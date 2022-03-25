@@ -24,7 +24,11 @@ class ExtractReviewDataMov(openpype.api.Extractor):
     outputs = {}
 
     def process(self, instance):
-        families = instance.data["families"]
+        families = set(instance.data["families"])
+
+        # add main family to make sure all families are compared
+        families.add(instance.data["family"])
+
         task_type = instance.context.data["taskType"]
         subset = instance.data["subset"]
         self.log.info("Creating staging dir...")
@@ -50,51 +54,31 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 f_task_types = o_data["filter"]["task_types"]
                 f_subsets = o_data["filter"]["sebsets"]
 
+                self.log.debug(
+                    "f_families `{}` > families: {}".format(
+                        f_families, families))
+
+                self.log.debug(
+                    "f_task_types `{}` > task_type: {}".format(
+                        f_task_types, task_type))
+
+                self.log.debug(
+                    "f_subsets `{}` > subset: {}".format(
+                        f_subsets, subset))
+
                 # test if family found in context
-                test_families = any([
-                    # first if exact family set is matching
-                    # make sure only interesetion of list is correct
-                    bool(set(families).intersection(f_families)),
-                    # and if famiies are set at all
-                    # if not then return True because we want this preset
-                    # to be active if nothig is set
-                    bool(not f_families)
-                ])
+                # using intersection to make sure all defined
+                # families are present in combination
+                if f_families and not families.intersection(f_families):
+                    continue
 
                 # test task types from filter
-                test_task_types = any([
-                    # check if actual task type is defined in task types
-                    # set in preset's filter
-                    bool(task_type in f_task_types),
-                    # and if taskTypes are defined in preset filter
-                    # if not then return True, because we want this filter
-                    # to be active if no taskType is set
-                    bool(not f_task_types)
-                ])
+                if f_task_types and task_type not in f_task_types:
+                    continue
 
                 # test subsets from filter
-                test_subsets = any([
-                    # check if any of subset filter inputs
-                    # converted to regex patern is not found in subset
-                    # we keep strict case sensitivity
-                    bool(next((
-                        s for s in f_subsets
-                        if re.search(re.compile(s), subset)
-                    ), None)),
-                    # but if no subsets were set then make this acuntable too
-                    bool(not f_subsets)
-                ])
-
-                # we need all filters to be positive for this
-                # preset to be activated
-                test_all = all([
-                    test_families,
-                    test_task_types,
-                    test_subsets
-                ])
-
-                # if it is not positive then skip this preset
-                if not test_all:
+                if f_subsets and not any(
+                        re.search(s, subset) for s in f_subsets):
                     continue
 
                 self.log.info(
