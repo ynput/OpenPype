@@ -169,6 +169,12 @@ class ExporterReview(object):
             "representations": list()
         })
 
+        #this correctly caluculates frame length of the instance
+        self.instance_length = int((
+            instance.data["frameEnd"] - instance.data["frameStart"] + 1) + (
+                instance.data["handleStart"] + instance.data["handleEnd"]
+            ))
+
     def get_file_info(self):
         if self.collection:
             self.log.debug("Collection: `{}`".format(self.collection))
@@ -180,7 +186,15 @@ class ExporterReview(object):
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
-            if "slate" in self.instance.data["families"]:
+            # get collection duration
+            self.frame_length = int(len(self.collection.indexes))
+            # compare lenghts to render out the data mov
+            # with the correct frame range. Since publishing happens at
+            # the same time as data mov extraction render needs to be
+            # with the slate for old code to work. This check exclude
+            # incrementing first frame when durations are the same.
+            if "slate" in self.instance.data["families"] and \
+                    self.frame_length > self.instance_length:
                 self.first_frame += 1
         else:
             self.fname = os.path.basename(self.path_in)

@@ -10,6 +10,11 @@ from openpype.lib import (
     get_ffmpeg_format_args,
 )
 
+# New import to get ffprobe info with frames=True
+# using a convenient wrapper function as to not
+# modify current behaviour
+from openpype.lib.transcoding import get_ffprobe_frames
+
 
 class ExtractReviewSlate(openpype.api.Extractor):
     """
@@ -39,11 +44,24 @@ class ExtractReviewSlate(openpype.api.Extractor):
         # - there may be a better way (checking `codec_type`?)+
         slate_width = None
         slate_height = None
+        slate_tc = None
         for slate_stream in slate_streams:
             if "width" in slate_stream and "height" in slate_stream:
                 slate_width = int(slate_stream["width"])
                 slate_height = int(slate_stream["height"])
                 break
+
+        # get frame info from slate
+        slate_frames = get_ffprobe_frames(slate_path, self.log)
+
+        for slate_frame in slate_frames:
+            if "timecode" in slate_frame["tags"]:
+                # get timecode from frame info
+                slate_tc = slate_frame["tags"]["timecode"]
+                break
+            else:
+                # set default timecode if not found
+                slate_tc = "01:00:00:00"
 
         # Raise exception of any stream didn't define input resolution
         if slate_width is None:
@@ -154,7 +172,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
             ))
             input_args.extend([
                 "-r {}".format(fps),
-                "-t 0.04"
+                "-t 0.04",
+                # added timecode to standard data
+                "-timecode {}".format(slate_tc)
             ])
 
             if use_legacy_code:
@@ -221,7 +241,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # overrides output file
             output_args.append("-y")
 
-            slate_v_path = slate_path.replace(".png", ext)
+            # use dpx as an image format for slate to hold tc info
+            slate_v_path = slate_path.replace(".dpx", ext)
             output_args.append(
                 path_to_subprocess_arg(slate_v_path)
             )
@@ -265,6 +286,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-f", "concat",
                 "-safe", "0",
                 "-i", conc_text_path,
+                # set timecode and fps on concat ffmpeg
+                # cast fps to string for parsing
+                "-r", str(fps),
+                "-timecode", slate_tc,
                 "-c", "copy",
                 output_path
             ]
@@ -371,3 +396,38 @@ class ExtractReviewSlate(openpype.api.Extractor):
         )
 
         return codec_args
+
+
+    def get_slate_timecode(self, fps, source_tc):
+        """
+        checks if source fps is dropframe or not,
+        passing it and tc to the correct math function.
+        23.976 or 23.98 actually need to be interpreted
+        as 24. for more info check this very informative page:
+        https://www.davidheidelberger.com/2010/06/10/drop-frame-timecode/
+        """
+        # TODO: need to actually finish the functions that
+        # calculate the actual timecode minus 1 frame.
+        # They will be target for return values in a future pr
+        drop = False
+        try:
+            fps = float(fps)
+            drop = True
+            if fps < float(24):
+                drop = False
+                
+        except ValueError:
+            fps = int(fps)
+        
+        if drop:
+            self.log.debug("TC - proceeding with drop \
+                tc math: `{}`".format(str(fps)))
+            # this is just a placeholder for now. Needs to return
+            # correct timecode using a function
+            return True
+        else:
+            self.log.debug("TC - proceeding with nondrop \
+                tc math: `{}`".format(str(fps)))
+            # this is just a placeholder for now. Needs to return
+            # correct timecode using a function
+            return False

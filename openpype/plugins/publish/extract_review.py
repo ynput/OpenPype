@@ -531,7 +531,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
 
-            # TODO add fps mapping `{fps: fraction}` ?
+        if temp_data["output_is_sequence"]:
+            # Set start frame of output sequence (just frame in filename)
+            # - this is definition of an output
+            ffmpeg_output_args.append(
+                "-start_number {}".format(temp_data["output_frame_start"])
+            )
+
+        # moved this from the input_is_sequence check, since it's best to
+        # specify framerate on anything that is not outputted as an image.
+        # This allows movs to receive the -r flag too, something needed
+        # to correctly setup the right timecode in slate for instance.
+        elif not temp_data["output_ext_is_image"]:
             # - e.g.: {
             #     "25": "25/1",
             #     "24": "24/1",
@@ -539,14 +550,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # }
             # Add framerate to input when input is sequence
             ffmpeg_input_args.append(
-                "-framerate {}".format(temp_data["fps"])
-            )
-
-        if temp_data["output_is_sequence"]:
-            # Set start frame of output sequence (just frame in filename)
-            # - this is definition of an output
-            ffmpeg_output_args.append(
-                "-start_number {}".format(temp_data["output_frame_start"])
+                "-r {}".format(temp_data["fps"])
             )
 
         # Change output's duration and start point if should not contain
