@@ -12,13 +12,12 @@ class CreateMultiverseUsdComp(plugin.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateMultiverseUsdComp, self).__init__(*args, **kwargs)
 
+        # Add animation data first, since it maintains order.
+        self.data.update(lib.collect_animation_data(True))
+
         self.data["stripNamespaces"] = False
         self.data["mergeTransformAndShape"] = False
         self.data["flattenContent"] = False
         self.data["writePendingOverrides"] = False
         self.data["numTimeSamples"] = 1
         self.data["timeSamplesSpan"] = 0.0
-
-        # Add animation data
-        animation_data = lib.collect_animation_data(True)
-        self.data.update(animation_data)

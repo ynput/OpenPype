@@ -12,6 +12,9 @@ class CreateMultiverseUsdOver(plugin.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateMultiverseUsdOver, self).__init__(*args, **kwargs)
 
+        # Add animation data first, since it maintains order.
+        self.data.update(lib.collect_animation_data(True))
+
         self.data["writeAll"] = False
         self.data["writeTransforms"] = True
         self.data["writeVisibility"] = True
@@ -23,7 +26,3 @@ class CreateMultiverseUsdOver(plugin.Creator):
         self.data["writeNamespaces"] = False
         self.data["numTimeSamples"] = 1
         self.data["timeSamplesSpan"] = 0.0
-
-        # Add animation data
-        animation_data = lib.collect_animation_data(True)
-        self.data.update(animation_data)

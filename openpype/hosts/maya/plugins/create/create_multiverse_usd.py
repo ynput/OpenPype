@@ -12,6 +12,9 @@ class CreateMultiverseUsd(plugin.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateMultiverseUsd, self).__init__(*args, **kwargs)
 
+        # Add animation data first, since it maintains order.
+        self.data.update(lib.collect_animation_data(True))
+
         self.data["stripNamespaces"] = False
         self.data["mergeTransformAndShape"] = False
         self.data["writeAncestors"] = True
@@ -46,7 +49,3 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data["customMaterialNamespace"] = ''
         self.data["numTimeSamples"] = 1
         self.data["timeSamplesSpan"] = 0.0
-
-        # Add animation data
-        animation_data = lib.collect_animation_data(True)
-        self.data.update(animation_data)
