@@ -57,7 +57,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         compositions = CollectAERender.get_stub().get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
         for inst in context:
-            if not inst.data["active"]:
+            if not inst.data.get("active", True):
                 continue
 
             family = inst.data["family"]
@@ -84,6 +84,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             fps = work_area_info.frameRate
             # TODO add resolution when supported by extension
 
+            task_name = (inst.data.get("task") or
+                         list(asset_entity["data"]["tasks"].keys())[0])  # lega
+
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family=family,
@@ -94,7 +97,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 label="{} - {}".format(subset_name, family),
                 subset=subset_name,
                 asset=inst.data["asset"],
-                task=inst.data["task"],
+                task=task_name,
                 attachTo=False,
                 setMembers='',
                 publish=True,
