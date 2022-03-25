@@ -5,11 +5,15 @@ import re
 
 import pyblish.api
 
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 from openpype.hosts.aftereffects.api import get_asset_settings
 
 
-class ValidateSceneSettings(pyblish.api.InstancePlugin):
+class ValidateSceneSettings(OptionalPyblishPluginMixin,
+                            pyblish.api.InstancePlugin):
     """
         Ensures that Composition Settings (right mouse on comp) are same as
         in FTrack on task.
@@ -59,6 +63,10 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        # Skip the instance if is not active by data on the instance
+        if not self.is_active(instance.data):
+            return
+
         expected_settings = get_asset_settings()
         self.log.info("config from DB::{}".format(expected_settings))
 
