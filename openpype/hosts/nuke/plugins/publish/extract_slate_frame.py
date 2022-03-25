@@ -96,6 +96,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
             fhead = fhead.replace("#", "")[:-1]
 
         previous_node = source_node
+<<<<<<< HEAD
 
         timecode_holder = nuke.createNode(
             "FrameHold",
@@ -115,6 +116,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
         temporary_nodes.append(slate_timecode)
 
         instance.data.get("slateNode").setInput(0, previous_node)
+=======
+>>>>>>> 8782c048aad03605f8aa44544dbcaba0cdef974a
 
         # get input process and connect it to baking
         ipn = self.get_view_process_node()
