@@ -199,6 +199,9 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         render_dir_path = os.path.join(
             task_workfile_path, "render", "flame")
 
+        if not os.path.exists(render_dir_path):
+            os.makedirs(render_dir_path, mode=0o777)
+
         # TODO: add most of these to `imageio/flame/batch/write_node`
         name = "{project[code]}_{asset}_{task[name]}".format(
             **anatomy_data
@@ -208,7 +211,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         # /path/to/file.[0001-0010].exr
         media_path = render_dir_path
         # name of file represented by tokens
-        media_path_pattern = "<name>_v<iteration###>.<frame><ext>"
+        media_path_pattern = "<name>_v<iteration###>/<name>_v<iteration###>.<frame><ext>"
         # The Create Open Clip attribute of the Write File node. \
         # Determines if an Open Clip is created by the Write File node.
         create_clip = True
