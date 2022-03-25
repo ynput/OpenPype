@@ -376,6 +376,48 @@
                             "label": "Clip name template"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "LoadClipBatch",
+                    "label": "Load as clip to current batch",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "families",
+                            "label": "Families",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "representations",
+                            "label": "Representations",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "reel_name",
+                            "label": "Reel name"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "clip_name_template",
+                            "label": "Clip name template"
+                        }
+                    ]
                 }
             ]
         }

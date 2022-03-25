@@ -92,6 +92,28 @@
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
             "clip_name_template": "{asset}_{subset}_{representation}"
+        },
+        "LoadClipBatch": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "review"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "h264",
+                "mov",
+                "mp4"
+            ],
+            "reel_name": "OP_LoadedReel",
+            "clip_name_template": "{asset}_{subset}_{representation}"
         }
     }
 }
