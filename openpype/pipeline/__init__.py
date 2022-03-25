@@ -3,8 +3,6 @@ from .constants import (
     HOST_WORKFILE_EXTENSIONS,
 )
 
-from .lib import attribute_definitions
-
 from .create import (
     BaseCreator,
     Creator,
@@ -43,7 +41,8 @@ from .publish import (
     PublishValidationError,
     PublishXmlValidationError,
     KnownPublishError,
-    OpenPypePyblishPluginMixin
+    OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
 )
 
 from .actions import (
@@ -107,6 +106,7 @@ __all__ = (
     "PublishXmlValidationError",
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
+    "OptionalPyblishPluginMixin",
 
     # --- Actions ---
     "LauncherAction",

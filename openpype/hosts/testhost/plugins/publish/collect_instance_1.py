@@ -1,10 +1,8 @@
 import json
 import pyblish.api
 
-from openpype.pipeline import (
-    OpenPypePyblishPluginMixin,
-    attribute_definitions
-)
+from openpype.lib import attribute_definitions
+from openpype.pipeline import OpenPypePyblishPluginMixin
 
 
 class CollectInstanceOneTestHost(

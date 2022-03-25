@@ -1,8 +1,8 @@
+from openpype.lib import NumberDef, TextDef
 from openpype.hosts.testhost.api import pipeline
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    lib
 )
 
 
@@ -40,8 +40,8 @@ class TestCreatorTwo(Creator):
 
     def get_instance_attr_defs(self):
         output = [
-            lib.NumberDef("number_key"),
-            lib.TextDef("text_key")
+            NumberDef("number_key"),
+            TextDef("text_key")
         ]
         return output
 
