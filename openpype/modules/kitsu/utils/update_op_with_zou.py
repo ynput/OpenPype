@@ -256,7 +256,7 @@ def sync_all_project(login: str, password: str):
     # Iterate projects
     dbcon = AvalonMongoDB()
     dbcon.install()
-    all_projects = gazu.project.all_projects()
+    all_projects = gazu.project.all_open_projects()
     for project in all_projects:
         sync_project_from_kitsu(project["name"], dbcon, project)
 
