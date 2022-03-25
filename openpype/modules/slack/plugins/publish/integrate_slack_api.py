@@ -82,9 +82,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         review_file_size_MB = os.path.getsize(review_path) / 1024 / 1024
         file_limit = message_profile.get("review_upload_limit", 50)
         if review_file_size_MB > file_limit:
+            message += "\nReview upload omitted because of file size."
             if review_path not in message:
-                message += "\n Review upload omitted because of " + \
-                           "file size, file located at: {}".format(review_path)
+                message += "\nFile located at: {}".format(review_path)
         else:
             publish_files.add(review_path)
         return message, publish_files
