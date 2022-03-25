@@ -1,7 +1,9 @@
 import os
+
 import pyblish.api
 from pymongo import MongoClient
-from openpype.api import get_project_settings
+
+from openpype.modules.shotgrid.lib.settings import get_shotgrid_project_settings
 
 
 class CollectShotgridEntities(pyblish.api.ContextPlugin):
@@ -64,12 +66,8 @@ def _get_shotgrid_collection(project):
     return client.get_database("shotgrid_openpype").get_collection(project)
 
 
-def _get_shotgrid_project_settings(project):
-    return get_project_settings(project).get("shotgrid", {})
-
-
 def _get_shotgrid_project(avalon_project):
-    proj_settings = _get_shotgrid_project_settings(avalon_project["name"])
+    proj_settings = get_shotgrid_project_settings(avalon_project["name"])
     shotgrid_project_id = proj_settings.get("shotgrid_project_id")
     if shotgrid_project_id:
         return {"type": "Project", "id": shotgrid_project_id}

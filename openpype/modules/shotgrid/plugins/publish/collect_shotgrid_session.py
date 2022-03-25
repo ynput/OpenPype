@@ -1,10 +1,14 @@
 import os
+
 import pyblish.api
 import shotgun_api3
 from shotgun_api3.shotgun import AuthenticationFault
+
 from openpype.lib import OpenPypeSettingsRegistry
-from openpype.api import get_project_settings, get_system_settings
-from openpype.modules.shotgrid.lib.settings import get_shotgrid_servers
+from openpype.modules.shotgrid.lib.settings import (
+    get_shotgrid_servers,
+    get_shotgrid_project_settings,
+)
 
 
 class CollectShotgridSession(pyblish.api.ContextPlugin):
@@ -40,7 +44,7 @@ class CollectShotgridSession(pyblish.api.ContextPlugin):
 
         avalon_project = os.getenv("AVALON_PROJECT")
 
-        shotgrid_settings = get_shotgrid_settings(avalon_project)
+        shotgrid_settings = get_shotgrid_project_settings(avalon_project)
         self.log.info("shotgrid settings: {}".format(shotgrid_settings))
         shotgrid_servers_settings = get_shotgrid_servers()
         self.log.info(
@@ -109,10 +113,6 @@ def get_shotgrid_certificate():
 
 def set_shotgrid_certificate(certificate):
     os.environ["SHOTGUN_API_CACERTS"] = certificate
-
-
-def get_shotgrid_settings(project):
-    return get_project_settings(project).get("shotgrid", {})
 
 
 def get_login():
