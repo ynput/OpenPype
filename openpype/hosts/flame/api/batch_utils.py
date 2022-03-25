@@ -56,6 +56,7 @@ def create_batch(name, frame_start, frame_duration, **kwargs):
     write_node.frame_padding = write_pref["frame_padding"]
     write_node.version_mode = write_pref["version_mode"]
     write_node.version_name = write_pref["version_name"]
+    write_node.version_padding = write_pref["version_padding"]
 
     flame.batch.connect_nodes(comp_node, "Result", write_node, "Front")
 

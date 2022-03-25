@@ -108,12 +108,11 @@ class LoadClipBatch(opfapi.ClipLoader):
         reel = self._get_reel()
 
         # with maintained openclip as opc
-        matching_clip = next(
-            (
-                cl for cl in reel.clips
-                if cl.name.get_value() == name
-            )
-        )
+        matching_clip = None
+        for cl in reel.clips:
+            if cl.name.get_value() != name:
+                continue
+            matching_clip = cl
 
         if not matching_clip:
             created_clips = flame.import_clips(str(clip_path), reel)

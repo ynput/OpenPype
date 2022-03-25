@@ -249,6 +249,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         # Only available if create_clip = True.
         version_mode = "Follow Iteration"
         version_name = "v<version>"
+        version_padding = 3
 
         return {
             "name": name,
@@ -266,7 +267,8 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             "frame_index_mode": frame_index_mode,
             "frame_padding": frame_padding,
             "version_mode": version_mode,
-            "version_name": version_name
+            "version_name": version_name,
+            "version_padding": version_padding
         }
 
     def _get_shot_task_dir_path(self, instance, task_data):
