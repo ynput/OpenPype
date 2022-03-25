@@ -22,6 +22,7 @@ class AERenderInstance(RenderInstance):
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
+    publish_attributes = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -50,15 +51,20 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
         current_file = context.data["currentFile"]
         version = context.data["version"]
-        asset_entity = context.data["assetEntity"]
+
         project_entity = context.data["projectEntity"]
 
         compositions = CollectAERender.get_stub().get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
         for inst in context:
+            if not inst.data["active"]:
+                continue
+
             family = inst.data["family"]
             if family not in ["render", "renderLocal"]:  # legacy
                 continue
+
+            asset_entity = inst.data["assetEntity"]
 
             item_id = inst.data["members"][0]
 
@@ -78,9 +84,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             fps = work_area_info.frameRate
             # TODO add resolution when supported by extension
 
-            if not inst.data["active"]:
-                continue
-
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family=family,
@@ -90,7 +93,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 source=current_file,
                 label="{} - {}".format(subset_name, family),
                 subset=subset_name,
-                asset=context.data["assetEntity"]["name"],
+                asset=inst.data["asset"],
+                task=inst.data["task"],
                 attachTo=False,
                 setMembers='',
                 publish=True,
@@ -112,8 +116,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 toBeRenderedOn='deadline',
                 fps=fps,
                 app_version=app_version,
-                anatomyData=deepcopy(context.data["anatomyData"]),
-                context=context
+                anatomyData=deepcopy(inst.data["anatomyData"]),
+                publish_attributes=inst.data.get("publish_attributes")
             )
 
             comp = compositions_by_id.get(int(item_id))

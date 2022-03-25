@@ -30,6 +30,7 @@ class RenderInstance(object):
     source = attr.ib()  # path to source scene file
     label = attr.ib()  # label to show in GUI
     subset = attr.ib()  # subset name
+    task = attr.ib()  # task name
     asset = attr.ib()  # asset name (AVALON_ASSET)
     attachTo = attr.ib()  # subset name to attach render to
     setMembers = attr.ib()  # list of nodes/members producing render output
