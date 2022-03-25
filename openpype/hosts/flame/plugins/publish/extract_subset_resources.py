@@ -115,10 +115,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 "batch_group_loader_name")
 
             # convert to None if empty string
-            if batch_group_loader_name:
-                batch_group_loader_name = str(batch_group_loader_name)
-                if batch_group_loader_name == "":
-                    batch_group_loader_name = None
+            if batch_group_loader_name == "":
+                batch_group_loader_name = None
 
             # get frame range with handles for representation range
             frame_start_handle = frame_start - handle_start

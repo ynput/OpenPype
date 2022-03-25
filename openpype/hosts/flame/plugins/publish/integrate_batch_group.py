@@ -66,6 +66,9 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             if _repr.get("load_to_batch_group") is not None
         ]
 
+        self.log.debug("__ loadable_representations: {}".format(pformat(
+            loadable_representations)))
+
         # get representation context from the repre_id
         representation_ids = [
             repre["_id"]
@@ -75,17 +78,20 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         repre_contexts = op_pipeline.load.get_repres_contexts(
             representation_ids)
 
+        self.log.debug("__ repre_contexts: {}".format(pformat(
+            repre_contexts)))
+
         # loop all returned repres from repre_context dict
         for repre_id, repre_context in repre_contexts.items():
+            self.log.debug("__ repre_id: {}".format(repre_id))
             # get loader name by representation id
             loader_name = next(
                 (
                     repr["loader"]
                     for repr in loadable_representations
                     if repr["_id"] == repre_id
-                ),
-                self.default_loader
-            )
+                )) or self.default_loader
+
             # get loader plugin
             Loader = next(
                 (
@@ -117,8 +123,6 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
                     "following data: {}".format(
                         pformat(loadable_representations))
                 )
-
-
 
     def _get_batch_group(self, instance, task_data):
         frame_start = instance.data["frameStart"]
