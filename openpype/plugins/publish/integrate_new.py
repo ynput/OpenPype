@@ -115,7 +115,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Exclude instances that also contain families from exclude families
         families = set(self._get_instance_families(instance))
-        if families & set(self.exclude_families):
+        exclude = families & set(self.exclude_families)
+        if exclude:
+            self.log.debug("Instance not integrated due to exclude "
+                           "families found: {}".format(", ".join(exclude)))
             return
 
         file_transactions = FileTransaction(log=self.log)
