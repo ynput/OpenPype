@@ -24,28 +24,22 @@ class CollectSubsetGroup(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.495
     label = "Collect Subset Group"
 
+    # Defined in OpenPype settings
+    subset_grouping_profiles = None
+
     def process(self, instance):
         """Look into subset group profiles set by settings.
 
         Attribute 'subset_grouping_profiles' is defined by OpenPype settings.
         """
 
-        # TODO: Move this setting to this Collector instead of Integrator
-        project_settings = instance.context.data["project_settings"]
-        subset_grouping_profiles = (
-            project_settings["global"]
-                            ["publish"]
-                            ["IntegrateAssetNew"]
-                            ["subset_grouping_profiles"]
-        )
-
         # Skip if 'subset_grouping_profiles' is empty
-        if not subset_grouping_profiles:
+        if not self.subset_grouping_profiles:
             return
 
         # Skip if there is no matching profile
         filter_criteria = self.get_profile_filter_criteria(instance)
-        profile = filter_profiles(subset_grouping_profiles,
+        profile = filter_profiles(self.subset_grouping_profiles,
                                   filter_criteria,
                                   logger=self.log)
         if not profile:

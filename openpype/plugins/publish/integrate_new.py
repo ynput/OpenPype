@@ -110,7 +110,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     # Attributes set by settings
     template_name_profiles = None
-    subset_grouping_profiles = None
 
     def process(self, instance):
 

@@ -20,6 +20,17 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "CollectSubsetGroup": {
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ]
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -192,15 +203,6 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "render"
-                }
-            ],
-            "subset_grouping_profiles": [
-                {
-                    "families": [],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "template": ""
                 }
             ]
         },
