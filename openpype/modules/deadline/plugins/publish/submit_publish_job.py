@@ -454,8 +454,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 render_file_name = os.path.basename(col)
             aov_patterns = self.aov_filter.keys()
             preview = match_aov_pattern(app, aov_patterns, render_file_name)
-            
-            
+
             # toggle preview on if multipart is on                  
             if instance_data.get("multipartExr"):
                 preview = True
