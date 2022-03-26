@@ -172,14 +172,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             )
         )
 
-        # Define publish template name from profiles
-        filter_criteria = self.get_profile_filter_criteria(instance)
-        profile = filter_profiles(self.template_name_profiles,
-                                  filter_criteria,
-                                  logger=self.log)
-        template_name = "publish"
-        if profile:
-            template_name = profile["template_name"]
+        template_name = self._get_template_name(instance)
 
         subset = self.register_subset(instance)
 
@@ -581,6 +574,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 families.append(_family)
 
         return families
+
+    def _get_template_name(self, instance):
+        """Return anatomy template name to use for integration"""
+
+        # Define publish template name from profiles
+        filter_criteria = self.get_profile_filter_criteria(instance)
+        profile = filter_profiles(self.template_name_profiles,
+                                  filter_criteria,
+                                  logger=self.log)
+        template_name = self.default_template_name
+        if profile:
+            template_name = profile["template_name"]
+        return template_name
 
     def register_subset(self, instance):
         asset = instance.data.get("assetEntity")
