@@ -2,6 +2,8 @@ import uuid
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.style import get_objected_colors
+
 from .lib import set_style_property
 
 
@@ -12,6 +14,9 @@ class CloseButton(QtWidgets.QFrame):
 
     def __init__(self, parent):
         super(CloseButton, self).__init__(parent)
+        colors = get_objected_colors()
+        close_btn_color = colors["overlay-messages"]["close-btn"]
+        self._color = close_btn_color.get_qcolor()
         self._mouse_pressed = False
         policy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed,
@@ -42,7 +47,7 @@ class CloseButton(QtWidgets.QFrame):
         painter.setClipRect(event.rect())
         pen = QtGui.QPen()
         pen.setWidth(2)
-        pen.setColor(QtGui.QColor(255, 255, 255))
+        pen.setColor(self._color)
         pen.setStyle(QtCore.Qt.SolidLine)
         pen.setCapStyle(QtCore.Qt.RoundCap)
         painter.setPen(pen)
@@ -61,7 +66,7 @@ class CloseButton(QtWidgets.QFrame):
         )
 
 
-class MessageWidget(QtWidgets.QFrame):
+class OverlayMessageWidget(QtWidgets.QFrame):
     """Message widget showed as overlay.
 
     Message is hidden after timeout but can be overriden by mouse hover.
@@ -81,9 +86,9 @@ class MessageWidget(QtWidgets.QFrame):
     _default_timeout = 5000
 
     def __init__(
-        self, message_id, message, parent, timeout=None, message_type=None
+        self, message_id, message, parent, message_type=None, timeout=None
     ):
-        super(MessageWidget, self).__init__(parent)
+        super(OverlayMessageWidget, self).__init__(parent)
         self.setObjectName("OverlayMessageWidget")
 
         if message_type:
@@ -127,7 +132,7 @@ class MessageWidget(QtWidgets.QFrame):
 
     def showEvent(self, event):
         """Start timeout on show."""
-        super(MessageWidget, self).showEvent(event)
+        super(OverlayMessageWidget, self).showEvent(event)
         self._timeout_timer.start()
 
     def _on_timer_timeout(self):
@@ -153,12 +158,12 @@ class MessageWidget(QtWidgets.QFrame):
 
     def enterEvent(self, event):
         """Start hover timer on hover."""
-        super(MessageWidget, self).enterEvent(event)
+        super(OverlayMessageWidget, self).enterEvent(event)
         self._hover_timer.start()
 
     def leaveEvent(self, event):
         """Start hover timer on hover leave."""
-        super(MessageWidget, self).leaveEvent(event)
+        super(OverlayMessageWidget, self).leaveEvent(event)
         self._hover_timer.start()
 
 
@@ -190,7 +195,7 @@ class MessageOverlayObject(QtCore.QObject):
         self._move_size = 4
         self._move_size_remove = 8
 
-    def add_message(self, message, timeout=None, message_type=None):
+    def add_message(self, message, message_type=None, timeout=None):
         """Add single message into overlay.
 
         Args:
@@ -206,8 +211,8 @@ class MessageOverlayObject(QtCore.QObject):
         # Create unique id of message
         label_id = str(uuid.uuid4())
         # Create message widget
-        widget = MessageWidget(
-            label_id, message, self._widget, timeout, message_type
+        widget = OverlayMessageWidget(
+            label_id, message, self._widget, message_type, timeout
         )
         widget.close_requested.connect(self._on_message_close_request)
         widget.show()
