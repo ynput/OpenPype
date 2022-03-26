@@ -13,11 +13,6 @@ import openpype.api
 from datetime import datetime
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
-from openpype.lib import (
-    prepare_template_data,
-    StringTemplate,
-    TemplateUnsolved
-)
 
 log = logging.getLogger(__name__)
 
@@ -619,9 +614,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         }
 
         subset_group = instance.data.get("subsetGroup")
-        if not subset_group:
-            # todo: move _get_subset_group fallback to its own collector
-            subset_group = self._get_subset_group(instance)
         if subset_group:
             data["subsetGroup"] = subset_group
 
@@ -652,48 +644,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         self.log.info("Registered subset: {}".format(subset_name))
         return subset
-
-    def _get_subset_group(self, instance):
-        """Look into subset group profiles set by settings.
-
-        Attribute 'subset_grouping_profiles' is defined by OpenPype settings.
-        """
-        # TODO: This logic is better suited for a Collector to just store
-        #       instance.data["subsetGroup"]
-        # Skip if 'subset_grouping_profiles' is empty
-        if not self.subset_grouping_profiles:
-            return None
-
-        # Skip if there is no matching profile
-        filter_criteria = self.get_profile_filter_criteria(instance)
-        profile = filter_profiles(self.subset_grouping_profiles,
-                                  filter_criteria,
-                                  logger=self.log)
-        if not profile:
-            return None
-
-        template = profile["template"]
-
-        fill_pairs = prepare_template_data({
-            "family": filter_criteria["families"],
-            "task": filter_criteria["tasks"],
-            "host": filter_criteria["hosts"],
-            "subset": instance.data["subset"],
-            "renderlayer": instance.data.get("renderlayer")
-        })
-
-        filled_template = None
-        try:
-            filled_template = StringTemplate.format_strict_template(
-                template, fill_pairs
-            )
-        except (KeyError, TemplateUnsolved):
-            keys = fill_pairs.keys()
-            msg = "Subset grouping failed. " \
-                  "Only {} are expected in Settings".format(','.join(keys))
-            self.log.warning(msg)
-
-        return filled_template
 
     def create_version_data(self, instance):
         """Create the data collection for the version
