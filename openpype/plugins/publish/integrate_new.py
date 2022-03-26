@@ -177,10 +177,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         template_name = self._get_template_name(instance)
 
-        subset = self.register_subset(instance)
-
-        version = self.register_version(instance, subset)
+        subset, subset_writes = self.register_subset(instance)
+        version, version_writes = self.register_version(instance, subset)
         instance.data["versionEntity"] = version
+
+        # Bulk write to the database
+        # todo: Try to avoid writing already until after we've prepared
+        #       representations to allow easier rollback?
+        io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+            subset_writes + version_writes
+        )
 
         archived_repres = list(io.find({
             "parent": version["_id"],
@@ -330,16 +336,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre["type"] = "archived_representation"
                 bulk_writes.append(InsertOne(repre))
 
-        # bulk updates
-        # todo: Try to avoid writing already until after we've prepared
-        #       representations to allow easier rollback?
-        io._database[io.Session["AVALON_PROJECT"]].bulk_write(
-            bulk_writes
-        )
-
         self.log.info("Registered version: v{0:03d}".format(version["name"]))
 
-        return version
+        return version, bulk_writes
 
     def prepare_representation(self, repre,
                                template_name,
@@ -612,6 +611,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if subset_group:
             data["subsetGroup"] = subset_group
 
+        bulk_writes = []
         if subset is None:
             # Create a new subset
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
@@ -623,22 +623,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "data": data,
                 "parent": asset["_id"]
             }
-            io.insert_one(subset)
+            bulk_writes.append(InsertOne(subset))
 
         else:
             # Update existing subset data with new data and set in database.
             # We also change the found subset  in-place so we don't need to
             # re-query the subset afterwards
             subset["data"].update(data)
-            io.update_many(
+            bulk_writes.append(UpdateOne(
                 {"type": "subset", "_id": subset["_id"]},
                 {"$set": {
                     "data": subset["data"]
                 }}
-            )
+            ))
 
         self.log.info("Registered subset: {}".format(subset_name))
-        return subset
+        return subset, bulk_writes
 
     def create_version_data(self, instance):
         """Create the data collection for the version
