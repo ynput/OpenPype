@@ -119,10 +119,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if families & set(self.exclude_families):
             return
 
-        # TODO: Avoid the need to do any adjustments to anatomy data
-        #       Best case scenario that's all handled by collectors
-        self.prepare_anatomy(instance)
-
         file_transactions = FileTransaction(log=self.log)
         try:
             self.register(instance, file_transactions)
@@ -136,15 +132,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Finalizing can't rollback safely so no use for moving it to
         # the try, except.
         file_transactions.finalize()
-
-    def prepare_anatomy(self, instance):
-        """Prepare anatomy data used to define representation destinations"""
-        # TODO: This logic should move to CollectAnatomyContextData
-        intent_value = instance.context.data.get("intent")
-        if intent_value and isinstance(intent_value, dict):
-            intent_value = intent_value.get("value")
-            if intent_value:
-                instance.data["anatomyData"]["intent"] = intent_value
 
     def get_profile_filter_criteria(self, instance):
         """Return filter criteria for `filter_profiles`"""
