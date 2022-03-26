@@ -24,7 +24,7 @@ class CollectSubsetGroup(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.495
     label = "Collect Subset Group"
 
-    # Defined in OpenPype settings
+    # Attributes set by settings
     subset_grouping_profiles = None
 
     def process(self, instance):
