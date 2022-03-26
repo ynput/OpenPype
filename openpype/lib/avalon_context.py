@@ -1705,7 +1705,7 @@ def _get_task_context_data_for_anatomy(
         "task": {
             "name": task_name,
             "type": task_type,
-            "short_name": project_task_type_data["short_name"]
+            "short": project_task_type_data["short_name"]
         }
     }
 
