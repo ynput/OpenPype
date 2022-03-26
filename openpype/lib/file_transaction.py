@@ -66,8 +66,8 @@ class FileTransaction(object):
         """Add a new file to transfer queue"""
         opts = {"mode": mode}
 
-        src = os.path.normpath(src)
-        dst = os.path.normpath(dst)
+        src = os.path.abspath(src)
+        dst = os.path.abspath(dst)
 
         if dst in self._transfers:
             queued_src = self._transfers[dst][0]
