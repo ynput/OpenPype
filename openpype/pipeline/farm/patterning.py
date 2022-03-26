@@ -20,4 +20,6 @@ def match_aov_pattern(app, aov_patterns, render_file_name):
     """
     aov_pattern = aov_patterns.get(app, [])
     if aov_pattern:
-        return any(re.match(aov_pattern, render_file_name))    
+        if re.match(aov_pattern, render_file_name):
+            preview = True
+            return preview
