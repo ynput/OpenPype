@@ -452,7 +452,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 render_file_name = os.path.basename(col[0])
             else:
                 render_file_name = os.path.basename(col)
-            aov_patterns = self.aov_filter.keys()
+            aov_patterns = self.aov_filter
             preview = match_aov_pattern(app, aov_patterns, render_file_name)
 
             # toggle preview on if multipart is on                  
@@ -529,7 +529,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             preview = False
             render_file_name = list(collection[0])
             app = os.environ.get("AVALON_APP", "")
-            aov_patterns = self.aov_filter.keys()
+            aov_patterns = self.aov_filter
             # if filtered aov name is found in filename, toggle it for
             # preview video rendering
             preview = match_aov_pattern(app, aov_patterns, render_file_name)
