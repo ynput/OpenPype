@@ -532,6 +532,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Store first transferred destination as published path data
         # todo: can we remove this?
         published_path = transfers[0][1]
+        repre["published_path"] = published_path  # Backwards compatibility
 
         # todo: `repre` is not the actual `representation` entity
         #       we should simplify/clarify difference between data above
