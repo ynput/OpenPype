@@ -398,6 +398,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
             # Collection of files (sequence)
+            assert not any(os.path.isabs(fname) for fname in files), (
+                "Given file names contain full paths"
+            )
+
             # Get the sequence as a collection. The files must be of a single
             # sequence and have no remainder outside of the collections.
             collections, remainder = clique.assemble(files,
