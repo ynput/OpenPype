@@ -22,14 +22,17 @@ class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin):
     def process(self, instance):
         geo = instance.data.get("geometry")
         joints = instance.data.get("joints")
-        joints_parents = cmds.ls(joints, long=True)[0].split("|")[1:-1]
-        geo_parents = cmds.ls(geo, long=True)[0].split("|")[1:-1]
+        # joints_parents = cmds.ls(joints, long=True)[0].split("|")[1:-1]
+        # geo_parents = cmds.ls(geo, long=True)[0].split("|")[1:-1]
 
-        self.log.info(joints_parents)
-        self.log.info(geo_parents)
-        self.log.info(set(joints_parents + geo_parents))
+        joints_parents = cmds.ls(joints, long=True)
+        geo_parents = cmds.ls(geo, long=True)
 
-        if len(set(joints_parents + geo_parents)) != 1:
+        parents_set = {
+            parent.split("|")[1] for parent in (joints_parents + geo_parents)
+        }
+
+        if len(set(parents_set)) != 1:
             raise PublishXmlValidationError(
                 self,
                 "Multiple roots on geometry or joints."
