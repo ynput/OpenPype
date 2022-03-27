@@ -7,12 +7,7 @@ from maya import cmds
 
 
 class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin):
-    """Adheres to the content of 'model' family
-
-    - Must have one top group. (configurable)
-    - Must only contain: transforms, meshes and groups
-
-    """
+    """Validates that nodes has common root."""
 
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
@@ -22,8 +17,6 @@ class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin):
     def process(self, instance):
         geo = instance.data.get("geometry")
         joints = instance.data.get("joints")
-        # joints_parents = cmds.ls(joints, long=True)[0].split("|")[1:-1]
-        # geo_parents = cmds.ls(geo, long=True)[0].split("|")[1:-1]
 
         joints_parents = cmds.ls(joints, long=True)
         geo_parents = cmds.ls(geo, long=True)
