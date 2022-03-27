@@ -66,20 +66,22 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
             instance.data.get("variant", "")
         )
 
+        joints_parents = cmds.ls(joints, long=True)
+        geo_parents = cmds.ls(geo, long=True)
+
+        parent_node = {
+            parent.split("|")[1] for parent in (joints_parents + geo_parents)
+        }.pop()
+
         renamed_to_extract = []
         for node in to_extract:
             node_path = node.split("|")
             node_path[1] = parent
             renamed_to_extract.append("|".join(node_path))
 
-        with renamed(joints_parent, parent):
-            with parent_nodes(renamed_to_extract, parent=parent):
-                rooted = [
-                    "{}|{}".format(parent, i.split("|")[-1])
-                    for i in renamed_to_extract
-                ]
-                self.log.info("Un-parenting: {}".format(rooted, path))
-                fbx_exporter.export(rooted, path)
+        with renamed(parent_node, parent):
+            self.log.info("Extracting: {}".format(renamed_to_extract, path))
+            fbx_exporter.export(renamed_to_extract, path)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
