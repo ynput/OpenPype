@@ -348,7 +348,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     concat_args, logger=self.log
                 )
             else:
-                self.log.warning("Audio found. Creating slate with audio"
+                self.log.warning(
+                    "Audio found. Creating slate with audio"
                     " is not supported at this time. Outputing slate-less"
                     ":\n{}".format(input_file))
                 # skip concatenating slate, use slate-less file instead
