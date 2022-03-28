@@ -636,9 +636,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "source": source,
             "comment": context.data.get("comment"),
             "machine": context.data.get("machine"),
-            "fps": context.data.get(
-                "fps", instance.data.get("fps")
-            )
+            "fps": instance.data.get("fps", context.data.get("fps"))
         }
 
         intent_value = context.data.get("intent")
