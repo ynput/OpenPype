@@ -17,6 +17,21 @@ from openpype.lib.file_transaction import FileTransaction
 log = logging.getLogger(__name__)
 
 
+def get_instance_families(instance):
+    """Get all families of the instance"""
+    # todo: move this to lib?
+    family = instance.data.get("family")
+    families = []
+    if family:
+        families.append(family)
+
+    for _family in (instance.data.get("families") or []):
+        if _family not in families:
+            families.append(_family)
+
+    return families
+
+
 def get_frame_padded(frame, padding):
     """Return frame number as string with `padding` amount of padded zeros"""
     return "{frame:0{padding}d}".format(padding=padding, frame=frame)
@@ -119,7 +134,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         # Exclude instances that also contain families from exclude families
-        families = set(self._get_instance_families(instance))
+        families = set(get_instance_families(instance))
         exclude = families & set(self.exclude_families)
         if exclude:
             self.log.debug("Instance not integrated due to exclude "
@@ -140,22 +155,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # the try, except.
         file_transactions.finalize()
 
-    def get_profile_filter_criteria(self, instance):
-        """Return filter criteria for `filter_profiles`"""
-        # Anatomy data is pre-filled by Collectors
-        anatomy_data = instance.data["anatomyData"]
-
-        # Task can be optional in anatomy data
-        task = anatomy_data.get("task", {})
-
-        # Return filter criteria
-        return {
-            "families": anatomy_data["family"],
-            "tasks": task.get("name"),
-            "hosts": anatomy_data["app"],
-            "task_types": task.get("type")
-        }
-
     def register(self, instance, file_transactions):
 
         instance_stagingdir = instance.data.get("stagingDir")
@@ -171,16 +170,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "@ {0}".format(instance_stagingdir)
             )
 
-        # Ensure at least one file is set up for transfer in staging dir.
+        # Ensure at least one representation is set up for registering.
         repres = instance.data.get("representations")
-        assert repres, "Instance has no files to transfer"
+        assert repres, "Instance has representations data"
         assert isinstance(repres, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0} {1}".format(
+            "Instance 'repres' must be a list, got: {0} {1}".format(
                 str(type(repres)), str(repres)
             )
         )
 
-        template_name = self._get_template_name(instance)
+        template_name = self.get_template_name(instance)
 
         subset, subset_writes = self.prepare_subset(instance)
         version, version_writes = self.prepare_version(instance, subset)
@@ -299,6 +298,56 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         self.log.info("Registered {} representations"
                       "".format(len(prepared_representations)))
+
+    def prepare_subset(self, instance):
+        asset = instance.data.get("assetEntity")
+        subset_name = instance.data["subset"]
+        self.log.debug("Subset: {}".format(subset_name))
+
+        # Get existing subset if it exists
+        subset = io.find_one({
+            "type": "subset",
+            "parent": asset["_id"],
+            "name": subset_name
+        })
+
+        # Define subset data
+        data = {
+            "families": get_instance_families(instance)
+        }
+
+        subset_group = instance.data.get("subsetGroup")
+        if subset_group:
+            data["subsetGroup"] = subset_group
+
+        bulk_writes = []
+        if subset is None:
+            # Create a new subset
+            self.log.info("Subset '%s' not found, creating ..." % subset_name)
+            subset = {
+                "_id": ObjectId(),
+                "schema": "openpype:subset-3.0",
+                "type": "subset",
+                "name": subset_name,
+                "data": data,
+                "parent": asset["_id"]
+            }
+            bulk_writes.append(InsertOne(subset))
+
+        else:
+            # Update existing subset data with new data and set in database.
+            # We also change the found subset in-place so we don't need to
+            # re-query the subset afterwards
+            subset["data"].update(data)
+            bulk_writes.append(UpdateOne(
+                {"type": "subset", "_id": subset["_id"]},
+                {"$set": {
+                    "data": subset["data"]
+                }}
+            ))
+
+        self.log.info("Prepared subset: {}".format(subset_name))
+        return subset, bulk_writes
 
     def prepare_version(self, instance, subset):
 
@@ -559,91 +608,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "published_files": [transfer[1] for transfer in transfers]
         }
 
-    def _get_instance_families(self, instance):
-        """Get all families of the instance"""
-        # todo: move this to lib?
-        family = instance.data.get("family")
-        families = []
-        if family:
-            families.append(family)
-
-        for _family in (instance.data.get("families") or []):
-            if _family not in families:
-                families.append(_family)
-
-        return families
-
-    def _get_template_name(self, instance):
-        """Return anatomy template name to use for integration"""
-
-        # Define publish template name from profiles
-        filter_criteria = self.get_profile_filter_criteria(instance)
-        profile = filter_profiles(self.template_name_profiles,
-                                  filter_criteria,
-                                  logger=self.log)
-        template_name = self.default_template_name
-        if profile:
-            template_name = profile["template_name"]
-        return template_name
-
-    def prepare_subset(self, instance):
-        asset = instance.data.get("assetEntity")
-        subset_name = instance.data["subset"]
-        self.log.debug("Subset: {}".format(subset_name))
-
-        # Get existing subset if it exists
-        subset = io.find_one({
-            "type": "subset",
-            "parent": asset["_id"],
-            "name": subset_name
-        })
-
-        # Define subset data
-        data = {
-            "families": self._get_instance_families(instance)
-        }
-
-        subset_group = instance.data.get("subsetGroup")
-        if subset_group:
-            data["subsetGroup"] = subset_group
-
-        bulk_writes = []
-        if subset is None:
-            # Create a new subset
-            self.log.info("Subset '%s' not found, creating ..." % subset_name)
-            subset = {
-                "_id": ObjectId(),
-                "schema": "openpype:subset-3.0",
-                "type": "subset",
-                "name": subset_name,
-                "data": data,
-                "parent": asset["_id"]
-            }
-            bulk_writes.append(InsertOne(subset))
-
-        else:
-            # Update existing subset data with new data and set in database.
-            # We also change the found subset in-place so we don't need to
-            # re-query the subset afterwards
-            subset["data"].update(data)
-            bulk_writes.append(UpdateOne(
-                {"type": "subset", "_id": subset["_id"]},
-                {"$set": {
-                    "data": subset["data"]
-                }}
-            ))
-
-        self.log.info("Prepared subset: {}".format(subset_name))
-        return subset, bulk_writes
-
     def create_version_data(self, instance):
-        """Create the data collection for the version
+        """Create the data dictionary for the version
 
         Args:
             instance: the current instance being published
 
         Returns:
-            dict: the required information with instance.data as key
+            dict: the required information for version["data"]
         """
 
         context = instance.context
@@ -658,7 +630,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Source: {}".format(source))
 
         version_data = {
-            "families": self._get_instance_families(instance),
+            "families": get_instance_families(instance),
             "time": context.data["time"],
             "author": context.data["user"],
             "source": source,
@@ -692,28 +664,52 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         return version_data
 
-    def main_family_from_instance(self, instance):
-        """Returns main family of entered instance."""
-        return self._get_instance_families(instance)[0]
+    def get_template_name(self, instance):
+        """Return anatomy template name to use for integration"""
+
+        # Define publish template name from profiles
+        filter_criteria = self.get_profile_filter_criteria(instance)
+        profile = filter_profiles(self.template_name_profiles,
+                                  filter_criteria,
+                                  logger=self.log)
+        template_name = self.default_template_name
+        if profile:
+            template_name = profile["template_name"]
+        return template_name
+
+    def get_profile_filter_criteria(self, instance):
+        """Return filter criteria for `filter_profiles`"""
+        # Anatomy data is pre-filled by Collectors
+        anatomy_data = instance.data["anatomyData"]
+
+        # Task can be optional in anatomy data
+        task = anatomy_data.get("task", {})
+
+        # Return filter criteria
+        return {
+            "families": anatomy_data["family"],
+            "tasks": task.get("name"),
+            "hosts": anatomy_data["app"],
+            "task_types": task.get("type")
+        }
 
     def get_rootless_path(self, anatomy, path):
-        """  Returns, if possible, path without absolute portion from host
-             (eg. 'c:\' or '/opt/..')
-             This information is host dependent and shouldn't be captured.
-             Example:
-                 'c:/projects/MyProject1/Assets/publish...' >
-                 '{root}/MyProject1/Assets...'
+        """Returns, if possible, path without absolute portion from root
+            (eg. 'c:\' or '/opt/..')
+
+         This information is platform dependent and shouldn't be captured.
+         Example:
+             'c:/projects/MyProject1/Assets/publish...' >
+             '{root}/MyProject1/Assets...'
 
         Args:
-                anatomy: anatomy part from instance
-                path: path (absolute)
+            anatomy: anatomy part from instance
+            path: path (absolute)
         Returns:
-                path: modified path if possible, or unmodified path
-                + warning logged
+            path: modified path if possible, or unmodified path
+            + warning logged
         """
-        success, rootless_path = (
-            anatomy.find_root_template_from_path(path)
-        )
+        success, rootless_path = anatomy.find_root_template_from_path(path)
         if success:
             path = rootless_path
         else:
@@ -731,9 +727,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             Context info.
 
         Arguments:
-            instance: the current instance being published
-            integrated_file_sizes: dictionary of destination path (absolute)
-            and its file size
+            transfers (list): List of transferred files (source, destination)
+            sites (list): array of published locations
+            anatomy: anatomy part from instance
         Returns:
             output_resources: array of dictionaries to be added to 'files' key
             in representation
@@ -749,14 +745,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """ Prepare information for one file (asset or resource)
 
         Arguments:
-            path: destination url of published file (rootless)
-            size(optional): size of file in bytes
-            file_hash(optional): hash of file for synchronization validation
-            sites(optional): array of published locations,
-                            [ {'name':'studio', 'created_dt':date} by default
-                                keys expected ['studio', 'site1', 'gdrive1']
+            path: destination url of published file
+            anatomy: anatomy part from instance
+            sites: array of published locations,
+                [ {'name':'studio', 'created_dt':date} by default
+                keys expected ['studio', 'site1', 'gdrive1']
+
         Returns:
-            rec: dictionary with filled info
+            dict: file info dictionary
         """
         file_hash = openpype.api.source_hash(path)
 
