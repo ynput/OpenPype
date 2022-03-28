@@ -829,7 +829,7 @@ class OpenClipSolver:
         xml_data = self._fix_xml_data(tmp_xml)
         self.log.info("Adding feed version: {}".format(self.feed_basename))
 
-        self._write_result_xml_to_file(xml_data)
+        self._write_result_xml_to_file(self.out_file, xml_data)
 
         self.log.info("openClip Updated: {}".format(self.tmp_file))
 
