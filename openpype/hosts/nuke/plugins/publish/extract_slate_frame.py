@@ -81,8 +81,15 @@ class ExtractSlateFrame(openpype.api.Extractor):
             self.log.info(
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
-            if ("slate" in instance.data["families"]) \
-                    and (frame_length != collected_frames_len):
+            # THIS WE NEED. there seemed to be a bug between pyblish and
+            # clique context, where the actual file does not get collected
+            # properly since pyblish has already validates that information
+            # before slate rendering. the result was that any review data mov
+            # would be rendered one frame short at head and with one duplicated
+            # frame at tail. This increments first_frame only if there's a
+            # discrepancy between clique data and task data.
+            if (("slate" in instance.data["families"]) and 
+            (frame_length != collected_frames_len)):
                 first_frame += 1
 
             last_frame = first_frame
@@ -97,6 +104,16 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         previous_node = source_node
 
+        # This block is needed to be sure that the correct timecode
+        # will be rendered in the slate frame. Sometimes Nuke does not
+        # advance timecode (or backtrack) consistently. The trick
+        # we've been using for a bit now is to create a FrameHold at
+        # first comp frame connected to the output but not to the render.
+        # Then we add an AddTimeCode node referencing that timecode
+        # through expressions, set the useFrame check to True and set the
+        # Frame value at whatever the FrameHold is set.
+        # Nuke then is able to backtrack or advance timecode without
+        # discrepancies.
         timecode_holder = nuke.createNode(
             "FrameHold",
             "name {}".format("OP_timecode_holder"))
@@ -107,7 +124,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
         slate_timecode = nuke.createNode(
             "AddTimeCode",
             "name {}".format("OP_slate_timecode"))
-        slate_timecode["startcode"].setValue("[metadata -n OP_timecode_holder input/timecode]")
+        slate_timecode["startcode"].setValue(
+            "[metadata -n OP_timecode_holder input/timecode]")
         slate_timecode["useFrame"].setValue(True)
         slate_timecode["frame"].setValue(first_frame + 1)
         slate_timecode.setInput(0, previous_node)
@@ -129,6 +147,9 @@ class ExtractSlateFrame(openpype.api.Extractor):
             previous_node = dag_node
             temporary_nodes.append(dag_node)
         
+        # This slate was moved after Input Process and lut, since
+        # there's really no need to encode lut on the slate (apart
+        # from the thumbs inside)
         slate_node = self.get_slate_node(instance)
         if slate_node is not None:
             slate_node.setInput(0, previous_node)
@@ -137,11 +158,11 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead + "slate.dpx"
+        file = fhead + "slate.png"
         path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["slateFrame"] = path
         write_node["file"].setValue(path)
-        write_node["file_type"].setValue("dpx")
+        write_node["file_type"].setValue("png")
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
@@ -215,6 +236,9 @@ class ExtractSlateFrame(openpype.api.Extractor):
             intent_value = intent_value.get("value")
 
         try:
+            # we check if the comment was already in from the slate
+            # fields, if not it gets overridden by pyblish, else
+            # it stays as before
             if node["f_submission_note"].getValue() == "":
                 node["f_submission_note"].setValue(comment)
             if node["f_submission_note"].getValue() == "":

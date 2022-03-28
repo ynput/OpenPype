@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import os
 import openpype.api
 import pyblish
@@ -8,6 +9,7 @@ from openpype.lib import (
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
+    get_offset_timecode
 )
 
 # New import to get ffprobe info with frames=True
@@ -31,6 +33,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
     def process(self, instance):
         inst_data = instance.data
+        self.log.debug(inst_data)
         if "representations" not in inst_data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
@@ -44,24 +47,23 @@ class ExtractReviewSlate(openpype.api.Extractor):
         # - there may be a better way (checking `codec_type`?)+
         slate_width = None
         slate_height = None
-        slate_tc = None
         for slate_stream in slate_streams:
             if "width" in slate_stream and "height" in slate_stream:
                 slate_width = int(slate_stream["width"])
                 slate_height = int(slate_stream["height"])
                 break
 
-        # get frame info from slate
-        slate_frames = get_ffprobe_frames(slate_path, self.log)
-
-        for slate_frame in slate_frames:
-            if "timecode" in slate_frame["tags"]:
-                # get timecode from frame info
-                slate_tc = slate_frame["tags"]["timecode"]
-                break
-            else:
-                # set default timecode if not found
-                slate_tc = "01:00:00:00"
+        # # get frame info from slate
+        # slate_frames = get_ffprobe_frames(slate_path, self.log)
+        # 
+        # for slate_frame in slate_frames:
+        #     if "timecode" in slate_frame["tags"]:
+        #         # get timecode from frame info
+        #         slate_tc = slate_frame["tags"]["timecode"]
+        #         break
+        #     else:
+        #         # set default timecode if not found
+        #         slate_tc = "01:00:00:00"
 
         # Raise exception of any stream didn't define input resolution
         if slate_width is None:
@@ -100,10 +102,16 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # - there may be a better way (checking `codec_type`?)
             input_width = None
             input_height = None
+            input_timecode = None
             for stream in video_streams:
                 if "width" in stream and "height" in stream:
                     input_width = int(stream["width"])
                     input_height = int(stream["height"])
+                    break
+            # this gets main timecode, forces first occurrence 
+            for stream in video_streams:
+                if "timecode" in stream["tags"]:
+                    input_timecode = stream["tags"]["timecode"]
                     break
 
             # Raise exception of any stream didn't define input resolution
@@ -172,9 +180,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             ))
             input_args.extend([
                 "-r {}".format(fps),
-                "-t 0.04",
-                # added timecode to standard data
-                "-timecode {}".format(slate_tc)
+                "-t 0.04"
             ])
 
             if use_legacy_code:
@@ -241,8 +247,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # overrides output file
             output_args.append("-y")
 
-            # use dpx as an image format for slate to hold tc info
-            slate_v_path = slate_path.replace(".dpx", ext)
+            slate_v_path = slate_path.replace(".png", ext)
             output_args.append(
                 path_to_subprocess_arg(slate_v_path)
             )
@@ -289,7 +294,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 # set timecode and fps on concat ffmpeg
                 # cast fps to string for parsing
                 "-r", str(fps),
-                "-timecode", slate_tc,
+                "-timecode", get_offset_timecode(input_timecode, str(fps)),
                 "-c", "copy",
                 output_path
             ]
@@ -298,6 +303,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             self.log.debug(
                 "Executing concat: {}".format(" ".join(concat_args))
             )
+
             openpype.api.run_subprocess(
                 concat_args, logger=self.log
             )
@@ -396,38 +402,3 @@ class ExtractReviewSlate(openpype.api.Extractor):
         )
 
         return codec_args
-
-
-    def get_slate_timecode(self, fps, source_tc):
-        """
-        checks if source fps is dropframe or not,
-        passing it and tc to the correct math function.
-        23.976 or 23.98 actually need to be interpreted
-        as 24. for more info check this very informative page:
-        https://www.davidheidelberger.com/2010/06/10/drop-frame-timecode/
-        """
-        # TODO: need to actually finish the functions that
-        # calculate the actual timecode minus 1 frame.
-        # They will be target for return values in a future pr
-        drop = False
-        try:
-            fps = float(fps)
-            drop = True
-            if fps < float(24):
-                drop = False
-                
-        except ValueError:
-            fps = int(fps)
-        
-        if drop:
-            self.log.debug("TC - proceeding with drop \
-                tc math: `{}`".format(str(fps)))
-            # this is just a placeholder for now. Needs to return
-            # correct timecode using a function
-            return True
-        else:
-            self.log.debug("TC - proceeding with nondrop \
-                tc math: `{}`".format(str(fps)))
-            # this is just a placeholder for now. Needs to return
-            # correct timecode using a function
-            return False

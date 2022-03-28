@@ -286,3 +286,141 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
         returning_dict.update(version_data)
 
     return returning_dict
+
+
+def get_offset_timecode(source_tc, fps, offset=-1):
+    """
+    Returns a timecode plus offset in frames.
+    Handles drop frame rates automatically, treats 23.98
+    and 23.976 as 24 fps.
+    for more info check this very informative page:
+    https://www.davidheidelberger.com/2010/06/10/drop-frame-timecode/
+    """
+    frame = tc_to_frame(source_tc, fps)
+    frame += offset
+    return frame_to_tc(frame, fps)
+
+
+def str_to_number(s):
+    """
+    Converts a string to a correctly cast number (float or int)
+    """
+    if isinstance(s, str):
+        try:
+            val = float(s)
+            if val.is_integer(): 
+                return int(val)
+            return val
+        except:
+            val = s
+    else:
+        val = s
+    return val
+
+
+def check_drop_frame(fps):
+    """
+    Returns if a framerate is non drop-frame or drop-frame.
+    Treats 23.976 and 23.98 as 24 (so non drop-frame)
+    since there's too little deviation to be meaningful.
+    """
+    is_drop = False
+    real_fps = str_to_number(fps)
+    if isinstance(real_fps, float):
+        if real_fps > 24:
+            is_drop = True
+    return is_drop
+
+
+def tc_to_frame(tc, fps):
+    """
+    Returns correct frame number for any given timecode
+    and fps. Correctly infers if it's drop frame or not
+    """
+    tc_split = list(map(int, tc.split(":")))
+    hours = tc_split[0]
+    minutes = tc_split[1]
+    seconds = tc_split[2]
+    frames = tc_split[3]
+
+    is_drop = check_drop_frame(fps)
+    real_fps = str_to_number(fps)
+    tb = real_fps
+    
+    if isinstance(real_fps, float):
+        tb = round(tb)
+    
+    if is_drop:
+        df = round(tb * 0.066666)
+        computed_frame = (
+            ((tb * 60 * 60 * hours) + 
+            (tb * 60 * minutes) + 
+            (tb * seconds) +
+            frames) -
+            ((df * (((60 * hours) + minutes) -
+            (((60 * hours) + minutes) // 10))))
+        )
+    else:
+        computed_frame = (
+            (tb * 60 * 60 * hours) +
+            (tb * 60 * minutes) +
+            (tb * seconds) +
+            frames
+        )
+    return computed_frame
+
+
+def frame_to_tc(frame, fps):
+    """
+    Returns a formed timecode from frame number
+    and fps. Correctly infers if it's drop of not
+    """
+    is_drop = check_drop_frame(fps)
+    real_fps = str_to_number(fps)
+    tb = real_fps
+    
+    if isinstance(real_fps, float):
+        tb = round(tb)
+    
+    if is_drop:
+        df = round(real_fps * 0.066666)
+        frames_per_hour = round(real_fps * 60 * 60)
+        frames_per_24_hours = frames_per_hour * 24 
+        frames_per_10_minutes = round(real_fps * 60 * 10)
+        frames_per_minute = (tb * 60) - df
+
+        if frame < 0:
+            frame = frames_per_24_hours + frame
+        frame = frame % frames_per_24_hours
+        d = frame // frames_per_10_minutes 
+        m = frame % frames_per_10_minutes
+        
+        if m > df:
+            frame = (frame + (df * 9 * d) +
+                df * ((m - df) // frames_per_minute))
+        else:
+            frame = frame + df * 9 * d
+        
+        hours = (((frame // tb) // 60) // 60)
+        minutes = ((frame // tb) // 60) % 60
+        seconds = (frame // tb) % 60
+        frames = frame % tb
+
+        return "{}:{}:{};{}".format(hours, minutes, seconds, frames)
+
+    else:           
+        if (frame < 0):
+            frame = frame + (tb * 60 * 60 * 24)
+        
+        frame = frame % (tb * 60 * 60 * 24)
+        remainder = frame
+
+        hours = remainder // (tb * 60 * 60)
+        remainder = remainder - (hours * (tb * 60 * 60))
+        minutes = remainder // (tb * 60)
+        remainder = remainder - (minutes * (tb * 60))
+        seconds = remainder // tb
+        frames = remainder - (seconds * tb)
+
+        return "{}:{}:{}:{}".format(hours, minutes, seconds, frames)
+        

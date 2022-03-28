@@ -545,25 +545,25 @@ def get_ffprobe_data(path_to_file, logger=None, show_frames=False):
     return json.loads(popen_stdout)
 
 
-def get_ffprobe_streams(path_to_file, logger=None, show_frames=False):
+def get_ffprobe_streams(path_to_file, logger=None):
     """Load streams from entered filepath via ffprobe.
 
     Args:
         path_to_file (str): absolute path
         logger (logging.Logger): injected logger, if empty new is created
     """
-    return get_ffprobe_data(path_to_file, logger, show_frames)["streams"]
+    return get_ffprobe_data(path_to_file, logger, show_frames=False)["streams"]
 
 # New wrapper with show frames Enabled. This returns just the "frames"
-# block, useful to get metadata like timecode.
-def get_ffprobe_frames(path_to_file, logger=None, show_frames=True):
+# block, useful to get metadata like timecode from slate if it's needed.
+def get_ffprobe_frames(path_to_file, logger=None):
     """Load frames from entered filepath via ffprobe.
 
     Args:
         path_to_file (str): absolute path
         logger (logging.Logger): injected logger, if empty new is created
     """
-    return get_ffprobe_data(path_to_file, logger, show_frames)["frames"]
+    return get_ffprobe_data(path_to_file, logger, show_frames=True)["frames"]
 
 
 def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):
