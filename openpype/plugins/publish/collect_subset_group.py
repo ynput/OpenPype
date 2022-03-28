@@ -17,7 +17,7 @@ from openpype.lib import (
 )
 
 
-class CollectSubsetGroup(pyblish.api.ContextPlugin):
+class CollectSubsetGroup(pyblish.api.InstancePlugin):
     """Collect Subset Group for publish."""
 
     # Run after CollectAnatomyInstanceData
