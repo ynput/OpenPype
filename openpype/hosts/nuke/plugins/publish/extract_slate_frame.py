@@ -18,7 +18,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
     families = ["slate"]
     hosts = ["nuke"]
 
-
     def process(self, instance):
         if hasattr(self, "viewer_lut_raw"):
             self.viewer_lut_raw = self.viewer_lut_raw
@@ -35,12 +34,12 @@ class ExtractSlateFrame(openpype.api.Extractor):
     def render_slate(self, instance):
         node_subset_name = instance.data.get("name", None)
         node = instance[0]  # group node
-        #TODO: have a more general approach. this assumes
+        # TODO: have a more general approach. this assumes
         # slate is connected to render instance node now
         # and thus we get the source node as first input of slate.
         # This is needed since we modified the slate logic,
         # to copy itself after the lut. It made no sense to us to
-        # have the lut break the colors and text on slate. 
+        # have the lut break the colors and text on slate.
         source_node = instance.data.get("slateNode").input(0)
         self.log.info("Creating staging dir...")
 
@@ -88,8 +87,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
             # would be rendered one frame short at head and with one duplicated
             # frame at tail. This increments first_frame only if there's a
             # discrepancy between clique data and task data.
-            if (("slate" in instance.data["families"]) and 
-            (frame_length != collected_frames_len)):
+            if (("slate" in instance.data["families"]) and
+                    (frame_length != collected_frames_len)):
                 first_frame += 1
 
             last_frame = first_frame
@@ -146,7 +145,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
             dag_node.setInput(0, previous_node)
             previous_node = dag_node
             temporary_nodes.append(dag_node)
-        
+
         # This slate was moved after Input Process and lut, since
         # there's really no need to encode lut on the slate (apart
         # from the thumbs inside)
@@ -184,10 +183,9 @@ class ExtractSlateFrame(openpype.api.Extractor):
         for node in temporary_nodes:
             nuke.delete(node)
 
-
     def get_slate_node(self, instance):
 
-        #Same code execution as the view process selection.
+        # Same code execution as the view process selection.
         if nuke.selectedNodes():
             [n.setSelected(False) for n in nuke.selectedNodes()]
         slate_orig = instance.data.get("slateNode")
@@ -197,7 +195,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
         nuke.nodePaste('%clipboard%')
         slate = nuke.selectedNode()
         return slate
-
 
     def get_view_process_node(self):
 
@@ -216,8 +213,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
-
-            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
+            # Deselect all
+            [n.setSelected(False) for n in nuke.selectedNodes()]
 
             nuke.nodePaste('%clipboard%')
 

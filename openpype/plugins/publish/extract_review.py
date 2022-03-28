@@ -517,7 +517,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if "timecode" in stream["tags"]:
                 temp_data["start_timecode"] = stream["tags"]["timecode"]
 
-        self.log.debug("Set starting timecode: {}".format(temp_data["start_timecode"]))
+        self.log.debug("Set starting timecode: {}".format(
+            temp_data["start_timecode"]))
 
         # Set output frames len to 1 when ouput is single image
         if (
@@ -567,12 +568,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Change output's duration and start point if should not contain
         # handles
         start_sec = 0
-        
+
         # get correct TC for review from first frame
         ffmpeg_output_args.append("-timecode {}".format(
-            get_offset_timecode(temp_data["start_timecode"],
-            temp_data["fps"], offset=0)))
-        
+            get_offset_timecode(
+                temp_data["start_timecode"],
+                temp_data["fps"], offset=0)))
+
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
             # Set start time without handles
             # - check if handle_start is bigger than 0 to avoid zero division
@@ -586,8 +588,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_output_args.pop()
             ffmpeg_output_args.append("-t {:0.10}".format(duration_seconds))
             ffmpeg_output_args.append("-timecode {}".format(
-                get_offset_timecode(temp_data["start_timecode"],
-                temp_data["fps"], offset=int(temp_data["handle_start"]))))
+                get_offset_timecode(
+                    temp_data["start_timecode"],
+                    temp_data["fps"],
+                    offset=int(temp_data["handle_start"]))))
 
         # Set frame range of output when input or output is sequence
         elif temp_data["output_is_sequence"]:

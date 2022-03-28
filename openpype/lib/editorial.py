@@ -308,10 +308,10 @@ def str_to_number(s):
     if isinstance(s, str):
         try:
             val = float(s)
-            if val.is_integer(): 
+            if val.is_integer():
                 return int(val)
             return val
-        except:
+        except ValueError:
             val = s
     else:
         val = s
@@ -346,19 +346,22 @@ def tc_to_frame(tc, fps):
     is_drop = check_drop_frame(fps)
     real_fps = str_to_number(fps)
     tb = real_fps
-    
+
     if isinstance(real_fps, float):
         tb = round(tb)
-    
+
     if is_drop:
         df = round(tb * 0.066666)
         computed_frame = (
-            ((tb * 60 * 60 * hours) + 
-            (tb * 60 * minutes) + 
-            (tb * seconds) +
-            frames) -
-            ((df * (((60 * hours) + minutes) -
-            (((60 * hours) + minutes) // 10))))
+            (
+                (tb * 60 * 60 * hours) +
+                (tb * 60 * minutes) +
+                (tb * seconds) + frames
+            ) - (
+                (df * (
+                    ((60 * hours) + minutes) -
+                    (((60 * hours) + minutes) // 10)))
+            )
         )
     else:
         computed_frame = (
@@ -378,29 +381,29 @@ def frame_to_tc(frame, fps):
     is_drop = check_drop_frame(fps)
     real_fps = str_to_number(fps)
     tb = real_fps
-    
+
     if isinstance(real_fps, float):
         tb = round(tb)
-    
+
     if is_drop:
         df = round(real_fps * 0.066666)
         frames_per_hour = round(real_fps * 60 * 60)
-        frames_per_24_hours = frames_per_hour * 24 
+        frames_per_24_hours = frames_per_hour * 24
         frames_per_10_minutes = round(real_fps * 60 * 10)
         frames_per_minute = (tb * 60) - df
 
         if frame < 0:
             frame = frames_per_24_hours + frame
         frame = frame % frames_per_24_hours
-        d = frame // frames_per_10_minutes 
+        d = frame // frames_per_10_minutes
         m = frame % frames_per_10_minutes
-        
+
         if m > df:
             frame = (frame + (df * 9 * d) +
-                df * ((m - df) // frames_per_minute))
+                     df * ((m - df) // frames_per_minute))
         else:
             frame = frame + df * 9 * d
-        
+
         hours = (((frame // tb) // 60) // 60)
         minutes = ((frame // tb) // 60) % 60
         seconds = (frame // tb) % 60
@@ -408,10 +411,10 @@ def frame_to_tc(frame, fps):
 
         return "{}:{}:{};{}".format(hours, minutes, seconds, frames)
 
-    else:           
+    else:
         if (frame < 0):
             frame = frame + (tb * 60 * 60 * 24)
-        
+
         frame = frame % (tb * 60 * 60 * 24)
         remainder = frame
 
@@ -423,4 +426,3 @@ def frame_to_tc(frame, fps):
         frames = remainder - (seconds * tb)
 
         return "{}:{}:{}:{}".format(hours, minutes, seconds, frames)
-        

@@ -169,11 +169,10 @@ class ExporterReview(object):
             "representations": list()
         })
 
-        #this correctly caluculates frame length of the instance
-        self.instance_length = int((
-            instance.data["frameEnd"] - instance.data["frameStart"] + 1) + (
-                instance.data["handleStart"] + instance.data["handleEnd"]
-            ))
+        # this correctly caluculates frame length of the instance
+        self.instance_length = int(
+            (instance.data["frameEnd"] - instance.data["frameStart"] + 1) +
+            (instance.data["handleStart"] + instance.data["handleEnd"]))
 
     def get_file_info(self):
         if self.collection:
@@ -272,8 +271,6 @@ class ExporterReview(object):
             return nuke_imageio["viewer"]["viewerProcess"]
 
 
-
-
 class ExporterReviewLut(ExporterReview):
     """
     Generator object for review lut from Nuke
@@ -360,7 +357,8 @@ class ExporterReviewLut(ExporterReview):
                 dag_node.setInput(0, self.previous_node)
                 self._temp_nodes.append(dag_node)
                 self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+                self.log.debug("OCIODisplay...   `{}`".format(
+                    self._temp_nodes))
 
         # GenerateLUT
         gen_lut_node = nuke.createNode("GenerateLUT")

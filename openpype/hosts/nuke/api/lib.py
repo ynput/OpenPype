@@ -1318,7 +1318,6 @@ class WorkfileSettings(object):
 
                 write_node[knob["name"]].setValue(value)
 
-
     def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
 

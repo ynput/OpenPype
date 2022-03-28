@@ -12,11 +12,6 @@ from openpype.lib import (
     get_offset_timecode
 )
 
-# New import to get ffprobe info with frames=True
-# using a convenient wrapper function as to not
-# modify current behaviour
-from openpype.lib.transcoding import get_ffprobe_frames
-
 
 class ExtractReviewSlate(openpype.api.Extractor):
     """
@@ -55,7 +50,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         # # get frame info from slate
         # slate_frames = get_ffprobe_frames(slate_path, self.log)
-        # 
         # for slate_frame in slate_frames:
         #     if "timecode" in slate_frame["tags"]:
         #         # get timecode from frame info
@@ -108,7 +102,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     input_width = int(stream["width"])
                     input_height = int(stream["height"])
                     break
-            # this gets main timecode, forces first occurrence 
+            # this gets main timecode, forces first occurrence
             for stream in video_streams:
                 if "timecode" in stream["tags"]:
                     input_timecode = stream["tags"]["timecode"]

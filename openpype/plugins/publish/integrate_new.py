@@ -422,11 +422,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 # slate workflow check
                 if "slate" in instance.data["families"]:
                     # get the correct instance length
-                    repre_length = ((int(instance.data["frameEndHandle"])
-                        - int(instance.data["frameStartHandle"])) + 1)
-                    self.log.debug("InstanceData: Start: {}, End: {}, Length: {}".format(
-                        instance.data["frameStartHandle"],
-                        instance.data["frameEndHandle"], repre_length))
+                    repre_length = (
+                        (int(instance.data["frameEndHandle"]) -
+                         int(instance.data["frameStartHandle"])) + 1)
 
                     # fix for slate workflow not having the slate in the files
                     # if the actual render was not rendered with it included
@@ -435,8 +433,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     # the already formed clique collection, so we regenerate
                     # it if needed.
                     if repre_length == len(files):
-                        files.insert(0, ("{0}{1}{2}".format(src_head,
-                            int(list(src_collection.indexes)[0])-1, src_tail)))
+                        files.insert(0, ("{0}{1}{2}".format(
+                            src_head,
+                            int(list(src_collection.indexes)[0]) - 1,
+                            src_tail)))
                         src_collections, remainder = clique.assemble(files)
                         src_collection = src_collections[0]
 
