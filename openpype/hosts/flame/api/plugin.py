@@ -728,13 +728,14 @@ class OpenClipSolver:
     def _is_valid_tmp_file(self, file):
         # check if file exists
         if os.path.isfile(file):
-            with open(self.tmp_file) as f:
+            # test also if file is not empty
+            with open(file) as f:
                 lines = f.readlines()
                 if len(lines) > 2:
                     return True
 
                 # file is probably corrupted
-                self._clear_tmp_file()
+                os.remove(file)
                 return False
 
     def make(self):
@@ -779,7 +780,7 @@ class OpenClipSolver:
         xml_clips = new_root.findall("clip")
         matching_clip = None
         for xml_clip in xml_clips:
-            if xml_clip.find("name").text == self.feed_basename:
+            if xml_clip.find("name").text in self.feed_basename:
                 matching_clip = xml_clip
 
         if not matching_clip:
