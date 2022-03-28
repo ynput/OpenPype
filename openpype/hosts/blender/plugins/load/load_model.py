@@ -134,7 +134,7 @@ class BlendModelLoader(plugin.AssetLoader):
                                 property_dict[property] = getattr(
                                     modifier, property
                                 )
-                        # the modifier properties of an object in a dict
+                        # Set the modifier properties of an object in a dict
                         modifiers_dict[modifier_name] = property_dict
                 object_modifier_dict[object.name] = modifiers_dict
         return object_modifier_dict
@@ -147,31 +147,40 @@ class BlendModelLoader(plugin.AssetLoader):
         for object_name in object_names_list:
 
             object = bpy.data.objects.get(object_name)
+            if object.type == "MESH":
+                index_modifier = 0
+                for modifier_name in object_modifier_dict[object_name]:
+                    if object.modifiers.get(modifier_name) is None:
+                        object.modifiers.new(
+                            object_modifier_dict[object.name][modifier_name][
+                                "name"
+                            ],
+                            object_modifier_dict[object.name][modifier_name][
+                                "type"
+                            ],
+                        )
 
-            for modifier_name in object_modifier_dict[object_name]:
-                if object.modifiers.get(modifier_name) is None:
-                    object.modifiers.new(
-                        object_modifier_dict[object.name][modifier_name][
-                            "name"
-                        ],
-                        object_modifier_dict[object.name][modifier_name][
-                            "type"
-                        ],
-                    )
+                    modifier = bpy.data.objects[object_name].modifiers[
+                        modifier_name
+                    ]
 
-                modifier = bpy.data.objects[object_name].modifiers[
-                    modifier_name
-                ]
-
-                property_names_list = object_modifier_dict[object.name][
-                    modifier_name
-                ]
-                for property_name in property_names_list:
-                    if not (modifier.is_property_readonly(property_name)):
-                        property_value = object_modifier_dict[object.name][
-                            modifier_name
-                        ][property_name]
-                        setattr(modifier, property_name, property_value)
+                    property_names_list = object_modifier_dict[object.name][
+                        modifier_name
+                    ]
+                    for property_name in property_names_list:
+                        if not (modifier.is_property_readonly(property_name)):
+                            property_value = object_modifier_dict[object.name][
+                                modifier_name
+                            ][property_name]
+                            setattr(modifier, property_name, property_value)
+                    bpy.context.view_layer.objects.active = object
+                    try:
+                        bpy.ops.object.modifier_move_to_index(
+                            modifier=modifier.name, index=index_modifier
+                        )
+                    except Exception as ex:
+                        print(ex)
+                    index_modifier = index_modifier + 1
 
     def _remove(self, container):
         """Remove the container and used data"""
