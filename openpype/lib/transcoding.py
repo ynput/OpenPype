@@ -517,7 +517,7 @@ def get_ffprobe_data(path_to_file, logger=None, show_frames=False):
         "-show_private_data",
         "-print_format", "json"
     ]
-    #split to optionally use -show_frames flag before checked file
+    # Split to optionally use -show_frames flag before checked file
     if show_frames:
         args.append("-show_frames")
     args.append(path_to_file)
@@ -553,6 +553,7 @@ def get_ffprobe_streams(path_to_file, logger=None):
         logger (logging.Logger): injected logger, if empty new is created
     """
     return get_ffprobe_data(path_to_file, logger, show_frames=False)["streams"]
+
 
 # New wrapper with show frames Enabled. This returns just the "frames"
 # block, useful to get metadata like timecode from slate if it's needed.
