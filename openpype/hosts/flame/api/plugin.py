@@ -708,18 +708,31 @@ class OpenClipSolver:
         self.feed_dir = os.path.dirname(feed_path)
         self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
 
-        if not os.path.isfile(openclip_file_path):
+        if not self._is_valid_tmp_file(openclip_file_path):
             # openclip does not exist yet and will be created
             self.tmp_file = self.out_file = openclip_file_path
             self.create_new_clip = True
 
         else:
+            # update already created clip
             # output a temp file
             self.out_file = openclip_file_path
             self.tmp_file = os.path.join(self.feed_dir, self.tmp_name)
+
+            # remove previously generated temp files
+            # it will be regenerated
             self._clear_tmp_file()
 
         self.log.info("Temp File: {}".format(self.tmp_file))
+
+    def _is_valid_tmp_file(self, file):
+        # check if file exists
+        if os.path.isfile(file):
+            with open(self.tmp_file) as f:
+                lines = f.readlines()
+                if len(lines) < 1:
+                    self._clear_tmp_file()
+                    return False
 
     def make(self):
         self._generate_media_info_file()
