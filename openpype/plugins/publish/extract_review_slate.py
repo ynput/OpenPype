@@ -120,7 +120,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     if stream["sample_rate"]:
                         audio_sample_rate = str(stream.get("sample_rate"))
                     if stream["channel_layout"]:
-                        audio_channel_layout = str(stream.get("channel_layout"))
+                        audio_channel_layout = str(
+                            stream.get("channel_layout"))
                     if (
                         audio_channels
                         and audio_sample_rate
