@@ -730,9 +730,12 @@ class OpenClipSolver:
         if os.path.isfile(file):
             with open(self.tmp_file) as f:
                 lines = f.readlines()
-                if len(lines) < 1:
-                    self._clear_tmp_file()
-                    return False
+                if len(lines) > 2:
+                    return True
+
+                # file is probably corrupted
+                self._clear_tmp_file()
+                return False
 
     def make(self):
         self._generate_media_info_file()
