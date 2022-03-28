@@ -22,7 +22,7 @@ class LoadClip(opfapi.ClipLoader):
     # settings
     reel_group_name = "OpenPype_Reels"
     reel_name = "Loaded"
-    clip_name_template = "{asset}_{subset}_{representation}"
+    clip_name_template = "{asset}_{subset}_{output}"
 
     def load(self, context, name, namespace, options):
 

@@ -21,7 +21,7 @@ class LoadClipBatch(opfapi.ClipLoader):
 
     # settings
     reel_name = "OP_LoadedReel"
-    clip_name_template = "{asset}_{subset}_{representation}"
+    clip_name_template = "{asset}_{subset}_{output}"
 
     def load(self, context, name, namespace, options):
 
@@ -34,6 +34,11 @@ class LoadClipBatch(opfapi.ClipLoader):
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
+
+        # in case output is not in context replace key to representation
+        if not context["representation"]["context"].get("output"):
+            self.clip_name_template.replace("output", "representation")
+
         clip_name = self.clip_name_template.format(
             **context["representation"]["context"])
 

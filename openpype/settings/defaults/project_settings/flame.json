@@ -91,7 +91,7 @@
             ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
-            "clip_name_template": "{asset}_{subset}_{representation}"
+            "clip_name_template": "{asset}_{subset}_{output}"
         },
         "LoadClipBatch": {
             "enabled": true,
@@ -113,7 +113,7 @@
                 "mp4"
             ],
             "reel_name": "OP_LoadedReel",
-            "clip_name_template": "{asset}_{subset}_{representation}"
+            "clip_name_template": "{asset}_{subset}_{output}"
         }
     }
 }
