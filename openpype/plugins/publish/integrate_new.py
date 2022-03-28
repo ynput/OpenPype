@@ -1,4 +1,3 @@
-from msilib.schema import Error
 import os
 from os.path import getsize
 import logging
