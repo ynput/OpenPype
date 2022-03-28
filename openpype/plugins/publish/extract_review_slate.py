@@ -47,17 +47,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 slate_height = int(slate_stream["height"])
                 break
 
-        # # get frame info from slate
-        # slate_frames = get_ffprobe_frames(slate_path, self.log)
-        # for slate_frame in slate_frames:
-        #     if "timecode" in slate_frame["tags"]:
-        #         # get timecode from frame info
-        #         slate_tc = slate_frame["tags"]["timecode"]
-        #         break
-        #     else:
-        #         # set default timecode if not found
-        #         slate_tc = "01:00:00:00"
-
         # Raise exception of any stream didn't define input resolution
         if slate_width is None:
             raise AssertionError((
@@ -101,6 +90,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     input_width = int(stream["width"])
                     input_height = int(stream["height"])
                     break
+
             # this gets main timecode, forces first occurrence
             for stream in video_streams:
                 if "timecode" in stream["tags"]:
