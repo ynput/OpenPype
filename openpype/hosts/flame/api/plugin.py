@@ -791,10 +791,8 @@ class OpenClipSolver:
                         for xml_clip in xml_clips
                     ]
                 ))
-        # save it as new file
-        tree = cET.ElementTree(matching_clip)
-        tree.write(self.tmp_file, xml_declaration=True,
-                   method='xml', encoding='UTF-8')
+
+        self._write_result_xml_to_file(self.tmp_file, matching_clip)
 
     def _clear_tmp_file(self):
         if os.path.isfile(self.tmp_file):
@@ -901,7 +899,7 @@ class OpenClipSolver:
             self.log.info("Adding feed version: {}".format(
                 self.feed_version_name))
 
-            self._write_result_xml_to_file(xml_data)
+            self._write_result_xml_to_file(self.out_file, xml_data)
 
             self.log.info("openClip Updated: {}".format(self.out_file))
 
@@ -940,9 +938,11 @@ class OpenClipSolver:
         self._clear_handler(xml_root)
         return ET.tostring(xml_root).decode('utf-8')
 
-    def _write_result_xml_to_file(self, xml_data):
-        with open(self.out_file, "w") as f:
-            f.write(xml_data)
+    def _write_result_xml_to_file(self, file, xml_data):
+        # save it as new file
+        tree = cET.ElementTree(xml_data)
+        tree.write(file, xml_declaration=True,
+                   method='xml', encoding='UTF-8')
 
     def _create_openclip_backup_file(self, file):
         bck_file = "{}.bak".format(file)
