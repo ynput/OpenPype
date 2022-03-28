@@ -1,24 +1,22 @@
+import itertools
 import os
 import re
 import shutil
 import sys
-from xml.etree import ElementTree as ET
-import six
-import qargparse
-from Qt import QtWidgets, QtCore
-import openpype.api as openpype
-from openpype.pipeline import (
-    LegacyCreator,
-    LoaderPlugin,
-)
-from openpype import style
-from . import (
-    lib as flib,
-    pipeline as fpipeline,
-    constants
-)
-
+import xml.etree.cElementTree as cET
 from copy import deepcopy
+from xml.etree import ElementTree as ET
+
+import openpype.api as openpype
+import qargparse
+import six
+from openpype import style
+from openpype.pipeline import LegacyCreator, LoaderPlugin
+from Qt import QtCore, QtWidgets
+
+from . import constants
+from . import lib as flib
+from . import pipeline as fpipeline
 
 log = openpype.Logger.get_logger(__name__)
 
@@ -749,9 +747,38 @@ class OpenClipSolver:
         # execute creation of clip xml template data
         try:
             openpype.run_subprocess(cmd_args)
+            self._make_single_clip_media_info()
         except TypeError:
             self.log.error("Error creating self.tmp_file")
             six.reraise(*sys.exc_info())
+
+    def _make_single_clip_media_info(self):
+        with open(self.tmp_file) as f:
+            lines = f.readlines()
+            _added_root = itertools.chain(
+                "<root>", deepcopy(lines)[1:], "</root>")
+            new_root = ET.fromstringlist(_added_root)
+
+        # find the clip which is matching to my input name
+        xml_clips = new_root.findall("clip")
+        matching_clip = None
+        for xml_clip in xml_clips:
+            if xml_clip.find("name").text == self.feed_basename:
+                matching_clip = xml_clip
+
+        if not matching_clip:
+            # return warning there is missing clip
+            raise ET.ParseError(
+                "Missing clip in `{}`. Available clips {}".format(
+                    self.feed_basename, [
+                        xml_clip.find("name").text
+                        for xml_clip in xml_clips
+                    ]
+                ))
+        # save it as new file
+        tree = cET.ElementTree(matching_clip)
+        tree.write(self.tmp_file, xml_declaration=True,
+                   method='xml', encoding='UTF-8')
 
     def _clear_tmp_file(self):
         if os.path.isfile(self.tmp_file):
