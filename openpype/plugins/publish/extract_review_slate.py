@@ -138,7 +138,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 elif len(items) == 2:
                     one_frame_duration = float(items[1]) / float(items[0])
                 one_frame_duration *= 1000000
-                one_frame_duration = str(int(one_frame_duration))+"us"
+                one_frame_duration = str(int(one_frame_duration)) + "us"
             self.log.debug(
                 "One frame duration is {}".format(one_frame_duration))
 
@@ -199,8 +199,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 input_args.extend(repre["outputDef"].get('input', []))
 
             input_args.append("-loop 1 -i {}".format(
-            openpype.lib.path_to_subprocess_arg(slate_path)
-            ))
+                openpype.lib.path_to_subprocess_arg(slate_path)))
             # if input has an audio, add silent audio to the slate
             if input_audio:
                 input_args.extend(
@@ -350,10 +349,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 )
             else:
                 self.log.warning("Audio found. Creating slate with audio"
-                " is not supported at this time. Outputing slate-less"
-                ":\n{}".format(input_file))
+                    " is not supported at this time. Outputing slate-less"
+                    ":\n{}".format(input_file))
                 # skip concatenating slate, use slate-less file instead
-                shutil.copyfile(input_path, output_path)     
+                shutil.copyfile(input_path, output_path)
 
             self.log.debug("__ repre[tags]: {}".format(repre["tags"]))
             repre_update = {
