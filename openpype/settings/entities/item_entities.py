@@ -490,8 +490,8 @@ class ListStrictEntity(ItemEntity):
         if log_invalid_types:
             self.log.warning(
                 (
-                    "{} Amount of strict list items in {} values is"
-                    " not same as expected. Expected {} items. Got {} items. {}"
+                    "{} Amount of strict list items in {} values is not same"
+                    " as expected. Expected {} items. Got {} items. {}"
                 ).format(
                     self.path, value_type,
                     child_len, value_len, str(value)
