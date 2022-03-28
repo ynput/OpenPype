@@ -328,7 +328,6 @@ class LaunchWorkFiles(LaunchQtApp):
         result = super().execute(context)
         self._window.set_context({
             "asset": avalon.api.Session["AVALON_ASSET"],
-            "silo": avalon.api.Session["AVALON_SILO"],
             "task": avalon.api.Session["AVALON_TASK"]
         })
         return result
