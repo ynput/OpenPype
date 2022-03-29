@@ -90,9 +90,9 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         left_side_splitter.addWidget(assets_widget)
         left_side_splitter.addWidget(families_filter_view)
         left_side_splitter.addWidget(families_toggle_button)
-        left_side_splitter.setStretchFactor(0, 65)
-        left_side_splitter.setStretchFactor(1, 30)
-        left_side_splitter.setStretchFactor(2, 5)
+        left_side_splitter.setStretchFactor(1, 65)
+        left_side_splitter.setStretchFactor(2, 30)
+        left_side_splitter.setStretchFactor(3, 5)
 
         # --- Middle part ---
         # Subsets widget
