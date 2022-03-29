@@ -601,6 +601,19 @@ class EnvironmentTool:
     def environment(self):
         return copy.deepcopy(self._environment)
 
+    def is_valid_for_app(self, app):
+        """Is tool valid for application.
+
+        Args:
+            app (Application): Application for which are prepared environments.
+        """
+        if self.app_variants and app.full_name not in self.app_variants:
+            return False
+
+        if self.host_names and app.host_name not in self.host_names:
+            return False
+        return True
+
 
 class ApplicationExecutable:
     """Representation of executable loaded from settings."""
@@ -1406,7 +1419,7 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
         # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
             tool = app.manager.tools.get(key)
-            if not tool:
+            if not tool or not tool.is_valid_for_app(app):
                 continue
             groups_by_name[tool.group.name] = tool.group
             tool_by_group_name[tool.group.name][tool.name] = tool
