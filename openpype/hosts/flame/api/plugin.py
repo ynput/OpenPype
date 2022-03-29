@@ -783,7 +783,7 @@ class OpenClipSolver:
             if xml_clip.find("name").text in self.feed_basename:
                 matching_clip = xml_clip
 
-        if matching_clip is not None:
+        if matching_clip is None:
             # return warning there is missing clip
             raise ET.ParseError(
                 "Missing clip in `{}`. Available clips {}".format(
