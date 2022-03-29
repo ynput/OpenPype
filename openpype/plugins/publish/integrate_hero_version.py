@@ -457,6 +457,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 backup_hero_publish_dir is not None and
                 os.path.exists(backup_hero_publish_dir)
             ):
+                if os.path.exists(hero_publish_dir):
+                    shutil.rmtree(hero_publish_dir)
                 os.rename(backup_hero_publish_dir, hero_publish_dir)
             self.log.error((
                 "!!! Creating of hero version failed."
