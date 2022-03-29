@@ -783,7 +783,7 @@ class OpenClipSolver:
             if xml_clip.find("name").text in self.feed_basename:
                 matching_clip = xml_clip
 
-        if not matching_clip:
+        if matching_clip is not None:
             # return warning there is missing clip
             raise ET.ParseError(
                 "Missing clip in `{}`. Available clips {}".format(
@@ -937,7 +937,7 @@ class OpenClipSolver:
     def _fix_xml_data(self, xml_data):
         xml_root = xml_data.getroot()
         self._clear_handler(xml_root)
-        return ET.tostring(xml_root).decode('utf-8')
+        return xml_root
 
     def _write_result_xml_to_file(self, file, xml_data):
         # save it as new file
