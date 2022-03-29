@@ -551,21 +551,24 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         else:
             # Single file
-            template_data.pop("frame", None)
             fname = files
             assert not os.path.isabs(fname), (
                 "Given file name is a full path"
             )
-            # Store used frame value to template data
+
+            # Manage anatomy template data
+            template_data.pop("frame", None)
             if repre.get("udim"):
                 template_data["udim"] = repre["udim"][0]
-            src = os.path.join(stagingdir, fname)
+
+            # Construct destination filepath from template
             anatomy_filled = anatomy.format(template_data)
             template_filled = anatomy_filled[template_name]["path"]
             repre_context = template_filled.used_values
             dst = os.path.normpath(template_filled)
 
             # Single file transfer
+            src = os.path.join(stagingdir, fname)
             transfers = [(src, dst)]
 
         for key in self.db_representation_context_keys:
