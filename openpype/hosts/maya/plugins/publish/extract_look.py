@@ -65,10 +65,10 @@ def rstex(source, *args):
         os.environ["REDSHIFT_COREDATAPATH"],
         "bin",
         "redshiftTextureProcessor"
-        )
+    )
         
     texture_processor_path = find_executable(redshift_bin_path)
-    
+
     cmd = [
         texture_processor_path,
         escape_space(source),
@@ -83,7 +83,7 @@ def rstex(source, *args):
     kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
 
     if sys.platform == "win32":
-        kwargs["creationflags"]  = CREATE_NO_WINDOW
+        kwargs["creationflags"] = CREATE_NO_WINDOW
     try:
         out = subprocess.check_output(**kwargs)
     except subprocess.CalledProcessError as exc:
