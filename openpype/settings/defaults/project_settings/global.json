@@ -192,6 +192,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "render"
+                },
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "simpleUnrealTexture"
                 }
             ],
             "subset_grouping_profiles": [

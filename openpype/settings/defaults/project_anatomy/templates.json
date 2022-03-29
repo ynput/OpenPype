@@ -32,5 +32,14 @@
         "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
-    "others": {}
+    "others": {
+        "simpleUnrealTexture": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}",
+            "file": "{original_file}",
+            "path": "{@folder}/{@file}"
+        },
+        "__dynamic_keys_labels__": {
+            "simpleUnrealTexture": "Simple Unreal Texture"
+        }
+    }
 }

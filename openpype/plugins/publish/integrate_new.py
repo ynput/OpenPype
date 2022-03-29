@@ -107,7 +107,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "hda",
                 "usd",
                 "usdComposition",
-                "usdOverride"
+                "usdOverride",
+                "simpleUnrealTexture"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
