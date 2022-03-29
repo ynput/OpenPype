@@ -90,6 +90,24 @@ class ExtractPlayblast(openpype.api.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Image planes do not update the file sequence unless the active panel
+        # is viewing through the camera.
+        model_panel = instance.context.data.get("model_panel")
+        if not model_panel:
+            model_panels = cmds.getPanel(type="modelPanel")
+            visible_panels = cmds.getPanel(visiblePanels=True)
+            model_panel = list(
+                set(visible_panels) - (set(visible_panels) - set(model_panels))
+            )[0]
+            instance.context.data["model_panel"] = model_panel
+
+        panel_camera = instance.context.data.get("panel_camera")
+        if not panel_camera:
+            panel_camera = capture.parse_view(model_panel)["camera"]
+            instance.context.data["panel_camera"] = panel_camera
+
+        cmds.modelPanel(model_panel, edit=True, camera=preset["camera"])
+
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -107,6 +125,9 @@ class ExtractPlayblast(openpype.api.Extractor):
                 preset.update(panel_preset)
 
             path = capture.capture(**preset)
+
+        # Restore panel camera.
+        cmds.modelPanel(model_panel, edit=True, camera=panel_camera)
 
         self.log.debug("playblast path  {}".format(path))
 
