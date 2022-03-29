@@ -6,6 +6,7 @@ from avalon import api
 from openpype.tools.utils import host_tools
 
 from openpype.style import load_stylesheet
+from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
@@ -133,7 +134,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
             fn()
 
         self._callbacks.append(_callback)
-        api.on(name, _callback)
+        register_event_callback(name, _callback)
 
     def deregister_all_callbacks(self):
         self._callbacks[:] = []
