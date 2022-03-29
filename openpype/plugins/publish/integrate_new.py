@@ -174,7 +174,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         repres = instance.data.get("representations")
         assert repres, "Instance has no representations data"
         assert isinstance(repres, (list, tuple)), (
-            "Instance 'repres' must be a list, got: {0} {1}".format(
+            "Instance 'representations' must be a list, got: {0} {1}".format(
                 str(type(repres)), str(repres)
             )
         )
