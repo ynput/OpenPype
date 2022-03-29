@@ -580,7 +580,7 @@ class EnvironmentTool:
             app_variants = variant_data["app_variants"]
 
         if "environment" in variant_data:
-            environment = variant_data["environemnt"]
+            environment = variant_data["environment"]
         else:
             environment = variant_data
 
