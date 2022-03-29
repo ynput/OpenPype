@@ -13,12 +13,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "workfile"
-        task = os.getenv("AVALON_TASK", None)
         subset = get_subset_name(
             family,
             "",
-            task,
+            context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"]["_id"],
+            context.data["anatomyData"]["project"]["name"],
             host_name="photoshop"
         )
 
