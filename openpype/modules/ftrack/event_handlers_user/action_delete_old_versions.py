@@ -5,11 +5,11 @@ import uuid
 import clique
 from pymongo import UpdateOne
 
-from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from avalon.api import AvalonMongoDB
-from openpype.api import Anatomy
 
-import avalon.pipeline
+from openpype.api import Anatomy
+from openpype.lib import StringTemplate, TemplateUnsolved
+from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
 class DeleteOldVersions(BaseAction):
@@ -492,7 +492,8 @@ class DeleteOldVersions(BaseAction):
                         os.remove(file_path)
                         self.log.debug("Removed file: {}".format(file_path))
 
-                    remainders.remove(file_path_base)
+                    if file_path_base in remainders:
+                        remainders.remove(file_path_base)
                     continue
 
                 seq_path_base = os.path.split(seq_path)[1]
@@ -563,18 +564,16 @@ class DeleteOldVersions(BaseAction):
         try:
             context = representation["context"]
             context["root"] = anatomy.roots
-            path = avalon.pipeline.format_template_with_optional_keys(
-                context, template
-            )
+            path = StringTemplate.format_strict_template(template, context)
             if "frame" in context:
                 context["frame"] = self.sequence_splitter
                 sequence_path = os.path.normpath(
-                    avalon.pipeline.format_template_with_optional_keys(
+                    StringTemplate.format_strict_template(
                         context, template
                     )
                 )
 
-        except KeyError:
+        except (KeyError, TemplateUnsolved):
             # Template references unavailable data
             return (None, None)
 

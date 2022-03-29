@@ -3,6 +3,7 @@ import sys
 import re
 import contextlib
 
+from bson.objectid import ObjectId
 from Qt import QtGui
 
 from avalon import io
@@ -117,7 +118,7 @@ def switch_item(container,
     # Collect any of current asset, subset and representation if not provided
     # so we can use the original name from those.
     if any(not x for x in [asset_name, subset_name, representation_name]):
-        _id = io.ObjectId(container["representation"])
+        _id = ObjectId(container["representation"])
         representation = io.find_one({"type": "representation", "_id": _id})
         version, subset, asset, project = io.parenthood(representation)
 

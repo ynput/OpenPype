@@ -28,7 +28,8 @@ from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data,
-    get_workfile_template_key
+    get_workfile_template_key,
+    get_last_workfile
 )
 
 from .python_module_tools import (
@@ -1318,6 +1319,41 @@ def _merge_env(env, current_env):
     return result
 
 
+def _add_python_version_paths(app, env, logger):
+    """Add vendor packages specific for a Python version."""
+
+    # Skip adding if host name is not set
+    if not app.host_name:
+        return
+
+    # Add Python 2/3 modules
+    openpype_root = os.getenv("OPENPYPE_REPOS_ROOT")
+    python_vendor_dir = os.path.join(
+        openpype_root,
+        "openpype",
+        "vendor",
+        "python"
+    )
+    if app.use_python_2:
+        pythonpath = os.path.join(python_vendor_dir, "python_2")
+    else:
+        pythonpath = os.path.join(python_vendor_dir, "python_3")
+
+    if not os.path.exists(pythonpath):
+        return
+
+    logger.debug("Adding Python version specific paths to PYTHONPATH")
+    python_paths = [pythonpath]
+
+    # Load PYTHONPATH from current launch context
+    python_path = env.get("PYTHONPATH")
+    if python_path:
+        python_paths.append(python_path)
+
+    # Set new PYTHONPATH to launch context environments
+    env["PYTHONPATH"] = os.pathsep.join(python_paths)
+
+
 def prepare_app_environments(data, env_group=None, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
@@ -1329,6 +1365,8 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
 
     app = data["app"]
     log = data["log"]
+
+    _add_python_version_paths(app, data["env"], log)
 
     # `added_env_keys` has debug purpose
     added_env_keys = {app.group.name, app.name}
@@ -1544,6 +1582,7 @@ def _prepare_last_workfile(data, workdir):
         workdir (str): Path to folder where workfiles should be stored.
     """
     import avalon.api
+    from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
     log = data["log"]
 
@@ -1592,7 +1631,7 @@ def _prepare_last_workfile(data, workdir):
     # Last workfile path
     last_workfile_path = data.get("last_workfile_path") or ""
     if not last_workfile_path:
-        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+        extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
         if extensions:
             anatomy = data["anatomy"]
             project_settings = data["project_settings"]
@@ -1609,7 +1648,7 @@ def _prepare_last_workfile(data, workdir):
                 "ext": extensions[0]
             })
 
-            last_workfile_path = avalon.api.last_workfile(
+            last_workfile_path = get_last_workfile(
                 workdir, file_template, workdir_data, extensions, True
             )
 
