@@ -339,10 +339,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     _template_filled = _anatomy_filled[template_key]["path"]
                     head, tail = _template_filled.split(frame_splitter)
                     padding = int(
-                        anatomy.templates["render"].get(
-                            "frame_padding",
-                            anatomy.templates["render"].get("padding")
-                        )
+                        anatomy.templates[template_key]["frame_padding"]
                     )
 
                     dst_col = clique.Collection(
