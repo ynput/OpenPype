@@ -172,7 +172,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Ensure at least one representation is set up for registering.
         repres = instance.data.get("representations")
-        assert repres, "Instance has representations data"
+        assert repres, "Instance has no representations data"
         assert isinstance(repres, (list, tuple)), (
             "Instance 'repres' must be a list, got: {0} {1}".format(
                 str(type(repres)), str(repres)
