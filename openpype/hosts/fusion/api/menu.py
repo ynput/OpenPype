@@ -11,6 +11,7 @@ from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )
+from openpype.lib import register_event_callback
 
 
 class Spacer(QtWidgets.QWidget):
@@ -123,12 +124,11 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self.asset_label.setText(label)
 
     def register_callback(self, name, fn):
-
         # Create a wrapper callback that we only store
         # for as long as we want it to persist as callback
         callback = lambda *args: fn()
         self._callbacks.append(callback)
-        api.on(name, callback)
+        register_event_callback(name, callback)
 
     def deregister_all_callbacks(self):
         self._callbacks[:] = []
