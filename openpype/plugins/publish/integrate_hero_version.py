@@ -82,12 +82,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             hero_template
         ))
 
-        self.process_instance(instance, template_key, hero_template)
+        self.integrate_instance(instance, template_key, hero_template)
 
-    def process_instance(self, instance, template_key, hero_template):
+    def integrate_instance(self, instance, template_key, hero_template):
         anatomy = instance.context.data["anatomy"]
         published_repres = instance.data["published_representations"]
-        hero_publish_dir = self.get_publish_dir(instance)
+        hero_publish_dir = self.get_publish_dir(instance, template_key)
 
         src_version_entity = instance.data.get("versionEntity")
         filtered_repre_ids = []
@@ -539,6 +539,13 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         else:
             template_name = self._default_template_name
         return template_name
+
+    def main_family_from_instance(self, instance):
+        """Returns main family of entered instance."""
+        family = instance.data.get("family")
+        if not family:
+            family = instance.data["families"][0]
+        return family
 
     def copy_file(self, src_path, dst_path):
         # TODO check drives if are the same to check if cas hardlink
