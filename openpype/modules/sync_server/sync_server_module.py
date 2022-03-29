@@ -23,7 +23,7 @@ from openpype.settings.lib import (
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
-from .utils import time_function, SyncStatus
+from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -129,7 +129,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     """ Start of Public API """
     def add_site(self, collection, representation_id, site_name=None,
-                 force=False):
+                 force=False, force_only_broken=False):
         """
             Adds new site to representation to be synced.
 
@@ -143,6 +143,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
                 force (bool): reset site if exists
+                force_only_broken (bool): reset only if "error" present
 
             Returns:
                 throws ValueError if any issue
@@ -155,7 +156,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         self.reset_site_on_representation(collection,
                                           representation_id,
-                                          site_name=site_name, force=force)
+                                          site_name=site_name,
+                                          force=force,
+                                          force_only_broken=force_only_broken)
 
     # public facing API
     def remove_site(self, collection, representation_id, site_name,
@@ -281,7 +284,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             os.path.getmtime(local_file_path))
                         elem = {"name": site_name,
                                 "created_dt": created_dt}
-                        self._add_site(collection, query, [repre], elem,
+                        self._add_site(collection, query, repre, elem,
                                        site_name=site_name,
                                        file_id=repre_file["_id"])
                         sites_added += 1
@@ -819,7 +822,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self.log.debug("Adding alternate {} to {}".format(
                 alt_site, representation["_id"]))
             self._add_site(collection, query,
-                           [representation], elem,
+                           representation, elem,
                            alt_site, file_id=file_id, force=True)
 
     """ End of Public API """
@@ -1394,7 +1397,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def reset_site_on_representation(self, collection, representation_id,
                                      side=None, file_id=None, site_name=None,
-                                     remove=False, pause=None, force=False):
+                                     remove=False, pause=None, force=False,
+                                     force_only_broken=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -1417,6 +1421,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             remove (bool): if True remove site altogether
             pause (bool or None): if True - pause, False - unpause
             force (bool): hard reset - currently only for add_site
+            force_only_broken(bool): reset site only if there is "error" field
 
         Returns:
             throws ValueError
@@ -1425,7 +1430,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             "_id": ObjectId(representation_id)
         }
 
-        representation = list(self.connection.database[collection].find(query))
+        representation = self.connection.database[collection].find_one(query)
         if not representation:
             raise ValueError("Representation {} not found in {}".
                              format(representation_id, collection))
@@ -1456,7 +1461,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                      representation, site_name, pause)
         else:  # add new site to all files for representation
             self._add_site(collection, query, representation, elem, site_name,
-                           force)
+                           force=force, force_only_broken=force_only_broken)
 
     def _update_site(self, collection, query, update, arr_filter):
         """
@@ -1511,7 +1516,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Throws ValueError if 'site_name' not found on 'representation'
         """
         found = False
-        for repre_file in representation.pop().get("files"):
+        for repre_file in representation.get("files"):
             for site in repre_file.get("sites"):
                 if site.get("name") == site_name:
                     found = True
@@ -1537,7 +1542,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         found = False
         site = None
-        for repre_file in representation.pop().get("files"):
+        for repre_file in representation.get("files"):
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     found = True
@@ -1564,34 +1569,39 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self._update_site(collection, query, update, arr_filter)
 
     def _add_site(self, collection, query, representation, elem, site_name,
-                  force=False, file_id=None):
+                  force=False, file_id=None, force_only_broken=False):
         """
             Adds 'site_name' to 'representation' on 'collection'
 
             Args:
-                representation (list of 1 dict)
+                representation (dict)
                 file_id (ObjectId)
 
             Use 'force' to remove existing or raises ValueError
         """
-        reseted_existing = False
-        for repre_file in representation.pop().get("files"):
+        reset_existing = False
+        files = representation.get("files", [])
+        if not files:
+            log.debug("No files for {}".format(representation["_id"]))
+            return
+
+        for repre_file in files:
             if file_id and file_id != repre_file["_id"]:
                 continue
 
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
-                    if force:
+                    if force or (force_only_broken and site.get("error")):
                         self._reset_site_for_file(collection, query,
                                                   elem, repre_file["_id"],
                                                   site_name)
-                        reseted_existing = True
+                        reset_existing = True
                     else:
                         msg = "Site {} already present".format(site_name)
                         log.info(msg)
-                        raise ValueError(msg)
+                        raise SiteAlreadyPresentError(msg)
 
-        if reseted_existing:
+        if reset_existing:
             return
 
         if not file_id:
