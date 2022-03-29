@@ -48,7 +48,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         colorspace = colorspace
 
         # create workfile path
-        workfile_dir = os.environ["AVALON_WORKDIR"]
+        workfile_dir = options.get("workdir") or os.environ["AVALON_WORKDIR"]
         openclip_dir = os.path.join(
             workfile_dir, clip_name
         )

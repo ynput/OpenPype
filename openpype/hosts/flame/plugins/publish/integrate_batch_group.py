@@ -105,7 +105,9 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
                 # load to flame by representation context
                 try:
                     op_pipeline.load.load_with_repre_context(
-                        Loader, repre_context)
+                        Loader, repre_context, **{
+                            "data": {"workdir": self.task_workdir}
+                        })
                 except op_pipeline.load.IncompatibleLoaderError as msg:
                     self.log.error(
                         "Check allowed representations for Loader `{}` "
@@ -192,12 +194,14 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         anatomy_data = self._get_anamoty_data_with_current_task(
             instance, task_data)
 
-        task_workfile_path = self._get_shot_task_dir_path(instance, task_data)
-        self.log.debug("__ task_workfile_path: {}".format(task_workfile_path))
+        self.task_workdir = self._get_shot_task_dir_path(
+            instance, task_data)
+        self.log.debug("__ task_workdir: {}".format(
+            self.task_workdir))
 
         # TODO: this might be done with template in settings
         render_dir_path = os.path.join(
-            task_workfile_path, "render", "flame")
+            self.task_workdir, "render", "flame")
 
         if not os.path.exists(render_dir_path):
             os.makedirs(render_dir_path, mode=0o777)
