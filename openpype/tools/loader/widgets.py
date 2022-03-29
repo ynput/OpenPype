@@ -1070,6 +1070,12 @@ class FamilyListView(QtWidgets.QListView):
     def set_all_checked(self):
         self._set_checkstates(True, self._get_all_indexes())
 
+    def toggle_all(self):
+        if self.get_enabled_families():
+            self.set_all_unchecked()
+        else:
+            self.set_all_checked()
+
     def _get_all_indexes(self):
         indexes = []
         model = self._family_model
