@@ -84,29 +84,26 @@ def bulk_write(writes):
 
 
 class IntegrateAssetNew(pyblish.api.InstancePlugin):
-    """Resolve any dependency issues
+    """Register publish in the database and transfer files to destinations.
 
-    This plug-in resolves any paths which, if not updated might break
-    the published file.
+    Steps:
+        1) Register the subset and version
+        2) Transfer the representation files to the destination
+        3) Register the representation
 
-    The order of families is important, when working with lookdev you want to
-    first publish the texture, update the texture paths in the nodes and then
-    publish the shading network. Same goes for file dependent assets.
-
-    Requirements for instance to be correctly integrated
-
-    instance.data['representations'] - must be a list and each member
-    must be a dictionary with following data:
-        'files': list of filenames for sequence, string for single file.
-                 Only the filename is allowed, without the folder path.
-        'stagingDir': "path/to/folder/with/files"
-        'name': representation name (usually the same as extension)
-        'ext': file extension
-    optional data
-        "frameStart"
-        "frameEnd"
-        'fps'
-        "data": additional metadata for each representation.
+    Requires:
+        instance.data['representations'] - must be a list and each member
+        must be a dictionary with following data:
+            'files': list of filenames for sequence, string for single file.
+                     Only the filename is allowed, without the folder path.
+            'stagingDir': "path/to/folder/with/files"
+            'name': representation name (usually the same as extension)
+            'ext': file extension
+        optional data
+            "frameStart"
+            "frameEnd"
+            'fps'
+            "data": additional metadata for each representation.
     """
 
     label = "Integrate Asset New"
