@@ -71,8 +71,7 @@ def rstex(source, *args):
 
     cmd = [
         texture_processor_path,
-        escape_space(source),
-        
+        escape_space(source),   
     ]
 
     cmd.extend(args)
