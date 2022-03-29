@@ -187,10 +187,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Get existing representations (if any)
         existing_repres_by_name = {
-            repres["name"].lower(): repres for repres in io.find({
-                "parent": version["_id"],
-                "type": "representation"
-            })
+            repres["name"].lower(): repres for repres in io.find(
+                {
+                    "parent": version["_id"],
+                    "type": "representation"
+                },
+                # Only care about id and name of existing representations
+                projection={"_id": True, "name": True}
+            )
         }
 
         # Prepare all representations
@@ -239,16 +243,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                        "{}".format(file_transactions.backups))
         self.log.debug("Transferred files: "
                        "{}".format(file_transactions.transferred))
-
-        # Finalize the representations now the published files are integrated
-        # Get 'files' info for representations and its attached resources
         self.log.debug("Retrieving Representation Site Sync information ...")
+
+        # Get the accessible sites for Site Sync
         sites = SiteSync.compute_resource_sync_sites(
             system_settings=instance.context.data["system_settings"],
             project_settings=instance.context.data["project_settings"]
         )
-        self.log.debug("final sites:: {}".format(sites))
+        self.log.debug("Site Sync Sites: {}".format(sites))
 
+        # Finalize the representations now the published files are integrated
+        # Get 'files' info for representations and its attached resources
         anatomy = instance.context.data["anatomy"]
         representation_writes = []
         new_repre_names_low = set()
@@ -365,7 +370,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             'type': 'version',
             'parent': subset["_id"],
             'name': version_number
-        })
+        }, projection={"_id": True})
 
         if existing_version:
             self.log.debug("Updating existing version ...")
@@ -576,7 +581,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # todo: `repre` is not the actual `representation` entity
         #       we should simplify/clarify difference between data above
         #       and the actual representation entity for the database
-        data = repre.get("data") or {}
+        data = repre.get("data", {})
         data.update({'path': published_path, 'template': template})
         representation = {
             "_id": repre_id,
@@ -664,16 +669,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def get_template_name(self, instance):
         """Return anatomy template name to use for integration"""
-
         # Define publish template name from profiles
         filter_criteria = self.get_profile_filter_criteria(instance)
         profile = filter_profiles(self.template_name_profiles,
                                   filter_criteria,
                                   logger=self.log)
-        template_name = self.default_template_name
         if profile:
-            template_name = profile["template_name"]
-        return template_name
+            return profile["template_name"]
+        else:
+            return self.default_template_name
 
     def get_profile_filter_criteria(self, instance):
         """Return filter criteria for `filter_profiles`"""
@@ -752,13 +756,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             dict: file info dictionary
         """
-        file_hash = openpype.api.source_hash(path)
-
         return {
             "_id": ObjectId(),
             "path": self.get_rootless_path(anatomy, path),
             "size": os.path.getsize(path),
-            "hash": file_hash,
+            "hash": openpype.api.source_hash(path),
             "sites": sites
         }
 
