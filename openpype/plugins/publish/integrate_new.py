@@ -17,6 +17,41 @@ from openpype.lib.file_transaction import FileTransaction
 log = logging.getLogger(__name__)
 
 
+def assemble(files):
+    """Convenience `clique.assemble` wrapper for files of a single collection.
+
+    Unlike `clique.assemble` this wrapper does not allow more than a single
+    Collection nor any remainder files. Errors will be raised when not only
+    a single collection is assembled.
+
+    Returns:
+        clique.Collection: A single sequence Collection
+
+    Raises:
+        ValueError: Error is raised when files do not result in a single
+                    collected Collection.
+
+    """
+    # todo: move this to lib?
+    # Get the sequence as a collection. The files must be of a single
+    # sequence and have no remainder outside of the collections.
+    patterns = [clique.PATTERNS["frames"]]
+    collections, remainder = clique.assemble(files,
+                                             minimum_items=1,
+                                             patterns=patterns)
+    if not collections:
+        raise ValueError("No collections found in files: "
+                         "{}".format(files))
+    if remainder:
+        raise ValueError("Files found not detected as part"
+                         " of a sequence: {}".format(remainder))
+    if len(collections) > 1:
+        raise ValueError("Files in sequence are not part of a"
+                         " single sequence collection: "
+                         "{}".format(collections))
+    return collections[0]
+
+
 def get_instance_families(instance):
     """Get all families of the instance"""
     # todo: move this to lib?
@@ -451,21 +486,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "Given file names contain full paths"
             )
 
-            # Get the sequence as a collection. The files must be of a single
-            # sequence and have no remainder outside of the collections.
-            collections, remainder = clique.assemble(files,
-                                                     minimum_items=1)
-            if not collections:
-                raise ValueError("No collections found in files: "
-                                 "{}".format(files))
-            if remainder:
-                raise ValueError("Files found not detected as part"
-                                 " of a sequence: {}".format(remainder))
-            if len(collections) > 1:
-                raise ValueError("Files in sequence are not part of a"
-                                 " single sequence collection: "
-                                 "{}".format(collections))
-            src_collection = collections[0]
+            src_collection = assemble(files)
 
             # If the representation has `frameStart` set it renumbers the
             # frame indices of the published collection. It will start from
@@ -512,14 +533,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template_filled = anatomy_filled[template_name]["path"]
             repre_context = template_filled.used_values
             self.log.debug("Template filled: {}".format(str(template_filled)))
-            dst_collections, _remainder = clique.assemble(
-                [os.path.normpath(template_filled)],
-                minimum_items=1,
-                patterns=[clique.PATTERNS["frames"]]
-            )
-            assert not _remainder, "This is a bug"
-            assert len(dst_collections) == 1, "This is a bug"
-            dst_collection = dst_collections[0]
+            dst_collection = assemble([os.path.normpath(template_filled)])
 
             # Update the destination indexes and padding
             dst_collection.indexes.clear()
