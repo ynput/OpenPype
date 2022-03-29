@@ -7,8 +7,12 @@ import shutil
 from bson.objectid import ObjectId
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
+
 from avalon import api, io, schema
-from openpype.lib import create_hard_link
+from openpype.lib import (
+    create_hard_link,
+    filter_profiles
+)
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):
@@ -17,7 +21,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
 
     optional = True
+    active = True
 
+    # Families are modified using settings
     families = [
         "model",
         "rig",
@@ -33,10 +39,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         "project", "asset", "task", "subset", "representation",
         "family", "hierarchy", "task", "username"
     ]
-    # TODO add family filtering
     # QUESTION/TODO this process should happen on server if crashed due to
     # permissions error on files (files were used or user didn't have perms)
     # *but all other plugins must be sucessfully completed
+
+    template_name_profiles = []
+    _default_template_name = "hero"
 
     def process(self, instance):
         self.log.debug(
@@ -51,26 +59,34 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             )
             return
 
-        project_name = api.Session["AVALON_PROJECT"]
+        template_key = self._get_template_key(instance)
 
-        # TODO raise error if Hero not set?
         anatomy = instance.context.data["anatomy"]
-        if "hero" not in anatomy.templates:
-            self.log.warning("!!! Anatomy does not have set `hero` key!")
-            return
-
-        if "path" not in anatomy.templates["hero"]:
+        project_name = api.Session["AVALON_PROJECT"]
+        if template_key not in anatomy.templates:
             self.log.warning((
-                "!!! There is not set `path` template in `hero` anatomy"
-                " for project \"{}\"."
-            ).format(project_name))
+                "!!! Anatomy of project \"{}\" does not have set"
+                " \"{}\" template key!"
+            ).format(project_name, template_key))
             return
 
-        hero_template = anatomy.templates["hero"]["path"]
+        if "path" not in anatomy.templates[template_key]:
+            self.log.warning((
+                "!!! There is not set \"path\" template in \"{}\" anatomy"
+                " for project \"{}\"."
+            ).format(template_key, project_name))
+            return
+
+        hero_template = anatomy.templates[template_key]["path"]
         self.log.debug("`hero` template check was successful. `{}`".format(
             hero_template
         ))
 
+        self.process_instance(instance, template_key, hero_template)
+
+    def process_instance(self, instance, template_key, hero_template):
+        anatomy = instance.context.data["anatomy"]
+        published_repres = instance.data["published_representations"]
         hero_publish_dir = self.get_publish_dir(instance)
 
         src_version_entity = instance.data.get("versionEntity")
@@ -271,12 +287,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     continue
 
                 # Prepare anatomy data
-                anatomy_data = repre_info["anatomy_data"]
+                anatomy_data = copy.deepcopy(repre_info["anatomy_data"])
                 anatomy_data.pop("version", None)
 
                 # Get filled path to repre context
                 anatomy_filled = anatomy.format(anatomy_data)
-                template_filled = anatomy_filled["hero"]["path"]
+                template_filled = anatomy_filled[template_key]["path"]
 
                 repre_data = {
                     "path": str(template_filled),
@@ -308,11 +324,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     collections, remainders = clique.assemble(published_files)
                     if remainders or not collections or len(collections) > 1:
                         raise Exception((
-                                            "Integrity error. Files of published representation "
-                                            "is combination of frame collections and single files."
-                                            "Collections: `{}` Single files: `{}`"
-                                        ).format(str(collections),
-                                                 str(remainders)))
+                            "Integrity error. Files of published"
+                            " representation is combination of frame"
+                            " collections and single files. Collections:"
+                            " `{}` Single files: `{}`"
+                        ).format(str(collections), str(remainders)))
 
                     src_col = collections[0]
 
@@ -320,7 +336,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     frame_splitter = "_-_FRAME_SPLIT_-_"
                     anatomy_data["frame"] = frame_splitter
                     _anatomy_filled = anatomy.format(anatomy_data)
-                    _template_filled = _anatomy_filled["hero"]["path"]
+                    _template_filled = _anatomy_filled[template_key]["path"]
                     head, tail = _template_filled.split(frame_splitter)
                     padding = int(
                         anatomy.templates["render"].get(
@@ -466,13 +482,13 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 files.append(_path)
         return files
 
-    def get_publish_dir(self, instance):
+    def get_publish_dir(self, instance, template_key):
         anatomy = instance.context.data["anatomy"]
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
-        if "folder" in anatomy.templates["hero"]:
+        if "folder" in anatomy.templates[template_key]:
             anatomy_filled = anatomy.format(template_data)
-            publish_folder = anatomy_filled["hero"]["folder"]
+            publish_folder = anatomy_filled[template_key]["folder"]
         else:
             # This is for cases of Deprecated anatomy without `folder`
             # TODO remove when all clients have solved this issue
@@ -489,7 +505,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(project_name))
 
-            file_path = anatomy_filled["hero"]["path"]
+            file_path = anatomy_filled[template_key]["path"]
             # Directory
             publish_folder = os.path.dirname(file_path)
 
@@ -498,6 +514,31 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         self.log.debug("hero publish dir: \"{}\"".format(publish_folder))
 
         return publish_folder
+
+    def _get_template_key(self, instance):
+        anatomy_data = instance.data["anatomyData"]
+        task_data = anatomy_data.get("task") or {}
+        task_name = task_data.get("name")
+        task_type = task_data.get("type")
+        host_name = instance.context.data["hostName"]
+        # TODO raise error if Hero not set?
+        family = self.main_family_from_instance(instance)
+        key_values = {
+            "families": family,
+            "task_names": task_name,
+            "task_types": task_type,
+            "hosts": host_name
+        }
+        profile = filter_profiles(
+            self.template_name_profiles,
+            key_values,
+            logger=self.log
+        )
+        if profile:
+            template_name = profile["template_name"]
+        else:
+            template_name = self._default_template_name
+        return template_name
 
     def copy_file(self, src_path, dst_path):
         # TODO check drives if are the same to check if cas hardlink
@@ -564,22 +605,16 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 src_file (string) - original file path
                 dst_file (string) - hero file path
         """
-        _, rootless = anatomy.find_root_template_from_path(
-            dst_file
-        )
-        _, rtls_src = anatomy.find_root_template_from_path(
-            src_file
-        )
+        _, rootless = anatomy.find_root_template_from_path(dst_file)
+        _, rtls_src = anatomy.find_root_template_from_path(src_file)
         return path.replace(rtls_src, rootless)
 
     def _update_hash(self, hash, src_file_name, dst_file):
         """
             Updates hash value with proper hero name
         """
-        src_file_name = self._get_name_without_ext(
-            src_file_name)
-        hero_file_name = self._get_name_without_ext(
-            dst_file)
+        src_file_name = self._get_name_without_ext(src_file_name)
+        hero_file_name = self._get_name_without_ext(dst_file)
         return hash.replace(src_file_name, hero_file_name)
 
     def _get_name_without_ext(self, value):
