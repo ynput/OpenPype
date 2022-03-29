@@ -1,9 +1,12 @@
+from .window import Window
 from .app import (
     show,
-    Window
+    validate_host_requirements,
 )
 
 __all__ = [
+    "Window",
+
     "show",
-    "Window"
+    "validate_host_requirements",
 ]
