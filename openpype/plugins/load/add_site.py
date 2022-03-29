@@ -1,6 +1,6 @@
 from openpype.modules import ModulesManager
 from openpype.pipeline import load
-:from openpype.lib.avalon_context import get_linked_ids_for_representations
+from openpype.lib.avalon_context import get_linked_ids_for_representations
 from openpype.modules.sync_server.utils import SiteAlreadyPresentError
 
 
