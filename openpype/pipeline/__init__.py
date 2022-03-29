@@ -41,7 +41,8 @@ from .publish import (
     PublishValidationError,
     PublishXmlValidationError,
     KnownPublishError,
-    OpenPypePyblishPluginMixin
+    OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
 )
 
 from .actions import (
@@ -105,6 +106,7 @@ __all__ = (
     "PublishXmlValidationError",
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
+    "OptionalPyblishPluginMixin",
 
     # --- Actions ---
     "LauncherAction",
