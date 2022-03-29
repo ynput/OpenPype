@@ -255,6 +255,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             prepared_representations.append(prepared)
 
+        if not prepared_representations:
+            # Even though we check `instance.data["representations"]` earlier
+            # this could still happen if all representations were tagged with
+            # "delete" and thus are skipped for integration
+            raise RuntimeError("No representations prepared to publish.")
+
         # Each instance can also have pre-defined transfers not explicitly
         # part of a representation - like texture resources used by a
         # .ma representation. Those destination paths are pre-defined, etc.
