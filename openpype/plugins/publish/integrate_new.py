@@ -739,11 +739,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return path
 
     def get_files_info(self, transfers, sites, anatomy):
-        """ Prepare 'files' portion for attached resources and main asset.
-            Combining records from 'transfers' and 'hardlinks' parts from
-            instance.
-            All attached resources should be added, currently without
-            Context info.
+        """Prepare 'files' info portion for representations.
 
         Arguments:
             transfers (list): List of transferred files (source, destination)
