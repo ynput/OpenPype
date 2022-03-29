@@ -6,6 +6,7 @@ import json
 import tempfile
 import contextlib
 import subprocess
+from openpype.lib.vendor_bin_utils import find_executable
 from collections import OrderedDict
 
 from maya import cmds  # noqa
@@ -40,6 +41,58 @@ def find_paths_by_hash(texture_hash):
     """
     key = "data.sourceHashes.{0}".format(texture_hash)
     return io.distinct(key, {"type": "version"})
+
+
+def rstex(source, *args):
+    """Make `.rstexbin` using `redshiftTextureProcessor`
+    with some default settings.
+
+    This function requires the `REDSHIFT_COREDATAPATH`
+    to be in `PATH`.
+
+    Args:
+        source (str): Path to source file.
+        *args: Additional arguments for `redshiftTextureProcessor`.
+
+    Returns:
+        str: Output of `redshiftTextureProcessor` command.
+
+    """
+    if "REDSHIFT_COREDATAPATH" not in os.environ:
+        raise RuntimeError("Must have Redshift available.")
+
+    redshift_bin_path = os.path.join(
+        os.environ["REDSHIFT_COREDATAPATH"],
+        "bin",
+        "redshiftTextureProcessor"
+        )
+        
+    texture_processor_path = find_executable(redshift_bin_path)
+    
+    cmd = [
+        texture_processor_path,
+        escape_space(source),
+        
+    ]
+
+    cmd.extend(args)
+
+    cmd = " ".join(cmd)
+
+    CREATE_NO_WINDOW = 0x08000000
+    kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
+
+    if sys.platform == "win32":
+        kwargs["creationflags"]  = CREATE_NO_WINDOW
+    try:
+        out = subprocess.check_output(**kwargs)
+    except subprocess.CalledProcessError as exc:
+        print(exc)
+        import traceback
+
+        traceback.print_exc()
+        raise
+    return out
 
 
 def maketx(source, destination, *args):
