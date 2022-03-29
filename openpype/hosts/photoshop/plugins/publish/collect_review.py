@@ -9,9 +9,8 @@ class CollectReview(pyblish.api.ContextPlugin):
     """Gather the active document as review instance."""
 
     label = "Review"
-    order = pyblish.api.CollectorOrder
-    hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.1
+    hosts = ["photoshop"]
 
     def process(self, context):
         family = "review"
