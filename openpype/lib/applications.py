@@ -211,6 +211,7 @@ class ApplicationGroup:
         data (dict): Group defying data loaded from settings.
         manager (ApplicationManager): Manager that created the group.
     """
+
     def __init__(self, name, data, manager):
         self.name = name
         self.manager = manager
@@ -374,6 +375,7 @@ class ApplicationManager:
             will always use these values. Gives ability to create manager
             using different settings.
     """
+
     def __init__(self, system_settings=None):
         self.log = PypeLogger.get_logger(self.__class__.__name__)
 
@@ -530,13 +532,13 @@ class EnvironmentToolGroup:
         variants = data.get("variants") or {}
         label_by_key = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         variants_by_name = {}
-        for variant_name, variant_env in variants.items():
+        for variant_name, variant_data in variants.items():
             if variant_name in METADATA_KEYS:
                 continue
 
             variant_label = label_by_key.get(variant_name) or variant_name
             tool = EnvironmentTool(
-                variant_name, variant_label, variant_env, self
+                variant_name, variant_label, variant_data, self
             )
             variants_by_name[variant_name] = tool
         self.variants = variants_by_name
@@ -560,15 +562,35 @@ class EnvironmentTool:
 
     Args:
         name (str): Name of the tool.
-        environment (dict): Variant environments.
+        variant_data (dict): Variant data with environments and
+            host and app variant filters.
         group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, name, label, environment, group):
+    def __init__(self, name, label, variant_data, group):
+        # Backwards compatibility 3.9.1 - 3.9.2
+        # - 'variant_data' contained only environments but contain also host
+        #   and application variant filters
+        host_names = []
+        app_variants = []
+        if "host_names" in variant_data:
+            host_names = variant_data["host_names"]
+
+        if "app_variants" in variant_data:
+            app_variants = variant_data["app_variants"]
+
+        if "environment" in variant_data:
+            environment = variant_data["environemnt"]
+        else:
+            environment = variant_data
+
+        self.host_names = host_names
+        self.app_variants = app_variants
         self.name = name
         self.variant_label = label
         self.label = " ".join((group.label, label))
         self.group = group
+
         self._environment = environment
         self.full_name = "/".join((group.name, name))
 
