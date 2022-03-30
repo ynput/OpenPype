@@ -26,75 +26,43 @@ class BlendModelLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _copy_driver(self, from_fcurve, target_fcurve):
-        new_driver = target_fcurve.driver
-        driver_to_copy = from_fcurve.driver
-        new_driver.type = driver_to_copy.type
-        new_driver.expression = driver_to_copy.expression
-        new_driver.use_self = driver_to_copy.use_self
-        for variable_to_copy in driver_to_copy.variables:
-            new_variable = new_driver.variables.new()
-            new_variable.name = variable_to_copy.name
-            new_variable.type = variable_to_copy.type
-            for i, target in variable_to_copy.targets.items():
-                new_variable.targets[i].id = target.id_data
-            for i, target in variable_to_copy.targets.items():
-                for property in dir(target):
-                    try:
-                        setattr(
-                            new_variable.targets[i],
-                            property,
-                            getattr(target, property),
-                        )
-                    except:
-                        print(f"'{property}' is read-only")
+    def _get_drivers_target(self, container):
+        """Get the driver targets list in the container"""
 
-    def _store_drivers_in_an_empty(self, container):
-        """Get all the drivers in the container's objects and copy them on an empty"""
-        # Create the empty
-        empty = bpy.data.objects.new("empty", None)
-        # Get all the container's objects
+        object_driver_targets = list()
         objects_list = plugin.get_all_objects_in_collection(container)
-        # Create animation data on the empty
-        empty.animation_data_create()
-        # Add a fake user to the empty to keep him if we remove orphan data
-        empty.use_fake_user = True
-        # Loop on the object
-        for object in objects_list:
+        object_names_list = [object.name for object in objects_list]
+        for object_name in object_names_list:
+            object = bpy.data.objects.get(object_name)
             if object:
                 if object.animation_data:
-                    # Get the drivers on the object
                     drivers = object.animation_data.drivers
                     for driver in drivers:
-                        # Create a driver on the empty with the
-                        # data_path = name of the object + data_path of the object driver
-                        new_driver = empty.animation_data.drivers.new(
-                            object.name + ":" + driver.data_path
-                        )
-                        self._copy_driver(driver, new_driver)
-        return empty
+                        variables = driver.driver.variables
+                        for variable in variables:
+                            targets = variable.targets
+                            for target in targets:
+                                object_driver_targets.append(target.id)
+        return object_driver_targets
 
-    def _set_drivers_from_empty(self, empty):
-        """Get all the drivers in an empty and copy them on the container's objects"""
-        # Get the drivers store in the empty
-        drivers = empty.animation_data.drivers
-        for driver in drivers:
-            # Get the data path on the driver
-            data_path_with_object_name = driver.data_path
-            # Get the object name and the data path store in the data_path
-            # data_path = object name + empty driver data_path
-            object_name = data_path_with_object_name.split(":")[0]
-            data_path = data_path_with_object_name.split(":")[1]
+    def _set_drivers_target(self, container, object_driver_target_list):
+        """Set the driver targets list in the container"""
 
-            object = bpy.data.objects[object_name]
-            if object.animation_data is None:
-                object.animation_data_create()
-            if object.animation_data.drivers.find(data_path) is None:
-                new_driver = object.animation_data.drivers.new(data_path)
-                self._copy_driver(driver, new_driver)
-
-    # bpy.data.objects.remove(empty)
-    # modifiers["mask_arm_L"].show_viewport
+        objects_list = plugin.get_all_objects_in_collection(container)
+        object_names_list = [object.name for object in objects_list]
+        index = 0
+        for object_name in object_names_list:
+            object = bpy.data.objects.get(object_name)
+            if object:
+                if object.animation_data:
+                    drivers = object.animation_data.drivers
+                    for driver in drivers:
+                        variables = driver.driver.variables
+                        for variable in variables:
+                            targets = variable.targets
+                            for target in targets:
+                                target.id = object_driver_target_list[index]
+                                index = index + 1
 
     def _get_modifier_parameters(self, container):
         """Get all modifier parameters of the container's objects in a dict"""
@@ -368,10 +336,8 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Get a dictionary of the modifier parameters to reset them after the update
         modifiers_dict = self._get_modifier_parameters(avalon_container)
-
         # Get a list of the driver targets to reset them after the update
-        # object_driver_target_list = self._get_drivers_target(avalon_container)
-        empty = self._store_drivers_in_an_empty(avalon_container)
+        object_driver_target_list = self._get_drivers_target(avalon_container)
 
         # If the container is override remove his reference
         if avalon_container.override_library:
@@ -400,8 +366,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Reset the modifier parameters and the driver targets
         self._set_modifier(container_override, modifiers_dict)
-        self._set_drivers_from_empty(empty)
-        # self._set_drivers_target(container_override, object_driver_target_list)
+        self._set_drivers_target(container_override, object_driver_target_list)
 
         bpy.context.view_layer.update()
         plugin.remove_orphan_datablocks()
