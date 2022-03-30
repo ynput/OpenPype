@@ -18,6 +18,7 @@ log = Logger.get_logger(__name__)
 
 FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
+
 class CTX:
     # singleton used for passing data between api modules
     app_framework = None
@@ -538,9 +539,17 @@ def get_segment_attributes(segment):
 
     # head and tail with forward compatibility
     if segment.head:
-        clip_data["segment_head"] = int(segment.head)
+        # `infinite` can be also returned
+        if isinstance(segment.head, str):
+            clip_data["segment_head"] = 0
+        else:
+            clip_data["segment_head"] = int(segment.head)
     if segment.tail:
-        clip_data["segment_tail"] = int(segment.tail)
+        # `infinite` can be also returned
+        if isinstance(segment.tail, str):
+            clip_data["segment_tail"] = 0
+        else:
+            clip_data["segment_tail"] = int(segment.tail)
 
     # add all available shot tokens
     shot_tokens = _get_shot_tokens_values(segment, [

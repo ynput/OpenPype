@@ -240,7 +240,7 @@ class LoadGizmoInputProcess(load.LoaderPlugin):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
         elif isinstance(input, unicode):

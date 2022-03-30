@@ -9,6 +9,7 @@ import six
 import re
 import shutil
 
+from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
@@ -104,7 +105,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "effect",
                 "xgen",
                 "hda",
-                "usd"
+                "usd",
+                "usdComposition",
+                "usdOverride"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -294,7 +297,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 bulk_writes.append(DeleteOne({"_id": repre_id}))
 
                 repre["orig_id"] = repre_id
-                repre["_id"] = io.ObjectId()
+                repre["_id"] = ObjectId()
                 repre["type"] = "archived_representation"
                 bulk_writes.append(InsertOne(repre))
 
@@ -573,7 +576,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Create new id if existing representations does not match
             if repre_id is None:
-                repre_id = io.ObjectId()
+                repre_id = ObjectId()
 
             data = repre.get("data") or {}
             data.update({'path': dst, 'template': template})
@@ -782,7 +785,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         families = [instance.data["family"]]
         families.extend(instance.data.get("families", []))
         io.update_many(
-            {"type": "subset", "_id": io.ObjectId(subset["_id"])},
+            {"type": "subset", "_id": ObjectId(subset["_id"])},
             {"$set": {"data.families": families}}
         )
 
@@ -807,7 +810,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if subset_group:
             io.update_many({
                 'type': 'subset',
-                '_id': io.ObjectId(subset_id)
+                '_id': ObjectId(subset_id)
             }, {'$set': {'data.subsetGroup': subset_group}})
 
     def _get_subset_group(self, instance):
@@ -1054,7 +1057,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         sync_project_presets = None
 
         rec = {
-            "_id": io.ObjectId(),
+            "_id": ObjectId(),
             "path": path
         }
         if size:
