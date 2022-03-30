@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Invalid texture name</title>
+<description>
+## Source files not found
+
+Submitted file has invalid name:
+'{invalid_file}'
+
+### How to repair?
+
+    Texture file must adhere to naming conventions for Unreal:
+    T_[ASSET_NAME}_*.ext
+</description>
+</error>
+</root>

@@ -33,12 +33,18 @@
         "path": "{@folder}/{@file}"
     },
     "others": {
+        "simpleUnrealTextureHero": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/hero",
+            "file": "{originalBasename}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
         "simpleUnrealTexture": {
-            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}",
-            "file": "{original_file}",
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{@version}",
+            "file": "{originalBasename}_{@version}.{ext}",
             "path": "{@folder}/{@file}"
         },
         "__dynamic_keys_labels__": {
+            "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
             "simpleUnrealTexture": "Simple Unreal Texture"
         }
     }

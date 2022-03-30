@@ -213,9 +213,22 @@
                 "animation",
                 "setdress",
                 "layout",
-                "mayaScene"
+                "mayaScene",
+                "simpleUnrealTexture"
             ],
-            "template_name_profiles": []
+            "template_name_profiles": [
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTextureHero"
+                }
+            ]
         },
         "CleanUp": {
             "paterns": [],
