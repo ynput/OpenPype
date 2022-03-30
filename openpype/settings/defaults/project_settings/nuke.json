@@ -119,11 +119,10 @@
                         "families": [],
                         "sebsets": []
                     },
-                    "extension": "mov",
+                    "read_raw": false,
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
-                    "add_tags": [],
                     "reformat_node_add": false,
                     "reformat_node_config": [
                         {
@@ -151,7 +150,9 @@
                             "name": "pbb",
                             "value": false
                         }
-                    ]
+                    ],
+                    "extension": "mov",
+                    "add_tags": []
                 }
             }
         },
