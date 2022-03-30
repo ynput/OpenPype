@@ -337,6 +337,9 @@ class ExtractLook(openpype.api.Extractor):
         hashes = {}
         # Temporary fix to NOT create hardlinks on windows machines
         if platform.system().lower() == "windows":
+            self.log.info(
+                "Forcing copy instead of hardlink due to issues on Windows..."
+            )
             force_copy = True
         else:
             force_copy = instance.data.get("forceCopy", False)
