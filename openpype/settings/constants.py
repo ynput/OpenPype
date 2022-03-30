@@ -8,11 +8,11 @@ M_ENVIRONMENT_KEY = "__environment_keys__"
 # Metadata key for storing dynamic created labels
 M_DYNAMIC_KEY_LABEL = "__dynamic_keys_labels__"
 
-METADATA_KEYS = (
+METADATA_KEYS = frozenset([
     M_OVERRIDDEN_KEY,
     M_ENVIRONMENT_KEY,
     M_DYNAMIC_KEY_LABEL
-)
+])
 
 # Keys where studio's system overrides are stored
 GLOBAL_SETTINGS_KEY = "global_settings"
