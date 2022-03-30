@@ -1511,7 +1511,7 @@ def get_container_members(container):
 
     members = cmds.sets(container, query=True) or []
     members = cmds.ls(members, long=True, objectsOnly=True) or []
-    members = set(members)
+    all_members = set(members)
 
     # Include any referenced nodes from any reference in the container
     # This is required since we've removed adding ALL nodes of a reference
@@ -1530,9 +1530,9 @@ def get_container_members(container):
         reference_members = cmds.ls(reference_members,
                                     long=True,
                                     objectsOnly=True)
-        members.update(reference_members)
+        all_members.update(reference_members)
 
-    return members
+    return list(all_members)
 
 
 # region LOOKDEV

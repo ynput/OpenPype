@@ -1,6 +1,7 @@
 import logging
 import contextlib
 import nuke
+from bson.objectid import ObjectId
 
 from avalon import api, io
 
@@ -70,10 +71,10 @@ def get_handles(asset):
     if "visualParent" in data:
         vp = data["visualParent"]
         if vp is not None:
-            parent_asset = io.find_one({"_id": io.ObjectId(vp)})
+            parent_asset = io.find_one({"_id": ObjectId(vp)})
 
     if parent_asset is None:
-        parent_asset = io.find_one({"_id": io.ObjectId(asset["parent"])})
+        parent_asset = io.find_one({"_id": ObjectId(asset["parent"])})
 
     if parent_asset is not None:
         return get_handles(parent_asset)

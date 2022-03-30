@@ -2,12 +2,14 @@ import collections
 import logging
 from Qt import QtWidgets, QtCore
 import qtawesome
+from bson.objectid import ObjectId
 
-from avalon import io, pipeline
-from openpype.pipeline import (
+from avalon import io
+from openpype.pipeline.load import (
     discover_loader_plugins,
     switch_container,
     get_repres_contexts,
+    loaders_from_repre_context,
 )
 
 from .widgets import (
@@ -146,7 +148,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         repre_ids = set()
         content_loaders = set()
         for item in self._items:
-            repre_ids.add(io.ObjectId(item["representation"]))
+            repre_ids.add(ObjectId(item["representation"]))
             content_loaders.add(item["loader"])
 
         repres = list(io.find({
@@ -369,7 +371,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         loaders = None
         for repre_context in repre_contexts.values():
-            _loaders = set(pipeline.loaders_from_repre_context(
+            _loaders = set(loaders_from_repre_context(
                 available_loaders, repre_context
             ))
             if loaders is None:
@@ -1306,7 +1308,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             repre_docs_by_parent_id_by_name[parent_id][name] = repre_doc
 
         for container in self._items:
-            container_repre_id = io.ObjectId(container["representation"])
+            container_repre_id = ObjectId(container["representation"])
             container_repre = self.content_repres[container_repre_id]
             container_repre_name = container_repre["name"]
 

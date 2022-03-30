@@ -9,6 +9,8 @@ import collections
 import functools
 import getpass
 
+from bson.objectid import ObjectId
+
 from openpype.settings import (
     get_project_settings,
     get_system_settings
@@ -169,7 +171,7 @@ def any_outdated():
 
         representation_doc = avalon.io.find_one(
             {
-                "_id": avalon.io.ObjectId(representation),
+                "_id": ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -1703,7 +1705,7 @@ def _get_task_context_data_for_anatomy(
         "task": {
             "name": task_name,
             "type": task_type,
-            "short_name": project_task_type_data["short_name"]
+            "short": project_task_type_data["short_name"]
         }
     }
 

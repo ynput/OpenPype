@@ -98,6 +98,10 @@ class PypeStreamHandler(logging.StreamHandler):
             self.flush()
         except (KeyboardInterrupt, SystemExit):
             raise
+
+        except OSError:
+            self.handleError(record)
+
         except Exception:
             print(repr(record))
             self.handleError(record)
