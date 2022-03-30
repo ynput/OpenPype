@@ -571,13 +571,8 @@ class EnvironmentTool:
         # Backwards compatibility 3.9.1 - 3.9.2
         # - 'variant_data' contained only environments but contain also host
         #   and application variant filters
-        host_names = []
-        app_variants = []
-        if "host_names" in variant_data:
-            host_names = variant_data["host_names"]
-
-        if "app_variants" in variant_data:
-            app_variants = variant_data["app_variants"]
+        host_names = variant_data.get("host_names", [])
+        app_variants = variant_data.get("app_variants", [])
 
         if "environment" in variant_data:
             environment = variant_data["environment"]
