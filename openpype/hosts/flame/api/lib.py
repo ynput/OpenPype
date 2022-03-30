@@ -227,16 +227,6 @@ class FlameAppFramework(object):
         return True
 
 
-def get_project_manager():
-    # TODO: get_project_manager
-    return
-
-
-def get_media_storage():
-    # TODO: get_media_storage
-    return
-
-
 def get_current_project():
     import flame
     return flame.project.current_project
@@ -264,11 +254,6 @@ def get_current_sequence(selection):
                 break
 
     return process_timeline
-
-
-def create_bin(name, root=None):
-    # TODO: create_bin
-    return
 
 
 def rescan_hooks():
@@ -724,5 +709,5 @@ def get_batch_group_from_desktop(name):
     project_desktop = project.current_workspace.desktop
 
     for bgroup in project_desktop.batch_groups:
-        if bgroup.name.get_value() == name:
+        if bgroup.name.get_value() in name:
             return bgroup

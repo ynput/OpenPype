@@ -11,10 +11,8 @@ from .constants import (
 from .lib import (
     CTX,
     FlameAppFramework,
-    get_project_manager,
     get_current_project,
     get_current_sequence,
-    create_bin,
     create_segment_data_marker,
     get_segment_data_marker,
     set_segment_data_marker,
@@ -87,10 +85,8 @@ __all__ = [
     # lib
     "CTX",
     "FlameAppFramework",
-    "get_project_manager",
     "get_current_project",
     "get_current_sequence",
-    "create_bin",
     "create_segment_data_marker",
     "get_segment_data_marker",
     "set_segment_data_marker",

@@ -166,8 +166,11 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             self.log.info(
                 "Updating batch group: {}".format(batchgroup_name))
             # update already created batch group
+            bgroup.name = batchgroup_name
             bgroup.start_frame = frame_start
             bgroup.duration = frame_duration
+            # TODO: also update write node if there is any
+            # TODO: also update loaders to start from correct frameStart
 
         return bgroup
 

@@ -254,7 +254,7 @@ class WireTapCom(object):
         filtered_users = [user for user in used_names if user_name in user]
 
         if filtered_users:
-            # todo: need to find lastly created following regex pattern for
+            # TODO: need to find lastly created following regex pattern for
             # date used in name
             return filtered_users.pop()
 
