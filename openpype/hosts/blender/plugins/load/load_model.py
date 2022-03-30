@@ -192,8 +192,9 @@ class BlendModelLoader(plugin.AssetLoader):
             object = bpy.data.objects.get(object_name)
             if object:
                 for modifier in object.modifiers:
+                    modifier_name = modifier.name
                     if modifier:
-                        modifier_avalon = modfier_service(modifier)
+                        modifier_description = modfier_service(modifier)
                         # Set the modifier properties of an object in a dict
                         modifier_list.append(modifier_avalon)
         return modifier_list
@@ -201,6 +202,7 @@ class BlendModelLoader(plugin.AssetLoader):
     def _set_modifier(self, container, modifier_list):
         """Set all modifier parameters of the container's objects"""
 
+        objects_list = plugin.get_all_objects_in_collection(container)
         for modifier_description in modifier_list:
             modifier_description.create_blender_modifier()
 

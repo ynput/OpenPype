@@ -1,13 +1,11 @@
 """Load a layout in Blender."""
 
 from pathlib import Path
-from pprint import pformat
 from typing import Dict, List, Optional
 
 import bpy
 
 from avalon import api
-from openpype import lib
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
@@ -27,25 +25,37 @@ class BlendLayoutLoader(plugin.AssetLoader):
     color = "orange"
 
     def _remove(self, container):
+        """Remove the container and used data"""
+
         objects = list(container.objects)
-        for obj in objects:
-            if obj.type == "MESH":
-                for material_slot in list(obj.material_slots):
-                    if material_slot.material is not None:
+        for object in objects:
+            # Check if the object type is mesh
+            if object.type == "MESH":
+                for material_slot in list(object.material_slots):
+                    if material_slot.material:
+                        # Check if the material is local
                         if (
                             material_slot.material.library is None
                             and material_slot.material.override_library is None
                         ):
+                            # Remove the material
                             bpy.data.materials.remove(material_slot.material)
+                # Check if the mesh is local
                 if (
-                    obj.data.library is None
-                    and obj.data.override_library is None
+                    object.data.library is None
+                    and object.data.override_library is None
                 ):
-                    bpy.data.meshes.remove(obj.data)
-            elif obj.type == "EMPTY":
-                objects.extend(obj.objects)
-                if obj.library is None and obj.override_library is None:
-                    bpy.data.objects.remove(obj)
+                    # Remove the mesh
+                    bpy.data.meshes.remove(object.data)
+            # Check if the object type is Empty
+            elif object.type == "EMPTY":
+                # Add object children to the loop
+                objects.extend(object.objects)
+                # Check if the object is local
+                if object.library is None and object.override_library is None:
+                    # Remove the object
+                    bpy.data.objects.remove(object)
+        # Remove the container
         bpy.data.collections.remove(container)
 
     def _remove_asset_and_library(self, asset_group):
@@ -53,8 +63,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Check how many assets use the same library
         count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).all_objects:
-            if obj.get(AVALON_PROPERTY).get("libpath") == libpath:
+        for object in bpy.data.collections.get(AVALON_CONTAINERS).all_objects:
+            if object.get(AVALON_PROPERTY).get("libpath") == libpath:
                 count += 1
 
         self._remove(asset_group)
@@ -80,7 +90,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Find the loaded collection and set in variable container_collection
         container_collection = None
         instances = plugin.get_containers_list()
-        self.log.info("instances : %s", instances)
+        self.log.info(f"instances : '{instances}'")
         for data_collection in instances:
             if data_collection.override_library is None:
                 if data_collection[AVALON_PROPERTY].get("family") is not None:
@@ -218,9 +228,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             Path(bpy.path.abspath(str(libpath))).resolve()
         )
         self.log.debug(
-            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_container_libpath,
-            normalized_libpath,
+            f"normalized_group_libpath:\n  '{normalized_container_libpath}'\nnormalized_libpath:\n  '{normalized_libpath}'"
         )
         if normalized_container_libpath == normalized_libpath:
             self.log.info("Library already loaded, not updating...")
@@ -267,10 +275,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
                             sub_avalon_container.name
                         ] = armature.animation_data.action
 
-        # for collection in collections_in_container:
-        #     self._remove(collection)
-        # if avalon_container.override_library:
-        #     self._remove(avalon_container.override_library.reference)
         self._remove(avalon_container)
         plugin.remove_orphan_datablocks()
         plugin.remove_orphan_datablocks()
@@ -339,19 +343,23 @@ class BlendLayoutLoader(plugin.AssetLoader):
         return True
 
     def update_avalon_property(self, representation: Dict):
-
+        """Set the avalon property with the representation data"""
+        # Get all the container in the scene
+        containers = plugin.get_containers_list()
         container_collection = None
-        instances = plugin.get_containers_list()
-        for data_collection in instances:
+        for container in containers:
+            # Check if the container is local
             if (
-                data_collection.override_library is None
-                and data_collection.library is None
+                container.override_library is None
+                and container.library is None
             ):
-                container_collection = data_collection
-        self.log.info("container name %s ", container_collection.name)
+                # Check if the container isn't publish
+                if container["avalon"].get("id") == "pyblish.avalon.instance":
+                    container_collection = container
+
+        self.log.info(f"container name '{container_collection.name}' ")
 
         # Set the avalon property with the representation data
-
         asset = str(representation["context"]["asset"])
         subset = str(representation["context"]["subset"])
         asset_name = plugin.asset_name(asset, subset)
