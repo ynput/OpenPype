@@ -255,6 +255,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     tile_assembler_plugin = "OpenPypeTileAssembler"
     asset_dependencies = False
     limit_groups = []
+    jobInfo = None
+    pluginInfo = None
     group = "none"
 
     def process(self, instance):
@@ -272,37 +274,12 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             self.deadline_url = instance.data.get("deadlineUrl")
         assert self.deadline_url, "Requires Deadline Webservice URL"
 
-        self._job_info = (
-            context.data["project_settings"].get(
-                "deadline", {}).get(
-                "publish", {}).get(
-                "MayaSubmitDeadline", {}).get(
-                "jobInfo", {})
-        )
+        # just using existing names from Setting
+        self._job_info = self.jobInfo
 
-        self._plugin_info = (
-            context.data["project_settings"].get(
-                "deadline", {}).get(
-                "publish", {}).get(
-                "MayaSubmitDeadline", {}).get(
-                "pluginInfo", {})
-        )
+        self._plugin_info = self.pluginInfo
 
-        self.limit_groups = (
-            context.data["project_settings"].get(
-                "deadline", {}).get(
-                "publish", {}).get(
-                "MayaSubmitDeadline", {}).get(
-                "limit", [])
-        )
-
-        self.group = (
-            context.data["project_settings"].get(
-                "deadline", {}).get(
-                "publish", {}).get(
-                "MayaSubmitDeadline", {}).get(
-                "group", "none")
-        )
+        self.limit_groups = self.limit
 
         context = instance.context
         workspace = context.data["workspaceDir"]
