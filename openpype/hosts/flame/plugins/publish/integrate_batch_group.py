@@ -218,7 +218,8 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         # /path/to/file.[0001-0010].exr
         media_path = render_dir_path
         # name of file represented by tokens
-        media_path_pattern = "<name>_v<iteration###>/<name>_v<iteration###>.<frame><ext>"
+        media_path_pattern = (
+            "<name>_v<iteration###>/<name>_v<iteration###>.<frame><ext>")
         # The Create Open Clip attribute of the Write File node. \
         # Determines if an Open Clip is created by the Write File node.
         create_clip = True
