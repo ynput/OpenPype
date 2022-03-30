@@ -187,7 +187,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
 def launch_openpype_menu():
     app = QtWidgets.QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)
 
     pype_menu = OpenPypeMenu()
 
@@ -196,4 +195,6 @@ def launch_openpype_menu():
 
     pype_menu.show()
 
-    sys.exit(app.exec_())
+    result = app.exec_()
+    print("Shutting down..")
+    sys.exit(result)
