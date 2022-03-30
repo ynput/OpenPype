@@ -13,46 +13,19 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class modfier_service:
+class modfier_description:
     """
-    Store the type, name, type, index, properties and object modified  of a modifier
+    Store the type, name, type,  properties and object modified  of a modifier
     The class has a method to create a modifier with this description
     """
-
-    def _get_index(self, modifier: bpy.types.Modifier):
-        """Method to get the index of the input modifier"""
-        index = 0
-        for current_modifier in modifier.id_data.modifiers:
-            if current_modifier.bl_rna == modifier.bl_rna:
-                self._index = index
-            index = index + 1
-
-    def set_index(self, index):
-        """change the position of the modifier if the modifier exits in the scene"""
-        object = bpy.data.objects[self._object_name]
-        if object:
-            bpy.context.view_layer.objects.active = object
-            try:
-                bpy.ops.object.modifier_move_to_index(
-                    modifier=self._properties["name"], index=index
-                )
-                self._index = index
-            except Exception as ex:
-                print(ex)
 
     @property
     def properties(self):
         return self._properties
 
     @property
-    def index(self):
-        return self._index
-
-    @property
     def object(self):
-        object = bpy.data.objects[self._object_name]
-        if object:
-            return object
+        return self._object_name
 
     def create_blender_modifier(self):
         """create the modifier with the index, properties and object properties"""
@@ -72,7 +45,6 @@ class modfier_service:
         """Get the index, properties and object modified of the modifier"""
         self._object_name = str()
         self._properties = dict()
-        self._index = int()
         for property in dir(modifier):
             # filter the property
             if property not in [
@@ -96,7 +68,6 @@ class modfier_service:
             ]:
                 self._properties[property] = getattr(modifier, property)
         self._object_name = modifier.id_data.name
-        self._get_index(modifier)
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -193,16 +164,29 @@ class BlendModelLoader(plugin.AssetLoader):
             if object:
                 for modifier in object.modifiers:
                     if modifier:
-                        modifier_avalon = modfier_service(modifier)
+                        modifier_description = modfier_description(modifier)
+
                         # Set the modifier properties of an object in a dict
-                        modifier_list.append(modifier_avalon)
+                        modifier_list.append(modifier_description)
         return modifier_list
 
-    def _set_modifier(self, container, modifier_list):
+    def _set_modifier(self, modifier_list):
         """Set all modifier parameters of the container's objects"""
-
+        modifier_list.reverse()
         for modifier_description in modifier_list:
             modifier_description.create_blender_modifier()
+
+        for modifier_description in modifier_list:
+            object = bpy.data.objects[modifier_description.object]
+            if object:
+                bpy.context.view_layer.objects.active = object
+                try:
+                    bpy.ops.object.modifier_move_to_index(
+                        modifier=modifier_description.properties["name"],
+                        index=0,
+                    )
+                except Exception as ex:
+                    print(ex)
 
     def _remove(self, container):
         """Remove the container and used data"""
@@ -429,7 +413,7 @@ class BlendModelLoader(plugin.AssetLoader):
                 parent_collection.children.link(container_override)
 
         # Reset the modifier parameters and the driver targets
-        self._set_modifier(container_override, modifiers_dict)
+        self._set_modifier(modifiers_dict)
         self._set_drivers_from_empty(empty)
         # self._set_drivers_target(container_override, object_driver_target_list)
 
