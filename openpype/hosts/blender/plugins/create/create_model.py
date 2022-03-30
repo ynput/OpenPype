@@ -42,12 +42,24 @@ class CreateModel(plugin.Creator):
         if (self.options or {}).get("useSelection"):
             selected = lib.get_selection()
             for object in selected:
-                container.objects.link(object)
-                scene_collection.objects.unlink(object)
+                if object not in container.objects.values():
+                    for collection in object.users_collection:
+                        collection.objects.unlink(object)
+                    container.objects.link(object)
         else:
+            collections = scene_collection.children
+            for collection in collections:
+                if (
+                    collection not in container.children.values()
+                    and collection is not container
+                ):
+                    scene_collection.children.unlink(collection)
+                    container.children.link(collection)
             objects = scene_collection.objects
             for object in objects:
-                container.objects.link(object)
-                scene_collection.objects.unlink(object)
+                if object not in container.objects.values():
+                    for user_collection in object.users_collection:
+                        user_collection.objects.unlink(object)
+                    container.objects.link(object)
 
         return container

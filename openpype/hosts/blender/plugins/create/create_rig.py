@@ -52,24 +52,27 @@ class CreateRig(plugin.Creator):
         lib.imprint(container, self.data)
 
         # Link the collections in the scene to the container
-        for collection in collections:
-            if (
-                container.children.get(collection.name) is None
-                and container != collection
-            ):
-                scene_collection.children.unlink(collection)
-                container.children.link(collection)
+        if not (self.options or {}).get("useSelection"):
+            for collection in collections:
+                if (
+                    container.children.get(collection.name) is None
+                    and container != collection
+                ):
+                    scene_collection.children.unlink(collection)
+                    container.children.link(collection)
 
         # Add selected objects to container
         objects_to_link = list()
         if (self.options or {}).get("useSelection"):
-            objects_to_link = self.get_selection_hierarchie()
+            selected = lib.get_selection()
+            for object in selected:
+                objects_to_link.append(object)
         else:
             objects_to_link = scene_collection.objects
 
         for object in objects_to_link:
             if container.get(object.name) is None:
+                for collection in object.users_collection:
+                    collection.objects.unlink(object)
                 container.objects.link(object)
-            if scene_collection.objects.get(object.name) is not None:
-                scene_collection.objects.unlink(object)
         return container

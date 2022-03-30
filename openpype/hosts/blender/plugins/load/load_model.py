@@ -13,6 +13,92 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
+class modfier_service:
+    """
+    Store the type, name, type, index, properties and object modified  of a modifier
+    The class has a method to create a modifier with this description
+    """
+
+    def _get_index(self, modifier: bpy.types.Modifier):
+        """Method to get the index of the input modifier"""
+        index = 0
+        for current_modifier in modifier.id_data.modifiers:
+            if current_modifier.bl_rna == modifier.bl_rna:
+                self._index = index
+            index = index + 1
+
+    def set_index(self, index):
+        """change the position of the modifier if the modifier exits in the scene"""
+        object = bpy.data.objects[self._object_name]
+        if object:
+            bpy.context.view_layer.objects.active = object
+            try:
+                bpy.ops.object.modifier_move_to_index(
+                    modifier=self._properties["name"], index=index
+                )
+                self._index = index
+            except Exception as ex:
+                print(ex)
+
+    @property
+    def properties(self):
+        return self._properties
+
+    @property
+    def index(self):
+        return self._index
+
+    @property
+    def object(self):
+        object = bpy.data.objects[self._object_name]
+        if object:
+            return object
+
+    def create_blender_modifier(self):
+        """create the modifier with the index, properties and object properties"""
+        object = bpy.data.objects[self._object_name]
+        if object:
+            if object.modifiers.get(self._properties["name"]) is None:
+                modifier = object.modifiers.new(
+                    self._properties["name"],
+                    self._properties["type"],
+                )
+                for property_key in self._properties.keys():
+                    if not (modifier.is_property_readonly(property_key)):
+                        property_value = self._properties[property_key]
+                        setattr(modifier, property_key, property_value)
+
+    def __init__(self, modifier: bpy.types.Modifier):
+        """Get the index, properties and object modified of the modifier"""
+        self._object_name = str()
+        self._properties = dict()
+        self._index = int()
+        for property in dir(modifier):
+            # filter the property
+            if property not in [
+                "__doc__",
+                "__module__",
+                "__slots__",
+                "bl_rna",
+                "is_active",
+                "is_override_data",
+                "rna_type",
+                "show_expanded",
+                "show_in_editmode",
+                "show_on_cage",
+                "show_render",
+                "show_viewport",
+                "use_apply_on_spline",
+                "use_bone_envelopes",
+                "use_deform_preserve_volume",
+                "use_multi_modifier",
+                "use_vertex_groups",
+            ]:
+                self._properties[property] = getattr(modifier, property)
+        self._object_name = modifier.id_data.name
+        self._get_index(modifier)
+
+
 class BlendModelLoader(plugin.AssetLoader):
     """Load models from a .blend file.
 
@@ -82,7 +168,7 @@ class BlendModelLoader(plugin.AssetLoader):
             # Get the data path on the driver
             data_path_with_object_name = driver.data_path
             # Get the object name and the data path store in the data_path
-            # data_path = object name + empty driver data_path
+            # Data_path = object name + empty driver data_path
             object_name = data_path_with_object_name.split(":")[0]
             data_path = data_path_with_object_name.split(":")[1]
 
@@ -100,87 +186,25 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects_list = plugin.get_all_objects_in_collection(container)
         object_names_list = [object.name for object in objects_list]
-        object_modifier_dict = dict()
+        modifier_list = list()
         # Find the modifier properties of an object
         for object_name in object_names_list:
             object = bpy.data.objects.get(object_name)
             if object:
-                modifiers_dict = dict()
                 for modifier in object.modifiers:
                     modifier_name = modifier.name
                     if modifier:
-                        property_dict = dict()
-                        for property in dir(modifier):
-                            # filter the property
-                            if property not in [
-                                "__doc__",
-                                "__module__",
-                                "__slots__",
-                                "bl_rna",
-                                "is_active",
-                                "is_override_data",
-                                "rna_type",
-                                "show_expanded",
-                                "show_in_editmode",
-                                "show_on_cage",
-                                "show_render",
-                                "show_viewport",
-                                "use_apply_on_spline",
-                                "use_bone_envelopes",
-                                "use_deform_preserve_volume",
-                                "use_multi_modifier",
-                                "use_vertex_groups",
-                            ]:
-                                property_dict[property] = getattr(
-                                    modifier, property
-                                )
+                        modifier_description = modfier_service(modifier)
                         # Set the modifier properties of an object in a dict
-                        modifiers_dict[modifier_name] = property_dict
-                object_modifier_dict[object.name] = modifiers_dict
-        return object_modifier_dict
+                        modifier_list.append(modifier_avalon)
+        return modifier_list
 
-    def _set_modifier(self, container, object_modifier_dict):
+    def _set_modifier(self, container, modifier_list):
         """Set all modifier parameters of the container's objects"""
 
         objects_list = plugin.get_all_objects_in_collection(container)
-        object_names_list = [object.name for object in objects_list]
-        for object_name in object_names_list:
-
-            object = bpy.data.objects.get(object_name)
-            if object.type == "MESH":
-                index_modifier = 0
-                for modifier_name in object_modifier_dict[object_name]:
-                    if object.modifiers.get(modifier_name) is None:
-                        object.modifiers.new(
-                            object_modifier_dict[object.name][modifier_name][
-                                "name"
-                            ],
-                            object_modifier_dict[object.name][modifier_name][
-                                "type"
-                            ],
-                        )
-
-                    modifier = bpy.data.objects[object_name].modifiers[
-                        modifier_name
-                    ]
-
-                    property_names_list = object_modifier_dict[object.name][
-                        modifier_name
-                    ]
-                    for property_name in property_names_list:
-                        if not (modifier.is_property_readonly(property_name)):
-                            property_value = object_modifier_dict[object.name][
-                                modifier_name
-                            ][property_name]
-                            setattr(modifier, property_name, property_value)
-                    bpy.context.view_layer.objects.active = object
-                    try:
-                        bpy.ops.object.modifier_move_to_index(
-                            modifier=modifier.name, index=index_modifier
-                        )
-                    except Exception as ex:
-                        print(ex)
-                    index_modifier = index_modifier + 1
+        for modifier_description in modifier_list:
+            modifier_description.create_blender_modifier()
 
     def _remove(self, container):
         """Remove the container and used data"""

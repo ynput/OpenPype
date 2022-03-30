@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 from openpype.hosts.blender.api.plugin import is_local_collection
 from openpype.hosts.blender.plugins.publish import (
-    extract_local_instance_standalone,
+    extract_local_container_standalone,
 )
 
 import pyblish.api
@@ -49,7 +49,7 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
                 "work"
             ][system]
             script_path = os.path.abspath(
-                extract_local_instance_standalone.__file__
+                extract_local_container_standalone.__file__
             )
 
             filepath = str(representation["data"]["source"]).replace(
