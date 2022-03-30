@@ -43,17 +43,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         # process all sellected
         for segment in selected_segments:
-            comment_attributes = self._get_comment_attributes(segment)
-            self.log.debug("__ segment.name: {}".format(
-                segment.name
-            ))
-            self.log.debug("_ comment_attributes: {}".format(
-                pformat(comment_attributes)))
-
-            clip_data = opfapi.get_segment_attributes(segment)
-            clip_name = clip_data["segment_name"]
-            self.log.debug("clip_name: {}".format(clip_name))
-
             # get openpype tag data
             marker_data = opfapi.get_segment_data_marker(segment)
             self.log.debug("__ marker_data: {}".format(
@@ -64,6 +53,19 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             if marker_data.get("id") != "pyblish.avalon.instance":
                 continue
+
+            self.log.debug("__ segment.name: {}".format(
+                segment.name
+            ))
+
+            comment_attributes = self._get_comment_attributes(segment)
+
+            self.log.debug("_ comment_attributes: {}".format(
+                pformat(comment_attributes)))
+
+            clip_data = opfapi.get_segment_attributes(segment)
+            clip_name = clip_data["segment_name"]
+            self.log.debug("clip_name: {}".format(clip_name))
 
             # get file path
             file_path = clip_data["fpath"]
