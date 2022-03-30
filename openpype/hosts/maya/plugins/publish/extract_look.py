@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import tempfile
+import platform
 import contextlib
 import subprocess
 from collections import OrderedDict
@@ -334,7 +335,11 @@ class ExtractLook(openpype.api.Extractor):
         transfers = []
         hardlinks = []
         hashes = {}
-        force_copy = instance.data.get("forceCopy", False)
+        # Temporary fix to NOT create hardlinks on windows machines
+        if platform.system().lower() == "windows":
+            force_copy = True
+        else:
+            force_copy = instance.data.get("forceCopy", False)
 
         for filepath in files_metadata:
 
