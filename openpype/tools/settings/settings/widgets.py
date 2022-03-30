@@ -97,6 +97,9 @@ class CompleterView(QtWidgets.QListView):
             QtCore.Qt.FramelessWindowHint
             | QtCore.Qt.Tool
         )
+
+        # Open the widget unactivated
+        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
