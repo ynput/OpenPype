@@ -1,7 +1,7 @@
 from typing import List
 
 import mathutils
-import bpy
+
 import pyblish.api
 import openpype.hosts.blender.api.action
 
@@ -22,21 +22,24 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = "Transform Zero"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
-
+    optional = True
+    active = False
     _identity = mathutils.Matrix()
 
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        collection = bpy.data.collections[instance.name]
-        for obj in [obj for obj in collection.objects]:
+        for obj in [obj for obj in instance]:
+
             if obj.matrix_basis != cls._identity:
                 invalid.append(obj)
         return invalid
 
     def process(self, instance):
+
+        # not sure if it's to check the controllers or the objects in the instance
+
         invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError(
-                f"Object found in instance is not transform zero: {invalid}"
-            )
+        # if invalid:
+        # raise RuntimeError(
+        # f"Object found in instance is not in Object Mode: {invalid}")
