@@ -98,8 +98,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             label = asset
             if asset != clip_name:
                 label += " ({})".format(clip_name)
-            label += " {}".format(subset)
-            label += " {}".format("[" + ", ".join(families) + "]")
+            label += " {} [{}]".format(subset, ", ".join(families))
 
             inst_data.update({
                 "name": "{}_{}".format(asset, subset),
