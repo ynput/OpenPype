@@ -4,7 +4,6 @@ import logging
 import contextlib
 
 import hou
-import hdefereval
 
 import pyblish.api
 import avalon.api
@@ -305,7 +304,13 @@ def on_new():
         start = hou.playbar.playbackRange()[0]
         hou.setFrame(start)
 
-    hdefereval.executeDeferred(_enforce_start_frame)
+    if hou.isUIAvailable():
+        import hdefereval
+        hdefereval.executeDeferred(_enforce_start_frame)
+    else:
+        # Run without execute deferred when no UI is available because
+        # without UI `hdefereval` is not available to import
+        _enforce_start_frame()
 
 
 def _set_context_settings():
