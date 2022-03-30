@@ -22,4 +22,4 @@ class CreateLook(plugin.Creator):
         self.data["maketx"] = self.make_tx
 
         # Enable users to force a copy.
-        self.data["forceCopy"] = False
+        self.data["forceCopy"] = True
