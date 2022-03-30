@@ -185,7 +185,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         set_framerange()
 
 
-
 def launch_openpype_menu():
     app = QtWidgets.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
