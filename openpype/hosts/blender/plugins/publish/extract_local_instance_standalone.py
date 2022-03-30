@@ -23,10 +23,45 @@ def extract(file_to_open, filepath, collection_name):
     bpy.context.scene.collection.children.link(collection)
     bpy.ops.object.make_local(type="ALL")
 
+    objects_list = plugin.get_all_objects_in_collection(collection)
+    for object in objects_list:
+        if object.animation_data:
+            if object.animation_data.drivers:
+                drivers = object.animation_data.drivers
+                modifier_to_delete = []
+                for driver in drivers:
+                    data_path = driver.data_path
+                    if "modifier" in data_path:
+                        variables = driver.driver.variables
+                        for variable in variables:
+                            targets = variable.targets
+                            for target in targets:
+                                target_id = target.id
+                                if target_id.type == "ARMATURE":
+                                    modifier_data_path = data_path.split(".")[
+                                        0
+                                    ]
+                                    try:
+                                        modifier = object.path_resolve(
+                                            modifier_data_path, False
+                                        )
+                                        object.animation_data.drivers.remove(
+                                            driver
+                                        )
+                                        if modifier not in modifier_to_delete:
+                                            modifier_to_delete.append(modifier)
+                                    except:
+                                        print(
+                                            f" '{modifier_data_path}' could not be resolved"
+                                        )
+                for modifier in modifier_to_delete:
+                    object.modifiers.remove(modifier)
+
     objects_List = plugin.get_all_objects_in_collection(collection)
     for object in objects_List:
-        if object.modifiers:
-            object.modifiers.clear()
+        for modifier in object.modifiers:
+            if modifier.type == "ARMATURE":
+                object.modifiers.remove(modifier)
 
     plugin.remove_orphan_datablocks()
 
