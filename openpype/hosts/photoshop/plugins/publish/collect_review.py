@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 
-from openpype.lib import get_subset_name
+from openpype.lib import get_subset_name_with_asset_doc
 
 
 class CollectReview(pyblish.api.ContextPlugin):
@@ -14,13 +14,13 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "review"
-        subset = get_subset_name(
+        subset = get_subset_name_with_asset_doc(
             family,
             "",
             context.data["anatomyData"]["task"]["name"],
-            context.data["assetEntity"]["_id"],
+            context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],
-            host_name="photoshop"
+            host_name=context.data["hostName"]
         )
 
         file_path = context.data["currentFile"]
