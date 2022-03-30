@@ -1,7 +1,7 @@
 import os
 import sys
 
-from Qt import QtCore, QtWidgets
+from Qt import QtCore
 
 
 class PulseThread(QtCore.QThread):
@@ -24,7 +24,7 @@ class PulseThread(QtCore.QThread):
             except Exception:
                 self.no_response.emit()
 
-            self.msleep(self._interval)
+            self.msleep(interval)
 
 
 class FusionPulse(QtCore.QObject):
@@ -58,5 +58,3 @@ class FusionPulse(QtCore.QObject):
 
     def stop(self):
         self._thread.requestInterruption()
-
-
