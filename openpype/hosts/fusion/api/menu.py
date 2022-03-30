@@ -15,6 +15,8 @@ from openpype.hosts.fusion.api import (
     set_framerange
 )
 
+from .pulse import FusionPulse
+
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
@@ -120,6 +122,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self._callbacks = []
         self.register_callback("taskChanged", self.on_task_changed)
         self.on_task_changed()
+
+        # Force close current process if Fusion is closed
+        self._pulse = FusionPulse(parent=self)
+        self._pulse.start()
 
     def on_task_changed(self):
         # Update current context label
