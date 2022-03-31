@@ -3,7 +3,7 @@
 <error id="main">
 <title>Invalid texture name</title>
 <description>
-## Source files not found
+## Invalid file name
 
 Submitted file has invalid name:
 '{invalid_file}'
@@ -11,7 +11,7 @@ Submitted file has invalid name:
 ### How to repair?
 
     Texture file must adhere to naming conventions for Unreal:
-    T_[ASSET_NAME}_*.ext
+    T_{asset}_*.ext
 </description>
 </error>
 </root>

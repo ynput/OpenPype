@@ -20,4 +20,7 @@ class ValidateSimpleUnrealTextureNaming(pyblish.api.InstancePlugin):
         if not re.match(pattern, file_name):
             msg = f"Invalid file name {file_name}"
             raise PublishXmlValidationError(
-                self, msg, formatting_data={"invalid_file": file_name})
+                self, msg, formatting_data={
+                    "invalid_file": file_name,
+                    "asset": instance.data.get("asset")
+                })
