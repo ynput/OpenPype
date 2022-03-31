@@ -45,7 +45,7 @@ class AddSyncSite(load.LoaderPlugin):
 
         if family == "workfile":
             links = get_linked_ids_for_representations(project_name,
-                                                       add_ids,
+                                                       [repre_id],
                                                        link_type="reference")
             for link_repre_id in links:
                 self.add_site_to_representation(project_name,
