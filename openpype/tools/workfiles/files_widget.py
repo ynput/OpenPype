@@ -449,11 +449,18 @@ class FilesWidget(QtWidgets.QWidget):
         """
         session = self._get_session()
 
+        if self.published_enabled:
+            filepath = self._get_selected_filepath()
+            extensions = [os.path.splitext(filepath)[1]]
+        else:
+            extensions = self.host.file_extensions()
+
         window = SaveAsDialog(
             parent=self,
             root=self._workfiles_root,
             anatomy=self.anatomy,
             template_key=self.template_key,
+            extensions=extensions,
             session=session
         )
         window.exec_()
