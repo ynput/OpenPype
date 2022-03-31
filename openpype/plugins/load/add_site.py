@@ -38,23 +38,20 @@ class AddSyncSite(load.LoaderPlugin):
         family = context["representation"]["context"]["family"]
         project_name = data["project_name"]
         repre_id = data["_id"]
+        self.add_site_to_representation(project_name,
+                                        repre_id,
+                                        data["site_name"],
+                                        is_main=True)
 
-        add_ids = [repre_id]
         if family == "workfile":
             links = get_linked_ids_for_representations(project_name,
                                                        add_ids,
                                                        link_type="reference")
-            add_ids.extend(links)
-
-        add_ids = set(add_ids)
-        self.log.info("Add to repre_ids {}".format(add_ids))
-        is_main = True
-        for add_repre_id in add_ids:
-            self.add_site_to_representation(project_name,
-                                            add_repre_id,
-                                            data["site_name"],
-                                            is_main)
-            is_main = False
+            for link_repre_id in links:
+                self.add_site_to_representation(project_name,
+                                                link_repre_id,
+                                                data["site_name"],
+                                                is_main=False)
 
         self.log.debug("Site added.")
 
