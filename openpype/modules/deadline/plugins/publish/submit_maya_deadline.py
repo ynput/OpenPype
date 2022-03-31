@@ -254,6 +254,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     use_published = True
     tile_assembler_plugin = "OpenPypeTileAssembler"
     asset_dependencies = False
+    priority = 50
+    tile_priority = 50
     limit_groups = []
     jobInfo = None
     pluginInfo = None
@@ -442,7 +444,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["UserName"] = deadline_user
         # Set job priority
         self.payload_skeleton["JobInfo"]["Priority"] = \
-            self._instance.data.get("priority", 50)
+            self._instance.data.get("priority", self.priority)
 
         if self.group != "none" and self.group:
             self.payload_skeleton["JobInfo"]["Group"] = self.group
@@ -612,7 +614,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             }
             assembly_payload["JobInfo"].update(output_filenames)
             assembly_payload["JobInfo"]["Priority"] = self._instance.data.get(
-                "priority", 50)
+                "tile_priority", self.tile_priority)
             assembly_payload["JobInfo"]["UserName"] = deadline_user
 
             frame_payloads = []
