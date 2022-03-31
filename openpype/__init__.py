@@ -24,7 +24,7 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 
 
 def install():
-    """Install Pype to Avalon."""
+    """Install OpenPype to Avalon."""
     import avalon.api
     import pyblish.api
     from pyblish.lib import MessageHandler
