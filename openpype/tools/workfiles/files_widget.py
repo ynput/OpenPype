@@ -554,7 +554,7 @@ class FilesWidget(QtWidgets.QWidget):
     def _save_as_with_dialog(self):
         work_filename = self.get_filename()
         if not work_filename:
-            return
+            return None
 
         src_path = self._get_selected_filepath()
 
@@ -612,6 +612,7 @@ class FilesWidget(QtWidgets.QWidget):
             self._published_checkbox.setChecked(False)
         else:
             self.refresh()
+        return filepath
 
     def _on_published_save_as_pressed(self):
         self._save_as_with_dialog()
@@ -648,9 +649,10 @@ class FilesWidget(QtWidgets.QWidget):
         self._set_publish_context_select_mode(True)
 
     def _on_publish_select_context_pressed(self):
-        self._save_as_with_dialog()
-        self._set_publish_context_select_mode(False)
-        self._update_asset_task()
+        result = self._save_as_with_dialog()
+        if result is not None:
+            self._set_publish_context_select_mode(False)
+            self._update_asset_task()
 
     def _on_publish_cancel_pressed(self):
         self._set_publish_context_select_mode(False)
