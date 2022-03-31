@@ -131,7 +131,7 @@ class BinaryThumbnail(ThumbnailResolver):
 
 # Thumbnail resolvers
 def discover_thumbnail_resolvers():
-    return discover(ThumbnailResolver).plugins
+    return discover(ThumbnailResolver)
 
 
 def register_thumbnail_resolver(plugin):
