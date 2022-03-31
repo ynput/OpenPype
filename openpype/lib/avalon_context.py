@@ -2067,7 +2067,7 @@ def _process_referenced_pipeline_result(result, link_type):
 
         # outputs_recursive in random order, sort by _id
         outputs_recursive = sorted(item.get("outputs_recursive", []),
-                                   key=lambda d: d["_id"])
+                                   key=lambda d: d["depth"])
         # go from oldest to newest
         # only older _id can reference another newer _id
         for output in outputs_recursive[::-1]:
