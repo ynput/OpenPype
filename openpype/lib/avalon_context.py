@@ -2040,14 +2040,14 @@ def get_linked_ids_for_representations(project, repre_ids, dbcon=None,
     referenced_version_ids = _process_referenced_pipeline_result(result,
                                                                  link_type)
 
-    representations = avalon.io.find(
-        {
+    ref_ids = avalon.io.distinct(
+        "_id",
+        filter={
             "parent": {"$in": list(referenced_version_ids)},
             "type": "representation"
-        },
-        projection={"_id": True}
+        }
     )
-    ref_ids = {representation["_id"] for representation in representations}
+
     return list(ref_ids)
 
 
