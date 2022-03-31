@@ -522,4 +522,29 @@ Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_
     ```
 </details>
 
+## **UI examples**
+### Main publish window
+Main window of publisher shows instances and their values, collected by creators.
 
+**Card view**
+![Publisher UI - Card view](assets/publisher_card_view.png)
+**List view**
+![Publisher UI - List view](assets/publisher_list_view.png)
+
+#### *Instances views*
+List of instances always contains `Options` item which is used to show attributes of context plugins. Values from the item are saved and loaded using [host implementation](#required-functions-in-host-implementation) **get_context_data** and **update_context_data**. Instances are grouped by family and can be shown in card view (single selection) or list view (multi selection).
+
+Instance view has at the bottom 3 buttons. Plus sign opens [create dialog](#create-dialog), bin removes selected instances and stripes swap card and list view.
+
+#### *Context options*
+It is possible to change variant or asset and task context of instances at the top part but all changes there must be confirmed. Confirmation will trigger recalculation of subset names and all new data are stored to instances.
+
+#### *Create attributes*
+Instance attributes display all create attributes of all selected instances. All attributes that have same definition are grouped into one input and is visually indicated if values are not same for selected instances. In most of cases have **< Multiselection >** placeholder.
+
+#### *Publish attributes*
+Publish attributes work the same way as create attributes but the source of attribute definitions are pyblish plugins. Attributes are filtered based on families of selected instances and families defined in pyblish plugin.
+
+### Create dialog
+![Publisher UI - Create dialog](assets/publisher_create_dialog.png)
+Create dialog is used by artist to create new instances in a context. The context selection can be enabled/disabled by changing `create_allow_context_change` on [creator plugin](#creator). In middle part artist select what will be created and what variant it is. On right side is information about selected creator and it's pre-create attributes. There is also question mark button which extends window and display more detailed information about the creator.
