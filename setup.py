@@ -187,5 +187,6 @@ setup(
             "build_dir": (openpype_root / "docs" / "build").as_posix()
         }
     },
-    executables=executables
+    executables=executables,
+    package_dir=[]
 )
