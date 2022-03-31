@@ -1604,13 +1604,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     Returns:
         Creator: Return first matching plugin or `None`.
     """
-    from openpype.pipeline import LegacyCreator
+    from openpype.pipeline import discover_legacy_creator_plugins
 
     # Lower input creator name if is not case sensitive
     if not case_sensitive:
         creator_name = creator_name.lower()
 
-    for creator_plugin in avalon.api.discover(LegacyCreator):
+    for creator_plugin in discover_legacy_creator_plugins():
         _creator_name = creator_plugin.__name__
 
         # Lower creator plugin name if is not case sensitive
@@ -1705,7 +1705,7 @@ def _get_task_context_data_for_anatomy(
         "task": {
             "name": task_name,
             "type": task_type,
-            "short_name": project_task_type_data["short_name"]
+            "short": project_task_type_data["short_name"]
         }
     }
 

@@ -208,9 +208,10 @@
                                 "type": "separator"
                             },
                             {
-                                "type": "text",
-                                "key": "extension",
-                                "label": "File extension"
+                                "type": "boolean",
+                                "key": "read_raw",
+                                "label": "Read colorspace RAW",
+                                "default": false
                             },
                             {
                                 "type": "text",
@@ -228,12 +229,6 @@
                                 "label": "Bake Viewer Input Process (LUTs)"
                             },
                             {
-                                "key": "add_tags",
-                                "label": "Add additional tags to representations",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
                                 "type": "separator"
                             },
                             {
@@ -246,7 +241,7 @@
                                 "type": "collapsible-wrap",
                                 "label": "Reformat Node Knobs",
                                 "collapsible": true,
-                                "collapsed": false,
+                                "collapsed": true,
                                 "children": [
                                     {
                                         "type": "list",
@@ -347,6 +342,20 @@
                                         }
                                     }
                                 ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "extension",
+                                "label": "Write node file type"
+                            },
+                            {
+                                "key": "add_tags",
+                                "label": "Add additional tags to representations",
+                                "type": "list",
+                                "object_type": "text"
                             }
                         ]
                     }

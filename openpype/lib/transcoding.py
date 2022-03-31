@@ -478,8 +478,14 @@ def convert_for_ffmpeg(
             oiio_cmd.extend(["--eraseattrib", attr_name])
 
     # Add last argument - path to output
-    base_file_name = os.path.basename(first_input_path)
-    output_path = os.path.join(output_dir, base_file_name)
+    if is_sequence:
+        ext = os.path.splitext(first_input_path)[1]
+        base_filename = "tmp.%{:0>2}d{}".format(
+            len(str(input_frame_end)), ext
+        )
+    else:
+        base_filename = os.path.basename(first_input_path)
+    output_path = os.path.join(output_dir, base_filename)
     oiio_cmd.extend([
         "-o", output_path
     ])
