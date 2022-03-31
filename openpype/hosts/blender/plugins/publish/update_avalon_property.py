@@ -46,7 +46,9 @@ class UpdateAvalonProperty(
                 "context.ext": "blend",
             }
         )
-
+        # Get avalon custom property
+        container = bpy.data.collections.get(instance.name)
+        avalon_property = container.get("avalon").to_dict()
         # Create context for the loader object
         context = {"representation": representation}
         # Use the good update property update function with the family
@@ -74,3 +76,6 @@ class UpdateAvalonProperty(
 
         # Overwrite the publish file
         self.log.info(" %s updated.", filepath)
+        # Reset avalon custom property
+        # Otherwise we can't relaunch the publish
+        container["avalon"] = avalon_property
