@@ -294,6 +294,12 @@ class CreateRender(plugin.Creator):
                 deadline_url = next(iter(self.deadline_servers.values()))
 
             pool_names = self._get_deadline_pools(deadline_url)
+            priority = self._project_settings.get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
+                "priority", 50)
+            self.data["priority"] = priority
 
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
