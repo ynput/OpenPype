@@ -2,7 +2,7 @@
 import re
 
 
-def match_aov_pattern(app, aov_patterns, render_file_name):
+def match_aov_pattern(host_name, aov_patterns, render_file_name):
     """Matching against a `AOV` pattern in the render files.
 
     In order to match the AOV name we must compare
@@ -18,7 +18,7 @@ def match_aov_pattern(app, aov_patterns, render_file_name):
     Returns:
         bool: Review state for rendered file (render_file_name).
     """
-    aov_pattern = aov_patterns.get(app, [])
+    aov_pattern = aov_patterns.get(host_name, [])
     if aov_pattern:
         if re.match(aov_pattern, render_file_name):
             preview = True
