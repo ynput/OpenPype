@@ -188,5 +188,5 @@ setup(
         }
     },
     executables=executables,
-    package_dir=[]
+    packages=[]
 )
