@@ -265,11 +265,43 @@ def save_project_anatomy(project_name, anatomy_data):
         raise SaveWarningExc(warnings)
 
 
+def _system_settings_backwards_compatible_conversion(studio_overrides):
+    # Backwards compatibility of tools 3.9.1 - 3.9.2 to keep
+    #   "tools" environments
+    if (
+        "tools" in studio_overrides
+        and "tool_groups" in studio_overrides["tools"]
+    ):
+        tool_groups = studio_overrides["tools"]["tool_groups"]
+        for tool_group, group_value in tool_groups.items():
+            if tool_group in METADATA_KEYS:
+                continue
+
+            variants = group_value.get("variants")
+            if not variants:
+                continue
+
+            for key in set(variants.keys()):
+                if key in METADATA_KEYS:
+                    continue
+
+                variant_value = variants[key]
+                if "environment" not in variant_value:
+                    variants[key] = {
+                        "environment": variant_value
+                    }
+
+
 @require_handler
 def get_studio_system_settings_overrides(return_version=False):
-    return _SETTINGS_HANDLER.get_studio_system_settings_overrides(
+    output = _SETTINGS_HANDLER.get_studio_system_settings_overrides(
         return_version
     )
+    value = output
+    if return_version:
+        value, version = output
+    _system_settings_backwards_compatible_conversion(value)
+    return output
 
 
 @require_handler
