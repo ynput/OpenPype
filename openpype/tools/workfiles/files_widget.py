@@ -44,6 +44,31 @@ class FilesView(QtWidgets.QTreeView):
         return super(FilesView, self).mouseDoubleClickEvent(event)
 
 
+class SelectContextOverlay(QtWidgets.QFrame):
+    def __init__(self, parent):
+        super(SelectContextOverlay, self).__init__(parent)
+
+        self.setObjectName("WorkfilesPublishedContextSelect")
+        label_widget = QtWidgets.QLabel(
+            "Please select context on Left side<br/>&lt",
+            self
+        )
+        label_widget.setAlignment(QtCore.Qt.AlignCenter)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
+
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        parent.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Resize:
+            self.resize(obj.size())
+
+        return super(SelectContextOverlay, self).eventFilter(obj, event)
+
+
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
@@ -144,6 +169,9 @@ class FilesWidget(QtWidgets.QWidget):
         # about and the date modified is relatively small anyway.
         publish_files_view.setColumnWidth(0, 330)
 
+        publish_context_overlay = SelectContextOverlay(views_widget)
+        publish_context_overlay.setVisible(False)
+
         views_layout = QtWidgets.QHBoxLayout(views_widget)
         views_layout.setContentsMargins(0, 0, 0, 0)
         views_layout.addWidget(workarea_files_view, 1)
@@ -240,6 +268,8 @@ class FilesWidget(QtWidgets.QWidget):
         self._publish_files_view = publish_files_view
         self._publish_files_model = publish_files_model
         self._publish_proxy_model = publish_proxy_model
+
+        self._publish_context_overlay = publish_context_overlay
 
         self._workarea_btns_widget = workarea_btns_widget
         self._publish_btns_widget = publish_btns_widget
@@ -590,6 +620,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._publish_context_select_mode = enabled
 
         # Show buttons related to context selection
+        self._publish_context_overlay.setVisible(enabled)
         self._btn_cancel_published.setVisible(enabled)
         self._btn_select_context_published.setVisible(enabled)
         # Change enabled state based on select context
