@@ -50,7 +50,7 @@ class SelectContextOverlay(QtWidgets.QFrame):
 
         self.setObjectName("WorkfilesPublishedContextSelect")
         label_widget = QtWidgets.QLabel(
-            "Please select context on Left side<br/>&lt",
+            "Please choose context on the left<br/>&lt",
             self
         )
         label_widget.setAlignment(QtCore.Qt.AlignCenter)
