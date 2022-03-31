@@ -916,12 +916,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # User is deadline user
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
-            # Priority is now not handled at all
-
-            if self.deadline_priority:
-                render_job["Props"]["Pri"] = self.deadline_priority
-            else:
-                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             render_job["Props"]["Env"] = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
@@ -936,6 +930,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance.data.get("deadlineUrl"):
                 self.deadline_url = instance.data.get("deadlineUrl")
             assert self.deadline_url, "Requires Deadline Webservice URL"
+
+            if self.deadline_priority:
+                render_job["Props"]["Pri"] = self.deadline_priority
+            else:
+                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             self._submit_deadline_post_job(instance, render_job, instances)
 
