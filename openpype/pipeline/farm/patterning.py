@@ -19,9 +19,6 @@ def match_aov_pattern(host_name, aov_patterns, render_file_name):
         bool: Review state for rendered file (render_file_name).
     """
     aov_pattern = aov_patterns.get(host_name, [])
-    if aov_pattern:
-        if re.match(aov_pattern, render_file_name):
-            preview = True
-            return preview
-        else:
-            return False
+    if not aov_pattern:
+        return False
+    return re.match(aov_pattern, render_file_name) is not None
