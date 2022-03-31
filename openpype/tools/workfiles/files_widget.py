@@ -95,7 +95,7 @@ class FilesWidget(QtWidgets.QWidget):
         extensions = set(self.host.file_extensions())
 
         views_widget = QtWidgets.QWidget(self)
-        # Workarea view
+        # --- Workarea view ---
         workarea_files_model = WorkAreaFilesModel(extensions)
 
         # Create proxy model for files to be able sort and filter
@@ -113,13 +113,14 @@ class FilesWidget(QtWidgets.QWidget):
         # Date modified delegate
         workarea_time_delegate = PrettyTimeDelegate()
         workarea_files_view.setItemDelegateForColumn(1, workarea_time_delegate)
-        workarea_files_view.setIndentation(3)   # smaller indentation
+        # smaller indentation
+        workarea_files_view.setIndentation(3)
 
         # Default to a wider first filename column it is what we mostly care
         # about and the date modified is relatively small anyway.
         workarea_files_view.setColumnWidth(0, 330)
 
-        # Publish files view
+        # --- Publish files view ---
         publish_files_model = PublishFilesModel(extensions, io, self.anatomy)
 
         publish_proxy_model = QtCore.QSortFilterProxyModel()
@@ -136,7 +137,8 @@ class FilesWidget(QtWidgets.QWidget):
         # Date modified delegate
         publish_time_delegate = PrettyTimeDelegate()
         publish_files_view.setItemDelegateForColumn(1, publish_time_delegate)
-        publish_files_view.setIndentation(3)   # smaller indentation
+        # smaller indentation
+        publish_files_view.setIndentation(3)
 
         # Default to a wider first filename column it is what we mostly care
         # about and the date modified is relatively small anyway.
@@ -164,13 +166,13 @@ class FilesWidget(QtWidgets.QWidget):
 
         publish_btns_widget = QtWidgets.QWidget(btns_widget)
         btn_save_as_published = QtWidgets.QPushButton(
-            "Copy & Open", publish_btns_widget
+            "Copy && Open", publish_btns_widget
         )
         btn_change_context = QtWidgets.QPushButton(
             "Choose different context", publish_btns_widget
         )
         btn_select_context_published = QtWidgets.QPushButton(
-            "Copy & Open", publish_btns_widget
+            "Copy && Open", publish_btns_widget
         )
         btn_cancel_published = QtWidgets.QPushButton(
             "Cancel", publish_btns_widget
