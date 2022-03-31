@@ -4,7 +4,7 @@ title: Ftrack
 sidebar_label: Project Manager
 ---
 
-Ftrack is currently the main project management option for OpenPype. This documentation assumes that you are familiar with Ftrack and it's basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](https://help.ftrack.com/en/articles/1040483-creating-a-new-project).
+Ftrack is currently the main project management option for OpenPype. This documentation assumes that you are familiar with Ftrack and it's basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](https://help.ftrack.com/en/).
 
 ## Project management
 Setting project attributes is the key to properly working pipeline.
