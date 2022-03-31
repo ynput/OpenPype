@@ -465,21 +465,21 @@ Values of publish attributes from created instance are never removed automatical
 Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_definitions.py`.
 
 <details>
-  <summary>Toggle me!</summary>
+<summary>Example plugin</summary>
+<p>
 
-    ``` python
-
-    import pyblish.api
-    from openpype.pipeline import (
+```python
+import pyblish.api
+from openpype.pipeline import (
     OpenPypePyblishPluginMixin,
     attribute_definitions,
-    )
+)
 
 
-    # Example context plugin
-    class MyExtendedPlugin(
+# Example context plugin
+class MyExtendedPlugin(
     pyblish.api.ContextPlugin, OpenPypePyblishPluginMixin
-    ):
+):
     optional = True
     active = True
 
@@ -501,16 +501,13 @@ Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_
         if not self.optional:
             return True
 
+        # Attribute values are stored by class names
+        # - for those purposes was implemented 'get_attr_values_from_data'
+        #   to help with accessing it
+        attribute_values = self.get_attr_values_from_data(context.data)
         # Get 'process' key
-        process_value = (
-            context.data
-            .get("publish_attributes", {})
-            # Attribute values are stored by class names
-            .get(self.__class__.__name__, {})
-            # Access the key
-            .get("process")
-        )
-        if process_value or process_value is None:
+        process_value = attribute_values.get("process")
+        if process_value is None or process_value:
             return True
         return False
 
@@ -519,7 +516,8 @@ Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_
             return
         # Do plugin logic
         ...
-    ```
+```
+</p>
 </details>
 
 ## **UI examples**
