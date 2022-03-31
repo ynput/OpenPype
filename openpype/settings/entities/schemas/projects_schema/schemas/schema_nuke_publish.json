@@ -142,6 +142,21 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "ExtractReviewData",
+            "label": "ExtractReviewData",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "ExtractReviewDataLut",
             "label": "ExtractReviewDataLut",
             "is_group": true,
