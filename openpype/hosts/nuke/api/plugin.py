@@ -450,6 +450,7 @@ class ExporterReviewMov(ExporterReview):
 
     def generate_mov(self, farm=False, **kwargs):
         self.publish_on_farm = farm
+        read_raw = kwargs["read_raw"]
         reformat_node_add = kwargs["reformat_node_add"]
         reformat_node_config = kwargs["reformat_node_config"]
         bake_viewer_process = kwargs["bake_viewer_process"]
@@ -483,6 +484,9 @@ class ExporterReviewMov(ExporterReview):
         r_node["last"].setValue(self.last_frame)
         r_node["origlast"].setValue(self.last_frame)
         r_node["colorspace"].setValue(self.write_colorspace)
+
+        if read_raw:
+            r_node["raw"].setValue(1)
 
         # connect
         self._temp_nodes[subset].append(r_node)
