@@ -272,8 +272,8 @@ function Client() {
 
         app.avalonClient.send(
             {
-                'module': 'avalon.api',
-                'method': 'emit',
+                'module': 'openpype.lib',
+                'method': 'emit_event',
                 'args': ['application.launched']
             }, false);
     };

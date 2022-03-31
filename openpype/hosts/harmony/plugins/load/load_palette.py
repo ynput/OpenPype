@@ -1,11 +1,14 @@
 import os
 import shutil
 
-from avalon import api
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 import openpype.hosts.harmony.api as harmony
 
 
-class ImportPaletteLoader(api.Loader):
+class ImportPaletteLoader(load.LoaderPlugin):
     """Import palettes."""
 
     families = ["palette", "harmony.palette"]
@@ -31,7 +34,7 @@ class ImportPaletteLoader(api.Loader):
         scene_path = harmony.send(
             {"function": "scene.currentProjectPath"}
         )["result"]
-        src = api.get_representation_path(representation)
+        src = get_representation_path(representation)
         dst = os.path.join(
             scene_path,
             "palette-library",

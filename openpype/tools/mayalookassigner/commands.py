@@ -2,11 +2,13 @@ from collections import defaultdict
 import logging
 import os
 
+from bson.objectid import ObjectId
 import maya.cmds as cmds
 
-from openpype.hosts.maya.api import lib
-
 from avalon import io, api
+
+from openpype.pipeline import remove_container
+from openpype.hosts.maya.api import lib
 
 from .vray_proxies import get_alembic_ids_cache
 
@@ -156,7 +158,7 @@ def create_items_from_nodes(nodes):
         return asset_view_items
 
     for _id, id_nodes in id_hashes.items():
-        asset = io.find_one({"_id": io.ObjectId(_id)},
+        asset = io.find_one({"_id": ObjectId(_id)},
                             projection={"name": True})
 
         # Skip if asset id is not found
@@ -206,6 +208,6 @@ def remove_unused_looks():
 
     for container in unused:
         log.info("Removing unused look container: %s", container['objectName'])
-        api.remove(container)
+        remove_container(container)
 
     log.info("Finished removing unused looks. (see log for details)")

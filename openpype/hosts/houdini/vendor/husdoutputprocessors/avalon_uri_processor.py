@@ -145,7 +145,6 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
         path = self._template.format(**{
             "root": root,
             "project": PROJECT,
-            "silo": asset_doc["silo"],
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": ext,
@@ -165,4 +164,3 @@ output_processor = AvalonURIOutputProcessor()
 
 def usdOutputProcessor():
     return output_processor
-

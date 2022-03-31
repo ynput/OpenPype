@@ -1,6 +1,5 @@
 import os
 import sys
-import inspect
 import datetime
 import pprint
 import traceback
@@ -8,9 +7,20 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api, pipeline
-from avalon.lib import HeroVersionType
-
+from openpype.api import Anatomy
+from openpype.pipeline import HeroVersionType
+from openpype.pipeline.thumbnail import get_thumbnail_binary
+from openpype.pipeline.load import (
+    discover_loader_plugins,
+    SubsetLoaderPlugin,
+    loaders_from_repre_context,
+    get_repres_contexts,
+    get_subset_contexts,
+    load_with_repre_context,
+    load_with_subset_context,
+    load_with_subset_contexts,
+    IncompatibleLoaderError,
+)
 from openpype.tools.utils import (
     ErrorMessageBox,
     lib as tools_lib
@@ -425,7 +435,7 @@ class SubsetWidget(QtWidgets.QWidget):
 
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = api.discover(api.Loader)
+        available_loaders = discover_loader_plugins()
         if self.tool_name:
             available_loaders = lib.remove_tool_name_from_loaders(
                 available_loaders, self.tool_name
@@ -435,7 +445,7 @@ class SubsetWidget(QtWidgets.QWidget):
         subset_loaders = []
         for loader in available_loaders:
             # Skip if its a SubsetLoader.
-            if api.SubsetLoader in inspect.getmro(loader):
+            if issubclass(loader, SubsetLoaderPlugin):
                 subset_loaders.append(loader)
             else:
                 repre_loaders.append(loader)
@@ -459,7 +469,7 @@ class SubsetWidget(QtWidgets.QWidget):
             repre_docs = repre_docs_by_version_id[version_id]
             for repre_doc in repre_docs:
                 repre_context = repre_context_by_id[repre_doc["_id"]]
-                for loader in pipeline.loaders_from_repre_context(
+                for loader in loaders_from_repre_context(
                     repre_loaders,
                     repre_context
                 ):
@@ -515,7 +525,7 @@ class SubsetWidget(QtWidgets.QWidget):
             action = lib.get_no_loader_action(menu, one_item_selected)
             menu.addAction(action)
         else:
-            repre_contexts = pipeline.get_repres_contexts(
+            repre_contexts = get_repres_contexts(
                 repre_context_by_id.keys(), self.dbcon)
 
             menu = lib.add_representation_loaders_to_menu(
@@ -532,7 +542,7 @@ class SubsetWidget(QtWidgets.QWidget):
 
         self.load_started.emit()
 
-        if api.SubsetLoader in inspect.getmro(loader):
+        if issubclass(loader, SubsetLoaderPlugin):
             subset_ids = []
             subset_version_docs = {}
             for item in items:
@@ -541,8 +551,7 @@ class SubsetWidget(QtWidgets.QWidget):
                 subset_version_docs[subset_id] = item["version_document"]
 
             # get contexts only for selected menu option
-            subset_contexts_by_id = pipeline.get_subset_contexts(subset_ids,
-                                                                 self.dbcon)
+            subset_contexts_by_id = get_subset_contexts(subset_ids, self.dbcon)
             subset_contexts = list(subset_contexts_by_id.values())
             options = lib.get_options(action, loader, self, subset_contexts)
 
@@ -575,8 +584,7 @@ class SubsetWidget(QtWidgets.QWidget):
                 repre_ids.append(representation["_id"])
 
             # get contexts only for selected menu option
-            repre_contexts = pipeline.get_repres_contexts(repre_ids,
-                                                          self.dbcon)
+            repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
             options = lib.get_options(action, loader, self,
                                       list(repre_contexts.values()))
 
@@ -632,6 +640,7 @@ class VersionTextEdit(QtWidgets.QTextEdit):
             "source": None,
             "raw": None
         }
+        self._anatomy = None
 
         # Reset
         self.set_version(None)
@@ -722,20 +731,20 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         # Add additional actions when any text so we can assume
         # the version is set.
         if self.toPlainText().strip():
-
             menu.addSeparator()
-            action = QtWidgets.QAction("Copy source path to clipboard",
-                                       menu)
+            action = QtWidgets.QAction(
+                "Copy source path to clipboard", menu
+            )
             action.triggered.connect(self.on_copy_source)
             menu.addAction(action)
 
-            action = QtWidgets.QAction("Copy raw data to clipboard",
-                                       menu)
+            action = QtWidgets.QAction(
+                "Copy raw data to clipboard", menu
+            )
             action.triggered.connect(self.on_copy_raw)
             menu.addAction(action)
 
         menu.exec_(event.globalPos())
-        del menu
 
     def on_copy_source(self):
         """Copy formatted source path to clipboard"""
@@ -743,7 +752,11 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         if not source:
             return
 
-        path = source.format(root=api.registered_root())
+        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        if self._anatomy is None or self._anatomy.project_name != project_name:
+            self._anatomy = Anatomy(project_name)
+
+        path = source.format(root=self._anatomy.roots)
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(path)
 
@@ -763,7 +776,6 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
 
 class ThumbnailWidget(QtWidgets.QLabel):
-
     aspect_ratio = (16, 9)
     max_width = 300
 
@@ -855,7 +867,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
         if not thumbnail_ent:
             return
 
-        thumbnail_bin = pipeline.get_thumbnail_binary(
+        thumbnail_bin = get_thumbnail_binary(
             thumbnail_ent, "thumbnail", self.dbcon
         )
         if not thumbnail_bin:
@@ -1339,12 +1351,12 @@ class RepresentationWidget(QtWidgets.QWidget):
         selected_side = self._get_selected_side(point_index, rows)
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = api.discover(api.Loader)
+        available_loaders = discover_loader_plugins()
 
         filtered_loaders = []
         for loader in available_loaders:
             # Skip subset loaders
-            if api.SubsetLoader in inspect.getmro(loader):
+            if issubclass(loader, SubsetLoaderPlugin):
                 continue
 
             if (
@@ -1370,7 +1382,7 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         for item in items:
             repre_context = repre_context_by_id[item["_id"]]
-            for loader in pipeline.loaders_from_repre_context(
+            for loader in loaders_from_repre_context(
                 filtered_loaders,
                 repre_context
             ):
@@ -1426,7 +1438,7 @@ class RepresentationWidget(QtWidgets.QWidget):
             action = lib.get_no_loader_action(menu)
             menu.addAction(action)
         else:
-            repre_contexts = pipeline.get_repres_contexts(
+            repre_contexts = get_repres_contexts(
                 repre_context_by_id.keys(), self.dbcon)
             menu = lib.add_representation_loaders_to_menu(loaders, menu,
                                                           repre_contexts)
@@ -1472,8 +1484,7 @@ class RepresentationWidget(QtWidgets.QWidget):
 
             repre_ids.append(item.get("_id"))
 
-        repre_contexts = pipeline.get_repres_contexts(repre_ids,
-                                                      self.dbcon)
+        repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
         options = lib.get_options(action, loader, self,
                                   list(repre_contexts.values()))
 
@@ -1540,7 +1551,7 @@ def _load_representations_by_loader(loader, repre_contexts,
     """Loops through list of repre_contexts and loads them with one loader
 
         Args:
-            loader (cls of api.Loader) - not initialized yet
+            loader (cls of LoaderPlugin) - not initialized yet
             repre_contexts (dicts) - full info about selected representations
                 (containing repre_doc, version_doc, subset_doc, project info)
             options (dict) - qargparse arguments to fill OptionDialog
@@ -1558,12 +1569,12 @@ def _load_representations_by_loader(loader, repre_contexts,
                 _id = repre_context["representation"]["_id"]
                 data = data_by_repre_id.get(_id)
                 options.update(data)
-            pipeline.load_with_repre_context(
+            load_with_repre_context(
                 loader,
                 repre_context,
                 options=options
             )
-        except pipeline.IncompatibleLoaderError as exc:
+        except IncompatibleLoaderError as exc:
             print(exc)
             error_info.append((
                 "Incompatible Loader",
@@ -1612,7 +1623,7 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
 
             context["version"] = subset_version_docs[context["subset"]["_id"]]
         try:
-            pipeline.load_with_subset_contexts(
+            load_with_subset_contexts(
                 loader,
                 subset_contexts,
                 options=options
@@ -1638,7 +1649,7 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
             version_doc = subset_version_docs[subset_context["subset"]["_id"]]
             subset_context["version"] = version_doc
             try:
-                pipeline.load_with_subset_context(
+                load_with_subset_context(
                     loader,
                     subset_context,
                     options=options

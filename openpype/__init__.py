@@ -75,7 +75,11 @@ def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
-    from openpype.pipeline import LegacyCreator
+    from openpype.pipeline import (
+        LegacyCreator,
+        register_loader_plugin_path,
+        register_inventory_action,
+    )
     from avalon import pipeline
 
     # Make sure modules are loaded
@@ -91,7 +95,7 @@ def install():
     log.info("Registering global plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     pyblish.register_discovery_filter(filter_pyblish_plugins)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
 
     project_name = os.environ.get("AVALON_PROJECT")
 
@@ -119,9 +123,9 @@ def install():
                 continue
 
             pyblish.register_plugin_path(path)
-            avalon.register_plugin_path(avalon.Loader, path)
+            register_loader_plugin_path(path)
             avalon.register_plugin_path(LegacyCreator, path)
-            avalon.register_plugin_path(avalon.InventoryAction, path)
+            register_inventory_action(path)
 
     # apply monkey patched discover to original one
     log.info("Patching discovery")
@@ -139,10 +143,12 @@ def _on_task_change():
 @import_wrapper
 def uninstall():
     """Uninstall Pype from Avalon."""
+    from openpype.pipeline import deregister_loader_plugin_path
+
     log.info("Deregistering global plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     pyblish.deregister_discovery_filter(filter_pyblish_plugins)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     log.info("Global plug-ins unregistred")
 
     # restore original discover

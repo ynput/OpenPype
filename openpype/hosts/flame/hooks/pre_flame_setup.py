@@ -73,7 +73,7 @@ class FlamePrelaunch(PreLaunchHook):
             "FrameWidth": int(width),
             "FrameHeight": int(height),
             "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
-            "FrameRate": "{} fps".format(fps),
+            "FrameRate": self._get_flame_fps(fps),
             "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
             "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
         }
@@ -100,6 +100,28 @@ class FlamePrelaunch(PreLaunchHook):
         app_arguments = self._get_launch_arguments(data_to_script)
 
         self.launch_context.launch_args.extend(app_arguments)
+
+    def _get_flame_fps(self, fps_num):
+        fps_table = {
+            float(23.976): "23.976 fps",
+            int(25): "25 fps",
+            int(24): "24 fps",
+            float(29.97): "29.97 fps DF",
+            int(30): "30 fps",
+            int(50): "50 fps",
+            float(59.94): "59.94 fps DF",
+            int(60): "60 fps"
+        }
+
+        match_key = min(fps_table.keys(), key=lambda x: abs(x - fps_num))
+
+        try:
+            return fps_table[match_key]
+        except KeyError as msg:
+            raise KeyError((
+                "Missing FPS key in conversion table. "
+                "Following keys are available: {}".format(fps_table.keys())
+            )) from msg
 
     def _add_pythonpath(self):
         pythonpath = self.launch_context.env.get("PYTHONPATH")

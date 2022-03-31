@@ -9,6 +9,8 @@ import collections
 import functools
 import getpass
 
+from bson.objectid import ObjectId
+
 from openpype.settings import (
     get_project_settings,
     get_system_settings
@@ -16,6 +18,7 @@ from openpype.settings import (
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .events import emit_event
+from .path_templates import StringTemplate
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -168,7 +171,7 @@ def any_outdated():
 
         representation_doc = avalon.io.find_one(
             {
-                "_id": avalon.io.ObjectId(representation),
+                "_id": ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -980,6 +983,8 @@ class BuildWorkfile:
             ...
         }]
         """
+        from openpype.pipeline import discover_loader_plugins
+
         # Get current asset name and entity
         current_asset_name = avalon.io.Session["AVALON_ASSET"]
         current_asset_entity = avalon.io.find_one({
@@ -996,7 +1001,7 @@ class BuildWorkfile:
 
         # Prepare available loaders
         loaders_by_name = {}
-        for loader in avalon.api.discover(avalon.api.Loader):
+        for loader in discover_loader_plugins():
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(
@@ -1390,6 +1395,11 @@ class BuildWorkfile:
         Returns:
             (list) Objects of loaded containers.
         """
+        from openpype.pipeline import (
+            IncompatibleLoaderError,
+            load_container,
+        )
+
         loaded_containers = []
 
         # Get subset id order from build presets.
@@ -1451,7 +1461,7 @@ class BuildWorkfile:
                     if not loader:
                         continue
                     try:
-                        container = avalon.api.load(
+                        container = load_container(
                             loader,
                             repre["_id"],
                             name=subset_name
@@ -1460,7 +1470,7 @@ class BuildWorkfile:
                         is_loaded = True
 
                     except Exception as exc:
-                        if exc == avalon.pipeline.IncompatibleLoaderError:
+                        if exc == IncompatibleLoaderError:
                             self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"
@@ -1728,8 +1738,6 @@ def get_custom_workfile_template_by_context(
             context. (Existence of formatted path is not validated.)
     """
 
-    from openpype.lib import filter_profiles
-
     if anatomy is None:
         anatomy = Anatomy(project_doc["name"])
 
@@ -1752,7 +1760,9 @@ def get_custom_workfile_template_by_context(
     # there are some anatomy template strings
     if matching_item:
         template = matching_item["path"][platform.system().lower()]
-        return template.format(**anatomy_context_data)
+        return StringTemplate.format_strict_template(
+            template, anatomy_context_data
+        )
 
     return None
 
@@ -1840,3 +1850,124 @@ def get_custom_workfile_template(template_profiles):
         io.Session["AVALON_TASK"],
         io
     )
+
+
+def get_last_workfile_with_version(
+    workdir, file_template, fill_data, extensions
+):
+    """Return last workfile version.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+
+    Returns:
+        tuple: Last workfile<str> with version<int> if there is any otherwise
+            returns (None, None).
+    """
+    if not os.path.exists(workdir):
+        return None, None
+
+    # Fast match on extension
+    filenames = [
+        filename
+        for filename in os.listdir(workdir)
+        if os.path.splitext(filename)[1] in extensions
+    ]
+
+    # Build template without optionals, version to digits only regex
+    # and comment to any definable value.
+    _ext = []
+    for ext in extensions:
+        if not ext.startswith("."):
+            ext = "." + ext
+        # Escape dot for regex
+        ext = "\\" + ext
+        _ext.append(ext)
+    ext_expression = "(?:" + "|".join(_ext) + ")"
+
+    # Replace `.{ext}` with `{ext}` so we are sure there is not dot at the end
+    file_template = re.sub(r"\.?{ext}", ext_expression, file_template)
+    # Replace optional keys with optional content regex
+    file_template = re.sub(r"<.*?>", r".*?", file_template)
+    # Replace `{version}` with group regex
+    file_template = re.sub(r"{version.*?}", r"([0-9]+)", file_template)
+    file_template = re.sub(r"{comment.*?}", r".+?", file_template)
+    file_template = StringTemplate.format_strict_template(
+        file_template, fill_data
+    )
+
+    # Match with ignore case on Windows due to the Windows
+    # OS not being case-sensitive. This avoids later running
+    # into the error that the file did exist if it existed
+    # with a different upper/lower-case.
+    kwargs = {}
+    if platform.system().lower() == "windows":
+        kwargs["flags"] = re.IGNORECASE
+
+    # Get highest version among existing matching files
+    version = None
+    output_filenames = []
+    for filename in sorted(filenames):
+        match = re.match(file_template, filename, **kwargs)
+        if not match:
+            continue
+
+        file_version = int(match.group(1))
+        if version is None or file_version > version:
+            output_filenames[:] = []
+            version = file_version
+
+        if file_version == version:
+            output_filenames.append(filename)
+
+    output_filename = None
+    if output_filenames:
+        if len(output_filenames) == 1:
+            output_filename = output_filenames[0]
+        else:
+            last_time = None
+            for _output_filename in output_filenames:
+                full_path = os.path.join(workdir, _output_filename)
+                mod_time = os.path.getmtime(full_path)
+                if last_time is None or last_time < mod_time:
+                    output_filename = _output_filename
+                    last_time = mod_time
+
+    return output_filename, version
+
+
+def get_last_workfile(
+    workdir, file_template, fill_data, extensions, full_path=False
+):
+    """Return last workfile filename.
+
+    Returns file with version 1 if there is not workfile yet.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+        full_path(bool): Full path to file is returned if set to True.
+
+    Returns:
+        str: Last or first workfile as filename of full path to filename.
+    """
+    filename, version = get_last_workfile_with_version(
+        workdir, file_template, fill_data, extensions
+    )
+    if filename is None:
+        data = copy.deepcopy(fill_data)
+        data["version"] = 1
+        data.pop("comment", None)
+        if not data.get("ext"):
+            data["ext"] = extensions[0]
+        filename = StringTemplate.format_strict_template(file_template, data)
+
+    if full_path:
+        return os.path.normpath(os.path.join(workdir, filename))
+
+    return filename

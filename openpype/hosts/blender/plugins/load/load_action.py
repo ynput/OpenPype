@@ -5,9 +5,13 @@ from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
 
-from avalon import api, blender
 import bpy
+from openpype.pipeline import get_representation_path
 import openpype.hosts.blender.api.plugin
+from openpype.hosts.blender.api.pipeline import (
+    containerise_existing,
+    AVALON_PROPERTY,
+)
 
 logger = logging.getLogger("openpype").getChild("blender").getChild("load_action")
 
@@ -49,7 +53,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
 
         container = bpy.data.collections.new(lib_container)
         container.name = container_name
-        blender.pipeline.containerise_existing(
+        containerise_existing(
             container,
             name,
             namespace,
@@ -57,8 +61,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
             self.__class__.__name__,
         )
 
-        container_metadata = container.get(
-            blender.pipeline.AVALON_PROPERTY)
+        container_metadata = container.get(AVALON_PROPERTY)
 
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
@@ -90,16 +93,16 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
 
                 anim_data.action.make_local()
 
-            if not obj.get(blender.pipeline.AVALON_PROPERTY):
+            if not obj.get(AVALON_PROPERTY):
 
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+                obj[AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
             objects_list.append(obj)
 
-        animation_container.pop(blender.pipeline.AVALON_PROPERTY)
+        animation_container.pop(AVALON_PROPERTY)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -128,7 +131,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
             container["objectName"]
         )
 
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         logger.info(
@@ -153,8 +156,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
             f"Unsupported file: {libpath}"
         )
 
-        collection_metadata = collection.get(
-            blender.pipeline.AVALON_PROPERTY)
+        collection_metadata = collection.get(AVALON_PROPERTY)
 
         collection_libpath = collection_metadata["libpath"]
         normalized_collection_libpath = (
@@ -225,16 +227,16 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
                     strip.action = anim_data.action
                     strip.action_frame_end = anim_data.action.frame_range[1]
 
-            if not obj.get(blender.pipeline.AVALON_PROPERTY):
+            if not obj.get(AVALON_PROPERTY):
 
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+                obj[AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": collection.name})
 
             objects_list.append(obj)
 
-        anim_container.pop(blender.pipeline.AVALON_PROPERTY)
+        anim_container.pop(AVALON_PROPERTY)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -266,8 +268,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
             "Nested collections are not supported."
         )
 
-        collection_metadata = collection.get(
-            blender.pipeline.AVALON_PROPERTY)
+        collection_metadata = collection.get(AVALON_PROPERTY)
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 

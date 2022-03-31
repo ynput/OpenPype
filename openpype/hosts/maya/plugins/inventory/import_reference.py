@@ -1,11 +1,10 @@
 from maya import cmds
 
-from avalon import api
-
+from openpype.pipeline import InventoryAction
 from openpype.hosts.maya.api.plugin import get_reference_node
 
 
-class ImportReference(api.InventoryAction):
+class ImportReference(InventoryAction):
     """Imports selected reference to inside of the file."""
 
     label = "Import Reference"

@@ -5,7 +5,8 @@ from collections import defaultdict
 
 from Qt import QtWidgets
 
-from avalon import api, io
+from avalon import io
+from openpype.pipeline import get_representation_path
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 from openpype.widgets.message_window import ScrollMessageBox
@@ -77,7 +78,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         })
 
         # Load relationships
-        shader_relation = api.get_representation_path(json_representation)
+        shader_relation = get_representation_path(json_representation)
         with open(shader_relation, "r") as f:
             json_data = json.load(f)
 

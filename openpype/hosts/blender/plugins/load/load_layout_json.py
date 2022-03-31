@@ -7,12 +7,18 @@ from typing import Dict, Optional
 
 import bpy
 
-from avalon import api
+from openpype.pipeline import (
+    discover_loader_plugins,
+    remove_container,
+    load_container,
+    get_representation_path,
+    loaders_from_representation,
+    AVALON_CONTAINER_ID,
+)
 from openpype.hosts.blender.api.pipeline import (
     AVALON_INSTANCES,
     AVALON_CONTAINERS,
     AVALON_PROPERTY,
-    AVALON_CONTAINER_ID
 )
 from openpype.hosts.blender.api import plugin
 
@@ -33,7 +39,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         objects = list(asset_group.children)
 
         for obj in objects:
-            api.remove(obj.get(AVALON_PROPERTY))
+            remove_container(obj.get(AVALON_PROPERTY))
 
     def _remove_animation_instances(self, asset_group):
         instances = bpy.data.collections.get(AVALON_INSTANCES)
@@ -66,13 +72,13 @@ class JsonLayoutLoader(plugin.AssetLoader):
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
-        all_loaders = api.discover(api.Loader)
+        all_loaders = discover_loader_plugins()
 
         for element in data:
             reference = element.get('reference')
             family = element.get('family')
 
-            loaders = api.loaders_from_representation(all_loaders, reference)
+            loaders = loaders_from_representation(all_loaders, reference)
             loader = self._get_loader(loaders, family)
 
             if not loader:
@@ -102,7 +108,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
             # at this time it will not return anything. The assets will be
             # loaded in the next Blender cycle, so we use the options to
             # set the transform, parent and assign the action, if there is one.
-            api.load(
+            load_container(
                 loader,
                 reference,
                 namespace=instance_name,
@@ -188,7 +194,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

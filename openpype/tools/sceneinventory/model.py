@@ -5,19 +5,19 @@ from collections import defaultdict
 
 from Qt import QtCore, QtGui
 import qtawesome
+from bson.objectid import ObjectId
 
 from avalon import api, io, schema
-from avalon.lib import HeroVersionType
+from openpype.pipeline import HeroVersionType
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
+from openpype.modules import ModulesManager
 
 from .lib import (
     get_site_icons,
     walk_hierarchy,
     get_progress_for_repre
 )
-
-from openpype.modules import ModulesManager
 
 
 class InventoryModel(TreeModel):
@@ -300,7 +300,7 @@ class InventoryModel(TreeModel):
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
             # Get parenthood per group
-            representation = io.find_one({"_id": io.ObjectId(repre_id)})
+            representation = io.find_one({"_id": ObjectId(repre_id)})
             if not representation:
                 not_found["representation"].append(group_items)
                 not_found_ids.append(repre_id)

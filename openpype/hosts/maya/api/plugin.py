@@ -4,9 +4,12 @@ from maya import cmds
 
 import qargparse
 
-from avalon import api
-from avalon.pipeline import AVALON_CONTAINER_ID
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+    get_representation_path,
+    AVALON_CONTAINER_ID,
+)
 
 from .pipeline import containerise
 from . import lib
@@ -95,7 +98,7 @@ class Creator(LegacyCreator):
         return instance
 
 
-class Loader(api.Loader):
+class Loader(LoaderPlugin):
     hosts = ["maya"]
 
 
@@ -194,7 +197,7 @@ class ReferenceLoader(Loader):
 
         node = container["objectName"]
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         # Get reference node from container members
         members = get_container_members(node)

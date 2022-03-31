@@ -101,7 +101,7 @@ def eventserver(debug,
     on linux and window service).
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = "3"
+        os.environ["OPENPYPE_DEBUG"] = "1"
 
     PypeCommands().launch_eventservercli(
         ftrack_url,
@@ -128,7 +128,7 @@ def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
         Expect "pype.club" user created on Ftrack.
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = "3"
+        os.environ["OPENPYPE_DEBUG"] = "1"
 
     PypeCommands().launch_webpublisher_webservercli(
         upload_dir=upload_dir,
@@ -176,7 +176,7 @@ def publish(debug, paths, targets, gui):
     More than one path is allowed.
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = '3'
+        os.environ["OPENPYPE_DEBUG"] = "1"
     PypeCommands.publish(list(paths), targets, gui)
 
 
@@ -195,7 +195,7 @@ def remotepublishfromapp(debug, project, path, host, user=None, targets=None):
     More than one path is allowed.
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = '3'
+        os.environ["OPENPYPE_DEBUG"] = "1"
     PypeCommands.remotepublishfromapp(
         project, path, host, user, targets=targets
     )
@@ -215,7 +215,7 @@ def remotepublish(debug, project, path, user=None, targets=None):
     More than one path is allowed.
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = '3'
+        os.environ["OPENPYPE_DEBUG"] = "1"
     PypeCommands.remotepublish(project, path, user, targets=targets)
 
 
@@ -240,7 +240,7 @@ def texturecopy(debug, project, asset, path):
     Nothing is written to database.
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = '3'
+        os.environ["OPENPYPE_DEBUG"] = "1"
     PypeCommands().texture_copy(project, asset, path)
 
 
@@ -409,7 +409,7 @@ def syncserver(debug, active_site):
         var OPENPYPE_LOCAL_ID set to 'active_site'.
     """
     if debug:
-        os.environ['OPENPYPE_DEBUG'] = '3'
+        os.environ["OPENPYPE_DEBUG"] = "1"
     PypeCommands().syncserver(active_site)
 
 

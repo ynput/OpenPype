@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import maya.cmds as cmds  # noqa
-from avalon import api
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     namespaced,
@@ -11,7 +14,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class VRaySceneLoader(api.Loader):
+class VRaySceneLoader(load.LoaderPlugin):
     """Load Vray scene"""
 
     families = ["vrayscene_layer"]
@@ -78,7 +81,7 @@ class VRaySceneLoader(api.Loader):
         vraymeshes = cmds.ls(members, type="VRayScene")
         assert vraymeshes, "Cannot find VRayScene in container"
 
-        filename = api.get_representation_path(representation)
+        filename = get_representation_path(representation)
 
         for vray_mesh in vraymeshes:
             cmds.setAttr("{}.FilePath".format(vray_mesh),
