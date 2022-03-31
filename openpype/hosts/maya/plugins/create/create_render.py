@@ -252,6 +252,7 @@ class CreateRender(plugin.Creator):
         """Create instance settings."""
         # get pools
         pool_names = []
+        default_priority = 50
 
         self.server_aliases = list(self.deadline_servers.keys())
         self.data["deadlineServers"] = self.server_aliases
@@ -260,7 +261,8 @@ class CreateRender(plugin.Creator):
         self.data["extendFrames"] = False
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
-        self.data["priority"] = 50
+        self.data["priority"] = default_priority
+        self.data["tile_priority"] = default_priority
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
         self.data["machineList"] = ""
@@ -294,12 +296,16 @@ class CreateRender(plugin.Creator):
                 deadline_url = next(iter(self.deadline_servers.values()))
 
             pool_names = self._get_deadline_pools(deadline_url)
-            priority = self._project_settings.get(
+            maya_submit_dl = self._project_settings.get(
                 "deadline", {}).get(
                 "publish", {}).get(
-                "MayaSubmitDeadline", {}).get(
-                "priority", 50)
+                "MayaSubmitDeadline", {})
+            priority = maya_submit_dl.get("priority", default_priority)
             self.data["priority"] = priority
+
+            tile_priority = maya_submit_dl.get("tile_priority",
+                                               default_priority)
+            self.data["tile_priority"] = tile_priority
 
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
