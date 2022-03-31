@@ -228,9 +228,17 @@ class SettingsLineEdit(PlaceholderLineEdit):
     def __init__(self, *args, **kwargs):
         super(SettingsLineEdit, self).__init__(*args, **kwargs)
 
-        self._completer = None
+        # Timer which will get started on focus in and stopped on focus out
+        # - callback checks if line edit or completer have focus
+        #   and hide completer if not
+        focus_timer = QtCore.QTimer()
+        focus_timer.setInterval(50)
 
+        focus_timer.timeout.connect(self._on_focus_timer)
         self.textChanged.connect(self._on_text_change)
+
+        self._completer = None
+        self._focus_timer = focus_timer
 
     def _on_text_change(self, text):
         if self._completer is not None:
@@ -243,19 +251,19 @@ class SettingsLineEdit(PlaceholderLineEdit):
         new_point = self.mapToGlobal(point)
         self._completer.move(new_point)
 
+    def _on_focus_timer(self):
+        if not self.hasFocus() and not self._completer.hasFocus():
+            self._completer.hide()
+            self._focus_timer.stop()
+
     def focusInEvent(self, event):
         super(SettingsLineEdit, self).focusInEvent(event)
         self.focused_in.emit()
 
-        if self._completer is None:
-            return
-        self._completer.show()
-        self._update_completer()
-
-    def focusOutEvent(self, event):
-        super(SettingsLineEdit, self).focusOutEvent(event)
         if self._completer is not None:
-            self._completer.hide()
+            self._focus_timer.start()
+            self._completer.show()
+            self._update_completer()
 
     def paintEvent(self, event):
         super(SettingsLineEdit, self).paintEvent(event)
