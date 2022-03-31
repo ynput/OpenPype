@@ -25,7 +25,7 @@ class ExtractReviewData(openpype.api.Extractor):
             instance.data["families"].remove("review")
 
         for repre in representations:
-            if ext not in repre["ext"]:
+            if ext != repre["ext"]:
                 continue
 
             if not repre.get("tags"):
