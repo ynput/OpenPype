@@ -305,6 +305,9 @@ class FilesWidget(QtWidgets.QWidget):
 
     def set_save_enabled(self, enabled):
         self._btn_save.setEnabled(enabled)
+        if not enabled and self._published_checkbox.isChecked():
+            self._published_checkbox.setChecked(False)
+        self._published_checkbox.setVisible(enabled)
 
     def set_asset_task(self, asset_id, task_name, task_type):
         if asset_id != self._asset_id:
