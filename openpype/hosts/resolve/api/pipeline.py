@@ -4,14 +4,17 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon import api as avalon
-from avalon import schema
+
 from pyblish import api as pyblish
+
+from avalon import schema
+
 from openpype.api import Logger
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 from . import lib
@@ -46,7 +49,7 @@ def install():
     log.info("Registering DaVinci Resovle plug-ins..")
 
     register_loader_plugin_path(LOAD_PATH)
-    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -70,7 +73,7 @@ def uninstall():
     log.info("Deregistering DaVinci Resovle plug-ins..")
 
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
