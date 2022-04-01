@@ -12,6 +12,9 @@
             "flatten_subset_template": "",
             "color_code_mapping": []
         },
+        "CollectInstances": {
+            "flatten_subset_template": ""
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
