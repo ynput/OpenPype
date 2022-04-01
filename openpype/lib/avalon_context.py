@@ -1965,6 +1965,7 @@ def get_last_workfile(
         data.pop("comment", None)
         if not data.get("ext"):
             data["ext"] = extensions[0]
+        data["ext"] = data["ext"].replace('.', '')
         filename = StringTemplate.format_strict_template(file_template, data)
 
     if full_path:
