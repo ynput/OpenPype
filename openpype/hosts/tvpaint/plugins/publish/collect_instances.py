@@ -20,21 +20,35 @@ class CollectInstances(pyblish.api.ContextPlugin):
             json.dumps(workfile_instances, indent=4)
         ))
 
+        filtered_instance_data = []
+        # Check if there is any created instance
+        any_created_instance = False
         # Backwards compatibility for workfiles that already have review
         #   instance in metadata.
         review_instance_exist = False
         for instance_data in workfile_instances:
-            if instance_data["family"] == "review":
+            family = instance_data["family"]
+            if family == "review":
                 review_instance_exist = True
-                break
+
+            elif family in ("renderPass", "renderLayer"):
+                any_created_instance = True
+
+            else:
+                self.log.info("Unknown family \"{}\". Skipping {}".format(
+                    family, json.dumps(instance_data, indent=4)
+                ))
+                continue
+
+            filtered_instance_data.append(instance_data)
 
         # Fake review instance if review was not found in metadata families
         if not review_instance_exist:
-            workfile_instances.append(
+            filtered_instance_data.append(
                 self._create_review_instance_data(context)
             )
 
-        for instance_data in workfile_instances:
+        for instance_data in filtered_instance_data:
             instance_data["fps"] = context.data["sceneFps"]
 
             # Store workfile instance data to instance data
@@ -42,8 +56,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Global instance data modifications
             # Fill families
             family = instance_data["family"]
+            families = [family]
+            if family != "review":
+                families.append("review")
             # Add `review` family for thumbnail integration
-            instance_data["families"] = [family, "review"]
+            instance_data["families"] = families
 
             # Instance name
             subset_name = instance_data["subset"]
@@ -78,7 +95,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # Project name from workfile context
                 project_name = context.data["workfile_context"]["project"]
                 # Host name from environment variable
-                host_name = os.environ["AVALON_APP"]
+                host_name = context.data["hostName"]
                 # Use empty variant value
                 variant = ""
                 task_name = io.Session["AVALON_TASK"]
@@ -105,12 +122,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             elif family == "renderPass":
                 instance = self.create_render_pass_instance(
                     context, instance_data
-                )
-            else:
-                raise AssertionError(
-                    "Instance with unknown family \"{}\": {}".format(
-                        family, instance_data
-                    )
                 )
 
             if instance is None:
