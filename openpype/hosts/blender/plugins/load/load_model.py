@@ -154,7 +154,6 @@ class BlendModelLoader(plugin.AssetLoader):
 
     def _get_modifier_parameters(self, container):
         """Get all modifier parameters of the container's objects in a dict"""
-
         objects_list = plugin.get_all_objects_in_collection(container)
         object_names_list = [object.name for object in objects_list]
         modifier_list = list()
@@ -165,7 +164,6 @@ class BlendModelLoader(plugin.AssetLoader):
                 for modifier in object.modifiers:
                     if modifier:
                         modifier_description = modfier_description(modifier)
-
                         # Set the modifier properties of an object in a dict
                         modifier_list.append(modifier_description)
         return modifier_list
@@ -282,7 +280,7 @@ class BlendModelLoader(plugin.AssetLoader):
         plugin.deselect_all()
 
         # Override the container and the objects
-        container_overrided = container_collection.override_create(
+        container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
         collections.remove(container_collection)
@@ -291,7 +289,7 @@ class BlendModelLoader(plugin.AssetLoader):
         for object in objects:
             object.override_create(remap_local_usages=True)
 
-        return container_overrided
+        return container_overridden
 
     def process_asset(
         self,

@@ -6,14 +6,9 @@ from openpype.hosts.blender.plugins.load.load_layout_blend import (
     BlendLayoutLoader,
 )
 
-from openpype.hosts.blender.api import plugin
 
 from openpype.hosts.blender.api.workio import save_file
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_CONTAINERS,
-    AVALON_PROPERTY,
-    AVALON_CONTAINER_ID,
-)
+
 from avalon import io
 
 

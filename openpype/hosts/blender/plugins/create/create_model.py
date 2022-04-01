@@ -39,27 +39,42 @@ class CreateModel(plugin.Creator):
         lib.imprint(container, self.data)
 
         # Add selected objects to instance container
+        # If the use selection option is checked
         if (self.options or {}).get("useSelection"):
             selected = lib.get_selection()
             for object in selected:
                 if object not in container.objects.values():
+                    # Find the users collection of the object
                     for collection in object.users_collection:
+                        # And unlink the object to his users collection
                         collection.objects.unlink(object)
+                    # Link the object to the container
                     container.objects.link(object)
+        # If the use selection option is not checked
         else:
+            # Get collections under the scene collection
             collections = scene_collection.children
+
             for collection in collections:
+                # If the collection is not yet in the container
+                # And is not the container
                 if (
                     collection not in container.children.values()
                     and collection is not container
                 ):
+                    # Unlink the collection to the scene collection
+                    # And link them to the container
                     scene_collection.children.unlink(collection)
                     container.children.link(collection)
+            # Get objects under the scene collection
             objects = scene_collection.objects
             for object in objects:
+                # If the object is not yet in the container
                 if object not in container.objects.values():
+                    # Find the users collection of the object
                     for user_collection in object.users_collection:
+                        # And unlink the object to his users collection
                         user_collection.objects.unlink(object)
+                    # Link the object to the container
                     container.objects.link(object)
-
         return container
