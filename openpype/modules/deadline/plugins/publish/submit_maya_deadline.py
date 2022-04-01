@@ -257,8 +257,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     priority = 50
     tile_priority = 50
     limit_groups = []
-    jobInfo = None
-    pluginInfo = None
+    jobInfo = {}
+    pluginInfo = {}
     group = "none"
 
     def process(self, instance):
