@@ -190,8 +190,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 for _sci in src_components_to_add:
                     _sci["asset_data"]["name"] = extended_asset_name
 
-                first_thumbnail_component[
-                    "asset_data"]["name"] = extended_asset_name
+                # rename also first thumbnail component if any
+                if first_thumbnail_component is not None:
+                    first_thumbnail_component[
+                        "asset_data"]["name"] = extended_asset_name
 
             frame_start = repre.get("frameStartFtrack")
             frame_end = repre.get("frameEndFtrack")
