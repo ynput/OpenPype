@@ -9,7 +9,8 @@ from contextlib import contextmanager
 from .creator_plugins import (
     BaseCreator,
     Creator,
-    AutoCreator
+    AutoCreator,
+    discover_creator_plugins,
 )
 
 from openpype.api import (
@@ -845,7 +846,7 @@ class CreateContext:
         creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in avalon.api.discover(BaseCreator):
+        for creator_class in discover_creator_plugins():
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))

@@ -6,7 +6,7 @@ from openpype.pipeline import PublishValidationError
 class ValidateWorkfilePath(pyblish.api.InstancePlugin):
     """Validate existence of workfile instance existence."""
 
-    label = "Collect Workfile"
+    label = "Validate Workfile"
     order = pyblish.api.ValidatorOrder - 0.49
     families = ["workfile"]
     hosts = ["traypublisher"]

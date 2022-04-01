@@ -18,7 +18,7 @@
             "active": true
         },
         "ValidateNaming": {
-            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,;]",
             "replace_char": "_"
         },
         "ExtractImage": {

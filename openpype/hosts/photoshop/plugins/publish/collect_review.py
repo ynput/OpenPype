@@ -21,7 +21,7 @@ class CollectReview(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Review"
-    order = pyblish.api.CollectorOrder
+    label = "Review"
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.1
 

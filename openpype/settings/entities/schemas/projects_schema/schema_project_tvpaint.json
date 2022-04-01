@@ -78,6 +78,47 @@
                             "docstring": "Validate if shot on instances metadata is same as workfiles shot"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "key": "ExtractConvertToEXR",
+                    "label": "Extract Convert To EXR",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>WARNING:</b> This plugin does not work on MacOS (using OIIO tool)."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "replace_pngs",
+                            "label": "Replace source PNG"
+                        },
+                        {
+                            "type": "enum",
+                            "key": "exr_compression",
+                            "label": "EXR Compression",
+                            "multiselection": false,
+                            "enum_items": [
+                                {"ZIP": "ZIP"},
+                                {"ZIPS": "ZIPS"},
+                                {"DWAA": "DWAA"},
+                                {"DWAB": "DWAB"},
+                                {"PIZ": "PIZ"},
+                                {"RLE": "RLE"},
+                                {"PXR24": "PXR24"},
+                                {"B44": "B44"},
+                                {"B44A": "B44A"},
+                                {"none": "None"}
+                            ]
+                        }
+                    ]
                 }
             ]
         },

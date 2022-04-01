@@ -38,7 +38,13 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # workfile instance
         family = "workfile"
-        subset = family + task.capitalize()
+        subset = get_subset_name(
+            family,
+            "",
+            task,
+            context.data["assetEntity"]["_id"],
+            host_name="photoshop"
+        )
         # Create instance
         instance = context.create_instance(subset)
 
