@@ -88,6 +88,7 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
             "family": family,
             "families": families,
             "fps": context.data["sceneFps"],
+            "subset": subset_name,
             "name": subset_name,
             "label": "{} [{}-{}]".format(
                 subset_name,
