@@ -21,9 +21,15 @@ class ExtractReviewData(openpype.api.Extractor):
 
         representations = instance.data.get("representations", [])
 
-        if "render.farm" in instance.data["families"]:
+        # review can be removed since `ProcessSubmittedJobOnFarm` will create
+        # reviable representation if needed
+        if (
+            "render.farm" in instance.data["families"]
+            and "review" in instance.data["families"]
+        ):
             instance.data["families"].remove("review")
 
+        # iterate representations and add `review` tag
         for repre in representations:
             if ext != repre["ext"]:
                 continue
