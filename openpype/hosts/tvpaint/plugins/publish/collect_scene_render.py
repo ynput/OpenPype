@@ -55,7 +55,8 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
         # Collect asset doc to get asset id
         # - not sure if it's good idea to require asset id in
         #   get_subset_name?
-        asset_name = context.data["workfile_context"]["asset"]
+        workfile_context = context.data["workfile_context"]
+        asset_name = workfile_context["asset"]
         asset_doc = io.find_one({
             "type": "asset",
             "name": asset_name
@@ -71,7 +72,8 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
             "render_layer": self.render_layer,
             "render_pass": self.render_pass
         }
-        task_name = io.Session["AVALON_TASK"]
+
+        task_name = workfile_context["task"]
         subset_name = get_subset_name_with_asset_doc(
             family,
             variant,
@@ -95,7 +97,9 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
             "active": not any_created_instance,
             "publish": not any_created_instance,
             "representations": [],
-            "layers": copy.deepcopy(context.data["layersData"])
+            "layers": copy.deepcopy(context.data["layersData"]),
+            "asset": asset_name,
+            "task": task_name
         }
 
         instance = context.create_instance(**instance_data)
