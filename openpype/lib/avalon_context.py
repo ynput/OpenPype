@@ -1995,8 +1995,7 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
         # Make sure is installed
         dbcon.install()
 
-    if dbcon.Session["AVALON_PROJECT"] != project_name:
-        dbcon.Session["AVALON_PROJECT"] = project_name
+    dbcon.Session["AVALON_PROJECT"] = project_name
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
