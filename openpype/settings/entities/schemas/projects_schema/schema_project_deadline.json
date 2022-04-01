@@ -193,6 +193,9 @@
                             "label": "Use Published scene"
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "number",
                             "key": "priority",
                             "label": "Priority"
@@ -201,6 +204,14 @@
                             "type": "number",
                             "key": "chunk_size",
                             "label": "Chunk Size"
+                        },
+                        {
+                            "type": "number",
+                            "key": "concurent_task",
+                            "label": "Number of concurent tasks"
+                        },
+                        {
+                            "type": "splitter"
                         },
                         {
                             "type": "text",
@@ -216,6 +227,9 @@
                             "type": "text",
                             "key": "group",
                             "label": "Group"
+                        },
+                        {
+                            "type": "splitter"
                         },
                         {
                             "type": "text",
