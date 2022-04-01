@@ -2001,7 +2001,7 @@ def get_linked_ids_for_representations(project, repre_ids, dbcon=None,
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
 
-    versions = avalon.io.find(
+    versions = dbcon.find(
         {
             "_id": {"$in": repre_ids},
             "type": "representation"
