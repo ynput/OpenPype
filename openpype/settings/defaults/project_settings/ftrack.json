@@ -395,7 +395,8 @@
                 "vrayproxy": "cache",
                 "redshiftproxy": "cache",
                 "usd": "usd"
-            }
+            },
+            "nicer_asset_name": false
         }
     }
 }

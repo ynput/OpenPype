@@ -35,6 +35,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "image": "img",
         "reference": "reference"
     }
+    nicer_asset_name = False
 
     def process(self, instance):
         self.log.debug("instance {}".format(instance))
@@ -175,7 +176,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # condition for multiple reviewable representations
             # expand name to better label componenst
-            if is_first_review_repre and len(review_representations) > 1:
+            if (
+                self.nicer_asset_name is not False
+                and is_first_review_repre
+                and len(review_representations) > 1
+            ):
                 asset_name = review_item["asset_data"]["name"]
                 # define new extended name
                 extended_asset_name = "_".join(
@@ -278,7 +283,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             other_item = copy.deepcopy(base_component_item)
 
             # add extended name if any
-            if extended_asset_name:
+            if (
+                    self.nicer_asset_name is not False
+                    and extended_asset_name is not False
+            ):
                 other_item["asset_data"]["name"] = extended_asset_name
 
             other_item["component_data"] = {
