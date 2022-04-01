@@ -207,8 +207,8 @@
                         },
                         {
                             "type": "number",
-                            "key": "concurent_task",
-                            "label": "Number of concurent tasks"
+                            "key": "concurrent_tasks",
+                            "label": "Number of concurrent tasks"
                         },
                         {
                             "type": "splitter"

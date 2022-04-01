@@ -27,7 +27,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     # presets
     priority = 50
     chunk_size = 1
-    concurent_task = 1
+    concurrent_tasks = 1
     primary_pool = ""
     secondary_pool = ""
     group = ""
@@ -154,6 +154,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         if chunk_size == 0 and self.chunk_size:
             chunk_size = self.chunk_size
 
+        # define chunk and priority
+        concurrent_tasks = instance.data.get("deadlineConcurrentTasks")
+        if concurrent_tasks == 0 and self.concurrent_tasks:
+            concurrent_tasks = self.concurrent_tasks
+
         priority = instance.data.get("deadlinePriority")
         if not priority:
             priority = self.priority
@@ -178,7 +183,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Priority": priority,
                 "ChunkSize": chunk_size,
-                "ConcurrentTasks": self.concurent_task,
+                "ConcurrentTasks": concurrent_tasks,
+
                 "Department": self.department,
 
                 "Pool": self.primary_pool,

@@ -62,7 +62,7 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "concurent_task": 1,
+            "concurrent_tasks": 1,
             "primary_pool": "",
             "secondary_pool": "",
             "group": "",

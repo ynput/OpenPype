@@ -1048,12 +1048,16 @@ def add_review_knob(node):
 def add_deadline_tab(node):
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
+    knob = nuke.Int_Knob("deadlinePriority", "Priority")
+    knob.setValue(50)
+    node.addKnob(knob)
+
     knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
     knob.setValue(0)
     node.addKnob(knob)
 
-    knob = nuke.Int_Knob("deadlinePriority", "Priority")
-    knob.setValue(50)
+    knob = nuke.Int_Knob("deadlineConcurrentTasks", "Concurrent tasks")
+    knob.setValue(0)
     node.addKnob(knob)
 
 
