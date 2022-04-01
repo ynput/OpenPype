@@ -159,7 +159,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Fill tags and new families
         tags = []
-        if family_lowered in ("review", "renderlayer", "renderScene"):
+        if family_lowered in ("review", "renderlayer", "renderscene"):
             tags.append("review")
 
         # Sequence of one frame
