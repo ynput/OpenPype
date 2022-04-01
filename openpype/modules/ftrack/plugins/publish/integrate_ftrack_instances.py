@@ -2,7 +2,7 @@ import os
 import json
 import copy
 import pyblish.api
-from pprint import pformat
+
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     """Collect ftrack component data (not integrate yet).
