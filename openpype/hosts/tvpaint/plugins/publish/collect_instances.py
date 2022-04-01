@@ -21,8 +21,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
         ))
 
         filtered_instance_data = []
-        # Check if there is any created instance
-        any_created_instance = False
         # Backwards compatibility for workfiles that already have review
         #   instance in metadata.
         review_instance_exist = False
@@ -31,10 +29,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if family == "review":
                 review_instance_exist = True
 
-            elif family in ("renderPass", "renderLayer"):
-                any_created_instance = True
-
-            else:
+            elif family not in ("renderPass", "renderLayer"):
                 self.log.info("Unknown family \"{}\". Skipping {}".format(
                     family, json.dumps(instance_data, indent=4)
                 ))
