@@ -1,9 +1,22 @@
 """Create a model asset."""
+import typing
 
 import bpy
+from PySide2.QtWidgets import QMainWindow, QApplication, QMessageBox
 
 from avalon import api
+
+import openpype
 from openpype.hosts.blender.api import plugin, lib, ops
+
+
+def findMainWindow() -> typing.Union[QMainWindow, None]:
+    # Global function to find the (open) QMainWindow in application
+    app = QApplication.instance()
+    for widget in app.topLevelWidgets():
+        if isinstance(widget, openpype.tools.creator.window.CreatorWindow):
+            return widget
+    return None
 
 
 class CreateModel(plugin.Creator):
@@ -20,6 +33,26 @@ class CreateModel(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
+        print(lib.get_selection())
+        is_selection_behavior_accept = False
+        if (self.options or {}).get(
+            "useSelection"
+        ) and not lib.get_selection():
+            window = findMainWindow()
+            ret = QMessageBox.question(
+                window,
+                "MessageBox",
+                "You enabled use selected but no any object is selected. All objects from the scene will be moved to the created rig, do you want to continue?",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Cancel,
+            )
+            if ret == QMessageBox.No:
+                return
+            if ret == QMessageBox.Cancel:
+                return
+            if ret == QMessageBox.Yes:
+                is_selection_behavior_accept = True
+
         # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
@@ -40,7 +73,16 @@ class CreateModel(plugin.Creator):
 
         # Add selected objects to instance container
         # If the use selection option is checked
+        use_selection = False
         if (self.options or {}).get("useSelection"):
+            if lib.get_selection():
+                if not is_selection_behavior_accept:
+                    use_selection = True
+            else:
+                if is_selection_behavior_accept:
+                    use_selection = True
+
+        if use_selection:
             selected = lib.get_selection()
             for object in selected:
                 if object not in container.objects.values():
