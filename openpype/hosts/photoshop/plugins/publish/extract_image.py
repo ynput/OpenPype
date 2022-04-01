@@ -16,8 +16,6 @@ class ExtractImage(openpype.api.Extractor):
     formats = ["png", "jpg"]
 
     def process(self, instance):
-        print("PPPPPP")
-        self.log.info("fdfdsfdfs")
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
 
