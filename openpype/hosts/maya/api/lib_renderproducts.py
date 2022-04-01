@@ -1069,7 +1069,7 @@ class RenderProductsRenderman(ARenderProducts):
         default_ext = "exr"
         displays = cmds.listConnections("rmanGlobals.displays")
         for aov in displays:
-            enabled = self._get_attr(aov, "enabled")
+            enabled = self._get_attr(aov, "enable")
             if not enabled:
                 continue
 
@@ -1085,7 +1085,7 @@ class RenderProductsRenderman(ARenderProducts):
 
         return products
 
-    def get_files(self, product, camera):
+    def get_files(self, product):
         """Get expected files.
 
         In renderman we hack it with prepending path. This path would
@@ -1094,13 +1094,13 @@ class RenderProductsRenderman(ARenderProducts):
         to mess around with this settings anyway and it is enforced in
         render settings validator.
         """
-        files = super(RenderProductsRenderman, self).get_files(product, camera)
+        files = super(RenderProductsRenderman, self).get_files(product)
 
         layer_data = self.layer_data
         new_files = []
         for file in files:
             new_file = "{}/{}/{}".format(
-                layer_data["sceneName"], layer_data["layerName"], file
+                layer_data.sceneName, layer_data.layerName, file
             )
             new_files.append(new_file)
 

@@ -121,7 +121,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.error("Animation needs to be enabled. Use the same "
                           "frame for start and end to render single frame")
 
-        if not prefix.lower().startswith("maya/<scene>"):
+        if not prefix.lower().startswith("maya/<scene>") and \
+                renderer != "renderman":
             invalid = True
             cls.log.error("Wrong image prefix [ {} ] - "
                           "doesn't start with: 'maya/<scene>'".format(prefix))

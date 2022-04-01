@@ -215,6 +215,24 @@ def get_renderer_variables(renderlayer, root):
         filename_0 = os.path.normpath(os.path.join(root, filename_0))
     elif renderer == "renderman":
         prefix_attr = "rmanGlobals.imageFileFormat"
+        # NOTE: This is guessing extensions from renderman display types.
+        #       Some of them are just framebuffers, d_texture format can be
+        #       set in display setting. We set those now to None, but it
+        #       should be handled more gracefully.
+        display_types = {
+            "d_deepexr": "exr",
+            "d_it": None,
+            "d_null": None,
+            "d_openexr": "exr",
+            "d_png": "png",
+            "d_pointcloud": "ptc",
+            "d_targa": "tga",
+            "d_texture": None,
+            "d_tiff": "tif"
+        }
+        extension = display_types.get(
+            cmds.listConnections("rmanDefaultDisplay.displayType")[0]
+        )
     elif renderer == "redshift":
         # mapping redshift extension dropdown values to strings
         ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
