@@ -18,7 +18,7 @@ class ExploreToCurrent(LauncherAction):
 
     def process(self, session, **kwargs):
 
-        from avalon.vendor.Qt import QtCore, QtWidgets
+        from Qt import QtCore, QtWidgets
         from avalon.api import AvalonMongoDB
         from openpype.api import Anatomy
 
@@ -153,7 +153,7 @@ class ExploreToCurrent(LauncherAction):
 
     @staticmethod
     def copy_path_to_clipboard(path):
-        from avalon.vendor.Qt import QtCore, QtWidgets
+        from Qt import QtCore, QtWidgets
 
         path = path.replace("\\", "/")
         print("Copied to clipboard: %s" % path)
