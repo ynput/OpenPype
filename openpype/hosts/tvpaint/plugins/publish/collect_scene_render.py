@@ -27,12 +27,13 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.4
     hosts = ["tvpaint"]
 
+    # Value of 'render_pass' in subset name template
+    render_pass = "beauty"
+
     # Settings attributes
     enabled = False
-    # Value of 'renderLayer' for subset name template
-    render_layer_name = "Scene"
-    # Value of 'renderPass' for subset name template
-    render_pass_name = "Beauty"
+    # Value of 'render_layer' and 'variant' in subset name template
+    render_layer = "Main"
 
     def process(self, context):
         # Check if there are created instances of renderPass and renderLayer
@@ -65,10 +66,10 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
         # Host name from environment variable
         host_name = context.data["hostName"]
         # Variant is using render pass name
-        variant = self.render_pass_name
+        variant = self.render_layer
         dynamic_data = {
-            "renderLayer": self.render_layer_name,
-            "renderPass": self.render_pass_name,
+            "render_layer": self.render_layer,
+            "render_pass": self.render_pass
         }
         task_name = io.Session["AVALON_TASK"]
         subset_name = get_subset_name_with_asset_doc(
