@@ -1974,7 +1974,7 @@ def get_last_workfile(
 
 
 @with_avalon
-def get_linked_ids_for_representations(project, repre_ids, dbcon=None,
+def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
                                        link_type=None, max_depth=0):
     """Returns list of linked ids of particular type (if provided).
 
