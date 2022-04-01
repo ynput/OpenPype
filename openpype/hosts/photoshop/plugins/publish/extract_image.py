@@ -27,14 +27,10 @@ class ExtractImage(openpype.api.Extractor):
         with photoshop.maintained_selection():
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
-                self.log.info("instance.data:: {}".format(instance.data))
-                print("instance.data::: {}".format(instance.data))
+                ids = set()
                 layer = instance.data.get("layer")
-                self.log.info("layer:: {}".format(layer))
-                print("layer::: {}".format(layer))
-                if not layer:
-                    return
-                ids = set([layer.id])
+                if layer:
+                    ids.add(layer.id)
                 add_ids = instance.data.pop("ids", None)
                 if add_ids:
                     ids.update(set(add_ids))

@@ -1,7 +1,10 @@
 import pprint
+from avalon import api
 import pyblish.api
 
+from openpype.settings import get_project_settings
 from openpype.hosts.photoshop import api as photoshop
+from openpype.lib import prepare_template_data
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -9,6 +12,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     Collects publishable instances from file metadata or enhance
     already collected by creator (family == "image").
+
+    If no image instances are explicitly created, it looks if there is value
+    in `flatten_subset_template` (configurable in Settings), in that case it
+    produces flatten image with all visible layers.
 
     Identifier:
         id (str): "pyblish.avalon.instance"
@@ -20,6 +27,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "image": []
     }
+    # configurable in Settings
+    flatten_subset_template = ""
 
     def process(self, context):
         instance_by_layer_id = {}
@@ -34,8 +43,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         layer_items = stub.get_layers()
         layers_meta = stub.get_layers_metadata()
         instance_names = []
+
+        all_layer_ids = []
         for layer_item in layer_items:
             layer_meta_data = stub.read(layer_item, layers_meta)
+            all_layer_ids.append(layer_item.id)
 
             # Skip layers without metadata.
             if layer_meta_data is None:
@@ -70,3 +82,33 @@ class CollectInstances(pyblish.api.ContextPlugin):
         if len(instance_names) != len(set(instance_names)):
             self.log.warning("Duplicate instances found. " +
                              "Remove unwanted via SubsetManager")
+
+        if len(instance_names) == 0 and self.flatten_subset_template:
+            project_name = context.data["projectEntity"]["name"]
+            variants = get_project_settings(project_name).get(
+                "photoshop", {}).get(
+                "create", {}).get(
+                "CreateImage", {}).get(
+                "defaults", [''])
+            family = "image"
+            task_name = api.Session["AVALON_TASK"]
+            asset_name = context.data["assetEntity"]["name"]
+
+            fill_pairs = {
+                "variant": variants[0],
+                "family": family,
+                "task": task_name
+            }
+
+            subset = self.flatten_subset_template.format(
+                **prepare_template_data(fill_pairs))
+
+            instance = context.create_instance(subset)
+            instance.data["family"] = family
+            instance.data["asset"] = asset_name
+            instance.data["subset"] = subset
+            instance.data["ids"] = all_layer_ids
+            instance.data["families"] = self.families_mapping[family]
+            instance.data["publish"] = True
+
+            self.log.info("flatten instance: {} ".format(instance.data))
