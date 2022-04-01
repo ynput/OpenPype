@@ -5,19 +5,19 @@ sidebar_label: Publishing
 toc_max_heading_level: 4
 ---
 
-Publishing workflow consist of 2 parts:
+Publishing workflow consists of 2 parts:
 - Creating - Mark what will be published and how.
-- Publishing - Use data from Creating to go through pyblish process.
+- Publishing - Use data from Creating to go through the pyblish process.
 
-OpenPype is using [pyblish](https://pyblish.com/) for publishing process. OpenPype a little bit extend and modify few functions mainly for reports and UI purposes. The main differences are that OpenPype's publish UI allows to enable/disable instances or plugins during Creating part instead of in publishing part and has limited plugin actions only for failed validation plugins.
+OpenPype is using [pyblish](https://pyblish.com/) for the publishing process. OpenPype extends and modifies its few functions a bit, mainly for reports and UI purposes. The main differences are that OpenPype's publish UI allows to enable/disable instances or plugins during Creating part instead of in the publishing part and has limited plugin actions only for failed validation plugins.
 
 ## **Creating**
 
-Concept of Creating does not have to "create" anything but prepare and store metadata about an "instance" (becomes a subset after publish process). Created instance always has `family` which defines what kind of data will be published, best example is `workfile` family. Storing of metadata is host specific and may be even a Creator plugin specific. In most of hosts are metadata stored to workfile (Maya scene, Nuke script, etc.) to an item or a node the same way so consistency of host implementation is kept, but some features may require different approach that is the reason why it is creator plugin responsibility. Storing the metadata to workfile gives ability to keep values so artist does not have to do create and set what should be published and how over and over.
+Concept of Creating does not have to "create" anything yet, but prepare and store metadata about an "instance" (becomes a subset after the publish process). Created instance always has `family` which defines what kind of data will be published, the best example is `workfile` family. Storing of metadata is host specific and may be even a Creator plugin specific. Most hosts are storing metadata into a workfile (Maya scene, Nuke script, etc.) to an item or a node the same way as regular Pyblish instances, so consistency of host implementation is kept, but some features may require a different approach that is the reason why it is creator plugin responsibility. Storing the metadata to the workfile persists values, so the artist does not have to create and set what should be published and how over and over.
 
 ### Created instance
 
-Objected representation of created instance metadata defined by class **CreatedInstance**. Has access to **CreateContext** and **BaseCreator** that initialized the object. Is dictionary like object with few immutable keys (marked with start `*` in table). The immutable keys are set by creator plugin or create context on initialization and thei values can't change. Instance can have more arbitrary data, for example ids of nodes in scene but keep in mind that some keys are reserved.
+Objected representation of created instance metadata defined by class **CreatedInstance**. Has access to **CreateContext** and **BaseCreator** that initialized the object. Is a dictionary-like object with few immutable keys (marked with start `*` in table). The immutable keys are set by the creator plugin or create context on initialization and their values can't change. Instance can have more arbitrary data, for example ids of nodes in scene but keep in mind that some keys are reserved.
 
 | Key | Type | Description |
 |---|---|---|
@@ -25,34 +25,34 @@ Objected representation of created instance metadata defined by class **CreatedI
 | *instance_id | str | Unique ID of instance. Set automatically on instance creation using `str(uuid.uuid4())` |
 | *family | str | Instance's family representing type defined by creator plugin. |
 | *creator_identifier | str | Identifier of creator that collected/created the instance. |
-| *creator_attributes | dict | Dictionary of attributes that are defined by creator plugin (`get_instance_attr_defs`). |
+| *creator_attributes | dict | Dictionary of attributes that are defined by the creator plugin (`get_instance_attr_defs`). |
 | *publish_attributes | dict | Dictionary of attributes that are defined by publish plugins. |
-| variant | str | Variant is entered by artist on creation and may affect **subset**. |
-| subset | str | Name of instance. This name will be used as subset name during publishing. Can be changed on context change or variant change. |
-| active | bool | Is instance active and will be published or not. |
+| variant | str | Variant is entered by the artist on creation and may affect **subset**. |
+| subset | str | Name of instance. This name will be used as a subset name during publishing. Can be changed on context change or variant change. |
+| active | bool | Is the instance active and will be published or not. |
 | asset | str | Name of asset in which context was created. |
 | task | str | Name of task in which context was created. Can be set to `None`. |
 
 :::note
-Task should not be required until subset name template expect it.
+Task should not be required until the subset name template expects it.
 :::
 
-object of **CreatedInstance** has method **data_to_store** which returns dictionary that can be parsed to json string. This method will return all data related to instance so can be re-created using `CreatedInstance.from_existing(data)`.
+object of **CreatedInstance** has method **data_to_store** which returns a dictionary that can be parsed to a json string. This method will return all data related to the instance so it can be re-created using `CreatedInstance.from_existing(data)`.
 
 #### *Create context* {#category-doc-link}
 
 Controller and wrapper around Creating is `CreateContext` which cares about loading of plugins needed for Creating. And validates required functions in host implementation.
 
-Context discovers creator and publish plugins. Trigger collections of existing instances on creators and trigger Creating itself. Also keeps in mind instance objects by their ids.
+Context discovers creator and publish plugins. Trigger collections of existing instances on creators and trigger Creating itself. Also it keeps in mind instance objects by their ids.
 
-Creator plugins can call **creator_adds_instance** or **creator_removed_instance** to add/remove instance but these methods are not meant to be called directly out of creator. The reason is that is creator's responsibility to remove metadata or decide if should remove the instance.
+Creator plugins can call **creator_adds_instance** or **creator_removed_instance** to add/remove instances but these methods are not meant to be called directly out of the creator. The reason is that it is the creator's responsibility to remove metadata or decide if it should remove the instance.
 
 #### Required functions in host implementation
-Host implementation **must** have implemented **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now are there stored data about enabled/disabled optional publish plugins. When data are not stored and loaded properly reset of publishing will cause that they will be set to default value. Similar to instance data can be context data also parsed to json string.
+Host implementation **must** implement **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now only data about enabled/disabled optional publish plugins is stored there. When data is not stored and loaded properly, reset of publishing will cause that they will be set to default value. Context data also parsed to json string similarly as instance data.
 
-There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return string showed in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"`.
+There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return a string shown in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"`.
 
-Another optional function is **get_current_context**. This function is handy in hosts where is possible to open multiple workfiles in one process so using global context variables is not relevant because artist can switch between opened workfiles without being acknowledged. When function is not implemented or won't return right keys the global context is used.
+Another optional function is **get_current_context**. This function is handy in hosts where it is possible to open multiple workfiles in one process so using global context variables is not relevant because artists can switch between opened workfiles without being acknowledged. When a function is not implemented or won't return the right keys the global context is used.
 ```json
 # Expected keys in output
 {
@@ -75,7 +75,7 @@ class WorkfileCreator(Creator):
     family = "workfile"
 ```
 
-- **`collect_instances`** (method) - Collect already existing instances from workfile and add them to create context. This method is called on initialization or reset of **CreateContext**. Each creator is responsible to find it's instances metadata, convert them to **CreatedInstance** object and add the to create context (`self._add_instance_to_context(instnace_obj)`).
+- **`collect_instances`** (method) - Collect already existing instances from the workfile and add them to create context. This method is called on initialization or reset of **CreateContext**. Each creator is responsible to find its instance metadata, convert them to **CreatedInstance** object and add them to create context (`self._add_instance_to_context(instnace_obj)`).
 ```python
 def collect_instances(self):
     # Using 'pipeline.list_instances' is just example how to get existing instances from scene
@@ -92,7 +92,7 @@ def collect_instances(self):
             self._add_instance_to_context(instance)
 ```
 
-- **`create`** (method) - Create new object of **CreatedInstance** store it's metadata to workfile and add the instance into create context. Failed Creating should raise **CreatorError** if happens error that can artist fix or give him some useful information. Trigger and implementation differs for **Creator** and **AutoCreator**.
+- **`create`** (method) - Create a new object of **CreatedInstance** store its metadata to the workfile and add the instance into the created context. Failed Creating should raise **CreatorError** if an error happens that artists can fix or give them some useful information. Triggers and implementation differs for **Creator** and **AutoCreator**.
 
 - **`update_instances`** (method) - Update data of instances. Receives tuple with **instance** and **changes**.
 ```python
@@ -145,8 +145,8 @@ When host implementation use universal way how to store and load instances you s
 
 **Optional implementations**
 
-- **`enabled`** (attr) - Boolean if creator plugin is enabled and used.
-- **`identifier`** (class attr) - Consistent unique string identifier of the creator plugin. Is used to identify source plugin of existing instances. There can't be 2 creator plugins with same identifier. Default implementation returns `family` attribute.
+- **`enabled`** (attr) - Boolean if the creator plugin is enabled and used.
+- **`identifier`** (class attr) - Consistent unique string identifier of the creator plugin. Is used to identify source plugin of existing instances. There can't be 2 creator plugins with the same identifier. Default implementation returns `family` attribute.
 ```python
 class RenderLayerCreator(Creator):
     family = "render"
@@ -158,13 +158,13 @@ class RenderPassCreator(Creator):
     identifier = "render_pass"
 ```
 
-- **`label`** (attr) - String label of creator plugin which will showed in UI, `identifier` is used when not set. It should be possible to use html tags.
+- **`label`** (attr) - String label of creator plugin which will show up in UI, `identifier` is used when not set. It should be possible to use html tags.
 ```python
 class RenderLayerCreator(Creator):
     label = "Render Layer"
 ```
 
-- **`get_icon`** (attr) - Icon of creator and it's instances. Value can be a path to image file, full name of qtawesome icon, `QPixmap` or `QIcon`. For complex cases or cases when `Qt` objects are returned it is recommended to override `get_icon` method and handle the logic or import `Qt` inside the method to not break headless usage of creator plugin. For list of qtawesome icons check qtawesome github repository (look for used version in pyproject.toml). Default implementation return **icon** attribute.
+- **`get_icon`** (attr) - Icon of creator and its instances. Value can be a path to an image file, full name of qtawesome icon, `QPixmap` or `QIcon`. For complex cases or cases when `Qt` objects are returned it is recommended to override `get_icon` method and handle the logic or import `Qt` inside the method to not break headless usage of creator plugin. For list of qtawesome icons check qtawesome github repository (look for the used version in pyproject.toml). Default implementation return **icon** attribute.
 - **`icon`** (method) - Attribute for default implementation of **get_icon**.
 ```python
 class RenderLayerCreator(Creator):
@@ -172,7 +172,7 @@ class RenderLayerCreator(Creator):
     icon = "fa5.building"
 ```
 
-- **`get_instance_attr_defs`** (method) - Attribute definitions of instance. Creator can define attribute values with default values for each instance. These attributes may affect how will be instance processed during publishing. Attribute defiitions can be used from `openpype.pipeline.lib.attribute_definitions` (NOTE: Will be moved to `openpype.lib.attribute_definitions` soon). Attribute definitions define basic type of values for different cases e.g. boolean, number, string, enumerator, etc. Default implementations returns **instance_attr_defs**.
+- **`get_instance_attr_defs`** (method) - Attribute definitions of instance. Creator can define attribute values with default values for each instance. These attributes may affect how instances will be instance processed during publishing. Attribute defiitions can be used from `openpype.pipeline.lib.attribute_definitions` (NOTE: Will be moved to `openpype.lib.attribute_definitions` soon). Attribute definitions define basic types of values for different cases e.g. boolean, number, string, enumerator, etc. Default implementation returns **instance_attr_defs**.
 - **`instance_attr_defs`** (attr) - Attribute for default implementation of **get_instance_attr_defs**.
 
 ```python
@@ -194,16 +194,16 @@ class RenderLayerCreator(Creator):
         ]
 ```
 
-- **`get_subset_name`** (method) - Calculate subset name based on passed data. Data can be extended using `get_dynamic_data` method.  Default implementation is using `get_subset_name` from `openpype.lib` which is recommended.
+- **`get_subset_name`** (method) - Calculate subset name based on passed data. Data can be extended using the `get_dynamic_data` method. Default implementation is using `get_subset_name` from `openpype.lib` which is recommended.
 
-- **`get_dynamic_data`** (method) - Can be used to extend data for subset template which may be required in some cases.
+- **`get_dynamic_data`** (method) - Can be used to extend data for subset templates which may be required in some cases.
 
 
 #### *AutoCreator*
-Creator that is triggered on reset of create context. Can be used for families that are expected to be created automatically without artist interaction (e.g. **workfile**). Method `create` is triggered after collecting of all creators.
+Creator that is triggered on reset of create context. Can be used for families that are expected to be created automatically without artist interaction (e.g. **workfile**). Method `create` is triggered after collecting all creators.
 
 :::important
-**AutoCreator** has implemented **remove_instances** to do nothing as removing of auto created instances would lead to create new instance immediately or on refresh.
+**AutoCreator** has implemented **remove_instances** to do nothing as removing of auto created instances would lead to creating new instance immediately or on refresh.
 :::
 
 ```python
@@ -273,10 +273,10 @@ def create(self):
 ```
 
 #### *Creator*
-Implementation of creator plugin that is triggered manually by artist in UI (or by code). Has extended options for UI purposes than **AutoCreator** and **create** method expect more arguments.
+Implementation of creator plugin that is triggered manually by the artist in UI (or by code). Has extended options for UI purposes than **AutoCreator** and **create** method expect more arguments.
 
 **Optional implementations**
-- **`create_allow_context_change`** (class attr) - Allow to set context in UI before Creating. Some creator may not allow it or their logic would not use the context selection (e.g. bulk creators). Is set to `True` but default.
+- **`create_allow_context_change`** (class attr) - Allow to set context in UI before Creating. Some creators may not allow it or their logic would not use the context selection (e.g. bulk creators). Is set to `True` but default.
 ```python
 class BulkRenderCreator(Creator):
     create_allow_context_change = False
@@ -287,7 +287,7 @@ class BulkRenderCreator(Creator):
 - **`get_default_variant`** (method) - Returns default variant that is prefilled in UI (value does not have to be in default variants). By default returns **default_variant** attribute. If returns `None` then UI logic will take first item from **get_default_variants** if there is any otherwise **"Main"** is used.
 - **`default_variant`** (attr) - Attribute for default implementation of **get_default_variant**.
 
-- **`get_description`** (method) - Returns short string description of creator. Returns **description** attribute by default.
+- **`get_description`** (method) - Returns a short string description of the creator. Returns **description** attribute by default.
 - **`description`** (attr) - Attribute for default implementation of **get_description**.
 
 - **`get_detailed_description`** (method) - Returns detailed string description of creator. Can contain markdown. Returns **detailed_description** attribute by default.
@@ -397,34 +397,34 @@ class CreateRender(Creator):
 OpenPype define few specific exceptions that should be used in publish plugins.
 
 #### *Validation exception*
-Validation plugins should raise `PublishValidationError` to show to an artist what's wrong and give him actions to fix it. The exception says that error happened in plugin can be fixed by artist himself (with or without action on plugin). Any other errors will stop publishing immediately. Exception `PublishValidationError` raised after validation order has same effect as any other exception.
+Validation plugins should raise `PublishValidationError` to show to an artist what's wrong and give him actions to fix it. The exception says that errors in the plugin can be fixed by the artist himself (with or without action on plugin). Any other errors will stop publishing immediately. The exception `PublishValidationError` raised after validation order has the same effect as any other exception.
 
 Exception `PublishValidationError` expects 4 arguments:
 - **message** Which is not used in UI but for headless publishing.
 - **title** Short description of error (2-5 words). Title is used for grouping of exceptions per plugin.
-- **description** Detailed description of happened issue where markdown and html can be used.
-- **detail** Is optional to give even more detailed information for advanced users. At this moment is detail showed under description but it is in plan to have detail in collapsible widget.
+- **description** Detailed description of the issue where markdown and html can be used.
+- **detail** Is optional to give even more detailed information for advanced users. At this moment the detail is shown directly under description but it is in plan to have detail in a collapsible widget.
 
 Extended version is `PublishXmlValidationError` which uses xml files with stored descriptions. This helps to avoid having huge markdown texts inside code. The exception has 4 arguments:
-- **plugin** The plugin object which raises the exception to find it's related xml file.
+- **plugin** The plugin object which raises the exception to find its related xml file.
 - **message** Exception message for publishing without UI or different pyblish UI.
-- **key** Optional argument says which error from xml is used as validation plugin may raise error with different messages based on the current errors. Default is **"main"**.
+- **key** Optional argument says which error from xml is used as a validation plugin may raise error with different messages based on the current errors. Default is **"main"**.
 - **formatting_data** Optional dictionary to format data in the error. This is used to fill detailed description with data from the publishing so artist can get more precise information.
 
 **Where and how to create xml file**
 
-Xml files for `PublishXmlValidationError` must be located in **./help** subfolder next to plugin and the filename must match the filename of plugin.
+Xml files for `PublishXmlValidationError` must be located in **./help** subfolder next to the plugin and the filename must match the filename of the plugin.
 ```
 # File location related to plugin file
 └ publish
-  ├ help
-  │ ├ validate_scene.xml
-  │ └ ...
-  ├ validate_scene.py
-  └ ...
+ ├ help
+ │ ├ validate_scene.xml
+ │ └ ...
+ ├ validate_scene.py
+ └ ...
 ```
 
-Xml file content has **&ltroot&gt** node which may contain any amount of **&lterror&gt** nodes, but each of them must have **id** attribute with unique value. That is then used for **key**. Each error must have **&lttitle&gt** and **&ltdescription&gt** and **&ltdetail&gt**. Text content may contain python formatting keys that can be filled when exception is raised.
+Xml file content has **&ltroot&gt** node which may contain any amount of **&lterror&gt** nodes, but each of them must have **id** attribute with unique value. That is then used for **key**. Each error must have **&lttitle&gt** and **&ltdescription&gt** and **&ltdetail&gt**. Text content may contain python formatting keys that can be filled when an exception is raised.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
@@ -436,7 +436,7 @@ Context of the given subset doesn't match your current scene.
 
 ### How to repair?
 
-Yout can fix this with "Repair" button on the right. This will use '{expected_asset}' asset name and overwrite '{found_asset}' asset name in scene metadata.
+You can fix this with the "Repair" button on the right. This will use '{expected_asset}' asset name and overwrite '{found_asset}' asset name in scene metadata.
 
 After that restart publishing with Reload button.
         </description>
@@ -451,15 +451,15 @@ or the scene file was copy pasted from different context.
 ```
 
 #### *Known errors*
-When there is a known error that can't be fixed by user (e.g. can't connect to deadline service, etc.) `KnownPublishError` should be raise. The only difference is that it's message is shown in UI to artist otherwise a neutral message without context is shown.
+When there is a known error that can't be fixed by the user (e.g. can't connect to deadline service, etc.) `KnownPublishError` should be raised. The only difference is that its message is shown in UI to the artist otherwise a neutral message without context is shown.
 
 ### Plugin extension
-Publish plugins can be extended by additional logic when inherits from `OpenPypePyblishPluginMixin` which can be used as mixin (additional inheritance of class). Publish plugins that inherit from this mixin can define attributes that will be shown in **CreatedInstance**. One of most important usages is to be able turn on/off optional plugins.
+Publish plugins can be extended by additional logic when inheriting from `OpenPypePyblishPluginMixin` which can be used as mixin (additional inheritance of class). Publish plugins that inherit from this mixin can define attributes that will be shown in **CreatedInstance**. One of the most important usages is to be able turn on/off optional plugins.
 
-Attributes are defined by return value of `get_attribute_defs` method. Attribute definitions are for families defined in plugin's `families` attribute if it's instance plugin or for whole context if it's context plugin. To convert existing values (or to remove legacy values) can be re-implemented `convert_attribute_values`. Default implementation just converts the values to right types.
+Attributes are defined by the return value of `get_attribute_defs` method. Attribute definitions are for families defined in plugin's `families` attribute if it's instance plugin or for whole context if it's context plugin. To convert existing values (or to remove legacy values) can be re-implemented `convert_attribute_values`. Default implementation just converts the values to right types.
 
-:::important
-Values of publish attributes from created instance are never removed automatically so implementing of this method is best way to remove legacy data or convert them to new data structure.
+:::Important
+Values of publish attributes from created instance are never removed automatically so implementing this method is the best way to remove legacy data or convert them to new data structure.
 :::
 
 Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_definitions.py`.
@@ -530,7 +530,7 @@ Main window of publisher shows instances and their values, collected by creators
 ![Publisher UI - List view](assets/publisher_list_view.png)
 
 #### *Instances views*
-List of instances always contains `Options` item which is used to show attributes of context plugins. Values from the item are saved and loaded using [host implementation](#required-functions-in-host-implementation) **get_context_data** and **update_context_data**. Instances are grouped by family and can be shown in card view (single selection) or list view (multi selection).
+List of instances always contains an `Options` item which is used to show attributes of context plugins. Values from the item are saved and loaded using [host implementation](#required-functions-in-host-implementation) **get_context_data** and **update_context_data**. Instances are grouped by family and can be shown in card view (single selection) or list view (multi selection).
 
 Instance view has at the bottom 3 buttons. Plus sign opens [create dialog](#create-dialog), bin removes selected instances and stripes swap card and list view.
 
@@ -538,11 +538,11 @@ Instance view has at the bottom 3 buttons. Plus sign opens [create dialog](#crea
 It is possible to change variant or asset and task context of instances at the top part but all changes there must be confirmed. Confirmation will trigger recalculation of subset names and all new data are stored to instances.
 
 #### *Create attributes*
-Instance attributes display all create attributes of all selected instances. All attributes that have same definition are grouped into one input and is visually indicated if values are not same for selected instances. In most of cases have **< Multiselection >** placeholder.
+Instance attributes display all created attributes of all selected instances. All attributes that have the same definition are grouped into one input and are visually indicated if values are not the same for selected instances. In most cases have **< Multiselection >** placeholder.
 
 #### *Publish attributes*
-Publish attributes work the same way as create attributes but the source of attribute definitions are pyblish plugins. Attributes are filtered based on families of selected instances and families defined in pyblish plugin.
+Publish attributes work the same way as create attributes but the source of attribute definitions are pyblish plugins. Attributes are filtered based on families of selected instances and families defined in the pyblish plugin.
 
 ### Create dialog
 ![Publisher UI - Create dialog](assets/publisher_create_dialog.png)
-Create dialog is used by artist to create new instances in a context. The context selection can be enabled/disabled by changing `create_allow_context_change` on [creator plugin](#creator). In middle part artist select what will be created and what variant it is. On right side is information about selected creator and it's pre-create attributes. There is also question mark button which extends window and display more detailed information about the creator.
+Create dialog is used by artist to create new instances in a context. The context selection can be enabled/disabled by changing `create_allow_context_change` on [creator plugin](#creator). In the middle part the artist selects what will be created and what variant it is. On the right side is information about the selected creator and its pre-create attributes. There is also a question mark button which extends the window and displays more detailed information about the creator.
