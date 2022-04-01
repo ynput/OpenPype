@@ -31,7 +31,7 @@
                         },
                         {
                             "type": "label",
-                            "label": "It is possible to fill 'render_layer' or 'variant' in subset name template with custom value. Value of 'render_pass' is \"Beauty\"."
+                            "label": "It is possible to fill <b>'render_layer'</b> or <b>'variant'</b> in subset name template with custom value.<br/>- value of <b>'render_pass'</b> is always \"beauty\"."
                         },
                         {
                             "type": "text",
