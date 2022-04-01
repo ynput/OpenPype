@@ -8,8 +8,7 @@ import pyblish.api
 import openpype.api
 from openpype.hosts.maya.api.lib import (
     parent_nodes,
-    maintained_selection,
-    delete_after
+    maintained_selection
 )
 from openpype.hosts.maya.api import fbx
 

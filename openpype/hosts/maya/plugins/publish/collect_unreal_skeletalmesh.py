@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from maya import cmds  # noqa
 import pyblish.api
-from avalon.api import Session
-from openpype.api import get_project_settings
 
 
 class CollectUnrealSkeletalMesh(pyblish.api.InstancePlugin):

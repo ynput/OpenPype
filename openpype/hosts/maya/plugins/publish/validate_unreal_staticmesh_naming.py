@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+"""Validator for correct naming of Static Meshes."""
 from maya import cmds  # noqa
 import pyblish.api
 import openpype.api
@@ -70,13 +70,6 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
             ["create"]
             ["CreateUnrealStaticMesh"]
             ["collision_prefixes"]
-        )
-        static_mesh_prefix = (
-            project_settings
-            ["maya"]
-            ["create"]
-            ["CreateUnrealStaticMesh"]
-            ["static_mesh_prefix"]
         )
 
         if cls.validate_mesh:

@@ -7,10 +7,6 @@ from maya import cmds  # noqa
 
 import pyblish.api
 import openpype.api
-from openpype.hosts.maya.api.lib import (
-    parent_nodes,
-    maintained_selection
-)
 from openpype.hosts.maya.api import fbx
 
 
@@ -41,8 +37,6 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
 
         geo = instance.data.get("geometry")
         joints = instance.data.get("joints")
-
-        joints_parent = cmds.listRelatives(joints, p=True)
 
         to_extract = geo + joints
 
