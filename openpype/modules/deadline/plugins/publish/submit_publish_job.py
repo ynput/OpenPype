@@ -235,6 +235,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url
 
+        priority = self.deadline_priority or instance.data.get("priority")
+
         args = [
             "--headless",
             'publish',
@@ -254,7 +256,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
                 "Department": self.deadline_department,
                 "ChunkSize": self.deadline_chunk_size,
-                "Priority": job["Props"]["Pri"],
+                "Priority": priority,
 
                 "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
@@ -930,11 +932,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance.data.get("deadlineUrl"):
                 self.deadline_url = instance.data.get("deadlineUrl")
             assert self.deadline_url, "Requires Deadline Webservice URL"
-
-            if self.deadline_priority:
-                render_job["Props"]["Pri"] = self.deadline_priority
-            else:
-                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             self._submit_deadline_post_job(instance, render_job, instances)
 
