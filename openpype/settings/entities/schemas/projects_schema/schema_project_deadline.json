@@ -120,14 +120,12 @@
                         {
                             "type": "number",
                             "key": "priority",
-                            "label": "Priority",
-                            "default": 50
+                            "label": "Priority"
                         },
                         {
                             "type": "number",
                             "key": "tile_priority",
                             "label": "Tile Assembler Priority",
-                            "default": 50
                         },
                         {
                             "type": "text",
