@@ -2040,7 +2040,7 @@ def get_linked_ids_for_representations(project, repre_ids, dbcon=None,
     referenced_version_ids = _process_referenced_pipeline_result(result,
                                                                  link_type)
 
-    ref_ids = avalon.io.distinct(
+    ref_ids = dbcon.distinct(
         "_id",
         filter={
             "parent": {"$in": list(referenced_version_ids)},
