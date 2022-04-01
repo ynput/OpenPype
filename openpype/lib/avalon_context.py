@@ -1980,7 +1980,7 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
 
     Goes from representations to version, back to representations
     Args:
-        project (str)
+        project_name (str)
         repre_ids (list) or (ObjectId)
         dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
             with Session.
@@ -1995,23 +1995,24 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
         # Make sure is installed
         dbcon.install()
 
-    if dbcon.Session["AVALON_PROJECT"] != project:
-        dbcon.Session["AVALON_PROJECT"] = project
+    if dbcon.Session["AVALON_PROJECT"] != project_name:
+        dbcon.Session["AVALON_PROJECT"] = project_name
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
 
-    versions = dbcon.find(
-        {
-            "_id": {"$in": repre_ids},
-            "type": "representation"
-        },
-        projection={"parent": True}
-    )
-    version_ids = [version["parent"] for version in versions]
+    version_ids = dbcon.distinct("parent", {
+        "_id": {"$in": repre_ids},
+        "type": "representation"
+    })
+
+    match = {
+        "_id": {"$in": version_ids},
+        "type": "version"
+    }
 
     graph_lookup = {
-        "from": project,
+        "from": project_name,
         "startWith": "$data.inputLinks.id",
         "connectFromField": "data.inputLinks.id",
         "connectToField": "_id",
@@ -2023,11 +2024,6 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
         # but the recursion only happens after the initial lookup
         # for outputs.
         graph_lookup["maxDepth"] = max_depth - 1
-
-    match = {
-        "_id": {"$in": version_ids},
-        "type": "version"
-    }
 
     pipeline_ = [
         # Match
@@ -2065,12 +2061,11 @@ def _process_referenced_pipeline_result(result, link_type):
                                                    link_type,
                                                    correctly_linked_ids)
 
-        # outputs_recursive in random order, sort by _id
+        # outputs_recursive in random order, sort by depth
         outputs_recursive = sorted(item.get("outputs_recursive", []),
                                    key=lambda d: d["depth"])
-        # go from oldest to newest
-        # only older _id can reference another newer _id
-        for output in outputs_recursive[::-1]:
+
+        for output in outputs_recursive:
             if output["_id"] not in correctly_linked_ids:  # leaf
                 continue
 
