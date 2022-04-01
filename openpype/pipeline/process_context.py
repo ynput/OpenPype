@@ -63,7 +63,7 @@ def registered_root():
     return ""
 
 
-def install(host):
+def install_host(host):
     """Install `host` into the running Python session.
 
     Args:
@@ -71,6 +71,8 @@ def install(host):
             avalon host-interface.
     """
     global _is_installed
+
+    _is_installed = True
 
     io.install()
 
@@ -94,10 +96,7 @@ def install(host):
 
     register_host(host)
 
-    _is_installed = True
-
-    # Make sure modules are loaded
-    load_modules()
+    register_event_callback("taskChanged", _on_task_change)
 
     def modified_emit(obj, record):
         """Method replacing `emit` in Pyblish's MessageHandler."""
@@ -106,12 +105,20 @@ def install(host):
 
     MessageHandler.emit = modified_emit
 
+    install_openpype_plugins()
+
+
+def install_openpype_plugins(project_name=None):
+    # Make sure modules are loaded
+    load_modules()
+
     log.info("Registering global plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    project_name = os.environ.get("AVALON_PROJECT")
+    if project_name is None:
+        project_name = os.environ.get("AVALON_PROJECT")
 
     # Register studio specific plugins
     if project_name:
@@ -141,17 +148,12 @@ def install(host):
             register_creator_plugin_path(path)
             register_inventory_action(path)
 
-    # apply monkey patched discover to original one
-    log.info("Patching discovery")
-
-    register_event_callback("taskChanged", _on_task_change)
-
 
 def _on_task_change():
     change_timer_to_current_context()
 
 
-def uninstall():
+def uninstall_host():
     """Undo all of what `install()` did"""
     host = registered_host()
 
