@@ -12,6 +12,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
     This collector takes into account assets that are associated with
     an LayerSet and marked with a unique identifier;
 
+    If no image instances are explicitly created, it looks if there is value
+    in `flatten_subset_template` (configurable in Settings), in that case it
+    produces flatten image with all visible layers.
+
     Identifier:
         id (str): "pyblish.avalon.instance"
     """
@@ -22,6 +26,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "image": []
     }
+    # configurable in Settings
     flatten_subset_template = ""
 
     def process(self, context):
