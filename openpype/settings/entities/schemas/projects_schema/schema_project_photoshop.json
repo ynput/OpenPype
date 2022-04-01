@@ -109,6 +109,23 @@
                     ]
                 },
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectInstances",
+                    "label": "Collect Instances",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Name for flatten image created if no image instance present"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [
