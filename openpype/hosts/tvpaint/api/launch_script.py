@@ -8,8 +8,8 @@ import logging
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api
 from openpype import style
+from openpype.pipeline import install_host
 from openpype.hosts.tvpaint.api.communication_server import (
     CommunicationWrapper
 )
@@ -31,7 +31,7 @@ def main(launch_args):
     qt_app = QtWidgets.QApplication([])
 
     # Execute pipeline installation
-    api.install(tvpaint_host)
+    install_host(tvpaint_host)
 
     # Create Communicator object and trigger launch
     # - this must be done before anything is processed
