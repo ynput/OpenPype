@@ -24,7 +24,7 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
     `variant` is filled using `renderPass` value.
     """
     label = "Collect Render Scene"
-    order = pyblish.api.CollectorOrder - 0.4
+    order = pyblish.api.CollectorOrder - 0.39
     hosts = ["tvpaint"]
 
     # Value of 'render_pass' in subset name template
