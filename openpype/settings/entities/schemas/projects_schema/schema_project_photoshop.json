@@ -42,7 +42,7 @@
                     "children": [
                         {
                             "type": "label",
-                            "label": "Set color for publishable layers, set its resulting family and template for subset name. Can create flatten image from published instances"
+                            "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
                         },
                         {
                             "type": "boolean",
