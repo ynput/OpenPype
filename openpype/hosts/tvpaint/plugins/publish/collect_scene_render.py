@@ -75,7 +75,7 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
 
         task_name = workfile_context["task"]
         subset_name = get_subset_name_with_asset_doc(
-            family,
+            "render",
             variant,
             task_name,
             asset_doc,
