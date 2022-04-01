@@ -19,6 +19,30 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectRenderScene",
+                    "label": "Collect Render Scene",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "It is possible to fill <b>'render_layer'</b> or <b>'variant'</b> in subset name template with custom value.<br/>- value of <b>'render_pass'</b> is always \"beauty\"."
+                        },
+                        {
+                            "type": "text",
+                            "key": "render_layer",
+                            "label": "Render Layer"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractSequence",
                     "label": "ExtractSequence",
                     "is_group": true,
