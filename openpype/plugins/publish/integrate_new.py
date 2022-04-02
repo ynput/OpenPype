@@ -602,6 +602,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Backwards compatibility:
         # Store first transferred destination as published path data
         # todo: can we remove this?
+        # todo: We shouldn't change data that makes its way back into
+        #       instance.data[] until we know the publish actually succeeded
+        #       otherwise `published_path` might not actually be valid?
         published_path = transfers[0][1]
         repre["published_path"] = published_path  # Backwards compatibility
 
