@@ -522,6 +522,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = int(repre.get("frameStart"))
 
                 render_template = anatomy.templates[template_name]
+                # todo: should we ALWAYS manage the frame padding even when not
+                #       having `frameStart` set?
                 frame_start_padding = int(
                     render_template.get(
                         "frame_padding",
