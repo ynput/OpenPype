@@ -636,7 +636,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "parent": version["_id"],
             "name": repre['name'],
             "data": data,
-            "dependencies": instance.data.get("dependencies", "").split(),
 
             # Imprint shortcut to context for performance reasons.
             "context": repre_context
