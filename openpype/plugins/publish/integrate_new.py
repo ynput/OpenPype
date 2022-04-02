@@ -577,6 +577,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             transfers = [(src, dst)]
 
         for key in self.db_representation_context_keys:
+            # Also add these values to the context even if not used by the
+            # destination template
             value = template_data.get(key)
             if not value:
                 continue
