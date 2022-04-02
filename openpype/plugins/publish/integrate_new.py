@@ -501,6 +501,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         anatomy = instance.context.data['anatomy']
         template = os.path.normpath(anatomy.templates[template_name]["path"])
 
+        is_udim = bool(repre.get("udim"))
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
             # Collection of files (sequence)
@@ -517,7 +518,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # frame indices from the source collection.
             destination_indexes = list(src_collection.indexes)
             destination_padding = len(get_first_frame_padded(src_collection))
-            if repre.get("frameStart") is not None:
+            if repre.get("frameStart") is not None and not is_udim:
                 index_frame_start = int(repre.get("frameStart"))
 
                 render_template = anatomy.templates[template_name]
@@ -543,7 +544,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # from the source indexes, etc.
             first_index_padded = get_frame_padded(frame=destination_indexes[0],
                                                   padding=destination_padding)
-            if repre.get("udim"):
+            if is_udim:
                 # UDIM representations handle ranges in a different manner
                 template_data["udim"] = first_index_padded
             else:
@@ -579,7 +580,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Manage anatomy template data
             template_data.pop("frame", None)
-            if repre.get("udim"):
+            if is_udim:
                 template_data["udim"] = repre["udim"][0]
 
             # Construct destination filepath from template
