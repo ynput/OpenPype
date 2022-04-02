@@ -93,9 +93,9 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
 
         intent = context.data.get("intent")
         if intent and isinstance(intent, dict):
-            intent_value = intent.get("value")
-            if intent_value:
-                context_data["intent"] = intent_value
+            intent = intent.get("value")
+        if intent:
+            context_data["intent"] = intent
 
         self.log.info("Global anatomy Data collected")
         self.log.debug(json.dumps(context_data, indent=4))
