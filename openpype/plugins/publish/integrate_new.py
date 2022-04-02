@@ -270,7 +270,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
 
         # Bulk write to the database
-        # todo: Can we move this even to after the file transfers?
+        # We write the subset and version to the database before the File
+        # Transaction to reduce the chances of another publish trying to
+        # publish to the same version number since that chance can greatly
+        # increase if the file transaction takes a long time.
         bulk_write(subset_writes + version_writes)
         self.log.info("Subset {subset[name]} and Version {version[name]} "
                       "written to database..".format(subset=subset,
