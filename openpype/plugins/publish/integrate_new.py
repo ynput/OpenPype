@@ -264,10 +264,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # part of a representation - like texture resources used by a
         # .ma representation. Those destination paths are pre-defined, etc.
         # todo: should we move or simplify this logic?
+        resource_destinations = set()
         for src, dst in instance.data.get("transfers", []):
             file_transactions.add(src, dst, mode=FileTransaction.MODE_COPY)
+            resource_destinations.add(os.path.abspath(dst))
         for src, dst in instance.data.get("hardlinks", []):
             file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
+            resource_destinations.add(os.path.abspath(dst))
 
         # Bulk write to the database
         # We write the subset and version to the database before the File
@@ -295,17 +298,28 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
         self.log.debug("Site Sync Sites: {}".format(sites))
 
+        # Compute the resource file infos once (files belonging to the
+        # version instance instead of an individual representation) so
+        # we can re-use those file infos per representation
+        anatomy = instance.context.data["anatomy"]
+        resource_file_infos = self.prepare_file_info(resource_destinations,
+                                                     sites=sites,
+                                                     anatomy=anatomy)
+
         # Finalize the representations now the published files are integrated
         # Get 'files' info for representations and its attached resources
-        anatomy = instance.context.data["anatomy"]
         representation_writes = []
         new_repre_names_low = set()
         for prepared in prepared_representations:
-            transfers = prepared["transfers"]
             representation = prepared["representation"]
+            transfers = prepared["transfers"]
+            destinations = [dst for src, dst in transfers]
             representation["files"] = self.get_files_info(
-                transfers, sites, anatomy
+                destinations, sites=sites, anatomy=anatomy
             )
+
+            # Add the version resource file infos to each representation
+            representation["files"] += resource_file_infos
 
             # Set up representation for writing to the database. Since
             # we *might* be overwriting an existing entry if the version
@@ -751,11 +765,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             ).format(path))
         return path
 
-    def get_files_info(self, transfers, sites, anatomy):
+    def get_files_info(self, destinations, sites, anatomy):
         """Prepare 'files' info portion for representations.
 
         Arguments:
-            transfers (list): List of transferred files (source, destination)
+            destinations (list): List of transferred file destinations
             sites (list): array of published locations
             anatomy: anatomy part from instance
         Returns:
@@ -763,10 +777,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             in representation
         """
         file_infos = []
-        for _src, dest in transfers:
-            file_info = self.prepare_file_info(dest, anatomy, sites=sites)
+        for file_path in destinations:
+            file_info = self.prepare_file_info(file_path, anatomy, sites=sites)
             file_infos.append(file_info)
-
         return file_infos
 
     def prepare_file_info(self, path, anatomy, sites):
