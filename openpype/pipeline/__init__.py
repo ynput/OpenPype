@@ -3,8 +3,6 @@ from .constants import (
     HOST_WORKFILE_EXTENSIONS,
 )
 
-from .lib import attribute_definitions
-
 from .create import (
     BaseCreator,
     Creator,
@@ -15,6 +13,13 @@ from .create import (
 
     LegacyCreator,
     legacy_create,
+
+    discover_creator_plugins,
+    discover_legacy_creator_plugins,
+    register_creator_plugin,
+    deregister_creator_plugin,
+    register_creator_plugin_path,
+    deregister_creator_plugin_path,
 )
 
 from .load import (
@@ -43,7 +48,8 @@ from .publish import (
     PublishValidationError,
     PublishXmlValidationError,
     KnownPublishError,
-    OpenPypePyblishPluginMixin
+    OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
 )
 
 from .actions import (
@@ -81,6 +87,13 @@ __all__ = (
     "LegacyCreator",
     "legacy_create",
 
+    "discover_creator_plugins",
+    "discover_legacy_creator_plugins",
+    "register_creator_plugin",
+    "deregister_creator_plugin",
+    "register_creator_plugin_path",
+    "deregister_creator_plugin_path",
+
     # --- Load ---
     "HeroVersionType",
     "IncompatibleLoaderError",
@@ -107,6 +120,7 @@ __all__ = (
     "PublishXmlValidationError",
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
+    "OptionalPyblishPluginMixin",
 
     # --- Actions ---
     "LauncherAction",
