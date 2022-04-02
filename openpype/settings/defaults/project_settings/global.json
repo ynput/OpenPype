@@ -33,20 +33,6 @@
             "enabled": false,
             "profiles": []
         },
-        "IntegrateHeroVersion": {
-            "enabled": true,
-            "optional": true,
-            "families": [
-                "model",
-                "rig",
-                "look",
-                "pointcache",
-                "animation",
-                "setdress",
-                "layout",
-                "mayaScene"
-            ]
-        },
         "ExtractJpegEXR": {
             "enabled": true,
             "ffmpeg_args": {
@@ -203,6 +189,22 @@
                     "template": ""
                 }
             ]
+        },
+        "IntegrateHeroVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaScene"
+            ],
+            "template_name_profiles": []
         },
         "CleanUp": {
             "paterns": [],

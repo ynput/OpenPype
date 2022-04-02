@@ -29,7 +29,8 @@ class ValidateNamingRepair(pyblish.api.Action):
         stub = photoshop.stub()
         for instance in instances:
             self.log.info("validate_naming instance {}".format(instance))
-            metadata = stub.read(instance[0])
+            layer_item = instance.data["layer"]
+            metadata = stub.read(layer_item)
             self.log.info("metadata instance {}".format(metadata))
             layer_name = None
             if metadata.get("uuid"):
@@ -43,11 +44,11 @@ class ValidateNamingRepair(pyblish.api.Action):
                     stub.rename_layer(instance.data["uuid"], layer_name)
 
             subset_name = re.sub(invalid_chars, replace_char,
-                                 instance.data["name"])
+                                 instance.data["subset"])
 
-            instance[0].Name = layer_name or subset_name
+            layer_item.name = layer_name or subset_name
             metadata["subset"] = subset_name
-            stub.imprint(instance[0], metadata)
+            stub.imprint(layer_item, metadata)
 
         return True
 

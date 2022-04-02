@@ -271,7 +271,7 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.setEnabled(False)
 
         form_layout = QtWidgets.QFormLayout()
-        form_layout.addRow("Name:", variant_layout)
+        form_layout.addRow("Variant:", variant_layout)
         form_layout.addRow("Subset:", subset_name_input)
 
         mid_widget = QtWidgets.QWidget(self)
