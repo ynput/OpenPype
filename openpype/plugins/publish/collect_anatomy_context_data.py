@@ -91,6 +91,8 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
                 }
             })
 
+        # todo: some code actually expects the dict itself and others doesn't
+        #       question: what should it be?
         intent = context.data.get("intent")
         if intent and isinstance(intent, dict):
             intent = intent.get("value")
