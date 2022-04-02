@@ -520,8 +520,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("frameStart") is not None:
                 index_frame_start = int(repre.get("frameStart"))
 
-                # TODO use frame padding from right template group
-                render_template = anatomy.templates["render"]
+                render_template = anatomy.templates[template_name]
                 frame_start_padding = int(
                     render_template.get(
                         "frame_padding",
