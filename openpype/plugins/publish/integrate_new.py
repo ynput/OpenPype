@@ -183,7 +183,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.register(instance, file_transactions)
         except Exception:
             # clean destination
-            # todo: rollback any registered entities? (or how safe are we?)
+            # todo: preferably we'd also rollback *any* changes to the database
             file_transactions.rollback()
             self.log.critical("Error when registering", exc_info=True)
             six.reraise(*sys.exc_info())
