@@ -604,7 +604,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             repre_context[key] = template_data[key]
 
         # Explicitly store the full list even though template data might
-        # have a different value
+        # have a different value because it uses just a single udim tile
         if repre.get("udim"):
             repre_context["udim"] = repre.get("udim")  # store list
 
