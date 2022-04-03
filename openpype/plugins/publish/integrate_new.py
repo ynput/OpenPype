@@ -156,11 +156,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usdOverride"
                 ]
     exclude_families = ["clip"]
+    default_template_name = "publish"
+
+    # Representation context keys that should always be written to
+    # the database even if not used by the destination template
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "username"
     ]
-    default_template_name = "publish"
 
     # Attributes set by settings
     template_name_profiles = None
