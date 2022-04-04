@@ -609,6 +609,6 @@ def cli(args):
     # Store settings
     api.Session["AVALON_PROJECT"] = project
 
-    install_openpype_plugins()
+    install_openpype_plugins(project)
 
     show()
