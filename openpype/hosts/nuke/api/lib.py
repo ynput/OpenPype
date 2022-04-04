@@ -1057,8 +1057,8 @@ def add_deadline_tab(node):
     node.addKnob(knob)
 
     knob = nuke.Int_Knob("deadlineConcurrentTasks", "Concurrent tasks")
-    #  zero as default will trigger value from Setting during collection
-    # look to precollect_write.py
+    # zero as default will get value from Settings during collection
+    # instead of being an explicit user override, see precollect_write.py
     knob.setValue(0)
     node.addKnob(knob)
 
