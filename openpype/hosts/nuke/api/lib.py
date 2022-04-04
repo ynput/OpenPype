@@ -1057,12 +1057,19 @@ def add_deadline_tab(node):
     node.addKnob(knob)
 
     knob = nuke.Int_Knob("deadlineConcurrentTasks", "Concurrent tasks")
+    #  zero as default will trigger value from Setting during collection
+    # look to precollect_write.py
     knob.setValue(0)
     node.addKnob(knob)
 
 
 def get_deadline_knob_names():
-    return ["Deadline", "deadlineChunkSize", "deadlinePriority"]
+    return [
+        "Deadline",
+        "deadlineChunkSize",
+        "deadlinePriority",
+        "deadlineConcurrentTasks"
+    ]
 
 
 def create_backdrop(label="", color=None, layer=0,
