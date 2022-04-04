@@ -641,5 +641,6 @@ class SingleFileWidget(QtWidgets.QWidget):
                     filepaths.append(filepath)
             # TODO filter check
             if len(filepaths) == 1:
-                self.set_value(filepaths[0], False)
+                self._filepath_input.setText(filepaths[0])
+
         event.accept()

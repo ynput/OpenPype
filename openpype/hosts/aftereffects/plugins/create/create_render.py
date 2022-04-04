@@ -1,12 +1,14 @@
-from openpype.pipeline import create
-from openpype.pipeline import CreatorError
+from openpype.pipeline import (
+    CreatorError,
+    LegacyCreator
+)
 from openpype.hosts.aftereffects.api import (
     get_stub,
     list_instances
 )
 
 
-class CreateRender(create.LegacyCreator):
+class CreateRender(LegacyCreator):
     """Render folder for publish.
 
         Creates subsets in format 'familyTaskSubsetname',

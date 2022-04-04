@@ -26,6 +26,7 @@ from openpype.tools.utils import host_tools
 from openpype.lib.path_tools import HostDirmap
 from openpype.settings import get_project_settings
 from openpype.modules import ModulesManager
+from openpype.pipeline import discover_legacy_creator_plugins
 
 from .workio import (
     save_file,
@@ -1902,7 +1903,7 @@ def recreate_instance(origin_node, avalon_data=None):
     # create new node
     # get appropriate plugin class
     creator_plugin = None
-    for Creator in api.discover(api.Creator):
+    for Creator in discover_legacy_creator_plugins():
         if Creator.__name__ == data["creator"]:
             creator_plugin = Creator
             break

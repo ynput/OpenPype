@@ -5,7 +5,6 @@ from collections import OrderedDict
 import nuke
 
 import pyblish.api
-import avalon.api
 
 import openpype
 from openpype.api import (
@@ -15,10 +14,11 @@ from openpype.api import (
 )
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     register_inventory_action_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
@@ -106,7 +106,7 @@ def install():
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     register_inventory_action_path(INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
@@ -132,7 +132,7 @@ def uninstall():
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(
