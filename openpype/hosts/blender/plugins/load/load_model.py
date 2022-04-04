@@ -462,9 +462,6 @@ class BlendModelLoader(plugin.AssetLoader):
         plugin.remove_orphan_datablocks()
         plugin.remove_orphan_datablocks()
         # If it is the last object to use that library, remove it
-        print(container_libpath)
-        print(bpy.path.basename(container_libpath))
-        print(count)
         if count == 1:
             library = bpy.data.libraries.get(
                 bpy.path.basename(container_libpath)

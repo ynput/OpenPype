@@ -3,7 +3,7 @@
 import bpy
 
 from avalon import api
-from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api import plugin, lib, ops, dialog
 
 
 class CreateRig(plugin.Creator):
@@ -32,6 +32,16 @@ class CreateRig(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
+        all_in_container = True
+        # Dialog box if use_selection is checked
+        if (self.options or {}).get("useSelection"):
+            # and not any objects selected
+            if not lib.get_selection():
+                all_in_container = dialog.use_selection_behaviour_dialog()
+            # if any objects is selected not set all the objects in the container
+            else:
+                all_in_container = False
+
         # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
@@ -53,7 +63,7 @@ class CreateRig(plugin.Creator):
 
         # Link the collections in the scene to the container
         # If the use selection option is checked
-        if not (self.options or {}).get("useSelection"):
+        if all_in_container:
             for collection in collections:
                 # if collection is not yet in the container
                 # And is not the container
@@ -67,16 +77,16 @@ class CreateRig(plugin.Creator):
         # Add selected objects to container
         objects_to_link = list()
         # If the use selection option is checked
-        if (self.options or {}).get("useSelection"):
+        if all_in_container:
+            # Append object in the scene collection
+            # In the objects_to_link list
+            objects_to_link = scene_collection.objects
+        else:
             selected = lib.get_selection()
             for object in selected:
                 # Append object selected in the objects_to_link list
                 objects_to_link.append(object)
         # If the use selection option is not checked
-        else:
-            # Append object in the scene collection
-            # In the objects_to_link list
-            objects_to_link = scene_collection.objects
 
         for object in objects_to_link:
             # If the object is not yet in the container
@@ -87,4 +97,7 @@ class CreateRig(plugin.Creator):
                     collection.objects.unlink(object)
                 # Link the object to the container
                 container.objects.link(object)
+                # If the container is empty remove them
+        if not container.objects and not container.children:
+            bpy.data.collections.remove(container)
         return container
