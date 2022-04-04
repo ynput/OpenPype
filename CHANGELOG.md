@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.9.2-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.2](https://github.com/pypeclub/OpenPype/tree/3.9.2) (2022-04-04)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.1...3.9.2)
 
 ### 📖 Documentation
 
@@ -126,7 +126,6 @@
 - New Publisher: Error dialog got right styles [\#2857](https://github.com/pypeclub/OpenPype/pull/2857)
 - General: Fix getattr clalback on dynamic modules [\#2855](https://github.com/pypeclub/OpenPype/pull/2855)
 - Nuke: slate resolution to input video resolution [\#2853](https://github.com/pypeclub/OpenPype/pull/2853)
-- WebPublisher: Fix username stored in DB [\#2852](https://github.com/pypeclub/OpenPype/pull/2852)
 
 **🔀 Refactored code**
 
