@@ -528,11 +528,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # preview video rendering
             for app in self.aov_filter.keys():
                 if os.environ.get("AVALON_APP", "") == app:
-                    # no need to add review if baking in nuke present
-                    if (
-                        app == "nuke"
-                        and instance.get("bakingNukeScripts")
-                    ):
+                    # no need to add review if `hasReviewableRepresentations`
+                    if instance.get("hasReviewableRepresentations"):
                         break
 
                     # iteratre all aov filters
