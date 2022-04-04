@@ -3,7 +3,7 @@ import os.path
 import time
 import sys
 import six
-import acre
+import platform
 
 from openpype.api import Logger
 from openpype.api import get_system_settings
@@ -73,12 +73,22 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        cred_data = {
-            'cred_path': self.presets.get("credentials_url", {})
-        }
-        cred_data = acre.parse(cred_data)
-        cred_data = acre.merge(cred_data, current_env=os.environ)
-        cred_path = cred_data['cred_path']
+        current_platform = platform.system().lower()
+        cred_path = self.presets.get("credentials_url", {}). \
+            get(current_platform) or ''
+
+        if not cred_path:
+            msg = "Sync Server: Please, fill the credentials for gdrive "\
+                  "provider for platform '{}' !".format(current_platform)
+            log.info(msg)
+            return
+
+        try:
+            cred_path = cred_path.format(**os.environ)
+        except KeyError as e:
+            log.info("the key(s) {} does not exist in the environment "
+                     "variables".format(" ".join(e.args)))
+            return
 
         if not os.path.exists(cred_path):
             msg = "Sync Server: No credentials for gdrive provider " + \
