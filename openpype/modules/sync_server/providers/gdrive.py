@@ -86,7 +86,7 @@ class GDriveHandler(AbstractProvider):
         try:
             cred_path = cred_path.format(**os.environ)
         except KeyError as e:
-            log.info("the key(s) {} does not exist in the environment "
+            log.info("The key(s) {} does not exist in the environment "
                      "variables".format(" ".join(e.args)))
             return
 
