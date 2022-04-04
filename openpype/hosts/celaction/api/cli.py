@@ -71,7 +71,6 @@ def main():
     _prepare_publish_environments()
 
     # Registers pype's Global pyblish plugins
-    # - use fake host
     install_openpype_plugins()
 
     if os.path.exists(PUBLISH_PATH):
