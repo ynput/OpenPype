@@ -5,6 +5,7 @@ from avalon import api, io
 
 from openpype import style
 from openpype.lib import register_event_callback
+from openpype.pipeline import install_openpype_plugins
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -607,5 +608,7 @@ def cli(args):
 
     # Store settings
     api.Session["AVALON_PROJECT"] = project
+
+    install_openpype_plugins()
 
     show()
