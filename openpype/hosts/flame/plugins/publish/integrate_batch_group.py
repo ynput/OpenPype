@@ -7,7 +7,7 @@ import openpype.hosts.flame.api as opfapi
 import openpype.pipeline as op_pipeline
 
 
-@pyblish.api.log
+
 class IntegrateBatchGroup(pyblish.api.InstancePlugin):
     """Integrate published shot to batch group"""
 
