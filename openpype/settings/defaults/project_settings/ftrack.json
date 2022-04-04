@@ -396,7 +396,7 @@
                 "redshiftproxy": "cache",
                 "usd": "usd"
             },
-            "nicer_asset_name": false
+            "keep_first_subset_name_for_review": true
         }
     }
 }

@@ -787,9 +787,9 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "nicer_asset_name",
-                            "label": "Nicer Asset name if multiple reviewable",
-                            "default": false
+                            "key": "keep_first_subset_name_for_review",
+                            "label": "Make subset name as first asset name",
+                            "default": true
                         }
                     ]
                 }
