@@ -35,6 +35,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "image": "img",
         "reference": "reference"
     }
+    keep_first_subset_name_for_review = True
 
     def process(self, instance):
         self.log.debug("instance {}".format(instance))
@@ -168,7 +169,40 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Change asset name of each new component for review
         is_first_review_repre = True
         not_first_components = []
+        extended_asset_name = ""
+        multiple_reviewable = len(review_representations) > 1
         for repre in review_representations:
+            # Create copy of base comp item and append it
+            review_item = copy.deepcopy(base_component_item)
+
+            # condition for multiple reviewable representations
+            # expand name to better label componenst
+            if (
+                not self.keep_first_subset_name_for_review
+                and multiple_reviewable
+            ):
+                asset_name = review_item["asset_data"]["name"]
+                # define new extended name
+                extended_asset_name = "_".join(
+                    (asset_name, repre["name"])
+                )
+                review_item["asset_data"]["name"] = extended_asset_name
+
+                # rename asset name only if multiple reviewable repre
+                if is_first_review_repre:
+                    # and rename all already created components
+                    for _ci in component_list:
+                        _ci["asset_data"]["name"] = extended_asset_name
+
+                    # and rename all already created src components
+                    for _sci in src_components_to_add:
+                        _sci["asset_data"]["name"] = extended_asset_name
+
+                    # rename also first thumbnail component if any
+                    if first_thumbnail_component is not None:
+                        first_thumbnail_component[
+                            "asset_data"]["name"] = extended_asset_name
+
             frame_start = repre.get("frameStartFtrack")
             frame_end = repre.get("frameEndFtrack")
             if frame_start is None or frame_end is None:
@@ -184,8 +218,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             if fps is None:
                 fps = instance_fps
 
-            # Create copy of base comp item and append it
-            review_item = copy.deepcopy(base_component_item)
             # Change location
             review_item["component_path"] = repre["published_path"]
             # Change component data
@@ -200,17 +232,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     })
                 }
             }
-            # Create copy of item before setting location or changing asset
-            src_components_to_add.append(copy.deepcopy(review_item))
+
             if is_first_review_repre:
                 is_first_review_repre = False
             else:
-                # Add representation name to asset name of "not first" review
-                asset_name = review_item["asset_data"]["name"]
-                review_item["asset_data"]["name"] = "_".join(
-                    (asset_name, repre["name"])
-                )
                 not_first_components.append(review_item)
+
+            # Create copy of item before setting location
+            src_components_to_add.append(copy.deepcopy(review_item))
 
             # Set location
             review_item["component_location"] = ftrack_server_location
@@ -249,6 +278,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 continue
             # Create copy of base comp item and append it
             other_item = copy.deepcopy(base_component_item)
+
+            # add extended name if any
+            if extended_asset_name:
+                other_item["asset_data"]["name"] = extended_asset_name
+
             other_item["component_data"] = {
                 "name": repre["name"]
             }
