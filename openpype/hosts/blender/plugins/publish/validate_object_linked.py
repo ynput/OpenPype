@@ -104,5 +104,5 @@ class ValidateObjectLinked(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError(
-                f"Container found in instance is not linked: {invalid}"
+                f"Container contain local parts: {invalid} See Action of this Validate"
             )
