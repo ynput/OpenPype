@@ -6,7 +6,7 @@ import json
 import tempfile
 import contextlib
 import subprocess
-from openpype.lib.vendor_bin_utils import find_executable
+from openpype.lib.vendor_bin_utils import get_redshift_tool
 from collections import OrderedDict
 
 from maya import cmds  # noqa
@@ -61,13 +61,7 @@ def rstex(source, *args):
     if "REDSHIFT_COREDATAPATH" not in os.environ:
         raise RuntimeError("Must have Redshift available.")
 
-    redshift_bin_path = os.path.join(
-        os.environ["REDSHIFT_COREDATAPATH"],
-        "bin",
-        "redshiftTextureProcessor"
-    )
-        
-    texture_processor_path = find_executable(redshift_bin_path)
+    texture_processor_path = get_redshift_tool("TextureProcessor")
 
     cmd = [
         texture_processor_path,
