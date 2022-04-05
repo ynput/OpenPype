@@ -407,7 +407,8 @@
                 "vrayproxy": "cache",
                 "redshiftproxy": "cache",
                 "usd": "usd"
-            }
+            },
+            "keep_first_subset_name_for_review": true
         }
     }
 }

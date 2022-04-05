@@ -193,7 +193,9 @@ class SaveAsDialog(QtWidgets.QDialog):
 
     """
 
-    def __init__(self, parent, root, anatomy, template_key, session=None):
+    def __init__(
+        self, parent, root, anatomy, template_key, extensions, session=None
+    ):
         super(SaveAsDialog, self).__init__(parent=parent)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
@@ -201,6 +203,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         self.host = api.registered_host()
         self.root = root
         self.work_file = None
+        self._extensions = extensions
 
         if not session:
             # Fallback to active session
@@ -257,7 +260,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         # Add styled delegate to use stylesheets
         ext_delegate = QtWidgets.QStyledItemDelegate()
         ext_combo.setItemDelegate(ext_delegate)
-        ext_combo.addItems(self.host.file_extensions())
+        ext_combo.addItems(self._extensions)
 
         # Build inputs
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
@@ -336,7 +339,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
     def get_existing_comments(self):
         matcher = CommentMatcher(self.anatomy, self.template_key, self.data)
-        host_extensions = set(self.host.file_extensions())
+        host_extensions = set(self._extensions)
         comments = set()
         if os.path.isdir(self.root):
             for fname in os.listdir(self.root):
@@ -392,7 +395,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         return anatomy_filled[self.template_key]["file"]
 
     def refresh(self):
-        extensions = self.host.file_extensions()
+        extensions = list(self._extensions)
         extension = self.data["ext"]
         if extension is None:
             # Define saving file extension
