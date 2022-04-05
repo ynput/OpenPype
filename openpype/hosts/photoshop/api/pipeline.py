@@ -78,8 +78,7 @@ def install():
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     pyblish.api.register_callback(
