@@ -648,24 +648,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         # Skip if number of size items does not match to splitter
         splitters_count = len(self._widgets_splitter.sizes())
-        if len(splitter_size_ratio) != splitters_count:
-            return
-
-        # Don't use absolute sizes but ratio of last stored sizes
-        ratio_sum = sum(splitter_size_ratio)
-        sizes = []
-        max_size = self._widgets_splitter.height()
-        cur_size = 0
-        ratio = max_size / ratio_sum
-        for size in splitter_size_ratio:
-            item_size = int(ratio * size)
-            cur_size += item_size
-            if cur_size > max_size:
-                item_size -= cur_size - max_size
-            if not item_size:
-                item_size = 1
-            sizes.append(item_size)
-        self._widgets_splitter.setSizes(sizes)
+        if len(splitter_size_ratio) == splitters_count:
+            self._widgets_splitter.setSizes(splitter_size_ratio)
 
     def closeEvent(self, event):
         self.save_registry()
