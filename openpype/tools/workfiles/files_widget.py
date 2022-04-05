@@ -210,8 +210,8 @@ class FilesWidget(QtWidgets.QWidget):
         publish_btns_layout.setContentsMargins(0, 0, 0, 0)
         publish_btns_layout.addWidget(btn_save_as_published, 1)
         publish_btns_layout.addWidget(btn_change_context, 1)
-        publish_btns_layout.addWidget(btn_cancel_published, 1)
         publish_btns_layout.addWidget(btn_select_context_published, 1)
+        publish_btns_layout.addWidget(btn_cancel_published, 1)
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
