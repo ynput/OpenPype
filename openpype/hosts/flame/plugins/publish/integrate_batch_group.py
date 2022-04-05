@@ -38,44 +38,40 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
 
     def _load_clip_to_context(self, instance, bgroup):
         # get all loaders for host
-        loaders = op_pipeline.discover_loader_plugins()
+        loaders_by_name = {
+            loader.__name__: loader
+            for loader in op_pipeline.discover_loader_plugins()
+        }
 
         # get all published representations
         published_representations = instance.data["published_representations"]
+        repres_db_id_by_name = {
+            repre_info["representation"]["name"]: repre_id
+            for repre_id, repre_info in published_representations.items()
+        }
 
         # get all loadable representations
-        representations = instance.data["representations"]
+        repres_by_name = {
+            repre["name"]: repre for repre in instance.data["representations"]
+        }
 
         # get repre_id for the loadable representations
-        loadable_representations = [
-            {
-                "name": _repr["name"],
-                "loader": _repr.get("batch_group_loader_name"),
-                # match loader to the loadable representation
-                "_id": next(
-                    (
-                        id
-                        for id, repr in published_representations.items()
-                        if repr["representation"]["name"] == _repr["name"]
-                    ),
-                    None
-                )
+        loader_name_by_repre_id = {
+            repres_db_id_by_name[repr_name]: {
+                "loader": repr_data["batch_group_loader_name"],
+                # add repre data for exception logging
+                "_repre_data": repr_data
             }
-            for _repr in representations
-            if _repr.get("load_to_batch_group") is not None
-        ]
+            for repr_name, repr_data in repres_by_name.items()
+            if repr_data.get("load_to_batch_group")
+        }
 
-        self.log.debug("__ loadable_representations: {}".format(pformat(
-            loadable_representations)))
+        self.log.debug("__ loader_name_by_repre_id: {}".format(pformat(
+            loader_name_by_repre_id)))
 
         # get representation context from the repre_id
-        representation_ids = [
-            repre["_id"]
-            for repre in loadable_representations
-            if repre["_id"] is not None
-        ]
         repre_contexts = op_pipeline.load.get_repres_contexts(
-            representation_ids)
+            loader_name_by_repre_id.keys())
 
         self.log.debug("__ repre_contexts: {}".format(pformat(
             repre_contexts)))
@@ -84,45 +80,37 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         for repre_id, repre_context in repre_contexts.items():
             self.log.debug("__ repre_id: {}".format(repre_id))
             # get loader name by representation id
-            loader_name = next(
-                (
-                    repr["loader"]
-                    for repr in loadable_representations
-                    if repr["_id"] == repre_id
-                )) or self.default_loader
+            loader_name = (
+                loader_name_by_repre_id[repre_id]["loader"]
+                # if nothing was added to settings fallback to default
+                or self.default_loader
+            )
 
             # get loader plugin
-            Loader = next(
-                (
-                    loader_plugin
-                    for loader_plugin in loaders
-                    if loader_plugin.__name__ == loader_name
-                ),
-                None
-            )
-            if Loader:
+            loader_plugin = loaders_by_name.get(loader_name)
+            if loader_plugin:
                 # load to flame by representation context
                 try:
                     op_pipeline.load.load_with_repre_context(
-                        Loader, repre_context, **{
+                        loader_plugin, repre_context, **{
                             "data": {"workdir": self.task_workdir}
                         })
                 except op_pipeline.load.IncompatibleLoaderError as msg:
                     self.log.error(
                         "Check allowed representations for Loader `{}` "
                         "in settings > error: {}".format(
-                            Loader.__name__, msg))
+                            loader_plugin.__name__, msg))
                     self.log.error(
                         "Representaton context >>{}<< is not compatible "
                         "with loader `{}`".format(
-                            pformat(repre_context), Loader.__name__
+                            pformat(repre_context), loader_plugin.__name__
                         )
                     )
             else:
                 self.log.warning(
                     "Something got wrong and there is not Loader found for "
                     "following data: {}".format(
-                        pformat(loadable_representations))
+                        pformat(loader_name_by_repre_id))
                 )
 
     def _get_batch_group(self, instance, task_data):
