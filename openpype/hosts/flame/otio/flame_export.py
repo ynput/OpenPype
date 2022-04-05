@@ -401,8 +401,10 @@ def get_clips_in_reels(project):
 
                 version = clip.versions[-1]
                 track = version.tracks[-1]
+                # each reel clip is also having one segment
                 for segment in track.segments:
-                    segment_data = _get_segment_attributes(segment)
+                    segment_data = _get_segment_attributes(
+                        segment, from_clip=True)
                     clip_data.update(segment_data)
 
                 output_clips.append(clip_data)
@@ -489,12 +491,14 @@ def add_otio_metadata(otio_item, item, **kwargs):
         otio_item.metadata.update({key: value})
 
 
-def _get_shot_tokens_values(clip, tokens):
+def _get_shot_tokens_values(clip, tokens, from_clip=False):
     old_value = None
     output = {}
 
-    if not clip.shot_name:
-        return output
+    # in case it is segment from reel clip
+    # avoiding duplicity of segement data
+    if from_clip:
+        return {}
 
     old_value = clip.shot_name.get_value()
 
@@ -512,16 +516,19 @@ def _get_shot_tokens_values(clip, tokens):
     return output
 
 
-def _get_segment_attributes(segment):
+def _get_segment_attributes(segment, from_clip=False):
     # log.debug(dir(segment))
-
-    if str(segment.name)[1:-1] == "":
+    if (
+        segment.name.get_value() == ""
+        or segment.hidden
+    ):
         return None
 
     # Add timeline segment to tree
     clip_data = {
         "segment_name": segment.name.get_value(),
         "segment_comment": segment.comment.get_value(),
+        "shot_name": segment.shot_name.get_value(),
         "tape_name": segment.tape_name,
         "source_name": segment.source_name,
         "fpath": segment.file_path,
@@ -531,7 +538,7 @@ def _get_segment_attributes(segment):
     # add all available shot tokens
     shot_tokens = _get_shot_tokens_values(segment, [
         "<colour space>", "<width>", "<height>", "<depth>",
-    ])
+    ], from_clip)
     clip_data.update(shot_tokens)
 
     # populate shot source metadata
@@ -597,11 +604,7 @@ def create_otio_timeline(sequence):
                     continue
                 all_segments.append(clip_data)
 
-            segments_ordered = {
-                itemindex: clip_data
-                for itemindex, clip_data in enumerate(
-                    all_segments)
-            }
+            segments_ordered = dict(enumerate(all_segments))
             log.debug("_ segments_ordered: {}".format(
                 pformat(segments_ordered)
             ))
@@ -612,15 +615,11 @@ def create_otio_timeline(sequence):
                 log.debug("_ itemindex: {}".format(itemindex))
 
                 # Add Gap if needed
-                if itemindex == 0:
-                    # if it is first track item at track then add
-                    # it to previous item
-                    prev_item = segment_data
-
-                else:
-                    # get previous item
-                    prev_item = segments_ordered[itemindex - 1]
-
+                prev_item = (
+                    segment_data
+                    if itemindex == 0
+                    else segments_ordered[itemindex - 1]
+                )
                 log.debug("_ segment_data: {}".format(segment_data))
 
                 # calculate clip frame range difference from each other
