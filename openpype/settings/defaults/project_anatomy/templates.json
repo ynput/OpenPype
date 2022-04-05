@@ -38,8 +38,20 @@
             "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
             "path": "{@folder}/{@file}"
         },
+        "simpleUnrealTextureHero": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/hero",
+            "file": "{originalBasename}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "simpleUnrealTexture": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{@version}",
+            "file": "{originalBasename}_{@version}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
         "__dynamic_keys_labels__": {
-            "maya2unreal": "Maya to Unreal"
+            "maya2unreal": "Maya to Unreal",
+            "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
+            "simpleUnrealTexture": "Simple Unreal Texture"
         }
     }
 }
