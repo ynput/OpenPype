@@ -23,7 +23,7 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "rstex",
+                    "key": "rs_tex",
                     "label": "Make Redshift texture files"
                 },
                 {
