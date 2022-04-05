@@ -61,6 +61,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         # flame objects
         segment = instance.data["item"]
+        segment_name = segment.name.get_value()
         sequence_clip = instance.context.data["flameSequence"]
         clip_data = instance.data["flameSourceClip"]
 
@@ -138,7 +139,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 self.log.warning((
                     "Skipping preset {}. Not available "
                     "reel clip for {}").format(
-                        preset_file, segment.name.get_value()
+                        preset_file, segment_name
                 ))
                 continue
 
@@ -175,7 +176,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
                 if export_type == "Sequence Publish":
                     # only keep visible layer where instance segment is child
-                    self.hide_other_tracks(duplclip, s_track_name)
+                    self.hide_others(duplclip, segment_name, s_track_name)
 
                 # validate xml preset file is filled
                 if preset_file == "":
@@ -349,11 +350,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         return new_stage_dir, new_files_list
 
-    def hide_other_tracks(self, sequence_clip, track_name):
+    def hide_others(self, sequence_clip, segment_name, track_name):
         """Helper method used only if sequence clip is used
 
         Args:
             sequence_clip (flame.Clip): sequence clip
+            segment_name (str): segment name
             track_name (str): track name
         """
         # create otio tracks and clips
@@ -362,5 +364,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 if len(track.segments) == 0 and track.hidden.get_value():
                     continue
 
+                # hide tracks which are not parent track
                 if track.name.get_value() != track_name:
                     track.hidden = True
+                    continue
+
+                # hidde all other segments
+                for segment in track.segments:
+                    if segment.name.get_value() != segment_name:
+                        segment.hidden = True
