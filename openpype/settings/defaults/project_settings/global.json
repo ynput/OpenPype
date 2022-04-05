@@ -245,6 +245,15 @@
                 },
                 {
                     "families": [
+                        "workfile"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "{family}{Task}"
+                },
+                {
+                    "families": [
                         "render"
                     ],
                     "hosts": [],
