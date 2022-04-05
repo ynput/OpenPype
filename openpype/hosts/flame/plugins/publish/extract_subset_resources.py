@@ -63,7 +63,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
         segment = instance.data["item"]
         sequence_clip = instance.context.data["flameSequence"]
         clip_data = instance.data["flameSourceClip"]
-        clip = clip_data["PyClip"]
+
+        reel_clip = None
+        if clip_data:
+            reel_clip = clip_data["PyClip"]
 
         # segment's parent track name
         s_track_name = segment.parent.name.get_value()
@@ -127,8 +130,20 @@ class ExtractSubsetResources(openpype.api.Extractor):
             in_mark = (source_start_handles - source_first_frame) + 1
             out_mark = in_mark + source_duration_handles
 
+            # make test for type of preset and available reel_clip
+            if (
+                not reel_clip
+                and export_type != "Sequence Publish"
+            ):
+                self.log.warning((
+                    "Skipping preset {}. Not available "
+                    "reel clip for {}").format(
+                        preset_file, segment.name.get_value()
+                ))
+                continue
+
             # by default export source clips
-            exporting_clip = clip
+            exporting_clip = reel_clip
 
             if export_type == "Sequence Publish":
                 # change export clip to sequence
@@ -344,7 +359,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # create otio tracks and clips
         for ver in sequence_clip.versions:
             for track in ver.tracks:
-                if len(track.segments) == 0 and track.hidden:
+                if len(track.segments) == 0 and track.hidden.get_value():
                     continue
 
                 if track.name.get_value() != track_name:
