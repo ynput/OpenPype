@@ -638,7 +638,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def _on_first_show(self):
         # Change stylesheet
         self.setStyleSheet(load_stylesheet())
-        # Check if splitter size raio is set
+        # Check if splitter size ratio is set
         # - first store value to local variable and then unset it
         splitter_size_ratio = self._splitter_size_ratio
         self._splitter_size_ratio = None
