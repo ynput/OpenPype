@@ -107,7 +107,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "hda",
                 "usd",
                 "staticMesh",
-                "skeletalMesh"
+                "skeletalMesh",
                 "usdComposition",
                 "usdOverride"
                 ]

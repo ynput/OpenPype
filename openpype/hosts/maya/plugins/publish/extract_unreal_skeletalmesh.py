@@ -55,25 +55,19 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
         # variant we extract we need to rename top node of the rig correctly.
         # It is finally done in context manager so it won't affect current
         # scene.
-        parent = "{}{}".format(
-            instance.data["asset"],
-            instance.data.get("variant", "")
-        )
 
-        joints_parents = cmds.ls(joints, long=True)
-        geo_parents = cmds.ls(geo, long=True)
+        # we rely on hierarchy under one root.
+        original_parent = to_extract[0].split("|")[1]
 
-        parent_node = {
-            parent.split("|")[1] for parent in (joints_parents + geo_parents)
-        }.pop()
+        parent_node = instance.data.get("asset")
 
         renamed_to_extract = []
         for node in to_extract:
             node_path = node.split("|")
-            node_path[1] = parent
+            node_path[1] = parent_node
             renamed_to_extract.append("|".join(node_path))
 
-        with renamed(parent_node, parent):
+        with renamed(original_parent, parent_node):
             self.log.info("Extracting: {}".format(renamed_to_extract, path))
             fbx_exporter.export(renamed_to_extract, path)
 
