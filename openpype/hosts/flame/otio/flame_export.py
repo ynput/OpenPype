@@ -518,10 +518,13 @@ def _get_shot_tokens_values(clip, tokens, from_clip=False):
 
 
 def _get_segment_attributes(segment, from_clip=False):
-    # log.debug(dir(segment))
+
+    log.debug("Segment name|hidden: {}|{}".format(
+        segment.name.get_value(), segment.hidden
+    ))
     if (
         segment.name.get_value() == ""
-        or segment.hidden
+        or segment.hidden.get_value()
     ):
         return None
 
@@ -591,7 +594,12 @@ def create_otio_timeline(sequence):
     # create otio tracks and clips
     for ver in sequence.versions:
         for track in ver.tracks:
-            if len(track.segments) == 0 and track.hidden:
+            # avoid all empty tracks
+            # or hidden tracks
+            if (
+                len(track.segments) == 0
+                or track.hidden.get_value()
+            ):
                 return None
 
             # convert track to otio
