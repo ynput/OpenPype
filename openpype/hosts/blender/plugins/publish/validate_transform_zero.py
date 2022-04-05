@@ -4,7 +4,6 @@ import mathutils
 import bpy
 import pyblish.api
 import openpype.hosts.blender.api.action
-from openpype.hosts.blender.api import plugin
 
 
 class ValidateTransformZero(pyblish.api.InstancePlugin):
@@ -29,9 +28,9 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        collection = bpy.data.collections[instance.name]
-        objects = plugin.get_all_objects_in_collection(collection)
-        for obj in [obj for obj in objects]:
+        container = bpy.data.collections.get(instance.name)
+        objects = plugin.get_all_objects_in_collection(container)
+        for obj in objects:
             if obj.matrix_basis != cls._identity:
                 invalid.append(obj)
         return invalid
