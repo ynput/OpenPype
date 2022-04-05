@@ -389,7 +389,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         self._append_lines([openpype_art])
 
-        self.setStyleSheet(load_stylesheet())
+        self._first_show = True
+        self._splitter_size_ratio = None
 
         self._init_from_registry()
 
@@ -416,9 +417,9 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self.resize(width, height)
 
         try:
-            sizes = setting_registry.get_item("splitter_sizes")
-            if len(sizes) == len(self._widgets_splitter.sizes()):
-                self._widgets_splitter.setSizes(sizes)
+            self._splitter_size_ratio = (
+                setting_registry.get_item("splitter_sizes")
+            )
 
         except ValueError:
             pass
@@ -627,7 +628,44 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def showEvent(self, event):
         self._line_check_timer.start()
         super(PythonInterpreterWidget, self).showEvent(event)
+        # First show setup
+        if self._first_show:
+            self._first_show = False
+            self._on_first_show()
+
         self._output_widget.scroll_to_bottom()
+
+    def _on_first_show(self):
+        # Change stylesheet
+        self.setStyleSheet(load_stylesheet())
+        # Check if splitter size raio is set
+        # - first store value to local variable and then unset it
+        splitter_size_ratio = self._splitter_size_ratio
+        self._splitter_size_ratio = None
+        # Skip if is not set
+        if not splitter_size_ratio:
+            return
+
+        # Skip if number of size items does not match to splitter
+        splitters_count = len(self._widgets_splitter.sizes())
+        if len(splitter_size_ratio) != splitters_count:
+            return
+
+        # Don't use absolute sizes but ratio of last stored sizes
+        ratio_sum = sum(splitter_size_ratio)
+        sizes = []
+        max_size = self._widgets_splitter.height()
+        cur_size = 0
+        ratio = max_size / ratio_sum
+        for size in splitter_size_ratio:
+            item_size = int(ratio * size)
+            cur_size += item_size
+            if cur_size > max_size:
+                item_size -= cur_size - max_size
+            if not item_size:
+                item_size = 1
+            sizes.append(item_size)
+        self._widgets_splitter.setSizes(sizes)
 
     def closeEvent(self, event):
         self.save_registry()
