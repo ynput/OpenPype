@@ -3138,11 +3138,20 @@ def set_colorspace():
 
 
 @contextlib.contextmanager
-def root_parent(nodes):
-    # type: (list) -> list
+def parent_nodes(nodes, parent=None):
+    # type: (list, str) -> list
     """Context manager to un-parent provided nodes and return them back."""
     import pymel.core as pm  # noqa
 
+    parent_node = None
+    delete_parent = False
+
+    if parent:
+        if not cmds.objExists(parent):
+            parent_node = pm.createNode("transform", n=parent, ss=False)
+            delete_parent = True
+        else:
+            parent_node = pm.PyNode(parent)
     node_parents = []
     for node in nodes:
         n = pm.PyNode(node)
@@ -3153,9 +3162,14 @@ def root_parent(nodes):
         node_parents.append((n, root))
     try:
         for node in node_parents:
-            node[0].setParent(world=True)
+            if not parent:
+                node[0].setParent(world=True)
+            else:
+                node[0].setParent(parent_node)
         yield
     finally:
         for node in node_parents:
             if node[1]:
                 node[0].setParent(node[1])
+        if delete_parent:
+            pm.delete(parent_node)

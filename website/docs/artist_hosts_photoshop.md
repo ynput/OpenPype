@@ -49,6 +49,12 @@ With the `Creator` you have a variety of options to create:
 - Uncheck `Use selection`.
     - This will create a single group named after the `Subset` in the `Creator`.
 
+#### Simplified publish
+
+There is a simplified workflow for simple use case where only single image should be created containing all visible layers.
+No image instances must be present in a workfile and `project_settings/photoshop/publish/CollectInstances/flatten_subset_template` must be filled in Settings.
+Then artists just need to hit 'Publish' button in menu.
+
 ### Publish
 
 When you are ready to share some work, you will need to publish. This is done by opening the `Pyblish` through the extensions `Publish` button.

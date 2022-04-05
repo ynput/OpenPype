@@ -13,6 +13,13 @@ from .create import (
 
     LegacyCreator,
     legacy_create,
+
+    discover_creator_plugins,
+    discover_legacy_creator_plugins,
+    register_creator_plugin,
+    deregister_creator_plugin,
+    register_creator_plugin_path,
+    deregister_creator_plugin_path,
 )
 
 from .load import (
@@ -79,6 +86,13 @@ __all__ = (
     # - legacy creation
     "LegacyCreator",
     "legacy_create",
+
+    "discover_creator_plugins",
+    "discover_legacy_creator_plugins",
+    "register_creator_plugin",
+    "deregister_creator_plugin",
+    "register_creator_plugin_path",
+    "deregister_creator_plugin_path",
 
     # --- Load ---
     "HeroVersionType",
