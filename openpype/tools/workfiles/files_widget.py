@@ -113,8 +113,8 @@ class FilesWidget(QtWidgets.QWidget):
 
         filter_layout = QtWidgets.QHBoxLayout(filter_widget)
         filter_layout.setContentsMargins(0, 0, 0, 0)
-        filter_layout.addWidget(published_checkbox, 0)
         filter_layout.addWidget(filter_input, 1)
+        filter_layout.addWidget(published_checkbox, 0)
 
         # Create the Files models
         extensions = set(self.host.file_extensions())
