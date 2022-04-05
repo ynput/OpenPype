@@ -405,7 +405,8 @@ def get_clips_in_reels(project):
                 for segment in track.segments:
                     segment_data = _get_segment_attributes(
                         segment, from_clip=True)
-                    clip_data.update(segment_data)
+                    if segment_data:
+                        clip_data.update(segment_data)
 
                 output_clips.append(clip_data)
 
