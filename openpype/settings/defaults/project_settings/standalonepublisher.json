@@ -133,6 +133,14 @@
             ],
             "help": "Texture files with UDIM together with worfile"
         },
+        "create_simple_unreal_texture": {
+            "name": "simple_unreal_texture",
+            "label": "Simple Unreal Texture",
+            "family": "simpleUnrealTexture",
+            "icon": "Image",
+            "defaults": [],
+            "help": "Texture files with Unreal naming convention"
+        },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",
             "create_model": "Model",
@@ -145,7 +153,8 @@
             "create_matchmove": "Matchmove",
             "create_render": "Render",
             "create_mov_batch": "Batch Mov",
-            "create_texture_batch": "Batch Texture"
+            "create_texture_batch": "Batch Texture",
+            "create_simple_unreal_texture": "Simple Unreal Texture"
         }
     },
     "publish": {

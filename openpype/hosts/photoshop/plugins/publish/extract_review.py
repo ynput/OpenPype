@@ -155,6 +155,9 @@ class ExtractReview(openpype.api.Extractor):
         for image_instance in instance.context:
             if image_instance.data["family"] != "image":
                 continue
+            if not image_instance.data.get("layer"):
+                # dummy instance for flatten image
+                continue
             layers.append(image_instance.data.get("layer"))
 
         return sorted(layers)
