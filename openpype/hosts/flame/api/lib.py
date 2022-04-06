@@ -724,6 +724,7 @@ class MediaInfoFile:
     tmp_name = "_tmp.clip"
     tmp_file = None
 
+    clip_data = None
     out_feed_nb_ticks = None
     out_feed_fps = None
     out_feed_drop_mode = None
@@ -752,7 +753,7 @@ class MediaInfoFile:
             raise IOError("Media Scirpt does not exist: `{}`".format(
                 self.media_script_path))
 
-    def _generate_media_info_file(self):
+    def generate_media_info_file(self):
         # Create cmd arguments for gettig xml file info file
         cmd_args = [
             self.media_script_path,
@@ -793,6 +794,8 @@ class MediaInfoFile:
                     ]
                 ))
 
+        self._get_time_info_from_origin(matching_clip)
+        self.clip_data = matching_clip
         self._write_result_xml_to_file(self.tmp_file, matching_clip)
 
     def _clear_tmp_file(self):
