@@ -235,6 +235,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url
 
+        priority = self.deadline_priority or instance.data.get("priority", 50)
+
         args = [
             "--headless",
             'publish',
@@ -254,7 +256,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
                 "Department": self.deadline_department,
                 "ChunkSize": self.deadline_chunk_size,
-                "Priority": job["Props"]["Pri"],
+                "Priority": priority,
 
                 "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
@@ -927,12 +929,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # User is deadline user
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
-            # Priority is now not handled at all
-
-            if self.deadline_priority:
-                render_job["Props"]["Pri"] = self.deadline_priority
-            else:
-                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             render_job["Props"]["Env"] = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
