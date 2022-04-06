@@ -27,15 +27,19 @@ class ExtractAnimationFBX(api.Extractor):
 
         # The first collection object in the instance is taken, as there
         # should be only one that contains the asset group.
+        collection = bpy.data.collections[instance.name]
+        objects = plugin.get_all_objects_in_collection(collection)
         collection = [
-            obj for obj in instance if type(obj) is bpy.types.Collection][0]
+            obj for obj in objects if type(obj) is bpy.types.Collection
+        ][0]
 
         # Again, the first object in the collection is taken , as there
         # should be only the asset group in the collection.
         asset_group = collection.objects[0]
 
         armature = [
-            obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
+            obj for obj in asset_group.children if obj.type == "ARMATURE"
+        ][0]
 
         object_action_pairs = []
         original_actions = []
@@ -63,7 +67,7 @@ class ExtractAnimationFBX(api.Extractor):
         asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
 
         armature_name = armature.name
-        original_name = armature_name.split(':')[1]
+        original_name = armature_name.split(":")[1]
         armature.name = original_name
 
         object_action_pairs.append((armature, copy_action))
@@ -78,7 +82,7 @@ class ExtractAnimationFBX(api.Extractor):
             object_action_pairs,
             frames=range(int(min_frame), int(max_frame)),
             do_object=False,
-            do_clean=False
+            do_clean=False,
         )
 
         for obj in bpy.data.objects:
@@ -90,7 +94,8 @@ class ExtractAnimationFBX(api.Extractor):
         filepath = os.path.join(stagingdir, fbx_filename)
 
         override = plugin.create_blender_context(
-            active=asset_group, selected=[asset_group, armature])
+            active=asset_group, selected=[asset_group, armature]
+        )
         bpy.ops.export_scene.fbx(
             override,
             filepath=filepath,
@@ -99,8 +104,8 @@ class ExtractAnimationFBX(api.Extractor):
             bake_anim_use_nla_strips=False,
             bake_anim_use_all_actions=False,
             add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'EMPTY', 'ARMATURE'}
+            armature_nodetype="ROOT",
+            object_types={"EMPTY", "ARMATURE"},
         )
         armature.name = armature_name
         asset_group.name = asset_group_name
@@ -144,19 +149,22 @@ class ExtractAnimationFBX(api.Extractor):
             instance.data["representations"] = []
 
         fbx_representation = {
-            'name': 'fbx',
-            'ext': 'fbx',
-            'files': fbx_filename,
+            "name": "fbx",
+            "ext": "fbx",
+            "files": fbx_filename,
             "stagingDir": stagingdir,
         }
         json_representation = {
-            'name': 'json',
-            'ext': 'json',
-            'files': json_filename,
+            "name": "json",
+            "ext": "json",
+            "files": json_filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(fbx_representation)
         instance.data["representations"].append(json_representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
-                      instance.name, fbx_representation))
+        self.log.info(
+            "Extracted instance '{}' to: {}".format(
+                instance.name, fbx_representation
+            )
+        )

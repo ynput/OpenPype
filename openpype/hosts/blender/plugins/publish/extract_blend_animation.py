@@ -3,6 +3,7 @@ import os
 import bpy
 
 import openpype.api
+from openpype.hosts.blender.api import plugin
 
 
 class ExtractBlendAnimation(openpype.api.Extractor):
@@ -24,11 +25,12 @@ class ExtractBlendAnimation(openpype.api.Extractor):
         self.log.info("Performing extraction..")
 
         data_blocks = set()
-
-        for obj in instance:
-            if isinstance(obj, bpy.types.Object) and obj.type == 'EMPTY':
+        collection = bpy.data.collections[instance.name]
+        objects = plugin.get_all_objects_in_collection(collection)
+        for obj in objects:
+            if isinstance(obj, bpy.types.Object) and obj.type == "EMPTY":
                 child = obj.children[0]
-                if child and child.type == 'ARMATURE':
+                if child and child.type == "ARMATURE":
                     if child.animation_data and child.animation_data.action:
                         if not obj.animation_data:
                             obj.animation_data_create()
@@ -43,12 +45,13 @@ class ExtractBlendAnimation(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'blend',
-            'ext': 'blend',
-            'files': filename,
+            "name": "blend",
+            "ext": "blend",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            "Extracted instance '%s' to: %s", instance.name, representation
+        )

@@ -32,22 +32,21 @@ class ExtractABC(api.Extractor):
 
         selected = []
         asset_group = None
-
-        for obj in instance:
+        collection = bpy.data.collections[instance.name]
+        objects = plugin.get_all_objects_in_collection(collection)
+        for obj in objects:
             obj.select_set(True)
             selected.append(obj)
             if obj.get(AVALON_PROPERTY):
                 asset_group = obj
 
         context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            active=asset_group, selected=selected
+        )
 
         # We export the abc
         bpy.ops.wm.alembic_export(
-            context,
-            filepath=filepath,
-            selected=True,
-            flatten=False
+            context, filepath=filepath, selected=True, flatten=False
         )
 
         plugin.deselect_all()
@@ -56,12 +55,13 @@ class ExtractABC(api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'abc',
-            'ext': 'abc',
-            'files': filename,
+            "name": "abc",
+            "ext": "abc",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            "Extracted instance '%s' to: %s", instance.name, representation
+        )

@@ -35,15 +35,14 @@ class ExtractFBX(api.Extractor):
         #     if obj.get(AVALON_PROPERTY):
         #         asset_group = obj
 
-        context = plugin.create_blender_context(active=instance, selected=selected)
-
         new_materials = []
         new_materials_objs = []
 
-        objects = list(bpy.data.collections[instance.name].objects)
-
+        collection = bpy.data.collections[instance.name]
+        objects = plugin.get_all_objects_in_collection(collection)
         for obj in objects:
-            objects.extend(obj.children)
+            obj.select_set(True)
+            selected.append(obj)
             if obj.type == "MESH" and len(obj.data.materials) == 0:
                 mat = bpy.data.materials.new(obj.name)
                 obj.data.materials.append(mat)
@@ -53,6 +52,9 @@ class ExtractFBX(api.Extractor):
         scale_length = bpy.context.scene.unit_settings.scale_length
         bpy.context.scene.unit_settings.scale_length = 0.01
 
+        context = plugin.create_blender_context(
+            active=collection, selected=selected
+        )
         # We export the fbx
         bpy.ops.export_scene.fbx(
             context,
@@ -84,4 +86,6 @@ class ExtractFBX(api.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s", instance.name, representation)
+        self.log.info(
+            "Extracted instance '%s' to: %s", instance.name, representation
+        )

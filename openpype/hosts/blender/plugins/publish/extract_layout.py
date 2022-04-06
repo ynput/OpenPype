@@ -21,8 +21,8 @@ class ExtractLayout(openpype.api.Extractor):
 
     def _export_animation(self, asset, instance, stagingdir, fbx_count):
         n = fbx_count
-
-        for obj in asset.children:
+        objects = plugin.get_all_objects_in_collection(asset)
+        for obj in objects:
             if obj.type != "ARMATURE":
                 continue
 
@@ -52,7 +52,7 @@ class ExtractLayout(openpype.api.Extractor):
             asset.name = asset.get(AVALON_PROPERTY).get("asset_name")
 
             armature_name = obj.name
-            original_name = armature_name.split(':')[1]
+            original_name = armature_name.split(":")[1]
             obj.name = original_name
 
             object_action_pairs.append((obj, copy_action))
@@ -67,7 +67,7 @@ class ExtractLayout(openpype.api.Extractor):
                 object_action_pairs,
                 frames=range(int(min_frame), int(max_frame)),
                 do_object=False,
-                do_clean=False
+                do_clean=False,
             )
 
             for o in bpy.data.objects:
@@ -79,7 +79,8 @@ class ExtractLayout(openpype.api.Extractor):
             filepath = os.path.join(stagingdir, fbx_filename)
 
             override = plugin.create_blender_context(
-                active=asset, selected=[asset, obj])
+                active=asset, selected=[asset, obj]
+            )
             bpy.ops.export_scene.fbx(
                 override,
                 filepath=filepath,
@@ -88,8 +89,8 @@ class ExtractLayout(openpype.api.Extractor):
                 bake_anim_use_nla_strips=False,
                 bake_anim_use_all_actions=False,
                 add_leaf_bones=False,
-                armature_nodetype='ROOT',
-                object_types={'EMPTY', 'ARMATURE'}
+                armature_nodetype="ROOT",
+                object_types={"EMPTY", "ARMATURE"},
             )
             obj.name = armature_name
             asset.name = asset_group_name
@@ -125,8 +126,7 @@ class ExtractLayout(openpype.api.Extractor):
         json_data = []
         fbx_files = []
 
-        asset_group = bpy.data.objects[str(instance)]
-
+        asset_group = bpy.data.collections[instance.name]
         fbx_count = 0
 
         for asset in asset_group.children:
@@ -141,9 +141,10 @@ class ExtractLayout(openpype.api.Extractor):
                 {
                     "type": "representation",
                     "parent": io.ObjectId(parent),
-                    "name": "blend"
+                    "name": "blend",
                 },
-                projection={"_id": True})
+                projection={"_id": True},
+            )
             blend_id = None
             if blend:
                 blend_id = blend["_id"]
@@ -152,9 +153,10 @@ class ExtractLayout(openpype.api.Extractor):
                 {
                     "type": "representation",
                     "parent": io.ObjectId(parent),
-                    "name": "fbx"
+                    "name": "fbx",
                 },
-                projection={"_id": True})
+                projection={"_id": True},
+            )
             fbx_id = None
             if fbx:
                 fbx_id = fbx["_id"]
@@ -163,9 +165,10 @@ class ExtractLayout(openpype.api.Extractor):
                 {
                     "type": "representation",
                     "parent": io.ObjectId(parent),
-                    "name": "abc"
+                    "name": "abc",
                 },
-                projection={"_id": True})
+                projection={"_id": True},
+            )
             abc_id = None
             if abc:
                 abc_id = abc["_id"]
@@ -184,26 +187,27 @@ class ExtractLayout(openpype.api.Extractor):
 
             json_element["transform"] = {
                 "translation": {
-                    "x": asset.location.x,
-                    "y": asset.location.y,
-                    "z": asset.location.z
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
                 },
                 "rotation": {
-                    "x": asset.rotation_euler.x,
-                    "y": asset.rotation_euler.y,
-                    "z": asset.rotation_euler.z,
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
                 },
                 "scale": {
-                    "x": asset.scale.x,
-                    "y": asset.scale.y,
-                    "z": asset.scale.z
-                }
+                    "x": 1,
+                    "y": 1,
+                    "z": 1,
+                },
             }
 
             # Extract the animation as well
             if family == "rig":
                 f, n = self._export_animation(
-                    asset, instance, stagingdir, fbx_count)
+                    asset, instance, stagingdir, fbx_count
+                )
                 if f:
                     fbx_files.append(f)
                     json_element["animation"] = f
@@ -218,9 +222,9 @@ class ExtractLayout(openpype.api.Extractor):
             json.dump(json_data, fp=file, indent=2)
 
         json_representation = {
-            'name': 'json',
-            'ext': 'json',
-            'files': json_filename,
+            "name": "json",
+            "ext": "json",
+            "files": json_filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(json_representation)
@@ -229,20 +233,23 @@ class ExtractLayout(openpype.api.Extractor):
 
         if len(fbx_files) == 1:
             fbx_representation = {
-                'name': 'fbx',
-                'ext': '000.fbx',
-                'files': fbx_files[0],
+                "name": "fbx",
+                "ext": "000.fbx",
+                "files": fbx_files[0],
                 "stagingDir": stagingdir,
             }
             instance.data["representations"].append(fbx_representation)
         elif len(fbx_files) > 1:
             fbx_representation = {
-                'name': 'fbx',
-                'ext': 'fbx',
-                'files': fbx_files,
+                "name": "fbx",
+                "ext": "fbx",
+                "files": fbx_files,
                 "stagingDir": stagingdir,
             }
             instance.data["representations"].append(fbx_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, json_representation)
+        self.log.info(
+            "Extracted instance '%s' to: %s",
+            instance.name,
+            json_representation,
+        )

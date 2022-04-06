@@ -29,7 +29,8 @@ class ExtractCamera(api.Extractor):
 
         camera = None
 
-        for obj in instance:
+        collection = bpy.data.collections[instance.name]
+        objects = plugin.get_all_objects_in_collection(collection)
             if obj.type == "CAMERA":
                 obj.select_set(True)
                 selected.append(obj)
