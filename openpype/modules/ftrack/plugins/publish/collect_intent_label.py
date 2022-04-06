@@ -11,7 +11,7 @@ import six
 import pyblish.api
 
 
-class CollectFtrackApi(pyblish.api.ContextPlugin):
+class CollectFtrackIntentLabel(pyblish.api.ContextPlugin):
     """ Collects an ftrack session and the current task id. """
 
     order = pyblish.api.CollectorOrder + 0.49991
