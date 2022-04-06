@@ -61,12 +61,6 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
                 "Intent label is set to `{}`.".format(final_intent_label)
             )
 
-        elif intent_val:
-            self.log.debug((
-                "Intent is set to `{}` and was not added"
-                " to comment because label is set to `{}`."
-            ).format(intent_val, final_intent_label))
-
         else:
             self.log.debug("Intent is not set.")
 
