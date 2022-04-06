@@ -17,7 +17,7 @@ def main(env):
     # activate resolve from pype
     install_host(api)
 
-    log.info(f"Avalon registered hosts: {registered_host()}")
+    log.info(f"Registered host: {registered_host()}")
 
     menu.launch_openpype_menu()
 
