@@ -24,16 +24,18 @@ class DBAssert:
             else:
                 args[key] = val
 
-        msg = None
-        no_of_docs = dbcon.count_documents(args)
-        if expected != no_of_docs:
-            msg = "Not expected no of versions. "\
-                  "Expected {}, found {}".format(expected, no_of_docs)
-
         args.pop("type")
         detail_str = " "
         if args:
-            detail_str = " with {}".format(args)
+            detail_str = " with '{}'".format(args)
+
+        msg = None
+        no_of_docs = dbcon.count_documents(args)
+        if expected != no_of_docs:
+            msg = "Not expected no of '{}'{}."\
+                  "Expected {}, found {}".format(queried_type,
+                                                 detail_str,
+                                                 expected, no_of_docs)
 
         status = "successful"
         if msg:
@@ -42,7 +44,5 @@ class DBAssert:
         print("Comparing count of {}{} {}".format(queried_type,
                                                   detail_str,
                                                   status))
-        if msg:
-            print(msg)
 
         return msg
