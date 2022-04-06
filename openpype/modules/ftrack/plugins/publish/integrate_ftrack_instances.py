@@ -40,6 +40,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.debug("instance {}".format(instance))
 
+        instance_repres = instance.data.get("representations")
+        if not instance_repres:
+            self.log.info((
+                "Skipping instance. Does not have any representations {}"
+            ).format(str(instance)))
+            return
+
         instance_version = instance.data.get("version")
         if instance_version is None:
             raise ValueError("Instance version not set")
@@ -62,13 +69,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             self.log.info((
                 "Family \"{}\" does not match any asset type mapping"
             ).format(family))
-            return
-
-        instance_repres = instance.data.get("representations")
-        if not instance_repres:
-            self.log.info((
-                "Skipping instance. Does not have any representations {}"
-            ).format(str(instance)))
             return
 
         # Prepare FPS
