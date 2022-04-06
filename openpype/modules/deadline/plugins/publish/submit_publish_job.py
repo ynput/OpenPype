@@ -509,8 +509,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         most cases, but if not - we create representation from each of them.
 
         Arguments:
-            instance (pyblish.plugin.Instance): instance for which we are
-                                                setting representations
+            instance (dict): instance data for which we are
+                             setting representations
             exp_files (list): list of expected files
 
         Returns:
@@ -528,6 +528,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # preview video rendering
             for app in self.aov_filter.keys():
                 if os.environ.get("AVALON_APP", "") == app:
+                    # no need to add review if `hasReviewableRepresentations`
+                    if instance.get("hasReviewableRepresentations"):
+                        break
+
+                    # iteratre all aov filters
                     for aov in self.aov_filter[app]:
                         if re.match(
                             aov,
@@ -724,7 +729,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", "")
+            "jobBatchName": data.get("jobBatchName", ""),
+            "hasReviewableRepresentations": data.get(
+                "hasReviewableRepresentations")
         }
 
         if "prerender" in instance.data["families"]:
