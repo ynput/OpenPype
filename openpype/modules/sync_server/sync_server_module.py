@@ -848,6 +848,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if self.enabled and sync_settings.get('enabled'):
             sites.append(self.LOCAL_SITE)
 
+        active_site = sync_settings["config"]["active_site"]
+        # for Tray running background process
+        if active_site == get_local_site_id() and active_site not in sites:
+            sites.append(active_site)
+
         return sites
 
     def tray_init(self):
