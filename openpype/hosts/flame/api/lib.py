@@ -805,7 +805,7 @@ class MediaInfoFile:
     def _get_time_info_from_origin(self, xml_data):
         try:
             for out_track in xml_data.iter('track'):
-                for out_feed in out_track.iter('feeds'):
+                for out_feed in out_track.iter('feed'):
                     out_feed_nb_ticks_obj = out_feed.find(
                         'startTimecode/nbTicks')
                     self.out_feed_nb_ticks = out_feed_nb_ticks_obj.text

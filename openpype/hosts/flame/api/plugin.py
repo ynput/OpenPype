@@ -679,6 +679,7 @@ class ClipLoader(LoaderPlugin):
     ]
 
 
+# TODO: inheritance from flame.api.lib.MediaInfoFile
 class OpenClipSolver:
     media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
     tmp_name = "_tmp.clip"
