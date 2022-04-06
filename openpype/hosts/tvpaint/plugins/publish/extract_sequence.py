@@ -12,14 +12,13 @@ from openpype.hosts.tvpaint.lib import (
     fill_reference_frames,
     composite_rendered_layers,
     rename_filepaths_by_frame_start,
-    composite_images
 )
 
 
 class ExtractSequence(pyblish.api.Extractor):
     label = "Extract Sequence"
     hosts = ["tvpaint"]
-    families = ["review", "renderPass", "renderLayer"]
+    families = ["review", "renderPass", "renderLayer", "renderScene"]
 
     # Modifiable with settings
     review_bg = [255, 255, 255, 255]
@@ -160,7 +159,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Fill tags and new families
         tags = []
-        if family_lowered in ("review", "renderlayer"):
+        if family_lowered in ("review", "renderlayer", "renderscene"):
             tags.append("review")
 
         # Sequence of one frame
@@ -186,7 +185,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         instance.data["representations"].append(new_repre)
 
-        if family_lowered in ("renderpass", "renderlayer"):
+        if family_lowered in ("renderpass", "renderlayer", "renderscene"):
             # Change family to render
             instance.data["family"] = "render"
 

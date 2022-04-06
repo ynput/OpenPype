@@ -1,11 +1,10 @@
-import os
 import toml
 
 import nuke
 
-from avalon import api
 import pyblish.api
 import openpype.api
+from openpype.pipeline import discover_creator_plugins
 from openpype.hosts.nuke.api.lib import get_avalon_knob_data
 
 
@@ -79,7 +78,7 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
 
         # get appropriate plugin class
         creator_plugin = None
-        for Creator in api.discover(api.Creator):
+        for Creator in discover_creator_plugins():
             if Creator.__name__ != Create_name:
                 continue
 
