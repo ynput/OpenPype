@@ -26,6 +26,7 @@ from openpype.pipeline import (
     loaders_from_representation,
     get_representation_path,
     load_container,
+    registered_host,
 )
 from .commands import reset_frame_range
 
@@ -1574,7 +1575,7 @@ def assign_look_by_version(nodes, version_id):
                                        "name": "json"})
 
     # See if representation is already loaded, if so reuse it.
-    host = api.registered_host()
+    host = registered_host()
     representation_id = str(look_representation['_id'])
     for container in host.ls():
         if (container['loader'] == "LookLoader" and
@@ -2612,7 +2613,7 @@ def get_attr_in_layer(attr, layer):
 def fix_incompatible_containers():
     """Backwards compatibility: old containers to use new ReferenceLoader"""
 
-    host = api.registered_host()
+    host = registered_host()
     for container in host.ls():
         loader = container['loader']
 

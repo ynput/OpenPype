@@ -7,8 +7,11 @@ from Qt import QtCore, QtGui
 import qtawesome
 from bson.objectid import ObjectId
 
-from avalon import api, io, schema
-from openpype.pipeline import HeroVersionType
+from avalon import io, schema
+from openpype.pipeline import (
+    HeroVersionType,
+    registered_host,
+)
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.modules import ModulesManager
@@ -181,7 +184,7 @@ class InventoryModel(TreeModel):
     def refresh(self, selected=None, items=None):
         """Refresh the model"""
 
-        host = api.registered_host()
+        host = registered_host()
         if not items:  # for debugging or testing, injecting items from outside
             items = host.ls()
 
