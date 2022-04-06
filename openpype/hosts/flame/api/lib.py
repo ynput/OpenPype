@@ -748,12 +748,14 @@ class MediaInfoFile:
 
         self.log.info("Temp File: {}".format(self.tmp_file))
 
+        self._generate_media_info_file()
+
     def _validate_media_script_path(self):
         if not os.path.isfile(self.media_script_path):
             raise IOError("Media Scirpt does not exist: `{}`".format(
                 self.media_script_path))
 
-    def generate_media_info_file(self):
+    def _generate_media_info_file(self):
         # Create cmd arguments for gettig xml file info file
         cmd_args = [
             self.media_script_path,
