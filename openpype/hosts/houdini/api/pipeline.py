@@ -7,8 +7,6 @@ import hou
 import hdefereval
 
 import pyblish.api
-import avalon.api
-from avalon.lib import find_submodule
 
 from openpype.pipeline import (
     register_creator_plugin_path,
@@ -215,24 +213,12 @@ def ls():
                        "pyblish.mindbender.container"):
         containers += lib.lsattr("id", identifier)
 
-    has_metadata_collector = False
-    config_host = find_submodule(avalon.api.registered_config(), "houdini")
-    if hasattr(config_host, "collect_container_metadata"):
-        has_metadata_collector = True
-
     for container in sorted(containers,
                             # Hou 19+ Python 3 hou.ObjNode are not
                             # sortable due to not supporting greater
                             # than comparisons
                             key=lambda node: node.path()):
-        data = parse_container(container)
-
-        # Collect custom data if attribute is present
-        if has_metadata_collector:
-            metadata = config_host.collect_container_metadata(container)
-            data.update(metadata)
-
-        yield data
+        yield parse_container(container)
 
 
 def before_save():

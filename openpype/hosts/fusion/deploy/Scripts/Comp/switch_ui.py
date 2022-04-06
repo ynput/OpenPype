@@ -1,14 +1,15 @@
 import os
+import sys
 import glob
 import logging
 
 from Qt import QtWidgets, QtCore
 
-import avalon.api
 from avalon import io
 import qtawesome as qta
 
 from openpype import style
+from openpype.pipeline import install_host
 from openpype.hosts.fusion import api
 from openpype.lib.avalon_context import get_workdir_from_session
 
@@ -181,8 +182,7 @@ class App(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
-    avalon.api.install(api)
+    install_host(api)
 
     app = QtWidgets.QApplication(sys.argv)
     window = App()

@@ -101,7 +101,8 @@ class PypeCommands:
             RuntimeError: When there is no path to process.
         """
         from openpype.modules import ModulesManager
-        from openpype import install, uninstall
+        from openpype.pipeline import install_openpype_plugins
+
         from openpype.api import Logger
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
@@ -112,7 +113,7 @@ class PypeCommands:
 
         log = Logger.get_logger()
 
-        install()
+        install_openpype_plugins()
 
         manager = ModulesManager()
 
@@ -294,7 +295,8 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
-        import avalon.api
+
+        from openpype.pipeline import install_host
         from openpype.hosts.webpublisher import api as webpublisher
 
         log = PypeLogger.get_logger()
@@ -315,7 +317,7 @@ class PypeCommands:
             for target in targets:
                 pyblish.api.register_target(target)
 
-        avalon.api.install(webpublisher)
+        install_host(webpublisher)
 
         log.info("Running publish ...")
 
