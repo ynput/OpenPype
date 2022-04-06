@@ -37,6 +37,7 @@ IGNORED_DEFAULT_FILENAMES = (
     "__init__.py",
     "base.py",
     "interfaces.py",
+    "example_addons",
 )
 
 
