@@ -30,7 +30,7 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
         local_instances_list = list()
         system = platform.system().lower()
         for collection in bpy.data.collections:
-            if True or collection.override_library is not None:
+            if True or collection.override_library:
 
                 if collection.get(AVALON_PROPERTY):
                     avalon_dict = collection.get(AVALON_PROPERTY)
@@ -83,8 +83,6 @@ class ValidateObjectLinked(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-
-        scene = bpy.data.scenes["Scene"]
 
         # Get the local instances
         local_instances_list = list()

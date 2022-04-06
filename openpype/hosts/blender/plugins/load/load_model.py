@@ -13,46 +13,19 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class modfier_service:
+class modfier_description:
     """
-    Store the type, name, type, index, properties and object modified  of a modifier
+    Store the type, name, type,  properties and object modified  of a modifier
     The class has a method to create a modifier with this description
     """
-
-    def _get_index(self, modifier: bpy.types.Modifier):
-        """Method to get the index of the input modifier"""
-        index = 0
-        for current_modifier in modifier.id_data.modifiers:
-            if current_modifier.bl_rna == modifier.bl_rna:
-                self._index = index
-            index = index + 1
-
-    def set_index(self, index):
-        """change the position of the modifier if the modifier exits in the scene"""
-        object = bpy.data.objects[self._object_name]
-        if object:
-            bpy.context.view_layer.objects.active = object
-            try:
-                bpy.ops.object.modifier_move_to_index(
-                    modifier=self._properties["name"], index=index
-                )
-                self._index = index
-            except Exception as ex:
-                print(ex)
 
     @property
     def properties(self):
         return self._properties
 
     @property
-    def index(self):
-        return self._index
-
-    @property
     def object(self):
-        object = bpy.data.objects[self._object_name]
-        if object:
-            return object
+        return self._object_name
 
     def create_blender_modifier(self):
         """create the modifier with the index, properties and object properties"""
@@ -72,7 +45,6 @@ class modfier_service:
         """Get the index, properties and object modified of the modifier"""
         self._object_name = str()
         self._properties = dict()
-        self._index = int()
         for property in dir(modifier):
             # filter the property
             if property not in [
@@ -96,7 +68,6 @@ class modfier_service:
             ]:
                 self._properties[property] = getattr(modifier, property)
         self._object_name = modifier.id_data.name
-        self._get_index(modifier)
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -183,7 +154,6 @@ class BlendModelLoader(plugin.AssetLoader):
 
     def _get_modifier_parameters(self, container):
         """Get all modifier parameters of the container's objects in a dict"""
-
         objects_list = plugin.get_all_objects_in_collection(container)
         object_names_list = [object.name for object in objects_list]
         modifier_list = list()
@@ -192,19 +162,29 @@ class BlendModelLoader(plugin.AssetLoader):
             object = bpy.data.objects.get(object_name)
             if object:
                 for modifier in object.modifiers:
-                    modifier_name = modifier.name
                     if modifier:
-                        modifier_description = modfier_service(modifier)
+                        modifier_description = modfier_description(modifier)
                         # Set the modifier properties of an object in a dict
-                        modifier_list.append(modifier_avalon)
+                        modifier_list.append(modifier_description)
         return modifier_list
 
-    def _set_modifier(self, container, modifier_list):
+    def _set_modifier(self, modifier_list):
         """Set all modifier parameters of the container's objects"""
-
-        objects_list = plugin.get_all_objects_in_collection(container)
+        modifier_list.reverse()
         for modifier_description in modifier_list:
             modifier_description.create_blender_modifier()
+
+        for modifier_description in modifier_list:
+            object = bpy.data.objects[modifier_description.object]
+            if object:
+                bpy.context.view_layer.objects.active = object
+                try:
+                    bpy.ops.object.modifier_move_to_index(
+                        modifier=modifier_description.properties["name"],
+                        index=0,
+                    )
+                except Exception as ex:
+                    print(ex)
 
     def _remove(self, container):
         """Remove the container and used data"""
@@ -300,7 +280,7 @@ class BlendModelLoader(plugin.AssetLoader):
         plugin.deselect_all()
 
         # Override the container and the objects
-        container_overrided = container_collection.override_create(
+        container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
         collections.remove(container_collection)
@@ -309,7 +289,7 @@ class BlendModelLoader(plugin.AssetLoader):
         for object in objects:
             object.override_create(remap_local_usages=True)
 
-        return container_overrided
+        return container_overridden
 
     def process_asset(
         self,
@@ -431,7 +411,7 @@ class BlendModelLoader(plugin.AssetLoader):
                 parent_collection.children.link(container_override)
 
         # Reset the modifier parameters and the driver targets
-        self._set_modifier(container_override, modifiers_dict)
+        self._set_modifier(modifiers_dict)
         self._set_drivers_from_empty(empty)
         # self._set_drivers_target(container_override, object_driver_target_list)
 
@@ -482,9 +462,6 @@ class BlendModelLoader(plugin.AssetLoader):
         plugin.remove_orphan_datablocks()
         plugin.remove_orphan_datablocks()
         # If it is the last object to use that library, remove it
-        print(container_libpath)
-        print(bpy.path.basename(container_libpath))
-        print(count)
         if count == 1:
             library = bpy.data.libraries.get(
                 bpy.path.basename(container_libpath)

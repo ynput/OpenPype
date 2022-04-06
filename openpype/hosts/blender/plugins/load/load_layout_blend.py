@@ -100,17 +100,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     ):
                         container_collection = data_collection
         self.original_container_name = container_collection.name
-
-        # Create a collection used to start the load collections at .001
-        # increment_use_collection = bpy.data.collections.new(
-        #     name=self.original_container_name
-        # )
-
         # Link the container to the scene collection
-        # scene_collection.children.link(increment_use_collection)
         scene_collection.children.link(container_collection)
 
-        # Get all the collection of the container. The farest parents in first for override them first
+        # Get all the collection of the container.
         collections = []
         nodes = list(container_collection.children)
         collections.append(container_collection)
@@ -132,29 +125,28 @@ class BlendLayoutLoader(plugin.AssetLoader):
             # Get all objects that aren't an armature
             nodes = objects_of_the_collection
             non_armatures = []
+            # Add them in objects list
             for obj in nodes:
                 if obj.type != "ARMATURE":
                     non_armatures.append(obj)
                 nodes.extend(list(obj.children))
             non_armatures.reverse()
 
-            # Add them in objects list
-
             # Get all objects that are an armature
             nodes = objects_of_the_collection
-
+            # Add them in armature list
             for obj in nodes:
                 if obj.type == "ARMATURE":
                     armatures.append(obj)
                 nodes.extend(list(obj.children))
             armatures.reverse()
-            # Add them in armature list
 
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
 
-        container_overrided = container_collection.override_create(
+        # Override the container and the objects
+        container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
         collections.remove(container_collection)
@@ -165,12 +157,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
             obj.override_create(remap_local_usages=True)
         for armature in armatures:
             armature.override_create(remap_local_usages=True)
-        # obj.data.override_create(remap_local_usages=True)
 
-        # Remove the collection used to the increment
-        # bpy.data.collections.remove(increment_use_collection)
-
-        return container_overrided
+        return container_overridden
 
     def process_asset(
         self,
@@ -192,6 +180,34 @@ class BlendLayoutLoader(plugin.AssetLoader):
         asset_name = plugin.asset_name(asset, subset)
 
         avalon_container = self._process(libpath, asset_name)
+
+        # Get all the containers in the scene
+        sub_avalon_containers = plugin.get_containers_list()
+        # Loop on all containers
+        for sub_avalon_container in sub_avalon_containers:
+            # Check if the container is overridden but not liked
+            if (
+                sub_avalon_container.override_library
+                and sub_avalon_container.library is None
+            ):
+                # Check if the container has the avalon property
+                if sub_avalon_container.get(AVALON_PROPERTY):
+                    # Check if the container is a rig
+                    if sub_avalon_container["avalon"].get("family") == "rig":
+                        # Get all the object in the container
+                        objects = sub_avalon_container.objects
+                        # Get the armatures
+                        armatures = [
+                            obj for obj in objects if obj.type == "ARMATURE"
+                        ]
+                        for armature in armatures:
+                            # Make local the action
+                            if (
+                                armature.animation_data
+                                and armature.animation_data.action
+                            ):
+                                armature.animation_data.action.make_local()
+
         objects = avalon_container.objects
         self[:] = objects
         return objects
@@ -253,67 +269,94 @@ class BlendLayoutLoader(plugin.AssetLoader):
                         count += 1
 
         parent_collections = plugin.get_parent_collections(avalon_container)
-        collections_in_container = plugin.get_all_collections_in_collection(
-            avalon_container
-        )
-        # Get the armature of the rig
 
+        # Save the animation before we remove the containers
+        action = dict()
+        # Get all the containers in the scene
         sub_avalon_containers = plugin.get_containers_list()
+        # Loop on all containers
         for sub_avalon_container in sub_avalon_containers:
-            if sub_avalon_container.get(AVALON_PROPERTY):
-                if sub_avalon_container.get("family") == "rig":
-                    objects = sub_avalon_container.objects
-                    armature = [
-                        obj for obj in objects if obj.type == "ARMATURE"
-                    ][0]
-                    action = None
-                    if (
-                        armature.animation_data
-                        and armature.animation_data.action
-                    ):
-                        action[
-                            sub_avalon_container.name
-                        ] = armature.animation_data.action
-
+            # Check if the container is overridden but not liked
+            if (
+                sub_avalon_container.override_library
+                and sub_avalon_container.library is None
+            ):
+                # Check if the container has the avalon property
+                if sub_avalon_container.get(AVALON_PROPERTY):
+                    # Check if the container is a rig
+                    if sub_avalon_container["avalon"].get("family") == "rig":
+                        # Get all the object in the container
+                        objects = sub_avalon_container.objects
+                        # Get the armatures
+                        armatures = [
+                            obj for obj in objects if obj.type == "ARMATURE"
+                        ]
+                        # Get the action in the animation data
+                        for armature in armatures:
+                            if (
+                                armature.animation_data
+                                and armature.animation_data.action
+                            ):
+                                action[
+                                    sub_avalon_container.name
+                                ] = armature.animation_data.action
+        # Remove the current container
         self._remove(avalon_container)
+        # Clean the data blocks
         plugin.remove_orphan_datablocks()
         plugin.remove_orphan_datablocks()
 
         # If it is the last object to use that library, remove it
-        print(container_libpath)
-        print(bpy.path.basename(container_libpath))
-        print(count)
         if count == 1:
             library = bpy.data.libraries.get(
                 bpy.path.basename(container_libpath)
             )
             if library:
                 bpy.data.libraries.remove(library)
-
+        # Load the updated container
         container_override = self._process(str(libpath), object_name)
-        print(parent_collections)
+
+        # Link the the updated container to the collection of the old container
         if parent_collections:
             bpy.context.scene.collection.children.unlink(container_override)
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
+        # Clean the datablocks
         plugin.remove_orphan_datablocks()
 
-        # Set the armature of the rig
-        sub_avalon_containers = plugin.get_containers_list()
-        for sub_avalon_container in sub_avalon_containers:
-            if sub_avalon_container.get(AVALON_PROPERTY):
-                if sub_avalon_container.get("family") == "rig":
-                    objects = sub_avalon_container.objects
-                    armature = [
-                        obj for obj in objects if obj.type == "ARMATURE"
-                    ][0]
-                    if armature.animation_data is None:
-                        armature.animation_data_create()
+        # Load the animation on the containers
 
-                    if armature.animation_data:
-                        armature.animation_data.action = action[
-                            sub_avalon_container.name
+        # Get all the containers in the scene
+        sub_avalon_containers = plugin.get_containers_list()
+        # Loop on all containers
+        for sub_avalon_container in sub_avalon_containers:
+            # Check if the container is overridden but not liked
+            if (
+                sub_avalon_container.override_library
+                and sub_avalon_container.library is None
+            ):
+                # Check if the container has the avalon property
+                if sub_avalon_container.get(AVALON_PROPERTY):
+                    # Check if the container is a rig
+                    if sub_avalon_container["avalon"].get("family") == "rig":
+                        # Get all the object in the container
+                        objects = sub_avalon_container.objects
+                        # Get the armatures
+                        armatures = [
+                            obj for obj in objects if obj.type == "ARMATURE"
                         ]
+                        for armature in armatures:
+                            if armature.animation_data is None:
+                                armature.animation_data_create()
+                            if action.get(sub_avalon_container.name):
+                                # Clear the old animation data
+                                armature.animation_data_clear()
+                                # Create a new animation data
+                                armature.animation_data_create()
+                                # Set the action store in the action variable to the animation data
+                                armature.animation_data.action = action[
+                                    sub_avalon_container.name
+                                ]
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.

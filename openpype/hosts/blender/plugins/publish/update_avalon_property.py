@@ -6,14 +6,9 @@ from openpype.hosts.blender.plugins.load.load_layout_blend import (
     BlendLayoutLoader,
 )
 
-from openpype.hosts.blender.api import plugin
 
 from openpype.hosts.blender.api.workio import save_file
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_CONTAINERS,
-    AVALON_PROPERTY,
-    AVALON_CONTAINER_ID,
-)
+
 from avalon import io
 
 
@@ -46,7 +41,9 @@ class UpdateAvalonProperty(
                 "context.ext": "blend",
             }
         )
-
+        # Get avalon custom property
+        container = bpy.data.collections.get(instance.name)
+        avalon_property = container.get("avalon").to_dict()
         # Create context for the loader object
         context = {"representation": representation}
         # Use the good update property update function with the family
@@ -74,3 +71,6 @@ class UpdateAvalonProperty(
 
         # Overwrite the publish file
         self.log.info(" %s updated.", filepath)
+        # Reset avalon custom property
+        # Otherwise we can't relaunch the publish
+        container["avalon"] = avalon_property

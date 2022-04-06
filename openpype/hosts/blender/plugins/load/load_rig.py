@@ -124,7 +124,7 @@ class BlendRigLoader(plugin.AssetLoader):
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
         # Override the container and the objects
-        container_overrided = container_collection.override_create(
+        container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
         collections.remove(container_collection)
@@ -136,7 +136,7 @@ class BlendRigLoader(plugin.AssetLoader):
         for armature in armatures:
             armature.override_create(remap_local_usages=True)
 
-        return container_overrided
+        return container_overridden
 
     def process_asset(
         self,
@@ -307,9 +307,7 @@ class BlendRigLoader(plugin.AssetLoader):
         plugin.remove_orphan_datablocks()
 
         # If it is the last object to use that library, remove it
-        print(container_libpath)
-        print(bpy.path.basename(container_libpath))
-        print(count)
+
         if count == 1:
             library = bpy.data.libraries.get(
                 bpy.path.basename(container_libpath)
