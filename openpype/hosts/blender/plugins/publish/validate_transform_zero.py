@@ -4,6 +4,7 @@ import mathutils
 import bpy
 import pyblish.api
 import openpype.hosts.blender.api.action
+from openpype.hosts.blender.api import plugin
 
 
 class ValidateTransformZero(pyblish.api.InstancePlugin):
