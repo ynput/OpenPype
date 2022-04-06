@@ -1,5 +1,5 @@
 import nuke
-
+import six
 from avalon import io
 
 from openpype.pipeline import (
@@ -243,8 +243,8 @@ class LoadGizmoInputProcess(load.LoaderPlugin):
                     for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 

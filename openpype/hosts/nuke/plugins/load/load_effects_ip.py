@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-
+import six
 import nuke
 
 from avalon import io
@@ -353,7 +353,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
                     for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, str):
+        elif isinstance(input, six.text_type):
             return str(input)
         else:
             return input
