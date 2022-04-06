@@ -7,6 +7,7 @@ import json
 import logging
 import opentimelineio as otio
 from . import utils
+from openpype.hosts.flame.api import MediaInfoFile
 
 import flame
 from pprint import pformat
@@ -345,7 +346,13 @@ def create_otio_clip(clip_data):
     media_reference = create_otio_reference(clip_data)
 
     # calculate source in
-    first_frame = utils.get_frame_from_filename(clip_data["fpath"]) or 0
+    media_info = MediaInfoFile(clip_data["fpath"])
+    xml_timecode_ticks = media_info.out_feed_nb_ticks
+    if xml_timecode_ticks:
+        first_frame = int(xml_timecode_ticks)
+    else:
+        first_frame = utils.get_frame_from_filename(clip_data["fpath"]) or 0
+
     source_in = int(clip_data["source_in"]) - int(first_frame)
 
     # creatae source range
