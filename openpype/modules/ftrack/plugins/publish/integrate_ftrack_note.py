@@ -29,6 +29,7 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             self.log.info("There are any integrated AssetVersions")
             return
 
+        host_name = instance.context.data["hostName"]
         comment = (instance.context.data.get("comment") or "").strip()
         if not comment:
             self.log.info("Comment is not set.")
@@ -107,7 +108,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             format_data = {
                 "intent": final_intent_label,
                 "comment": comment,
-                "published_paths": "\n".join(sorted(published_paths))
+                "host_name": host_name,
+                "published_paths": "\n".join(sorted(published_paths)),
             }
             comment = template.format(**format_data)
             if not comment:
