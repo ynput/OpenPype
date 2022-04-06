@@ -115,6 +115,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             session, component_list
         )
 
+        asset_versions_data_by_id = {}
         used_asset_versions = []
         # Iterate over components and publish
         for data in component_list:
@@ -144,11 +145,27 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Component
             self.create_component(session, asset_version_entity, data)
 
+            # Store asset version and components items that were
+            version_id = asset_version_entity["id"]
+            if version_id not in asset_versions_data_by_id:
+                asset_versions_data_by_id[version_id] = {
+                    "asset_version": asset_version_entity,
+                    "component_items": []
+                }
+
+            asset_versions_data_by_id[version_id]["component_items"].append(
+                data
+            )
 
             # Backwards compatibility
             if asset_version_entity not in used_asset_versions:
                 used_asset_versions.append(asset_version_entity)
 
+        instance.data["ftrackIntegratedAssetVersionsData"] = (
+            asset_versions_data_by_id
+        )
+
+        # Backwards compatibility
         asset_versions_key = "ftrackIntegratedAssetVersions"
         if asset_versions_key not in instance.data:
             instance.data[asset_versions_key] = []
