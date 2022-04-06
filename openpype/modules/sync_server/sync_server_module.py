@@ -229,14 +229,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             attached_sites[remote_site] = create_metadata(remote_site,
                                                           created=False)
 
+        attached_sites = self._add_alternative_sites(attached_sites)
         # add skeleton for sites where it should be always synced to
         # usually it would be a backup site which is handled by separate
         # background process
         for site in self._get_always_accessible_sites(project_name):
             if site not in attached_sites:
                 attached_sites[site] = create_metadata(site, created=False)
-
-        attached_sites = self._add_alternative_sites(attached_sites)
 
         return list(attached_sites.values())
 
@@ -264,9 +263,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         additional_sites = self.sync_system_settings.get("sites", {})
 
+        alt_site_pairs = self._get_alt_site_pairs(additional_sites)
+
         for site_name, site_info in additional_sites.items():
             # Get alternate sites (stripped names) for this site name
-            alt_sites = site_info.get("alternative_sites", [])
+            alt_sites = alt_site_pairs.get(site_name)
             alt_sites = [site.strip() for site in alt_sites]
             alt_sites = set(alt_sites)
 
@@ -288,6 +289,44 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             attached_sites[site_name] = alt_site_meta
 
         return attached_sites
+
+    def _get_alt_site_pairs(self, conf_sites):
+        """Returns dict of site and its alternative sites.
+
+        If `site` has alternative site, it means that alt_site has 'site' as
+        alternative site
+        Args:
+            conf_sites (dict)
+        Returns:
+            (dict): {'site': [alternative sites]...}
+        """
+        alt_site_pairs = {}
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            if not alt_site_pairs.get(site_name):
+                alt_site_pairs[site_name] = []
+
+            alt_site_pairs[site_name].extend(alt_sites)
+
+            for alt_site in alt_sites:
+                if not alt_site_pairs.get(alt_site):
+                    alt_site_pairs[alt_site] = []
+                alt_site_pairs[alt_site].extend([site_name])
+
+        # transitive relationship, eg site is alternative to another which is
+        # alternative to nex site
+        loop = True
+        while loop:
+            loop = False
+            for site, alt_sites in alt_site_pairs.items():
+                for alt_site in alt_sites:
+                    for alt_alt_site in alt_site_pairs.get(alt_site, []):
+                        if (    alt_alt_site != site
+                                and alt_alt_site not in alt_sites):
+                            alt_site_pairs[site].append(alt_alt_site)
+                            loop = True
+
+        return alt_site_pairs
 
     def clear_project(self, collection, site_name):
         """
