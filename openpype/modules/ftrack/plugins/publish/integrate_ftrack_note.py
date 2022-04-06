@@ -30,6 +30,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             return
 
         host_name = instance.context.data["hostName"]
+        app_name = instance.context.data["appName"]
+        app_label = instance.context.data["appLabel"]
         comment = (instance.context.data.get("comment") or "").strip()
         if not comment:
             self.log.info("Comment is not set.")
@@ -109,6 +111,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
                 "intent": final_intent_label,
                 "comment": comment,
                 "host_name": host_name,
+                "app_name": app_name,
+                "app_label": app_label,
                 "published_paths": "\n".join(sorted(published_paths)),
             }
             comment = template.format(**format_data)

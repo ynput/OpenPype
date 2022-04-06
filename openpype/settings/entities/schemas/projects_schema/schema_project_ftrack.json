@@ -740,7 +740,7 @@
                         },
                         {
                             "type": "label",
-                            "label": "Template may contain formatting keys <b>{intent}</b>, <b>{comment}</b>, <b>{host_name}</b> and <b>{published_paths}</b>."
+                            "label": "Template may contain formatting keys <b>intent</b>, <b>comment</b>, <b>host_name</b>, <b>app_name</b>, <b>app_label</b> and <b>published_paths</b>."
                         },
                         {
                             "type": "text",
