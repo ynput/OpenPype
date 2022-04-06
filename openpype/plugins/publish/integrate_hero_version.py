@@ -485,6 +485,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         anatomy = instance.context.data["anatomy"]
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
+        if "originalBasename" in instance.data:
+            template_data.update({
+                "originalBasename": instance.data.get("originalBasename")
+            })
+
         if "folder" in anatomy.templates[template_key]:
             anatomy_filled = anatomy.format(template_data)
             publish_folder = anatomy_filled[template_key]["folder"]
