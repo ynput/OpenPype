@@ -745,7 +745,8 @@
                         {
                             "type": "text",
                             "key": "note_template",
-                            "label": "Note template"
+                            "label": "Note template",
+                            "multiline": true
                         },
                         {
                             "type": "list",
