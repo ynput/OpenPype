@@ -28,7 +28,8 @@ from .lib import (
     get_padding_from_filename,
     maintained_object_duplication,
     get_clip_segment,
-    get_batch_group_from_desktop
+    get_batch_group_from_desktop,
+    MediaInfoFile
 )
 from .utils import (
     setup,
@@ -103,6 +104,7 @@ __all__ = [
     "maintained_object_duplication",
     "get_clip_segment",
     "get_batch_group_from_desktop",
+    "MediaInfoFile",
 
     # pipeline
     "install",
