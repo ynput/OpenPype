@@ -38,6 +38,7 @@ IGNORED_DEFAULT_FILENAMES = (
     "base.py",
     "interfaces.py",
     "example_addons",
+    "default_modules",
 )
 
 
@@ -308,6 +309,9 @@ def _load_modules():
             # Check existence of init fil
             init_path = os.path.join(fullpath, "__init__.py")
             if not os.path.exists(init_path):
+                log.debug((
+                    "Module directory does not contan __init__.py file {}"
+                ).format(fullpath))
                 continue
 
         elif ext not in (".py", ):
@@ -352,6 +356,9 @@ def _load_modules():
                 # Check existence of init fil
                 init_path = os.path.join(fullpath, "__init__.py")
                 if not os.path.exists(init_path):
+                    log.debug((
+                        "Module directory does not contan __init__.py file {}"
+                    ).format(fullpath))
                     continue
 
             elif ext not in (".py", ):
