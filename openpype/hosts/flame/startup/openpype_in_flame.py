@@ -4,17 +4,18 @@ from Qt import QtWidgets
 from pprint import pformat
 import atexit
 
-import avalon
 import openpype.hosts.flame.api as opfapi
-from openpype.pipeline import install_host
+from openpype.pipeline import (
+    install_host,
+    registered_host,
+)
 
 
 def openpype_install():
     """Registering OpenPype in context
     """
     install_host(opfapi)
-    print("Avalon registered hosts: {}".format(
-        avalon.api.registered_host()))
+    print("Avalon registered hosts: {}".format(registered_host()))
 
 
 # Exception handler

@@ -9,6 +9,7 @@ import avalon.fusion
 
 # Config imports
 import openpype.lib as pype
+from openpype.pipeline import registered_host
 import openpype.hosts.fusion.lib as fusion_lib
 
 from openpype.lib.avalon_context import get_workdir_from_session
@@ -176,7 +177,7 @@ def switch(asset_name, filepath=None, new=True):
         current_comp = fusion.LoadComp(filepath, quiet=True)
         assert current_comp is not None, "Fusion could not load '%s'" % filepath
 
-    host = api.registered_host()
+    host = registered_host()
     containers = list(host.ls())
     assert containers, "Nothing to update"
 

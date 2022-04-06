@@ -18,6 +18,7 @@ from openpype.lib.avalon_context import (
     update_current_task,
     compute_session_changes
 )
+from openpype.pipeline import registered_host
 from .model import (
     WorkAreaFilesModel,
     PublishFilesModel,
@@ -93,7 +94,7 @@ class FilesWidget(QtWidgets.QWidget):
         # This is not root but workfile directory
         self._workfiles_root = None
         self._workdir_path = None
-        self.host = api.registered_host()
+        self.host = registered_host()
 
         # Whether to automatically select the latest modified
         # file on a refresh of the files model.
