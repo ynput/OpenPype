@@ -60,8 +60,12 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         if not asset_type and family_low in self.family_mapping:
             asset_type = self.family_mapping[family_low]
 
-        self.log.debug(self.family_mapping)
-        self.log.debug(family_low)
+        if not asset_type:
+            asset_type = "upload"
+
+        self.log.debug(
+            "Family: {}\nMapping: {}".format(family_low, self.family_mapping)
+        )
 
         # Ignore this instance if neither "ftrackFamily" or a family mapping is
         # found.
