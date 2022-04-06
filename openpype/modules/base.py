@@ -304,7 +304,13 @@ def _load_modules():
         fullpath = os.path.join(current_dir, filename)
         basename, ext = os.path.splitext(filename)
 
-        if not os.path.isdir(fullpath) and ext not in (".py", ):
+        if os.path.isdir(fullpath):
+            # Check existence of init fil
+            init_path = os.path.join(fullpath, "__init__.py")
+            if not os.path.exists(init_path):
+                continue
+
+        elif ext not in (".py", ):
             continue
 
         try:
@@ -342,7 +348,13 @@ def _load_modules():
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
 
-            if not os.path.isdir(fullpath) and ext not in (".py", ):
+            if os.path.isdir(fullpath):
+                # Check existence of init fil
+                init_path = os.path.join(fullpath, "__init__.py")
+                if not os.path.exists(init_path):
+                    continue
+
+            elif ext not in (".py", ):
                 continue
 
             # TODO add more logic how to define if folder is module or not
