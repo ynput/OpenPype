@@ -47,8 +47,9 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
         final_intent_label = None
         if intent_val:
             final_intent_label = self.get_intent_label(session, intent_val)
-            if final_intent_label is None:
-                final_intent_label = intent_label
+
+        if final_intent_label is None:
+            final_intent_label = intent_label
 
         # if intent label is set then format comment
         # - it is possible that intent_label is equal to "" (empty string)
@@ -103,11 +104,18 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             template = self.note_template
             if template is None:
                 template = self.note_with_intent_template
-            comment = template.format(**{
+            format_data = {
                 "intent": final_intent_label,
                 "comment": comment,
                 "published_paths": "\n".join(sorted(published_paths))
-            })
+            }
+            comment = template.format(**format_data)
+            if not comment:
+                self.log.info((
+                    "Note for AssetVersion {} would be empty. Skipping."
+                    "\nTemplate: {}\nData: {}"
+                ).format(asset_version["id"], template, format_data))
+                continue
             asset_version.create_note(comment, author=user, labels=labels)
 
             try:
