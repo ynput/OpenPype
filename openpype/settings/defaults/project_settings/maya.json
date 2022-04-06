@@ -52,13 +52,18 @@
                 "",
                 "_Main"
             ],
-            "static_mesh_prefix": "S_",
+            "static_mesh_prefix": "S",
             "collision_prefixes": [
                 "UBX",
                 "UCP",
                 "USP",
                 "UCX"
             ]
+        },
+        "CreateUnrealSkeletalMesh": {
+            "enabled": true,
+            "defaults": [],
+            "joint_hints": "jnt_org"
         },
         "CreateAnimation": {
             "enabled": true,

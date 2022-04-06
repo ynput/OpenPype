@@ -106,8 +106,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "xgen",
                 "hda",
                 "usd",
+                "staticMesh",
+                "skeletalMesh",
                 "usdComposition",
-                "usdOverride"
+                "usdOverride",
+                "simpleUnrealTexture"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -355,6 +358,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if profile:
             template_name = profile["template_name"]
 
+
+
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
             # reset transfers for next representation
@@ -382,6 +387,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 template_data["resolution_height"] = resolution_height
             if resolution_width:
                 template_data["fps"] = fps
+
+            if "originalBasename" in instance.data:
+                template_data.update({
+                    "originalBasename": instance.data.get("originalBasename")
+                })
 
             files = repre['files']
             if repre.get('stagingDir'):
@@ -554,6 +564,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
 
+            if not instance.data.get("publishDir"):
+                instance.data["publishDir"] = (
+                    anatomy_filled
+                    [template_name]
+                    ["folder"]
+                )
             if repre.get("udim"):
                 repre_context["udim"] = repre.get("udim")  # store list
 

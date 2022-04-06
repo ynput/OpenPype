@@ -1048,17 +1048,28 @@ def add_review_knob(node):
 def add_deadline_tab(node):
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
-    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
-    knob.setValue(0)
-    node.addKnob(knob)
-
     knob = nuke.Int_Knob("deadlinePriority", "Priority")
     knob.setValue(50)
     node.addKnob(knob)
 
+    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
+    knob.setValue(0)
+    node.addKnob(knob)
+
+    knob = nuke.Int_Knob("deadlineConcurrentTasks", "Concurrent tasks")
+    # zero as default will get value from Settings during collection
+    # instead of being an explicit user override, see precollect_write.py
+    knob.setValue(0)
+    node.addKnob(knob)
+
 
 def get_deadline_knob_names():
-    return ["Deadline", "deadlineChunkSize", "deadlinePriority"]
+    return [
+        "Deadline",
+        "deadlineChunkSize",
+        "deadlinePriority",
+        "deadlineConcurrentTasks"
+    ]
 
 
 def create_backdrop(label="", color=None, layer=0,
