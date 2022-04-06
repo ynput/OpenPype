@@ -357,6 +357,12 @@
             "note_template": "{intent}: {comment}",
             "note_labels": []
         },
+        "IntegrateFtrackDescription": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "description_template": "{comment}"
+        },
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}

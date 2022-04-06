@@ -760,6 +760,44 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackDescription",
+                    "label": "Integrate Ftrack Description",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Add description to integrated AssetVersion."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b> and <b>comment</b>."
+                        },
+                        {
+                            "type": "text",
+                            "key": "description_template",
+                            "label": "Description template"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "ValidateFtrackAttributes",
                     "label": "ValidateFtrackAttributes",
                     "is_group": true,
