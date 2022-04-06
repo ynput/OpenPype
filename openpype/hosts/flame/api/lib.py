@@ -1,9 +1,14 @@
 import sys
 import os
 import re
+import six
 import json
 import pickle
+import itertools
 import contextlib
+import xml.etree.cElementTree as cET
+from copy import deepcopy
+from xml.etree import ElementTree as ET
 from pprint import pformat
 from .constants import (
     MARKER_COLOR,
@@ -12,9 +17,10 @@ from .constants import (
     COLOR_MAP,
     MARKER_PUBLISH_DEFAULT
 )
-from openpype.api import Logger
 
-log = Logger.get_logger(__name__)
+import openpype.api as openpype
+
+log = openpype.Logger.get_logger(__name__)
 
 FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
@@ -711,3 +717,109 @@ def get_batch_group_from_desktop(name):
     for bgroup in project_desktop.batch_groups:
         if bgroup.name.get_value() in name:
             return bgroup
+
+
+class MediaInfoFile:
+    media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
+    tmp_name = "_tmp.clip"
+    tmp_file = None
+
+    out_feed_nb_ticks = None
+    out_feed_fps = None
+    out_feed_drop_mode = None
+
+    log = log
+
+    def __init__(self, path):
+        # test if media script paht exists
+        self._validate_media_script_path()
+
+        # derivate other feed variables
+        self.feed_basename = os.path.basename(path)
+        self.feed_dir = os.path.dirname(path)
+        self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
+
+        self.tmp_file = os.path.join(self.feed_dir, self.tmp_name)
+
+        # remove previously generated temp files
+        # it will be regenerated
+        self._clear_tmp_file()
+
+        self.log.info("Temp File: {}".format(self.tmp_file))
+
+    def _validate_media_script_path(self):
+        if not os.path.isfile(self.media_script_path):
+            raise IOError("Media Scirpt does not exist: `{}`".format(
+                self.media_script_path))
+
+    def _generate_media_info_file(self):
+        # Create cmd arguments for gettig xml file info file
+        cmd_args = [
+            self.media_script_path,
+            "-e", self.feed_ext,
+            "-o", self.tmp_file,
+            self.feed_dir
+        ]
+
+        # execute creation of clip xml template data
+        try:
+            openpype.run_subprocess(cmd_args)
+            self._make_single_clip_media_info()
+        except TypeError:
+            self.log.error("Error creating self.tmp_file")
+            six.reraise(*sys.exc_info())
+
+    def _make_single_clip_media_info(self):
+        with open(self.tmp_file) as f:
+            lines = f.readlines()
+            _added_root = itertools.chain(
+                "<root>", deepcopy(lines)[1:], "</root>")
+            new_root = ET.fromstringlist(_added_root)
+
+        # find the clip which is matching to my input name
+        xml_clips = new_root.findall("clip")
+        matching_clip = None
+        for xml_clip in xml_clips:
+            if xml_clip.find("name").text in self.feed_basename:
+                matching_clip = xml_clip
+
+        if matching_clip is None:
+            # return warning there is missing clip
+            raise ET.ParseError(
+                "Missing clip in `{}`. Available clips {}".format(
+                    self.feed_basename, [
+                        xml_clip.find("name").text
+                        for xml_clip in xml_clips
+                    ]
+                ))
+
+        self._write_result_xml_to_file(self.tmp_file, matching_clip)
+
+    def _clear_tmp_file(self):
+        if os.path.isfile(self.tmp_file):
+            os.remove(self.tmp_file)
+
+    def _get_time_info_from_origin(self, xml_data):
+        try:
+            for out_track in xml_data.iter('track'):
+                for out_feed in out_track.iter('feeds'):
+                    out_feed_nb_ticks_obj = out_feed.find(
+                        'startTimecode/nbTicks')
+                    self.out_feed_nb_ticks = out_feed_nb_ticks_obj.text
+                    out_feed_fps_obj = out_feed.find(
+                        'startTimecode/rate')
+                    self.out_feed_fps = out_feed_fps_obj.text
+                    out_feed_drop_mode_obj = out_feed.find(
+                        'startTimecode/dropMode')
+                    self.out_feed_drop_mode = out_feed_drop_mode_obj.text
+                    break
+                else:
+                    continue
+        except Exception as msg:
+            self.log.warning(msg)
+
+    def _write_result_xml_to_file(self, file, xml_data):
+        # save it as new file
+        tree = cET.ElementTree(xml_data)
+        tree.write(file, xml_declaration=True,
+                   method='xml', encoding='UTF-8')
