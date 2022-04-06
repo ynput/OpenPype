@@ -15,6 +15,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
+    registered_host,
 )
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
@@ -37,7 +38,7 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = pyblish.api.registered_host()
+    host = registered_host()
     outdated_containers = []
     for container in host.ls():
         representation = container['representation']
@@ -54,12 +55,12 @@ def check_inventory():
     # Warn about outdated containers.
     print("Starting new QApplication..")
     app = QtWidgets.QApplication(sys.argv)
-
-    message_box = QtWidgets.QMessageBox()
-    message_box.setIcon(QtWidgets.QMessageBox.Warning)
-    msg = "There are outdated containers in the scene."
-    message_box.setText(msg)
-    message_box.exec_()
+    if outdated_containers:
+        message_box = QtWidgets.QMessageBox()
+        message_box.setIcon(QtWidgets.QMessageBox.Warning)
+        msg = "There are outdated containers in the scene."
+        message_box.setText(msg)
+        message_box.exec_()
 
 
 def application_launch():
