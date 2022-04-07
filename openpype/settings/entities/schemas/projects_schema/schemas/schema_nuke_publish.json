@@ -401,7 +401,7 @@
                 {
                     "type": "list-strict",
                     "key": "f_submission_note",
-                    "label": "Submission Note",
+                    "label": "Submission Note:",
                     "object_types": [
                         {
                             "type": "boolean"
@@ -414,7 +414,7 @@
                 {
                     "type": "list-strict",
                     "key": "f_submitting_for",
-                    "label": "Submission For",
+                    "label": "Submission For:",
                     "object_types": [
                         {
                             "type": "boolean"
@@ -427,7 +427,7 @@
                 {
                     "type": "list-strict",
                     "key": "f_vfx_scope_of_work",
-                    "label": "VFX Scope Of Work",
+                    "label": "VFX Scope Of Work:",
                     "object_types": [
                         {
                             "type": "boolean"
