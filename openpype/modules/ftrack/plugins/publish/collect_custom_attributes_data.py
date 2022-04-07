@@ -76,10 +76,17 @@ class CollectFtrackCustomAttributeData(pyblish.api.ContextPlugin):
                 # Use defaut empty values
                 entity_id = None
 
-            value = values_by_entity_id[entity_id]
-            if "customData" not in instance.data:
-                instance.data["customData"] = {}
-            instance.data["customData"]["ftrack"] = copy.deepcopy(value)
+            for instance in instances:
+                value = copy.deepcopy(values_by_entity_id[entity_id])
+                if "customData" not in instance.data:
+                    instance.data["customData"] = {}
+                instance.data["customData"]["ftrack"] = value
+                instance_label = (
+                    instance.data.get("label") or instance.data["name"]
+                )
+                self.log.debug((
+                    "Added ftrack custom data to instance \"{}\": {}"
+                ).format(instance_label, value))
 
     def query_attr_values(self, session, entity_ids, custom_attr_key_by_id):
         # Prepare values for query
