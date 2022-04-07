@@ -23,7 +23,8 @@ class CreateModel(plugin.OpenPypeCreator):
     def process(self):
         nodes = list()
         if (self.options or {}).get("useSelection"):
-            nodes = self.nodes
+            # nodes = self.nodes
+            nodes = nuke.selectedNodes()
             for n in nodes:
                 n['selected'].setValue(0)
             end_nodes = list()
@@ -55,8 +56,8 @@ class CreateModel(plugin.OpenPypeCreator):
             for n in end_nodes:
                 n['selected'].setValue(1)
 
-            self.nodes = nuke.selectedNodes()
-            nodes = self.nodes
+            # self.nodes = nuke.selectedNodes()
+            # nodes = self.nodes
             if len(nodes) >= 1:
                 # loop selected nodes
                 for n in nodes:

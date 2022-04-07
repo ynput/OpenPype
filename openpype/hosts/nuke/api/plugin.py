@@ -557,6 +557,9 @@ class ExporterReviewMov(ExporterReview):
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
 
+        # write_node["mov64_audiofile"].setValue("C:/Users/22DOGS/Desktop/test/empty_audio.wav")
+        # write_node["mov64_audio_offset"].setValue(1001)
+
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
         try:
