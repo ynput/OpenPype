@@ -247,6 +247,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         head = clip_data.get("segment_head")
         tail = clip_data.get("segment_tail")
 
+        # HACK: it is here to serve for versions bellow 2021.1
         if not head:
             head = int(clip_data["source_in"]) - int(first_frame)
         if not tail:
