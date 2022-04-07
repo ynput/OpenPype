@@ -1,5 +1,6 @@
 import os
 import copy
+from collections import OrderedDict
 from pprint import pformat
 import pyblish
 from openpype.lib import get_workdir
@@ -30,11 +31,47 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             # create or get already created batch group
             bgroup = self._get_batch_group(instance, task_data)
 
+            # add batch group content
+            self._add_nodes_to_batch_with_links(instance, task_data, bgroup)
+
             # load plate to batch group
             self.log.info("Loading subset `{}` into batch `{}`".format(
                 instance.data["subset"], bgroup.name.get_value()
             ))
             self._load_clip_to_context(instance, bgroup)
+
+    def _add_nodes_to_batch_with_links(self, instance, task_data, batch_group):
+        # get write file node properties > OrederDict because order does mater
+        write_pref_data = self._get_write_prefs(instance, task_data)
+
+        batch_nodes = [
+            {
+                "type": "comp",
+                "properties": {},
+                "id": "comp_node01"
+            },
+            {
+                "type": "Write File",
+                "properties": write_pref_data,
+                "id": "write_file_node01"
+            }
+        ]
+        batch_links = [
+            {
+                "from_node": {
+                    "id": "comp_node01",
+                    "connector": "Result"
+                },
+                "to_node": {
+                    "id": "write_file_node01",
+                    "connector": "Front"
+                }
+            }
+        ]
+
+        # add nodes into batch group
+        opfapi.create_batch_group_conent(
+            batch_nodes, batch_links, batch_group)
 
     def _load_clip_to_context(self, instance, bgroup):
         # get all loaders for host
@@ -123,13 +160,11 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
 
         task_name = task_data["name"]
         batchgroup_name = "{}_{}".format(asset_name, task_name)
-        write_pref_data = self._get_write_prefs(instance, task_data)
 
         batch_data = {
             "shematic_reels": [
                 "OP_LoadedReel"
             ],
-            "write_pref": write_pref_data,
             "handleStart": handle_start,
             "handleEnd": handle_end
         }
@@ -143,21 +178,24 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             self.log.info(
                 "Creating new batch group: {}".format(batchgroup_name))
             # create batch with utils
-            bgroup = opfapi.create_batch(
+            bgroup = opfapi.create_batch_group(
                 batchgroup_name,
                 frame_start,
                 frame_duration,
                 **batch_data
             )
+
         else:
             self.log.info(
                 "Updating batch group: {}".format(batchgroup_name))
             # update already created batch group
-            bgroup.name = batchgroup_name
-            bgroup.start_frame = frame_start
-            bgroup.duration = frame_duration
-            # TODO: also update write node if there is any
-            # TODO: also update loaders to start from correct frameStart
+            bgroup = opfapi.create_batch_group(
+                batchgroup_name,
+                frame_start,
+                frame_duration,
+                update_batch_group=bgroup,
+                **batch_data
+            )
 
         return bgroup
 
@@ -249,25 +287,31 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         version_name = "v<version>"
         version_padding = 3
 
-        return {
-            "name": name,
-            "media_path": media_path,
-            "media_path_pattern": media_path_pattern,
-            "create_clip": create_clip,
-            "include_setup": include_setup,
-            "create_clip_path": create_clip_path,
-            "include_setup_path": include_setup_path,
-            "file_type": file_type,
-            "format_extension": format_extension,
-            "bit_depth": bit_depth,
-            "compress": compress,
-            "compress_mode": compress_mode,
-            "frame_index_mode": frame_index_mode,
-            "frame_padding": frame_padding,
-            "version_mode": version_mode,
-            "version_name": version_name,
-            "version_padding": version_padding
-        }
+        # return it as ordered dict
+        reutrn_dict = OrderedDict()
+        # need to make sure the order of keys is correct
+        for item in (
+            ("name", name),
+            ("media_path", media_path),
+            ("media_path_pattern", media_path_pattern),
+            ("create_clip", create_clip),
+            ("include_setup", include_setup),
+            ("create_clip_path", create_clip_path),
+            ("include_setup_path", include_setup_path),
+            ("file_type", file_type),
+            ("format_extension", format_extension),
+            ("bit_depth", bit_depth),
+            ("compress", compress),
+            ("compress_mode", compress_mode),
+            ("frame_index_mode", frame_index_mode),
+            ("frame_padding", frame_padding),
+            ("version_mode", version_mode),
+            ("version_name", version_name),
+            ("version_padding", version_padding)
+        ):
+            reutrn_dict.update({item[0]: item[1]})
+
+        return reutrn_dict
 
     def _get_shot_task_dir_path(self, instance, task_data):
         project_doc = instance.data["projectEntity"]

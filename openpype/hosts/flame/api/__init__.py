@@ -72,7 +72,8 @@ from .render_utils import (
     modify_preset_file
 )
 from .batch_utils import (
-    create_batch
+    create_batch_group,
+    create_batch_group_conent
 )
 
 __all__ = [
@@ -148,5 +149,6 @@ __all__ = [
     "modify_preset_file",
 
     # batch utils
-    "create_batch"
+    "create_batch_group",
+    "create_batch_group_conent"
 ]
