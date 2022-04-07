@@ -117,7 +117,7 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
             batch_node = batch_group.create_node(node_type)
 
             # set name
-            setattr(batch_node, "name", node_name)
+            batch_node.name.set_value(node_name)
 
         # set attributes found in node props
         for key, value in node_props.items():
