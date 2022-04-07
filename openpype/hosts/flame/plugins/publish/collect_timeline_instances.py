@@ -72,9 +72,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             # solve handles length
             marker_data["handleStart"] = min(
-                marker_data["handleStart"], head)
+                marker_data["handleStart"], abs(head))
             marker_data["handleEnd"] = min(
-                marker_data["handleEnd"], tail)
+                marker_data["handleEnd"], abs(tail))
 
             with_audio = bool(marker_data.pop("audio"))
 
