@@ -531,10 +531,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #   expected files contains more explicitly and from what
             #   should be review made.
             # - "review" tag is never added when is set to 'False'
-            use_sequence_for_review = instance.get(
-                "useSequenceForReview", True
-            )
-            if use_sequence_for_review:
+            if instance["useSequenceForReview"]:
                 # if filtered aov name is found in filename, toggle it for
                 # preview video rendering
                 for app in self.aov_filter.keys():
@@ -737,7 +734,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
-            "useSequenceForReview": data.get("useSequenceForReview")
+            "useSequenceForReview": data.get("useSequenceForReview", True)
         }
 
         if "prerender" in instance.data["families"]:
