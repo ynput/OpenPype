@@ -94,15 +94,25 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
     """
     # make sure some batch obj is present
     batch_group = batch_group or flame.batch
-
+    all_batch_nodes = {
+        b.name.get_value(): b
+        for b in batch_group.nodes
+    }
     created_nodes = {}
     for node in batch_nodes:
         # NOTE: node_props needs to be ideally OrederDict type
         node_id, node_type, node_props = (
             node["id"], node["type"], node["properties"])
 
-        # create batch node
-        batch_node = batch_group.create_node(node_type)
+        # get node name for checking if exists
+        node_name = node_props.get("name") or node_id
+
+        if all_batch_nodes.get(node_name):
+            # update existing batch node
+            batch_node = all_batch_nodes[node_name]
+        else:
+            # create new batch node
+            batch_node = batch_group.create_node(node_type)
 
         # set attributes found in node props
         for key, value in node_props.items():
