@@ -1,6 +1,8 @@
 import os
 import nuke
+import six
 import pyblish.api
+
 import openpype
 from openpype.hosts.nuke.api.lib import maintained_selection
 
@@ -18,6 +20,10 @@ class ExtractSlateFrame(openpype.api.Extractor):
     families = ["slate"]
     hosts = ["nuke"]
 
+    key_value_mapping = {
+        "f_submission_note": [True, "{comment}"],
+        "f_submitting_for": [True, "{intent[value]}"]
+    }
 
     def process(self, instance):
         if hasattr(self, "viewer_lut_raw"):
@@ -129,9 +135,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         for node in temporary_nodes:
             nuke.delete(node)
 
-
     def get_view_process_node(self):
-
         # Select only the target node
         if nuke.selectedNodes():
             [n.setSelected(False) for n in nuke.selectedNodes()]
@@ -162,13 +166,45 @@ class ExtractSlateFrame(openpype.api.Extractor):
             return
 
         comment = instance.context.data.get("comment")
-        intent_value = instance.context.data.get("intent")
-        if intent_value and isinstance(intent_value, dict):
-            intent_value = intent_value.get("value")
+        intent = instance.context.data.get("intent")
+        if not isinstance(intent, dict):
+            intent = {
+                "label": intent,
+                "value": intent
+            }
 
-        try:
-            node["f_submission_note"].setValue(comment)
-            node["f_submitting_for"].setValue(intent_value or "")
-        except NameError:
-            return
-        instance.data.pop("slateNode")
+        fill_data = {
+            "comment": comment,
+            "intent": intent
+        }
+
+        for key, value in self.key_value_mapping.items():
+            enabled, template = value
+            if not enabled:
+                continue
+
+            try:
+                value = template.format(**fill_data)
+
+            except ValueError:
+                self.log.warning(
+                    "Couldn't fill template \"{}\" with data: {}".format(
+                        template, fill_data
+                    ),
+                    exc_info=True
+                )
+                continue
+
+            except KeyError:
+                self.log.warning(
+                    "Template contains unknown key",
+                    exc_info=True
+                )
+                continue
+
+            try:
+                node[key].setValue(value)
+            except NameError:
+                self.log.warning(
+                    "Failed to set value \"{}\" on node attribute \"{}\""
+                ).format(value))
