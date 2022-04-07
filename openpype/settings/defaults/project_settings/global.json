@@ -190,7 +190,7 @@
                     "tasks": [],
                     "template_name": "simpleUnrealTexture"
                 },
-                 {
+                {
                     "families": [
                         "staticMesh",
                         "skeletalMesh"
@@ -278,6 +278,15 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "{family}{variant}"
+                },
+                {
+                    "families": [
+                        "workfile"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "{family}{Task}"
                 },
                 {
                     "families": [
