@@ -5,7 +5,6 @@ Requires:
     context > appLabel
     context > comment
     context > ftrackSession
-    context > ftrackIntentLabel
     instance > ftrackIntegratedAssetVersionsData
 """
 
@@ -52,7 +51,16 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
 
         session = context.data["ftrackSession"]
 
-        intent_label = context.data["ftrackIntentLabel"]
+        intent = instance.context.data.get("intent")
+        intent_label = None
+        if intent and isinstance(intent, dict):
+            intent_val = intent.get("value")
+            intent_label = intent.get("label")
+        else:
+            intent_val = intent
+
+        if not intent_label:
+            intent_label = intent_val or ""
 
         # if intent label is set then format comment
         # - it is possible that intent_label is equal to "" (empty string)
