@@ -190,7 +190,7 @@
                     "tasks": [],
                     "template_name": "simpleUnrealTexture"
                 },
-                 {
+                {
                     "families": [
                         "staticMesh",
                         "skeletalMesh"
