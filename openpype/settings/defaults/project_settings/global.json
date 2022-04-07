@@ -189,6 +189,29 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "render"
+                },
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "simpleUnrealTexture"
+                },
+                 {
+                    "families": [
+                        "staticMesh",
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "maya2unreal"
                 }
             ]
         },
@@ -204,9 +227,22 @@
                 "animation",
                 "setdress",
                 "layout",
-                "mayaScene"
+                "mayaScene",
+                "simpleUnrealTexture"
             ],
-            "template_name_profiles": []
+            "template_name_profiles": [
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTextureHero"
+                }
+            ]
         },
         "CleanUp": {
             "paterns": [],
@@ -244,6 +280,15 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "{family}{variant}"
+                },
+                {
+                    "families": [
+                        "workfile"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "{family}{Task}"
                 },
                 {
                     "families": [
@@ -291,7 +336,7 @@
                 },
                 {
                     "families": [
-                        "unrealStaticMesh"
+                        "staticMesh"
                     ],
                     "hosts": [
                         "maya"
@@ -299,6 +344,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "S_{asset}{variant}"
+                },
+                {
+                    "families": [
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "SK_{asset}{variant}"
                 }
             ]
         },
@@ -308,6 +364,13 @@
                     "task_types": [],
                     "hosts": [],
                     "workfile_template": "work"
+                },
+                {
+                    "task_types": [],
+                    "hosts": [
+                        "unreal"
+                    ],
+                    "workfile_template": "unreal"
                 }
             ],
             "last_workfile_on_startup": [

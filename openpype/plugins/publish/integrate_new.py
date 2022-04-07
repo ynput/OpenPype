@@ -152,8 +152,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "xgen",
                 "hda",
                 "usd",
+                "staticMesh",
+                "skeletalMesh",
                 "usdComposition",
-                "usdOverride"
+                "usdOverride",
+                "simpleUnrealTexture"
                 ]
     exclude_families = ["clip"]
     default_template_name = "publish"
@@ -477,16 +480,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # optionals
         # retrieve additional anatomy data from representation if exists
-        for representation_key, anatomy_key in {
+        for key, anatomy_key in {
             # Representation Key: Anatomy data key
             "resolutionWidth": "resolution_width",
             "resolutionHeight": "resolution_height",
             "fps": "fps",
             "outputName": "output",
+            "originalBasename": "originalBasename"
         }.items():
-            value = repre.get(representation_key)
-            if value:
-                template_data[anatomy_key] = value
+            # Allow to take value from representation
+            # if not found also consider instance.data
+            if key in repre:
+                value = repre[key]
+            elif key in instance.data:
+                value = instance.data[key]
+            else:
+                continue
+            template_data[anatomy_key] = value
 
         if repre.get('stagingDir'):
             stagingdir = repre['stagingDir']
@@ -597,6 +607,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # Single file transfer
             src = os.path.join(stagingdir, fname)
             transfers = [(src, dst)]
+
+        # todo: Are we sure the assumption each representation
+        #       ends up in the same folder is valid?
+        if not instance.data.get("publishDir"):
+            instance.data["publishDir"] = (
+                anatomy_filled
+                [template_name]
+                ["folder"]
+            )
 
         for key in self.db_representation_context_keys:
             # Also add these values to the context even if not used by the
