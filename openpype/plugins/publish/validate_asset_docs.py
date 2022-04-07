@@ -2,7 +2,7 @@ import pyblish.api
 from openpype.pipeline import PublishValidationError
 
 
-class ValidateContainers(pyblish.api.InstancePlugin):
+class ValidateAssetDocs(pyblish.api.InstancePlugin):
     """Validate existence of asset asset documents on instances.
 
     Without asset document it is not possible to publish the instance.
