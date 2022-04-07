@@ -13,19 +13,6 @@
 """
 import pytest
 
-import sys, os
-
-os.environ["OPENPYPE_MONGO"] = "mongodb://localhost:27017"
-os.environ["AVALON_MONGO"] = "mongodb://localhost:27017"
-os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
-os.environ["AVALON_TIMEOUT"] = '3000'
-os.environ["OPENPYPE_DEBUG"] = "3"
-
-os.environ["AVALON_PROJECT"] = "petr_test"
-os.environ["AVALON_DB"] = "avalon"
-os.environ["QT_PREFERRED_BINDING"] = "PySide2"
-os.environ["QT_VERBOSE"] = "true"
-
 from tests.lib.testing_classes import ModuleUnitTest
 
 

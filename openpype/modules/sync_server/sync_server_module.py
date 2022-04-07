@@ -265,7 +265,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         alt_site_pairs = self._get_alt_site_pairs(additional_sites)
 
-        for site_name, site_info in additional_sites.items():
+        for site_name in additional_sites.keys():
             # Get alternate sites (stripped names) for this site name
             alt_sites = alt_site_pairs.get(site_name)
             alt_sites = [site.strip() for site in alt_sites]
@@ -321,7 +321,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             for site, alt_sites in alt_site_pairs.items():
                 for alt_site in alt_sites:
                     for alt_alt_site in alt_site_pairs.get(alt_site, []):
-                        if (    alt_alt_site != site
+                        if (alt_alt_site != site
                                 and alt_alt_site not in alt_sites):
                             alt_site_pairs[site].append(alt_alt_site)
                             loop = True
