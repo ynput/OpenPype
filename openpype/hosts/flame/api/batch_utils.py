@@ -91,6 +91,9 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
         batch_nodes (list of dict): each dict is node definition
         batch_links (list of dict): each dict is link definition
         batch_group (PyBatch, optional): batch group. Defaults to None.
+
+    Return:
+        dict: all batch nodes {name or id: PyNode}
     """
     # make sure some batch obj is present
     batch_group = batch_group or flame.batch
@@ -98,7 +101,6 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
         b.name.get_value(): b
         for b in batch_group.nodes
     }
-    created_nodes = {}
     for node in batch_nodes:
         # NOTE: node_props needs to be ideally OrederDict type
         node_id, node_type, node_props = (
@@ -121,7 +123,7 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
             setattr(batch_node, key, value)
 
         # add created node for possible linking
-        created_nodes[node_id] = batch_node
+        all_batch_nodes[node_id] = batch_node
 
     # link nodes to each other
     for link in batch_links:
@@ -129,16 +131,18 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
 
         # check if all linking nodes are available
         if not all([
-            created_nodes.get(_from_n["id"]),
-            created_nodes.get(_to_n["id"])
+            all_batch_nodes.get(_from_n["id"]),
+            all_batch_nodes.get(_to_n["id"])
         ]):
             continue
 
         # link nodes in defined link
         batch_group.connect_nodes(
-            created_nodes[_from_n["id"]], _from_n["connector"],
-            created_nodes[_to_n["id"]], _to_n["connector"]
+            all_batch_nodes[_from_n["id"]], _from_n["connector"],
+            all_batch_nodes[_to_n["id"]], _to_n["connector"]
         )
 
     # sort batch nodes
     batch_group.organize()
+
+    return all_batch_nodes
