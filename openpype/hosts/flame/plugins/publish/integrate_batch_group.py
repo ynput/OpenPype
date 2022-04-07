@@ -35,7 +35,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             all_batch_nodes = self._add_nodes_to_batch_with_links(
                 instance, task_data, bgroup)
 
-            for name, node in all_batch_nodes:
+            for name, node in all_batch_nodes.items():
                 self.log.debug("name: {}, dir: {}".format(
                     name, dir(node)
                 ))
