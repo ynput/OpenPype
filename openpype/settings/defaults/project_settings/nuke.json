@@ -160,7 +160,19 @@
             }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "f_submission_note": [
+                true,
+                "{comment}"
+            ],
+            "f_submitting_for": [
+                true,
+                "{intent[value]}"
+            ],
+            "f_vfx_scope_of_work": [
+                false,
+                ""
+            ]
         },
         "IncrementScriptVersion": {
             "enabled": true,

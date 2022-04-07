@@ -1,6 +1,7 @@
 import os
 import nuke
-import six
+import copy
+
 import pyblish.api
 
 import openpype
@@ -20,9 +21,12 @@ class ExtractSlateFrame(openpype.api.Extractor):
     families = ["slate"]
     hosts = ["nuke"]
 
+    # Settings values
+    # - can be extended by other attributes from node in the future
     key_value_mapping = {
         "f_submission_note": [True, "{comment}"],
-        "f_submitting_for": [True, "{intent[value]}"]
+        "f_submitting_for": [True, "{intent[value]}"],
+        "f_vfx_scope_of_work": [False, ""]
     }
 
     def process(self, instance):
@@ -173,10 +177,11 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 "value": intent
             }
 
-        fill_data = {
+        fill_data = copy.deepcopy(instance.data["anatomyData"])
+        fill_data.update({
             "comment": comment,
             "intent": intent
-        }
+        })
 
         for key, value in self.key_value_mapping.items():
             enabled, template = value
@@ -205,6 +210,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
             try:
                 node[key].setValue(value)
             except NameError:
-                self.log.warning(
+                self.log.warning((
                     "Failed to set value \"{}\" on node attribute \"{}\""
                 ).format(value))
