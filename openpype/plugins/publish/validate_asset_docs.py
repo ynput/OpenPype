@@ -3,7 +3,7 @@ from openpype.pipeline import PublishValidationError
 
 
 class ValidateAssetDocs(pyblish.api.InstancePlugin):
-    """Validate existence of asset asset documents on instances.
+    """Validate existence of asset documents on instances.
 
     Without asset document it is not possible to publish the instance.
 
@@ -22,10 +22,10 @@ class ValidateAssetDocs(pyblish.api.InstancePlugin):
             return
 
         if instance.data.get("assetEntity"):
-            self.log.info("Instance have set asset document in it's data.")
+            self.log.info("Instance has set asset document in its data.")
 
         else:
             raise PublishValidationError((
-                "Instance \"{}\" don't have set asset"
-                " document which is needed for publishing."
+                "Instance \"{}\" doesn't have asset document "
+                "set which is needed for publishing."
             ).format(instance.data["name"]))
