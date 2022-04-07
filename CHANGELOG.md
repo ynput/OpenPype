@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.9.3-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.3](https://github.com/pypeclub/OpenPype/tree/3.9.3) (2022-04-07)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.2...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.2...3.9.3)
 
 ### 📖 Documentation
 
@@ -20,6 +20,7 @@
 - Console Interpreter: Changed how console splitter size are reused on show [\#3016](https://github.com/pypeclub/OpenPype/pull/3016)
 - Deadline: Use more suitable name for sequence review logic [\#3015](https://github.com/pypeclub/OpenPype/pull/3015)
 - Nuke: add concurrency attr to deadline job [\#3005](https://github.com/pypeclub/OpenPype/pull/3005)
+- Photoshop: create image without instance [\#3001](https://github.com/pypeclub/OpenPype/pull/3001)
 - Deadline: priority configurable in Maya jobs [\#2995](https://github.com/pypeclub/OpenPype/pull/2995)
 - Workfiles tool: Save as published workfiles [\#2937](https://github.com/pypeclub/OpenPype/pull/2937)
 
@@ -59,7 +60,6 @@
 
 **🚀 Enhancements**
 
-- Photoshop: create image without instance [\#3001](https://github.com/pypeclub/OpenPype/pull/3001)
 - TVPaint: Render scene family [\#3000](https://github.com/pypeclub/OpenPype/pull/3000)
 - Nuke: ReviewDataMov Read RAW attribute [\#2985](https://github.com/pypeclub/OpenPype/pull/2985)
 - General: `METADATA\_KEYS` constant as `frozenset` for optimal immutable lookup [\#2980](https://github.com/pypeclub/OpenPype/pull/2980)
@@ -71,7 +71,6 @@
 - Workfiles: Open published workfiles [\#2925](https://github.com/pypeclub/OpenPype/pull/2925)
 - General: Default modules loaded dynamically [\#2923](https://github.com/pypeclub/OpenPype/pull/2923)
 - Nuke: Add no-audio Tag [\#2911](https://github.com/pypeclub/OpenPype/pull/2911)
-- Ftrack: Fill workfile in custom attribute [\#2906](https://github.com/pypeclub/OpenPype/pull/2906)
 - Nuke: improving readability [\#2903](https://github.com/pypeclub/OpenPype/pull/2903)
 
 **🐛 Bug fixes**
@@ -121,7 +120,7 @@
 
 **🚀 Enhancements**
 
-- Settings UI: Add simple tooltips for settings entities [\#2901](https://github.com/pypeclub/OpenPype/pull/2901)
+- General: Change how OPENPYPE\_DEBUG value is handled [\#2907](https://github.com/pypeclub/OpenPype/pull/2907)
 - nuke: imageio adding ocio config version 1.2 [\#2897](https://github.com/pypeclub/OpenPype/pull/2897)
 - Flame: support for comment with xml attribute overrides [\#2892](https://github.com/pypeclub/OpenPype/pull/2892)
 
