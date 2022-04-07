@@ -221,10 +221,16 @@ class ExtractBurnin(openpype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
-            # Add context data burnin_data.
-            burnin_data["custom"] = (
+            custom_data = copy.deepcopy(
+                instance.data.get("customData") or {}
+            )
+            # Backwards compatibility
+            custom_data.update(
                 instance.data.get("custom_burnin_data") or {}
             )
+
+            # Add context data burnin_data.
+            burnin_data["custom"] = custom_data
 
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
