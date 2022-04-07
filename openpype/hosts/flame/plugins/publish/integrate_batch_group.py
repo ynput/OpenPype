@@ -130,7 +130,10 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
                 try:
                     op_pipeline.load.load_with_repre_context(
                         loader_plugin, repre_context, **{
-                            "data": {"workdir": self.task_workdir}
+                            "data": {
+                                "workdir": self.task_workdir,
+                                "batch": bgroup
+                            }
                         })
                 except op_pipeline.load.IncompatibleLoaderError as msg:
                     self.log.error(

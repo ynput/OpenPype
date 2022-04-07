@@ -26,7 +26,7 @@ class LoadClipBatch(opfapi.ClipLoader):
     def load(self, context, name, namespace, options):
 
         # get flame objects
-        self.batch = flame.batch
+        self.batch = options.get("batch") or flame.batch
 
         # load clip to timeline and get main variables
         namespace = namespace
