@@ -185,7 +185,9 @@ class WireTapCom(object):
 
             exit_code = subprocess.call(
                 project_create_cmd,
-                cwd=os.path.expanduser('~'))
+                cwd=os.path.expanduser('~'),
+                preexec_fn=_subprocess_preexec_fn
+            )
 
             if exit_code != 0:
                 RuntimeError("Cannot create project in flame db")
@@ -448,12 +450,19 @@ class WireTapCom(object):
 
         exit_code = subprocess.call(
             project_colorspace_cmd,
-            cwd=os.path.expanduser('~'))
+            cwd=os.path.expanduser('~'),
+            preexec_fn=_subprocess_preexec_fn
+        )
 
         if exit_code != 0:
             RuntimeError("Cannot set colorspace {} on project {}".format(
                 color_policy, project_name
             ))
+
+
+def _subprocess_preexec_fn():
+    os.setpgrp()
+    os.umask(0o022)
 
 
 if __name__ == "__main__":
