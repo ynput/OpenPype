@@ -235,6 +235,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url
 
+        priority = self.deadline_priority or instance.data.get("priority", 50)
+
         args = [
             "--headless",
             'publish',
@@ -254,7 +256,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
                 "Department": self.deadline_department,
                 "ChunkSize": self.deadline_chunk_size,
-                "Priority": job["Props"]["Pri"],
+                "Priority": priority,
 
                 "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
@@ -524,26 +526,31 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
-            # if filtered aov name is found in filename, toggle it for
-            # preview video rendering
-            for app in self.aov_filter.keys():
-                if os.environ.get("AVALON_APP", "") == app:
-                    # no need to add review if `hasReviewableRepresentations`
-                    if instance.get("hasReviewableRepresentations"):
-                        break
+            # TODO 'useSequenceForReview' is temporary solution which does
+            #   not work for 100% of cases. We must be able to tell what
+            #   expected files contains more explicitly and from what
+            #   should be review made.
+            # - "review" tag is never added when is set to 'False'
+            use_sequence_for_review = instance.get(
+                "useSequenceForReview", True
+            )
+            if use_sequence_for_review:
+                # if filtered aov name is found in filename, toggle it for
+                # preview video rendering
+                for app in self.aov_filter.keys():
+                    if os.environ.get("AVALON_APP", "") == app:
+                        # iteratre all aov filters
+                        for aov in self.aov_filter[app]:
+                            if re.match(
+                                aov,
+                                list(collection)[0]
+                            ):
+                                preview = True
+                                break
 
-                    # iteratre all aov filters
-                    for aov in self.aov_filter[app]:
-                        if re.match(
-                            aov,
-                            list(collection)[0]
-                        ):
-                            preview = True
-                            break
-
-            # toggle preview on if multipart is on
-            if instance.get("multipartExr", False):
-                preview = True
+                # toggle preview on if multipart is on
+                if instance.get("multipartExr", False):
+                    preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -730,8 +737,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
-            "hasReviewableRepresentations": data.get(
-                "hasReviewableRepresentations")
+            "useSequenceForReview": data.get("useSequenceForReview")
         }
 
         if "prerender" in instance.data["families"]:
@@ -923,12 +929,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # User is deadline user
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
-            # Priority is now not handled at all
-
-            if self.deadline_priority:
-                render_job["Props"]["Pri"] = self.deadline_priority
-            else:
-                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             render_job["Props"]["Env"] = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
