@@ -17,6 +17,9 @@ class CollectFtrackCustomAttributeData(pyblish.api.ContextPlugin):
 
     Data are stored into each instance in context under
         instance.data["customData"]["ftrack"].
+
+    Hierarchical attributes are not looked up properly for that functionality
+    custom attribute values lookup must be extended.
     """
 
     order = pyblish.api.CollectorOrder + 0.4992

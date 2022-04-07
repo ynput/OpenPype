@@ -224,7 +224,7 @@ class ExtractBurnin(openpype.api.Extractor):
             custom_data = copy.deepcopy(
                 instance.data.get("customData") or {}
             )
-            # Backwards compatibility
+            # Backwards compatibility (since 2022/04/07)
             custom_data.update(
                 instance.data.get("custom_burnin_data") or {}
             )
