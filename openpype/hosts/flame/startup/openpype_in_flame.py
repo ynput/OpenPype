@@ -15,7 +15,7 @@ def openpype_install():
     """Registering OpenPype in context
     """
     install_host(opfapi)
-    print("Avalon registered hosts: {}".format(registered_host()))
+    print("Registered host: {}".format(registered_host()))
 
 
 # Exception handler
