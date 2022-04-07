@@ -6,14 +6,14 @@ import importlib
 
 
 try:
-    from Qt import QtWidgets
+    from Qt import QtWidgets  # noqa: F401
     from Qt import __binding__
     print(f"Qt binding: {__binding__}")
     mod = importlib.import_module(__binding__)
     print(f"Qt path: {mod.__file__}")
     print("Qt library found, nothing to do..")
 
-except ImportError as exc:
+except ImportError:
     print("Assuming no Qt library is installed..")
     print('Installing PySide2 for Python 3.6: '
           f'{os.environ["FUSION16_PYTHON36_HOME"]}')

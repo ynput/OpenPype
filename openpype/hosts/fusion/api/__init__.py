@@ -23,7 +23,8 @@ from .workio import (
 from .lib import (
     maintained_selection,
     get_additional_data,
-    update_frame_range
+    update_frame_range,
+    set_framerange
 )
 
 from .menu import launch_openpype_menu
@@ -53,6 +54,7 @@ __all__ = [
     "maintained_selection",
     "get_additional_data",
     "update_frame_range",
+    "set_framerange",
 
     # menu
     "launch_openpype_menu",

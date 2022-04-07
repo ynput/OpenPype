@@ -1,4 +1,3 @@
-import os
 import sys
 
 from Qt import QtWidgets, QtCore
@@ -7,11 +6,16 @@ from avalon import api
 from openpype.tools.utils import host_tools
 
 from openpype.style import load_stylesheet
+from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )
-from openpype.lib import register_event_callback
+from openpype.hosts.fusion.api import (
+    set_framerange
+)
+
+from .pulse import FusionPulse
 
 
 class Spacer(QtWidgets.QWidget):
@@ -62,11 +66,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
+        set_framerange_btn = QtWidgets.QPushButton("Set Frame Range", self)
+        set_resolution_btn = QtWidgets.QPushButton("Set Resolution", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
-        )
-        reset_resolution_btn = QtWidgets.QPushButton(
-            "Reset Resolution from project", self
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -91,12 +94,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
+        layout.addWidget(set_framerange_btn)
+        layout.addWidget(set_resolution_btn)
         layout.addWidget(rendermode_btn)
 
         layout.addWidget(Spacer(15, self))
 
         layout.addWidget(duplicate_with_inputs_btn)
-        layout.addWidget(reset_resolution_btn)
 
         self.setLayout(layout)
 
@@ -109,14 +113,19 @@ class OpenPypeMenu(QtWidgets.QWidget):
         load_btn.clicked.connect(self.on_load_clicked)
         manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
-        rendermode_btn.clicked.connect(self.on_rendernode_clicked)
+        rendermode_btn.clicked.connect(self.on_rendermode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked)
-        reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        set_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
+        set_framerange_btn.clicked.connect(self.on_set_framerange_clicked)
 
         self._callbacks = []
         self.register_callback("taskChanged", self.on_task_changed)
         self.on_task_changed()
+
+        # Force close current process if Fusion is closed
+        self._pulse = FusionPulse(parent=self)
+        self._pulse.start()
 
     def on_task_changed(self):
         # Update current context label
@@ -124,11 +133,14 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self.asset_label.setText(label)
 
     def register_callback(self, name, fn):
+
         # Create a wrapper callback that we only store
         # for as long as we want it to persist as callback
-        callback = lambda *args: fn()
-        self._callbacks.append(callback)
-        register_event_callback(name, callback)
+        def _callback(*args):
+            fn()
+
+        self._callbacks.append(_callback)
+        register_event_callback(name, _callback)
 
     def deregister_all_callbacks(self):
         self._callbacks[:] = []
@@ -157,7 +169,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         print("Clicked Library")
         host_tools.show_library_loader()
 
-    def on_rendernode_clicked(self):
+    def on_rendermode_clicked(self):
         print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()
@@ -168,16 +180,19 @@ class OpenPypeMenu(QtWidgets.QWidget):
             self.render_mode_widget.show()
 
     def on_duplicate_with_inputs_clicked(self):
+        print("Clicked Duplicate with input connections")
         duplicate_with_inputs.duplicate_with_input_connections()
-        print("Clicked Set Colorspace")
 
-    def on_reset_resolution_clicked(self):
+    def on_set_resolution_clicked(self):
         print("Clicked Reset Resolution")
+
+    def on_set_framerange_clicked(self):
+        print("Clicked Reset Framerange")
+        set_framerange()
 
 
 def launch_openpype_menu():
     app = QtWidgets.QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)
 
     pype_menu = OpenPypeMenu()
 
@@ -186,4 +201,6 @@ def launch_openpype_menu():
 
     pype_menu.show()
 
-    sys.exit(app.exec_())
+    result = app.exec_()
+    print("Shutting down..")
+    sys.exit(result)
