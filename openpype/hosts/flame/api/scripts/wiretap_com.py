@@ -462,7 +462,7 @@ class WireTapCom(object):
 
 def _subprocess_preexec_fn():
     os.setpgrp()
-    os.umask(0o022)
+    os.umask(0o000)
 
 
 if __name__ == "__main__":
