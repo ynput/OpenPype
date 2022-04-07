@@ -179,6 +179,9 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         fill_data = copy.deepcopy(instance.data["anatomyData"])
         fill_data.update({
+            "custom": copy.deepcopy(
+                instance.data.get("customData") or {}
+            ),
             "comment": comment,
             "intent": intent
         })
