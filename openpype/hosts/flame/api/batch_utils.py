@@ -107,7 +107,7 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
             node["id"], node["type"], node["properties"])
 
         # get node name for checking if exists
-        node_name = node_props.get("name") or node_id
+        node_name = node_props.pop("name", None) or node_id
 
         if all_batch_nodes.get(node_name):
             # update existing batch node
@@ -115,6 +115,9 @@ def create_batch_group_conent(batch_nodes, batch_links, batch_group=None):
         else:
             # create new batch node
             batch_node = batch_group.create_node(node_type)
+
+            # set name
+            setattr(batch_node, "name", node_name)
 
         # set attributes found in node props
         for key, value in node_props.items():
