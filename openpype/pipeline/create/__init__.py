@@ -6,7 +6,14 @@ from .creator_plugins import (
 
     BaseCreator,
     Creator,
-    AutoCreator
+    AutoCreator,
+
+    discover_creator_plugins,
+    discover_legacy_creator_plugins,
+    register_creator_plugin,
+    deregister_creator_plugin,
+    register_creator_plugin_path,
+    deregister_creator_plugin_path,
 )
 
 from .context import (
@@ -28,6 +35,13 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
+
+    "discover_creator_plugins",
+    "discover_legacy_creator_plugins",
+    "register_creator_plugin",
+    "deregister_creator_plugin",
+    "register_creator_plugin_path",
+    "deregister_creator_plugin_path",
 
     "CreatedInstance",
     "CreateContext",

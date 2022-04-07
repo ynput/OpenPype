@@ -216,7 +216,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def create_ui(self):
         self.modify_defaults_checkbox = None
 
-        conf_wrapper_widget = QtWidgets.QWidget(self)
+        conf_wrapper_widget = QtWidgets.QSplitter(self)
         configurations_widget = QtWidgets.QWidget(conf_wrapper_widget)
 
         # Breadcrumbs/Path widget
@@ -294,10 +294,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         configurations_layout.addWidget(scroll_widget, 1)
 
-        conf_wrapper_layout = QtWidgets.QHBoxLayout(conf_wrapper_widget)
-        conf_wrapper_layout.setContentsMargins(0, 0, 0, 0)
-        conf_wrapper_layout.setSpacing(0)
-        conf_wrapper_layout.addWidget(configurations_widget, 1)
+        conf_wrapper_widget.addWidget(configurations_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -327,7 +324,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.breadcrumbs_model = None
         self.refresh_btn = refresh_btn
 
-        self.conf_wrapper_layout = conf_wrapper_layout
+        self.conf_wrapper_widget = conf_wrapper_widget
         self.main_layout = main_layout
 
         self.ui_tweaks()
@@ -818,7 +815,9 @@ class ProjectWidget(SettingsCategoryWidget):
 
         project_list_widget = ProjectListWidget(self)
 
-        self.conf_wrapper_layout.insertWidget(0, project_list_widget, 0)
+        self.conf_wrapper_widget.insertWidget(0, project_list_widget)
+        self.conf_wrapper_widget.setStretchFactor(0, 0)
+        self.conf_wrapper_widget.setStretchFactor(1, 1)
 
         project_list_widget.project_changed.connect(self._on_project_change)
         project_list_widget.version_change_requested.connect(

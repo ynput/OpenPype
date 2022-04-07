@@ -99,6 +99,32 @@
 
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateUnrealSkeletalMesh",
+            "label": "Create Unreal - Skeletal Mesh",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "text",
+                    "key": "joint_hints",
+                    "label": "Joint root hint"
+                }
+            ]
+
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [
