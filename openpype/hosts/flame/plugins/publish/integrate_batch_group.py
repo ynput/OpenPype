@@ -32,7 +32,16 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             bgroup = self._get_batch_group(instance, task_data)
 
             # add batch group content
-            self._add_nodes_to_batch_with_links(instance, task_data, bgroup)
+            all_batch_nodes = self._add_nodes_to_batch_with_links(
+                instance, task_data, bgroup)
+
+            for name, node in all_batch_nodes:
+                self.log.debug("name: {}, dir: {}".format(
+                    name, dir(node)
+                ))
+                self.log.debug("__ node.attributes: {}".format(
+                    node.attributes
+                ))
 
             # load plate to batch group
             self.log.info("Loading subset `{}` into batch `{}`".format(
@@ -70,7 +79,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         ]
 
         # add nodes into batch group
-        opfapi.create_batch_group_conent(
+        return opfapi.create_batch_group_conent(
             batch_nodes, batch_links, batch_group)
 
     def _load_clip_to_context(self, instance, bgroup):
