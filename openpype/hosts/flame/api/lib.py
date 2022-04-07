@@ -826,5 +826,7 @@ class MediaInfoFile:
     def _write_result_xml_to_file(self, file, xml_data):
         # save it as new file
         tree = cET.ElementTree(xml_data)
-        tree.write(file, xml_declaration=True,
-                   method='xml', encoding='UTF-8')
+        tree.write(
+            file, xml_declaration=True,
+            method='xml', encoding='UTF-8'
+        )
