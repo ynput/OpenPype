@@ -10,6 +10,7 @@ from openpype.api import PypeCreatorMixin
 from .pipeline import AVALON_PROPERTY
 from .ops import MainThreadItem, execute_in_main_thread
 from .lib import imprint, get_selection
+from openpype.hosts.blender.api import plugin
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
@@ -132,12 +133,63 @@ def get_model_unique_number(current_container_name: str) -> str:
 
 def prepare_data(data, container_name=None):
     name = data.name
-    local_data = data.make_local()
+    name_split = name.split(":")
+    if len(name_split) > 1:
+        name = name_split[1]
     if container_name:
-        local_data.name = f"{container_name}:{name}"
+        data.name = f"{container_name}:{name}"
     else:
-        local_data.name = f"{name}"
-    return local_data
+        data.name = f"{name}"
+
+    return data.name
+
+
+def set_original_name_for_objects_container(container, has_namespace=False):
+    namespace = ""
+    if has_namespace:
+        namespace = f"{container.name}:"
+    # Set the orginal_name for all the objects and collections in the container
+    # or namespace + original name if AVALON_TASK != "modelling"
+    objects = plugin.get_all_objects_in_collection(container)
+    for object in objects:
+        if object.get("original_name"):
+            object.name = namespace + object["original_name"]
+        if object.type != "EMPTY":
+            object.data.name = namespace + object["original_name"]
+    collections = plugin.get_all_collections_in_collection(container)
+    for collection in collections:
+        if collection.get("original_name"):
+            collection.name = namespace + collection["original_name"]
+
+
+def set_temp_namespace_for_objects_container(container):
+    objects = plugin.get_all_objects_in_collection(container)
+    for object in objects:
+        if object.get("original_name"):
+            object.name = f'temp:{object["original_name"]}'
+        if object.type != "EMPTY":
+            object.data.name = f'temp:{object["original_name"]}'
+    collections = plugin.get_all_collections_in_collection(container)
+    for collection in collections:
+        if collection.get("original_name"):
+            collection.name = f'temp:{collection["original_name"]}'
+
+
+def remove_namespace_for_objects_container(container):
+    objects = plugin.get_all_objects_in_collection(container)
+    for object in objects:
+        name = object.name
+        name_split = name.split(":")
+        if len(name_split) > 1:
+            name = name_split[1]
+        object.name = name
+    collections = plugin.get_all_collections_in_collection(container)
+    for collection in collections:
+        name = collection.name
+        name_split = name.split(":")
+        if len(name_split) > 1:
+            name = name_split[1]
+        collection.name = name
 
 
 def create_blender_context(

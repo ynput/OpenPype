@@ -84,7 +84,7 @@ class CreateModel(plugin.Creator):
                         collection.objects.unlink(object)
                     # Link the object to the container
                     container.objects.link(object)
-        # If the container is empty romove them
+        # If the container is empty remove them
         if not container.objects and not container.children:
             bpy.data.collections.remove(container)
         return container

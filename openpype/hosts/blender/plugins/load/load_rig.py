@@ -95,30 +95,19 @@ class BlendRigLoader(plugin.AssetLoader):
         # Get all the object of the container. The farest parents in first for override them first
         armatures = []
         non_armatures = []
-        for collection in collections:
-            nodes = list(collection.objects)
-            objects_of_the_collection = []
-            for object in nodes:
-                if object.parent is None:
-                    objects_of_the_collection.append(object)
+        objects = plugin.get_all_objects_in_collection(container_collection)
 
-            # Get all objects that aren't an armature
-            nodes = objects_of_the_collection
+        # Get all objects that aren't an armature
+        for object in objects:
+            if object.type != "ARMATURE":
+                non_armatures.append(object)
+        non_armatures.reverse()
 
-            for object in nodes:
-                if object.type != "ARMATURE":
-                    non_armatures.append(object)
-                nodes.extend(list(object.children))
-            non_armatures.reverse()
-
-            # Get all objects that are an armature
-            nodes = objects_of_the_collection
-
-            for object in nodes:
-                if object.type == "ARMATURE":
-                    armatures.append(object)
-                nodes.extend(list(object.children))
-            armatures.reverse()
+        # Get all objects that are an armature
+        for object in objects:
+            if object.type == "ARMATURE":
+                armatures.append(object)
+        armatures.reverse()
 
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
@@ -127,14 +116,20 @@ class BlendRigLoader(plugin.AssetLoader):
         container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
+
+        overridden_collections = []
+        overridden_objects = []
         collections.remove(container_collection)
         for collection in collections:
             collection.override_create(remap_local_usages=True)
-
         for object in non_armatures:
             object.override_create(remap_local_usages=True)
+
         for armature in armatures:
             armature.override_create(remap_local_usages=True)
+
+        for collection in overridden_collections:
+            plugin.prepare_data(collection, container_collection.name)
 
         return container_overridden
 
@@ -161,6 +156,8 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Process the load of the container
         avalon_container = self._process(libpath, asset_name)
+        plugin.set_original_name_for_objects_container(avalon_container)
+
         objects = avalon_container.objects
         self[:] = objects
         return objects
@@ -220,6 +217,8 @@ class BlendRigLoader(plugin.AssetLoader):
                     ):
                         count += 1
 
+        plugin.set_temp_namespace_for_objects_container(avalon_container)
+
         # Get the parent collections of the container to relink after update
         parent_collections = plugin.get_parent_collections(avalon_container)
 
@@ -247,6 +246,8 @@ class BlendRigLoader(plugin.AssetLoader):
         # Load the updated container
         container_override = self._process(str(libpath), asset_name)
 
+        plugin.set_temp_namespace_for_objects_container(container_override)
+
         # Get the armature of the rig
         objects = container_override.objects
         armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
@@ -262,6 +263,9 @@ class BlendRigLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.unlink(container_override)
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
+
+        plugin.set_original_name_for_objects_container(container_override)
+
         # Clean
         plugin.remove_orphan_datablocks()
 

@@ -29,13 +29,30 @@ class ExtractBlend(openpype.api.Extractor):
         data_blocks = set()
 
         # Get instance collection
-        collection = bpy.data.collections[instance.name]
-        data_blocks.add(collection)
-        for obj in collection.objects:
-            data_blocks.add(obj)
+        container = bpy.data.collections[instance.name]
+        objects = plugin.get_all_objects_in_collection(container)
+        collections = plugin.get_all_collections_in_collection(container)
+        for collection in collections:
+            # remove the namespace if exists
+            collection_name = collection.name
+            collection.name = collection_name.replace(f"{container.name}:", "")
+            collection["original_name"] = collection.name
+
+        data_blocks.add(container)
+        for object in objects:
+            data_blocks.add(object)
+            # remove the namespace if exists
+            object_name = object.name
+            object.name = object_name.replace(f"{container.name}:", "")
+            # if doesn't exist create the custom property original_name
+            if not object.get("original_name"):
+                object["original_name"] = object.name
+                if object.type != "EMPTY":
+                    object.data["original_name"] = object.data.name
+
             # Pack used images in the blend files.
-            if obj.type == "MESH":
-                for material_slot in obj.material_slots:
+            if object.type == "MESH":
+                for material_slot in object.material_slots:
                     mat = material_slot.material
                     if mat and mat.use_nodes:
                         tree = mat.node_tree

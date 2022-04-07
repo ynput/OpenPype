@@ -251,7 +251,7 @@ class BlendModelLoader(plugin.AssetLoader):
         # Link the container collection to the scene collection
         scene_collection.children.link(container_collection)
 
-        # Get all the object of the container. The farest parents in first for override them first
+        # Get all the collection of the container. The farest parents in first for override them first
         collections = []
         nodes = list(container_collection.children)
         collections.append(container_collection)
@@ -261,19 +261,8 @@ class BlendModelLoader(plugin.AssetLoader):
             nodes.extend(list(collection.children))
 
         # Get all the object of the container. The farest parents in first for override them first
-        objects = []
-
-        for collection in collections:
-            nodes = list(collection.objects)
-            for object in nodes:
-                if object.parent is None:
-                    objects.append(object)
-            # Get all objects that aren't an armature
-            for object in nodes:
-                if object.type != "ARMATURE":
-                    objects.append(object)
-                nodes.extend(list(object.children))
-            objects.reverse()
+        objects = plugin.get_all_objects_in_collection(container_collection)
+        objects.reverse()
 
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
@@ -284,10 +273,15 @@ class BlendModelLoader(plugin.AssetLoader):
             remap_local_usages=True
         )
         collections.remove(container_collection)
+        overridden_collections = []
+        overridden_objects = []
         for collection in collections:
             collection.override_create(remap_local_usages=True)
         for object in objects:
             object.override_create(remap_local_usages=True)
+
+        for collection in overridden_collections:
+            plugin.prepare_data(collection, container_collection.name)
 
         return container_overridden
 
@@ -314,6 +308,15 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Process the load of the container
         avalon_container = self._process(libpath, asset_name)
+
+        has_namespace = api.Session["AVALON_TASK"] not in [
+            "Rigging",
+            "Modeling",
+        ]
+        plugin.set_original_name_for_objects_container(
+            avalon_container, has_namespace
+        )
+
         objects = avalon_container.objects
         self[:] = objects
         return objects
@@ -374,6 +377,7 @@ class BlendModelLoader(plugin.AssetLoader):
                         == container_libpath
                     ):
                         count += 1
+        plugin.set_temp_namespace_for_objects_container(avalon_container)
 
         # Get the parent collections of the container to relink after update
         parent_collections = plugin.get_parent_collections(avalon_container)
@@ -404,6 +408,8 @@ class BlendModelLoader(plugin.AssetLoader):
         # Update of the container
         container_override = self._process(str(libpath), asset_name)
 
+        plugin.set_temp_namespace_for_objects_container(container_override)
+
         # relink the updated container to his parent collection
         if parent_collections:
             bpy.context.scene.collection.children.unlink(container_override)
@@ -414,6 +420,8 @@ class BlendModelLoader(plugin.AssetLoader):
         self._set_modifier(modifiers_dict)
         self._set_drivers_from_empty(empty)
         # self._set_drivers_target(container_override, object_driver_target_list)
+
+        plugin.set_original_name_for_objects_container(container_override)
 
         bpy.context.view_layer.update()
         plugin.remove_orphan_datablocks()

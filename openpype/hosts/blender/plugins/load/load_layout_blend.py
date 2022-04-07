@@ -112,51 +112,63 @@ class BlendLayoutLoader(plugin.AssetLoader):
             collections.append(collection)
             nodes.extend(list(collection.children))
 
-        # Get all the object of the container. The farest parents in first for override them first
-        objects = []
-        armatures = []
-        non_armatures = []
-        for collection in collections:
-            nodes = list(collection.objects)
-            objects_of_the_collection = []
-            for obj in nodes:
-                if obj.parent is None:
-                    objects_of_the_collection.append(obj)
-            # Get all objects that aren't an armature
-            nodes = objects_of_the_collection
+            # Get all the object of the container. The farest parents in first for override them first
+            armatures = []
             non_armatures = []
-            # Add them in objects list
-            for obj in nodes:
-                if obj.type != "ARMATURE":
-                    non_armatures.append(obj)
-                nodes.extend(list(obj.children))
+            objects = plugin.get_all_objects_in_collection(
+                container_collection
+            )
+
+            # Get all objects that aren't an armature
+            for object in objects:
+                if object.type != "ARMATURE":
+                    non_armatures.append(object)
             non_armatures.reverse()
 
             # Get all objects that are an armature
-            nodes = objects_of_the_collection
-            # Add them in armature list
-            for obj in nodes:
-                if obj.type == "ARMATURE":
-                    armatures.append(obj)
-                nodes.extend(list(obj.children))
+            for object in objects:
+                if object.type == "ARMATURE":
+                    armatures.append(object)
             armatures.reverse()
 
-        # Clean
-        bpy.data.orphans_purge(do_local_ids=False)
-        plugin.deselect_all()
+            # Clean
+            bpy.data.orphans_purge(do_local_ids=False)
+            plugin.deselect_all()
+            # Override the container and the objects
+            container_overridden = container_collection.override_create(
+                remap_local_usages=True
+            )
 
-        # Override the container and the objects
-        container_overridden = container_collection.override_create(
-            remap_local_usages=True
-        )
-        collections.remove(container_collection)
-        for collection in collections:
-            collection.override_create(remap_local_usages=True)
+            overridden_collections = []
+            overridden_objects = []
+            collections.remove(container_collection)
+            for collection in collections:
+                overridden_collection = collection.override_create(
+                    remap_local_usages=True
+                )
+                overridden_collections.append(overridden_collection)
+            for object in non_armatures:
+                overridden_object = object.override_create(
+                    remap_local_usages=True
+                )
+                overridden_objects.append(overridden_object)
 
-        for obj in non_armatures:
-            obj.override_create(remap_local_usages=True)
-        for armature in armatures:
-            armature.override_create(remap_local_usages=True)
+            for armature in armatures:
+                overridden_object = armature.override_create(
+                    remap_local_usages=True
+                )
+                overridden_objects.append(overridden_object)
+
+            for object in overridden_objects:
+                if object.type != "ARMATURE":
+                    plugin.prepare_data(object, container_collection.name)
+                    if object.type != "EMPTY":
+                        plugin.prepare_data(
+                            object.data, container_collection.name
+                        )
+
+            for collection in overridden_collections:
+                plugin.prepare_data(collection, container_collection.name)
 
         return container_overridden
 

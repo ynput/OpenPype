@@ -8,7 +8,7 @@ from openpype.hosts.blender.api import plugin
 
 
 def extract(file_to_open, filepath, collection_name):
-    """Extract a container if some parts are local save a work file And publish"""
+    """Extract a container if some parts are local, save a work file And publish"""
     with bpy.data.libraries.load(file_to_open, link=False, relative=False) as (
         data_from,
         data_to,
@@ -18,13 +18,16 @@ def extract(file_to_open, filepath, collection_name):
             if data_from_collection == collection_name:
                 data_to.collections.append(data_from_collection)
     # Get the collection from data
-    collection = bpy.data.collections.get(collection_name)
+    container = bpy.data.collections.get(collection_name)
     # And link them to the scene colection
-    bpy.context.scene.collection.children.link(collection)
+    bpy.context.scene.collection.children.link(container)
     bpy.ops.object.make_local(type="ALL")
+    plugin.remove_orphan_datablocks()
+    plugin.remove_namespace_for_objects_container(container)
 
-    objects_list = plugin.get_all_objects_in_collection(collection)
-    for object in objects_list:
+    objects = plugin.get_all_objects_in_collection(container)
+    for object in objects:
+
         if object.animation_data:
             if object.animation_data.drivers:
                 drivers = object.animation_data.drivers
@@ -56,8 +59,8 @@ def extract(file_to_open, filepath, collection_name):
                     object.modifiers.remove(modifier)
         object.animation_data_clear()
 
-    objects_List = plugin.get_all_objects_in_collection(collection)
-    for object in objects_List:
+    objects = plugin.get_all_objects_in_collection(container)
+    for object in objects:
         for modifier in object.modifiers:
             if modifier.type == "ARMATURE":
                 object.modifiers.remove(modifier)
@@ -66,7 +69,7 @@ def extract(file_to_open, filepath, collection_name):
 
     # Get container data from the data base
     representation = io.find_one(
-        {"_id": io.ObjectId(collection[AVALON_PROPERTY]["representation"])}
+        {"_id": io.ObjectId(container[AVALON_PROPERTY]["representation"])}
     )
 
     family = representation["context"]["family"]
@@ -85,7 +88,7 @@ def extract(file_to_open, filepath, collection_name):
         "task": task,
     }
     # Store the data in the avalon custom property
-    collection[AVALON_PROPERTY] = data
+    container[AVALON_PROPERTY] = data
     bpy.ops.object.make_local(type="ALL")
     plugin.remove_orphan_datablocks()
 
