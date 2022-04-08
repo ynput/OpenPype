@@ -558,7 +558,7 @@ def create_otio_timeline(sequence):
                 len(track.segments) == 0
                 or track.hidden.get_value()
             ):
-                return None
+                continue
 
             # convert track to otio
             otio_track = create_otio_track(
