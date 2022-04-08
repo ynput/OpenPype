@@ -1,7 +1,6 @@
 import sys
 import os
 import re
-import six
 import json
 import pickle
 import tempfile
@@ -740,19 +739,34 @@ def get_batch_group_from_desktop(name):
 
 
 class MediaInfoFile:
-    media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
-    tmp_name = "_tmp.clip"
-    tmp_file = None
+    """Class to get media info file clip data
 
-    clip_data = None
-    out_feed_nb_ticks = None
-    out_feed_fps = None
-    out_feed_drop_mode = None
+    Raises:
+        IOError: MEDIA_SCRIPT_PATH path doesn't exists
+        TypeError: Not able to generate clip xml data file
+        ET.ParseError: Missing clip in xml clip data
+        IOError: Not able to save xml clip data to file
+
+    Attributes:
+        str: `MEDIA_SCRIPT_PATH` path to flame binary
+        logging.Logger: `log` logger
+    """
+    MEDIA_SCRIPT_PATH = "/opt/Autodesk/mio/current/dl_get_media_info"
 
     log = log
 
-    def __init__(self, path):
-        # test if media script paht exists
+    _clip_data = None
+    _start_frame = None
+    _fps = None
+    _drop_mode = None
+
+    def __init__(self, path, **kwargs):
+
+        # replace log if any
+        if kwargs.get("log"):
+            self.log = kwargs["log"]
+
+        # test if `dl_get_media_info` paht exists
         self._validate_media_script_path()
 
         # derivate other feed variables
@@ -760,40 +774,93 @@ class MediaInfoFile:
         self.feed_dir = os.path.dirname(path)
         self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
 
-        self.tmp_file = os.path.join(self.feed_dir, self.tmp_name)
+        with maintained_temp_file_path(".clip") as tmp_path:
+            self.log.info("Temp File: {}".format(tmp_path))
+            self._generate_media_info_file(tmp_path)
 
-        # remove previously generated temp files
-        # it will be regenerated
-        self._clear_tmp_file()
+            # get clip data and make them single if there is multiple
+            # clips data
+            xml_data = self._make_single_clip_media_info(tmp_path)
 
-        self.log.info("Temp File: {}".format(self.tmp_file))
+            # get all time related data and assign them
+            self._get_time_info_from_origin(xml_data)
+            self.set_clip_data(xml_data)
 
-        self._generate_media_info_file()
+    @property
+    def clip_data(self):
+        """Clip's xml clip data
+
+        Returns:
+            xml.etree.ElementTree: xml data
+        """
+        return self._clip_data
+
+    @clip_data.setter
+    def clip_data(self, data):
+        self._clip_data = data
+
+    @property
+    def start_frame(self):
+        """ Clip's starting frame found in timecode
+
+        Returns:
+            int: number of frames
+        """
+        return self._start_frame
+
+    @start_frame.setter
+    def start_frame(self, number):
+        self._start_frame = int(number)
+
+    @property
+    def fps(self):
+        """ Clip's frame rate
+
+        Returns:
+            float: frame rate
+        """
+        return self._fps
+
+    @fps.setter
+    def fps(self, fl_number):
+        self._fps = float(fl_number)
+
+    @property
+    def drop_mode(self):
+        """ Clip's drop frame mode
+
+        Returns:
+            str: drop frame flag
+        """
+        return self._drop_mode
+
+    @drop_mode.setter
+    def drop_mode(self, text):
+        self._drop_mode = str(text)
 
     def _validate_media_script_path(self):
-        if not os.path.isfile(self.media_script_path):
+        if not os.path.isfile(self.MEDIA_SCRIPT_PATH):
             raise IOError("Media Scirpt does not exist: `{}`".format(
-                self.media_script_path))
+                self.MEDIA_SCRIPT_PATH))
 
-    def _generate_media_info_file(self):
+    def _generate_media_info_file(self, fpath):
         # Create cmd arguments for gettig xml file info file
         cmd_args = [
-            self.media_script_path,
+            self.MEDIA_SCRIPT_PATH,
             "-e", self.feed_ext,
-            "-o", self.tmp_file,
+            "-o", fpath,
             self.feed_dir
         ]
 
-        # execute creation of clip xml template data
         try:
+            # execute creation of clip xml template data
             openpype.run_subprocess(cmd_args)
-            self._make_single_clip_media_info()
-        except TypeError:
-            self.log.error("Error creating self.tmp_file")
-            six.reraise(*sys.exc_info())
+        except TypeError as error:
+            raise TypeError(
+                "Error creating `{}` due: {}".format(fpath, error)) from error
 
-    def _make_single_clip_media_info(self):
-        with open(self.tmp_file) as f:
+    def _make_single_clip_media_info(self, fpath):
+        with open(fpath) as f:
             lines = f.readlines()
             _added_root = itertools.chain(
                 "<root>", deepcopy(lines)[1:], "</root>")
@@ -816,37 +883,41 @@ class MediaInfoFile:
                     ]
                 ))
 
-        self._get_time_info_from_origin(matching_clip)
-        self.clip_data = matching_clip
-        self._write_result_xml_to_file(self.tmp_file, matching_clip)
-
-    def _clear_tmp_file(self):
-        if os.path.isfile(self.tmp_file):
-            os.remove(self.tmp_file)
+        return matching_clip
 
     def _get_time_info_from_origin(self, xml_data):
         try:
             for out_track in xml_data.iter('track'):
                 for out_feed in out_track.iter('feed'):
+                    # start frame
                     out_feed_nb_ticks_obj = out_feed.find(
                         'startTimecode/nbTicks')
-                    self.out_feed_nb_ticks = out_feed_nb_ticks_obj.text
+                    self.start_frame(out_feed_nb_ticks_obj.text)
+
+                    # fps
                     out_feed_fps_obj = out_feed.find(
                         'startTimecode/rate')
-                    self.out_feed_fps = out_feed_fps_obj.text
+                    self.fps(out_feed_fps_obj.text)
+
+                    # drop frame mode
                     out_feed_drop_mode_obj = out_feed.find(
                         'startTimecode/dropMode')
-                    self.out_feed_drop_mode = out_feed_drop_mode_obj.text
+                    self.drop_mode(out_feed_drop_mode_obj.text)
                     break
                 else:
                     continue
         except Exception as msg:
             self.log.warning(msg)
 
-    def _write_result_xml_to_file(self, file, xml_data):
-        # save it as new file
-        tree = cET.ElementTree(xml_data)
-        tree.write(
-            file, xml_declaration=True,
-            method='xml', encoding='UTF-8'
-        )
+    @staticmethod
+    def write_clip_data_to_file(fpath, xml_data):
+        try:
+            # save it as new file
+            tree = cET.ElementTree(xml_data)
+            tree.write(
+                fpath, xml_declaration=True,
+                method='xml', encoding='UTF-8'
+            )
+        except IOError as error:
+            raise IOError(
+                "Not able to write data to file: {}".format(error)) from error
