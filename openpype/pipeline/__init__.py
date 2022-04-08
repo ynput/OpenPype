@@ -41,6 +41,7 @@ from .load import (
 
     loaders_from_representation,
     get_representation_path,
+    get_representation_context,
     get_repres_contexts,
 )
 
@@ -129,6 +130,7 @@ __all__ = (
 
     "loaders_from_representation",
     "get_representation_path",
+    "get_representation_context",
     "get_repres_contexts",
 
     # --- Publish ---
