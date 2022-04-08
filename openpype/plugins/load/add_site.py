@@ -63,9 +63,11 @@ class AddSyncSite(load.LoaderPlugin):
             project_name (str)
             representation_id (ObjectId):
             site_name (str)
-            is_main (bool): true for really downloaded, false for references,
-                force redownload main file always, for references only if
-                broken
+            is_main (bool): true for main representation, false for referenced
+                loaded repres. Drives if site state should be reset.
+                (it should be for main, not for referenced as they might be
+                shared from multiple workfiles). In necessary cases, referenced
+                repres should be reset (re-downloaded) manually.
         """
         try:
             self.sync_server.add_site(project_name, representation_id,
