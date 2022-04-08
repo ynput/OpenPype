@@ -687,7 +687,7 @@ class OpenClipSolver(flib.MediaInfoFile):
         feed_path = feed_data.pop("path")
 
         # initialize parent class
-        super(OpenClipSolver).__init__(
+        super(OpenClipSolver, self).__init__(
             feed_path,
             **feed_data
         )
@@ -756,7 +756,7 @@ class OpenClipSolver(flib.MediaInfoFile):
             xml_new_version.set('uid', self.feed_version_name)
             xml_new_version.set('type', 'version')
 
-        xml_data = self._fix_xml_data(self.clip_data)
+        xml_data = self._clear_handler(self.clip_data)
         self.log.info("Adding feed version: {}".format(self.feed_basename))
 
         self.write_clip_data_to_file(self.out_file, xml_data)
@@ -823,7 +823,7 @@ class OpenClipSolver(flib.MediaInfoFile):
                 "version", {"type": "version", "uid": self.feed_version_name})
             out_xml_versions_obj.insert(0, new_version_obj)
 
-            xml_data = self._fix_xml_data(out_xml)
+            xml_data = self._clear_handler(out_xml)
 
             # fist create backup
             self._create_openclip_backup_file(self.out_file)
@@ -843,11 +843,6 @@ class OpenClipSolver(flib.MediaInfoFile):
                 self.log.warning(
                     "Not appending file as it already is in .clip file")
                 return True
-
-    def _fix_xml_data(self, xml_data):
-        xml_root = xml_data.getroot()
-        self._clear_handler(xml_root)
-        return xml_root
 
     def _create_openclip_backup_file(self, file):
         bck_file = "{}.bak".format(file)

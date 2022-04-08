@@ -739,7 +739,7 @@ def get_batch_group_from_desktop(name):
             return bgroup
 
 
-class MediaInfoFile:
+class MediaInfoFile(object):
     """Class to get media info file clip data
 
     Raises:
