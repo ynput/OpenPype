@@ -37,12 +37,10 @@ class LocalEnvironmentsWidgets(QtWidgets.QWidget):
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setColumnStretch(0, 0)
-        content_layout.setColumnStretch(1, 1)
         white_list_entity = (
             self.system_settings_entity["general"]["local_env_white_list"]
         )
-
+        row = -1
         for row, item in enumerate(white_list_entity):
             key = item.value
             label_widget = QtWidgets.QLabel(key, self)
@@ -53,6 +51,21 @@ class LocalEnvironmentsWidgets(QtWidgets.QWidget):
             content_layout.addWidget(input_widget, row, 1)
 
             self._widgets_by_env_key[key] = input_widget
+
+        if row < 0:
+            label_widget = QtWidgets.QLabel(
+                (
+                    "Your studio does not allow to change"
+                    " Environment variables locally."
+                ),
+                self
+            )
+            content_layout.addWidget(label_widget, 0, 0)
+            content_layout.setColumnStretch(0, 1)
+
+        else:
+            content_layout.setColumnStretch(0, 0)
+            content_layout.setColumnStretch(1, 1)
 
         self._layout.addWidget(content_widget, 1)
 
