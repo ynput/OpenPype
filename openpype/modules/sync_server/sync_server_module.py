@@ -313,18 +313,23 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     alt_site_pairs[alt_site] = []
                 alt_site_pairs[alt_site].extend([site_name])
 
-        # transitive relationship, eg site is alternative to another which is
-        # alternative to nex site
-        loop = True
-        while loop:
-            loop = False
-            for site, alt_sites in alt_site_pairs.items():
-                for alt_site in alt_sites:
-                    for alt_alt_site in alt_site_pairs.get(alt_site, []):
-                        if (alt_alt_site != site
-                                and alt_alt_site not in alt_sites):
-                            alt_site_pairs[site].append(alt_alt_site)
-                            loop = True
+        for site_name, alt_sites in alt_site_pairs.items():
+            sites_queue = deque(alt_sites)
+            while sites_queue:
+                alt_site = sites_queue.popleft()
+
+                # safety against wrong config
+                # {"SFTP": {"alternative_site": "SFTP"}
+                if alt_site == site_name or alt_site not in alt_site_pairs:
+                    continue
+
+                for alt_alt_site in alt_site_pairs[alt_site]:
+                    if (
+                            alt_alt_site != site_name
+                            and alt_alt_site not in alt_sites
+                    ):
+                        alt_sites.append(alt_alt_site)
+                        sites_queue.append(alt_alt_site)
 
         return alt_site_pairs
 
@@ -991,6 +996,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         sites = [self.DEFAULT_SITE]
         if self.enabled and sync_settings.get('enabled'):
             sites.append(self.LOCAL_SITE)
+
+        active_site = sync_settings["config"]["active_site"]
+        # for Tray running background process
+        if active_site not in sites and active_site == get_local_site_id():
+            sites.append(active_site)
 
         return sites
 
