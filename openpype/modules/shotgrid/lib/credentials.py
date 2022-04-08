@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+
 from urllib.parse import urlparse
 
 import shotgun_api3
@@ -8,21 +8,21 @@ from openpype.lib import OpenPypeSecureRegistry, OpenPypeSettingsRegistry
 from openpype.modules.shotgrid.lib.record import Credentials
 
 
-def _get_shotgrid_secure_key(hostname: str, key: str) -> str:
+def _get_shotgrid_secure_key(hostname, key):
     """Secure item key for entered hostname."""
     return f"shotgrid/{hostname}/{key}"
 
 
 def _get_secure_value_and_registry(
-    hostname: str,
-    name: str,
-) -> Tuple[str, OpenPypeSecureRegistry]:
+    hostname,
+    name,
+):
     key = _get_shotgrid_secure_key(hostname, name)
     registry = OpenPypeSecureRegistry(key)
     return registry.get_item(name, None), registry
 
 
-def get_shotgrid_hostname(shotgrid_url: str) -> str:
+def get_shotgrid_hostname(shotgrid_url):
 
     if not shotgrid_url:
         raise Exception("Shotgrid url cannot be a null")
@@ -35,7 +35,7 @@ def get_shotgrid_hostname(shotgrid_url: str) -> str:
 # Credentials storing function (using keyring)
 
 
-def get_credentials(shotgrid_url: str) -> Optional[Credentials]:
+def get_credentials(shotgrid_url):
     hostname = get_shotgrid_hostname(shotgrid_url)
     if not hostname:
         return None
@@ -50,7 +50,7 @@ def get_credentials(shotgrid_url: str) -> Optional[Credentials]:
     return Credentials(login_value, password_value)
 
 
-def save_credentials(login: str, password: str, shotgrid_url: str):
+def save_credentials(login, password, shotgrid_url):
     hostname = get_shotgrid_hostname(shotgrid_url)
     _, login_registry = _get_secure_value_and_registry(
         hostname,
@@ -65,7 +65,7 @@ def save_credentials(login: str, password: str, shotgrid_url: str):
     password_registry.set_item(Credentials.password_key_prefix(), password)
 
 
-def clear_credentials(shotgrid_url: str):
+def clear_credentials(shotgrid_url):
     hostname = get_shotgrid_hostname(shotgrid_url)
     login_value, login_registry = _get_secure_value_and_registry(
         hostname,
@@ -86,7 +86,7 @@ def clear_credentials(shotgrid_url: str):
 # Login storing function (using json)
 
 
-def get_local_login() -> Optional[str]:
+def get_local_login():
     reg = OpenPypeSettingsRegistry()
     try:
         return str(reg.get_item("shotgrid_login"))
@@ -94,7 +94,7 @@ def get_local_login() -> Optional[str]:
         return None
 
 
-def save_local_login(login: str):
+def save_local_login(login):
     reg = OpenPypeSettingsRegistry()
     reg.set_item("shotgrid_login", login)
 
@@ -105,10 +105,10 @@ def clear_local_login():
 
 
 def check_credentials(
-    login: str,
-    password: str,
-    shotgrid_url: str,
-) -> bool:
+    login,
+    password,
+    shotgrid_url,
+):
 
     if not shotgrid_url or not login or not password:
         return False

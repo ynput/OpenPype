@@ -1,6 +1,5 @@
 import os
 import webbrowser
-from typing import Any
 
 from Qt import QtWidgets
 
@@ -11,11 +10,11 @@ from openpype.modules.shotgrid.tray.credential_dialog import (
 
 
 class ShotgridTrayWrapper:
-    module: Any
-    credentials_dialog: CredentialsDialog
-    logged_user_label: QtWidgets.QAction
+    module = None
+    credentials_dialog = None
+    logged_user_label = None
 
-    def __init__(self, module) -> None:
+    def __init__(self, module):
         self.module = module
         self.credentials_dialog = CredentialsDialog(module)
         self.credentials_dialog.login_changed.connect(self.set_login_label)
@@ -65,7 +64,7 @@ class ShotgridTrayWrapper:
                 )
                 m.addAction(shotgrid_manager_action)
 
-    def validate(self) -> bool:
+    def validate(self):
         login = credentials.get_local_login()
 
         if not login:

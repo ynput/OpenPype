@@ -1,7 +1,6 @@
 import traceback
 
 import requests
-from typing import Dict, Any, List
 
 from openpype.api import Logger
 from openpype.modules.shotgrid.lib import (
@@ -11,7 +10,7 @@ from openpype.modules.shotgrid.lib import (
 _LOG = Logger().get_logger("ShotgridModule.server")
 
 
-def find_linked_projects(email: str) -> List[Dict[str, Any]]:
+def find_linked_projects(email):
     url = "".join(
         [
             settings_lib.get_leecher_backend_url(),

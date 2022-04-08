@@ -1,5 +1,4 @@
 import os
-from typing import Any
 from Qt import QtCore, QtWidgets, QtGui
 
 from openpype import style
@@ -11,20 +10,20 @@ class CredentialsDialog(QtWidgets.QDialog):
     SIZE_W = 450
     SIZE_H = 200
 
-    _module: Any = None
-    _is_logged: bool = False
-    url_label: QtWidgets.QLabel
-    login_label: QtWidgets.QLabel
-    password_label: QtWidgets.QLabel
-    url_input: QtWidgets.QComboBox
-    login_input: QtWidgets.QLineEdit
-    password_input: QtWidgets.QLineEdit
-    input_layout: QtWidgets.QFormLayout
-    login_button: QtWidgets.QPushButton
-    buttons_layout: QtWidgets.QHBoxLayout
-    main_widget: QtWidgets.QVBoxLayout
+    _module = None
+    _is_logged = False
+    url_label = None
+    login_label = None
+    password_label = None
+    url_input = None
+    login_input = None
+    password_input = None
+    input_layout = None
+    login_button = None
+    buttons_layout = None
+    main_widget = None
 
-    login_changed: QtCore.Signal = QtCore.Signal()
+    login_changed = QtCore.Signal()
 
     def __init__(self, module, parent=None):
         super(CredentialsDialog, self).__init__(parent)
@@ -168,7 +167,7 @@ class CredentialsDialog(QtWidgets.QDialog):
         self._clear_shotgrid_login()
         self._on_logout()
 
-    def set_error(self, msg: str):
+    def set_error(self, msg):
         self.error_label.setText(msg)
         self.error_label.show()
 
@@ -184,15 +183,15 @@ class CredentialsDialog(QtWidgets.QDialog):
     def _close_widget(self):
         self.hide()
 
-    def _valid_input(self, input_widget: QtWidgets.QLineEdit):
+    def _valid_input(self, input_widget):
         input_widget.setStyleSheet("")
 
-    def _invalid_input(self, input_widget: QtWidgets.QLineEdit):
+    def _invalid_input(self, input_widget):
         input_widget.setStyleSheet("border: 1px solid red;")
 
     def login_with_credentials(
-        self, url: str, login: str, password: str
-    ) -> bool:
+        self, url, login, password
+    ):
         verification = credentials.check_credentials(url, login, password)
         if verification:
             credentials.save_credentials(login, password, False)

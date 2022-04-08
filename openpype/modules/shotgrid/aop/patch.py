@@ -1,5 +1,4 @@
 from copy import copy
-from typing import Any, Iterator, Dict, Set
 
 from avalon.api import AvalonMongoDB
 
@@ -14,8 +13,8 @@ _LOG = Logger().get_logger("ShotgridModule.patch")
 
 
 def _patched_projects(
-    self: Any, projection: Any = None, only_active: bool = True
-) -> Iterator[Dict[str, Any]]:
+    self, projection=None, only_active=True
+):
     all_projects = list(self._prev_projects(projection, only_active))
     if (
         not credentials.get_local_login()
@@ -30,18 +29,18 @@ def _patched_projects(
         return all_projects
 
 
-def _upper(x: Any) -> str:
+def _upper(x):
     return str(x).strip().upper()
 
 
-def _fetch_linked_project_names() -> Set[str]:
+def _fetch_linked_project_names():
     return {
         _upper(x["project_name"])
         for x in server.find_linked_projects(credentials.get_local_login())
     }
 
 
-def patch_avalon_db() -> None:
+def patch_avalon_db():
     _LOG.debug("Run avalon patching")
     if AvalonMongoDB.projects is _patched_projects:
         return None
