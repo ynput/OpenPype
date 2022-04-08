@@ -111,6 +111,16 @@
             "type": "splitter"
         },
         {
+            "type": "list",
+            "key": "local_env_white_list",
+            "label": "White list of local environment variables",
+            "use_label_wrap": true,
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "type": "collapsible-wrap",
             "label": "OpenPype deployment control",
             "collapsible": false,
