@@ -8,10 +8,6 @@ from openpype_interfaces import (
 )
 
 from openpype.modules import OpenPypeModule
-from .aop.patch import patch_avalon_db
-from .tray.shotgrid_tray import (
-    ShotgridTrayWrapper,
-)
 
 SHOTGRID_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,8 +22,6 @@ class ShotgridModule(
     tray_wrapper = None
 
     def initialize(self, modules_settings):
-        patch_avalon_db()
-        threading.Timer(10.0, patch_avalon_db).start()
         shotgrid_settings = modules_settings.get(self.name, dict())
         self.enabled = shotgrid_settings.get("enabled", False)
         self.leecher_manager_url = shotgrid_settings.get(
@@ -51,7 +45,14 @@ class ShotgridModule(
         return os.path.join(SHOTGRID_MODULE_DIR, "hooks")
 
     def tray_init(self):
+        from .tray.shotgrid_tray import ShotgridTrayWrapper
+        from .aop.patch import patch_avalon_db
+
+        patch_avalon_db()
+        threading.Timer(10.0, patch_avalon_db).start()
+
         self.tray_wrapper = ShotgridTrayWrapper(self)
+
 
     def tray_start(self):
         return self.tray_wrapper.validate()

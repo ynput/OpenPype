@@ -1,6 +1,5 @@
 from copy import copy
 
-from avalon.api import AvalonMongoDB
 
 from openpype.api import Logger
 from openpype.modules.shotgrid.lib import (
@@ -42,8 +41,12 @@ def _fetch_linked_project_names():
 
 def patch_avalon_db():
     _LOG.debug("Run avalon patching")
-    if AvalonMongoDB.projects is _patched_projects:
-        return None
-    _LOG.debug("Patch Avalon.projects method")
-    AvalonMongoDB._prev_projects = copy(AvalonMongoDB.projects)
-    AvalonMongoDB.projects = _patched_projects
+    try:
+        from avalon.api import AvalonMongoDB
+        if AvalonMongoDB.projects is _patched_projects:
+            return None
+        _LOG.debug("Patch Avalon.projects method")
+        AvalonMongoDB._prev_projects = copy(AvalonMongoDB.projects)
+        AvalonMongoDB.projects = _patched_projects
+    except e:
+        _LOG.error("Unable to patch avalon db "+ e)
