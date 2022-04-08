@@ -209,7 +209,6 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         msg = "No family found for combination of " +\
               "task_type: {}, is_sequence:{}, extension: {}".format(
                   task_type, is_sequence, extension)
-        found_family = "render"
         assert found_family, msg
 
         return (found_family,
