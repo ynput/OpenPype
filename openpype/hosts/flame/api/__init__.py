@@ -57,7 +57,6 @@ from .plugin import (
     PublishableClip,
     ClipLoader,
     OpenClipSolver
-
 )
 from .workio import (
     open_file,

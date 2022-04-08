@@ -7,12 +7,9 @@ import json
 import logging
 import opentimelineio as otio
 from . import utils
-from openpype.hosts.flame.api import MediaInfoFile
 
 import flame
 from pprint import pformat
-
-reload(utils)  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -331,6 +328,8 @@ def create_otio_reference(clip_data, fps=None):
 
 
 def create_otio_clip(clip_data):
+    from openpype.hosts.flame.api import MediaInfoFile
+
     segment = clip_data["PySegment"]
 
     # calculate source in

@@ -1,15 +1,11 @@
-import itertools
 import os
 import re
 import shutil
-import sys
-import xml.etree.cElementTree as cET
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
 import openpype.api as openpype
 import qargparse
-import six
 from openpype import style
 from openpype.pipeline import LegacyCreator, LoaderPlugin
 from Qt import QtCore, QtWidgets
@@ -740,6 +736,7 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     def _create_new_open_clip(self):
         self.log.info("Building new openClip")
+        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
         # clip data comming from MediaInfoFile
         tmp_xml_feeds = self.clip_data.find('tracks/track/feeds')

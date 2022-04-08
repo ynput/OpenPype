@@ -708,7 +708,7 @@ def maintained_temp_file_path(suffix=None):
 
     except IOError as _error:
         raise IOError(
-            "Not able to create temp json file: {}".format(_error)) from _error
+            "Not able to create temp json file: {}".format(_error))
 
     finally:
         # Remove the temporary json
@@ -860,7 +860,7 @@ class MediaInfoFile:
             openpype.run_subprocess(cmd_args)
         except TypeError as error:
             raise TypeError(
-                "Error creating `{}` due: {}".format(fpath, error)) from error
+                "Error creating `{}` due: {}".format(fpath, error))
 
     def _make_single_clip_media_info(self, fpath):
         with open(fpath) as f:
@@ -923,4 +923,4 @@ class MediaInfoFile:
             )
         except IOError as error:
             raise IOError(
-                "Not able to write data to file: {}".format(error)) from error
+                "Not able to write data to file: {}".format(error))
