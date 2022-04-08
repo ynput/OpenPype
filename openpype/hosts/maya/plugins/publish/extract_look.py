@@ -396,6 +396,7 @@ class ExtractLook(openpype.api.Extractor):
 
             source, mode, texture_hash = self._process_texture(
                 filepath,
+                do_rstex,
                 do_maketx,
                 staging=staging_dir,
                 linearize=linearize,
@@ -487,7 +488,7 @@ class ExtractLook(openpype.api.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging, linearize, force):
+    def _process_texture(self, filepath, do_rstex, do_maketx, staging, linearize, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
