@@ -21,7 +21,7 @@ class MultiverseUsdLoader(load.LoaderPlugin):
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
     label = "Read USD by Multiverse"
-    order = -10
+    order = -1
     icon = "code-fork"
     color = "orange"
 
