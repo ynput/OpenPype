@@ -61,6 +61,7 @@ payload_skeleton_template = {
         "RenderLayer": None,  # Render only this layer
         "Renderer": None,
         "ProjectPath": None,  # Resolve relative references
+        "RenderSetupIncludeLights": None,  # Include all lights flag.
     },
     "AuxFiles": []  # Mandatory for Deadline, may be empty
 }
