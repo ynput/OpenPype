@@ -72,6 +72,9 @@ class CreateRender(plugin.Creator):
     # renderSetup instance
     _rs = None
 
+    # Disable "render all lights" flag for the scene.
+    disable_all_lights = True
+
     _image_prefix_nodes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
         'vray': 'vraySettings.fileNamePrefix',
@@ -105,6 +108,8 @@ class CreateRender(plugin.Creator):
             return
         self._project_settings = get_project_settings(
             Session["AVALON_PROJECT"])
+
+        self.data["RenderSetupIncludeLights"] = self.disable_all_lights
 
         # project_settings/maya/create/CreateRender/aov_separator
         try:
