@@ -1,13 +1,16 @@
 from openpype.hosts.houdini.api import plugin
 
 
-class CreatePointCache(plugin.Creator):
+class CreatePointCache(plugin.HoudiniCreator):
     """Alembic ROP to pointcache"""
 
     name = "pointcache"
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        pass
 
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)

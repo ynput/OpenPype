@@ -2,11 +2,17 @@
 """Houdini specific Avalon/Pyblish plugin definitions."""
 import sys
 import six
-
+from abc import (
+    ABCMeta,
+    abstractmethod,
+    abstractproperty
+)
+import six
 import hou
 from openpype.pipeline import (
     CreatorError,
-    LegacyCreator
+    LegacyCreator,
+    Creator as NewCreator
 )
 from .lib import imprint
 
@@ -84,3 +90,17 @@ class Creator(LegacyCreator):
                 OpenPypeCreatorError,
                 OpenPypeCreatorError("Creator error: {}".format(er)),
                 sys.exc_info()[2])
+
+
+@six.add_metaclass(ABCMeta)
+class HoudiniCreator(NewCreator):
+    _nodes = []
+
+    def collect_instances(self):
+        pass
+
+    def update_instances(self, update_list):
+        pass
+
+    def remove_instances(self, instances):
+        pass

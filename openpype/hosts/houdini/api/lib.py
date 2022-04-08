@@ -453,3 +453,21 @@ def reset_framerange():
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
     hou.setFrame(frame_start)
+
+
+def load_creator_code_to_asset(
+        otl_file_path, node_type_name, source_file_path):
+    # type: (str, str, str) -> None
+    # Load the Python source code.
+    with open(source_file_path, "rb") as src:
+        source = src.read()
+
+    # Find the asset definition in the otl file.
+    definitions = [definition
+        for definition in hou.hda.definitionsInFile(otl_file_path)
+        if definition.nodeTypeName() == node_type_name]
+    assert(len(definitions) == 1)
+    definition = definitions[0]
+
+    # Store the source code into the PythonCook section of the asset.
+    definition.addSection("PythonCook", source)
