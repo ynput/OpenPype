@@ -15,6 +15,14 @@ class ExtractBlend(openpype.api.Extractor):
     families = ["model", "camera", "rig", "action", "layout"]
     optional = True
 
+    def _set_original_name_property(self, object):
+        object["original_name"] = object.name
+        object.property_overridable_library_set('["original_name"]', True)
+
+    def _set_namespace_property(self, object, container):
+        object["namespace"] = container.name
+        object.property_overridable_library_set('["namespace"]', True)
+
     def process(self, instance):
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
@@ -41,46 +49,29 @@ class ExtractBlend(openpype.api.Extractor):
             "Rigging",
             "Modeling",
         ]
+
+        self._set_original_name_property(container)
+        if has_namespace:
+            self._set_namespace_property(container)
+
         for collection in collections:
             # remove the namespace if exists
-            if not collection.get("original_name"):
-                collection["original_name"] = collection.name
-                collection.property_overridable_library_set(
-                    '["original_name"]', True
-                )
-
-                if has_namespace:
-                    collection["namespace"] = container.name
-                    collection.property_overridable_library_set(
-                        '["namespace"]', True
-                    )
+            self._set_original_name_property(collection)
+            if has_namespace:
+                self._set_namespace_property(collection, container)
 
         data_blocks.add(container)
         for object in objects:
             data_blocks.add(object)
 
             # if doesn't exist create the custom property original_name
-            if not object.get("original_name"):
-
-                object["original_name"] = object.name
-                object.property_overridable_library_set(
-                    '["original_name"]', True
-                )
-                if object.type != "EMPTY":
-                    object.data["original_name"] = object.data.name
-                    object.data.property_overridable_library_set(
-                        '["original_name"]', True
-                    )
-
+            self._set_original_name_property(object)
+            if object.type != "EMPTY":
+                self._set_original_name_property(object.data)
             if has_namespace:
-
-                object["namespace"] = container.name
-                object.property_overridable_library_set('["namespace"]', True)
+                self._set_namespace_property(object, container)
                 if object.type != "EMPTY":
-                    object.data["namespace"] = container.name
-                    object.data.property_overridable_library_set(
-                        '["namespace"]', True
-                    )
+                    self._set_namespace_property(object.data, container)
 
             # Pack used images in the blend files.
             if object.type == "MESH":

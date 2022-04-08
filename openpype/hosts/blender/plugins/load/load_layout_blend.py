@@ -258,6 +258,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     ):
                         count += 1
 
+        # Set temp namespace to avoid object renames while the update
+        plugin.set_temp_namespace_for_objects_container(avalon_container)
+
         parent_collections = plugin.get_parent_collections(avalon_container)
 
         # Save the animation before we remove the containers
@@ -306,6 +309,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Load the updated container
         container_override = self._process(str(libpath), object_name)
 
+        # Set temp namespace to avoid object renames while the update
+        plugin.set_temp_namespace_for_objects_container(container_override)
+
         # Link the the updated container to the collection of the old container
         if parent_collections:
             bpy.context.scene.collection.children.unlink(container_override)
@@ -343,10 +349,23 @@ class BlendLayoutLoader(plugin.AssetLoader):
                                 armature.animation_data_clear()
                                 # Create a new animation data
                                 armature.animation_data_create()
-                                # Set the action store in the action variable to the animation data
+                                # Set the action store in the action
+                                # variable to the animation data
                                 armature.animation_data.action = action[
                                     sub_avalon_container.name
                                 ]
+
+        has_namespace = api.Session["AVALON_TASK"] not in [
+            "Rigging",
+            "Modeling",
+        ]
+        # Set the name of the objects by its original name and its namespace
+        plugin.set_original_name_for_objects_container(
+            container_override, has_namespace
+        )
+
+        # Clean
+        plugin.remove_orphan_datablocks()
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
