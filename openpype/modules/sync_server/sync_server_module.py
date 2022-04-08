@@ -129,24 +129,27 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     """ Start of Public API """
     def add_site(self, collection, representation_id, site_name=None,
-                 force=False, force_only_broken=False):
+                 force=False):
         """
-            Adds new site to representation to be synced.
+        Adds new site to representation to be synced.
 
-            'collection' must have synchronization enabled (globally or
-            project only)
+        'collection' must have synchronization enabled (globally or
+        project only)
 
-            Used as a API endpoint from outside applications (Loader etc)
+        Used as a API endpoint from outside applications (Loader etc).
 
-            Args:
-                collection (string): project name (must match DB)
-                representation_id (string): MongoDB _id value
-                site_name (string): name of configured and active site
-                force (bool): reset site if exists
-                force_only_broken (bool): reset only if "error" present
+        Use 'force' to reset existing site.
 
-            Returns:
-                throws ValueError if any issue
+        Args:
+            collection (string): project name (must match DB)
+            representation_id (string): MongoDB _id value
+            site_name (string): name of configured and active site
+            force (bool): reset site if exists
+
+        Throws:
+            SiteAlreadyPresentError - if adding already existing site and
+                not 'force'
+            ValueError - other errors (repre not found, misconfiguration)
         """
         if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
@@ -157,8 +160,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.reset_site_on_representation(collection,
                                           representation_id,
                                           site_name=site_name,
-                                          force=force,
-                                          force_only_broken=force_only_broken)
+                                          force=force)
 
     # public facing API
     def remove_site(self, collection, representation_id, site_name,
@@ -1397,8 +1399,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def reset_site_on_representation(self, collection, representation_id,
                                      side=None, file_id=None, site_name=None,
-                                     remove=False, pause=None, force=False,
-                                     force_only_broken=False):
+                                     remove=False, pause=None, force=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -1421,10 +1422,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             remove (bool): if True remove site altogether
             pause (bool or None): if True - pause, False - unpause
             force (bool): hard reset - currently only for add_site
-            force_only_broken(bool): reset site only if there is "error" field
 
-        Returns:
-            throws ValueError
+        Throws:
+            SiteAlreadyPresentError - if adding already existing site and
+                not 'force'
+            ValueError - other errors (repre not found, misconfiguration)
         """
         query = {
             "_id": ObjectId(representation_id)
@@ -1461,7 +1463,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                      representation, site_name, pause)
         else:  # add new site to all files for representation
             self._add_site(collection, query, representation, elem, site_name,
-                           force=force, force_only_broken=force_only_broken)
+                           force=force)
 
     def _update_site(self, collection, query, update, arr_filter):
         """
@@ -1569,7 +1571,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self._update_site(collection, query, update, arr_filter)
 
     def _add_site(self, collection, query, representation, elem, site_name,
-                  force=False, file_id=None, force_only_broken=False):
+                  force=False, file_id=None):
         """
             Adds 'site_name' to 'representation' on 'collection'
 
@@ -1591,7 +1593,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
-                    if force or (force_only_broken and site.get("error")):
+                    if force or site.get("error"):
                         self._reset_site_for_file(collection, query,
                                                   elem, repre_file["_id"],
                                                   site_name)

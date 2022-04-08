@@ -38,44 +38,25 @@ class AddSyncSite(load.LoaderPlugin):
         family = context["representation"]["context"]["family"]
         project_name = data["project_name"]
         repre_id = data["_id"]
-        self.add_site_to_representation(project_name,
-                                        repre_id,
-                                        data["site_name"],
-                                        is_main=True)
+        site_name = data["site_name"]
+
+        self.sync_server.add_site(project_name, repre_id, site_name,
+                                  force=True)
 
         if family == "workfile":
             links = get_linked_ids_for_representations(project_name,
                                                        [repre_id],
                                                        link_type="reference")
             for link_repre_id in links:
-                self.add_site_to_representation(project_name,
-                                                link_repre_id,
-                                                data["site_name"],
-                                                is_main=False)
+                try:
+                    self.sync_server.add_site(project_name, link_repre_id,
+                                              site_name,
+                                              force=False)
+                except SiteAlreadyPresentError:
+                    # do not add/reset working site for references
+                    self.log.debug("Site present", exc_info=True)
 
         self.log.debug("Site added.")
-
-    def add_site_to_representation(self, project_name, representation_id,
-                                   site_name, is_main):
-        """Adds new site to representation_id, resets if exists
-
-        Args:
-            project_name (str)
-            representation_id (ObjectId):
-            site_name (str)
-            is_main (bool): true for main representation, false for referenced
-                loaded repres. Drives if site state should be reset.
-                (it should be for main, not for referenced as they might be
-                shared from multiple workfiles). In necessary cases, referenced
-                repres should be reset (re-downloaded) manually.
-        """
-        try:
-            self.sync_server.add_site(project_name, representation_id,
-                                      site_name,
-                                      force=is_main,
-                                      force_only_broken=not is_main)
-        except SiteAlreadyPresentError:
-            self.log.debug("Site present", exc_info=True)
 
     def filepath_from_context(self, context):
         """No real file loading"""
