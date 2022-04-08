@@ -8,7 +8,7 @@ import errno
 import six
 import re
 import shutil
-from collections import deque
+from collections import deque, defaultdict
 
 from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
@@ -1185,21 +1185,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             (dict): {'site': [alternative sites]...}
         """
-        alt_site_pairs = {}
+        alt_site_pairs = defaultdict(list)
         for site_name, site_info in conf_sites.items():
             alt_sites = set(site_info.get("alternative_sites", []))
-            if not alt_site_pairs.get(site_name):
-                alt_site_pairs[site_name] = []
-
             alt_site_pairs[site_name].extend(alt_sites)
 
             for alt_site in alt_sites:
-                if not alt_site_pairs.get(alt_site):
-                    alt_site_pairs[alt_site] = []
-                alt_site_pairs[alt_site].extend([site_name])
+                alt_site_pairs[alt_site].append(site_name)
 
-        # transitive relationship, eg site is alternative to another which is
-        # alternative to nex site
         for site_name, alt_sites in alt_site_pairs.items():
             sites_queue = deque(alt_sites)
             while sites_queue:
