@@ -252,16 +252,13 @@ class BlendModelLoader(plugin.AssetLoader):
         scene_collection.children.link(container_collection)
 
         # Get all the collection of the container. The farest parents in first for override them first
-        collections = []
-        nodes = list(container_collection.children)
-        collections.append(container_collection)
-
-        for collection in nodes:
-            collections.append(collection)
-            nodes.extend(list(collection.children))
 
         # Get all the object of the container. The farest parents in first for override them first
         objects = plugin.get_all_objects_in_collection(container_collection)
+        collections = plugin.get_all_collections_in_collection(
+            container_collection
+        )
+
         objects.reverse()
 
         # Clean
@@ -272,7 +269,6 @@ class BlendModelLoader(plugin.AssetLoader):
         container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
-        collections.remove(container_collection)
         overridden_collections = []
         overridden_objects = []
         for collection in collections:

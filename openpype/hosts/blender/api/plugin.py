@@ -145,21 +145,37 @@ def prepare_data(data, container_name=None):
 
 
 def set_original_name_for_objects_container(container, has_namespace=False):
-    namespace = ""
-    if has_namespace:
-        namespace = f"{container.name}:"
     # Set the orginal_name for all the objects and collections in the container
     # or namespace + original name if AVALON_TASK != "modelling"
     objects = plugin.get_all_objects_in_collection(container)
     for object in objects:
         if object.get("original_name"):
-            object.name = namespace + object["original_name"]
-        if object.type != "EMPTY":
-            object.data.name = namespace + object["original_name"]
+            if has_namespace and object.get("namespace"):
+                object.name = (
+                    f'{object["namespace"]}:{object["original_name"]}'
+                )
+            else:
+                object.name = object["original_name"]
+        if object.data.get("original_name"):
+            if object.type != "EMPTY":
+                if (
+                    has_namespace
+                    and object.data.get("namespace")
+                    and object.data.get("original_name")
+                ):
+                    object.data.name = f'{object.data["namespace"]}:{object.data["original_name"]}'
+                else:
+                    object.data.name = object.data["original_name"]
+
     collections = plugin.get_all_collections_in_collection(container)
     for collection in collections:
         if collection.get("original_name"):
-            collection.name = namespace + collection["original_name"]
+            if has_namespace and collection.get("namespace"):
+                collection.name = (
+                    f'{collection["namespace"]}:{collection["original_name"]}'
+                )
+            else:
+                collection.name = collection["original_name"]
 
 
 def set_temp_namespace_for_objects_container(container):

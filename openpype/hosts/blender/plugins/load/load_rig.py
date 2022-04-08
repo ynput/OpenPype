@@ -84,17 +84,13 @@ class BlendRigLoader(plugin.AssetLoader):
         scene_collection.children.link(container_collection)
 
         # Get all the collection of the container. The farest parents in first for override them first
-        collections = []
-        nodes = list(container_collection.children)
-        collections.append(container_collection)
-
-        for collection in nodes:
-            collections.append(collection)
-            nodes.extend(list(collection.children))
 
         # Get all the object of the container. The farest parents in first for override them first
         armatures = []
         non_armatures = []
+        collections = plugin.get_all_collections_in_collection(
+            container_collection
+        )
         objects = plugin.get_all_objects_in_collection(container_collection)
 
         # Get all objects that aren't an armature
@@ -117,9 +113,6 @@ class BlendRigLoader(plugin.AssetLoader):
             remap_local_usages=True
         )
 
-        overridden_collections = []
-        overridden_objects = []
-        collections.remove(container_collection)
         for collection in collections:
             collection.override_create(remap_local_usages=True)
         for object in non_armatures:
@@ -127,9 +120,6 @@ class BlendRigLoader(plugin.AssetLoader):
 
         for armature in armatures:
             armature.override_create(remap_local_usages=True)
-
-        for collection in overridden_collections:
-            plugin.prepare_data(collection, container_collection.name)
 
         return container_overridden
 
@@ -156,7 +146,13 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Process the load of the container
         avalon_container = self._process(libpath, asset_name)
-        plugin.set_original_name_for_objects_container(avalon_container)
+        has_namespace = api.Session["AVALON_TASK"] not in [
+            "Rigging",
+            "Modeling",
+        ]
+        plugin.set_original_name_for_objects_container(
+            avalon_container, has_namespace
+        )
 
         objects = avalon_container.objects
         self[:] = objects
@@ -264,7 +260,13 @@ class BlendRigLoader(plugin.AssetLoader):
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
 
-        plugin.set_original_name_for_objects_container(container_override)
+        has_namespace = api.Session["AVALON_TASK"] not in [
+            "Rigging",
+            "Modeling",
+        ]
+        plugin.set_original_name_for_objects_container(
+            container_override, has_namespace
+        )
 
         # Clean
         plugin.remove_orphan_datablocks()

@@ -1,7 +1,7 @@
 import os
 
 import bpy
-from avalon import io
+from avalon import io, api
 
 import openpype.api
 from openpype.hosts.blender.api import plugin
@@ -32,23 +32,55 @@ class ExtractBlend(openpype.api.Extractor):
         container = bpy.data.collections[instance.name]
         objects = plugin.get_all_objects_in_collection(container)
         collections = plugin.get_all_collections_in_collection(container)
+
+        plugin.remove_orphan_datablocks()
+
+        plugin.remove_namespace_for_objects_container(container)
+
+        has_namespace = api.Session["AVALON_TASK"] in [
+            "Rigging",
+            "Modeling",
+        ]
         for collection in collections:
             # remove the namespace if exists
-            collection_name = collection.name
-            collection.name = collection_name.replace(f"{container.name}:", "")
-            collection["original_name"] = collection.name
+            if not collection.get("original_name"):
+                collection["original_name"] = collection.name
+                collection.property_overridable_library_set(
+                    '["original_name"]', True
+                )
+
+                if has_namespace:
+                    collection["namespace"] = container.name
+                    collection.property_overridable_library_set(
+                        '["namespace"]', True
+                    )
 
         data_blocks.add(container)
         for object in objects:
             data_blocks.add(object)
-            # remove the namespace if exists
-            object_name = object.name
-            object.name = object_name.replace(f"{container.name}:", "")
+
             # if doesn't exist create the custom property original_name
             if not object.get("original_name"):
+
                 object["original_name"] = object.name
+                object.property_overridable_library_set(
+                    '["original_name"]', True
+                )
                 if object.type != "EMPTY":
                     object.data["original_name"] = object.data.name
+                    object.data.property_overridable_library_set(
+                        '["original_name"]', True
+                    )
+
+            if has_namespace:
+
+                object["namespace"] = container.name
+                object.property_overridable_library_set('["namespace"]', True)
+                if object.type != "EMPTY":
+                    object.data["namespace"] = container.name
+                    object.data.property_overridable_library_set(
+                        '["namespace"]', True
+                    )
 
             # Pack used images in the blend files.
             if object.type == "MESH":

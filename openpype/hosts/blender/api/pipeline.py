@@ -358,7 +358,9 @@ def containerise_existing(
     return container
 
 
-def parse_container(container: bpy.types.Collection, validate: bool = True) -> Dict:
+def parse_container(
+    container: bpy.types.Collection, validate: bool = True
+) -> Dict:
     """Return the container node's full container data.
 
     Args:
@@ -388,10 +390,12 @@ def ls() -> Iterator:
     disk, it lists assets already loaded in Blender; once loaded they are
     called containers.
     """
-
-    for container in lib.lsattr("id", AVALON_CONTAINER_ID):
+    collections = lib.lsattr("id", AVALON_CONTAINER_ID)
+    for container in collections:
         is_not_override_override_of_override = True
-        is_not_linked = container.library is None and container.override_library is None
+        is_not_linked = (
+            container.library is None and container.override_library is None
+        )
         is_override = container.library is None and container.override_library
 
         if is_override:
@@ -400,8 +404,10 @@ def ls() -> Iterator:
                 and container.override_library.reference.override_library
             ):
                 is_not_override_override_of_override = False
-
-        if (is_override and is_not_override_override_of_override) or (is_not_linked):
+            collections.append(container.override_library.reference)
+        if (is_override and is_not_override_override_of_override) or (
+            is_not_linked
+        ):
             yield parse_container(container)
 
 
@@ -422,7 +428,9 @@ def update_hierarchy(containers):
         # FIXME (jasperge): re-evaluate this. How would it be possible
         # to 'nest' assets?  Collections can have several parents, for
         # now assume it has only 1 parent
-        parent = [coll for coll in bpy.data.collections if container in coll.children]
+        parent = [
+            coll for coll in bpy.data.collections if container in coll.children
+        ]
         for node in parent:
             if node in all_containers:
                 container["parent"] = node

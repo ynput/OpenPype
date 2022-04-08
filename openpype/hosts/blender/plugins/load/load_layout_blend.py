@@ -104,71 +104,42 @@ class BlendLayoutLoader(plugin.AssetLoader):
         scene_collection.children.link(container_collection)
 
         # Get all the collection of the container.
-        collections = []
-        nodes = list(container_collection.children)
-        collections.append(container_collection)
 
-        for collection in nodes:
-            collections.append(collection)
-            nodes.extend(list(collection.children))
+        armatures = []
+        non_armatures = []
+        collections = plugin.get_all_collections_in_collection(
+            container_collection
+        )
 
-            # Get all the object of the container. The farest parents in first for override them first
-            armatures = []
-            non_armatures = []
-            objects = plugin.get_all_objects_in_collection(
-                container_collection
-            )
+        objects = plugin.get_all_objects_in_collection(container_collection)
 
-            # Get all objects that aren't an armature
-            for object in objects:
-                if object.type != "ARMATURE":
-                    non_armatures.append(object)
-            non_armatures.reverse()
+        # Get all objects that aren't an armature
+        for object in objects:
+            if object.type != "ARMATURE":
+                non_armatures.append(object)
+        non_armatures.reverse()
 
-            # Get all objects that are an armature
-            for object in objects:
-                if object.type == "ARMATURE":
-                    armatures.append(object)
-            armatures.reverse()
+        # Get all objects that are an armature
+        for object in objects:
+            if object.type == "ARMATURE":
+                armatures.append(object)
+        armatures.reverse()
 
-            # Clean
-            bpy.data.orphans_purge(do_local_ids=False)
-            plugin.deselect_all()
-            # Override the container and the objects
-            container_overridden = container_collection.override_create(
-                remap_local_usages=True
-            )
+        # Clean
+        bpy.data.orphans_purge(do_local_ids=False)
+        plugin.deselect_all()
+        # Override the container and the objects
+        container_overridden = container_collection.override_create(
+            remap_local_usages=True
+        )
 
-            overridden_collections = []
-            overridden_objects = []
-            collections.remove(container_collection)
-            for collection in collections:
-                overridden_collection = collection.override_create(
-                    remap_local_usages=True
-                )
-                overridden_collections.append(overridden_collection)
-            for object in non_armatures:
-                overridden_object = object.override_create(
-                    remap_local_usages=True
-                )
-                overridden_objects.append(overridden_object)
+        for collection in collections:
+            collection.override_create(remap_local_usages=True)
+        for object in non_armatures:
+            object.override_create(remap_local_usages=True)
 
-            for armature in armatures:
-                overridden_object = armature.override_create(
-                    remap_local_usages=True
-                )
-                overridden_objects.append(overridden_object)
-
-            for object in overridden_objects:
-                if object.type != "ARMATURE":
-                    plugin.prepare_data(object, container_collection.name)
-                    if object.type != "EMPTY":
-                        plugin.prepare_data(
-                            object.data, container_collection.name
-                        )
-
-            for collection in overridden_collections:
-                plugin.prepare_data(collection, container_collection.name)
+        for armature in armatures:
+            armature.override_create(remap_local_usages=True)
 
         return container_overridden
 
@@ -220,6 +191,13 @@ class BlendLayoutLoader(plugin.AssetLoader):
                             ):
                                 armature.animation_data.action.make_local()
 
+        has_namespace = api.Session["AVALON_TASK"] not in [
+            "Rigging",
+            "Modeling",
+        ]
+        plugin.set_original_name_for_objects_container(
+            avalon_container, has_namespace
+        )
         objects = avalon_container.objects
         self[:] = objects
         return objects
