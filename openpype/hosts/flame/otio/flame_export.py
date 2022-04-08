@@ -261,23 +261,14 @@ def create_otio_markers(otio_item, item):
         otio_item.markers.append(otio_marker)
 
 
-def create_otio_reference(clip_data):
+def create_otio_reference(clip_data, fps=None):
     metadata = _get_metadata(clip_data)
 
     # get file info for path and start frame
     frame_start = 0
-    fps = CTX.get_fps()
+    fps = fps or CTX.get_fps()
 
     path = clip_data["fpath"]
-
-    reel_clip = None
-    match_reel_clip = [
-        clip for clip in CTX.clips
-        if clip["fpath"] == path
-    ]
-    if match_reel_clip:
-        reel_clip = match_reel_clip.pop()
-        fps = reel_clip["fps"]
 
     file_name = os.path.basename(path)
     file_head, extension = os.path.splitext(file_name)
@@ -342,16 +333,17 @@ def create_otio_reference(clip_data):
 def create_otio_clip(clip_data):
     segment = clip_data["PySegment"]
 
-    # create media reference
-    media_reference = create_otio_reference(clip_data)
-
     # calculate source in
     media_info = MediaInfoFile(clip_data["fpath"])
-    xml_timecode_ticks = media_info.out_feed_nb_ticks
-    if xml_timecode_ticks:
-        first_frame = int(xml_timecode_ticks)
-    else:
-        first_frame = utils.get_frame_from_filename(clip_data["fpath"]) or 0
+    media_timecode_start = media_info.start_frame
+    media_fps = media_info.fps
+
+    # create media reference
+    media_reference = create_otio_reference(clip_data, media_fps)
+
+    # define first frame
+    first_frame = media_timecode_start or utils.get_frame_from_filename(
+        clip_data["fpath"]) or 0
 
     source_in = int(clip_data["source_in"]) - int(first_frame)
 
@@ -383,41 +375,6 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
             fps
         )
     )
-
-
-def get_clips_in_reels(project):
-    output_clips = []
-    project_desktop = project.current_workspace.desktop
-
-    for reel_group in project_desktop.reel_groups:
-        for reel in reel_group.reels:
-            for clip in reel.clips:
-                clip_data = {
-                    "PyClip": clip,
-                    "fps": float(str(clip.frame_rate)[:-4])
-                }
-
-                attrs = [
-                    "name", "width", "height",
-                    "ratio", "sample_rate", "bit_depth"
-                ]
-
-                for attr in attrs:
-                    val = getattr(clip, attr)
-                    clip_data[attr] = val
-
-                version = clip.versions[-1]
-                track = version.tracks[-1]
-                # each reel clip is also having one segment
-                for segment in track.segments:
-                    segment_data = _get_segment_attributes(
-                        segment, from_clip=True)
-                    if segment_data:
-                        clip_data.update(segment_data)
-
-                output_clips.append(clip_data)
-
-    return output_clips
 
 
 def _get_colourspace_policy():
@@ -579,11 +536,6 @@ def create_otio_timeline(sequence):
     log.info(sequence.attributes)
 
     CTX.project = get_current_flame_project()
-    CTX.clips = get_clips_in_reels(CTX.project)
-
-    log.debug(pformat(
-        CTX.clips
-    ))
 
     # get current timeline
     CTX.set_fps(
