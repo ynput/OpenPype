@@ -548,6 +548,10 @@ class ExtractLook(openpype.api.Extractor):
 
             return converted, COPY, texture_hash
 
+        self.log.info("Generating .rstexbin file for %s .." % filepath)
+        # Generates Redshift optimized textures using Redshift processor
+        if do_rstex:
+            rstex(filepath)
         return filepath, COPY, texture_hash
 
 
