@@ -118,6 +118,16 @@
                             "label": "Use Asset dependencies"
                         },
                         {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "tile_priority",
+                            "label": "Tile Assembler Priority"
+                        },
+                        {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"

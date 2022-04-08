@@ -1,6 +1,7 @@
 import os
 from avalon import api
 import pyblish.api
+from openpype.lib import get_subset_name_with_asset_doc
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -38,7 +39,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # workfile instance
         family = "workfile"
-        subset = family + task.capitalize()
+        subset = get_subset_name_with_asset_doc(
+            family,
+            "",
+            context.data["anatomyData"]["task"]["name"],
+            context.data["assetEntity"],
+            context.data["anatomyData"]["project"]["name"],
+            host_name=context.data["hostName"]
+        )
         # Create instance
         instance = context.create_instance(subset)
 

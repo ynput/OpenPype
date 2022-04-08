@@ -41,7 +41,8 @@ class LoaderPlugin(list):
     def get_representations(cls):
         return cls.representations
 
-    def filepath_from_context(self, context):
+    @classmethod
+    def filepath_from_context(cls, context):
         return get_representation_path_from_context(context)
 
     def load(self, context, name=None, namespace=None, options=None):
