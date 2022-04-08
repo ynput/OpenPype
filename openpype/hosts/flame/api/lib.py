@@ -784,9 +784,14 @@ class MediaInfoFile(object):
             # get clip data and make them single if there is multiple
             # clips data
             xml_data = self._make_single_clip_media_info(tmp_path)
+            self.log.debug("xml_data: {}".format(xml_data))
+            self.log.debug("type: {}".format(type(xml_data)))
 
             # get all time related data and assign them
             self._get_time_info_from_origin(xml_data)
+            self.log.debug("start_frame: {}".format(self.start_frame))
+            self.log.debug("fps: {}".format(self.fps))
+            self.log.debug("drop frame: {}".format(self.drop_mode))
             self.clip_data = xml_data
 
     @property
@@ -913,10 +918,19 @@ class MediaInfoFile(object):
             self.log.warning(msg)
 
     @staticmethod
-    def write_clip_data_to_file(fpath, xml_data):
+    def write_clip_data_to_file(fpath, xml_element_data):
+        """ Write xml element of clip data to file
+
+        Args:
+            fpath (string): file path
+            xml_element_data (xml.etree.ElementTree.Element): xml data
+
+        Raises:
+            IOError: If data could not be written to file
+        """
         try:
             # save it as new file
-            tree = cET.ElementTree(xml_data)
+            tree = cET.ElementTree(xml_element_data)
             tree.write(
                 fpath, xml_declaration=True,
                 method='xml', encoding='UTF-8'
