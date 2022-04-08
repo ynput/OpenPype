@@ -271,6 +271,7 @@ def rescan_hooks():
 
 
 def get_metadata(project_name, _log=None):
+    # TODO: can be replaced by MediaInfoFile class method
     from adsk.libwiretapPythonClientAPI import (
         WireTapClient,
         WireTapServerHandle,
@@ -750,6 +751,8 @@ class MediaInfoFile:
     Attributes:
         str: `MEDIA_SCRIPT_PATH` path to flame binary
         logging.Logger: `log` logger
+
+    TODO: add method for getting metadata to dict
     """
     MEDIA_SCRIPT_PATH = "/opt/Autodesk/mio/current/dl_get_media_info"
 
