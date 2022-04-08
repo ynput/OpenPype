@@ -1,11 +1,15 @@
+import itertools
 import os
 import re
 import shutil
+import sys
+import xml.etree.cElementTree as cET
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
 import openpype.api as openpype
 import qargparse
+import six
 from openpype import style
 from openpype.pipeline import LegacyCreator, LoaderPlugin
 from Qt import QtCore, QtWidgets
@@ -675,38 +679,52 @@ class ClipLoader(LoaderPlugin):
     ]
 
 
-class OpenClipSolver(flib.MediaInfoFile):
+# TODO: inheritance from flame.api.lib.MediaInfoFile
+class OpenClipSolver:
+    media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
+    tmp_name = "_tmp.clip"
+    tmp_file = None
     create_new_clip = False
+
+    out_feed_nb_ticks = None
+    out_feed_fps = None
+    out_feed_drop_mode = None
 
     log = log
 
     def __init__(self, openclip_file_path, feed_data):
-        self.out_file = openclip_file_path
+        # test if media script paht exists
+        self._validate_media_script_path()
 
         # new feed variables:
-        feed_path = feed_data.pop("path")
-
-        # initialize parent class
-        super(OpenClipSolver, self).__init__(
-            feed_path,
-            **feed_data
-        )
-
-        # get logger if any
-        if feed_data.get("logger"):
-            self.log = feed_data["logger"]
-
-        # get other metadata
+        feed_path = feed_data["path"]
         self.feed_version_name = feed_data["version"]
         self.feed_colorspace = feed_data.get("colorspace")
+
+        if feed_data.get("logger"):
+            self.log = feed_data["logger"]
 
         # derivate other feed variables
         self.feed_basename = os.path.basename(feed_path)
         self.feed_dir = os.path.dirname(feed_path)
         self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
 
-        if not self._is_valid_tmp_file(self.out_file):
+        if not self._is_valid_tmp_file(openclip_file_path):
+            # openclip does not exist yet and will be created
+            self.tmp_file = self.out_file = openclip_file_path
             self.create_new_clip = True
+
+        else:
+            # update already created clip
+            # output a temp file
+            self.out_file = openclip_file_path
+            self.tmp_file = os.path.join(self.feed_dir, self.tmp_name)
+
+            # remove previously generated temp files
+            # it will be regenerated
+            self._clear_tmp_file()
+
+        self.log.info("Temp File: {}".format(self.tmp_file))
 
     def _is_valid_tmp_file(self, file):
         # check if file exists
@@ -722,12 +740,65 @@ class OpenClipSolver(flib.MediaInfoFile):
                 return False
 
     def make(self):
+        self._generate_media_info_file()
 
         if self.create_new_clip:
             # New openClip
             self._create_new_open_clip()
         else:
             self._update_open_clip()
+
+    def _validate_media_script_path(self):
+        if not os.path.isfile(self.media_script_path):
+            raise IOError("Media Scirpt does not exist: `{}`".format(
+                self.media_script_path))
+
+    def _generate_media_info_file(self):
+        # Create cmd arguments for gettig xml file info file
+        cmd_args = [
+            self.media_script_path,
+            "-e", self.feed_ext,
+            "-o", self.tmp_file,
+            self.feed_dir
+        ]
+
+        # execute creation of clip xml template data
+        try:
+            openpype.run_subprocess(cmd_args)
+            self._make_single_clip_media_info()
+        except TypeError:
+            self.log.error("Error creating self.tmp_file")
+            six.reraise(*sys.exc_info())
+
+    def _make_single_clip_media_info(self):
+        with open(self.tmp_file) as f:
+            lines = f.readlines()
+            _added_root = itertools.chain(
+                "<root>", deepcopy(lines)[1:], "</root>")
+            new_root = ET.fromstringlist(_added_root)
+
+        # find the clip which is matching to my input name
+        xml_clips = new_root.findall("clip")
+        matching_clip = None
+        for xml_clip in xml_clips:
+            if xml_clip.find("name").text in self.feed_basename:
+                matching_clip = xml_clip
+
+        if matching_clip is None:
+            # return warning there is missing clip
+            raise ET.ParseError(
+                "Missing clip in `{}`. Available clips {}".format(
+                    self.feed_basename, [
+                        xml_clip.find("name").text
+                        for xml_clip in xml_clips
+                    ]
+                ))
+
+        self._write_result_xml_to_file(self.tmp_file, matching_clip)
+
+    def _clear_tmp_file(self):
+        if os.path.isfile(self.tmp_file):
+            os.remove(self.tmp_file)
 
     def _clear_handler(self, xml_object):
         for handler in xml_object.findall("./handler"):
@@ -736,10 +807,10 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     def _create_new_open_clip(self):
         self.log.info("Building new openClip")
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
-        # clip data comming from MediaInfoFile
-        tmp_xml_feeds = self.clip_data.find('tracks/track/feeds')
+        tmp_xml = ET.parse(self.tmp_file)
+
+        tmp_xml_feeds = tmp_xml.find('tracks/track/feeds')
         tmp_xml_feeds.set('currentVersion', self.feed_version_name)
         for tmp_feed in tmp_xml_feeds:
             tmp_feed.set('vuid', self.feed_version_name)
@@ -750,47 +821,46 @@ class OpenClipSolver(flib.MediaInfoFile):
 
             self._clear_handler(tmp_feed)
 
-        tmp_xml_versions_obj = self.clip_data.find('versions')
+        tmp_xml_versions_obj = tmp_xml.find('versions')
         tmp_xml_versions_obj.set('currentVersion', self.feed_version_name)
         for xml_new_version in tmp_xml_versions_obj:
             xml_new_version.set('uid', self.feed_version_name)
             xml_new_version.set('type', 'version')
 
-        xml_data = self._clear_handler(self.clip_data)
+        xml_data = self._fix_xml_data(tmp_xml)
         self.log.info("Adding feed version: {}".format(self.feed_basename))
 
-        self.write_clip_data_to_file(self.out_file, xml_data)
+        self._write_result_xml_to_file(self.out_file, xml_data)
+
+        self.log.info("openClip Updated: {}".format(self.tmp_file))
 
     def _update_open_clip(self):
         self.log.info("Updating openClip ..")
 
         out_xml = ET.parse(self.out_file)
+        tmp_xml = ET.parse(self.tmp_file)
 
         self.log.debug(">> out_xml: {}".format(out_xml))
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
+        self.log.debug(">> tmp_xml: {}".format(tmp_xml))
 
         # Get new feed from tmp file
-        tmp_xml_feed = self.clip_data.find('tracks/track/feeds/feed')
+        tmp_xml_feed = tmp_xml.find('tracks/track/feeds/feed')
 
         self._clear_handler(tmp_xml_feed)
+        self._get_time_info_from_origin(out_xml)
 
-        # update fps from MediaInfoFile class
-        if self.fps:
+        if self.out_feed_fps:
             tmp_feed_fps_obj = tmp_xml_feed.find(
                 "startTimecode/rate")
-            tmp_feed_fps_obj.text = self.fps
-
-        # update start_frame from MediaInfoFile class
-        if self.start_frame:
+            tmp_feed_fps_obj.text = self.out_feed_fps
+        if self.out_feed_nb_ticks:
             tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
                 "startTimecode/nbTicks")
-            tmp_feed_nb_ticks_obj.text = self.start_frame
-
-        # update drop_mode from MediaInfoFile class
-        if self.drop_mode:
+            tmp_feed_nb_ticks_obj.text = self.out_feed_nb_ticks
+        if self.out_feed_drop_mode:
             tmp_feed_drop_mode_obj = tmp_xml_feed.find(
                 "startTimecode/dropMode")
-            tmp_feed_drop_mode_obj.text = self.drop_mode
+            tmp_feed_drop_mode_obj.text = self.out_feed_drop_mode
 
         new_path_obj = tmp_xml_feed.find(
             "spans/span/path")
@@ -823,7 +893,7 @@ class OpenClipSolver(flib.MediaInfoFile):
                 "version", {"type": "version", "uid": self.feed_version_name})
             out_xml_versions_obj.insert(0, new_version_obj)
 
-            xml_data = self._clear_handler(out_xml)
+            xml_data = self._fix_xml_data(out_xml)
 
             # fist create backup
             self._create_openclip_backup_file(self.out_file)
@@ -831,9 +901,30 @@ class OpenClipSolver(flib.MediaInfoFile):
             self.log.info("Adding feed version: {}".format(
                 self.feed_version_name))
 
-            self.write_clip_data_to_file(self.out_file, xml_data)
+            self._write_result_xml_to_file(self.out_file, xml_data)
 
             self.log.info("openClip Updated: {}".format(self.out_file))
+
+        self._clear_tmp_file()
+
+    def _get_time_info_from_origin(self, xml_data):
+        try:
+            for out_track in xml_data.iter('track'):
+                for out_feed in out_track.iter('feed'):
+                    out_feed_nb_ticks_obj = out_feed.find(
+                        'startTimecode/nbTicks')
+                    self.out_feed_nb_ticks = out_feed_nb_ticks_obj.text
+                    out_feed_fps_obj = out_feed.find(
+                        'startTimecode/rate')
+                    self.out_feed_fps = out_feed_fps_obj.text
+                    out_feed_drop_mode_obj = out_feed.find(
+                        'startTimecode/dropMode')
+                    self.out_feed_drop_mode = out_feed_drop_mode_obj.text
+                    break
+                else:
+                    continue
+        except Exception as msg:
+            self.log.warning(msg)
 
     def _feed_exists(self, xml_data, path):
         # loop all available feed paths and check if
@@ -843,6 +934,17 @@ class OpenClipSolver(flib.MediaInfoFile):
                 self.log.warning(
                     "Not appending file as it already is in .clip file")
                 return True
+
+    def _fix_xml_data(self, xml_data):
+        xml_root = xml_data.getroot()
+        self._clear_handler(xml_root)
+        return xml_root
+
+    def _write_result_xml_to_file(self, file, xml_data):
+        # save it as new file
+        tree = cET.ElementTree(xml_data)
+        tree.write(file, xml_declaration=True,
+                   method='xml', encoding='UTF-8')
 
     def _create_openclip_backup_file(self, file):
         bck_file = "{}.bak".format(file)
