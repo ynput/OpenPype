@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.9.3-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.3](https://github.com/pypeclub/OpenPype/tree/3.9.3) (2022-04-07)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.2...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.2...3.9.3)
 
 ### 📖 Documentation
 
@@ -10,16 +10,29 @@
 
 **🆕 New features**
 
+- Ftrack: Add description integrator [\#3027](https://github.com/pypeclub/OpenPype/pull/3027)
 - Publishing textures for Unreal [\#2988](https://github.com/pypeclub/OpenPype/pull/2988)
-- Maya to Unreal \> Static and Skeletal Meshes [\#2978](https://github.com/pypeclub/OpenPype/pull/2978)
+- Maya to Unreal: Static and Skeletal Meshes [\#2978](https://github.com/pypeclub/OpenPype/pull/2978)
 
 **🚀 Enhancements**
 
+- Ftrack: Add more options for note text of integrate ftrack note [\#3025](https://github.com/pypeclub/OpenPype/pull/3025)
+- Console Interpreter: Changed how console splitter size are reused on show [\#3016](https://github.com/pypeclub/OpenPype/pull/3016)
+- Deadline: Use more suitable name for sequence review logic [\#3015](https://github.com/pypeclub/OpenPype/pull/3015)
 - Nuke: add concurrency attr to deadline job [\#3005](https://github.com/pypeclub/OpenPype/pull/3005)
+- Photoshop: create image without instance [\#3001](https://github.com/pypeclub/OpenPype/pull/3001)
+- Deadline: priority configurable in Maya jobs [\#2995](https://github.com/pypeclub/OpenPype/pull/2995)
 - Workfiles tool: Save as published workfiles [\#2937](https://github.com/pypeclub/OpenPype/pull/2937)
 
 **🐛 Bug fixes**
 
+- Deadline: Fixed default value of use sequence for review [\#3033](https://github.com/pypeclub/OpenPype/pull/3033)
+- Settings UI: Version column can be extended so version are visible [\#3032](https://github.com/pypeclub/OpenPype/pull/3032)
+- General: Fix import after movements [\#3028](https://github.com/pypeclub/OpenPype/pull/3028)
+- Harmony: Added creating subset name for workfile from template [\#3024](https://github.com/pypeclub/OpenPype/pull/3024)
+- AfterEffects: Added creating subset name for workfile from template [\#3023](https://github.com/pypeclub/OpenPype/pull/3023)
+- General: Add example addons to ignored [\#3022](https://github.com/pypeclub/OpenPype/pull/3022)
+- Maya: Remove missing import [\#3017](https://github.com/pypeclub/OpenPype/pull/3017)
 - Ftrack: multiple  reviewable componets [\#3012](https://github.com/pypeclub/OpenPype/pull/3012)
 - Tray publisher: Fixes after code movement [\#3010](https://github.com/pypeclub/OpenPype/pull/3010)
 - Nuke: fixing unicode type detection in effect loaders [\#3002](https://github.com/pypeclub/OpenPype/pull/3002)
@@ -27,6 +40,7 @@
 
 **Merged pull requests:**
 
+- Maya: Allow to select invalid camera contents if no cameras found [\#3030](https://github.com/pypeclub/OpenPype/pull/3030)
 - General: adding limitations for pyright [\#2994](https://github.com/pypeclub/OpenPype/pull/2994)
 
 ## [3.9.2](https://github.com/pypeclub/OpenPype/tree/3.9.2) (2022-04-04)
@@ -46,7 +60,6 @@
 
 **🚀 Enhancements**
 
-- Photoshop: create image without instance [\#3001](https://github.com/pypeclub/OpenPype/pull/3001)
 - TVPaint: Render scene family [\#3000](https://github.com/pypeclub/OpenPype/pull/3000)
 - Nuke: ReviewDataMov Read RAW attribute [\#2985](https://github.com/pypeclub/OpenPype/pull/2985)
 - General: `METADATA\_KEYS` constant as `frozenset` for optimal immutable lookup [\#2980](https://github.com/pypeclub/OpenPype/pull/2980)
@@ -58,7 +71,7 @@
 - Workfiles: Open published workfiles [\#2925](https://github.com/pypeclub/OpenPype/pull/2925)
 - General: Default modules loaded dynamically [\#2923](https://github.com/pypeclub/OpenPype/pull/2923)
 - Nuke: Add no-audio Tag [\#2911](https://github.com/pypeclub/OpenPype/pull/2911)
-- Flame: support for comment with xml attribute overrides [\#2892](https://github.com/pypeclub/OpenPype/pull/2892)
+- Nuke: improving readability [\#2903](https://github.com/pypeclub/OpenPype/pull/2903)
 
 **🐛 Bug fixes**
 
@@ -92,7 +105,6 @@
 - General: Move Attribute Definitions from pipeline [\#2931](https://github.com/pypeclub/OpenPype/pull/2931)
 - General: Removed silo references and terminal splash [\#2927](https://github.com/pypeclub/OpenPype/pull/2927)
 - General: Move pipeline constants to OpenPype [\#2918](https://github.com/pypeclub/OpenPype/pull/2918)
-- General: Move formatting and workfile functions [\#2914](https://github.com/pypeclub/OpenPype/pull/2914)
 - General: Move remaining plugins from avalon [\#2912](https://github.com/pypeclub/OpenPype/pull/2912)
 
 **Merged pull requests:**
@@ -109,10 +121,8 @@
 **🚀 Enhancements**
 
 - General: Change how OPENPYPE\_DEBUG value is handled [\#2907](https://github.com/pypeclub/OpenPype/pull/2907)
-- Nuke: improving readability [\#2903](https://github.com/pypeclub/OpenPype/pull/2903)
 - nuke: imageio adding ocio config version 1.2 [\#2897](https://github.com/pypeclub/OpenPype/pull/2897)
-- Nuke: ExtractReviewSlate can handle more codes and profiles [\#2879](https://github.com/pypeclub/OpenPype/pull/2879)
-- Flame: sequence used for reference video [\#2869](https://github.com/pypeclub/OpenPype/pull/2869)
+- Flame: support for comment with xml attribute overrides [\#2892](https://github.com/pypeclub/OpenPype/pull/2892)
 
 **🐛 Bug fixes**
 
@@ -121,38 +131,14 @@
 - Pyblish Pype - ensure current state is correct when entering new group order [\#2899](https://github.com/pypeclub/OpenPype/pull/2899)
 - SceneInventory: Fix import of load function [\#2894](https://github.com/pypeclub/OpenPype/pull/2894)
 - Harmony - fixed creator issue [\#2891](https://github.com/pypeclub/OpenPype/pull/2891)
-- General: Remove forgotten use of avalon Creator [\#2885](https://github.com/pypeclub/OpenPype/pull/2885)
-- General: Avoid circular import [\#2884](https://github.com/pypeclub/OpenPype/pull/2884)
-- Fixes for attaching loaded containers \(\#2837\) [\#2874](https://github.com/pypeclub/OpenPype/pull/2874)
 
 **🔀 Refactored code**
 
 - General: Reduce style usage to OpenPype repository [\#2889](https://github.com/pypeclub/OpenPype/pull/2889)
-- General: Move loader logic from avalon to openpype [\#2886](https://github.com/pypeclub/OpenPype/pull/2886)
 
 ## [3.9.0](https://github.com/pypeclub/OpenPype/tree/3.9.0) (2022-03-14)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.9.0-nightly.9...3.9.0)
-
-### 📖 Documentation
-
-- Documentation: Change Photoshop & AfterEffects plugin path [\#2878](https://github.com/pypeclub/OpenPype/pull/2878)
-
-**🚀 Enhancements**
-
-- General: Subset name filtering in ExtractReview outpus [\#2872](https://github.com/pypeclub/OpenPype/pull/2872)
-- NewPublisher: Descriptions and Icons in creator dialog [\#2867](https://github.com/pypeclub/OpenPype/pull/2867)
-
-**🐛 Bug fixes**
-
-- General: Missing time function [\#2877](https://github.com/pypeclub/OpenPype/pull/2877)
-- Deadline: Fix plugin name for tile assemble [\#2868](https://github.com/pypeclub/OpenPype/pull/2868)
-- Nuke: gizmo precollect fix [\#2866](https://github.com/pypeclub/OpenPype/pull/2866)
-- General: Fix hardlink for windows [\#2864](https://github.com/pypeclub/OpenPype/pull/2864)
-
-**🔀 Refactored code**
-
-- Refactor: move webserver tool to openpype [\#2876](https://github.com/pypeclub/OpenPype/pull/2876)
 
 ## [3.8.2](https://github.com/pypeclub/OpenPype/tree/3.8.2) (2022-02-07)
 
