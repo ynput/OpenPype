@@ -27,6 +27,7 @@ from .lib import (
     get_frame_from_filename,
     get_padding_from_filename,
     maintained_object_duplication,
+    maintained_temp_file_path,
     get_clip_segment,
     get_batch_group_from_desktop,
     MediaInfoFile
@@ -103,6 +104,7 @@ __all__ = [
     "get_frame_from_filename",
     "get_padding_from_filename",
     "maintained_object_duplication",
+    "maintained_temp_file_path",
     "get_clip_segment",
     "get_batch_group_from_desktop",
     "MediaInfoFile",

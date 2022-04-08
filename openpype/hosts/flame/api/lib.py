@@ -4,6 +4,7 @@ import re
 import six
 import json
 import pickle
+import tempfile
 import itertools
 import contextlib
 import xml.etree.cElementTree as cET
@@ -693,6 +694,25 @@ def maintained_object_duplication(item):
     finally:
         # delete the item at the end
         flame.delete(duplicate)
+
+
+@contextlib.contextmanager
+def maintained_temp_file_path(suffix=None):
+    _suffix = suffix or ""
+
+    try:
+        # Store dumped json to temporary file
+        temporary_file = tempfile.mktemp(
+            suffix=_suffix, prefix="flame_maintained_")
+        yield temporary_file.name.replace("\\", "/")
+
+    except IOError as _error:
+        raise IOError(
+            "Not able to create temp json file: {}".format(_error)) from _error
+
+    finally:
+        # Remove the temporary json
+        os.remove(temporary_file)
 
 
 def get_clip_segment(flame_clip):
