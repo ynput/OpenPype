@@ -26,6 +26,7 @@ from openpype.tools.utils import host_tools
 from openpype.lib.path_tools import HostDirmap
 from openpype.settings import get_project_settings
 from openpype.modules import ModulesManager
+from openpype.pipeline import discover_legacy_creator_plugins
 
 from .workio import (
     save_file,
@@ -1047,17 +1048,28 @@ def add_review_knob(node):
 def add_deadline_tab(node):
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
-    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
-    knob.setValue(0)
-    node.addKnob(knob)
-
     knob = nuke.Int_Knob("deadlinePriority", "Priority")
     knob.setValue(50)
     node.addKnob(knob)
 
+    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
+    knob.setValue(0)
+    node.addKnob(knob)
+
+    knob = nuke.Int_Knob("deadlineConcurrentTasks", "Concurrent tasks")
+    # zero as default will get value from Settings during collection
+    # instead of being an explicit user override, see precollect_write.py
+    knob.setValue(0)
+    node.addKnob(knob)
+
 
 def get_deadline_knob_names():
-    return ["Deadline", "deadlineChunkSize", "deadlinePriority"]
+    return [
+        "Deadline",
+        "deadlineChunkSize",
+        "deadlinePriority",
+        "deadlineConcurrentTasks"
+    ]
 
 
 def create_backdrop(label="", color=None, layer=0,
@@ -1902,7 +1914,7 @@ def recreate_instance(origin_node, avalon_data=None):
     # create new node
     # get appropriate plugin class
     creator_plugin = None
-    for Creator in api.discover(api.Creator):
+    for Creator in discover_legacy_creator_plugins():
         if Creator.__name__ == data["creator"]:
             creator_plugin = Creator
             break

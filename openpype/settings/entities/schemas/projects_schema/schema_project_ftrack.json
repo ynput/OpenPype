@@ -739,15 +739,58 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b>, <b>comment</b>, <b>host_name</b>, <b>app_name</b>, <b>app_label</b> and <b>published_paths</b>."
+                        },
+                        {
                             "type": "text",
-                            "key": "note_with_intent_template",
-                            "label": "Note with intent template"
+                            "key": "note_template",
+                            "label": "Note template",
+                            "multiline": true
                         },
                         {
                             "type": "list",
                             "object_type": "text",
                             "key": "note_labels",
                             "label": "Note labels"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackDescription",
+                    "label": "Integrate Ftrack Description",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Add description to integrated AssetVersion."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b> and <b>comment</b>."
+                        },
+                        {
+                            "type": "text",
+                            "key": "description_template",
+                            "label": "Description template"
                         }
                     ]
                 },
@@ -784,6 +827,12 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "keep_first_subset_name_for_review",
+                            "label": "Make subset name as first asset name",
+                            "default": true
                         }
                     ]
                 }

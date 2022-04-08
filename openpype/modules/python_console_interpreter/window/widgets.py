@@ -389,7 +389,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         self._append_lines([openpype_art])
 
-        self.setStyleSheet(load_stylesheet())
+        self._first_show = True
+        self._splitter_size_ratio = None
 
         self._init_from_registry()
 
@@ -416,9 +417,9 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self.resize(width, height)
 
         try:
-            sizes = setting_registry.get_item("splitter_sizes")
-            if len(sizes) == len(self._widgets_splitter.sizes()):
-                self._widgets_splitter.setSizes(sizes)
+            self._splitter_size_ratio = (
+                setting_registry.get_item("splitter_sizes")
+            )
 
         except ValueError:
             pass
@@ -627,7 +628,28 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def showEvent(self, event):
         self._line_check_timer.start()
         super(PythonInterpreterWidget, self).showEvent(event)
+        # First show setup
+        if self._first_show:
+            self._first_show = False
+            self._on_first_show()
+
         self._output_widget.scroll_to_bottom()
+
+    def _on_first_show(self):
+        # Change stylesheet
+        self.setStyleSheet(load_stylesheet())
+        # Check if splitter size ratio is set
+        # - first store value to local variable and then unset it
+        splitter_size_ratio = self._splitter_size_ratio
+        self._splitter_size_ratio = None
+        # Skip if is not set
+        if not splitter_size_ratio:
+            return
+
+        # Skip if number of size items does not match to splitter
+        splitters_count = len(self._widgets_splitter.sizes())
+        if len(splitter_size_ratio) == splitters_count:
+            self._widgets_splitter.setSizes(splitter_size_ratio)
 
     def closeEvent(self, event):
         self.save_registry()

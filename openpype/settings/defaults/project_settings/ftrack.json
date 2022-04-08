@@ -354,8 +354,14 @@
         },
         "IntegrateFtrackNote": {
             "enabled": true,
-            "note_with_intent_template": "{intent}: {comment}",
+            "note_template": "{intent}: {comment}",
             "note_labels": []
+        },
+        "IntegrateFtrackDescription": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "description_template": "{comment}"
         },
         "ValidateFtrackAttributes": {
             "enabled": false,
@@ -395,7 +401,8 @@
                 "vrayproxy": "cache",
                 "redshiftproxy": "cache",
                 "usd": "usd"
-            }
+            },
+            "keep_first_subset_name_for_review": true
         }
     }
 }
