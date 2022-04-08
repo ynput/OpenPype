@@ -1399,8 +1399,27 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
 
     app = data["app"]
     log = data["log"]
+    source_env = data["env"].copy()
 
-    _add_python_version_paths(app, data["env"], log)
+    _add_python_version_paths(app, source_env, log)
+
+    # Use environments from local settings
+    filtered_local_envs = {}
+    system_settings = data["system_settings"]
+    whitelist_envs = system_settings["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        filtered_local_envs = {
+            key: value
+            for key, value in local_envs.items()
+            if key in whitelist_envs
+        }
+
+    # Apply local environment variables for already existing values
+    for key, value in filtered_local_envs.items():
+        if key in source_env:
+            source_env[key] = value
 
     # `added_env_keys` has debug purpose
     added_env_keys = {app.group.name, app.name}
@@ -1438,19 +1457,6 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
         )
     )
 
-    # Use environments from local settings
-    filtered_local_envs = {}
-    system_settings = data["system_settings"]
-    whitelist_envs = system_settings["general"].get("local_env_white_list")
-    if whitelist_envs:
-        local_settings = get_local_settings()
-        local_envs = local_settings.get("environments") or {}
-        filtered_local_envs = {
-            key: value
-            for key, value in local_envs.items()
-            if key in whitelist_envs
-        }
-
     env_values = {}
     for _env_values in environments:
         if not _env_values:
@@ -1458,6 +1464,10 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
 
         # Choose right platform
         tool_env = parse_environments(_env_values, env_group)
+
+        # Apply local environment variables
+        # - must happen between all values because they may be used during
+        #   merge
         for key, value in filtered_local_envs.items():
             if key in tool_env:
                 tool_env[key] = value
@@ -1465,7 +1475,8 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
-    merged_env = _merge_env(env_values, data["env"])
+    merged_env = _merge_env(env_values, source_env)
+
     loaded_env = acre.compute(merged_env, cleanup=False)
 
     final_env = None
@@ -1485,7 +1496,7 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
     if final_env is None:
         final_env = loaded_env
 
-    keys_to_remove = set(data["env"].keys()) - set(final_env.keys())
+    keys_to_remove = set(source_env.keys()) - set(final_env.keys())
 
     # Update env
     data["env"].update(final_env)
