@@ -13,7 +13,8 @@ import six
 
 from openpype.settings import (
     get_system_settings,
-    get_project_settings
+    get_project_settings,
+    get_local_settings
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
@@ -1272,6 +1273,9 @@ class EnvironmentPrepData(dict):
         if data.get("env") is None:
             data["env"] = os.environ.copy()
 
+        if "system_settings" not in data:
+            data["system_settings"] = get_system_settings()
+
         super(EnvironmentPrepData, self).__init__(data)
 
 
@@ -1434,6 +1438,19 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
         )
     )
 
+    # Use environments from local settings
+    filtered_local_envs = {}
+    system_settings = data["system_settings"]
+    whitelist_envs = system_settings["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        filtered_local_envs = {
+            key: value
+            for key, value in local_envs.items()
+            if key in whitelist_envs
+        }
+
     env_values = {}
     for _env_values in environments:
         if not _env_values:
@@ -1441,6 +1458,10 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
 
         # Choose right platform
         tool_env = parse_environments(_env_values, env_group)
+        for key, value in filtered_local_envs.items():
+            if key in tool_env:
+                tool_env[key] = value
+
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
@@ -1611,7 +1632,6 @@ def _prepare_last_workfile(data, workdir):
             result will be stored.
         workdir (str): Path to folder where workfiles should be stored.
     """
-    import avalon.api
     from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
     log = data["log"]
