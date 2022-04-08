@@ -704,7 +704,7 @@ def maintained_temp_file_path(suffix=None):
         # Store dumped json to temporary file
         temporary_file = tempfile.mktemp(
             suffix=_suffix, prefix="flame_maintained_")
-        yield temporary_file.name.replace("\\", "/")
+        yield temporary_file.replace("\\", "/")
 
     except IOError as _error:
         raise IOError(
@@ -787,7 +787,7 @@ class MediaInfoFile:
 
             # get all time related data and assign them
             self._get_time_info_from_origin(xml_data)
-            self.set_clip_data(xml_data)
+            self.clip_data = xml_data
 
     @property
     def clip_data(self):
@@ -895,17 +895,17 @@ class MediaInfoFile:
                     # start frame
                     out_feed_nb_ticks_obj = out_feed.find(
                         'startTimecode/nbTicks')
-                    self.start_frame(out_feed_nb_ticks_obj.text)
+                    self.start_frame = out_feed_nb_ticks_obj.text
 
                     # fps
                     out_feed_fps_obj = out_feed.find(
                         'startTimecode/rate')
-                    self.fps(out_feed_fps_obj.text)
+                    self.fps = out_feed_fps_obj.text
 
                     # drop frame mode
                     out_feed_drop_mode_obj = out_feed.find(
                         'startTimecode/dropMode')
-                    self.drop_mode(out_feed_drop_mode_obj.text)
+                    self.drop_mode = out_feed_drop_mode_obj.text
                     break
                 else:
                     continue
