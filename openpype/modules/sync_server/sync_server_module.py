@@ -4,7 +4,7 @@ from datetime import datetime
 import threading
 import platform
 import copy
-from collections import deque
+from collections import deque, defaultdict
 
 from avalon.api import AvalonMongoDB
 
@@ -300,18 +300,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (dict): {'site': [alternative sites]...}
         """
-        alt_site_pairs = {}
+        alt_site_pairs = defaultdict(list)
         for site_name, site_info in conf_sites.items():
             alt_sites = set(site_info.get("alternative_sites", []))
-            if not alt_site_pairs.get(site_name):
-                alt_site_pairs[site_name] = []
-
             alt_site_pairs[site_name].extend(alt_sites)
 
             for alt_site in alt_sites:
-                if not alt_site_pairs.get(alt_site):
-                    alt_site_pairs[alt_site] = []
-                alt_site_pairs[alt_site].extend([site_name])
+                alt_site_pairs[alt_site].append(site_name)
 
         for site_name, alt_sites in alt_site_pairs.items():
             sites_queue = deque(alt_sites)
