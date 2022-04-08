@@ -73,6 +73,11 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
+        if not self.presets["enabled"]:
+            log.debug("Sync Server: Site {} not enabled for {}.".
+                      format(site_name, project_name))
+            return
+
         current_platform = platform.system().lower()
         cred_path = self.presets.get("credentials_url", {}). \
             get(current_platform) or ''
@@ -97,11 +102,10 @@ class GDriveHandler(AbstractProvider):
             return
 
         self.service = None
-        if self.presets["enabled"]:
-            self.service = self._get_gd_service(cred_path)
+        self.service = self._get_gd_service(cred_path)
 
-            self._tree = tree
-            self.active = True
+        self._tree = tree
+        self.active = True
 
     def is_active(self):
         """
