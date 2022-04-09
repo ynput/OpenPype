@@ -10,7 +10,7 @@ class CollectKitsuSession(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Kitsu user session"
-
+    # families = ["kitsu"]
 
     def process(self, context):
 
