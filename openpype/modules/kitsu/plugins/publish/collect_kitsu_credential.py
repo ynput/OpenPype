@@ -1,11 +1,11 @@
+# -*- coding: utf-8 -*-
 import os
 
 import gazu
-
 import pyblish.api
 
 
-class CollectKitsuSession(pyblish.api.ContextPlugin):
+class CollectKitsuSession(pyblish.api.ContextPlugin): #rename log in
     """Collect Kitsu session using user credentials"""
 
     order = pyblish.api.CollectorOrder

@@ -1,4 +1,5 @@
-# import gazu
+# -*- coding: utf-8 -*-
+import gazu
 import pyblish.api
 
 
