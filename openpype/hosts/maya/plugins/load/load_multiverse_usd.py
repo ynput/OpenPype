@@ -14,13 +14,13 @@ from openpype.hosts.maya.api.pipeline import containerise
 
 
 class MultiverseUsdLoader(load.LoaderPlugin):
-    """Load the USD by Multiverse"""
+    """Read USD data in a Multiverse Compound"""
 
     families = ["model", "usd", "usdComposition", "usdOverride",
                 "pointcache", "animation"]
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
-    label = "Read USD by Multiverse"
+    label = "Load USD to Multiverse"
     order = -10
     icon = "code-fork"
     color = "orange"

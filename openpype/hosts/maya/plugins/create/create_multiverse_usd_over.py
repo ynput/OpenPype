@@ -2,7 +2,7 @@ from openpype.hosts.maya.api import plugin, lib
 
 
 class CreateMultiverseUsdOver(plugin.Creator):
-    """Multiverse USD data"""
+    """Multiverse USD Override"""
 
     name = "usdOverrideMain"
     label = "Multiverse USD Override"

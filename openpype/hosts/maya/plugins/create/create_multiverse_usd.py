@@ -2,10 +2,10 @@ from openpype.hosts.maya.api import plugin, lib
 
 
 class CreateMultiverseUsd(plugin.Creator):
-    """Multiverse USD data"""
+    """Multiverse USD asset data"""
 
     name = "usdMain"
-    label = "Multiverse USD"
+    label = "Multiverse USD Asset"
     family = "usd"
     icon = "cubes"
 

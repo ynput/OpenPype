@@ -8,9 +8,9 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseUsd(openpype.api.Extractor):
-    """Extractor for USD by Multiverse."""
+    """Extractor for Multiverse USD asset data."""
 
-    label = "Extract Multiverse USD"
+    label = "Extract Multiverse USD Asset"
     hosts = ["maya"]
     families = ["usd"]
 
