@@ -7,14 +7,16 @@ import logging
 import contextlib
 
 import pyblish.api
-import avalon.api
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.api import Logger
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
+    register_inventory_action_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    deregister_inventory_action_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.fusion
 
@@ -68,8 +70,8 @@ def install():
     log.info("Registering Fusion plug-ins..")
 
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
+    register_creator_plugin_path(CREATE_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled
@@ -92,10 +94,8 @@ def uninstall():
     log.info("Deregistering Fusion plug-ins..")
 
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.api.deregister_plugin_path(
-        avalon.api.InventoryAction, INVENTORY_PATH
-    )
+    deregister_creator_plugin_path(CREATE_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(
         "instanceToggled", on_pyblish_instance_toggled

@@ -236,7 +236,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url
 
+        priority = self.deadline_priority or instance.data.get("priority", 50)
+
         args = [
+            "--headless",
             'publish',
             roothless_metadata_path,
             "--targets", "deadline",
@@ -254,7 +257,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
                 "Department": self.deadline_department,
                 "ChunkSize": self.deadline_chunk_size,
-                "Priority": job["Props"]["Pri"],
+                "Priority": priority,
 
                 "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
@@ -455,7 +458,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             aov_patterns = self.aov_filter
             preview = match_aov_pattern(app, aov_patterns, render_file_name)
 
-            # toggle preview on if multipart is on                  
+            # toggle preview on if multipart is on
             if instance_data.get("multipartExr"):
                 preview = True
 
@@ -512,8 +515,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         most cases, but if not - we create representation from each of them.
 
         Arguments:
-            instance (pyblish.plugin.Instance): instance for which we are
-                                                setting representations
+            instance (dict): instance data for which we are
+                             setting representations
             exp_files (list): list of expected files
 
         Returns:
@@ -527,15 +530,21 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
-            render_file_name = list(collection[0])
-            app = os.environ.get("AVALON_APP", "")
-            aov_patterns = self.aov_filter
-            # if filtered aov name is found in filename, toggle it for
-            # preview video rendering
-            preview = match_aov_pattern(app, aov_patterns, render_file_name)
-            # toggle preview on if multipart is on
-            if instance.get("multipartExr", False):
-                preview = True
+            # TODO 'useSequenceForReview' is temporary solution which does
+            #   not work for 100% of cases. We must be able to tell what
+            #   expected files contains more explicitly and from what
+            #   should be review made.
+            # - "review" tag is never added when is set to 'False'
+            if instance["useSequenceForReview"]:
+                render_file_name = list(collection[0])
+                app = os.environ.get("AVALON_APP", "")
+                aov_patterns = self.aov_filter
+                # if filtered aov name is found in filename, toggle it for
+                # preview video rendering
+                preview = match_aov_pattern(app, aov_patterns, render_file_name)
+                # toggle preview on if multipart is on
+                if instance.get("multipartExr", False):
+                    preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -604,7 +613,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "fps": instance.get("fps"),
                     "tags": ["review"]
                 })
-                self._solve_families(instance, True)
+            self._solve_families(instance, True)
+
+            already_there = False
+            for repre in instance.get("representations", []):
+                # might be added explicitly before by publish_on_farm
+                already_there = repre.get("files") == rep["files"]
+                if already_there:
+                    self.log.debug("repre {} already_there".format(repre))
+                    break
+
+            if not already_there:
+                representations.append(rep)
 
         return representations
 
@@ -710,7 +730,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", "")
+            "jobBatchName": data.get("jobBatchName", ""),
+            "useSequenceForReview": data.get("useSequenceForReview", True)
         }
 
         if "prerender" in instance.data["families"]:
@@ -902,12 +923,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # User is deadline user
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
-            # Priority is now not handled at all
-
-            if self.deadline_priority:
-                render_job["Props"]["Pri"] = self.deadline_priority
-            else:
-                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             render_job["Props"]["Env"] = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),

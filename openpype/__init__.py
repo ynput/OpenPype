@@ -2,19 +2,15 @@
 """Pype module."""
 import os
 import platform
-import functools
 import logging
 
 from .settings import get_project_settings
 from .lib import (
     Anatomy,
     filter_pyblish_plugins,
-    set_plugin_attributes_from_settings,
     change_timer_to_current_context,
     register_event_callback,
 )
-
-pyblish = avalon = _original_discover = None
 
 log = logging.getLogger(__name__)
 
@@ -27,59 +23,17 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 
 
-def import_wrapper(func):
-    """Wrap module imports to specific functions."""
-    @functools.wraps(func)
-    def decorated(*args, **kwargs):
-        global pyblish
-        global avalon
-        global _original_discover
-        if pyblish is None:
-            from pyblish import api as pyblish
-            from avalon import api as avalon
-
-            # we are monkey patching `avalon.api.discover()` to allow us to
-            # load plugin presets on plugins being discovered by avalon.
-            # Little bit of hacking, but it allows us to add out own features
-            # without need to modify upstream code.
-
-            _original_discover = avalon.discover
-
-        return func(*args, **kwargs)
-
-    return decorated
-
-
-@import_wrapper
-def patched_discover(superclass):
-    """Patch `avalon.api.discover()`.
-
-    Monkey patched version of :func:`avalon.api.discover()`. It allows
-    us to load presets on plugins being discovered.
-    """
-    # run original discover and get plugins
-    plugins = _original_discover(superclass)
-    filtered_plugins = [
-        plugin
-        for plugin in plugins
-        if issubclass(plugin, superclass)
-    ]
-
-    set_plugin_attributes_from_settings(filtered_plugins, superclass)
-
-    return filtered_plugins
-
-
-@import_wrapper
 def install():
-    """Install Pype to Avalon."""
+    """Install OpenPype to Avalon."""
+    import avalon.api
+    import pyblish.api
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
     from openpype.pipeline import (
-        LegacyCreator,
         register_loader_plugin_path,
+        register_inventory_action,
+        register_creator_plugin_path,
     )
-    from avalon import pipeline
 
     # Make sure modules are loaded
     load_modules()
@@ -92,8 +46,8 @@ def install():
     MessageHandler.emit = modified_emit
 
     log.info("Registering global plug-ins..")
-    pyblish.register_plugin_path(PUBLISH_PATH)
-    pyblish.register_discovery_filter(filter_pyblish_plugins)
+    pyblish.api.register_plugin_path(PUBLISH_PATH)
+    pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
     project_name = os.environ.get("AVALON_PROJECT")
@@ -102,7 +56,7 @@ def install():
     if project_name:
         anatomy = Anatomy(project_name)
         anatomy.set_root_environments()
-        avalon.register_root(anatomy.roots)
+        avalon.api.register_root(anatomy.roots)
 
         project_settings = get_project_settings(project_name)
         platform_name = platform.system().lower()
@@ -121,16 +75,13 @@ def install():
             if not path or not os.path.exists(path):
                 continue
 
-            pyblish.register_plugin_path(path)
+            pyblish.api.register_plugin_path(path)
             register_loader_plugin_path(path)
-            avalon.register_plugin_path(LegacyCreator, path)
-            avalon.register_plugin_path(avalon.InventoryAction, path)
+            register_creator_plugin_path(path)
+            register_inventory_action(path)
 
     # apply monkey patched discover to original one
     log.info("Patching discovery")
-
-    avalon.discover = patched_discover
-    pipeline.discover = patched_discover
 
     register_event_callback("taskChanged", _on_task_change)
 
@@ -139,16 +90,13 @@ def _on_task_change():
     change_timer_to_current_context()
 
 
-@import_wrapper
 def uninstall():
     """Uninstall Pype from Avalon."""
+    import pyblish.api
     from openpype.pipeline import deregister_loader_plugin_path
 
     log.info("Deregistering global plug-ins..")
-    pyblish.deregister_plugin_path(PUBLISH_PATH)
-    pyblish.deregister_discovery_filter(filter_pyblish_plugins)
+    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
+    pyblish.api.deregister_discovery_filter(filter_pyblish_plugins)
     deregister_loader_plugin_path(LOAD_PATH)
     log.info("Global plug-ins unregistred")
-
-    # restore original discover
-    avalon.discover = _original_discover

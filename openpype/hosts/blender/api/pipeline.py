@@ -12,12 +12,13 @@ from . import ops
 import pyblish.api
 import avalon.api
 from avalon import io, schema
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from openpype.api import Logger
 from openpype.lib import (
@@ -31,7 +32,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 ORIGINAL_EXCEPTHOOK = sys.excepthook
 
@@ -55,7 +55,7 @@ def install():
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
     register_loader_plugin_path(str(LOAD_PATH))
-    avalon.api.register_plugin_path(LegacyCreator, str(CREATE_PATH))
+    register_creator_plugin_path(str(CREATE_PATH))
 
     lib.append_user_scripts()
 
@@ -77,7 +77,7 @@ def uninstall():
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
 
     deregister_loader_plugin_path(str(LOAD_PATH))
-    avalon.api.deregister_plugin_path(LegacyCreator, str(CREATE_PATH))
+    deregister_creator_plugin_path(str(CREATE_PATH))
 
     if not IS_HEADLESS:
         ops.unregister()
