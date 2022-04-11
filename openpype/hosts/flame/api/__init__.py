@@ -67,9 +67,10 @@ from .workio import (
     work_root
 )
 from .render_utils import (
-    export_clip,
     get_preset_path_by_xml_name,
-    modify_preset_file
+    modify_preset_file,
+    Transcoder,
+    BackburnerTranscoder
 )
 from .batch_utils import (
     create_batch_group,
@@ -145,9 +146,10 @@ __all__ = [
     "work_root",
 
     # render utils
-    "export_clip",
     "get_preset_path_by_xml_name",
     "modify_preset_file",
+    "Transcoder",
+    "BackburnerTranscoder",
 
     # batch utils
     "create_batch_group",

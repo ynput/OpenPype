@@ -6,6 +6,10 @@ import tempfile
 from xml.etree import ElementTree as ET
 import flame
 
+import openpype.api as openpype
+
+log = openpype.Logger.get_logger(__name__)
+
 
 def get_preset_path_by_xml_name(xml_preset_name):
     def _search_path(root):
@@ -100,6 +104,7 @@ def modify_preset_file(xml_path, staging_dir, data):
 
 class Transcoder(object):
     exporter = flame.PyExporter()
+    log = log
 
     def __init__(
             self,
@@ -119,6 +124,10 @@ class Transcoder(object):
         self._preset_name = os.path.splitext(
             os.path.basename(preset_path)
         )[0]
+
+        # replace logger
+        if kwargs.get("logger"):
+            self.log = kwargs["logger"]
 
         # set in and out markers
         self._define_in_out(kwargs)
@@ -149,6 +158,9 @@ class Transcoder(object):
         if in_mark and out_mark:
             self._input_clip.in_mark = in_mark
             self._input_clip.out_mark = out_mark
+            self.log.info("Limiting clip to {}-{} ...".format(
+                in_mark, out_mark
+            ))
 
     def _get_temp_dir(self):
         return tempfile.mkdtemp()
@@ -167,7 +179,7 @@ class Transcoder(object):
             six.reraise(tp, value, tb)
 
         finally:
-            print("Exported: `{}` [{}-{}] to `{}`".format(
+            self.log.info("Exported: `{}` [{}-{}] to `{}`".format(
                 self._clip_name,
                 self._input_clip.in_mark,
                 self._input_clip.out_mark,
