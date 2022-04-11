@@ -455,14 +455,9 @@ def add_otio_metadata(otio_item, item, **kwargs):
         otio_item.metadata.update({key: value})
 
 
-def _get_shot_tokens_values(clip, tokens, from_clip=False):
+def _get_shot_tokens_values(clip, tokens):
     old_value = None
     output = {}
-
-    # in case it is segment from reel clip
-    # avoiding duplicity of segement data
-    if from_clip:
-        return {}
 
     old_value = clip.shot_name.get_value()
 
@@ -480,7 +475,7 @@ def _get_shot_tokens_values(clip, tokens, from_clip=False):
     return output
 
 
-def _get_segment_attributes(segment, from_clip=False):
+def _get_segment_attributes(segment):
 
     log.debug("Segment name|hidden: {}|{}".format(
         segment.name.get_value(), segment.hidden
@@ -503,9 +498,10 @@ def _get_segment_attributes(segment, from_clip=False):
     }
 
     # add all available shot tokens
-    shot_tokens = _get_shot_tokens_values(segment, [
-        "<colour space>", "<width>", "<height>", "<depth>",
-    ], from_clip)
+    shot_tokens = _get_shot_tokens_values(
+        segment,
+        ["<colour space>", "<width>", "<height>", "<depth>"]
+    )
     clip_data.update(shot_tokens)
 
     # populate shot source metadata

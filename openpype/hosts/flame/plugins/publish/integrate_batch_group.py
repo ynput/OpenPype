@@ -299,10 +299,8 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         version_name = "v<version>"
         version_padding = 3
 
-        # return it as ordered dict
-        reutrn_dict = OrderedDict()
         # need to make sure the order of keys is correct
-        for item in (
+        return OrderedDict(
             ("name", name),
             ("media_path", media_path),
             ("media_path_pattern", media_path_pattern),
@@ -320,10 +318,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             ("version_mode", version_mode),
             ("version_name", version_name),
             ("version_padding", version_padding)
-        ):
-            reutrn_dict.update({item[0]: item[1]})
-
-        return reutrn_dict
+        )
 
     def _get_shot_task_dir_path(self, instance, task_data):
         project_doc = instance.data["projectEntity"]

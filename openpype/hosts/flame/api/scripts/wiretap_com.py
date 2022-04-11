@@ -461,6 +461,10 @@ class WireTapCom(object):
 
 
 def _subprocess_preexec_fn():
+    """ Helper function
+
+    Setting permission mask to 0777
+    """
     os.setpgrp()
     os.umask(0o000)
 

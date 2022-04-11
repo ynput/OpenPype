@@ -4,11 +4,12 @@ import shutil
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
+from Qt import QtCore, QtWidgets
+
 import openpype.api as openpype
 import qargparse
 from openpype import style
 from openpype.pipeline import LegacyCreator, LoaderPlugin
-from Qt import QtCore, QtWidgets
 
 from . import constants
 from . import lib as flib
@@ -712,12 +713,13 @@ class OpenClipSolver(flib.MediaInfoFile):
             # test also if file is not empty
             with open(file) as f:
                 lines = f.readlines()
-                if len(lines) > 2:
-                    return True
 
-                # file is probably corrupted
-                os.remove(file)
-                return False
+            if len(lines) > 2:
+                return True
+
+            # file is probably corrupted
+            os.remove(file)
+            return False
 
     def make(self):
 
