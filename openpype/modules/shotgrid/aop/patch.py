@@ -48,5 +48,5 @@ def patch_avalon_db():
         _LOG.debug("Patch Avalon.projects method")
         AvalonMongoDB._prev_projects = copy(AvalonMongoDB.projects)
         AvalonMongoDB.projects = _patched_projects
-    except e:
-        _LOG.error("Unable to patch avalon db "+ e)
+    except Exception as e:
+        _LOG.error("Unable to patch avalon db {}".format(e))
