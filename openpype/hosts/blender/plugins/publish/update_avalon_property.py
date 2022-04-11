@@ -2,6 +2,9 @@ import pyblish.api
 import bpy
 from openpype.hosts.blender.plugins.load.load_model import BlendModelLoader
 from openpype.hosts.blender.plugins.load.load_rig import BlendRigLoader
+from openpype.hosts.blender.plugins.load.load_camera_blend import (
+    BlendCameraLoader,
+)
 from openpype.hosts.blender.plugins.load.load_layout_blend import (
     BlendLayoutLoader,
 )
@@ -21,7 +24,7 @@ class UpdateAvalonProperty(
     label = "Update Avalon Property"
     optional = False
     hosts = ["blender"]
-    families = ["animation", "model", "rig", "action", "layout"]
+    families = ["animation", "model", "rig", "action", "layout", "camera"]
 
     def process(self, instance):
 
@@ -62,7 +65,11 @@ class UpdateAvalonProperty(
             blend_layout_loader.update_avalon_property(
                 representation=representation
             )
-
+        elif family == "camera":
+            blend_camera_loader = BlendCameraLoader(context=context)
+            blend_camera_loader.update_avalon_property(
+                representation=representation
+            )
         # Get the filepath of the publish
         filepath = str(representation["data"]["path"])
 

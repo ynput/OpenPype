@@ -19,62 +19,22 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
     families = ["layout"]
     representations = ["blend"]
-
     label = "Link Layout"
     icon = "code-fork"
     color = "orange"
 
     def _remove(self, container):
         """Remove the container and used data"""
-
-        objects = list(container.objects)
+        objects = plugin.get_all_objects_in_collection(container)
         for object in objects:
-            # Check if the object type is mesh
-            if object.type == "MESH":
-                for material_slot in list(object.material_slots):
-                    if material_slot.material:
-                        # Check if the material is local
-                        if (
-                            material_slot.material.library is None
-                            and material_slot.material.override_library is None
-                        ):
-                            # Remove the material
-                            bpy.data.materials.remove(material_slot.material)
-                # Check if the mesh is local
-                if (
-                    object.data.library is None
-                    and object.data.override_library is None
-                ):
-                    # Remove the mesh
-                    bpy.data.meshes.remove(object.data)
-            # Check if the object type is Empty
-            elif object.type == "EMPTY":
-                # Add object children to the loop
-                objects.extend(object.objects)
-                # Check if the object is local
-                if object.library is None and object.override_library is None:
-                    # Remove the object
-                    bpy.data.objects.remove(object)
+            bpy.data.objects.remove(object)
+
+        collections = plugin.get_all_collections_in_collection(container)
+        for collection in collections:
+            bpy.data.collections.remove(collection)
+
         # Remove the container
         bpy.data.collections.remove(container)
-
-    def _remove_asset_and_library(self, asset_group):
-        libpath = asset_group.get(AVALON_PROPERTY).get("libpath")
-
-        # Check how many assets use the same library
-        count = 0
-        for object in bpy.data.collections.get(AVALON_CONTAINERS).all_objects:
-            if object.get(AVALON_PROPERTY).get("libpath") == libpath:
-                count += 1
-
-        self._remove(asset_group)
-
-        bpy.data.objects.remove(asset_group)
-
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(libpath))
-            bpy.data.libraries.remove(library)
 
     def _process(self, libpath, asset_name):
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
@@ -99,19 +59,21 @@ class BlendLayoutLoader(plugin.AssetLoader):
                         == "layout"
                     ):
                         container_collection = data_collection
+
         self.original_container_name = container_collection.name
+
         # Link the container to the scene collection
         scene_collection.children.link(container_collection)
 
-        # Get all the collection of the container.
-
-        armatures = []
-        non_armatures = []
+        # Get all the collections of the container.
         collections = plugin.get_all_collections_in_collection(
             container_collection
         )
 
+        # Get all the objects of the container.
         objects = plugin.get_all_objects_in_collection(container_collection)
+        armatures = []
+        non_armatures = []
 
         # Get all objects that aren't an armature
         for object in objects:
@@ -128,6 +90,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
+
         # Override the container and the objects
         container_overridden = container_collection.override_create(
             remap_local_usages=True
@@ -137,10 +100,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
             collection.override_create(remap_local_usages=True)
         for object in non_armatures:
             object.override_create(remap_local_usages=True)
-
         for armature in armatures:
             armature.override_create(remap_local_usages=True)
-
         return container_overridden
 
     def process_asset(
@@ -157,6 +118,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
+
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
@@ -166,8 +128,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Get all the containers in the scene
         sub_avalon_containers = plugin.get_containers_list()
-        # Loop on all containers
+
+        # Make local all the action on armature
         for sub_avalon_container in sub_avalon_containers:
+
             # Check if the container is overridden but not liked
             if (
                 sub_avalon_container.override_library
@@ -240,24 +204,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
-        # Check how many assets use the same library
-        count = 0
-        for collection in bpy.data.collections:
-            if collection.get(AVALON_PROPERTY) is not None:
-                if (
-                    collection.override_library is not None
-                    and collection.library is None
-                ) or (
-                    collection.override_library is None
-                    and collection.library is None
-                ):
-                    container_item = collection
-                    if (
-                        container_item[AVALON_PROPERTY].get("libpath")
-                        == container_libpath
-                    ):
-                        count += 1
-
         # Set temp namespace to avoid object renames while the update
         plugin.set_temp_namespace_for_objects_container(avalon_container)
 
@@ -265,8 +211,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Save the animation before we remove the containers
         action = dict()
+
         # Get all the containers in the scene
         sub_avalon_containers = plugin.get_containers_list()
+
         # Loop on all containers
         for sub_avalon_container in sub_avalon_containers:
             # Check if the container is overridden but not liked
@@ -293,19 +241,16 @@ class BlendLayoutLoader(plugin.AssetLoader):
                                 action[
                                     sub_avalon_container.name
                                 ] = armature.animation_data.action
+                                armature.animation_data.action.use_fake_user = (
+                                    True
+                                )
+
         # Remove the current container
         self._remove(avalon_container)
+
         # Clean the data blocks
         plugin.remove_orphan_datablocks()
-        plugin.remove_orphan_datablocks()
 
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(
-                bpy.path.basename(container_libpath)
-            )
-            if library:
-                bpy.data.libraries.remove(library)
         # Load the updated container
         container_override = self._process(str(libpath), object_name)
 
@@ -317,6 +262,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.unlink(container_override)
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
+
         # Clean the datablocks
         plugin.remove_orphan_datablocks()
 
@@ -324,6 +270,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Get all the containers in the scene
         sub_avalon_containers = plugin.get_containers_list()
+
         # Loop on all containers
         for sub_avalon_container in sub_avalon_containers:
             # Check if the container is overridden but not liked
@@ -354,6 +301,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
                                 armature.animation_data.action = action[
                                     sub_avalon_container.name
                                 ]
+                                armature.animation_data.action.use_fake_user = (
+                                    False
+                                )
 
         has_namespace = api.Session["AVALON_TASK"] not in [
             "Rigging",
@@ -376,56 +326,48 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         Returns:
             bool: Whether the container was deleted.
-
-        Warning:
-            No nested collections are supported at the moment!
         """
+        # Setup variable to construct names
         object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
+        # Get the avalon_container with the object name
+        avalon_container = bpy.data.collections.get(object_name)
 
-        if not asset_group:
-            return False
-
-        # Remove the children of the asset_group first
-        for child in list(asset_group.children):
-            self._remove_asset_and_library(child)
-
-        self._remove_asset_and_library(asset_group)
+        # Remove the container
+        self._remove(avalon_container)
+        plugin.remove_orphan_datablocks()
 
         return True
 
     def update_avalon_property(self, representation: Dict):
         """Set the avalon property with the representation data"""
-        # Get all the container in the scene
-        containers = plugin.get_containers_list()
-        container_collection = None
-        for container in containers:
-            # Check if the container is local
-            if (
-                container.override_library is None
-                and container.library is None
-            ):
-                # Check if the container isn't publish
-                if container["avalon"].get("id") == "pyblish.avalon.instance":
-                    container_collection = container
-
-        self.log.info(f"container name '{container_collection.name}' ")
 
         # Set the avalon property with the representation data
         asset = str(representation["context"]["asset"])
         subset = str(representation["context"]["subset"])
         asset_name = plugin.asset_name(asset, subset)
 
-        container_collection[AVALON_PROPERTY] = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
-            "name": asset,
-            "namespace": container_collection.name,
-            "loader": str(self.__class__.__name__),
-            "representation": str(representation["_id"]),
-            "libpath": str(representation["data"]["path"]),
-            "asset_name": asset_name,
-            "parent": str(representation["parent"]),
-            "family": str(representation["context"]["family"]),
-            "objectName": container_collection.name,
-        }
+        # Get the container in the scene
+        container = bpy.data.collections.get(asset_name)
+
+        container_collection = None
+        if container.override_library is None and container.library is None:
+            # Check if the container isn't publish
+            if container["avalon"].get("id") == "pyblish.avalon.instance":
+                container_collection = container
+
+        self.log.info(f"container name '{container_collection.name}' ")
+
+        if container_collection:
+            container_collection[AVALON_PROPERTY] = {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": asset,
+                "namespace": container_collection.name,
+                "loader": str(self.__class__.__name__),
+                "representation": str(representation["_id"]),
+                "libpath": str(representation["data"]["path"]),
+                "asset_name": asset_name,
+                "parent": str(representation["parent"]),
+                "family": str(representation["context"]["family"]),
+                "objectName": container_collection.name,
+            }

@@ -31,39 +31,46 @@ def remove_orphan_datablocks():
     orphan_block_users_find = True
     while orphan_block_users_find:
         orphan_block_users_find = False
+        properties = [
+            "actions",
+            "armatures",
+            "brushes",
+            "cameras",
+            "collections",
+            "curves",
+            "grease_pencils",
+            "images",
+            "lattices",
+            "libraries",
+            "lightprobes",
+            "lights",
+            "linestyles",
+            "masks",
+            "materials",
+            "meshes",
+            "metaballs",
+            "movieclips",
+            "node_groups",
+            "objects",
+            "paint_curves",
+            "palettes",
+            "particles",
+            "shape_keys",
+            "sounds",
+            "texts",
+            "textures",
+            "volumes",
+        ]
 
-        for block in bpy.data.collections:
-            if block.users == 0:
-                orphan_block_users_find = True
-                bpy.data.collections.remove(block)
-
-        for block in bpy.data.objects:
-            if block.users == 0:
-                orphan_block_users_find = True
-                bpy.data.objects.remove(block)
-
-        for block in bpy.data.meshes:
-            if block.users == 0:
-                orphan_block_users_find = True
-                bpy.data.meshes.remove(block)
-
-        for block in bpy.data.materials:
-            if block.users == 0:
-                orphan_block_users_find = True
-                bpy.data.materials.remove(block)
-
-        for block in bpy.data.textures:
-            if block.users == 0:
-                orphan_block_users_find = True
-                bpy.data.textures.remove(block)
-
-        for block in bpy.data.images:
-            if block.users == 0:
-                orphan_block_users_find = True
-                bpy.data.images.remove(block)
+        for property in properties:
+            data = getattr(bpy.data, property)
+            for block in data:
+                if block.users == 0:
+                    orphan_block_users_find = True
+                    data.remove(block)
 
         for block in bpy.data.libraries:
-            if block.users == 0:
+            if not block.users_id:
                 orphan_block_users_find = True
                 bpy.data.libraries.remove(block)
 
@@ -156,6 +163,7 @@ def set_original_name_for_objects_container(container, has_namespace=False):
                 )
             else:
                 object.name = object["original_name"]
+
         if object.data.get("original_name"):
             if object.type != "EMPTY":
                 if (
