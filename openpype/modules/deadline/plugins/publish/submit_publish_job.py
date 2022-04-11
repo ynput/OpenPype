@@ -536,15 +536,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #   should be review made.
             # - "review" tag is never added when is set to 'False'
             if instance["useSequenceForReview"]:
-                render_file_name = list(collection[0])
-                app = os.environ.get("AVALON_APP", "")
-                aov_patterns = self.aov_filter
-                # if filtered aov name is found in filename, toggle it for
-                # preview video rendering
-                preview = match_aov_pattern(app, aov_patterns, render_file_name)
                 # toggle preview on if multipart is on
                 if instance.get("multipartExr", False):
                     preview = True
+                else:
+                    render_file_name = list(collection[0])
+                    host_name = os.environ.get("AVALON_APP", "")
+                    # if filtered aov name is found in filename, toggle it for
+                    # preview video rendering
+                    preview = match_aov_pattern(
+                        host_name, self.aov_filter, render_file_name
+                    )
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
