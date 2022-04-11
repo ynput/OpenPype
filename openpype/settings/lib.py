@@ -1113,6 +1113,14 @@ def get_general_environments():
 
     clear_metadata_from_settings(environments)
 
+    whitelist_envs = result["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        for key, value in local_envs.items():
+            if key in whitelist_envs and key in environments:
+                environments[key] = value
+
     return environments
 
 
