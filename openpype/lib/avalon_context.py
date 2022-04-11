@@ -2057,7 +2057,8 @@ def _process_referenced_pipeline_result(result, link_type):
     referenced_version_ids = set()
     correctly_linked_ids = set()
     for item in result:
-        correctly_linked_ids = _filter_input_links(item["data"]["inputLinks"],
+        input_links = item["data"].get("inputLinks", [])
+        correctly_linked_ids = _filter_input_links(input_links,
                                                    link_type,
                                                    correctly_linked_ids)
 
