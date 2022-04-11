@@ -422,7 +422,12 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = [get_oiio_tools_path()]
+    oiio_cmd = [
+        get_oiio_tools_path(),
+
+        # Don't add any additional attributes
+        "--nosoftwareattrib",
+    ]
     # Add input compression if available
     if compression:
         oiio_cmd.extend(["--compression", compression])
@@ -458,7 +463,6 @@ def convert_for_ffmpeg(
             "--frames", "{}-{}".format(input_frame_start, input_frame_end)
         ])
 
-    ignore_attr_changes_added = False
     for attr_name, attr_value in input_info["attribs"].items():
         if not isinstance(attr_value, str):
             continue
@@ -466,10 +470,6 @@ def convert_for_ffmpeg(
         # Remove attributes that have string value longer than allowed length
         #   for ffmpeg
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
-            if not ignore_attr_changes_added:
-                # Attrite changes won't be added to attributes itself
-                ignore_attr_changes_added = True
-                oiio_cmd.append("--sansattrib")
             # Set attribute to empty string
             logger.info((
                 "Removed attribute \"{}\" from metadata"
