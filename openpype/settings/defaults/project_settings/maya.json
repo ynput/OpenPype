@@ -43,8 +43,39 @@
             "defaults": [
                 "Main"
             ],
+            "default_render_image_folder": "renders",
             "aov_separator": "underscore",
-            "default_render_image_folder": "renders"
+            "arnold_renderer": {
+                "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>",
+                "image_format": "exr",
+                "multilayer_exr": false,
+                "tiled": true,
+                "aov_list": [
+                    "empty"
+                ],
+                "additional_options": {}
+            },
+            "vray_renderer": {
+                "image_prefix": "maya/<scene>/<Layer>/<Layer>",
+                "engine": "1",
+                "image_format": "exr",
+                "aov_list": [
+                    "empty"
+                ],
+                "additional_options": {}
+            },
+            "redshift_renderer": {
+                "image_prefix": "'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>",
+                "primary_gi_engine": "0",
+                "secondary_gi_engine": "0",
+                "image_format": "exr",
+                "multilayer_exr": false,
+                "force_combine": false,
+                "aov_list": [
+                    "empty"
+                ],
+                "additional_options": {}
+            }
         },
         "CreateUnrealStaticMesh": {
             "enabled": true,
