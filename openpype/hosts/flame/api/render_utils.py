@@ -219,13 +219,13 @@ class BackburnerTranscoder(Transcoder):
         self.exporter.foreground_export = False
         hooks_user_data = {}
 
-        output_dir, output_file = self._create_temp_paths()
+        self._output_dir, output_file = self._create_temp_paths()
 
         try:
             self.exporter.export(
                 sources=self._input_clip,
                 preset_path=self._preset_path,
-                output_directory=output_dir,
+                output_directory=self._output_dir,
                 background_job_settings=self._create_background_job_settings(),
                 hooks=self.job_hook(self.RETURNING_JOB_KEY),
                 hooks_user_data=hooks_user_data,
@@ -246,17 +246,26 @@ class BackburnerTranscoder(Transcoder):
         tmp_d, fpath = tempfile.mkstemp(
             suffix=self._output_ext, dir=self.get_backburner_tmp()
         )
+        self.log.debug("_ tmp_d: {}".format(tmp_d))
+        self.log.debug("_ fpath: {}".format(fpath))
+
         os.close(tmp_d)
-        self._input_clip.name = os.path.splitext(
-            os.path.basename(fpath))[0]
+        self.log.debug("_ new clip.name: {}".format(os.path.splitext(
+            os.path.basename(fpath))[0]))
+
+        self._input_clip.name.set_value(
+            str(os.path.splitext(
+                os.path.basename(fpath))[0]))
 
         return tmp_d, fpath
 
     def get_backburner_tmp(self):
-        return (
+        temp_dir = (
             os.environ.get("SHOTGUN_FLAME_BACKBURNER_SHARED_TMP")
             or tempfile.gettempdir()
         )
+        self.log.debug("_ temp_dir: {}".format(temp_dir))
+        return temp_dir
 
     def _create_background_job_settings(self):
         """ Creating Backbruner job settings
@@ -271,7 +280,7 @@ class BackburnerTranscoder(Transcoder):
         ).format(
             self._job_name,
             self._clip_name,
-            self._out_dir_path,
+            self._output_dir,
         )
 
         if self._job_completion:
