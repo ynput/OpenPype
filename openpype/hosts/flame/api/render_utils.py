@@ -1,66 +1,10 @@
 import os
 import re
+import sys
+import six
 import tempfile
 from xml.etree import ElementTree as ET
 import flame
-
-
-def export_clip(export_path, clip, preset_path, **kwargs):
-    """Flame exported wrapper
-
-    Args:
-        export_path (str): exporting directory path
-        clip (PyClip): flame api object
-        preset_path (str): full export path to xml file
-
-    Kwargs:
-        thumb_frame_number (int)[optional]: source frame number
-        in_mark (int)[optional]: cut in mark
-        out_mark (int)[optional]: cut out mark
-
-    Raises:
-        KeyError: Missing input kwarg `thumb_frame_number`
-                  in case `thumbnail` in `export_preset`
-        FileExistsError: Missing export preset in shared folder
-    """
-    import flame
-
-    in_mark = out_mark = None
-
-    # Set exporter
-    exporter = flame.PyExporter()
-    exporter.foreground = True
-    exporter.export_between_marks = True
-
-    if kwargs.get("thumb_frame_number"):
-        thumb_frame_number = kwargs["thumb_frame_number"]
-        # make sure it exists in kwargs
-        if not thumb_frame_number:
-            raise KeyError(
-                "Missing key `thumb_frame_number` in input kwargs")
-
-        in_mark = int(thumb_frame_number)
-        out_mark = int(thumb_frame_number) + 1
-
-    elif kwargs.get("in_mark") and kwargs.get("out_mark"):
-        in_mark = int(kwargs["in_mark"])
-        out_mark = int(kwargs["out_mark"])
-    else:
-        exporter.export_between_marks = False
-
-    try:
-        # set in and out marks if they are available
-        if in_mark and out_mark:
-            clip.in_mark = in_mark
-            clip.out_mark = out_mark
-
-        exporter.export(clip, preset_path, export_path)
-    finally:
-        print('Exported: {} at {}-{}'.format(
-            clip.name.get_value(),
-            clip.in_mark,
-            clip.out_mark
-        ))
 
 
 def get_preset_path_by_xml_name(xml_preset_name):
@@ -154,14 +98,7 @@ def modify_preset_file(xml_path, staging_dir, data):
     return temp_path
 
 
-class BackburnerTranscoder:
-    RETURNING_JOB_KEY = "transcoding_job"
-    JOB_NAME_LENGTH = 92
-    COMPLETION = {
-        "delete": {"delay": 10},
-        "leaveInQueue": {"delay": None},
-        "archive": {"delay": 0}
-    }
+class Transcoder(object):
     exporter = flame.PyExporter()
 
     def __init__(
@@ -169,26 +106,19 @@ class BackburnerTranscoder:
             clip,
             preset_path,
             ext,
-            job_name=None,
-            job_completion=None,
+            output_dir=None,
             **kwargs
     ):
         self._input_clip = clip
         self._output_ext = ext
         self._preset_path = preset_path
+        self._output_dir = output_dir or self._get_temp_dir()
 
         # create arbitrari job name
         self._clip_name = clip.name.get_value()
-        preset_name = os.path.splitext(
+        self._preset_name = os.path.splitext(
             os.path.basename(preset_path)
         )[0]
-
-        self._job_name = job_name or "_".join([
-            self._clip_name,
-            preset_name
-        ])
-
-        self._job_completion = job_completion
 
         # set in and out markers
         self._define_in_out(kwargs)
@@ -220,20 +150,78 @@ class BackburnerTranscoder:
             self._input_clip.in_mark = in_mark
             self._input_clip.out_mark = out_mark
 
+    def _get_temp_dir(self):
+        return tempfile.mkdtemp()
+
+    def export(self):
+        self.exporter.foreground_export = True
+
+        try:
+            self.exporter.export(
+                self._input_clip,
+                self._preset_path,
+                self._output_dir
+            )
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            six.reraise(tp, value, tb)
+
+        finally:
+            print("Exported: `{}` [{}-{}] to `{}`".format(
+                self._clip_name,
+                self._input_clip.in_mark,
+                self._input_clip.out_mark,
+                self._output_dir
+            ))
+
+
+class BackburnerTranscoder(Transcoder):
+    RETURNING_JOB_KEY = "transcoding_job"
+    JOB_NAME_LENGTH = 92
+    COMPLETION = {
+        "delete": {"delay": 10},
+        "leaveInQueue": {"delay": None},
+        "archive": {"delay": 0}
+    }
+
+    def __init__(
+            self,
+            clip,
+            preset_path,
+            ext,
+            job_name=None,
+            job_completion=None,
+            **kwargs
+    ):
+        super(BackburnerTranscoder, self).__init__(
+            clip, preset_path, ext, **kwargs)
+
+        self._job_name = job_name or "_".join([
+            self._clip_name,
+            self._preset_name
+        ])
+
+        self._job_completion = job_completion
+
     def export(self):
         self.exporter.foreground_export = False
         hooks_user_data = {}
 
         output_dir, output_file = self._create_temp_paths()
 
-        self.exporter.export(
-            sources=self._input_clip,
-            preset_path=self._preset_path,
-            output_directory=output_dir,
-            background_job_settings=self._create_background_job_settings(),
-            hooks=self.job_hook(self.RETURNING_JOB_KEY),
-            hooks_user_data=hooks_user_data,
-        )
+        try:
+            self.exporter.export(
+                sources=self._input_clip,
+                preset_path=self._preset_path,
+                output_directory=output_dir,
+                background_job_settings=self._create_background_job_settings(),
+                hooks=self.job_hook(self.RETURNING_JOB_KEY),
+                hooks_user_data=hooks_user_data,
+            )
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            six.reraise(tp, value, tb)
+
         return {
             "job_temp_dir": output_dir,
             "job_temp_files": output_file,
