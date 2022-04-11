@@ -1,9 +1,9 @@
 import os
-# from functools import lru_cache
 
 from pymongo import MongoClient
 from openpype.api import get_system_settings, get_project_settings
 from openpype.modules.shotgrid.lib.const import MODULE_NAME
+from openpype.modules.shotgrid.lib.tools import memoize
 
 
 def get_project_list():
@@ -13,12 +13,12 @@ def get_project_list():
     return db.list_collection_names()
 
 
-# @lru_cache(maxsize=64)
+@memoize
 def get_shotgrid_project_settings(project):
     return get_project_settings(project).get(MODULE_NAME, {})
 
 
-# @lru_cache(maxsize=64)
+@memoize
 def get_shotgrid_settings():
     return get_system_settings().get("modules", {}).get(MODULE_NAME, {})
 
