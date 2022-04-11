@@ -223,7 +223,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 ))
                 os.makedirs(export_dir_path)
 
-                extension = preset_config["ext"]
+                extension = "." + preset_config["ext"]
 
                 # add logger override
                 export_data["logger"] = self.log
