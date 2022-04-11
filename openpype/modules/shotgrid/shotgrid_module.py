@@ -12,7 +12,9 @@ from openpype.modules import OpenPypeModule
 SHOTGRID_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class ShotgridModule(OpenPypeModule, ITrayModule, IPluginPaths, ILaunchHookPaths):
+class ShotgridModule(
+    OpenPypeModule, ITrayModule, IPluginPaths, ILaunchHookPaths
+):
     leecher_manager_url = None
     name = "shotgrid"
     enabled = False
@@ -22,7 +24,9 @@ class ShotgridModule(OpenPypeModule, ITrayModule, IPluginPaths, ILaunchHookPaths
     def initialize(self, modules_settings):
         shotgrid_settings = modules_settings.get(self.name, dict())
         self.enabled = shotgrid_settings.get("enabled", False)
-        self.leecher_manager_url = shotgrid_settings.get("leecher_manager_url", "")
+        self.leecher_manager_url = shotgrid_settings.get(
+            "leecher_manager_url", ""
+        )
 
     def connect_with_modules(self, enabled_modules):
         pass
@@ -31,7 +35,11 @@ class ShotgridModule(OpenPypeModule, ITrayModule, IPluginPaths, ILaunchHookPaths
         return {"PROJECT_ID": self.project_id}
 
     def get_plugin_paths(self):
-        return {"publish": [os.path.join(SHOTGRID_MODULE_DIR, "plugins", "publish")]}
+        return {
+            "publish": [
+                os.path.join(SHOTGRID_MODULE_DIR, "plugins", "publish")
+            ]
+        }
 
     def get_launch_hook_paths(self):
         return os.path.join(SHOTGRID_MODULE_DIR, "hooks")
