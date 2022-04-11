@@ -23,6 +23,7 @@ class AddSyncSite(load.LoaderPlugin):
     color = "#999999"
 
     _sync_server = None
+    is_add_site_loader = True
 
     @property
     def sync_server(self):

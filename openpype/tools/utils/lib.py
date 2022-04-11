@@ -719,11 +719,11 @@ def is_sync_loader(loader):
 
 
 def is_remove_site_loader(loader):
-    return hasattr(loader, "remove_site_on_representation")
+    return hasattr(loader, "is_remove_site_loader")
 
 
 def is_add_site_loader(loader):
-    return hasattr(loader, "add_site_to_representation")
+    return hasattr(loader, "is_add_site_loader")
 
 
 class WrappedCallbackItem:
