@@ -17,6 +17,9 @@ from .vendor_bin_utils import (
 
 # Max length of string that is supported by ffmpeg
 MAX_FFMPEG_STRING_LEN = 8196
+# Not allowed symbols in attributes for ffmpeg
+NOT_ALLOWED_FFMPEG_CHARS = ("\"", )
+
 # OIIO known xml tags
 STRING_TAGS = {
     "format"
@@ -367,11 +370,15 @@ def should_convert_for_ffmpeg(src_filepath):
         return None
 
     for attr_value in input_info["attribs"].values():
-        if (
-            isinstance(attr_value, str)
-            and len(attr_value) > MAX_FFMPEG_STRING_LEN
-        ):
+        if not isinstance(attr_value, str):
+            continue
+
+        if len(attr_value) > MAX_FFMPEG_STRING_LEN:
             return True
+
+        for char in NOT_ALLOWED_FFMPEG_CHARS:
+            if char in attr_value:
+                return True
     return False
 
 
@@ -468,13 +475,28 @@ def convert_for_ffmpeg(
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg
+        #   for ffmpeg or when containt unallowed symbols
+        erase_reason = "Missing reason"
+        erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
+            erase_reason = "has too long value ({} chars).".format(
+                len(attr_value)
+            )
+
+        if erase_attribute:
+            for char in NOT_ALLOWED_FFMPEG_CHARS:
+                if char in attr_value:
+                    erase_attribute = True
+                    erase_reason = (
+                        "contains unsupported character \"{}\"."
+                    ).format(char)
+                    break
+
+        if erase_attribute:
             # Set attribute to empty string
             logger.info((
-                "Removed attribute \"{}\" from metadata"
-                " because has too long value ({} chars)."
-            ).format(attr_name, len(attr_value)))
+                "Removed attribute \"{}\" from metadata because {}."
+            ).format(attr_name, erase_reason))
             oiio_cmd.extend(["--eraseattrib", attr_name])
 
     # Add last argument - path to output
