@@ -342,8 +342,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
                 "tilesX": render_instance.data.get("tilesX") or 2,
                 "tilesY": render_instance.data.get("tilesY") or 2,
-                "primaryPool": render_instance.data.get("primaryPool"),
-                "secondaryPool": render_instance.data.get("secondaryPool"),
                 "priority": render_instance.data.get("priority"),
                 "convertToScanline": render_instance.data.get(
                     "convertToScanline") or False,
@@ -387,6 +385,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # Get global overrides and translate to Deadline values
             overrides = self.parse_options(str(render_globals))
             data.update(**overrides)
+
+            # get string values for pools
+            primary_pool = overrides["renderGlobals"]["Pool"]
+            secondary_pool = overrides["renderGlobals"]["SecondaryPool"]
+            data["primaryPool"] = primary_pool
+            data["secondaryPool"] = secondary_pool
 
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
