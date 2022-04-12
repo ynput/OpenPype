@@ -69,7 +69,7 @@ from .actions import (
     deregister_inventory_action_path,
 )
 
-from .process_context import (
+from .context_tools import (
     install_openpype_plugins,
     install_host,
     uninstall_host,
