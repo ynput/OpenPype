@@ -228,14 +228,14 @@ class BackburnerTranscoder(Transcoder):
                 output_directory=self._output_dir,
                 background_job_settings=self._create_background_job_settings(),
                 hooks=self.job_hook(self.RETURNING_JOB_KEY),
-                hooks_user_data=hooks_user_data,
+                hooks_user_data=hooks_user_data
             )
         except Exception:
             tp, value, tb = sys.exc_info()
             six.reraise(tp, value, tb)
 
         return {
-            "job_temp_dir": output_dir,
+            "job_temp_dir": self._output_dirut_dir,
             "job_temp_files": output_file,
             "job_hooks_data": hooks_user_data.get(
                 self.RETURNING_JOB_KEY)
