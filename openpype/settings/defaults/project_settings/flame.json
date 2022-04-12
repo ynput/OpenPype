@@ -52,6 +52,8 @@
             ]
         },
         "ExtractSubsetResources": {
+            "background_export": true,
+            "hide_ui_on_process": false,
             "keep_original_representation": false,
             "export_presets_mapping": {
                 "exr16fpdwaa": {
