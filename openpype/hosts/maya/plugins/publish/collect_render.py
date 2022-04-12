@@ -194,11 +194,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             assert render_products, "no render products generated"
             exp_files = []
             multipart = False
+            render_cameras = []
             for product in render_products:
                 if product.multipart:
                     multipart = True
                 product_name = product.productName
                 if product.camera and layer_render_products.has_camera_token():
+                    render_cameras.append(product.camera)
                     product_name = "{}{}".format(
                         product.camera,
                         "_" + product_name if product_name else "")
@@ -208,6 +210,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                             product)
                     })
 
+            assert render_cameras, "No render cameras found."
+                
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
