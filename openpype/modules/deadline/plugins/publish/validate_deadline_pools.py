@@ -34,7 +34,7 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
         primary_pool = instance.data.get("primaryPool")
         if primary_pool and primary_pool not in pools:
             msg = "Configured primary '{}' not present on Deadline".format(
-                    instance.data["primaryPool"])
+                instance.data["primaryPool"])
             formatting_data["invalid_value_str"] = msg
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
@@ -42,7 +42,7 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
         secondary_pool = instance.data.get("secondaryPool")
         if secondary_pool and secondary_pool not in pools:
             msg = "Configured secondary '{}' not present on Deadline".format(
-                    instance.data["secondaryPool"])
+                instance.data["secondaryPool"])
             formatting_data["invalid_value_str"] = msg
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
