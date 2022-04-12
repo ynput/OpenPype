@@ -130,9 +130,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         if not prefix.lower().startswith(required_prefix):
             invalid = True
-            cls.log.error("Wrong image prefix [ {} ] - "
-                          "doesn't start with: '{}'".format(
-                prefix, required_prefix))
+            cls.log.error(
+                "Wrong image prefix [ {} ] - doesn't start with: '{}'".format(
+                    prefix, required_prefix)
+            )
 
         if not re.search(cls.R_LAYER_TOKEN, prefix):
             invalid = True
