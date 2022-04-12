@@ -21,4 +21,4 @@ def match_aov_pattern(host_name, aov_patterns, render_file_name):
     aov_pattern = aov_patterns.get(host_name, [])
     if not aov_pattern:
         return False
-    return re.match(aov_pattern, render_file_name) is not None
+    return any(re.match(p, render_file_name) for p in aov_pattern)
