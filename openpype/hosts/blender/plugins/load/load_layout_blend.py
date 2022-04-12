@@ -25,16 +25,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
     def _remove(self, container):
         """Remove the container and used data"""
-        objects = plugin.get_all_objects_in_collection(container)
-        for object in objects:
-            bpy.data.objects.remove(object)
-
-        collections = plugin.get_all_collections_in_collection(container)
-        for collection in collections:
-            bpy.data.collections.remove(collection)
-
-        # Remove the container
-        bpy.data.collections.remove(container)
+        plugin.remove_container(container)
 
     def _process(self, libpath, asset_name):
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
@@ -227,7 +218,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     # Check if the container is a rig
                     if sub_avalon_container["avalon"].get("family") == "rig":
                         # Get all the object in the container
-                        objects = sub_avalon_container.objects
+                        objects = plugin.get_all_objects_in_collection(
+                            sub_avalon_container
+                        )
                         # Get the armatures
                         armatures = [
                             obj for obj in objects if obj.type == "ARMATURE"
@@ -247,9 +240,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Remove the current container
         self._remove(avalon_container)
-
-        # Clean the data blocks
-        plugin.remove_orphan_datablocks()
 
         # Load the updated container
         container_override = self._process(str(libpath), object_name)
@@ -283,7 +273,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     # Check if the container is a rig
                     if sub_avalon_container["avalon"].get("family") == "rig":
                         # Get all the object in the container
-                        objects = sub_avalon_container.objects
+                        objects = plugin.get_all_objects_in_collection(
+                            sub_avalon_container
+                        )
                         # Get the armatures
                         armatures = [
                             obj for obj in objects if obj.type == "ARMATURE"
@@ -334,7 +326,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Remove the container
         self._remove(avalon_container)
-        plugin.remove_orphan_datablocks()
 
         return True
 

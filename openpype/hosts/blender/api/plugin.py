@@ -26,8 +26,25 @@ def asset_name(
     return name
 
 
+def remove_container(container):
+    items_with_fake_user_list = set_fake_user_on_orphans()
+    objects = get_all_objects_in_collection(container)
+    for object in objects:
+        bpy.data.objects.remove(object)
+
+    collections = get_all_collections_in_collection(container)
+    for collection in collections:
+        bpy.data.collections.remove(collection)
+
+    # Remove the container
+    bpy.data.collections.remove(container)
+    remove_orphan_datablocks()
+    remove_fake_user_on_orphans(items_with_fake_user_list)
+
+
 def remove_orphan_datablocks():
     """Remove the data_blocks without users"""
+
     orphan_block_users_find = True
     while orphan_block_users_find:
         orphan_block_users_find = False
@@ -65,14 +82,65 @@ def remove_orphan_datablocks():
         for property in properties:
             data = getattr(bpy.data, property)
             for block in data:
-                if block.users == 0:
+                if block.users == 0 and not block.use_fake_user:
                     orphan_block_users_find = True
                     data.remove(block)
 
         for block in bpy.data.libraries:
-            if not block.users_id:
+            if not block.users_id and not block.use_fake_user:
                 orphan_block_users_find = True
                 bpy.data.libraries.remove(block)
+
+
+def set_fake_user_on_orphans():
+    """set fake user on orphans to avoid orphan purge"""
+    properties = [
+        "actions",
+        "armatures",
+        "brushes",
+        "cameras",
+        "collections",
+        "curves",
+        "grease_pencils",
+        "images",
+        "lattices",
+        "libraries",
+        "lightprobes",
+        "lights",
+        "linestyles",
+        "masks",
+        "materials",
+        "meshes",
+        "metaballs",
+        "movieclips",
+        "node_groups",
+        "objects",
+        "paint_curves",
+        "palettes",
+        "particles",
+        "shape_keys",
+        "sounds",
+        "texts",
+        "textures",
+        "volumes",
+    ]
+    items_with_fake_user_list = list()
+    for property in properties:
+        data = getattr(bpy.data, property)
+        for block in data:
+            if block.users == 0:
+                block.use_fake_user = True
+                items_with_fake_user_list.append(block)
+    return items_with_fake_user_list
+
+
+def remove_fake_user_on_orphans(items_with_fake_user_list):
+    """remove fake user on orphans list to allow orphan purge"""
+    for block in items_with_fake_user_list:
+        try:
+            block.use_fake_user = False
+        except Exception as e:
+            print("Remove Fake User Failed", e)
 
 
 def model_asset_name(model_name: str, namespace: Optional[str] = None) -> str:

@@ -32,7 +32,6 @@ class ExtractBlend(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
         plugin.remove_orphan_datablocks()
-        plugin.remove_orphan_datablocks()
         # Create data block set
         data_blocks = set()
 
@@ -45,14 +44,19 @@ class ExtractBlend(openpype.api.Extractor):
 
         plugin.remove_namespace_for_objects_container(container)
 
-        has_namespace = api.Session["AVALON_TASK"] in [
-            "Rigging",
-            "Modeling",
-        ]
+        # define if objects have namspace by task
+        has_namespace = (
+            api.Session["AVALON_TASK"]
+            in [
+                "Rigging",
+                "Modeling",
+            ]
+            or container["avalon"].get("family") == "camera"
+        )
 
         self._set_original_name_property(container)
         if has_namespace:
-            self._set_namespace_property(container)
+            self._set_namespace_property(container, container)
 
         for collection in collections:
             # remove the namespace if exists
@@ -99,3 +103,7 @@ class ExtractBlend(openpype.api.Extractor):
         instance.data["representations"].append(representation)
         # Write the .blend library with data_blocks collected
         bpy.data.libraries.write(filepath, data_blocks)
+
+        self.log.info(
+            "Extracted instance '%s' to: %s", instance.name, representation
+        )

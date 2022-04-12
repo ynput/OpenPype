@@ -24,16 +24,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
     def _remove(self, container):
         """Remove the container and used data"""
-        objects = plugin.get_all_objects_in_collection(container)
-        for object in objects:
-            bpy.data.objects.remove(object)
-
-        collections = plugin.get_all_collections_in_collection(container)
-        for collection in collections:
-            bpy.data.collections.remove(collection)
-
-        # Remove the container
-        bpy.data.collections.remove(container)
+        plugin.remove_container(container)
 
     def _process(self, libpath, asset_name):
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
@@ -191,7 +182,6 @@ class BlendRigLoader(plugin.AssetLoader):
         # Remove the container
         self._remove(avalon_container)
         # Clean
-        plugin.remove_orphan_datablocks()
 
         # Load the updated container
         container_override = self._process(str(libpath), asset_name)
@@ -243,47 +233,39 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Remove the container
         self._remove(avalon_container)
-        plugin.remove_orphan_datablocks()
 
         return True
 
     def update_avalon_property(self, representation: Dict):
         """Set the avalon property with the representation data"""
-        # Get all the cotainer in the scene
 
-        def update_avalon_property(self, representation: Dict):
-            """Set the avalon property with the representation data"""
+        # Set the avalon property with the representation data
+        asset = str(representation["context"]["asset"])
+        subset = str(representation["context"]["subset"])
+        asset_name = plugin.asset_name(asset, subset)
 
-            # Set the avalon property with the representation data
-            asset = str(representation["context"]["asset"])
-            subset = str(representation["context"]["subset"])
-            asset_name = plugin.asset_name(asset, subset)
+        # Get the container in the scene
+        container = bpy.data.collections.get(asset_name)
 
-            # Get the container in the scene
-            container = bpy.data.collections.get(asset_name)
+        container_collection = None
+        if container.override_library is None and container.library is None:
+            # Check if the container isn't publish
+            if container["avalon"].get("id") == "pyblish.avalon.instance":
+                container_collection = container
 
-            container_collection = None
-            if (
-                container.override_library is None
-                and container.library is None
-            ):
-                # Check if the container isn't publish
-                if container["avalon"].get("id") == "pyblish.avalon.instance":
-                    container_collection = container
+        self.log.info(f"container name '{container_collection.name}' ")
 
-            self.log.info(f"container name '{container_collection.name}' ")
-
-            if container_collection:
-                container_collection[AVALON_PROPERTY] = {
-                    "schema": "openpype:container-2.0",
-                    "id": AVALON_CONTAINER_ID,
-                    "name": asset,
-                    "namespace": container_collection.name,
-                    "loader": str(self.__class__.__name__),
-                    "representation": str(representation["_id"]),
-                    "libpath": str(representation["data"]["path"]),
-                    "asset_name": asset_name,
-                    "parent": str(representation["parent"]),
-                    "family": str(representation["context"]["family"]),
-                    "objectName": container_collection.name,
-                }
+        if container_collection:
+            container_collection[AVALON_PROPERTY] = {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": asset,
+                "namespace": container_collection.name,
+                "loader": str(self.__class__.__name__),
+                "representation": str(representation["_id"]),
+                "libpath": str(representation["data"]["path"]),
+                "asset_name": asset_name,
+                "parent": str(representation["parent"]),
+                "family": str(representation["context"]["family"]),
+                "objectName": container_collection.name,
+            }
