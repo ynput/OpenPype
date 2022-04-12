@@ -15,9 +15,9 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
     by Settings in CollectDeadlinePools.
     """
 
-    label = "Validate Deadline Web Service"
+    label = "Validate Deadline Pools"
     order = pyblish.api.ValidatorOrder
-    families = ["rendering", "render.farm", "renderFarm"]
+    families = ["rendering", "render.farm", "renderFarm", "renderlayer"]
     optional = True
 
     def process(self, instance):
@@ -35,7 +35,7 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
         if primary_pool and primary_pool not in pools:
             msg = "Configured primary '{}' not present on Deadline".format(
                     instance.data["primaryPool"])
-
+            formatting_data["invalid_value_str"] = msg
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
 
@@ -43,5 +43,6 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
         if secondary_pool and secondary_pool not in pools:
             msg = "Configured secondary '{}' not present on Deadline".format(
                     instance.data["secondaryPool"])
+            formatting_data["invalid_value_str"] = msg
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
