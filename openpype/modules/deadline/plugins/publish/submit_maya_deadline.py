@@ -35,6 +35,7 @@ from maya import cmds
 from avalon import api
 import pyblish.api
 
+from openpype.lib import requests_post
 from openpype.hosts.maya.api import lib
 
 # Documentation for keys available at:
@@ -700,7 +701,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             tiles_count = instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
 
             for tile_job in frame_payloads:
-                response = self._requests_post(url, json=tile_job)
+                response = requests_post(url, json=tile_job)
                 if not response.ok:
                     raise Exception(response.text)
 
@@ -763,7 +764,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     job_idx, len(assembly_payloads)
                 ))
                 self.log.debug(json.dumps(ass_job, indent=4, sort_keys=True))
-                response = self._requests_post(url, json=ass_job)
+                response = requests_post(url, json=ass_job)
                 if not response.ok:
                     raise Exception(response.text)
 
@@ -781,7 +782,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             # E.g. http://192.168.0.1:8082/api/jobs
             url = "{}/api/jobs".format(self.deadline_url)
-            response = self._requests_post(url, json=payload)
+            response = requests_post(url, json=payload)
             if not response.ok:
                 raise Exception(response.text)
             instance.data["deadlineSubmissionJob"] = response.json()
@@ -989,7 +990,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.info("Submitting ass export job.")
 
         url = "{}/api/jobs".format(self.deadline_url)
-        response = self._requests_post(url, json=payload)
+        response = requests_post(url, json=payload)
         if not response.ok:
             self.log.error("Submition failed!")
             self.log.error(response.status_code)
@@ -1012,44 +1013,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
-
-    def _requests_post(self, *args, **kwargs):
-        """Wrap request post method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """Wrap request get method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.get(*args, **kwargs)
 
     def format_vray_output_filename(self, filename, template, dir=False):
         """Format the expected output file of the Export job.

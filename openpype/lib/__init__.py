@@ -221,6 +221,12 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
+
+from .connections import (
+    requests_get,
+    requests_post
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -390,4 +396,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "requests_get",
+    "requests_post"
 ]
