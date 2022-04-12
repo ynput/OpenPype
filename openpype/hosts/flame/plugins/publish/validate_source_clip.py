@@ -9,6 +9,8 @@ class ValidateSourceClip(pyblish.api.InstancePlugin):
     label = "Validate Source Clip"
     hosts = ["flame"]
     families = ["clip"]
+    optional = True
+    active = False
 
     def process(self, instance):
         flame_source_clip = instance.data["flameSourceClip"]

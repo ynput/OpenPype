@@ -410,6 +410,7 @@ class FamilyConfigCache:
         project_name = os.environ.get("AVALON_PROJECT")
         asset_name = os.environ.get("AVALON_ASSET")
         task_name = os.environ.get("AVALON_TASK")
+        host_name = os.environ.get("AVALON_APP")
         if not all((project_name, asset_name, task_name)):
             return
 
@@ -423,15 +424,21 @@ class FamilyConfigCache:
             ["family_filter_profiles"]
         )
         if profiles:
-            asset_doc = self.dbcon.find_one(
+            # Make sure connection is installed
+            # - accessing attribute which does not have auto-install
+            self.dbcon.install()
+            database = getattr(self.dbcon, "database", None)
+            if database is None:
+                database = self.dbcon._database
+            asset_doc = database[project_name].find_one(
                 {"type": "asset", "name": asset_name},
                 {"data.tasks": True}
-            )
+            ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")
             profiles_filter = {
                 "task_types": task_type,
-                "hosts": os.environ["AVALON_APP"]
+                "hosts": host_name
             }
             matching_item = filter_profiles(profiles, profiles_filter)
 

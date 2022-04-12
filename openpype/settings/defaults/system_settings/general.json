@@ -12,6 +12,7 @@
         "linux": [],
         "darwin": []
     },
+    "local_env_white_list": [],
     "openpype_path": {
         "windows": [],
         "darwin": [],

@@ -22,7 +22,7 @@ class LoadClip(opfapi.ClipLoader):
     # settings
     reel_group_name = "OpenPype_Reels"
     reel_name = "Loaded"
-    clip_name_template = "{asset}_{subset}_{representation}"
+    clip_name_template = "{asset}_{subset}_{output}"
 
     def load(self, context, name, namespace, options):
 
@@ -39,7 +39,7 @@ class LoadClip(opfapi.ClipLoader):
         clip_name = self.clip_name_template.format(
             **context["representation"]["context"])
 
-        # todo: settings in imageio
+        # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
         colorspace = colorspace
