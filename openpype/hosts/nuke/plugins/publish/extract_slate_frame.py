@@ -189,6 +189,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         for key, value in self.key_value_mapping.items():
             enabled, template = value
             if not enabled:
+                self.log.debug("Key \"{}\" is disabled".format(key))
                 continue
 
             try:
@@ -205,13 +206,19 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
             except KeyError:
                 self.log.warning(
-                    "Template contains unknown key",
+                    (
+                        "Template contains unknown key."
+                        " Template \"{}\" Data: {}"
+                    ).format(template, fill_data),
                     exc_info=True
                 )
                 continue
 
             try:
                 node[key].setValue(value)
+                self.log.info("Change key \"{}\" to value \"{}\"".format(
+                    key, value
+                ))
             except NameError:
                 self.log.warning((
                     "Failed to set value \"{}\" on node attribute \"{}\""
