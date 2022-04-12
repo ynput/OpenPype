@@ -25,11 +25,13 @@ from .experimental_widget import (
     LOCAL_EXPERIMENTAL_KEY
 )
 from .apps_widget import LocalApplicationsWidgets
+from .environments_widget import LocalEnvironmentsWidgets
 from .projects_widget import ProjectSettingsWidget
 
 from .constants import (
     LOCAL_GENERAL_KEY,
     LOCAL_PROJECTS_KEY,
+    LOCAL_ENV_KEY,
     LOCAL_APPS_KEY
 )
 
@@ -49,18 +51,20 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.pype_mongo_widget = None
         self.general_widget = None
         self.experimental_widget = None
+        self.envs_widget = None
         self.apps_widget = None
         self.projects_widget = None
 
-        self._create_pype_mongo_ui()
+        self._create_mongo_url_ui()
         self._create_general_ui()
         self._create_experimental_ui()
+        self._create_environments_ui()
         self._create_app_ui()
         self._create_project_ui()
 
         self.main_layout.addStretch(1)
 
-    def _create_pype_mongo_ui(self):
+    def _create_mongo_url_ui(self):
         pype_mongo_expand_widget = ExpandingWidget("OpenPype Mongo URL", self)
         pype_mongo_content = QtWidgets.QWidget(self)
         pype_mongo_layout = QtWidgets.QVBoxLayout(pype_mongo_content)
@@ -110,6 +114,22 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         self.experimental_widget = experimental_widget
 
+    def _create_environments_ui(self):
+        envs_expand_widget = ExpandingWidget("Environments", self)
+        envs_content = QtWidgets.QWidget(self)
+        envs_layout = QtWidgets.QVBoxLayout(envs_content)
+        envs_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        envs_expand_widget.set_content_widget(envs_content)
+
+        envs_widget = LocalEnvironmentsWidgets(
+            self.system_settings, envs_content
+        )
+        envs_layout.addWidget(envs_widget)
+
+        self.main_layout.addWidget(envs_expand_widget)
+
+        self.envs_widget = envs_widget
+
     def _create_app_ui(self):
         # Applications
         app_expand_widget = ExpandingWidget("Applications", self)
@@ -154,6 +174,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.general_widget.update_local_settings(
             value.get(LOCAL_GENERAL_KEY)
         )
+        self.envs_widget.update_local_settings(
+            value.get(LOCAL_ENV_KEY)
+        )
         self.app_widget.update_local_settings(
             value.get(LOCAL_APPS_KEY)
         )
@@ -169,6 +192,10 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         general_value = self.general_widget.settings_value()
         if general_value:
             output[LOCAL_GENERAL_KEY] = general_value
+
+        envs_value = self.envs_widget.settings_value()
+        if envs_value:
+            output[LOCAL_ENV_KEY] = envs_value
 
         app_value = self.app_widget.settings_value()
         if app_value:

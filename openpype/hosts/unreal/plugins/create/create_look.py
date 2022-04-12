@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Create look in Unreal."""
 import unreal  # noqa
-from openpype.hosts.unreal.api.plugin import Creator
-from openpype.hosts.unreal.api import pipeline
+from openpype.hosts.unreal.api import pipeline, plugin
 
 
-class CreateLook(Creator):
+class CreateLook(plugin.Creator):
     """Shader connections defining shape look."""
 
     name = "unrealLook"
