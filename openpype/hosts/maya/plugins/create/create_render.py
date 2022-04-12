@@ -204,7 +204,6 @@ class CreateRender(plugin.Creator):
     def _deadline_webservice_changed(self):
         """Refresh Deadline server dependent options."""
         # get selected server
-        from maya import cmds
         webservice = self.deadline_servers[
             self.server_aliases[
                 cmds.getAttr("{}.deadlineServers".format(self.instance))
@@ -213,12 +212,23 @@ class CreateRender(plugin.Creator):
         pools = self.deadline_module.get_deadline_pools(webservice, self.log)
         cmds.deleteAttr("{}.primaryPool".format(self.instance))
         cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+
+        pool_setting = (self._project_settings["deadline"]
+                                              ["publish"]
+                                              ["CollectDeadlinePools"])
+
+        primary_pool = pool_setting["primary_pool"]
+        sorted_pools = self._set_default_pool(list(pools), primary_pool)
         cmds.addAttr(self.instance, longName="primaryPool",
                      attributeType="enum",
-                     enumName=":".join(pools))
-        cmds.addAttr(self.instance, longName="secondaryPool",
+                     enumName=":".join(sorted_pools))
+
+        pools = ["-"] + pools
+        secondary_pool = pool_setting["secondary_pool"]
+        sorted_pools = self._set_default_pool(list(pools), secondary_pool)
+        cmds.addAttr("{}.secondaryPool".format(self.instance),
                      attributeType="enum",
-                     enumName=":".join(["-"] + pools))
+                     enumName=":".join(sorted_pools))
 
     def _create_render_settings(self):
         """Create instance settings."""
@@ -299,11 +309,26 @@ class CreateRender(plugin.Creator):
                 self.log.info("  - pool: {}".format(pool["name"]))
                 pool_names.append(pool["name"])
 
-        self.data["primaryPool"] = pool_names
+        pool_setting = (self._project_settings["deadline"]
+                                              ["publish"]
+                                              ["CollectDeadlinePools"])
+        primary_pool = pool_setting["primary_pool"]
+        self.data["primaryPool"] = self._set_default_pool(pool_names,
+                                                          primary_pool)
         # We add a string "-" to allow the user to not
         # set any secondary pools
-        self.data["secondaryPool"] = ["-"] + pool_names
+        pool_names = ["-"] + pool_names
+        secondary_pool = pool_setting["secondary_pool"]
+        self.data["secondaryPool"] = self._set_default_pool(pool_names,
+                                                            secondary_pool)
         self.options = {"useSelection": False}  # Force no content
+
+    def _set_default_pool(self, pool_names, pool_value):
+        """Reorder pool names, default should come first"""
+        if pool_value and pool_value in pool_names:
+            pool_names.remove(pool_value)
+            pool_names = [pool_value] + pool_names
+        return pool_names
 
     def _load_credentials(self):
         """Load Muster credentials.
