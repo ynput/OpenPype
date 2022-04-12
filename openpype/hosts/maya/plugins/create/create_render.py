@@ -84,7 +84,9 @@ class CreateRender(plugin.Creator):
         'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
-        'renderman': '<layer>_<aov>.<f4>.<ext>',  # this needs `imageOutputDir` set separately
+        # this needs `imageOutputDir`
+        # (<ws>/renders/maya/<scene>) set separately
+        'renderman': '<layer>_<aov>.<f4>.<ext>',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
     }
 
