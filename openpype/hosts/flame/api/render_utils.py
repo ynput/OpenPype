@@ -110,12 +110,10 @@ class Transcoder(object):
             self,
             clip,
             preset_path,
-            ext,
             output_dir=None,
             **kwargs
     ):
         self._input_clip = clip
-        self._output_ext = ext
         self._preset_path = preset_path
         self._output_dir = output_dir or self._get_temp_dir()
 
@@ -200,7 +198,6 @@ class BackburnerTranscoder(Transcoder):
             self,
             clip,
             preset_path,
-            ext,
             job_name=None,
             job_completion=None,
             **kwargs
@@ -219,8 +216,7 @@ class BackburnerTranscoder(Transcoder):
         self.exporter.foreground_export = False
         hooks_user_data = {}
 
-        output_file = self._create_temp_paths()
-        output_dir = os.path.dirname(output_file)
+        output_dir = self.get_backburner_tmp()
 
         try:
             self.log.debug(
@@ -248,29 +244,10 @@ class BackburnerTranscoder(Transcoder):
             six.reraise(tp, value, tb)
 
         return {
-            "job_temp_dir": output_dir,
-            "job_temp_files": output_file,
+            "output_dir": output_dir,
             "job_hooks_data": hooks_user_data.get(
                 self.RETURNING_JOB_KEY)
         }
-
-    def _create_temp_paths(self):
-
-        tmp_d, fpath = tempfile.mkstemp(
-            suffix=self._output_ext, dir=self.get_backburner_tmp()
-        )
-        self.log.debug("_ tmp_d: {}".format(tmp_d))
-        self.log.debug("_ fpath: {}".format(fpath))
-
-        os.close(tmp_d)
-        self.log.debug("_ new clip.name: {}".format(os.path.splitext(
-            os.path.basename(fpath))[0]))
-
-        self._input_clip.name.set_value(
-            str(os.path.splitext(
-                os.path.basename(fpath))[0]))
-
-        return str(fpath)
 
     def get_backburner_tmp(self):
         temp_dir = (
@@ -278,7 +255,7 @@ class BackburnerTranscoder(Transcoder):
             or self._output_dir
         )
         self.log.debug("_ temp_dir: {}".format(temp_dir))
-        return temp_dir
+        return str(temp_dir)
 
     def _create_background_job_settings(self):
         """ Creating Backbruner job settings
@@ -348,7 +325,8 @@ class BackburnerTranscoder(Transcoder):
             def postExportAsset(self, info, userData, *args, **kwargs):
                 del args, kwargs  # Unused necessary parameters
                 userData[self._job_key_user_data] = {
-                    info["backgroundJobId"]: info
+                    "resolvedFile": info["resolvedPath"],
+                    "jobInfoData": info["backgroundJobId"]
                 }
 
             def exportOverwriteFile(self, path, *args, **kwargs):

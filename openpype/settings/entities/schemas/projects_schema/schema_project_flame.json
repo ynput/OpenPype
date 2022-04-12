@@ -226,6 +226,16 @@
                     "children": [
                         {
                             "type": "boolean",
+                            "key": "background_export",
+                            "label": "Export with Backburner"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "hide_ui_on_process",
+                            "label": "Hide publisher when exporting"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "keep_original_representation",
                             "label": "Publish clip's original media"
                         },

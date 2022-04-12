@@ -217,28 +217,29 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         "out_mark": out_mark
                     })
 
-                # get and make export dir paths
-                export_dir_path = str(os.path.join(
-                    staging_dir, unique_name
-                ))
-                os.makedirs(export_dir_path)
-
-                extension = "." + preset_config["ext"]
+                extension = preset_config["ext"]
 
                 # add logger override
                 export_data["logger"] = self.log
 
                 if self.background_export:
                     transcoder = opfapi.BackburnerTranscoder(
-                        duplclip, preset_path, extension, **export_data
+                        duplclip, preset_path, **export_data
                     )
                     data_back = transcoder.export()
                     self.log.debug("__ data_back: {}".format(
                         pformat(data_back)
                     ))
+                    export_dir_path = data_back["output_dir"]
                 else:
+                    # get and make export dir paths
+                    export_dir_path = str(os.path.join(
+                        staging_dir, unique_name
+                    ))
+                    os.makedirs(export_dir_path)
+
                     transcoder = opfapi.Transcoder(
-                        duplclip, preset_path, extension,
+                        duplclip, preset_path,
                         output_dir=export_dir_path, **export_data
                     )
                     data_back = transcoder.export()
@@ -246,71 +247,71 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         pformat(data_back)
                     ))
 
-                    # create representation data
-                    representation_data = {
-                        "name": unique_name,
-                        "outputName": unique_name,
-                        "ext": extension,
-                        "stagingDir": export_dir_path,
-                        "tags": repre_tags,
-                        "data": {
-                            "colorspace": color_out
-                        },
-                        "load_to_batch_group": load_to_batch_group,
-                        "batch_group_loader_name": batch_group_loader_name
-                    }
+                # create representation data
+                representation_data = {
+                    "name": unique_name,
+                    "outputName": unique_name,
+                    "ext": extension,
+                    "stagingDir": export_dir_path,
+                    "tags": repre_tags,
+                    "data": {
+                        "colorspace": color_out
+                    },
+                    "load_to_batch_group": load_to_batch_group,
+                    "batch_group_loader_name": batch_group_loader_name
+                }
 
-                    # collect all available content of export dir
-                    files = os.listdir(export_dir_path)
+                # collect all available content of export dir
+                files = os.listdir(export_dir_path)
 
-                    # make sure no nested folders inside
-                    n_stage_dir, n_files = self._unfolds_nested_folders(
-                        export_dir_path, files, extension)
+                # make sure no nested folders inside
+                n_stage_dir, n_files = self._unfolds_nested_folders(
+                    export_dir_path, files, extension)
 
-                    # fix representation in case of nested folders
-                    if n_stage_dir:
-                        representation_data["stagingDir"] = n_stage_dir
-                        files = n_files
+                # fix representation in case of nested folders
+                if n_stage_dir:
+                    representation_data["stagingDir"] = n_stage_dir
+                    files = n_files
 
-                    # add files to represetation but add
-                    # imagesequence as list
-                    if (
-                        # first check if path in files is not mov extension
-                        [
-                            f for f in files
-                            if os.path.splitext(f)[-1] == ".mov"
-                        ]
-                        # then try if thumbnail is not in unique name
-                        or unique_name == "thumbnail"
-                    ):
-                        representation_data["files"] = files.pop()
-                    else:
-                        representation_data["files"] = files
+                # add files to represetation but add
+                # imagesequence as list
+                if (
+                    # first check if path in files is not mov extension
+                    [
+                        f for f in files
+                        if os.path.splitext(f)[-1] == ".mov"
+                    ]
+                    # then try if thumbnail is not in unique name
+                    or unique_name == "thumbnail"
+                ):
+                    representation_data["files"] = files.pop()
+                else:
+                    representation_data["files"] = files
 
-                    # add frame range
-                    if preset_config["representation_add_range"]:
-                        representation_data.update({
-                            "frameStart": frame_start_handle,
-                            "frameEnd": (
-                                frame_start_handle + source_duration_handles),
-                            "fps": instance.data["fps"]
-                        })
+                # add frame range
+                if preset_config["representation_add_range"]:
+                    representation_data.update({
+                        "frameStart": frame_start_handle,
+                        "frameEnd": (
+                            frame_start_handle + source_duration_handles),
+                        "fps": instance.data["fps"]
+                    })
 
-                    instance.data["representations"].append(
-                        representation_data)
+                instance.data["representations"].append(
+                    representation_data)
 
-                    # add review family if found in tags
-                    if "review" in repre_tags:
-                        instance.data["families"].append("review")
+                # add review family if found in tags
+                if "review" in repre_tags:
+                    instance.data["families"].append("review")
 
-                    self.log.info("Added representation: {}".format(
-                        representation_data))
+                self.log.info("Added representation: {}".format(
+                    representation_data))
 
         if self.background_export:
             if "clip" in instance.data["families"]:
                 instance.data["families"].remove("clip")
 
-            instance.data["family"].append("clip.farm")
+            instance.data["families"].append("clip.farm")
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
