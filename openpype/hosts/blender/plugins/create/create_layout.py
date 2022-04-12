@@ -26,7 +26,8 @@ class CreateLayout(plugin.Creator):
             # and not any objects selected
             if not lib.get_selection():
                 all_in_container = dialog.use_selection_behaviour_dialog()
-            # if any objects is selected not set all the objects in the container
+            # if any objects is selected
+            # not set all the objects in the container
             else:
                 all_in_container = False
 
@@ -81,7 +82,7 @@ class CreateLayout(plugin.Creator):
             if object not in container.objects.values():
                 # Find the users collection of the object
                 for collection in object.users_collection:
-                    # And unlink the object to his users collection
+                    # And unlink the object to its users collection
                     collection.objects.unlink(object)
                 # Link the object to the container
                 container.objects.link(object)

@@ -180,7 +180,7 @@ def get_unique_number(asset: str, subset: str) -> str:
     container_names = [
         c.name for c in data_collections if c.get(AVALON_PROPERTY)
     ]
-    if container_names == []:
+    if container_names:
         return "01"
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
@@ -196,7 +196,7 @@ def get_model_unique_number(current_container_name: str) -> str:
     container_names = [
         c.name for c in data_collections if c.get(AVALON_PROPERTY)
     ]
-    if container_names == []:
+    if container_names:
         return "001"
     count = 1
     name = f"{current_container_name}_{count:0>3}"
@@ -239,7 +239,10 @@ def set_original_name_for_objects_container(container, has_namespace=False):
                     and object.data.get("namespace")
                     and object.data.get("original_name")
                 ):
-                    object.data.name = f'{object.data["namespace"]}:{object.data["original_name"]}'
+                    object.data.name = (
+                        f'{object.data["namespace"]}:'
+                        f'{object.data["original_name"]}'
+                    )
                 else:
                     object.data.name = object.data["original_name"]
 
@@ -553,7 +556,8 @@ class AssetLoader(avalon.api.Loader):
         if not nodes:
             return None
 
-        # Only containerise if it's not already a collection from a .blend file.
+        # Only containerise if it's not already a collection
+        # from a .blend file.
         # representation = context["representation"]["name"]
         # if representation != "blend":
         #     from avalon.blender.pipeline import containerise

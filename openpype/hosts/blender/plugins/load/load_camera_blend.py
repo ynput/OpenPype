@@ -178,7 +178,8 @@ class BlendCameraLoader(plugin.AssetLoader):
             Path(bpy.path.abspath(str(libpath))).resolve()
         )
         self.log.debug(
-            f"normalized_group_libpath:\n  '{normalized_container_libpath}'\nnormalized_libpath:\n  '{normalized_libpath}'"
+            f"normalized_group_libpath:\n  '{normalized_container_libpath}'"
+            f"\nnormalized_libpath:\n  '{normalized_libpath}'"
         )
         # If library exits do nothing
         if normalized_container_libpath == normalized_libpath:
@@ -204,7 +205,8 @@ class BlendCameraLoader(plugin.AssetLoader):
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
 
-        # self._set_drivers_target(container_override, object_driver_target_list)
+        # self._set_drivers_target(container_override,
+        # object_driver_target_list)
 
         plugin.set_original_name_for_objects_container(container_override)
 

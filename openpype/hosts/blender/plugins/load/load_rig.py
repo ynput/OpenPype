@@ -53,9 +53,11 @@ class BlendRigLoader(plugin.AssetLoader):
         # Link the container to the scene collection
         scene_collection.children.link(container_collection)
 
-        # Get all the collection of the container. The farest parents in first for override them first
+        # Get all the collection of the container. The farest parents in first
+        # for override them first
 
-        # Get all the object of the container. The farest parents in first for override them first
+        # Get all the object of the container. The farest parents in first
+        # for override them first
         armatures = []
         non_armatures = []
         collections = plugin.get_all_collections_in_collection(
@@ -159,7 +161,8 @@ class BlendRigLoader(plugin.AssetLoader):
             Path(bpy.path.abspath(str(libpath))).resolve()
         )
         self.log.debug(
-            f"normalized_group_libpath:\n  '{normalized_container_libpath}'\nnormalized_libpath:\n  '{normalized_libpath}'"
+            f"normalized_group_libpath:\n  {normalized_container_libpath}"
+            f"\nnormalized_libpath:\n  {normalized_libpath}"
         )
         # If library exits do nothing
         if normalized_container_libpath == normalized_libpath:

@@ -31,16 +31,18 @@ class ExtractCamera(api.Extractor):
 
         collection = bpy.data.collections[instance.name]
         objects = plugin.get_all_objects_in_collection(collection)
-            if obj.type == "CAMERA":
-                obj.select_set(True)
-                selected.append(obj)
-                camera = obj
+        for object in objects:
+            if object.type == "CAMERA":
+                object.select_set(True)
+                selected.append(object)
+                camera = object
                 break
 
         assert camera, "No camera found"
 
         context = plugin.create_blender_context(
-            active=camera, selected=selected)
+            active=camera, selected=selected
+        )
 
         scale_length = bpy.context.scene.unit_settings.scale_length
         bpy.context.scene.unit_settings.scale_length = 0.01
@@ -51,8 +53,8 @@ class ExtractCamera(api.Extractor):
             filepath=filepath,
             use_active_collection=False,
             use_selection=True,
-            object_types={'CAMERA'},
-            bake_anim_simplify_factor=0.0
+            object_types={"CAMERA"},
+            bake_anim_simplify_factor=0.0,
         )
 
         bpy.context.scene.unit_settings.scale_length = scale_length
@@ -63,12 +65,13 @@ class ExtractCamera(api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'fbx',
-            'ext': 'fbx',
-            'files': filename,
+            "name": "fbx",
+            "ext": "fbx",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            "Extracted instance '%s' to: %s", instance.name, representation
+        )

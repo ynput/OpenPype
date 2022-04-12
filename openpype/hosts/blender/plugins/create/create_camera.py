@@ -27,7 +27,8 @@ class CreateCamera(plugin.Creator):
             # and not any objects selected
             if not lib.get_selection():
                 all_in_container = dialog.use_selection_behaviour_dialog()
-            # if any objects is selected not set all the objects in the container
+            # if any objects is selected
+            # not set all the objects in the container
             else:
                 all_in_container = False
 
@@ -68,6 +69,7 @@ class CreateCamera(plugin.Creator):
                     # And link them to the container
                     scene_collection.children.unlink(collection)
                     container.children.link(collection)
+
             # Get objects under the scene collection
             objects = scene_collection.objects
             for object in objects:
@@ -79,6 +81,7 @@ class CreateCamera(plugin.Creator):
                         user_collection.objects.unlink(object)
                     # Link the object to the container
                     container.objects.link(object)
+
         # If all_in_container is False set selected objects in the container
         else:
             selected = lib.get_selection()

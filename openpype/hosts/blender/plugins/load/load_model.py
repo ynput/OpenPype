@@ -28,7 +28,10 @@ class modfier_description:
         return self._object_name
 
     def create_blender_modifier(self):
-        """create the modifier with the index, properties and object properties"""
+        """
+        create the modifier with the index, properties and object
+        properties
+        """
         object = bpy.data.objects[self._object_name]
         if object:
             if object.modifiers.get(self._properties["name"]) is None:
@@ -107,7 +110,10 @@ class BlendModelLoader(plugin.AssetLoader):
                         print(inst)
 
     def _store_drivers_in_an_empty(self, container):
-        """Get all the drivers in the container's objects and copy them on an empty"""
+        """
+        Get all the drivers in the container's objects and
+        copy them on an empty
+        """
         # Create the empty
         empty = bpy.data.objects.new("empty", None)
         # Get all the container's objects
@@ -124,7 +130,8 @@ class BlendModelLoader(plugin.AssetLoader):
                     drivers = object.animation_data.drivers
                     for driver in drivers:
                         # Create a driver on the empty with the
-                        # data_path = name of the object + data_path of the object driver
+                        # data_path = name of the object + data_path of
+                        # the object driver
                         new_driver = empty.animation_data.drivers.new(
                             object.name + ":" + driver.data_path
                         )
@@ -132,7 +139,10 @@ class BlendModelLoader(plugin.AssetLoader):
         return empty
 
     def _set_drivers_from_empty(self, empty):
-        """Get all the drivers in an empty and copy them on the container's objects"""
+        """
+        Get all the drivers in an empty and
+        copy them on the container's objects
+        """
         # Get the drivers store in the empty
         drivers = empty.animation_data.drivers
         for driver in drivers:
@@ -221,9 +231,8 @@ class BlendModelLoader(plugin.AssetLoader):
         # Link the container collection to the scene collection
         scene_collection.children.link(container_collection)
 
-        # Get all the collection of the container. The farest parents in first for override them first
-
-        # Get all the object of the container. The farest parents in first for override them first
+        # Get all the object of the container.
+        # The farest parents in first for override them first
         objects = plugin.get_all_objects_in_collection(container_collection)
         collections = plugin.get_all_collections_in_collection(
             container_collection
@@ -323,7 +332,8 @@ class BlendModelLoader(plugin.AssetLoader):
             Path(bpy.path.abspath(str(libpath))).resolve()
         )
         self.log.debug(
-            f"normalized_group_libpath:\n  '{normalized_container_libpath}'\nnormalized_libpath:\n  '{normalized_libpath}'"
+            f"normalized_group_libpath:\n  '{normalized_container_libpath}'"
+            f"\nnormalized_libpath:\n  '{normalized_libpath}'"
         )
         # If library exits do nothing
         if normalized_container_libpath == normalized_libpath:
@@ -335,7 +345,8 @@ class BlendModelLoader(plugin.AssetLoader):
         # Get the parent collections of the container to relink after update
         parent_collections = plugin.get_parent_collections(avalon_container)
 
-        # Get a dictionary of the modifier parameters to reset them after the update
+        # Get a dictionary of the modifier parameters to
+        # reset them after the update
         modifiers_dict = self._get_modifier_parameters(avalon_container)
 
         # Get a list of the driver targets to reset them after the update
@@ -358,7 +369,6 @@ class BlendModelLoader(plugin.AssetLoader):
         # Reset the modifier parameters and the driver targets
         self._set_modifier(modifiers_dict)
         self._set_drivers_from_empty(empty)
-        # self._set_drivers_target(container_override, object_driver_target_list)
 
         plugin.set_original_name_for_objects_container(container_override)
 

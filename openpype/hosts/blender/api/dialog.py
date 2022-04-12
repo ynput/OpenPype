@@ -27,7 +27,8 @@ def use_selection_behaviour_dialog() -> bool:
         window,
         "MessageBox",
         "You enabled use selected but no any object is selected. "
-        + "All objects from the scene will be moved under the created rig, do you want to continue?",
+        "All objects from the scene will be moved under the created instance,"
+        " do you want to continue?",
         (QMessageBox.Yes | QMessageBox.No),
         QMessageBox.No,
     )

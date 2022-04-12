@@ -21,7 +21,6 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
 
         path = context.data["currentFile"]
         filepath = version_up(path)
-        self.log.info(filepath)
         save_file(filepath, copy=False)
 
         self.log.info("Incrementing script version")

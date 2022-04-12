@@ -188,7 +188,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
             Path(bpy.path.abspath(str(libpath))).resolve()
         )
         self.log.debug(
-            f"normalized_group_libpath:\n  '{normalized_container_libpath}'\nnormalized_libpath:\n  '{normalized_libpath}'"
+            f"normalized_group_libpath:\n  '{normalized_container_libpath}'"
+            f"\nnormalized_libpath:\n  '{normalized_libpath}'"
         )
         if normalized_container_libpath == normalized_libpath:
             self.log.info("Library already loaded, not updating...")
