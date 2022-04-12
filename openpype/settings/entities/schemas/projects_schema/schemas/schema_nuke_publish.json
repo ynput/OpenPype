@@ -399,41 +399,47 @@
                     "word_wrap": true
                 },
                 {
-                    "type": "list-strict",
-                    "key": "f_submission_note",
-                    "label": "Submission Note:",
-                    "object_types": [
+                    "type": "dict",
+                    "key": "key_value_mapping",
+                    "children": [
                         {
-                            "type": "boolean"
+                            "type": "list-strict",
+                            "key": "f_submission_note",
+                            "label": "Submission Note:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
                         },
                         {
-                            "type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "list-strict",
-                    "key": "f_submitting_for",
-                    "label": "Submission For:",
-                    "object_types": [
-                        {
-                            "type": "boolean"
+                            "type": "list-strict",
+                            "key": "f_submitting_for",
+                            "label": "Submission For:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
                         },
                         {
-                            "type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "list-strict",
-                    "key": "f_vfx_scope_of_work",
-                    "label": "VFX Scope Of Work:",
-                    "object_types": [
-                        {
-                            "type": "boolean"
-                        },
-                        {
-                            "type": "text"
+                            "type": "list-strict",
+                            "key": "f_vfx_scope_of_work",
+                            "label": "VFX Scope Of Work:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
                         }
                     ]
                 }
