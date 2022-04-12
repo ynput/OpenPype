@@ -89,6 +89,8 @@ This menu item will set correct Colorspace definitions for you. All has to be co
 -   set preview LUT to your viewers
 -   set correct colorspace to all discovered Read nodes (following expression set in settings)
 
+See [Nuke Color Management](artist_hosts_nuke_tut.md#nuke-color-management)
+
 </div>
 <div class="col col--6 markdown">
 
@@ -144,7 +146,7 @@ This tool will append all available subsets into an actual node graph. It will l
 
 This QuickStart is short introduction to what OpenPype can do for you. It attempts to make an overview for compositing artists, and simplifies processes that are better described in specific parts of the documentation.
 
-<iframe width="512px" height="288px" src="https://www.youtube.com/embed/jgwmLOPJg0g" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/jgwmLOPJg0g" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 ### Launch Nuke - Shot and Task Context
 OpenPype has to know what shot and task you are working on. You need to run Nuke in context of the task, using Ftrack Action or OpenPype Launcher to select the task and run Nuke.
@@ -227,6 +229,11 @@ This will create a Group with a Write node inside.
 :::tip Admin Tip - Configuring write node
 You can configure write node parameters in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke → Nodes**
 :::
+
+### Create Prerender Node
+Creating Prerender is very similar to creating OpenPype managed Write node.
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/er4SztHFN-w" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 #### What Nuke Publish Does
 From Artist perspective, Nuke publish gathers all the stuff found in the Nuke script with Publish checkbox set to on, exports stuff and raises the Nuke script (workfile) version.
@@ -317,7 +324,7 @@ Main disadvantage of this approach is that you can render only one version of yo
 
 When making quick farm publishes, like making two versions with different color correction, care must be taken to let the first job (first version) completely finish before the second version starts rendering.
 
-<iframe width="512px" height="288px" src="https://www.youtube.com/embed/j95OITIWJk8" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/j95OITIWJk8" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 ### Managing Versions
 
@@ -327,19 +334,30 @@ OpenPype checks all the assets loaded to Nuke on script open. All out of date as
 
 Use Manage to switch versions for loaded assets.
 
+### Loading Effects
+This video show how to publish effect from Hiero / Nuke Studio, and use the effect in Nuke.
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/zFoH7bq-w0E" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/HzZDdtII5io" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
+### Nuke Color Management
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/NKjQHkuwkSM" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
 ## Troubleshooting
 
 ### Fixing Validate Containers
 
-![Versionless](assets/nuke_tut/nuke_ValidateContainers.png)
-
 If your Pyblish dialog fails on Validate Containers, you might have an old asset loaded. Use OpenPype - Manage... to switch the asset(s) to the latest version.
 
-<iframe width="512px" height="288px" src="https://www.youtube.com/embed/hridMybn5nA" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+![Versionless](assets/nuke_tut/nuke_ValidateContainers.png)
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/hridMybn5nA" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 ### Fixing Validate Version
 If your Pyblish dialog fails on Validate Version, you might be trying to publish already published version. Rise your version in the OpenPype WorkFiles SaveAs.
 
 Or maybe you accidentally copied write node from different shot to your current one. Check the write publishes on the left side of the Pyblish dialog. Typically you publish only one write. Locate and delete the stray write from other shot.
 
-<iframe width="512px" height="288px" src="https://www.youtube.com/embed/Ic9z4gKnHAA" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/Ic9z4gKnHAA" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
