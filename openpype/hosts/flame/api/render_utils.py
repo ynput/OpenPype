@@ -219,13 +219,26 @@ class BackburnerTranscoder(Transcoder):
         self.exporter.foreground_export = False
         hooks_user_data = {}
 
-        self._output_dir, output_file = self._create_temp_paths()
+        output_file = self._create_temp_paths()
+        output_dir = os.path.dirname(output_file)
 
         try:
+            self.log.debug(
+                "__ self._input_clip: {}".format(self._input_clip))
+            self.log.debug(
+                "__ self._preset_path: {}".format(self._preset_path))
+            self.log.debug(
+                "__ self._output_dir: {}".format(self._output_dir))
+            self.log.debug(
+                "__ self._create_background_job_settings: {}".format(
+                    self._create_background_job_settings()
+                )
+            )
+
             self.exporter.export(
                 sources=self._input_clip,
                 preset_path=self._preset_path,
-                output_directory=self._output_dir,
+                output_directory=output_dir,
                 background_job_settings=self._create_background_job_settings(),
                 hooks=self.job_hook(self.RETURNING_JOB_KEY),
                 hooks_user_data=hooks_user_data
@@ -235,7 +248,7 @@ class BackburnerTranscoder(Transcoder):
             six.reraise(tp, value, tb)
 
         return {
-            "job_temp_dir": self._output_dirut_dir,
+            "job_temp_dir": output_dir,
             "job_temp_files": output_file,
             "job_hooks_data": hooks_user_data.get(
                 self.RETURNING_JOB_KEY)
@@ -257,12 +270,12 @@ class BackburnerTranscoder(Transcoder):
             str(os.path.splitext(
                 os.path.basename(fpath))[0]))
 
-        return tmp_d, fpath
+        return fpath
 
     def get_backburner_tmp(self):
         temp_dir = (
             os.environ.get("SHOTGUN_FLAME_BACKBURNER_SHARED_TMP")
-            or tempfile.gettempdir()
+            or self._output_dir
         )
         self.log.debug("_ temp_dir: {}".format(temp_dir))
         return temp_dir
@@ -311,11 +324,8 @@ class BackburnerTranscoder(Transcoder):
         name_correct_length = self._job_name[: self.JOB_NAME_LENGTH]
         return re.sub(r"[^0-9a-zA-Z_\-,\. %]+", "_", name_correct_length)
 
-    def submit(self):
-        pass
-
-    @classmethod
-    def job_hook(klass, job_key_user_data):
+    @staticmethod
+    def job_hook(job_key_user_data):
         class PythonHookOverride(object):
             def __init__(self, job_key_user_data):
                 self._job_key_user_data = job_key_user_data
