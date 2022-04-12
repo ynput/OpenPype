@@ -1,24 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
-<error id="main">
-<title>Scene setting</title>
-<description>
-## Invalid Deadline pools found
+    <error id="main">
+        <title>Scene setting</title>
+        <description>
+            ## Invalid Deadline pools found
 
-Configured pools don't match what is set in Deadline.
+            Configured pools don't match what is set in Deadline.
 
-{invalid_setting_str}
+            {invalid_value_str}
 
-### How to repair?
+            ### How to repair?
 
-    If your instance had deadline pools set on creation, remove or change them.</br>
-In other cases inform admin to change them in Settings.
+            If your instance had deadline pools set on creation, remove or
+            change them.
 
-    Available deadline pools {pools_str}.
-<detail>
-### __Detailed Info__
+        In other cases inform admin to change them in Settings.
 
-This error is shown when deadline pool is not on Deadline anymore. It could happen in case of republish old workfile which was created with previous deadline pools,
-    or someone changed pools on Deadline side, but didn't modify Openpype Settings.
-</detail>
+        Available deadline pools {pools_str}.
+        </description>
+        <detail>
+            ### __Detailed Info__
+
+            This error is shown when deadline pool is not on Deadline anymore. It
+            could happen in case of republish old workfile which was created with
+            previous deadline pools,
+            or someone changed pools on Deadline side, but didn't modify Openpype
+            Settings.
+        </detail>
+    </error>
 </root>
