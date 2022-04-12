@@ -426,7 +426,10 @@ class FamilyConfigCache:
             # Make sure connection is installed
             # - accessing attribute which does not have auto-install
             self.dbcon.install()
-            asset_doc = self.dbcon.database[project_name].find_one(
+            database = getattr(self.dbcon, "database", None)
+            if database is None:
+                database = self.dbcon._database
+            asset_doc = database[project_name].find_one(
                 {"type": "asset", "name": asset_name},
                 {"data.tasks": True}
             ) or {}
