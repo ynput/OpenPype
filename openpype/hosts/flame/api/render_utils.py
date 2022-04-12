@@ -203,7 +203,7 @@ class BackburnerTranscoder(Transcoder):
             **kwargs
     ):
         super(BackburnerTranscoder, self).__init__(
-            clip, preset_path, ext, **kwargs)
+            clip, preset_path, **kwargs)
 
         self._job_name = job_name or "_".join([
             self._clip_name,
