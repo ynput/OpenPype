@@ -41,7 +41,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Find the loaded collection and set in variable container_collection
         container_collection = None
         instances = plugin.get_containers_list()
-        self.log.info(f"instances : '{instances}'")
         for data_collection in instances:
             if data_collection.override_library is None:
                 if data_collection[AVALON_PROPERTY].get("family") is not None:
@@ -345,8 +344,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
             # Check if the container isn't publish
             if container["avalon"].get("id") == "pyblish.avalon.instance":
                 container_collection = container
-
-        self.log.info(f"container name '{container_collection.name}' ")
 
         if container_collection:
             container_collection[AVALON_PROPERTY] = {

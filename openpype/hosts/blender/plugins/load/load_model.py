@@ -401,8 +401,6 @@ class BlendModelLoader(plugin.AssetLoader):
             if container["avalon"].get("id") == "pyblish.avalon.instance":
                 container_collection = container
 
-        self.log.info(f"container name '{container_collection.name}' ")
-
         if container_collection:
             container_collection[AVALON_PROPERTY] = {
                 "schema": "openpype:container-2.0",

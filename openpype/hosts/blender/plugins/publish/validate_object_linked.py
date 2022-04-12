@@ -55,15 +55,12 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
             filepath = str(representation["data"]["source"]).replace(
                 "{root[work]}", work_path
             )
-            self.log.info(filepath)
             output = version_up(filepath)
             blender_binary_path = bpy.app.binary_path
             command = f"'{blender_binary_path}' --python '{script_path}' -- '{bpy.data.filepath}' '{output}' '{collection.name}'"
             # Not sure if it works on windows and ios
             command = command.replace("'", '"')
-            self.log.info(command)
             p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            self.log.info(p)
             p.stdout.close()
             p.wait()
             api.update(collection[AVALON_PROPERTY], -1)
