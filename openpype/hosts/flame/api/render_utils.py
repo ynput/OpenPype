@@ -228,7 +228,7 @@ class BackburnerTranscoder(Transcoder):
             self.log.debug(
                 "__ self._preset_path: {}".format(self._preset_path))
             self.log.debug(
-                "__ self._output_dir: {}".format(self._output_dir))
+                "__ output_dir: {}".format(output_dir))
             self.log.debug(
                 "__ self._create_background_job_settings: {}".format(
                     self._create_background_job_settings()
@@ -270,7 +270,7 @@ class BackburnerTranscoder(Transcoder):
             str(os.path.splitext(
                 os.path.basename(fpath))[0]))
 
-        return fpath
+        return str(fpath)
 
     def get_backburner_tmp(self):
         temp_dir = (
