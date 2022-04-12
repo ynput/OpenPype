@@ -388,7 +388,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # get string values for pools
             primary_pool = overrides["renderGlobals"]["Pool"]
-            secondary_pool = overrides["renderGlobals"]["SecondaryPool"]
+            secondary_pool = overrides["renderGlobals"].get("SecondaryPool")
             data["primaryPool"] = primary_pool
             data["secondaryPool"] = secondary_pool
 
