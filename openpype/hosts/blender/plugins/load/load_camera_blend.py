@@ -69,8 +69,6 @@ class BlendCameraLoader(plugin.AssetLoader):
 
         # Get all the collection of the container.
 
-        armatures = []
-        non_armatures = []
         collections = plugin.get_all_collections_in_collection(
             container_collection
         )
