@@ -427,10 +427,30 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
-
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
                 src_tail = src_collection.format("{tail}")
+
+                # slate workflow check
+                if "slate" in instance.data["families"]:
+                    # get the correct instance length
+                    repre_length = (
+                        (int(instance.data["frameEndHandle"]) -
+                         int(instance.data["frameStartHandle"])) + 1)
+
+                    # fix for slate workflow not having the slate in the files
+                    # if the actual render was not rendered with it included
+                    # before publishing.
+                    # we did not find a reliable way to directly add to
+                    # the already formed clique collection, so we regenerate
+                    # it if needed.
+                    if repre_length == len(files):
+                        files.insert(0, ("{0}{1}{2}".format(
+                            src_head,
+                            int(list(src_collection.indexes)[0]) - 1,
+                            src_tail)))
+                        src_collections, remainder = clique.assemble(files)
+                        src_collection = src_collections[0]
 
                 # fix dst_padding
                 valid_files = [x for x in files if src_collection.match(x)]

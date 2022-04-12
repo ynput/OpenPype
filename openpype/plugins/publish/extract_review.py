@@ -13,13 +13,15 @@ import pyblish.api
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
+    get_ffprobe_data,
     get_ffprobe_streams,
 
     path_to_subprocess_arg,
 
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
-    get_transcode_temp_directory
+    get_transcode_temp_directory,
+    get_offset_timecode
 )
 import speedcopy
 
@@ -508,6 +510,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
 
+        # get timecode from input file
+        input_file_data = get_ffprobe_data(temp_data["full_input_path"])
+        temp_data["start_timecode"] = "01:00:00:00"
+        for stream in input_file_data["streams"]:
+            if "timecode" in stream["tags"]:
+                temp_data["start_timecode"] = stream["tags"]["timecode"]
+
+        self.log.debug("Set starting timecode: {}".format(
+            temp_data["start_timecode"]))
+
         # Set output frames len to 1 when ouput is single image
         if (
             temp_data["output_ext_is_image"]
@@ -531,17 +543,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
 
-            # TODO add fps mapping `{fps: fraction}` ?
-            # - e.g.: {
-            #     "25": "25/1",
-            #     "24": "24/1",
-            #     "23.976": "24000/1001"
-            # }
-            # Add framerate to input when input is sequence
-            ffmpeg_input_args.append(
-                "-framerate {}".format(temp_data["fps"])
-            )
-
         if temp_data["output_is_sequence"]:
             # Set start frame of output sequence (just frame in filename)
             # - this is definition of an output
@@ -549,9 +550,31 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
 
+        # moved this from the input_is_sequence check, since it's best to
+        # specify framerate on anything that is not outputted as an image.
+        # This allows movs to receive the -r flag too, something needed
+        # to correctly setup the right timecode in slate for instance.
+        elif not temp_data["output_ext_is_image"]:
+            # - e.g.: {
+            #     "25": "25/1",
+            #     "24": "24/1",
+            #     "23.976": "24000/1001"
+            # }
+            # Add framerate to input when input is sequence
+            ffmpeg_input_args.append(
+                "-r {}".format(temp_data["fps"])
+            )
+
         # Change output's duration and start point if should not contain
         # handles
         start_sec = 0
+
+        # get correct TC for review from first frame
+        ffmpeg_output_args.append("-timecode {}".format(
+            get_offset_timecode(
+                temp_data["start_timecode"],
+                temp_data["fps"], offset=0)))
+
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
             # Set start time without handles
             # - check if handle_start is bigger than 0 to avoid zero division
@@ -559,8 +582,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
                 ffmpeg_input_args.append("-ss {:0.10f}".format(start_sec))
 
-            # Set output duration inn seconds
+            # Delete last appended timecode argument from list
+            # Set output duration in seconds
+            # Set correct timecode for trim
+            ffmpeg_output_args.pop()
             ffmpeg_output_args.append("-t {:0.10}".format(duration_seconds))
+            ffmpeg_output_args.append("-timecode {}".format(
+                get_offset_timecode(
+                    temp_data["start_timecode"],
+                    temp_data["fps"],
+                    offset=int(temp_data["handle_start"]))))
 
         # Set frame range of output when input or output is sequence
         elif temp_data["output_is_sequence"]:

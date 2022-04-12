@@ -8,6 +8,8 @@ from openpype.lib import (
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
+    get_offset_timecode,
+    str_to_number
 )
 
 
@@ -26,6 +28,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
     def process(self, instance):
         inst_data = instance.data
+        self.log.debug(inst_data)
         if "representations" not in inst_data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
@@ -36,7 +39,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
         slate_streams = get_ffprobe_streams(slate_path, self.log)
         # Try to find first stream with defined 'width' and 'height'
         # - this is to avoid order of streams where audio can be as first
-        # - there may be a better way (checking `codec_type`?)+
+        # - there may be a better way (checking `codec_type`?)
         slate_width = None
         slate_height = None
         for slate_stream in slate_streams:
@@ -82,10 +85,25 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # - there may be a better way (checking `codec_type`?)
             input_width = None
             input_height = None
+            input_timecode = None
+            input_audio = False
             for stream in video_streams:
                 if "width" in stream and "height" in stream:
                     input_width = int(stream["width"])
                     input_height = int(stream["height"])
+                    break
+
+            # this gets main timecode, forces first occurrence
+            for stream in video_streams:
+                if "timecode" in stream["tags"]:
+                    input_timecode = stream["tags"]["timecode"]
+                    break
+
+            # Tries to find any audio stream in source
+            # so we can deal with audio slate
+            for stream in video_streams:
+                if stream["codec_type"] == "audio":
+                    input_audio = True
                     break
 
             # Raise exception of any stream didn't define input resolution
@@ -154,7 +172,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             ))
             input_args.extend([
                 "-r {}".format(fps),
-                "-t 0.04"
+                "-t {:0.5f}".format(1 / str_to_number(fps))
             ])
 
             if use_legacy_code:
@@ -183,13 +201,13 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 (use_legacy_code and "reformat" in p_tags)
             ):
                 if resolution_ratio_test < delivery_ratio_test:
-                    self.log.debug("lower then delivery")
+                    self.log.debug("lower than delivery")
                     width_scale = int(slate_width * scale_factor_by_height)
                     width_half_pad = int((to_width - width_scale) / 2)
                     height_scale = to_height
                     height_half_pad = 0
                 else:
-                    self.log.debug("heigher then delivery")
+                    self.log.debug("higher than delivery")
                     width_scale = to_width
                     width_half_pad = 0
                     height_scale = int(slate_height * scale_factor_by_width)
@@ -222,6 +240,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
             output_args.append("-y")
 
             slate_v_path = slate_path.replace(".png", ext)
+            # Check for audio, gets the slate as intermediate
+            # instead of a final for concat.
+            if input_audio:
+                slate_v_path = slate_path.replace(
+                    ".png", ".intermediate{}".format(ext))
+
             output_args.append(
                 path_to_subprocess_arg(slate_v_path)
             )
@@ -241,6 +265,31 @@ class ExtractReviewSlate(openpype.api.Extractor):
             openpype.api.run_subprocess(
                 slate_subprocess_cmd, shell=True, logger=self.log
             )
+
+            # Not sure if this is the right place but this is
+            # where the party is so audio gets done here
+            # if audio was checked true before we
+            if input_audio:
+                slate_a_path = slate_path.replace(".png", ext)
+                audio_slate_args = [
+                    ffmpeg_path,
+                    "-y",
+                    "-f", "lavfi",
+                    "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+                    "-i", slate_v_path,
+                    "-codec:v", "copy",
+                    "-codec:a", "aac",
+                    "-shortest",
+                    slate_a_path
+                ]
+                self.log.debug(
+                    "Slate With Audio Executing: {}".format(
+                        " ".join(audio_slate_args))
+                )
+                openpype.api.run_subprocess(
+                    audio_slate_args, logger=self.log
+                )
+                _remove_at_end.append(slate_a_path)
 
             # create ffmpeg concat text file path
             conc_text_file = input_file.replace(ext, "") + "_concat" + ".txt"
@@ -265,6 +314,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-f", "concat",
                 "-safe", "0",
                 "-i", conc_text_path,
+                # set timecode and fps on concat ffmpeg
+                # cast fps to string for parsing
+                "-r", str(fps),
+                "-timecode", get_offset_timecode(input_timecode, str(fps)),
                 "-c", "copy",
                 output_path
             ]
@@ -273,6 +326,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             self.log.debug(
                 "Executing concat: {}".format(" ".join(concat_args))
             )
+
             openpype.api.run_subprocess(
                 concat_args, logger=self.log
             )

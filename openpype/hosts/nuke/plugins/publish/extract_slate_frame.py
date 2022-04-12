@@ -18,7 +18,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
     families = ["slate"]
     hosts = ["nuke"]
 
-
     def process(self, instance):
         if hasattr(self, "viewer_lut_raw"):
             self.viewer_lut_raw = self.viewer_lut_raw
@@ -35,6 +34,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
     def render_slate(self, instance):
         node_subset_name = instance.data.get("name", None)
         node = instance[0]  # group node
+        # TODO: have a more general approach. this assumes
+        # slate is connected to render instance node now
+        # and thus we get the source node as first input of slate.
+        # This is needed since we modified the slate logic,
+        # to copy itself after the lut. It made no sense to us to
+        # have the lut break the colors and text on slate.
+        source_node = instance.data.get("slateNode").input(0)
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
@@ -74,8 +80,15 @@ class ExtractSlateFrame(openpype.api.Extractor):
             self.log.info(
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
-            if ("slate" in instance.data["families"]) \
-                    and (frame_length != collected_frames_len):
+            # THIS WE NEED. there seemed to be a bug between pyblish and
+            # clique context, where the actual file does not get collected
+            # properly since pyblish has already validates that information
+            # before slate rendering. the result was that any review data mov
+            # would be rendered one frame short at head and with one duplicated
+            # frame at tail. This increments first_frame only if there's a
+            # discrepancy between clique data and task data.
+            if (("slate" in instance.data["families"]) and
+                    (frame_length != collected_frames_len)):
                 first_frame += 1
 
             last_frame = first_frame
@@ -88,7 +101,37 @@ class ExtractSlateFrame(openpype.api.Extractor):
         if "#" in fhead:
             fhead = fhead.replace("#", "")[:-1]
 
-        previous_node = node
+        previous_node = source_node
+
+        # This block is needed to be sure that the correct timecode
+        # will be rendered in the slate frame. Sometimes Nuke does not
+        # advance timecode (or backtrack) consistently. The trick
+        # we've been using for a bit now is to create a FrameHold at
+        # first comp frame connected to the output but not to the render.
+        # Then we add an AddTimeCode node referencing that timecode
+        # through expressions, set the useFrame check to True and set the
+        # Frame value at whatever the FrameHold is set.
+        # Nuke then is able to backtrack or advance timecode without
+        # discrepancies.
+        timecode_holder = nuke.createNode(
+            "FrameHold",
+            "name {}".format("OP_timecode_holder"))
+        timecode_holder["firstFrame"].setValue(first_frame + 1)
+        timecode_holder.setInput(0, previous_node)
+        temporary_nodes.append(timecode_holder)
+
+        slate_timecode = nuke.createNode(
+            "AddTimeCode",
+            "name {}".format("OP_slate_timecode"))
+        slate_timecode["startcode"].setValue(
+            "[metadata -n OP_timecode_holder input/timecode]")
+        slate_timecode["useFrame"].setValue(True)
+        slate_timecode["frame"].setValue(first_frame + 1)
+        slate_timecode.setInput(0, previous_node)
+        previous_node = slate_timecode
+        temporary_nodes.append(slate_timecode)
+
+        instance.data.get("slateNode").setInput(0, previous_node)
 
         # get input process and connect it to baking
         ipn = self.get_view_process_node()
@@ -102,6 +145,15 @@ class ExtractSlateFrame(openpype.api.Extractor):
             dag_node.setInput(0, previous_node)
             previous_node = dag_node
             temporary_nodes.append(dag_node)
+
+        # This slate was moved after Input Process and lut, since
+        # there's really no need to encode lut on the slate (apart
+        # from the thumbs inside)
+        slate_node = self.get_slate_node(instance)
+        if slate_node is not None:
+            slate_node.setInput(0, previous_node)
+            previous_node = slate_node
+            temporary_nodes.append(slate_node)
 
         # create write node
         write_node = nuke.createNode("Write")
@@ -125,10 +177,24 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.debug(
             "slate frame path: {}".format(instance.data["slateFrame"]))
 
+        instance.data.get("slateNode").setInput(0, source_node)
+
         # Clean up
         for node in temporary_nodes:
             nuke.delete(node)
 
+    def get_slate_node(self, instance):
+
+        # Same code execution as the view process selection.
+        if nuke.selectedNodes():
+            [n.setSelected(False) for n in nuke.selectedNodes()]
+        slate_orig = instance.data.get("slateNode")
+        slate_orig.setSelected(True)
+        nuke.nodeCopy('%clipboard%')
+        [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
+        nuke.nodePaste('%clipboard%')
+        slate = nuke.selectedNode()
+        return slate
 
     def get_view_process_node(self):
 
@@ -147,8 +213,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
-
-            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
+            # Deselect all
+            [n.setSelected(False) for n in nuke.selectedNodes()]
 
             nuke.nodePaste('%clipboard%')
 
@@ -167,8 +233,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
             intent_value = intent_value.get("value")
 
         try:
-            node["f_submission_note"].setValue(comment)
-            node["f_submitting_for"].setValue(intent_value or "")
+            # we check if the comment was already in from the slate
+            # fields, if not it gets overridden by pyblish, else
+            # it stays as before
+            if node["f_submission_note"].getValue() == "":
+                node["f_submission_note"].setValue(comment)
+            if node["f_submission_note"].getValue() == "":
+                node["f_submitting_for"].setValue(intent_value or "")
         except NameError:
             return
         instance.data.pop("slateNode")

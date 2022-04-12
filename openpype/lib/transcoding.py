@@ -495,7 +495,11 @@ def convert_for_ffmpeg(
 
 
 # FFMPEG functions
-def get_ffprobe_data(path_to_file, logger=None):
+# Modified to handle also frame information. This is needed to get
+# timecode from any image input that supports it. This is needed
+# to get the timecode out of the slate frame. Argumet is optional,
+# set to False by default to keep consistent with previous behaviour
+def get_ffprobe_data(path_to_file, logger=None, show_frames=False):
     """Load data about entered filepath via ffprobe.
 
     Args:
@@ -517,9 +521,12 @@ def get_ffprobe_data(path_to_file, logger=None):
         "-show_programs",
         "-show_chapters",
         "-show_private_data",
-        "-print_format", "json",
-        path_to_file
+        "-print_format", "json"
     ]
+    # Split to optionally use -show_frames flag before checked file
+    if show_frames:
+        args.append("-show_frames")
+    args.append(path_to_file)
 
     logger.debug("FFprobe command: {}".format(
         subprocess.list2cmdline(args)
@@ -551,7 +558,19 @@ def get_ffprobe_streams(path_to_file, logger=None):
         path_to_file (str): absolute path
         logger (logging.Logger): injected logger, if empty new is created
     """
-    return get_ffprobe_data(path_to_file, logger)["streams"]
+    return get_ffprobe_data(path_to_file, logger, show_frames=False)["streams"]
+
+
+# New wrapper with show frames Enabled. This returns just the "frames"
+# block, useful to get metadata like timecode from slate if it's needed.
+def get_ffprobe_frames(path_to_file, logger=None):
+    """Load frames from entered filepath via ffprobe.
+
+    Args:
+        path_to_file (str): absolute path
+        logger (logging.Logger): injected logger, if empty new is created
+    """
+    return get_ffprobe_data(path_to_file, logger, show_frames=True)["frames"]
 
 
 def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):

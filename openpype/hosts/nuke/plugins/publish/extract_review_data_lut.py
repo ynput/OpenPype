@@ -40,7 +40,7 @@ class ExtractReviewDataLut(openpype.api.Extractor):
         with maintained_selection():
             exporter = plugin.ExporterReviewLut(
                 self, instance
-                )
+            )
             data = exporter.generate_lut()
 
             # assign to representations

@@ -169,6 +169,11 @@ class ExporterReview(object):
             "representations": list()
         })
 
+        # this correctly caluculates frame length of the instance
+        self.instance_length = int(
+            (instance.data["frameEnd"] - instance.data["frameStart"] + 1) +
+            (instance.data["handleStart"] + instance.data["handleEnd"]))
+
     def get_file_info(self):
         if self.collection:
             self.log.debug("Collection: `{}`".format(self.collection))
@@ -180,7 +185,15 @@ class ExporterReview(object):
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
-            if "slate" in self.instance.data["families"]:
+            # get collection duration
+            self.frame_length = int(len(self.collection.indexes))
+            # compare lenghts to render out the data mov
+            # with the correct frame range. Since publishing happens at
+            # the same time as data mov extraction render needs to be
+            # with the slate for old code to work. This check exclude
+            # incrementing first frame when durations are the same.
+            if "slate" in self.instance.data["families"] and \
+                    self.frame_length > self.instance_length:
                 self.first_frame += 1
         else:
             self.fname = os.path.basename(self.path_in)
@@ -256,8 +269,6 @@ class ExporterReview(object):
             return nuke_imageio["baking"]["viewerProcess"]
         else:
             return nuke_imageio["viewer"]["viewerProcess"]
-
-
 
 
 class ExporterReviewLut(ExporterReview):
@@ -346,7 +357,8 @@ class ExporterReviewLut(ExporterReview):
                 dag_node.setInput(0, self.previous_node)
                 self._temp_nodes.append(dag_node)
                 self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+                self.log.debug("OCIODisplay...   `{}`".format(
+                    self._temp_nodes))
 
         # GenerateLUT
         gen_lut_node = nuke.createNode("GenerateLUT")
@@ -548,6 +560,9 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
+
+        # write_node["mov64_audiofile"].setValue("C:/Users/22DOGS/Desktop/test/empty_audio.wav")
+        # write_node["mov64_audio_offset"].setValue(1001)
 
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
