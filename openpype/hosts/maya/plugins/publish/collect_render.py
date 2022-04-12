@@ -211,7 +211,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     })
 
             assert render_cameras, "No render cameras found."
-                
+
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
