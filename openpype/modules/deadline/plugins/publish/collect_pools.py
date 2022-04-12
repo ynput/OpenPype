@@ -6,19 +6,18 @@ import pyblish.api
 
 
 class CollectDeadlinePools(pyblish.api.InstancePlugin):
-    """Collect pools from Deadline, if set on instance use these."""
+    """Collect pools from instance if present, from Setting otherwise."""
 
-    order = pyblish.api.CollectorOrder + 0.04
-    label = "Deadline Webservice from the Instance"
-    families = ["rendering", "render.farm", "renderFarm"]
+    order = pyblish.api.CollectorOrder + 0.420
+    label = "Collect Deadline Pools"
+    families = ["rendering", "render.farm", "renderFarm", "renderlayer"]
 
     primary_pool = None
     secondary_pool = None
 
     def process(self, instance):
-
         if not instance.data.get("primaryPool"):
-            self.instance.data["primaryPool"] = self.primary_pool
+            instance.data["primaryPool"] = self.primary_pool or "none"
 
         if not instance.data.get("secondaryPool"):
-            self.instance.data["secondaryPool"] = self.secondary_pool
+            instance.data["secondaryPool"] = self.secondary_pool or "none"
