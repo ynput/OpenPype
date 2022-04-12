@@ -12,7 +12,7 @@ def match_aov_pattern(host_name, aov_patterns, render_file_name):
 
     Args:
         app (str): Host name.
-        aov_patterns (list): List of AOV patterns from AOV filters.
+        aov_patterns (dict):  AOV patterns from AOV filters.
         render_file_name (str): Incoming file name to match against.
 
     Returns:
