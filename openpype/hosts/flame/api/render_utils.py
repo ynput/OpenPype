@@ -326,7 +326,7 @@ class BackburnerTranscoder(Transcoder):
                 del args, kwargs  # Unused necessary parameters
                 userData[self._job_key_user_data] = {
                     "resolvedFile": info["resolvedPath"],
-                    "jobInfoData": info["backgroundJobId"]
+                    "jobInfoData": info
                 }
 
             def exportOverwriteFile(self, path, *args, **kwargs):

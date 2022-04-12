@@ -263,6 +263,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
                 # collect all available content of export dir
                 files = os.listdir(export_dir_path)
+                self.log.debug("__ files: {}".format(
+                    pformat(files)
+                ))
 
                 # make sure no nested folders inside
                 n_stage_dir, n_files = self._unfolds_nested_folders(
