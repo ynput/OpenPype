@@ -540,7 +540,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 if instance.get("multipartExr", False):
                     preview = True
                 else:
-                    render_file_name = list(collection[0])
+                    render_file_name = list(collection)[0]
                     host_name = os.environ.get("AVALON_APP", "")
                     # if filtered aov name is found in filename, toggle it for
                     # preview video rendering
