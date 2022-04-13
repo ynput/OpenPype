@@ -1,7 +1,7 @@
 import os
+import time
 from pprint import pformat
 from copy import deepcopy
-
 import pyblish.api
 import openpype.api
 from openpype.hosts.flame import api as opfapi
@@ -226,11 +226,13 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     transcoder = opfapi.BackburnerTranscoder(
                         duplclip, preset_path, **export_data
                     )
-                    data_back = transcoder.export()
+                    data_back = transcoder.export(self.conf_custom_hook())
                     self.log.debug("__ data_back: {}".format(
                         pformat(data_back)
                     ))
                     export_dir_path = data_back["output_dir"]
+                    while not data_back["job_hooks_data"]["done"]:
+                        time.sleep(0.5)
                 else:
                     # get and make export dir paths
                     export_dir_path = str(os.path.join(
@@ -242,11 +244,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         duplclip, preset_path,
                         output_dir=export_dir_path, **export_data
                     )
-                    data_back = transcoder.export()
-                    self.log.debug("__ data_back: {}".format(
-                        pformat(data_back)
-                    ))
-
+                    transcoder.export()
                 # create representation data
                 representation_data = {
                     "name": unique_name,
@@ -260,6 +258,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "load_to_batch_group": load_to_batch_group,
                     "batch_group_loader_name": batch_group_loader_name
                 }
+
+                self.log.debug("__ export_dir_path: {}".format(export_dir_path))
+                self.log.debug("__ os.path.exists: {}".format(os.path.exists(export_dir_path)))
+                self.log.debug("__ os.path.isdir: {}".format(os.path.isdir(export_dir_path)))
 
                 # collect all available content of export dir
                 files = os.listdir(export_dir_path)
@@ -402,3 +404,57 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 for segment in track.segments:
                     if segment.name.get_value() != segment_name:
                         segment.hidden = True
+
+    def conf_custom_hook(self):
+        class CustomExportHook(object):
+            log = self.log
+
+            def __init__(self, job_key_user_data):
+                self._job_key_user_data = job_key_user_data
+                self._job_data = {
+                    "resolvedFile": None,
+                    "jobInfoData": None,
+                    "done": False
+                }
+
+            def preExport(self, info, userData, *args, **kwargs):
+                pass
+
+            def preExportSequence(self, info, userData, *args, **kwargs):
+                pass
+
+            def postExportSequence(self, info, userData, *args, **kwargs):
+                pass
+
+            def preExportAsset(self, info, userData, *args, **kwargs):
+                self._job_data.update({
+                    "resolvedFile": info["resolvedPath"],
+                    "jobInfoData": info
+                })
+                userData[self._job_key_user_data] = self._job_data
+
+            def postExportAsset(self, info, userData):
+                pass
+
+            def postExport(self, info, userData):
+                self.log.debug(">>>>>> postExport")
+
+                # make sure some files are generated
+                checker = False
+                while not checker:
+                    time.sleep(1)
+                    files = os.listdir(
+                        self._job_data[
+                            "jobInfoData"]["destinationPath"])
+                    self.log.debug(">>>>>> files: {}".format(
+                        files
+                    ))
+                    if len(files) > 0:
+                        checker = True
+
+                self._job_data["done"] = True
+
+            def useBackburnerPostExportAsset():
+                return True
+
+        return CustomExportHook

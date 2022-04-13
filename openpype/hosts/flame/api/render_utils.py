@@ -164,25 +164,22 @@ class Transcoder(object):
         return tempfile.mkdtemp()
 
     def export(self):
-        self.exporter.foreground_export = True
+        self.exporter.foreground = True
 
-        try:
-            self.exporter.export(
-                self._input_clip,
-                self._preset_path,
-                self._output_dir
-            )
-        except Exception:
-            tp, value, tb = sys.exc_info()
-            six.reraise(tp, value, tb)
+        result = self.exporter.export(
+            self._input_clip,
+            self._preset_path,
+            self._output_dir
+        )
 
-        finally:
-            self.log.info("Exported: `{}` [{}-{}] to `{}`".format(
-                self._clip_name,
-                self._input_clip.in_mark,
-                self._input_clip.out_mark,
-                self._output_dir
-            ))
+        self.log.info("Exported: `{}` [{}-{}] to `{}`".format(
+            self._clip_name,
+            self._input_clip.in_mark,
+            self._input_clip.out_mark,
+            self._output_dir
+        ))
+
+        return result
 
 
 class BackburnerTranscoder(Transcoder):
@@ -212,36 +209,32 @@ class BackburnerTranscoder(Transcoder):
 
         self._job_completion = job_completion
 
-    def export(self):
-        self.exporter.foreground_export = False
+    def export(self, custom_hook=None):
+        self.exporter.foreground = False
         hooks_user_data = {}
 
         output_dir = self.get_backburner_tmp()
 
-        try:
-            self.log.debug(
-                "__ self._input_clip: {}".format(self._input_clip))
-            self.log.debug(
-                "__ self._preset_path: {}".format(self._preset_path))
-            self.log.debug(
-                "__ output_dir: {}".format(output_dir))
-            self.log.debug(
-                "__ self._create_background_job_settings: {}".format(
-                    self._create_background_job_settings()
-                )
+        self.log.debug(
+            "__ self._input_clip: {}".format(self._input_clip))
+        self.log.debug(
+            "__ self._preset_path: {}".format(self._preset_path))
+        self.log.debug(
+            "__ output_dir: {}".format(output_dir))
+        self.log.debug(
+            "__ self._create_background_job_settings: {}".format(
+                self._create_background_job_settings()
             )
+        )
 
-            self.exporter.export(
-                sources=self._input_clip,
-                preset_path=self._preset_path,
-                output_directory=output_dir,
-                background_job_settings=self._create_background_job_settings(),
-                hooks=self.job_hook(self.RETURNING_JOB_KEY),
-                hooks_user_data=hooks_user_data
-            )
-        except Exception:
-            tp, value, tb = sys.exc_info()
-            six.reraise(tp, value, tb)
+        self.exporter.export(
+            sources=self._input_clip,
+            preset_path=self._preset_path,
+            output_directory=output_dir,
+            background_job_settings=self._create_background_job_settings(),
+            hooks=self.job_hook(self.RETURNING_JOB_KEY, custom_hook),
+            hooks_user_data=hooks_user_data
+        )
 
         return {
             "output_dir": output_dir,
@@ -302,15 +295,17 @@ class BackburnerTranscoder(Transcoder):
         return re.sub(r"[^0-9a-zA-Z_\-,\. %]+", "_", name_correct_length)
 
     @staticmethod
-    def job_hook(job_key_user_data):
-        class PythonHookOverride(object):
+    def job_hook(job_key_user_data, custom_hook=None):
+        class CustomExportHook(object):
             def __init__(self, job_key_user_data):
                 self._job_key_user_data = job_key_user_data
+                self._job_data = {
+                    "resolvedFile": None,
+                    "jobInfoData": None,
+                    "done": False
+                }
 
             def preExport(self, info, userData, *args, **kwargs):
-                pass
-
-            def postExport(self, info, userData, *args, **kwargs):
                 pass
 
             def preExportSequence(self, info, userData, *args, **kwargs):
@@ -320,17 +315,27 @@ class BackburnerTranscoder(Transcoder):
                 pass
 
             def preExportAsset(self, info, userData, *args, **kwargs):
-                pass
-
-            def postExportAsset(self, info, userData, *args, **kwargs):
-                del args, kwargs  # Unused necessary parameters
-                userData[self._job_key_user_data] = {
+                self._job_data.update({
                     "resolvedFile": info["resolvedPath"],
                     "jobInfoData": info
-                }
+                })
+                userData[self._job_key_user_data] = self._job_data
+
+            def postExportAsset(self, info, userData):
+                self._job_data["done"] = False
+
+            def postExport(self, info, userData):
+                print(">>>>>>: ")
+                self._job_data["done"] = False
+
+            def postCustomExport(self, info, userData):
+                self._job_data["done"] = True
 
             def exportOverwriteFile(self, path, *args, **kwargs):
                 del path, args, kwargs  # Unused necessary parameters
                 return "overwrite"
 
-        return PythonHookOverride(job_key_user_data)
+            def useBackburnerPostExportAsset():
+                return True
+        hook = custom_hook or CustomExportHook
+        return hook(job_key_user_data)
