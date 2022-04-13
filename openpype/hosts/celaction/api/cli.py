@@ -11,7 +11,7 @@ import openpype
 import openpype.hosts.celaction
 from openpype.hosts.celaction import api as celaction
 from openpype.tools.utils import host_tools
-from openpype.pipeline.process_context import install_openpype_plugins
+from openpype.pipeline import install_openpype_plugins
 
 
 log = Logger().get_logger("Celaction_cli_publisher")
