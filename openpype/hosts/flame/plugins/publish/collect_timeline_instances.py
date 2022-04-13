@@ -31,7 +31,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         self.log.debug("__ selected_segments: {}".format(selected_segments))
 
         self.otio_timeline = context.data["otioTimeline"]
-        self.clips_in_reels = opfapi.get_clips_in_reels(project)
         self.fps = context.data["fps"]
 
         # process all sellected
@@ -62,9 +61,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             # get file path
             file_path = clip_data["fpath"]
-
-            # get source clip
-            source_clip = self._get_reel_clip(file_path)
 
             first_frame = opfapi.get_frame_from_filename(file_path) or 0
 
@@ -103,7 +99,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "families": families,
                 "publish": marker_data["publish"],
                 "fps": self.fps,
-                "flameSourceClip": source_clip,
                 "sourceFirstFrame": int(first_frame),
                 "path": file_path,
                 "flameAddTasks": self.add_tasks,
@@ -257,14 +252,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 )
             )
         return head, tail
-
-    def _get_reel_clip(self, path):
-        match_reel_clip = [
-            clip for clip in self.clips_in_reels
-            if clip["fpath"] == path
-        ]
-        if match_reel_clip:
-            return match_reel_clip.pop()
 
     def _get_resolution_to_data(self, data, context):
         assert data.get("otioClip"), "Missing `otioClip` data"
