@@ -619,7 +619,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "fps": instance.get("fps"),
                     "tags": ["review"]
                 })
-            self._solve_families(instance, True)
+            self._solve_families(instance, preview)
 
             already_there = False
             for repre in instance.get("representations", []):
