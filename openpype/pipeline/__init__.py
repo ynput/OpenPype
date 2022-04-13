@@ -85,6 +85,10 @@ from .context_tools import (
 install = install_host
 uninstall = uninstall_host
 
+from .mongodb import (
+    AvalonMongoDB,
+)
+
 
 __all__ = (
     "AVALON_CONTAINER_ID",
@@ -170,4 +174,6 @@ __all__ = (
     # Backwards compatible function names
     "install",
     "uninstall",
+
+    "AvalonMongoDB",
 )
