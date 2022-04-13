@@ -7,7 +7,6 @@ import datetime
 
 import ftrack_api
 
-from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib import (
     get_workfile_template_key,
@@ -15,6 +14,7 @@ from openpype.lib import (
     Anatomy,
     StringTemplate,
 )
+from openpype.pipeline import AvalonMongoDB
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 

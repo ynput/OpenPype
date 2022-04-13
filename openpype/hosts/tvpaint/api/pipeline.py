@@ -7,7 +7,6 @@ import logging
 import requests
 
 import pyblish.api
-import avalon.api
 
 from avalon import io
 

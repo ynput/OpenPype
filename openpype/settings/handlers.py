@@ -337,7 +337,7 @@ class MongoSettingsHandler(SettingsHandler):
     def __init__(self):
         # Get mongo connection
         from openpype.lib import OpenPypeMongoConnection
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         settings_collection = OpenPypeMongoConnection.get_mongo_client()
 

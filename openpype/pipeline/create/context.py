@@ -6,6 +6,11 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
+from openpype.pipeline.mongodb import (
+    AvalonMongoDB,
+    session_data_from_environment,
+)
+
 from .creator_plugins import (
     BaseCreator,
     Creator,
@@ -659,10 +664,8 @@ class CreateContext:
     ):
         # Create conncetion if is not passed
         if dbcon is None:
-            import avalon.api
-
-            session = avalon.api.session_data_from_environment(True)
-            dbcon = avalon.api.AvalonMongoDB(session)
+            session = session_data_from_environment(True)
+            dbcon = AvalonMongoDB(session)
             dbcon.install()
 
         self.dbcon = dbcon

@@ -192,7 +192,7 @@ class ProcessEventHub(SocketBaseEventHub):
                 except pymongo.errors.AutoReconnect:
                     self.pypelog.error((
                         "Mongo server \"{}\" is not responding, exiting."
-                    ).format(os.environ["AVALON_MONGO"]))
+                    ).format(os.environ["OPENPYPE_MONGO"]))
                     sys.exit(0)
                 # Additional special processing of events.
                 if event['topic'] == 'ftrack.meta.disconnected':

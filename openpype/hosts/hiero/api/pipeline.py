@@ -20,8 +20,6 @@ from . import lib, menu, events
 
 log = Logger().get_logger(__name__)
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
-
 # plugin paths
 API_DIR = os.path.dirname(os.path.abspath(__file__))
 HOST_DIR = os.path.dirname(API_DIR)
@@ -247,15 +245,10 @@ def reload_config():
     import importlib
 
     for module in (
-        "avalon",
-        "avalon.lib",
-        "avalon.pipeline",
-        "pyblish",
-        "pypeapp",
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.hiero.lib".format(AVALON_CONFIG),
-        "{}.hosts.hiero.menu".format(AVALON_CONFIG),
-        "{}.hosts.hiero.tags".format(AVALON_CONFIG)
+        "openpype.api",
+        "openpype.hosts.hiero.lib",
+        "openpype.hosts.hiero.menu",
+        "openpype.hosts.hiero.tags"
     ):
         log.info("Reloading module: {}...".format(module))
         try:

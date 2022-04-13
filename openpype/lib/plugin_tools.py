@@ -136,7 +136,7 @@ def get_subset_name(
     `get_subset_name_with_asset_doc` where asset document is expected.
     """
     if dbcon is None:
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name

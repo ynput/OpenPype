@@ -64,8 +64,8 @@ def create_project(
     """
 
     from openpype.settings import ProjectSettings, SaveWarningExc
-    from avalon.api import AvalonMongoDB
-    from avalon.schema import validate
+    from openpype.pipeline import AvalonMongoDB
+    from openpype.pipeline.schema import validate
 
     if dbcon is None:
         dbcon = AvalonMongoDB()
@@ -333,8 +333,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
-        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
-            with Session.
+        dbcon (AvalonMongoDB, optional): Avalon Mongo connection with Session.
         project_name (str, optional): Find latest version in specific project.
 
     Returns:
@@ -429,7 +428,7 @@ def get_workfile_template_key_from_context(
                 "`get_workfile_template_key_from_context` requires to pass"
                 " one of 'dbcon' or 'project_name' arguments."
             ))
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
@@ -1794,7 +1793,7 @@ def get_custom_workfile_template_by_string_context(
     """
 
     if dbcon is None:
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
 

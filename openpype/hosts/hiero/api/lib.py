@@ -38,8 +38,6 @@ self.pype_tag_name = "openpypeData"
 self.default_sequence_name = "openpypeSequence"
 self.default_bin_name = "openpypeBin"
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
-
 
 def flatten(_list):
     for item in _list:
@@ -48,6 +46,7 @@ def flatten(_list):
                 yield sub_item
         else:
             yield item
+
 
 def get_current_project(remove_untitled=False):
     projects = flatten(hiero.core.projects())
