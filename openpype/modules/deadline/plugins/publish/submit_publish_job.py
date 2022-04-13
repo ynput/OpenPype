@@ -260,8 +260,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Priority": priority,
 
                 "Group": self.deadline_group,
-                "Pool": self.deadline_pool,
-                "SecondaryPool": self.deadline_pool_secondary,
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
 
                 "OutputDirectory0": output_dir
             },
