@@ -54,6 +54,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
 
             additional_filters = profile.get("advanced_filtering")
             if additional_filters:
+                self.log.info("'{}' families used for additional filtering".
+                              format(families))
                 add_ftrack_family = self._get_add_ftrack_f_from_addit_filters(
                     additional_filters,
                     families,
