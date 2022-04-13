@@ -7,8 +7,9 @@ from Qt import QtCore, QtGui
 import qtawesome
 from bson.objectid import ObjectId
 
-from avalon import io, schema
+from avalon import io
 from openpype.pipeline import (
+    schema,
     HeroVersionType,
     registered_host,
 )

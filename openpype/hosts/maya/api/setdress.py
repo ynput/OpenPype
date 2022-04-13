@@ -12,6 +12,7 @@ from maya import cmds
 
 from avalon import io
 from openpype.pipeline import (
+    schema,
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
@@ -253,7 +254,6 @@ def get_contained_containers(container):
 
     """
 
-    import avalon.schema
     from .pipeline import parse_container
 
     # Get avalon containers in this package setdress container
@@ -263,7 +263,7 @@ def get_contained_containers(container):
         try:
             member_container = parse_container(node)
             containers.append(member_container)
-        except avalon.schema.ValidationError:
+        except schema.ValidationError:
             pass
 
     return containers

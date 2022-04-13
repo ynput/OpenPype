@@ -11,9 +11,10 @@ from . import ops
 
 import pyblish.api
 import avalon.api
-from avalon import io, schema
+from avalon import io
 
 from openpype.pipeline import (
+    schema,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,

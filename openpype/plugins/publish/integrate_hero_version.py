@@ -8,11 +8,12 @@ from bson.objectid import ObjectId
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
 
-from avalon import api, io, schema
+from avalon import api, io
 from openpype.lib import (
     create_hard_link,
     filter_profiles
 )
+from openpype.pipeline import schema
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):

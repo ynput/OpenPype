@@ -9,10 +9,11 @@ import numbers
 import six
 from bson.objectid import ObjectId
 
-from avalon import io, schema
+from avalon import io
 from avalon.api import Session
 
 from openpype.lib import Anatomy
+from openpype.pipeline import schema
 
 log = logging.getLogger(__name__)
 

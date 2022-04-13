@@ -5,10 +5,10 @@ import os
 import contextlib
 from collections import OrderedDict
 
-from avalon import schema
 from pyblish import api as pyblish
 from openpype.api import Logger
 from openpype.pipeline import (
+    schema,
     register_creator_plugin_path,
     register_loader_plugin_path,
     deregister_creator_plugin_path,
