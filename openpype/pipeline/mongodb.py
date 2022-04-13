@@ -65,8 +65,6 @@ SESSION_CONTEXT_KEYS = (
     "AVALON_PROJECT",
     # Name of current Asset
     "AVALON_ASSET",
-    # Name of current silo
-    "AVALON_SILO",
     # Name of current task
     "AVALON_TASK",
     # Name of current app
@@ -89,10 +87,6 @@ def session_data_from_environment(context_keys=False):
             session_data[key] = None
 
     for key, default_value in (
-        # Name of current Config
-        # TODO(marcus): Establish a suitable default config
-        ("AVALON_CONFIG", "no_config"),
-
         # Name of Avalon in graphical user interfaces
         # Use this to customise the visual appearance of Avalon
         # to better integrate with your surrounding pipeline
@@ -106,37 +100,6 @@ def session_data_from_environment(context_keys=False):
 
         # Name of database used in MongoDB
         ("AVALON_DB", "avalon"),
-
-        # Address to Sentry
-        ("AVALON_SENTRY", None),
-
-        # Address to Deadline Web Service
-        # E.g. http://192.167.0.1:8082
-        ("AVALON_DEADLINE", None),
-
-        # Enable features not necessarily stable, at the user's own risk
-        ("AVALON_EARLY_ADOPTER", None),
-
-        # Address of central asset repository, contains
-        # the following interface:
-        #   /upload
-        #   /download
-        #   /manager (optional)
-        ("AVALON_LOCATION", "http://127.0.0.1"),
-
-        # Boolean of whether to upload published material
-        # to central asset repository
-        ("AVALON_UPLOAD", None),
-
-        # Generic username and password
-        ("AVALON_USERNAME", "avalon"),
-        ("AVALON_PASSWORD", "secret"),
-
-        # Unique identifier for instances in working files
-        ("AVALON_INSTANCE_ID", "avalon.instance"),
-
-        # Enable debugging
-        ("AVALON_DEBUG", None)
     ):
         value = os.environ.get(key) or default_value
         if value is not None:
