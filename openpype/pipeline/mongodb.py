@@ -3,7 +3,6 @@ import time
 import functools
 import logging
 import pymongo
-import ctypes
 from uuid import uuid4
 
 from . import schema
@@ -146,107 +145,12 @@ def session_data_from_environment(context_keys=False):
     return session_data
 
 
-class AvalonMongoConnection:
-    _mongo_client = None
-    _is_installed = False
-    _databases = {}
-    log = logging.getLogger("AvalonMongoConnection")
-
-    @classmethod
-    def register_database(cls, dbcon):
-        if dbcon.id in cls._databases:
-            return
-
-        cls._databases[dbcon.id] = {
-            "object": dbcon,
-            "installed": False
-        }
-
-    @classmethod
-    def database(cls):
-        return cls._mongo_client[str(os.environ["AVALON_DB"])]
-
-    @classmethod
-    def mongo_client(cls):
-        return cls._mongo_client
-
-    @classmethod
-    def install(cls, dbcon):
-        if not cls._is_installed or cls._mongo_client is None:
-            cls._mongo_client = cls.create_connection()
-            cls._is_installed = True
-
-        cls.register_database(dbcon)
-        cls._databases[dbcon.id]["installed"] = True
-
-        cls.check_db_existence()
-
-    @classmethod
-    def is_installed(cls, dbcon):
-        info = cls._databases.get(dbcon.id)
-        if not info:
-            return False
-        return cls._databases[dbcon.id]["installed"]
-
-    @classmethod
-    def _uninstall(cls):
-        try:
-            cls._mongo_client.close()
-        except AttributeError:
-            pass
-        cls._is_installed = False
-        cls._mongo_client = None
-
-    @classmethod
-    def uninstall(cls, dbcon, force=False):
-        if force:
-            for key in cls._databases:
-                cls._databases[key]["object"].uninstall()
-            cls._uninstall()
-            return
-
-        cls._databases[dbcon.id]["installed"] = False
-
-        cls.check_db_existence()
-
-        any_is_installed = False
-        for key in cls._databases:
-            if cls._databases[key]["installed"]:
-                any_is_installed = True
-                break
-
-        if not any_is_installed:
-            cls._uninstall()
-
-    @classmethod
-    def check_db_existence(cls):
-        items_to_pop = set()
-        for db_id, info in cls._databases.items():
-            obj = info["object"]
-            # TODO check if should check for 1 or more
-            cls.log.info(ctypes.c_long.from_address(id(obj)).value)
-            if ctypes.c_long.from_address(id(obj)).value == 1:
-                items_to_pop.add(db_id)
-
-        for db_id in items_to_pop:
-            cls._databases.pop(db_id, None)
-
-    @classmethod
-    def create_connection(cls):
-        from openpype.lib import OpenPypeMongoConnection
-
-        mongo_url = os.environ["AVALON_MONGO"]
-
-        mongo_client = OpenPypeMongoConnection.create_connection(mongo_url)
-
-        return mongo_client
-
-
 class AvalonMongoDB:
     def __init__(self, session=None, auto_install=True):
         self._id = uuid4()
         self._database = None
         self.auto_install = auto_install
+        self._installed = False
 
         if session is None:
             session = session_data_from_environment(context_keys=False)
@@ -292,7 +196,9 @@ class AvalonMongoDB:
 
     @property
     def mongo_client(self):
-        AvalonMongoConnection.mongo_client()
+        from openpype.lib import OpenPypeMongoConnection
+
+        return OpenPypeMongoConnection.get_mongo_client()
 
     @property
     def id(self):
@@ -313,20 +219,19 @@ class AvalonMongoDB:
         )
 
     def is_installed(self):
-        return AvalonMongoConnection.is_installed(self)
+        return self._installed
 
     def install(self):
         """Establish a persistent connection to the database"""
         if self.is_installed():
             return
 
-        AvalonMongoConnection.install(self)
-
-        self._database = AvalonMongoConnection.database()
+        self._installed = True
+        self._database = self.mongo_client[str(os.environ["AVALON_DB"])]
 
     def uninstall(self):
         """Close any connection to the database"""
-        AvalonMongoConnection.uninstall(self)
+        self._installed = False
         self._database = None
 
     @requires_install
