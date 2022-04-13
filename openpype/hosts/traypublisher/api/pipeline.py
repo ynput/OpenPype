@@ -7,7 +7,7 @@ from avalon import io
 import avalon.api
 import pyblish.api
 
-from openpype.pipeline import BaseCreator
+from openpype.pipeline import register_creator_plugin_path
 
 ROOT_DIR = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
@@ -169,7 +169,7 @@ def install():
 
     pyblish.api.register_host("traypublisher")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
 
 def set_project_name(project_name):

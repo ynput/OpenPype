@@ -9,13 +9,16 @@ from contextlib import contextmanager
 from .creator_plugins import (
     BaseCreator,
     Creator,
-    AutoCreator
+    AutoCreator,
+    discover_creator_plugins,
 )
 
 from openpype.api import (
     get_system_settings,
     get_project_settings
 )
+
+UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
 class ImmutableKeyError(TypeError):
@@ -843,7 +846,7 @@ class CreateContext:
         creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in avalon.api.discover(BaseCreator):
+        for creator_class in discover_creator_plugins():
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))
@@ -1081,7 +1084,7 @@ class CreateContext:
             for instance in cretor_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
-                    update_list.append((instance, instance_changes))
+                    update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
             if update_list:

@@ -73,8 +73,28 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        cred_path = self.presets.get("credentials_url", {}).\
-            get(platform.system().lower()) or ''
+        if not self.presets["enabled"]:
+            log.debug("Sync Server: Site {} not enabled for {}.".
+                      format(site_name, project_name))
+            return
+
+        current_platform = platform.system().lower()
+        cred_path = self.presets.get("credentials_url", {}). \
+            get(current_platform) or ''
+
+        if not cred_path:
+            msg = "Sync Server: Please, fill the credentials for gdrive "\
+                  "provider for platform '{}' !".format(current_platform)
+            log.info(msg)
+            return
+
+        try:
+            cred_path = cred_path.format(**os.environ)
+        except KeyError as e:
+            log.info("Sync Server: The key(s) {} does not exist in the "
+                     "environment variables".format(" ".join(e.args)))
+            return
+
         if not os.path.exists(cred_path):
             msg = "Sync Server: No credentials for gdrive provider " + \
                   "for '{}' on path '{}'!".format(site_name, cred_path)
@@ -82,11 +102,10 @@ class GDriveHandler(AbstractProvider):
             return
 
         self.service = None
-        if self.presets["enabled"]:
-            self.service = self._get_gd_service(cred_path)
+        self.service = self._get_gd_service(cred_path)
 
-            self._tree = tree
-            self.active = True
+        self._tree = tree
+        self.active = True
 
     def is_active(self):
         """
