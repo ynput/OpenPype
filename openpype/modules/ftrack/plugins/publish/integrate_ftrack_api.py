@@ -263,7 +263,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             self.log.info("Creating asset types with short names: {}".format(
                 ", ".join(asset_type_names_by_missing_shorts.keys())
             ))
-            for missing_short, type_name in asset_type_names_by_missing_shorts:
+            for missing_short, type_name in (
+                asset_type_names_by_missing_shorts.items()
+            ):
                 # Use short for name if name is not defined
                 if not type_name:
                     type_name = missing_short
