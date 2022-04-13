@@ -108,15 +108,18 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"], tags
                 )
-                file_url = os.path.join(task_dir, task_data["files"][0])
-                no_of_frames = self._get_number_of_frames(file_url)
-                if no_of_frames:
+                if family != 'workfile':
+                    file_url = os.path.join(task_dir, task_data["files"][0])
                     try:
-                        frame_end = int(frame_start) + math.ceil(no_of_frames)
-                        instance.data["frameEnd"] = math.ceil(frame_end) - 1
-                        self.log.debug("frameEnd:: {}".format(
-                            instance.data["frameEnd"]))
-                    except ValueError:
+                        no_of_frames = self._get_number_of_frames(file_url)
+                        if no_of_frames:
+                            frame_end = int(frame_start) + \
+                                        math.ceil(no_of_frames)
+                            frame_end = math.ceil(frame_end) - 1
+                            instance.data["frameEnd"] = frame_end
+                            self.log.debug("frameEnd:: {}".format(
+                                instance.data["frameEnd"]))
+                    except Exception:
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
