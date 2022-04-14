@@ -4,8 +4,8 @@ from contextlib import contextmanager
 
 import six
 
-from avalon import api, io
 from openpype.api import get_asset
+from openpype.pipeline import legacy_io
 
 
 import hou
@@ -75,9 +75,13 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]},
-                                 projection={"_id": True})
+        asset_data = legacy_io.find_one(
+            {
+                "type": "asset",
+                "name": legacy_io.Session["AVALON_ASSET"]
+            },
+            projection={"_id": True}
+        )
         assert asset_data, "No current asset found in Session"
         asset_id = asset_data['_id']
 
@@ -424,8 +428,8 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
-    asset_name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = legacy_io.find_one({"name": asset_name, "type": "asset"})
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
