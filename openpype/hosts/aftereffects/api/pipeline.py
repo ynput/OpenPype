@@ -2,10 +2,8 @@ import os
 import sys
 
 from Qt import QtWidgets
-from bson.objectid import ObjectId
 
 import pyblish.api
-from avalon import io
 
 from openpype import lib
 from openpype.api import Logger
@@ -15,7 +13,6 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    registered_host,
 )
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
