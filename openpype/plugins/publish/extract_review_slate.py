@@ -454,8 +454,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
         """Offsets timecode by frame"""
         def _seconds(value, framerate):
             if isinstance(value, str):
-                _zip_ft = zip((3600, 60, 1, 1/framerate), value.split(':'))
-                _s = sum(f * float(t) for f,t in _zip_ft)
+                _zip_ft = zip((3600, 60, 1, 1 / framerate), value.split(':'))
+                _s = sum(f * float(t) for f, t in _zip_ft)
             elif isinstance(value, (int, float)):
                 _s = value / framerate
             else:
@@ -470,10 +470,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         def _timecode(seconds, framerate):
             return '{h:02d}:{m:02d}:{s:02d}:{f:02d}'.format(
-                h = int(seconds / 3600),
-                m = int(seconds / 60 % 60),
-                s = int(seconds % 60),
-                f = int(round((seconds - int(seconds)) * framerate)))
+                h=int(seconds / 3600),
+                m=int(seconds / 60 % 60),
+                s=int(seconds % 60),
+                f=int(round((seconds - int(seconds)) * framerate)))
         drop = False
         if ';' in timecode:
             timecode = timecode.replace(';', ':')
