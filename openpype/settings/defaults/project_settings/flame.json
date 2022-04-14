@@ -69,6 +69,9 @@
                     "filter_path_regex": ".*"
                 }
             }
+        },
+        "IntegrateBatchGroup": {
+            "enabled": false
         }
     },
     "load": {

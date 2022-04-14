@@ -366,6 +366,21 @@
                             }
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "IntegrateBatchGroup",
+                    "label": "IntegrateBatchGroup",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
                 }
             ]
         },
