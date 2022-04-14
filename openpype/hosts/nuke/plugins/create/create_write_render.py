@@ -17,7 +17,7 @@ class CreateWriteRender(plugin.OpenPypeCreator):
     defaults = ["Main", "Mask"]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(CreateWriteRender, self).__init__(*args, **kwargs)
 
         data = OrderedDict()
 
