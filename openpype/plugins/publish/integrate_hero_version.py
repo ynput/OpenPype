@@ -8,12 +8,14 @@ from bson.objectid import ObjectId
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
 
-from avalon import api, io
 from openpype.lib import (
     create_hard_link,
     filter_profiles
 )
-from openpype.pipeline import schema
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+)
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):
@@ -63,7 +65,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         template_key = self._get_template_key(instance)
 
         anatomy = instance.context.data["anatomy"]
-        project_name = api.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
         if template_key not in anatomy.templates:
             self.log.warning((
                 "!!! Anatomy of project \"{}\" does not have set"
@@ -221,7 +223,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         if old_repres_by_name:
             old_repres_to_delete = old_repres_by_name
 
-        archived_repres = list(io.find({
+        archived_repres = list(legacy_io.find({
             # Check what is type of archived representation
             "type": "archived_repsentation",
             "parent": new_version_id
@@ -442,7 +444,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     )
 
             if bulk_writes:
-                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                project_name = legacy_io.Session["AVALON_PROJECT"]
+                legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
 
@@ -504,7 +507,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
+            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
@@ -585,12 +588,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
     def version_from_representations(self, repres):
         for repre in repres:
-            version = io.find_one({"_id": repre["parent"]})
+            version = legacy_io.find_one({"_id": repre["parent"]})
             if version:
                 return version
 
     def current_hero_ents(self, version):
-        hero_version = io.find_one({
+        hero_version = legacy_io.find_one({
             "parent": version["parent"],
             "type": "hero_version"
         })
@@ -598,7 +601,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         if not hero_version:
             return (None, [])
 
-        hero_repres = list(io.find({
+        hero_repres = list(legacy_io.find({
             "parent": hero_version["_id"],
             "type": "representation"
         }))

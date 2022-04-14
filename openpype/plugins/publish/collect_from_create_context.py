@@ -3,7 +3,8 @@
 """
 import os
 import pyblish.api
-import avalon.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectFromCreateContext(pyblish.api.ContextPlugin):
@@ -30,7 +31,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
         for key in ("AVALON_PROJECT", "AVALON_ASSET", "AVALON_TASK"):
             value = create_context.dbcon.Session.get(key)
             if value is not None:
-                avalon.api.Session[key] = value
+                legacy_io.Session[key] = value
                 os.environ[key] = value
 
     def create_instance(self, context, in_data):
