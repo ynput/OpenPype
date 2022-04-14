@@ -105,5 +105,8 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 
 ## Task Types
 
+Current state of default Task descriptors.
+
+![tasks](assets/settings/anatomy_tasks.png)
 
 ## Colour Management and Formats
