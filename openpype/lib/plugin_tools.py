@@ -72,9 +72,9 @@ def get_subset_name_with_asset_doc(
     family = family.rsplit(".", 1)[-1]
 
     if project_name is None:
-        import avalon.api
+        from openpype.pipeline import legacy_io
 
-        project_name = avalon.api.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
 
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
