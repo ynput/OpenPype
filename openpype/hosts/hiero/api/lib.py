@@ -12,8 +12,7 @@ import hiero
 from Qt import QtWidgets
 from bson.objectid import ObjectId
 
-import avalon.api as avalon
-import avalon.io
+from openpype.pipeline import legacy_io
 from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
 
@@ -383,7 +382,7 @@ def get_publish_attribute(tag):
 
 def sync_avalon_data_to_workfile():
     # import session to get project dir
-    project_name = avalon.Session["AVALON_PROJECT"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
 
     anatomy = Anatomy(project_name)
     work_template = anatomy.templates["work"]["path"]
@@ -408,7 +407,7 @@ def sync_avalon_data_to_workfile():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_doc = avalon.io.find_one({"type": "project"})
+    project_doc = legacy_io.find_one({"type": "project"})
     project_data = project_doc["data"]
 
     log.debug("project_data: {}".format(project_data))
@@ -994,7 +993,6 @@ def check_inventory_versions():
     it to red.
     """
     from . import parse_container
-    from avalon import io
 
     # presets
     clip_color_last = "green"
@@ -1006,19 +1004,19 @@ def check_inventory_versions():
 
         if container:
             # get representation from io
-            representation = io.find_one({
+            representation = legacy_io.find_one({
                 "type": "representation",
                 "_id": ObjectId(container["representation"])
             })
 
             # Get start frame from version data
-            version = io.find_one({
+            version = legacy_io.find_one({
                 "type": "version",
                 "_id": representation["parent"]
             })
 
             # get all versions in list
-            versions = io.find({
+            versions = legacy_io.find({
                 "type": "version",
                 "parent": version["parent"]
             }).distinct('name')
