@@ -68,6 +68,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         # flame objects
         segment = instance.data["item"]
+        asset_name = instance.data["asset"]
         segment_name = segment.name.get_value()
         clip_path = instance.data["path"]
         sequence_clip = instance.context.data["flameSequence"]
@@ -109,7 +110,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
             # get activating attributes
             activated_preset = preset_config["active"]
-            filter_path_regex = preset_config["filter_path_regex"]
+            filter_path_regex = preset_config.get("filter_path_regex")
 
             self.log.info(
                 "Preset `{}` is active `{}` with filter `{}`".format(
@@ -123,8 +124,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
             if not activated_preset:
                 continue
 
-            # exclude by regex filter
-            if not re.search(filter_path_regex, clip_path):
+            # exclude by regex filter if any
+            if (
+                filter_path_regex
+                and not re.search(filter_path_regex, clip_path)
+            ):
                 continue
 
             # get all presets attributes
@@ -162,6 +166,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
             out_mark = in_mark + source_duration_handles
 
             exporting_clip = None
+            name_patern_xml = "<name>_{}.".format(
+                unique_name)
             if export_type == "Sequence Publish":
                 # change export clip to sequence
                 exporting_clip = flame.duplicate(sequence_clip)
@@ -169,8 +175,15 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # only keep visible layer where instance segment is child
                 self.hide_others(
                     exporting_clip, segment_name, s_track_name)
+
+                # change name patern
+                name_patern_xml = (
+                    "<segment name>_<shot name>_{}.").format(
+                        unique_name)
             else:
                 exporting_clip = self.import_clip(clip_path)
+                exporting_clip.name.set_value("{}_{}".format(
+                    asset_name, segment_name))
 
             # change in/out marks to timeline in/out
             in_mark = clip_in
@@ -181,9 +194,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 "exportHandles": True,
                 "nbHandles": handles,
                 "startFrame": frame_start,
-                "namePattern": (
-                    "&lt;segment name&gt;_&lt;shot name&gt;_{}.").format(
-                        unique_name)
+                "namePattern": name_patern_xml
             })
 
             if parsed_comment_attrs:
@@ -302,8 +313,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
             self.log.info("Added representation: {}".format(
                 representation_data))
 
-            # at the end remove the duplicated clip
-            flame.delete(exporting_clip)
+            if export_type == "Sequence Publish":
+                # at the end remove the duplicated clip
+                flame.delete(exporting_clip)
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
@@ -405,4 +417,4 @@ class ExtractSubsetResources(openpype.api.Extractor):
             self.log.warning(
                 "Path `{}` is containing more that one clip".format(path)
             )
-        return clips.pop()
+        return clips[0]
