@@ -1,9 +1,9 @@
-from avalon import api
 import pyblish.api
 
 from openpype.settings import get_project_settings
 from openpype.hosts.photoshop import api as photoshop
 from openpype.lib import prepare_template_data
+from openpype.pipeline import legacy_io
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -79,7 +79,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "CreateImage", {}).get(
                 "defaults", [''])
             family = "image"
-            task_name = api.Session["AVALON_TASK"]
+            task_name = legacy_io.Session["AVALON_TASK"]
             asset_name = context.data["assetEntity"]["name"]
 
             fill_pairs = {
