@@ -29,6 +29,21 @@ from .vendor_bin_utils import (
     is_oiio_supported
 )
 
+from .attribute_definitions import (
+    AbtractAttrDef,
+
+    UIDef,
+    UISeparatorDef,
+    UILabelDef,
+
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef,
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -206,6 +221,12 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
+
+from .connections import (
+    requests_get,
+    requests_post
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -232,6 +253,19 @@ __all__ = [
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
     "is_oiio_supported",
+
+    "AbtractAttrDef",
+
+    "UIDef",
+    "UISeparatorDef",
+    "UILabelDef",
+
+    "UnknownDef",
+    "NumberDef",
+    "TextDef",
+    "EnumDef",
+    "BoolDef",
+    "FileDef",
 
     "import_filepath",
     "modules_from_path",
@@ -362,4 +396,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "requests_get",
+    "requests_post"
 ]

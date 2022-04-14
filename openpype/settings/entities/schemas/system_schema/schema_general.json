@@ -111,6 +111,17 @@
             "type": "splitter"
         },
         {
+            "type": "list",
+            "key": "local_env_white_list",
+            "label": "Local overrides of environment variable keys",
+            "tooltip": "Environment variable keys that can be changed per machine using Local settings UI.\nKey changes are applied only on applications and tools environments.",
+            "use_label_wrap": true,
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "type": "collapsible-wrap",
             "label": "OpenPype deployment control",
             "collapsible": false,

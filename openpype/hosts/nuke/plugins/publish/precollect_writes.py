@@ -128,13 +128,17 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         }
 
         group_node = [x for x in instance if x.Class() == "Group"][0]
-        deadlineChunkSize = 1
+        dl_chunk_size = 1
         if "deadlineChunkSize" in group_node.knobs():
-            deadlineChunkSize = group_node["deadlineChunkSize"].value()
+            dl_chunk_size = group_node["deadlineChunkSize"].value()
 
-        deadlinePriority = 50
+        dl_priority = 50
         if "deadlinePriority" in group_node.knobs():
-            deadlinePriority = group_node["deadlinePriority"].value()
+            dl_priority = group_node["deadlinePriority"].value()
+
+        dl_concurrent_tasks = 0
+        if "deadlineConcurrentTasks" in group_node.knobs():
+            dl_concurrent_tasks = group_node["deadlineConcurrentTasks"].value()
 
         instance.data.update({
             "versionData": version_data,
@@ -144,8 +148,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "label": label,
             "outputType": output_type,
             "colorspace": colorspace,
-            "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority
+            "deadlineChunkSize": dl_chunk_size,
+            "deadlinePriority": dl_priority,
+            "deadlineConcurrentTasks": dl_concurrent_tasks
         })
 
         if self.is_prerender(_families_test):

@@ -17,6 +17,9 @@ from .vendor_bin_utils import (
 
 # Max length of string that is supported by ffmpeg
 MAX_FFMPEG_STRING_LEN = 8196
+# Not allowed symbols in attributes for ffmpeg
+NOT_ALLOWED_FFMPEG_CHARS = ("\"", )
+
 # OIIO known xml tags
 STRING_TAGS = {
     "format"
@@ -367,11 +370,15 @@ def should_convert_for_ffmpeg(src_filepath):
         return None
 
     for attr_value in input_info["attribs"].values():
-        if (
-            isinstance(attr_value, str)
-            and len(attr_value) > MAX_FFMPEG_STRING_LEN
-        ):
+        if not isinstance(attr_value, str):
+            continue
+
+        if len(attr_value) > MAX_FFMPEG_STRING_LEN:
             return True
+
+        for char in NOT_ALLOWED_FFMPEG_CHARS:
+            if char in attr_value:
+                return True
     return False
 
 
@@ -422,7 +429,12 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = [get_oiio_tools_path()]
+    oiio_cmd = [
+        get_oiio_tools_path(),
+
+        # Don't add any additional attributes
+        "--nosoftwareattrib",
+    ]
     # Add input compression if available
     if compression:
         oiio_cmd.extend(["--compression", compression])
@@ -458,28 +470,44 @@ def convert_for_ffmpeg(
             "--frames", "{}-{}".format(input_frame_start, input_frame_end)
         ])
 
-    ignore_attr_changes_added = False
     for attr_name, attr_value in input_info["attribs"].items():
         if not isinstance(attr_value, str):
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg
+        #   for ffmpeg or when containt unallowed symbols
+        erase_reason = "Missing reason"
+        erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
-            if not ignore_attr_changes_added:
-                # Attrite changes won't be added to attributes itself
-                ignore_attr_changes_added = True
-                oiio_cmd.append("--sansattrib")
+            erase_reason = "has too long value ({} chars).".format(
+                len(attr_value)
+            )
+
+        if erase_attribute:
+            for char in NOT_ALLOWED_FFMPEG_CHARS:
+                if char in attr_value:
+                    erase_attribute = True
+                    erase_reason = (
+                        "contains unsupported character \"{}\"."
+                    ).format(char)
+                    break
+
+        if erase_attribute:
             # Set attribute to empty string
             logger.info((
-                "Removed attribute \"{}\" from metadata"
-                " because has too long value ({} chars)."
-            ).format(attr_name, len(attr_value)))
+                "Removed attribute \"{}\" from metadata because {}."
+            ).format(attr_name, erase_reason))
             oiio_cmd.extend(["--eraseattrib", attr_name])
 
     # Add last argument - path to output
-    base_file_name = os.path.basename(first_input_path)
-    output_path = os.path.join(output_dir, base_file_name)
+    if is_sequence:
+        ext = os.path.splitext(first_input_path)[1]
+        base_filename = "tmp.%{:0>2}d{}".format(
+            len(str(input_frame_end)), ext
+        )
+    else:
+        base_filename = os.path.basename(first_input_path)
+    output_path = os.path.join(output_dir, base_filename)
     oiio_cmd.extend([
         "-o", output_path
     ])

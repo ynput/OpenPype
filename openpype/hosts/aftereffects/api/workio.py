@@ -5,14 +5,6 @@ from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 from .launch_logic import get_stub
 
 
-def _active_document():
-    document_name = get_stub().get_active_document_name()
-    if not document_name:
-        return None
-
-    return document_name
-
-
 def file_extensions():
     return HOST_WORKFILE_EXTENSIONS["aftereffects"]
 
@@ -39,7 +31,8 @@ def current_file():
         full_name = get_stub().get_active_document_full_name()
         if full_name and full_name != "null":
             return os.path.normpath(full_name).replace("\\", "/")
-    except Exception:
+    except ValueError:
+        print("Nothing opened")
         pass
 
     return None
@@ -47,3 +40,15 @@ def current_file():
 
 def work_root(session):
     return os.path.normpath(session["AVALON_WORKDIR"]).replace("\\", "/")
+
+
+def _active_document():
+    # TODO merge with current_file - even in extension
+    document_name = None
+    try:
+        document_name = get_stub().get_active_document_name()
+    except ValueError:
+        print("Nothing opened")
+        pass
+
+    return document_name

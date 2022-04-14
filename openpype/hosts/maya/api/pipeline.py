@@ -9,8 +9,6 @@ import maya.api.OpenMaya as om
 import pyblish.api
 import avalon.api
 
-from avalon.lib import find_submodule
-
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import (
@@ -20,11 +18,12 @@ from openpype.lib import (
 )
 from openpype.lib.path_tools import HostDirmap
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
     register_inventory_action_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_inventory_action_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.maya.lib import copy_workspace_mel
@@ -60,7 +59,7 @@ def install():
     pyblish.api.register_host("maya")
 
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     register_inventory_action_path(INVENTORY_PATH)
     log.info(PUBLISH_PATH)
 
@@ -189,7 +188,7 @@ def uninstall():
     pyblish.api.deregister_host("maya")
 
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
 
     menu.uninstall()
@@ -268,21 +267,8 @@ def ls():
 
     """
     container_names = _ls()
-
-    has_metadata_collector = False
-    config_host = find_submodule(avalon.api.registered_config(), "maya")
-    if hasattr(config_host, "collect_container_metadata"):
-        has_metadata_collector = True
-
     for container in sorted(container_names):
-        data = parse_container(container)
-
-        # Collect custom data if attribute is present
-        if has_metadata_collector:
-            metadata = config_host.collect_container_metadata(container)
-            data.update(metadata)
-
-        yield data
+        yield parse_container(container)
 
 
 def containerise(name,
