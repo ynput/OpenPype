@@ -33,7 +33,7 @@ class TestModuleApi(ModuleUnitTest):
         yield sync_server
 
     def test_get_alt_site_pairs(self, setup_sync_server_module):
-        conf_sites = {'SFTP': {"alternative_sites": ["studio"]},
+        conf_sites = {"SFTP": {"alternative_sites": ["studio"]},
                       "studio2": {"alternative_sites": ["studio"]}}
 
         ret = setup_sync_server_module._get_alt_site_pairs(conf_sites)
