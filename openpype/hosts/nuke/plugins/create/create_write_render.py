@@ -97,9 +97,28 @@ class CreateWriteRender(plugin.OpenPypeCreator):
         else:
             self.log.info("Adding template path from plugin")
             write_data.update({
-                "fpath_template": ("{work}/renders/nuke/{subset}"
-                                   "/{subset}.{frame}.{ext}")})
+                "fpath_template":
+                    ("{work}/{}s/nuke/{subset}".format(self.family) +
+                     "/{subset}.{frame}.{ext}")})
 
+        write_node = self._create_write_node(selected_node,
+                                             inputs, outputs,
+                                             write_data)
+
+        # relinking to collected connections
+        for i, input in enumerate(inputs):
+            write_node.setInput(i, input)
+
+        write_node.autoplace()
+
+        for output in outputs:
+            output.setInput(0, write_node)
+
+        write_node = self._modify_write_node(write_node)
+
+        return write_node
+
+    def _create_write_node(self, selected_node, inputs, outputs, write_data):
         # add reformat node to cut off all outside of format bounding box
         # get width and height
         try:
@@ -126,13 +145,7 @@ class CreateWriteRender(plugin.OpenPypeCreator):
             input=selected_node,
             prenodes=_prenodes)
 
-        # relinking to collected connections
-        for i, input in enumerate(inputs):
-            write_node.setInput(i, input)
+        return write_node
 
-        write_node.autoplace()
-
-        for output in outputs:
-            output.setInput(0, write_node)
-
+    def _modify_write_node(self, write_node):
         return write_node
