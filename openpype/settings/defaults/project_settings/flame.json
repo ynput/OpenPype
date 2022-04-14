@@ -20,6 +20,37 @@
         }
     },
     "publish": {
+        "CollectTimelineInstances": {
+            "xml_preset_attrs_from_comments": [
+                {
+                    "name": "width",
+                    "type": "number"
+                },
+                {
+                    "name": "height",
+                    "type": "number"
+                },
+                {
+                    "name": "pixelRatio",
+                    "type": "float"
+                },
+                {
+                    "name": "resizeType",
+                    "type": "string"
+                },
+                {
+                    "name": "resizeFilter",
+                    "type": "string"
+                }
+            ],
+            "add_tasks": [
+                {
+                    "name": "compositing",
+                    "type": "Compositing",
+                    "create_batch_group": true
+                }
+            ]
+        },
         "ExtractSubsetResources": {
             "keep_original_representation": false,
             "export_presets_mapping": {
@@ -31,7 +62,9 @@
                     "ignore_comment_attrs": false,
                     "colorspace_out": "ACES - ACEScg",
                     "representation_add_range": true,
-                    "representation_tags": []
+                    "representation_tags": [],
+                    "load_to_batch_group": true,
+                    "batch_group_loader_name": "LoadClip"
                 }
             }
         }
@@ -58,7 +91,29 @@
             ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
-            "clip_name_template": "{asset}_{subset}_{representation}"
+            "clip_name_template": "{asset}_{subset}_{output}"
+        },
+        "LoadClipBatch": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "review"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "h264",
+                "mov",
+                "mp4"
+            ],
+            "reel_name": "OP_LoadedReel",
+            "clip_name_template": "{asset}_{subset}_{output}"
         }
     }
 }

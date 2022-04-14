@@ -4,7 +4,6 @@ import logging
 from typing import List
 
 import pyblish.api
-from avalon import api
 
 from openpype.pipeline import (
     register_loader_plugin_path,
@@ -74,30 +73,6 @@ def _register_events():
     TODO: Implement callbacks if supported by UE4
     """
     pass
-
-
-class Creator(LegacyCreator):
-    hosts = ["unreal"]
-    asset_types = []
-
-    def process(self):
-        nodes = list()
-
-        with unreal.ScopedEditorTransaction("OpenPype Creating Instance"):
-            if (self.options or {}).get("useSelection"):
-                self.log.info("setting ...")
-                print("settings ...")
-                nodes = unreal.EditorUtilityLibrary.get_selected_assets()
-
-                asset_paths = [a.get_path_name() for a in nodes]
-                self.name = move_assets_to_path(
-                    "/Game", self.name, asset_paths
-                )
-
-            instance = create_publish_instance("/Game", self.name)
-            imprint(instance, self.data)
-
-        return instance
 
 
 def ls():

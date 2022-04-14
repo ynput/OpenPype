@@ -8,6 +8,7 @@ from copy import copy, deepcopy
 import requests
 import clique
 import openpype.api
+from openpype.pipeline.farm.patterning import match_aov_pattern
 
 from avalon import api, io
 
@@ -107,7 +108,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": [r".*(?:[\._-])*([Bb]eauty)(?:[\.|_])*.*"],
+    aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
@@ -129,7 +130,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_PUBLISH_JOB"
     ]
 
-    # custom deadline atributes
+    # custom deadline attributes
     deadline_department = ""
     deadline_pool = ""
     deadline_pool_secondary = ""
@@ -259,8 +260,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Priority": priority,
 
                 "Group": self.deadline_group,
-                "Pool": self.deadline_pool,
-                "SecondaryPool": self.deadline_pool_secondary,
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
 
                 "OutputDirectory0": output_dir
             },
@@ -449,12 +450,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             app = os.environ.get("AVALON_APP", "")
 
             preview = False
-            if app in self.aov_filter.keys():
-                for aov_pattern in self.aov_filter[app]:
-                    if re.match(aov_pattern, aov):
-                        preview = True
-                        break
 
+            if isinstance(col, list):
+                render_file_name = os.path.basename(col[0])
+            else:
+                render_file_name = os.path.basename(col)
+            aov_patterns = self.aov_filter
+            preview = match_aov_pattern(app, aov_patterns, render_file_name)
+
+            # toggle preview on if multipart is on
             if instance_data.get("multipartExr"):
                 preview = True
 
@@ -531,26 +535,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #   expected files contains more explicitly and from what
             #   should be review made.
             # - "review" tag is never added when is set to 'False'
-            use_sequence_for_review = instance.get(
-                "useSequenceForReview", True
-            )
-            if use_sequence_for_review:
-                # if filtered aov name is found in filename, toggle it for
-                # preview video rendering
-                for app in self.aov_filter.keys():
-                    if os.environ.get("AVALON_APP", "") == app:
-                        # iteratre all aov filters
-                        for aov in self.aov_filter[app]:
-                            if re.match(
-                                aov,
-                                list(collection)[0]
-                            ):
-                                preview = True
-                                break
-
+            if instance["useSequenceForReview"]:
                 # toggle preview on if multipart is on
                 if instance.get("multipartExr", False):
                     preview = True
+                else:
+                    render_file_name = list(collection)[0]
+                    host_name = os.environ.get("AVALON_APP", "")
+                    # if filtered aov name is found in filename, toggle it for
+                    # preview video rendering
+                    preview = match_aov_pattern(
+                        host_name, self.aov_filter, render_file_name
+                    )
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -737,7 +733,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
-            "useSequenceForReview": data.get("useSequenceForReview")
+            "useSequenceForReview": data.get("useSequenceForReview", True)
         }
 
         if "prerender" in instance.data["families"]:
