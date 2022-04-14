@@ -14,7 +14,7 @@ The main things you will need to run and build pype are:
 - **Terminal** in your OS
     - PowerShell 5.0+ (Windows)
     - Bash (Linux)
-- [**Python 3.7.8**](#python) or higher
+- [**Python 3.7.9**](#python) or higher
 - [**MongoDB**](#database)
 
 
@@ -32,6 +32,8 @@ It can be built and ran on all common platforms. We develop and test on the foll
 
 
 ## Database 
+
+Database version should be at least **MongoDB 4.4**.
 
 Pype needs site-wide installation of **MongoDB**. It should be installed on
 reliable server, that all workstations (and possibly render nodes) can connect. This

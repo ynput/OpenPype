@@ -142,6 +142,21 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "ExtractReviewData",
+            "label": "ExtractReviewData",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "ExtractReviewDataLut",
             "label": "ExtractReviewDataLut",
             "is_group": true,
@@ -208,9 +223,10 @@
                                 "type": "separator"
                             },
                             {
-                                "type": "text",
-                                "key": "extension",
-                                "label": "File extension"
+                                "type": "boolean",
+                                "key": "read_raw",
+                                "label": "Read colorspace RAW",
+                                "default": false
                             },
                             {
                                 "type": "text",
@@ -228,12 +244,6 @@
                                 "label": "Bake Viewer Input Process (LUTs)"
                             },
                             {
-                                "key": "add_tags",
-                                "label": "Add additional tags to representations",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
                                 "type": "separator"
                             },
                             {
@@ -246,7 +256,7 @@
                                 "type": "collapsible-wrap",
                                 "label": "Reformat Node Knobs",
                                 "collapsible": true,
-                                "collapsed": false,
+                                "collapsed": true,
                                 "children": [
                                     {
                                         "type": "list",
@@ -347,6 +357,20 @@
                                         }
                                     }
                                 ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "extension",
+                                "label": "Write node file type"
+                            },
+                            {
+                                "key": "add_tags",
+                                "label": "Add additional tags to representations",
+                                "type": "list",
+                                "object_type": "text"
                             }
                         ]
                     }
@@ -365,6 +389,59 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill specific slate node values with templates. Uncheck the checkbox to not change the value.",
+                    "word_wrap": true
+                },
+                {
+                    "type": "dict",
+                    "key": "key_value_mapping",
+                    "children": [
+                        {
+                            "type": "list-strict",
+                            "key": "f_submission_note",
+                            "label": "Submission Note:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "f_submitting_for",
+                            "label": "Submission For:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "f_vfx_scope_of_work",
+                            "label": "VFX Scope Of Work:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },

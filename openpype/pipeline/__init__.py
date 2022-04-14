@@ -1,4 +1,7 @@
-from .lib import attribute_definitions
+from .constants import (
+    AVALON_CONTAINER_ID,
+    HOST_WORKFILE_EXTENSIONS,
+)
 
 from .create import (
     BaseCreator,
@@ -10,6 +13,13 @@ from .create import (
 
     LegacyCreator,
     legacy_create,
+
+    discover_creator_plugins,
+    discover_legacy_creator_plugins,
+    register_creator_plugin,
+    deregister_creator_plugin,
+    register_creator_plugin_path,
+    deregister_creator_plugin_path,
 )
 
 from .load import (
@@ -31,6 +41,7 @@ from .load import (
 
     loaders_from_representation,
     get_representation_path,
+    get_representation_context,
     get_repres_contexts,
 )
 
@@ -38,11 +49,31 @@ from .publish import (
     PublishValidationError,
     PublishXmlValidationError,
     KnownPublishError,
-    OpenPypePyblishPluginMixin
+    OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
+)
+
+from .actions import (
+    LauncherAction,
+
+    InventoryAction,
+
+    discover_launcher_actions,
+    register_launcher_action,
+    register_launcher_action_path,
+
+    discover_inventory_actions,
+    register_inventory_action,
+    register_inventory_action_path,
+    deregister_inventory_action,
+    deregister_inventory_action_path,
 )
 
 
 __all__ = (
+    "AVALON_CONTAINER_ID",
+    "HOST_WORKFILE_EXTENSIONS",
+
     "attribute_definitions",
 
     # --- Create ---
@@ -56,6 +87,13 @@ __all__ = (
     # - legacy creation
     "LegacyCreator",
     "legacy_create",
+
+    "discover_creator_plugins",
+    "discover_legacy_creator_plugins",
+    "register_creator_plugin",
+    "deregister_creator_plugin",
+    "register_creator_plugin_path",
+    "deregister_creator_plugin_path",
 
     # --- Load ---
     "HeroVersionType",
@@ -76,11 +114,27 @@ __all__ = (
 
     "loaders_from_representation",
     "get_representation_path",
+    "get_representation_context",
     "get_repres_contexts",
 
     # --- Publish ---
     "PublishValidationError",
     "PublishXmlValidationError",
     "KnownPublishError",
-    "OpenPypePyblishPluginMixin"
+    "OpenPypePyblishPluginMixin",
+    "OptionalPyblishPluginMixin",
+
+    # --- Actions ---
+    "LauncherAction",
+    "InventoryAction",
+
+    "discover_launcher_actions",
+    "register_launcher_action",
+    "register_launcher_action_path",
+
+    "discover_inventory_actions",
+    "register_inventory_action",
+    "register_inventory_action_path",
+    "deregister_inventory_action",
+    "deregister_inventory_action_path",
 )

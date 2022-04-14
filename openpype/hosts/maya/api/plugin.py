@@ -4,11 +4,11 @@ from maya import cmds
 
 import qargparse
 
-from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
+    AVALON_CONTAINER_ID,
 )
 
 from .pipeline import containerise

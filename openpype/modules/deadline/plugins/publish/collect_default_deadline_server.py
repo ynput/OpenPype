@@ -6,7 +6,7 @@ import pyblish.api
 class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
     """Collect default Deadline Webservice URL."""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = pyblish.api.CollectorOrder + 0.410
     label = "Default Deadline Webservice"
 
     pass_mongo_url = False

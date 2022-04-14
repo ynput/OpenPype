@@ -1,5 +1,13 @@
 import logging
 
+from openpype.lib import set_plugin_attributes_from_settings
+from openpype.pipeline.plugin_discover import (
+    discover,
+    register_plugin,
+    register_plugin_path,
+    deregister_plugin,
+    deregister_plugin_path
+)
 from .utils import get_representation_path_from_context
 
 
@@ -33,7 +41,8 @@ class LoaderPlugin(list):
     def get_representations(cls):
         return cls.representations
 
-    def filepath_from_context(self, context):
+    @classmethod
+    def filepath_from_context(cls, context):
         return get_representation_path_from_context(context)
 
     def load(self, context, name=None, namespace=None, options=None):
@@ -102,29 +111,22 @@ class SubsetLoaderPlugin(LoaderPlugin):
 
 
 def discover_loader_plugins():
-    import avalon.api
-
-    return avalon.api.discover(LoaderPlugin)
+    plugins = discover(LoaderPlugin)
+    set_plugin_attributes_from_settings(plugins, LoaderPlugin)
+    return plugins
 
 
 def register_loader_plugin(plugin):
-    import avalon.api
-
-    return avalon.api.register_plugin(LoaderPlugin, plugin)
-
-
-def deregister_loader_plugin_path(path):
-    import avalon.api
-
-    avalon.api.deregister_plugin_path(LoaderPlugin, path)
-
-
-def register_loader_plugin_path(path):
-    import avalon.api
-
-    return avalon.api.register_plugin_path(LoaderPlugin, path)
+    return register_plugin(LoaderPlugin, plugin)
 
 
 def deregister_loader_plugin(plugin):
-    import avalon.api
-    avalon.api.deregister_plugin(LoaderPlugin, plugin)
+    deregister_plugin(LoaderPlugin, plugin)
+
+
+def deregister_loader_plugin_path(path):
+    deregister_plugin_path(LoaderPlugin, path)
+
+
+def register_loader_plugin_path(path):
+    return register_plugin_path(LoaderPlugin, path)

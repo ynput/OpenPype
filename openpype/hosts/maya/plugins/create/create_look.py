@@ -24,4 +24,6 @@ class CreateLook(plugin.Creator):
         # Whether to automatically convert the textures to .rstex upon publish.
         self.data["rstex"] = self.rs_tex
         # Enable users to force a copy.
+        # - on Windows is "forceCopy" always changed to `True` because of
+        #   windows implementation of hardlinks
         self.data["forceCopy"] = False

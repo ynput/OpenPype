@@ -173,6 +173,10 @@ class BaseItemEntity(BaseEntity):
         # Entity has set `_project_override_value` (is not NOT_SET)
         self.had_project_override = False
 
+        self._default_log_invalid_types = True
+        self._studio_log_invalid_types = True
+        self._project_log_invalid_types = True
+
         # Callbacks that are called on change.
         # - main current purspose is to register GUI callbacks
         self.on_change_callbacks = []
@@ -419,7 +423,7 @@ class BaseItemEntity(BaseEntity):
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
     # TODO convert to private method
-    def _check_update_value(self, value, value_source):
+    def _check_update_value(self, value, value_source, log_invalid_types=True):
         """Validation of value on update methods.
 
         Update methods update data from currently saved settings so it is
@@ -447,16 +451,17 @@ class BaseItemEntity(BaseEntity):
         if new_value is not NOT_SET:
             return new_value
 
-        # Warning log about invalid value type.
-        self.log.warning(
-            (
-                "{} Got invalid value type for {} values."
-                " Expected types: {} | Got Type: {} | Value: \"{}\""
-            ).format(
-                self.path, value_source,
-                self.valid_value_types, type(value), str(value)
+        if log_invalid_types:
+            # Warning log about invalid value type.
+            self.log.warning(
+                (
+                    "{} Got invalid value type for {} values."
+                    " Expected types: {} | Got Type: {} | Value: \"{}\""
+                ).format(
+                    self.path, value_source,
+                    self.valid_value_types, type(value), str(value)
+                )
             )
-        )
         return NOT_SET
 
     def available_for_role(self, role_name=None):
@@ -985,7 +990,7 @@ class ItemEntity(BaseItemEntity):
         return self.root_item.get_entity_from_path(path)
 
     @abstractmethod
-    def update_default_value(self, parent_values):
+    def update_default_value(self, parent_values, log_invalid_types=True):
         """Fill default values on startup or on refresh.
 
         Default values stored in `openpype` repository should update all items
@@ -995,11 +1000,13 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass
 
     @abstractmethod
-    def update_studio_value(self, parent_values):
+    def update_studio_value(self, parent_values, log_invalid_types=True):
         """Fill studio override values on startup or on refresh.
 
         Set studio value if is not set to NOT_SET, in that case studio
@@ -1008,11 +1015,13 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass
 
     @abstractmethod
-    def update_project_value(self, parent_values):
+    def update_project_value(self, parent_values, log_invalid_types=True):
         """Fill project override values on startup, refresh or project change.
 
         Set project value if is not set to NOT_SET, in that case project
@@ -1021,5 +1030,7 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass

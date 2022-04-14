@@ -25,7 +25,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         based on 'families' (editorial drives it by presence of 'review')
     """
     label = "Collect Ftrack Family"
-    order = pyblish.api.CollectorOrder + 0.4998
+    order = pyblish.api.CollectorOrder + 0.4990
 
     profiles = None
 

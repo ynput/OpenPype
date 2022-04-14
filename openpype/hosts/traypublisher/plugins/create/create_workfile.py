@@ -1,8 +1,8 @@
 from openpype.hosts.traypublisher.api import pipeline
+from openpype.lib import FileDef
 from openpype.pipeline import (
     Creator,
-    CreatedInstance,
-    lib
+    CreatedInstance
 )
 
 
@@ -80,7 +80,7 @@ class WorkfileCreator(Creator):
 
     def get_instance_attr_defs(self):
         output = [
-            lib.FileDef(
+            FileDef(
                 "filepath",
                 folders=False,
                 extensions=self.extensions,
