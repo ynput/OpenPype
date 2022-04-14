@@ -943,41 +943,41 @@ class SiteSync(object):
             # Note: We change mutable `attached_site` dict in-place
             attached_sites[site_name] = alt_site_meta
 
-        @staticmethod
-        def _get_alt_site_pairs(conf_sites):
-            """Returns dict of site and its alternative sites.
-            If `site` has alternative site, it means that alt_site has
-            'site' as
-            alternative site
-            Args:
-                conf_sites (dict)
-            Returns:
-                (dict): {'site': [alternative sites]...}
-            """
-            alt_site_pairs = defaultdict(list)
-            for site_name, site_info in conf_sites.items():
-                alt_sites = set(site_info.get("alternative_sites", []))
-                alt_site_pairs[site_name].extend(alt_sites)
+    @staticmethod
+    def _get_alt_site_pairs(conf_sites):
+        """Returns dict of site and its alternative sites.
+        If `site` has alternative site, it means that alt_site has
+        'site' as
+        alternative site
+        Args:
+            conf_sites (dict)
+        Returns:
+            (dict): {'site': [alternative sites]...}
+        """
+        alt_site_pairs = defaultdict(list)
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            alt_site_pairs[site_name].extend(alt_sites)
 
-                for alt_site in alt_sites:
-                    alt_site_pairs[alt_site].append(site_name)
+            for alt_site in alt_sites:
+                alt_site_pairs[alt_site].append(site_name)
 
-            for site_name, alt_sites in alt_site_pairs.items():
-                sites_queue = deque(alt_sites)
-                while sites_queue:
-                    alt_site = sites_queue.popleft()
+        for site_name, alt_sites in alt_site_pairs.items():
+            sites_queue = deque(alt_sites)
+            while sites_queue:
+                alt_site = sites_queue.popleft()
 
-                    # safety against wrong config
-                    # {"SFTP": {"alternative_site": "SFTP"}
-                    if alt_site == site_name or alt_site not in alt_site_pairs:
-                        continue
+                # safety against wrong config
+                # {"SFTP": {"alternative_site": "SFTP"}
+                if alt_site == site_name or alt_site not in alt_site_pairs:
+                    continue
 
-                    for alt_alt_site in alt_site_pairs[alt_site]:
-                        if (
-                                alt_alt_site != site_name
-                                and alt_alt_site not in alt_sites
-                        ):
-                            alt_sites.append(alt_alt_site)
-                            sites_queue.append(alt_alt_site)
+                for alt_alt_site in alt_site_pairs[alt_site]:
+                    if (
+                            alt_alt_site != site_name
+                            and alt_alt_site not in alt_sites
+                    ):
+                        alt_sites.append(alt_alt_site)
+                        sites_queue.append(alt_alt_site)
 
-            return alt_site_pairs
+        return alt_site_pairs
