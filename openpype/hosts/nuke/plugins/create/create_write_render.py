@@ -98,7 +98,7 @@ class CreateWriteRender(plugin.OpenPypeCreator):
             self.log.info("Adding template path from plugin")
             write_data.update({
                 "fpath_template":
-                    ("{work}/{}s/nuke/{subset}".format(self.family) +
+                    ("{work}/" + self.family + "s/nuke/{subset}"
                      "/{subset}.{frame}.{ext}")})
 
         write_node = self._create_write_node(selected_node,
