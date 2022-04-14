@@ -4,13 +4,16 @@ import sys
 import logging
 
 # Pipeline imports
-from avalon import api, io
-import avalon.fusion
+from avalon import io
+from openpype.hosts.fusion import api
+import openpype.hosts.fusion.api.lib as fusion_lib
 
 # Config imports
-import openpype.lib as pype
-from openpype.pipeline import registered_host
-import openpype.hosts.fusion.lib as fusion_lib
+from openpype.lib import version_up
+from openpype.pipeline import (
+    install_host,
+    registered_host,
+)
 
 from openpype.lib.avalon_context import get_workdir_from_session
 
@@ -80,7 +83,7 @@ def _format_filepath(session):
 
     # Create new unqiue filepath
     if os.path.exists(new_filepath):
-        new_filepath = pype.version_up(new_filepath)
+        new_filepath = version_up(new_filepath)
 
     return new_filepath
 
@@ -103,7 +106,7 @@ def _update_savers(comp, session):
 
     comp.Print("New renders to: %s\n" % renders)
 
-    with avalon.fusion.comp_lock_and_undo_chunk(comp):
+    with api.comp_lock_and_undo_chunk(comp):
         savers = comp.GetToolList(False, "Saver").values()
         for saver in savers:
             filepath = saver.GetAttrs("TOOLST_Clip_Name")[1.0]
@@ -165,12 +168,12 @@ def switch(asset_name, filepath=None, new=True):
     # Get current project
     self._project = io.find_one({
         "type": "project",
-        "name": api.Session["AVALON_PROJECT"]
+        "name": io.Session["AVALON_PROJECT"]
     })
 
     # Go to comp
     if not filepath:
-        current_comp = avalon.fusion.get_current_comp()
+        current_comp = api.get_current_comp()
         assert current_comp is not None, "Could not find current comp"
     else:
         fusion = _get_fusion_instance()
@@ -195,7 +198,7 @@ def switch(asset_name, filepath=None, new=True):
     current_comp.Print(message)
 
     # Build the session to switch to
-    switch_to_session = api.Session.copy()
+    switch_to_session = io.Session.copy()
     switch_to_session["AVALON_ASSET"] = asset['name']
 
     if new:
@@ -204,7 +207,7 @@ def switch(asset_name, filepath=None, new=True):
         # Update savers output based on new session
         _update_savers(current_comp, switch_to_session)
     else:
-        comp_path = pype.version_up(filepath)
+        comp_path = version_up(filepath)
 
     current_comp.Print(comp_path)
 
@@ -235,7 +238,7 @@ if __name__ == '__main__':
 
     args, unknown = parser.parse_args()
 
-    api.install(avalon.fusion)
+    install_host(api)
     switch(args.asset_name, args.file_path)
 
     sys.exit(0)
