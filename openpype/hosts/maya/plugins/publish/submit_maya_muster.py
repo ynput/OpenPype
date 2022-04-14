@@ -8,10 +8,9 @@ import requests
 
 from maya import cmds
 
-from avalon import api
-
 import pyblish.api
 from openpype.hosts.maya.api import lib
+from openpype.pipeline import legacy_io
 from openpype.api import get_system_settings
 
 
@@ -503,7 +502,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "TOOL_ENV"
         ]
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         # self.log.debug("enviro: {}".format(pprint(environment)))
         for path in os.environ:
             if path.lower().startswith('pype_'):

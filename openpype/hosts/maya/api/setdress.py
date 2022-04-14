@@ -10,9 +10,9 @@ from bson.objectid import ObjectId
 
 from maya import cmds
 
-from avalon import io
 from openpype.pipeline import (
     schema,
+    legacy_io,
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
@@ -283,21 +283,23 @@ def update_package_version(container, version):
     """
 
     # Versioning (from `core.maya.pipeline`)
-    current_representation = io.find_one({
+    current_representation = legacy_io.find_one({
         "_id": ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
 
-    version_, subset, asset, project = io.parenthood(current_representation)
+    version_, subset, asset, project = legacy_io.parenthood(
+        current_representation
+    )
 
     if version == -1:
-        new_version = io.find_one({
+        new_version = legacy_io.find_one({
             "type": "version",
             "parent": subset["_id"]
         }, sort=[("name", -1)])
     else:
-        new_version = io.find_one({
+        new_version = legacy_io.find_one({
             "type": "version",
             "parent": subset["_id"],
             "name": version,
@@ -306,7 +308,7 @@ def update_package_version(container, version):
     assert new_version is not None, "This is a bug"
 
     # Get the new representation (new file)
-    new_representation = io.find_one({
+    new_representation = legacy_io.find_one({
         "type": "representation",
         "parent": new_version["_id"],
         "name": current_representation["name"]
@@ -328,7 +330,7 @@ def update_package(set_container, representation):
     """
 
     # Load the original package data
-    current_representation = io.find_one({
+    current_representation = legacy_io.find_one({
         "_id": ObjectId(set_container['representation']),
         "type": "representation"
     })
@@ -479,10 +481,10 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 # Check whether the conversion can be done by the Loader.
                 # They *must* use the same asset, subset and Loader for
                 # `update_container` to make sense.
-                old = io.find_one({
+                old = legacy_io.find_one({
                     "_id": ObjectId(representation_current)
                 })
-                new = io.find_one({
+                new = legacy_io.find_one({
                     "_id": ObjectId(representation_new)
                 })
                 is_valid = compare_representations(old=old, new=new)

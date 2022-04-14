@@ -1,10 +1,12 @@
 import os
 from maya import cmds
-from avalon import api
 
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
-from openpype.pipeline import legacy_create
+from openpype.pipeline import (
+    legacy_io,
+    legacy_create,
+)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import maintained_selection
 
@@ -143,7 +145,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = api.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         dependency = str(context["representation"]["_id"])
 
         self.log.info("Creating subset: {}".format(namespace))
