@@ -169,27 +169,30 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # only keep visible layer where instance segment is child
                 self.hide_others(
                     exporting_clip, segment_name, s_track_name)
+            else:
+                exporting_clip = self.import_clip(clip_path)
 
-                # change in/out marks to timeline in/out
-                in_mark = clip_in
-                out_mark = clip_out
+            # change in/out marks to timeline in/out
+            in_mark = clip_in
+            out_mark = clip_out
 
-                # add xml tags modifications
-                modify_xml_data.update({
-                    "exportHandles": True,
-                    "nbHandles": handles,
-                    "startFrame": frame_start
-                })
+            # add xml tags modifications
+            modify_xml_data.update({
+                "exportHandles": True,
+                "nbHandles": handles,
+                "startFrame": frame_start,
+                "namePattern": (
+                    "&lt;segment name&gt;_&lt;shot name&gt;_{}.").format(
+                        unique_name)
+            })
 
-                if parsed_comment_attrs:
-                    # add any xml overrides collected form segment.comment
-                    modify_xml_data.update(instance.data["xml_overrides"])
+            if parsed_comment_attrs:
+                # add any xml overrides collected form segment.comment
+                modify_xml_data.update(instance.data["xml_overrides"])
 
                 self.log.debug("__ modify_xml_data: {}".format(pformat(
                     modify_xml_data
                 )))
-            else:
-                exporting_clip = self.import_clip(clip_path)
 
             export_kwargs = {}
             # validate xml preset file is filled
