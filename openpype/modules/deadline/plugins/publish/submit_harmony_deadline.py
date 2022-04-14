@@ -8,8 +8,8 @@ import re
 
 import attr
 import pyblish.api
-from avalon import api
 
+from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -282,7 +282,7 @@ class HarmonySubmitDeadline(
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         for key in keys:
             val = environment.get(key)
             if val:

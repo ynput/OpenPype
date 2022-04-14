@@ -6,8 +6,8 @@ Provides:
     instance     -> families ([])
 """
 import pyblish.api
-import avalon.api
 
+from openpype.pipeline import legacy_io
 from openpype.lib.plugin_tools import filter_profiles
 
 
@@ -35,8 +35,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             return
 
         task_name = instance.data.get("task",
-                                      avalon.api.Session["AVALON_TASK"])
-        host_name = avalon.api.Session["AVALON_APP"]
+                                      legacy_io.Session["AVALON_TASK"])
+        host_name = legacy_io.Session["AVALON_APP"]
         family = instance.data["family"]
 
         filtering_criteria = {

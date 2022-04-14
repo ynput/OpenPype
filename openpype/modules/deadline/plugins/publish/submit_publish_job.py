@@ -7,13 +7,14 @@ import re
 from copy import copy, deepcopy
 import requests
 import clique
-import openpype.api
-
-from avalon import api, io
 
 import pyblish.api
 
-from openpype.pipeline import get_representation_path
+import openpype.api
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
 
 
 def get_resources(version, extension=None):
@@ -22,7 +23,7 @@ def get_resources(version, extension=None):
     if extension:
         query["name"] = extension
 
-    representation = io.find_one(query)
+    representation = legacy_io.find_one(query)
     assert representation, "This is a bug"
 
     directory = get_representation_path(representation)
@@ -221,9 +222,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._create_metadata_path(instance)
 
         environment = job["Props"].get("Env", {})
-        environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
-        environment["AVALON_ASSET"] = io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = io.Session["AVALON_TASK"]
+        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
+        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
+        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
@@ -663,7 +664,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if hasattr(instance, "_log"):
             data['_log'] = instance._log
 
-        asset = data.get("asset") or api.Session["AVALON_ASSET"]
+        asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 
         start = instance.data.get("frameStart")
@@ -955,7 +956,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             "job": render_job or None,
-            "session": api.Session.copy(),
+            "session": legacy_io.Session.copy(),
             "instances": instances
         }
 
@@ -1063,7 +1064,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
+            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."

@@ -4,10 +4,10 @@ import json
 import getpass
 
 import requests
-
-from avalon import api
 import pyblish.api
+
 import nuke
+from openpype.pipeline import legacy_io
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -266,7 +266,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             keys += self.env_allowed_keys
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
 
         for _path in os.environ:
             if _path.lower().startswith('openpype_'):
