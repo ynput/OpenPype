@@ -4,11 +4,11 @@ import getpass
 import platform
 
 import appdirs
-import requests
 
 from maya import cmds
 
 import pyblish.api
+from openpype.lib import requests_post
 from openpype.hosts.maya.api import lib
 from openpype.pipeline import legacy_io
 from openpype.api import get_system_settings
@@ -183,7 +183,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "select": "name"
         }
         api_entry = '/api/templates/list'
-        response = self._requests_post(
+        response = requests_post(
             self.MUSTER_REST_URL + api_entry, params=params)
         if response.status_code != 200:
             self.log.error(
@@ -234,7 +234,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "name": "submit"
         }
         api_entry = '/api/queue/actions'
-        response = self._requests_post(
+        response = requests_post(
             self.MUSTER_REST_URL + api_entry, params=params, json=payload)
 
         if response.status_code != 200:
@@ -548,16 +548,3 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 % (value, int(value))
             )
 
-    def _requests_post(self, *args, **kwargs):
-        """ Wrapper for requests, disabling SSL certificate validation if
-            DONT_VERIFY_SSL environment variable is found. This is useful when
-            Deadline or Muster server are running with self-signed certificates
-            and their certificate is not added to trusted certificates on
-            client machines.
-
-            WARNING: disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        return requests.post(*args, **kwargs)

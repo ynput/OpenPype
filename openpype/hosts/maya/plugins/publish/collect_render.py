@@ -386,6 +386,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             overrides = self.parse_options(str(render_globals))
             data.update(**overrides)
 
+            # get string values for pools
+            primary_pool = overrides["renderGlobals"]["Pool"]
+            secondary_pool = overrides["renderGlobals"].get("SecondaryPool")
+            data["primaryPool"] = primary_pool
+            data["secondaryPool"] = secondary_pool
+
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
             label += "  [{0}-{1}]".format(

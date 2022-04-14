@@ -25,7 +25,7 @@ class AERenderInstance(RenderInstance):
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
-    order = pyblish.api.CollectorOrder + 0.498
+    order = pyblish.api.CollectorOrder + 0.400
     label = "Collect After Effects Render Layers"
     hosts = ["aftereffects"]
 

@@ -14,7 +14,7 @@ from openpype.hosts.nuke.api.lib import (
     get_avalon_knob_data,
     set_avalon_knob_data
 )
-from openpype.hosts.nuke.api.commands import viewer_update_and_undo_stop
+from openpype.hosts.nuke.api.command import viewer_update_and_undo_stop
 from openpype.hosts.nuke.api import containerise, update_container
 
 

@@ -5,7 +5,7 @@ import getpass
 import requests
 import pyblish.api
 
-import hou
+# import hou  ???
 
 from openpype.pipeline import legacy_io
 
@@ -71,7 +71,8 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "UserName": deadline_user,
 
                 "Plugin": "Houdini",
-                "Pool": "houdini_redshift",  # todo: remove hardcoded pool
+                "Pool": instance.data.get("primaryPool"),
+                "secondaryPool": instance.data.get("secondaryPool"),
                 "Frames": frames,
 
                 "ChunkSize": instance.data.get("chunkSize", 10),
