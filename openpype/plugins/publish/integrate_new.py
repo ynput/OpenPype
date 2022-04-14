@@ -4,6 +4,7 @@ import sys
 import copy
 import clique
 import six
+from collections import deque, defaultdict
 
 from bson.objectid import ObjectId
 from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
@@ -871,17 +872,17 @@ class SiteSync(object):
             attached_sites[remote_site] = create_metadata(remote_site,
                                                           created=False)
 
+        # add alternative sites
+        cls._add_alternative_sites(system_sync_server_presets, attached_sites)
+
         # add skeleton for sites where it should be always synced to
         always_accessible_sites = (
             sync_project_presets["config"].get("always_accessible_on", [])
         )
-        for site in always_accessible_sites:
+        for site in set(always_accessible_sites):
             site = site.strip()
             if site not in attached_sites:
                 attached_sites[site] = create_metadata(site, created=False)
-
-        # add alternative sites
-        cls._add_alternative_sites(system_sync_server_presets, attached_sites)
 
         return list(attached_sites.values())
 
@@ -904,8 +905,9 @@ class SiteSync(object):
 
         return local_site, remote_site
 
-    @staticmethod
-    def _add_alternative_sites(system_sync_server_presets,
+    @classmethod
+    def _add_alternative_sites(cls,
+                               system_sync_server_presets,
                                attached_sites):
         """Loop through all configured sites and add alternatives.
 
@@ -916,17 +918,13 @@ class SiteSync(object):
             See SyncServerModule.handle_alternate_site
         """
         conf_sites = system_sync_server_presets.get("sites", {})
+        alt_site_pairs = cls._get_alt_site_pairs(conf_sites)
 
-        for site_name, site_info in conf_sites.items():
+        for site_name, alt_sites in alt_site_pairs.items():
 
             # Skip if already defined
             if site_name in attached_sites:
                 continue
-
-            # Get alternate sites (stripped names) for this site name
-            alt_sites = site_info.get("alternative_sites", [])
-            alt_sites = [site.strip() for site in alt_sites]
-            alt_sites = set(alt_sites)
 
             # If no alternative sites we don't need to add
             if not alt_sites:
@@ -944,3 +942,42 @@ class SiteSync(object):
 
             # Note: We change mutable `attached_site` dict in-place
             attached_sites[site_name] = alt_site_meta
+
+        @staticmethod
+        def _get_alt_site_pairs(conf_sites):
+            """Returns dict of site and its alternative sites.
+            If `site` has alternative site, it means that alt_site has
+            'site' as
+            alternative site
+            Args:
+                conf_sites (dict)
+            Returns:
+                (dict): {'site': [alternative sites]...}
+            """
+            alt_site_pairs = defaultdict(list)
+            for site_name, site_info in conf_sites.items():
+                alt_sites = set(site_info.get("alternative_sites", []))
+                alt_site_pairs[site_name].extend(alt_sites)
+
+                for alt_site in alt_sites:
+                    alt_site_pairs[alt_site].append(site_name)
+
+            for site_name, alt_sites in alt_site_pairs.items():
+                sites_queue = deque(alt_sites)
+                while sites_queue:
+                    alt_site = sites_queue.popleft()
+
+                    # safety against wrong config
+                    # {"SFTP": {"alternative_site": "SFTP"}
+                    if alt_site == site_name or alt_site not in alt_site_pairs:
+                        continue
+
+                    for alt_alt_site in alt_site_pairs[alt_site]:
+                        if (
+                                alt_alt_site != site_name
+                                and alt_alt_site not in alt_sites
+                        ):
+                            alt_sites.append(alt_alt_site)
+                            sites_queue.append(alt_alt_site)
+
+            return alt_site_pairs
