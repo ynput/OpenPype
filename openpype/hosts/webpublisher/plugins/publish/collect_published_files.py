@@ -12,7 +12,6 @@ import clique
 import tempfile
 import math
 
-from avalon import io
 import pyblish.api
 from openpype.lib import (
     prepare_template_data,
@@ -24,6 +23,7 @@ from openpype.lib.plugin_tools import (
     parse_json,
     get_subset_name_with_asset_doc
 )
+from openpype.pipeline import legacy_io
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -261,7 +261,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 }
             }
         ]
-        version = list(io.aggregate(query))
+        version = list(legacy_io.aggregate(query))
 
         if version:
             return version[0].get("version") or 0

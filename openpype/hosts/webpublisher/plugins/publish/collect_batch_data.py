@@ -7,12 +7,13 @@ Provides:
 import os
 
 import pyblish.api
-from avalon import io
+
 from openpype.lib.plugin_tools import (
     parse_json,
     get_batch_asset_task_info
 )
 from openpype.lib.remote_publish import get_webpublish_conn, IN_PROGRESS_STATUS
+from openpype.pipeline import legacy_io
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):
@@ -52,9 +53,9 @@ class CollectBatchData(pyblish.api.ContextPlugin):
         )
 
         os.environ["AVALON_ASSET"] = asset_name
-        io.Session["AVALON_ASSET"] = asset_name
+        legacy_io.Session["AVALON_ASSET"] = asset_name
         os.environ["AVALON_TASK"] = task_name
-        io.Session["AVALON_TASK"] = task_name
+        legacy_io.Session["AVALON_TASK"] = task_name
 
         context.data["asset"] = asset_name
         context.data["task"] = task_name
