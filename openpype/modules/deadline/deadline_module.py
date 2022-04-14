@@ -1,6 +1,17 @@
 import os
+import requests
+import six
+import sys
+
+from openpype.lib import requests_get, PypeLogger
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import IPluginPaths
+
+
+class DeadlineWebserviceError(Exception):
+    """
+    Exception to throw when connection to Deadline server fails.
+    """
 
 
 class DeadlineModule(OpenPypeModule, IPluginPaths):
@@ -32,3 +43,35 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")]
         }
+
+    @staticmethod
+    def get_deadline_pools(webservice, log=None):
+        # type: (str) -> list
+        """Get pools from Deadline.
+        Args:
+            webservice (str): Server url.
+            log (Logger)
+        Returns:
+            list: Pools.
+        Throws:
+            RuntimeError: If deadline webservice is unreachable.
+
+        """
+        if not log:
+            log = PypeLogger.get_logger(__name__)
+
+        argument = "{}/api/pools?NamesOnly=true".format(webservice)
+        try:
+            response = requests_get(argument)
+        except requests.exceptions.ConnectionError as exc:
+            msg = 'Cannot connect to DL web service {}'.format(webservice)
+            log.error(msg)
+            six.reraise(
+                DeadlineWebserviceError,
+                DeadlineWebserviceError('{} - {}'.format(msg, exc)),
+                sys.exc_info()[2])
+        if not response.ok:
+            log.warning("No pools retrieved")
+            return []
+
+        return response.json()
