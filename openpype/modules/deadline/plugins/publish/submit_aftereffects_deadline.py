@@ -37,8 +37,6 @@ class AfterEffectsSubmitDeadline(
 
     priority = 50
     chunk_size = 1000000
-    primary_pool = None
-    secondary_pool = None
     group = None
     department = None
     multiprocess = True
@@ -62,8 +60,8 @@ class AfterEffectsSubmitDeadline(
             dln_job_info.Frames = frame_range
 
         dln_job_info.Priority = self.priority
-        dln_job_info.Pool = self.primary_pool
-        dln_job_info.SecondaryPool = self.secondary_pool
+        dln_job_info.Pool = self._instance.data.get("primaryPool")
+        dln_job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
