@@ -1,8 +1,8 @@
-from avalon import io
 import nuke
 import nukescripts
 
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path,
 )
@@ -188,7 +188,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -237,7 +237,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
             GN["name"].setValue(object_name)
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
