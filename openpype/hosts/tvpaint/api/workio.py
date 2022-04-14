@@ -3,8 +3,10 @@
     has_unsaved_changes
 """
 
-from avalon import api
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+from openpype.pipeline import (
+    HOST_WORKFILE_EXTENSIONS,
+    legacy_io,
+)
 from .lib import (
     execute_george,
     execute_george_through_file
@@ -24,9 +26,9 @@ def save_file(filepath):
     """Save the open scene file."""
     # Store context to workfile before save
     context = {
-        "project": api.Session["AVALON_PROJECT"],
-        "asset": api.Session["AVALON_ASSET"],
-        "task": api.Session["AVALON_TASK"]
+        "project": legacy_io.Session["AVALON_PROJECT"],
+        "asset": legacy_io.Session["AVALON_ASSET"],
+        "task": legacy_io.Session["AVALON_TASK"]
     }
     save_current_workfile_context(context)
 
