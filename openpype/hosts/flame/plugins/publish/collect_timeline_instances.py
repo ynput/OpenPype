@@ -26,7 +26,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
     add_tasks = []
 
     def process(self, context):
-        project = context.data["flameProject"]
         selected_segments = context.data["flameSelectedSegments"]
         self.log.debug("__ selected_segments: {}".format(selected_segments))
 
