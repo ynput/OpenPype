@@ -3,6 +3,10 @@ from .constants import (
     HOST_WORKFILE_EXTENSIONS,
 )
 
+from .mongodb import (
+    AvalonMongoDB,
+)
+
 from .create import (
     BaseCreator,
     Creator,
@@ -85,16 +89,13 @@ from .context_tools import (
 install = install_host
 uninstall = uninstall_host
 
-from .mongodb import (
-    AvalonMongoDB,
-)
-
 
 __all__ = (
     "AVALON_CONTAINER_ID",
     "HOST_WORKFILE_EXTENSIONS",
 
-    "attribute_definitions",
+    # --- MongoDB ---
+    "AvalonMongoDB",
 
     # --- Create ---
     "BaseCreator",
@@ -174,6 +175,4 @@ __all__ = (
     # Backwards compatible function names
     "install",
     "uninstall",
-
-    "AvalonMongoDB",
 )
