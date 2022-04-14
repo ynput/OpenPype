@@ -95,9 +95,6 @@ def session_data_from_environment(context_keys=False):
         # Used during any connections to the outside world
         ("AVALON_TIMEOUT", "1000"),
 
-        # Address to Asset Database
-        ("AVALON_MONGO", "mongodb://localhost:27017"),
-
         # Name of database used in MongoDB
         ("AVALON_DB", "avalon"),
     ):

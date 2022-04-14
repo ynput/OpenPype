@@ -19,7 +19,6 @@ def my_exception_hook(exctype, value, traceback):
 
 
 if __name__ == '__main__':
-    os.environ["AVALON_MONGO"] = "mongodb://localhost:27017"
     os.environ["OPENPYPE_MONGO"] = "mongodb://localhost:27017"
     os.environ["AVALON_DB"] = "avalon"
     os.environ["AVALON_TIMEOUT"] = "1000"
