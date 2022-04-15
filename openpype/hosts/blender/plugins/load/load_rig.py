@@ -2,8 +2,7 @@
 
 from pathlib import Path
 from typing import Dict, List, Optional
-from mathutils import *
-from math import *
+from mathutils import Vector
 
 import bpy
 from avalon import api
