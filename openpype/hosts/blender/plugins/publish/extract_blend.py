@@ -71,11 +71,13 @@ class ExtractBlend(openpype.api.Extractor):
             # if doesn't exist create the custom property original_name
             self._set_original_name_property(object)
             if object.type != "EMPTY":
-                self._set_original_name_property(object.data)
+                if object.data is not None:
+                    self._set_original_name_property(object.data)
             if has_namespace:
                 self._set_namespace_property(object, container)
                 if object.type != "EMPTY":
-                    self._set_namespace_property(object.data, container)
+                    if object.data is not None:
+                        self._set_namespace_property(object.data, container)
 
             # Pack used images in the blend files.
             if object.type == "MESH":

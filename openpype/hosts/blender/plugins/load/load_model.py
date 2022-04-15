@@ -32,17 +32,18 @@ class modfier_description:
         create the modifier with the index, properties and object
         properties
         """
-        object = bpy.data.objects[self._object_name]
-        if object:
-            if object.modifiers.get(self._properties["name"]) is None:
-                modifier = object.modifiers.new(
-                    self._properties["name"],
-                    self._properties["type"],
-                )
-                for property_key in self._properties.keys():
-                    if not (modifier.is_property_readonly(property_key)):
-                        property_value = self._properties[property_key]
-                        setattr(modifier, property_key, property_value)
+        if bpy.data.objects.get(self._object_name):
+            object = bpy.data.objects[self._object_name]
+            if object:
+                if object.modifiers.get(self._properties["name"]) is None:
+                    modifier = object.modifiers.new(
+                        self._properties["name"],
+                        self._properties["type"],
+                    )
+                    for property_key in self._properties.keys():
+                        if not (modifier.is_property_readonly(property_key)):
+                            property_value = self._properties[property_key]
+                            setattr(modifier, property_key, property_value)
 
     def __init__(self, modifier: bpy.types.Modifier):
         """Get the index, properties and object modified of the modifier"""
@@ -87,6 +88,7 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
 
     def _copy_driver(self, from_fcurve, target_fcurve):
+        """Copy the driver on from an fcurve to another"""
         new_driver = target_fcurve.driver
         driver_to_copy = from_fcurve.driver
         new_driver.type = driver_to_copy.type
@@ -177,23 +179,25 @@ class BlendModelLoader(plugin.AssetLoader):
                         modifier_list.append(modifier_description)
         return modifier_list
 
-    def _set_modifier(self, modifier_list):
+    def _set_modifiers(self, modifier_list):
         """Set all modifier parameters of the container's objects"""
         modifier_list.reverse()
         for modifier_description in modifier_list:
-            modifier_description.create_blender_modifier()
+            if bpy.data.objects.get(modifier_description.object):
+                modifier_description.create_blender_modifier()
 
         for modifier_description in modifier_list:
-            object = bpy.data.objects[modifier_description.object]
-            if object:
-                bpy.context.view_layer.objects.active = object
-                try:
-                    bpy.ops.object.modifier_move_to_index(
-                        modifier=modifier_description.properties["name"],
-                        index=0,
-                    )
-                except Exception as ex:
-                    print(ex)
+            if bpy.data.objects.get(modifier_description.object):
+                object = bpy.data.objects[modifier_description.object]
+                if object:
+                    bpy.context.view_layer.objects.active = object
+                    try:
+                        bpy.ops.object.modifier_move_to_index(
+                            modifier=modifier_description.properties["name"],
+                            index=0,
+                        )
+                    except Exception as ex:
+                        print(ex)
 
     def _remove(self, container):
         """Remove the container and used data"""
@@ -229,7 +233,20 @@ class BlendModelLoader(plugin.AssetLoader):
                                 container_collection = container
 
         # Link the container collection to the scene collection
-        scene_collection.children.link(container_collection)
+        # or if there is one collection in scene_collection choose
+        # this collection
+        is_pyblish_container = plugin.is_pyblish_avalon_container(
+            scene_collection.children[0]
+        )
+        if len(scene_collection.children) == 1 and not is_pyblish_container:
+            # we don't want to add an asset in another publish container
+            plugin.link_collection_to_collection(
+                container_collection, scene_collection.children[0]
+            )
+        else:
+            plugin.link_collection_to_collection(
+                container_collection, scene_collection
+            )
 
         # Get all the object of the container.
         # The farest parents in first for override them first
@@ -340,6 +357,7 @@ class BlendModelLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
+        # Add temp namesapce to avoid rename object during the update
         plugin.set_temp_namespace_for_objects_container(avalon_container)
 
         # Get the parent collections of the container to relink after update
@@ -362,12 +380,20 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # relink the updated container to his parent collection
         if parent_collections:
-            bpy.context.scene.collection.children.unlink(container_override)
-            for parent_collection in parent_collections:
-                parent_collection.children.link(container_override)
+            if (
+                container_override
+                in bpy.context.scene.collection.children.values()
+            ):
+                bpy.context.scene.collection.children.unlink(
+                    container_override
+                )
+                for parent_collection in parent_collections:
+                    plugin.link_collection_to_collection(
+                        container_override, parent_collection
+                    )
 
         # Reset the modifier parameters and the driver targets
-        self._set_modifier(modifiers_dict)
+        self._set_modifiers(modifiers_dict)
         self._set_drivers_from_empty(empty)
 
         plugin.set_original_name_for_objects_container(container_override)

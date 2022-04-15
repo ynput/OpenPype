@@ -43,9 +43,24 @@ class CreateAnimation(plugin.Creator):
 
         # Get Instance Container or create it if it does not exist
         container = bpy.data.collections.get(name)
-        if not container:
-            container = bpy.data.collections.new(name=name)
-            scene_collection.children.link(container)
+        if container is None:
+            is_avalon_container = True
+            if len(scene_collection.children) == 1:
+                is_avalon_container = plugin.is_avalon_container(
+                    scene_collection.children[0]
+                )
+            if (
+                len(scene_collection.children) == 1
+                and all_in_container
+                and not is_avalon_container
+            ):
+                container = scene_collection.children[0]
+                container.name = name
+            else:
+                container = bpy.data.collections.new(name=name)
+                plugin.link_collection_to_collection(
+                    container, scene_collection
+                )
 
         # Add custom property on the instance container with the data
         self.data["task"] = api.Session.get("AVALON_TASK")
@@ -62,7 +77,7 @@ class CreateAnimation(plugin.Creator):
                     and container is not collection
                 ):
                     scene_collection.children.unlink(collection)
-                    container.children.link(collection)
+                    plugin.link_collection_to_collection(collection, container)
 
         # Add selected objects to container
         objects_to_link = list()
@@ -86,7 +101,7 @@ class CreateAnimation(plugin.Creator):
                     # And unlink the object to its users collection
                     collection.objects.unlink(object)
                 # Link the object to the container
-                container.objects.link(object)
+                plugin.link_object_to_collection(object, container)
                 # If the container is empty romove them
         if not container.objects and not container.children:
             bpy.data.collections.remove(container)

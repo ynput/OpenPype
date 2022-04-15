@@ -39,9 +39,24 @@ class CreateModel(plugin.Creator):
 
         # Get Instance Container or create it if it does not exist
         container = bpy.data.collections.get(name)
-        if not container:
-            container = bpy.data.collections.new(name=name)
-            scene_collection.children.link(container)
+        if container is None:
+            is_avalon_container = False
+            if len(scene_collection.children) == 1:
+                is_avalon_container = plugin.is_avalon_container(
+                    scene_collection.children[0]
+                )
+            if (
+                len(scene_collection.children) == 1
+                and all_in_container
+                and not is_avalon_container
+            ):
+                container = scene_collection.children[0]
+                container.name = name
+            else:
+                container = bpy.data.collections.new(name=name)
+                plugin.link_collection_to_collection(
+                    container, scene_collection
+                )
 
         # Add custom property on the instance container with the data
         self.data["task"] = api.Session.get("AVALON_TASK")
@@ -50,19 +65,25 @@ class CreateModel(plugin.Creator):
         # Add selected objects to container
         # If all_in_container is true set all the objects in the container
         if all_in_container:
-            # Get collections under the scene collection
-            collections = scene_collection.children
-            for collection in collections:
-                # If the collection is not yet in the container
-                # And is not the container
-                if (
-                    collection not in container.children.values()
-                    and collection is not container
-                ):
-                    # Unlink the collection to the scene collection
-                    # And link them to the container
-                    scene_collection.children.unlink(collection)
-                    container.children.link(collection)
+            # If all the collection isn't already in the container
+            if len(scene_collection.children) != 1:
+                # Get collections under the scene collection
+                collections = scene_collection.children
+                for collection in collections:
+                    # If the collection is not yet in the container
+                    # And is not the container
+                    if (
+                        collection not in container.children.values()
+                        and collection is not container
+                    ):
+                        # Unlink the collection to the scene collection
+                        # And link them to the container
+                        if collection in scene_collection.children.values():
+                            scene_collection.children.unlink(collection)
+                        plugin.link_collection_to_collection(
+                            collection, container
+                        )
+
             # Get objects under the scene collection
             objects = scene_collection.objects
             for object in objects:
@@ -73,7 +94,8 @@ class CreateModel(plugin.Creator):
                         # And unlink the object to its users collection
                         user_collection.objects.unlink(object)
                     # Link the object to the container
-                    container.objects.link(object)
+                    plugin.link_collection_to_collection(object, container)
+
         # If all_in_container is False set selected objects in the container
         else:
             selected = lib.get_selection()
@@ -84,7 +106,7 @@ class CreateModel(plugin.Creator):
                         # And unlink the object to its users collection
                         collection.objects.unlink(object)
                     # Link the object to the container
-                    container.objects.link(object)
+                    plugin.link_object_to_collection(object, container)
         # If the container is empty remove them
         if not container.objects and not container.children:
             bpy.data.collections.remove(container)

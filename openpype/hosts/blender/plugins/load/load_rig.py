@@ -50,8 +50,21 @@ class BlendRigLoader(plugin.AssetLoader):
                         ):
                             container_collection = container
 
-        # Link the container to the scene collection
-        scene_collection.children.link(container_collection)
+        # Link the container collection to the scene collection
+        # or if there is one collection in scene_collection choose
+        # this collection
+        is_pyblish_container = plugin.is_pyblish_avalon_container(
+            scene_collection.children[0]
+        )
+        if len(scene_collection.children) == 1 and not is_pyblish_container:
+            # we don't want to add an asset in another publish container
+            plugin.link_collection_to_collection(
+                container_collection, scene_collection.children[0]
+            )
+        else:
+            plugin.link_collection_to_collection(
+                container_collection, scene_collection
+            )
 
         # Get all the collection of the container. The farest parents in first
         # for override them first
@@ -200,13 +213,23 @@ class BlendRigLoader(plugin.AssetLoader):
         # Set the action on the armature
         if armature.animation_data:
             armature.animation_data.action = action
-            action.use_fake_user = False
-
+            try:
+                action.use_fake_user = False
+            except Exception as e:
+                print("Remove Fake User Failed", e)
         # Relink the container on the good collection
         if parent_collections:
-            bpy.context.scene.collection.children.unlink(container_override)
+            if (
+                container_override
+                in bpy.context.scene.collection.children.values()
+            ):
+                bpy.context.scene.collection.children.unlink(
+                    container_override
+                )
             for parent_collection in parent_collections:
-                parent_collection.children.link(container_override)
+                plugin.link_collection_to_collection(
+                    container_override, parent_collection
+                )
 
         has_namespace = api.Session["AVALON_TASK"] not in [
             "Rigging",

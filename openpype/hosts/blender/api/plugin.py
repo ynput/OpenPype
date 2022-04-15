@@ -92,6 +92,18 @@ def remove_orphan_datablocks():
                 bpy.data.libraries.remove(block)
 
 
+def link_collection_to_collection(collection_to_link, collection):
+    """link an item to a collection"""
+    if collection_to_link not in collection.children.values():
+        collection.children.link(collection_to_link)
+
+
+def link_object_to_collection(object_to_link, object):
+    """link an item to an object"""
+    if object_to_link not in object.objects.values():
+        object.objects.link(object_to_link)
+
+
 def set_fake_user_on_orphans():
     """set fake user on orphans to avoid orphan purge"""
     properties = [
@@ -129,8 +141,12 @@ def set_fake_user_on_orphans():
         data = getattr(bpy.data, property)
         for block in data:
             if block.users == 0:
-                block.use_fake_user = True
-                items_with_fake_user_list.append(block)
+                try:
+                    block.use_fake_user = True
+                    items_with_fake_user_list.append(block)
+                except Exception as e:
+                    print("Set Fake User Failed", e)
+
     return items_with_fake_user_list
 
 
@@ -211,7 +227,7 @@ def prepare_data(data, container_name=None):
     name_split = name.split(":")
     if len(name_split) > 1:
         name = name_split[1]
-    if container_name:
+    if container_name is not None:
         data.name = f"{container_name}:{name}"
     else:
         data.name = f"{name}"
@@ -231,20 +247,20 @@ def set_original_name_for_objects_container(container, has_namespace=False):
                 )
             else:
                 object.name = object["original_name"]
-
-        if object.data.get("original_name"):
-            if object.type != "EMPTY":
-                if (
-                    has_namespace
-                    and object.data.get("namespace")
-                    and object.data.get("original_name")
-                ):
-                    object.data.name = (
-                        f'{object.data["namespace"]}:'
-                        f'{object.data["original_name"]}'
-                    )
-                else:
-                    object.data.name = object.data["original_name"]
+        if object.data is not None:
+            if object.data.get("original_name"):
+                if object.type != "EMPTY":
+                    if (
+                        has_namespace
+                        and object.data.get("namespace")
+                        and object.data.get("original_name")
+                    ):
+                        object.data.name = (
+                            f'{object.data["namespace"]}:'
+                            f'{object.data["original_name"]}'
+                        )
+                    else:
+                        object.data.name = object.data["original_name"]
 
     collections = plugin.get_all_collections_in_collection(container)
     for collection in collections:
@@ -263,7 +279,8 @@ def set_temp_namespace_for_objects_container(container):
         if object.get("original_name"):
             object.name = f'temp:{object["original_name"]}'
         if object.type != "EMPTY":
-            object.data.name = f'temp:{object["original_name"]}'
+            if object.data is not None:
+                object.data.name = f'temp:{object["original_name"]}'
     collections = plugin.get_all_collections_in_collection(container)
     for collection in collections:
         if collection.get("original_name"):
@@ -379,6 +396,22 @@ def is_local_collection(collection):
         if collection.library is None and collection.override_library is None:
             return True
     return False
+
+
+def is_pyblish_avalon_container(container):
+    is_pyblish_avalon_container = False
+    if container.get("avalon"):
+        if container["avalon"].get("id") == "pyblish.avalon.container":
+            is_pyblish_avalon_container = True
+    return is_pyblish_avalon_container
+
+
+def is_avalon_container(container):
+    is_pyblish_avalon_container = False
+    if container.get("avalon"):
+        if container["avalon"].get("id") == "pyblish.avalon.instance":
+            is_pyblish_avalon_container = True
+    return is_pyblish_avalon_container
 
 
 def get_local_collection_with_name(name):

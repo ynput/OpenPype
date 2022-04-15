@@ -25,6 +25,7 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
     icon = "search"
 
     def process(self, context, plugin):
+
         scene = bpy.data.scenes["Scene"]
         # Get the local instances
         local_instances_list = list()
@@ -52,12 +53,12 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
                 extract_local_container_standalone.__file__
             )
 
-            filepath = str(representation["data"]["source"]).replace(
+            work_filepath = str(representation["data"]["source"]).replace(
                 "{root[work]}", work_path
             )
-            output = version_up(filepath)
+            output = version_up(work_filepath)
             blender_binary_path = bpy.app.binary_path
-            command = f"'{blender_binary_path}' --python '{script_path}' -- '{bpy.data.filepath}' '{output}' '{collection.name}'"
+            command = f"'{blender_binary_path}' -b --python '{script_path}' -- '{bpy.data.filepath}' '{output}' '{collection.name}'"
             # Not sure if it works on windows and ios
             command = command.replace("'", '"')
             p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)

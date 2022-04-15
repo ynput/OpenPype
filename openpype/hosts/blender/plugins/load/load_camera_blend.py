@@ -64,8 +64,22 @@ class BlendCameraLoader(plugin.AssetLoader):
                         container_collection = data_collection
 
         self.original_container_name = container_collection.name
-        # Link the container to the scene collection
-        scene_collection.children.link(container_collection)
+
+        # Link the container collection to the scene collection
+        # or if there is one collection in scene_collection choose
+        # this collection
+        is_pyblish_container = plugin.is_pyblish_avalon_container(
+            scene_collection.children[0]
+        )
+        if len(scene_collection.children) == 1 and not is_pyblish_container:
+            # we don't want to add an asset in another publish container
+            plugin.link_collection_to_collection(
+                container_collection, scene_collection.children[0]
+            )
+        else:
+            plugin.link_collection_to_collection(
+                container_collection, scene_collection
+            )
 
         # Get all the collection of the container.
 
@@ -201,9 +215,17 @@ class BlendCameraLoader(plugin.AssetLoader):
 
         # relink the updated container to his parent collection
         if parent_collections:
-            bpy.context.scene.collection.children.unlink(container_override)
+            if (
+                container_override
+                in bpy.context.scene.collection.children.values()
+            ):
+                bpy.context.scene.collection.children.unlink(
+                    container_override
+                )
             for parent_collection in parent_collections:
-                parent_collection.children.link(container_override)
+                plugin.link_collection_to_collection(
+                    container_override, parent_collection
+                )
 
         # self._set_drivers_target(container_override,
         # object_driver_target_list)
