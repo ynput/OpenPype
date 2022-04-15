@@ -2,6 +2,8 @@
 
 from pathlib import Path
 from typing import Dict, List, Optional
+from mathutils import *
+from math import *
 
 import bpy
 from avalon import api
@@ -21,6 +23,54 @@ class BlendRigLoader(plugin.AssetLoader):
     label = "Link Rig"
     icon = "code-fork"
     color = "orange"
+
+    def _get_object_transforms_list(self, container):
+        objects = plugin.get_all_objects_in_collection(container)
+        object_transforms_list = dict()
+        for object in objects:
+            transform = [
+                Vector(object.location),
+                Vector(object.scale),
+                Vector(object.rotation_euler),
+            ]
+            object_transforms_list[object.name] = transform
+        return object_transforms_list
+
+    def _get_bone_transforms_list(self, container):
+        objects = plugin.get_all_objects_in_collection(container)
+        armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
+        bones = armature.pose.bones
+        bone_transforms_list = dict()
+        for bone in bones:
+            transform = [
+                Vector(bone.location),
+                Vector(bone.scale),
+                Vector(bone.rotation_quaternion),
+            ]
+            bone_transforms_list[bone.name] = transform
+        print(bone_transforms_list)
+        return bone_transforms_list
+
+    def _set_object_transforms_list(self, object_transforms_list):
+        object_transforms_list = dict()
+        for object_name in object_transforms_list.keys():
+            if bpy.data.objects.get(object_name) is not None:
+                object = bpy.data.objects.get(object_name)
+                object.location = object_transforms_list[object_name][0]
+                object.scale = object_transforms_list[object_name][1]
+                object.rotation_euler = object_transforms_list[object_name][2]
+
+    def _set_bone_transforms_list(self, container, bone_transforms_list):
+        objects = plugin.get_all_objects_in_collection(container)
+        armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
+        bones = armature.pose.bones
+        print(bone_transforms_list)
+        for bone_name in bone_transforms_list.keys():
+            if bones.get(bone_name) is not None:
+                bone = bones.get(bone_name)
+                bone.location = bone_transforms_list[bone_name][0]
+                bone.scale = bone_transforms_list[bone_name][1]
+                bone.rotation_quaternion = bone_transforms_list[bone_name][2]
 
     def _remove(self, container):
         """Remove the container and used data"""
@@ -53,9 +103,10 @@ class BlendRigLoader(plugin.AssetLoader):
         # Link the container collection to the scene collection
         # or if there is one collection in scene_collection choose
         # this collection
-        is_pyblish_container = plugin.is_pyblish_avalon_container(
-            scene_collection.children[0]
-        )
+        if len(scene_collection.children) == 1:
+            is_pyblish_container = plugin.is_pyblish_avalon_container(
+                scene_collection.children[0]
+            )
         if len(scene_collection.children) == 1 and not is_pyblish_container:
             # we don't want to add an asset in another publish container
             plugin.link_collection_to_collection(
@@ -154,14 +205,15 @@ class BlendRigLoader(plugin.AssetLoader):
         asset_name = container["asset_name"]
         # Get the avalon_container with the object name
         avalon_container = bpy.data.collections.get(object_name)
+
         # Find the library path in the scene
         libpath = Path(api.get_representation_path(representation))
-
         assert container, f"The asset is not loaded: {container['objectName']}"
         assert (
             libpath
         ), "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
+
         # Get the metadata in the container
         metadata = avalon_container.get(AVALON_PROPERTY)
         # Get the library path store in the metadata
@@ -190,11 +242,22 @@ class BlendRigLoader(plugin.AssetLoader):
         # Get the armature of the rig
         objects = avalon_container.objects
         armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
-        # Get the action on the armature
+
+        # Store the transform of the objects and the bones
+        # that are in the container for restore them after the update
+        object_transforms_list = self._get_object_transforms_list(
+            avalon_container
+        )
+        bone_transforms_list = self._get_bone_transforms_list(avalon_container)
+
+        # Get the action on the armature to restore the animation after the
+        # update
+
         action = None
         if armature.animation_data and armature.animation_data.action:
             action = armature.animation_data.action
             armature.animation_data.action.use_fake_user = True
+
         # Remove the container
         self._remove(avalon_container)
         # Clean
@@ -230,6 +293,12 @@ class BlendRigLoader(plugin.AssetLoader):
                 plugin.link_collection_to_collection(
                     container_override, parent_collection
                 )
+        # restore the transform of the objects and the bones
+        # that are in the container
+        self._set_object_transforms_list(object_transforms_list)
+        self._set_bone_transforms_list(
+            container_override, bone_transforms_list
+        )
 
         has_namespace = api.Session["AVALON_TASK"] not in [
             "Rigging",

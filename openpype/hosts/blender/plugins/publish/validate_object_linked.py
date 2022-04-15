@@ -26,7 +26,6 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
 
     def process(self, context, plugin):
 
-        scene = bpy.data.scenes["Scene"]
         # Get the local instances
         local_instances_list = list()
         system = platform.system().lower()
@@ -58,7 +57,10 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
             )
             output = version_up(work_filepath)
             blender_binary_path = bpy.app.binary_path
-            command = f"'{blender_binary_path}' -b --python '{script_path}' -- '{bpy.data.filepath}' '{output}' '{collection.name}'"
+            command = (
+                f"'{blender_binary_path}' -b --python '{script_path}' "
+                f"-- '{bpy.data.filepath}' '{output}' '{collection.name}'"
+            )
             # Not sure if it works on windows and ios
             command = command.replace("'", '"')
             p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
@@ -102,5 +104,6 @@ class ValidateObjectLinked(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError(
-                f"Container contain local parts: {invalid} See Action of this Validate"
+                f"Container contain local parts: {invalid} "
+                f"See Action of this Validate"
             )

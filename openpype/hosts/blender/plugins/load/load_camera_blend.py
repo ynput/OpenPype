@@ -68,9 +68,10 @@ class BlendCameraLoader(plugin.AssetLoader):
         # Link the container collection to the scene collection
         # or if there is one collection in scene_collection choose
         # this collection
-        is_pyblish_container = plugin.is_pyblish_avalon_container(
-            scene_collection.children[0]
-        )
+        if len(scene_collection.children) == 1:
+            is_pyblish_container = plugin.is_pyblish_avalon_container(
+                scene_collection.children[0]
+            )
         if len(scene_collection.children) == 1 and not is_pyblish_container:
             # we don't want to add an asset in another publish container
             plugin.link_collection_to_collection(

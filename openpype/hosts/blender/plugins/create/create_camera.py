@@ -3,7 +3,7 @@
 import bpy
 
 from avalon import api
-from openpype.hosts.blender.api import plugin, lib, ops, dialog
+from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 

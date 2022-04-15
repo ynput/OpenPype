@@ -35,7 +35,8 @@ def load_scripts(paths):
         else:
             print(
                 "\nWarning! '%s' has no register function, "
-                "this is now a requirement for registerable scripts" % mod.__file__
+                "this is now a requirement for registerable scripts"
+                % mod.__file__
             )
 
     def unregister_module_call(mod):
@@ -174,7 +175,9 @@ def imprint(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     pipeline.metadata_update(node, imprint_data)
 
 
-def lsattr(attr: str, value: Union[str, int, bool, List, Dict, None] = None) -> List:
+def lsattr(
+    attr: str, value: Union[str, int, bool, List, Dict, None] = None
+) -> List:
     r"""Return nodes matching `attr` and `value`
 
     Arguments:
@@ -236,7 +239,9 @@ def read(node: bpy.types.bpy_struct_meta_idprop):
     data = dict(node.get(pipeline.AVALON_PROPERTY))
 
     # Ignore hidden/internal data
-    data = {key: value for key, value in data.items() if not key.startswith("_")}
+    data = {
+        key: value for key, value in data.items() if not key.startswith("_")
+    }
 
     return data
 

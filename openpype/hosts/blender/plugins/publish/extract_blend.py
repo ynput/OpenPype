@@ -1,7 +1,7 @@
 import os
 
 import bpy
-from avalon import io, api
+from avalon import api
 
 import openpype.api
 from openpype.hosts.blender.api import plugin

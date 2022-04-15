@@ -17,7 +17,11 @@ def clean_scene():
 
 
 def extract(file_to_open, filepath, collection_name):
-    """Extract a container if some parts are local, save a work file And publish"""
+    """
+    Extract a container if some parts are local,
+    save a work file And publish
+    """
+
     with bpy.data.libraries.load(file_to_open, link=False, relative=False) as (
         data_from,
         data_to,

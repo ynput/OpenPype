@@ -55,9 +55,11 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Link the container collection to the scene collection
         # or if there is one collection in scene_collection choose
         # this collection
-        is_pyblish_container = plugin.is_pyblish_avalon_container(
-            scene_collection.children[0]
-        )
+        if len(scene_collection.children) == 1:
+            is_pyblish_container = plugin.is_pyblish_avalon_container(
+                scene_collection.children[0]
+            )
+
         if len(scene_collection.children) == 1 and not is_pyblish_container:
             # we don't want to add an asset in another publish container
             plugin.link_collection_to_collection(
@@ -240,16 +242,15 @@ class BlendLayoutLoader(plugin.AssetLoader):
                         ]
                         # Get the action in the animation data
                         for armature in armatures:
+                            animation_data = armature.animation_data
                             if (
-                                armature.animation_data
+                                animation_data
                                 and armature.animation_data.action
                             ):
                                 action[
                                     sub_avalon_container.name
-                                ] = armature.animation_data.action
-                                armature.animation_data.action.use_fake_user = (
-                                    True
-                                )
+                                ] = animation_data.action
+                                animation_data.action.use_fake_user = True
 
         # Remove the current container
         self._remove(avalon_container)
@@ -302,7 +303,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
                             obj for obj in objects if obj.type == "ARMATURE"
                         ]
                         for armature in armatures:
-                            if armature.animation_data is None:
+                            animation_data = armature.animation_data
+                            if animation_data is None:
                                 armature.animation_data_create()
                             if action.get(sub_avalon_container.name):
                                 # Clear the old animation data
@@ -311,12 +313,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
                                 armature.animation_data_create()
                                 # Set the action store in the action
                                 # variable to the animation data
-                                armature.animation_data.action = action[
+                                animation_data.action = action[
                                     sub_avalon_container.name
                                 ]
-                                armature.animation_data.action.use_fake_user = (
-                                    False
-                                )
+                                animation_data.action.use_fake_user = False
 
         has_namespace = api.Session["AVALON_TASK"] not in [
             "Rigging",

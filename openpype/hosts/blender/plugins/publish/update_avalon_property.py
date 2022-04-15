@@ -28,13 +28,11 @@ class UpdateAvalonProperty(
 
     def process(self, instance):
 
-        from openpype.lib import version_up
-
         # Get info from data and create name , version value
         asset = instance.data["anatomyData"]["asset"]
         family = instance.data["anatomyData"]["family"]
         version = int(instance.data["anatomyData"]["version"])
-        libpath = ""
+
         # Get representation from the db
         representation = io.find_one(
             {

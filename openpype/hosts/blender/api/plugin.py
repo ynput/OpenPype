@@ -1,7 +1,7 @@
 """Shared functionality for pipeline plugins for Blender."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Generator
+from typing import Dict, List, Optional
 
 import bpy
 

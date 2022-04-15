@@ -235,9 +235,10 @@ class BlendModelLoader(plugin.AssetLoader):
         # Link the container collection to the scene collection
         # or if there is one collection in scene_collection choose
         # this collection
-        is_pyblish_container = plugin.is_pyblish_avalon_container(
-            scene_collection.children[0]
-        )
+        if len(scene_collection.children) == 1:
+            is_pyblish_container = plugin.is_pyblish_avalon_container(
+                scene_collection.children[0]
+            )
         if len(scene_collection.children) == 1 and not is_pyblish_container:
             # we don't want to add an asset in another publish container
             plugin.link_collection_to_collection(
@@ -265,14 +266,13 @@ class BlendModelLoader(plugin.AssetLoader):
         container_overridden = container_collection.override_create(
             remap_local_usages=True
         )
-        overridden_collections = []
-        overridden_objects = []
+
         for collection in collections:
             collection.override_create(remap_local_usages=True)
         for object in objects:
             object.override_create(remap_local_usages=True)
 
-        for collection in overridden_collections:
+        for collection in collections:
             plugin.prepare_data(collection, container_collection.name)
 
         return container_overridden
