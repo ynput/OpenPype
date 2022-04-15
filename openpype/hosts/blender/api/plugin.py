@@ -200,6 +200,8 @@ def get_unique_number(asset: str, subset: str) -> str:
         return "01"
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
+    # increment the name as long as it's in container_names.
+    # If it's not inside it's the right increment
     while name in container_names:
         count += 1
         name = f"{asset}_{count:0>2}_{subset}"
@@ -216,6 +218,8 @@ def get_model_unique_number(current_container_name: str) -> str:
         return "001"
     count = 1
     name = f"{current_container_name}_{count:0>3}"
+    # increment the name as long as it's in container_names.
+    # If it's not inside it's the right increment
     while name in container_names:
         count += 1
         name = f"{current_container_name}_{count:0>3}"
