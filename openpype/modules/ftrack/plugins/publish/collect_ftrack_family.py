@@ -34,6 +34,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             self.log.warning("No profiles present for adding Ftrack family")
             return
 
+        add_ftrack_family = False
         task_name = instance.data.get("task",
                                       avalon.api.Session["AVALON_TASK"])
         host_name = avalon.api.Session["AVALON_APP"]
@@ -53,6 +54,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
 
             additional_filters = profile.get("advanced_filtering")
             if additional_filters:
+                self.log.info("'{}' families used for additional filtering".
+                              format(families))
                 add_ftrack_family = self._get_add_ftrack_f_from_addit_filters(
                     additional_filters,
                     families,
@@ -68,6 +71,13 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
                         instance.data["families"].append("ftrack")
                 else:
                     instance.data["families"] = ["ftrack"]
+
+        result_str = "Adding"
+        if not add_ftrack_family:
+            result_str = "Not adding"
+        self.log.info("{} 'ftrack' family for instance with '{}'".format(
+            result_str, family
+        ))
 
     def _get_add_ftrack_f_from_addit_filters(self,
                                              additional_filters,
