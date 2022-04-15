@@ -531,6 +531,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         """
         representations = []
+        host_name = os.environ.get("AVALON_APP", "")
         collections, remainders = clique.assemble(exp_files)
 
         # create representation for every collected sequento ce
@@ -548,7 +549,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     preview = True
                 else:
                     render_file_name = list(collection)[0]
-                    host_name = os.environ.get("AVALON_APP", "")
                     # if filtered aov name is found in filename, toggle it for
                     # preview video rendering
                     preview = match_aov_pattern(
@@ -617,12 +617,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
             }
-            if "render" in instance.get("families"):
+
+            preview = match_aov_pattern(
+                host_name, self.aov_filter, remainder
+            )
+            if preview:
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review"]
                 })
-            self._solve_families(instance, True)
+            self._solve_families(instance, preview)
 
             already_there = False
             for repre in instance.get("representations", []):
