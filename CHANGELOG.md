@@ -1,14 +1,13 @@
 # Changelog
 
-## [3.9.4-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.4](https://github.com/pypeclub/OpenPype/tree/3.9.4) (2022-04-15)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.3...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.3...3.9.4)
 
 ### 📖 Documentation
 
 - Documentation: more info about Tasks [\#3062](https://github.com/pypeclub/OpenPype/pull/3062)
 - Documentation: Python requirements to 3.7.9 [\#3035](https://github.com/pypeclub/OpenPype/pull/3035)
-- Website Docs: Remove unused pages [\#2974](https://github.com/pypeclub/OpenPype/pull/2974)
 
 **🆕 New features**
 
@@ -62,6 +61,7 @@
 - Deadline: Use more suitable name for sequence review logic [\#3015](https://github.com/pypeclub/OpenPype/pull/3015)
 - General: default workfile subset name for workfile [\#3011](https://github.com/pypeclub/OpenPype/pull/3011)
 - Nuke: add concurrency attr to deadline job [\#3005](https://github.com/pypeclub/OpenPype/pull/3005)
+- Deadline: priority configurable in Maya jobs [\#2995](https://github.com/pypeclub/OpenPype/pull/2995)
 - Workfiles tool: Save as published workfiles [\#2937](https://github.com/pypeclub/OpenPype/pull/2937)
 
 **🐛 Bug fixes**
@@ -91,6 +91,7 @@
 ### 📖 Documentation
 
 - Documentation: Added mention of adding My Drive as a root [\#2999](https://github.com/pypeclub/OpenPype/pull/2999)
+- Website Docs: Remove unused pages [\#2974](https://github.com/pypeclub/OpenPype/pull/2974)
 - Docs: Added MongoDB requirements [\#2951](https://github.com/pypeclub/OpenPype/pull/2951)
 
 **🆕 New features**
@@ -101,7 +102,6 @@
 
 - Photoshop: create image without instance [\#3001](https://github.com/pypeclub/OpenPype/pull/3001)
 - TVPaint: Render scene family [\#3000](https://github.com/pypeclub/OpenPype/pull/3000)
-- Deadline: priority configurable in Maya jobs [\#2995](https://github.com/pypeclub/OpenPype/pull/2995)
 - Nuke: ReviewDataMov Read RAW attribute [\#2985](https://github.com/pypeclub/OpenPype/pull/2985)
 - General: `METADATA\_KEYS` constant as `frozenset` for optimal immutable lookup [\#2980](https://github.com/pypeclub/OpenPype/pull/2980)
 - General: Tools with host filters [\#2975](https://github.com/pypeclub/OpenPype/pull/2975)
