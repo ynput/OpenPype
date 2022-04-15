@@ -446,7 +446,7 @@
         {
             "key": "flame",
             "type": "dict",
-            "label": "Flame/Flair",
+            "label": "Flame & Flare",
             "children": [
                 {
                     "key": "project",
