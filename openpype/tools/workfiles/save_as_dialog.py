@@ -11,6 +11,7 @@ from openpype.lib import (
     get_last_workfile_with_version,
     get_workdir_data,
 )
+from openpype.pipeline import registered_host
 from openpype.tools.utils import PlaceholderLineEdit
 
 log = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class CommentMatcher(object):
             return
 
         # Create a regex group for extensions
-        extensions = api.registered_host().file_extensions()
+        extensions = registered_host().file_extensions()
         any_extension = "(?:{})".format(
             "|".join(re.escape(ext[1:]) for ext in extensions)
         )
@@ -200,7 +201,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.result = None
-        self.host = api.registered_host()
+        self.host = registered_host()
         self.root = root
         self.work_file = None
         self._extensions = extensions

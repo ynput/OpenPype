@@ -183,10 +183,10 @@ def launch(application_path, *args):
         application_path (str): Path to Harmony.
 
     """
-    from avalon import api
+    from openpype.pipeline import install_host
     from openpype.hosts.harmony import api as harmony
 
-    api.install(harmony)
+    install_host(harmony)
 
     ProcessContext.port = random.randrange(49152, 65535)
     os.environ["AVALON_HARMONY_PORT"] = str(ProcessContext.port)

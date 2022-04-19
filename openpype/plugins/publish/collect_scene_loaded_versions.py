@@ -1,7 +1,8 @@
 from bson.objectid import ObjectId
 
 import pyblish.api
-from avalon import api, io
+from avalon import io
+from openpype.pipeline import registered_host
 
 
 class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
@@ -24,7 +25,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        host = api.registered_host()
+        host = registered_host()
         if host is None:
             self.log.warn("No registered host.")
             return
