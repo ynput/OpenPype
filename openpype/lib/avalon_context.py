@@ -161,9 +161,10 @@ def is_latest(representation):
 @with_avalon
 def any_outdated():
     """Return whether the current scene has any outdated content"""
+    from openpype.pipeline import registered_host
 
     checked = set()
-    host = avalon.api.registered_host()
+    host = registered_host()
     for container in host.ls():
         representation = container['representation']
         if representation in checked:
