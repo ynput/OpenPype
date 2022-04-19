@@ -972,6 +972,16 @@ def boot():
     _print(">>> run disk mapping command ...")
     run_disk_mapping_commands(global_settings)
 
+    # Logging to server enabled/disabled
+    log_to_server = global_settings.get("log_to_server", True)
+    if log_to_server:
+        os.environ["OPENPYPE_LOG_TO_SERVER"] = "1"
+        log_to_server_msg = "ON"
+    else:
+        os.environ.pop("OPENPYPE_LOG_TO_SERVER", None)
+        log_to_server_msg = "OFF"
+    _print(f">>> Logging to server is turned {log_to_server_msg}")
+
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_settings(global_settings)

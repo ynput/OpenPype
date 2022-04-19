@@ -330,6 +330,9 @@ class PypeLogger:
 
         # Define if should logging to mongo be used
         use_mongo_logging = bool(log4mongo is not None)
+        if use_mongo_logging:
+            use_mongo_logging = os.environ.get("OPENPYPE_LOG_TO_SERVER") == "1"
+
         # Set mongo id for process (ONLY ONCE)
         if use_mongo_logging and cls.mongo_process_id is None:
             try:
