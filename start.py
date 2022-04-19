@@ -320,6 +320,7 @@ def run_disk_mapping_commands(settings):
                                                              destination))
             raise
 
+
 def set_avalon_environments():
     """Set avalon specific environments.
 
@@ -838,8 +839,14 @@ def _bootstrap_from_code(use_version, use_staging):
         version_path = Path(_openpype_root)
         os.environ["OPENPYPE_REPOS_ROOT"] = _openpype_root
 
-    repos = os.listdir(os.path.join(_openpype_root, "repos"))
-    repos = [os.path.join(_openpype_root, "repos", repo) for repo in repos]
+    repos = []
+    # Check for "openpype/repos" directory for sumodules
+    # NOTE: Is not used at this moment but can be re-used in future
+    repos_dir = os.path.join(_openpype_root, "repos")
+    if os.path.exists(repos_dir):
+        for name in os.listdir(repos_dir):
+            repos.append(os.path.join(repos_dir, name))
+
     # add self to python paths
     repos.insert(0, _openpype_root)
     for repo in repos:
