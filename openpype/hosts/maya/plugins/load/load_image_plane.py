@@ -175,10 +175,18 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 QtWidgets.QMessageBox.Cancel
             )
             if reply == QtWidgets.QMessageBox.Ok:
-                pm.delete(
-                    image_plane_shape.listConnections(type="expression")[0]
-                )
-                image_plane_shape.frameExtension.set(start_frame)
+                try:
+                    pm.delete(
+                        image_plane_shape.listConnections(type="expression")[0]
+                    )
+                except IndexError:
+                    # happens where there's no expression
+                    pass
+                try:
+                    image_plane_shape.frameExtension.set(start_frame)
+                except RuntimeError:
+                    # happens when frame extension is locked
+                    pass
 
         new_nodes.extend(
             [
