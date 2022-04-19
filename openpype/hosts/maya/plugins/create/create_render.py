@@ -466,6 +466,7 @@ class CreateRender(plugin.Creator):
         if renderer == "vray":
             self._set_vray_settings(asset)
         if renderer == "redshift":
+            self._set_redshift_settings()
             cmds.setAttr("redshiftOptions.imageFormat", 1)
 
             # resolution
@@ -477,6 +478,19 @@ class CreateRender(plugin.Creator):
                 asset["data"].get("resolutionHeight"))
 
             self._set_global_output_settings()
+
+    def _set_redshift_settings(self):
+        """Sets settings for Arnold."""
+
+        img_ext = self.redshift_renderer.get("image_format")
+        self._set_global_output_settings()
+        # Resolution
+        resWidth = self.attributes.get("resolutionWidth")
+        resHeight = self.attributes.get("resolutionHeight")
+
+        cmds.setAttr("redshiftOptions.imageFormat", img_ext)
+        cmds.setAttr("defaultResolution.width", resWidth)
+        cmds.setAttr("defaultResolution.height", resHeight)
 
     def _set_vray_settings(self, asset):
         # type: (dict) -> None
