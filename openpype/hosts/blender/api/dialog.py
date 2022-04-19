@@ -37,3 +37,12 @@ def use_selection_behaviour_dialog() -> bool:
     if ret == QMessageBox.Yes:
         is_selection_behavior_accept = True
     return is_selection_behavior_accept
+
+
+def container_already_exist_dialog() -> bool:
+    is_selection_behavior_accept = True
+    window = find_window(openpype.tools.creator.window.CreatorWindow)
+    msgBox = QMessageBox(window)
+
+    msgBox.setText("This instance already exists.")
+    msgBox.exec()
