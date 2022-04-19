@@ -99,65 +99,65 @@ class MakeRSTexBin(TextureProcessor):
             raise
         return processed_filepath
 
+class MakeTX(TextureProcessor):
+    def process(source, destination, *args):
+        """Make `.tx` using `maketx` with some default settings.
 
-def maketx(source, destination, *args):
-    """Make `.tx` using `maketx` with some default settings.
+        The settings are based on default as used in Arnold's
+        txManager in the scene.
+        This function requires the `maketx` executable to be
+        on the `PATH`.
 
-    The settings are based on default as used in Arnold's
-    txManager in the scene.
-    This function requires the `maketx` executable to be
-    on the `PATH`.
+        Args:
+            source (str): Path to source file.
+            destination (str): Writing destination path.
+            *args: Additional arguments for `maketx`.
 
-    Args:
-        source (str): Path to source file.
-        destination (str): Writing destination path.
-        *args: Additional arguments for `maketx`.
+        Returns:
+            str: Output of `maketx` command.
 
-    Returns:
-        str: Output of `maketx` command.
+        """
+        from openpype.lib import get_oiio_tools_path
 
-    """
-    from openpype.lib import get_oiio_tools_path
+        maketx_path = get_oiio_tools_path("maketx")
 
-    maketx_path = get_oiio_tools_path("maketx")
+        if not os.path.exists(maketx_path):
+            print(
+                "OIIO tool not found in {}".format(maketx_path))
+            raise AssertionError("OIIO tool not found")
 
-    if not os.path.exists(maketx_path):
-        print(
-            "OIIO tool not found in {}".format(maketx_path))
-        raise AssertionError("OIIO tool not found")
+        cmd = [
+            maketx_path,
+            "-v",  # verbose
+            "-u",  # update mode
+            # unpremultiply before conversion (recommended when alpha present)
+            "--unpremult",
+            "--checknan",
+            # use oiio-optimized settings for tile-size, planarconfig, metadata
+            "--oiio",
+            "--filter lanczos3",
+        ]
 
-    cmd = [
-        maketx_path,
-        "-v",  # verbose
-        "-u",  # update mode
-        # unpremultiply before conversion (recommended when alpha present)
-        "--unpremult",
-        "--checknan",
-        # use oiio-optimized settings for tile-size, planarconfig, metadata
-        "--oiio",
-        "--filter lanczos3",
-    ]
+        cmd.extend(args)
+        cmd.extend(["-o", escape_space(destination), escape_space(source)])
 
-    cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination), escape_space(source)])
+        cmd = " ".join(cmd)
 
-    cmd = " ".join(cmd)
+        CREATE_NO_WINDOW = 0x08000000  # noqa
+        kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
 
-    CREATE_NO_WINDOW = 0x08000000  # noqa
-    kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
+        if sys.platform == "win32":
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+        try:
+            processed_filepath = subprocess.check_output(**kwargs)
+        except subprocess.CalledProcessError as exc:
+            print(exc)
+            import traceback
 
-    if sys.platform == "win32":
-        kwargs["creationflags"] = CREATE_NO_WINDOW
-    try:
-        out = subprocess.check_output(**kwargs)
-    except subprocess.CalledProcessError as exc:
-        print(exc)
-        import traceback
+            traceback.print_exc()
+            raise
 
-        traceback.print_exc()
-        raise
-
-    return out
+        return processed_filepath
 
 
 @contextlib.contextmanager
