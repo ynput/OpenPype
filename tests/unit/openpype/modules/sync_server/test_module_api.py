@@ -42,5 +42,23 @@ class TestModuleApi(ModuleUnitTest):
                     "studio2": {"studio", "SFTP"}}
         assert ret == expected, "Not matching result"
 
+    def test_get_alt_site_pairs_deep(self, setup_sync_server_module):
+        conf_sites = {"A": {"alternative_sites": ["C"]},
+                      "B": {"alternative_sites": ["C"]},
+                      "C": {"alternative_sites": ["D"]},
+                      "D": {"alternative_sites": ["A"]},
+                      "F": {"alternative_sites": ["G"]},
+                      "G": {"alternative_sites": ["F"]},
+                      }
+
+        ret = setup_sync_server_module._get_alt_site_pairs(conf_sites)
+        expected = {"A": {"B", "C", "D"},
+                    "B": {"A", "C", "D"},
+                    "C": {"A", "B", "D"},
+                    "D": {"A", "B", "C"},
+                    "F": {"G"},
+                    "G": {"F"}}
+        assert ret == expected, "Not matching result"
+
 
 test_case = TestModuleApi()
