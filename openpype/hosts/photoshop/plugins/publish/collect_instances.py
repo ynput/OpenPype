@@ -82,8 +82,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             task_name = api.Session["AVALON_TASK"]
             asset_name = context.data["assetEntity"]["name"]
 
+            variant = context.data.get("variant") or variants[0]
             fill_pairs = {
-                "variant": variants[0],
+                "variant": variant,
                 "family": family,
                 "task": task_name
             }
