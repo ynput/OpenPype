@@ -300,13 +300,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (dict): {'site': [alternative sites]...}
         """
-        alt_site_pairs = defaultdict(list)
+        alt_site_pairs = defaultdict(set)
         for site_name, site_info in conf_sites.items():
             alt_sites = set(site_info.get("alternative_sites", []))
-            alt_site_pairs[site_name].extend(alt_sites)
+            alt_site_pairs[site_name].update(alt_sites)
 
             for alt_site in alt_sites:
-                alt_site_pairs[alt_site].append(site_name)
+                alt_site_pairs[alt_site].add(site_name)
 
         for site_name, alt_sites in alt_site_pairs.items():
             sites_queue = deque(alt_sites)
@@ -323,7 +323,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             alt_alt_site != site_name
                             and alt_alt_site not in alt_sites
                     ):
-                        alt_sites.append(alt_alt_site)
+                        alt_sites.add(alt_alt_site)
                         sites_queue.append(alt_alt_site)
 
         return alt_site_pairs

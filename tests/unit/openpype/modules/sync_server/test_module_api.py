@@ -37,9 +37,9 @@ class TestModuleApi(ModuleUnitTest):
                       "studio2": {"alternative_sites": ["studio"]}}
 
         ret = setup_sync_server_module._get_alt_site_pairs(conf_sites)
-        expected = {"SFTP": ["studio", "studio2"],
-                    "studio": ["SFTP", "studio2"],
-                    "studio2": ["studio", "SFTP"]}
+        expected = {"SFTP": {"studio", "studio2"},
+                    "studio": {"SFTP", "studio2"},
+                    "studio2": {"studio", "SFTP"}}
         assert ret == expected, "Not matching result"
 
 
