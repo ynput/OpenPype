@@ -230,6 +230,11 @@ if "--verbose" in sys.argv:
 
     os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
 
+# Enable debug mode, may affect log level if log level is not defined
+if "--debug" in sys.argv:
+    sys.argv.remove("--debug")
+    os.environ["OPENPYPE_DEBUG"] = "1"
+
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
