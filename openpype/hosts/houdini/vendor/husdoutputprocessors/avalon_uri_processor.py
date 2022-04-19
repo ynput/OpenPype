@@ -134,6 +134,7 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
         """
 
         from avalon import api, io
+        from openpype.pipeline import registered_root
 
         PROJECT = api.Session["AVALON_PROJECT"]
         asset_doc = io.find_one({"name": asset,
@@ -141,7 +142,7 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
         if not asset_doc:
             raise RuntimeError("Invalid asset name: '%s'" % asset)
 
-        root = api.registered_root()
+        root = registered_root()
         path = self._template.format(**{
             "root": root,
             "project": PROJECT,

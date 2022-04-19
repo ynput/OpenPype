@@ -5,9 +5,8 @@ import traceback
 
 from Qt import QtWidgets
 
-import avalon.api
-
 from openpype.api import Logger
+from openpype.pipeline import install_host
 from openpype.tools.utils import host_tools
 from openpype.lib.remote_publish import headless_publish
 from openpype.lib import env_value_to_bool
@@ -24,7 +23,7 @@ def safe_excepthook(*args):
 def main(*subprocess_args):
     from openpype.hosts.photoshop import api
 
-    avalon.api.install(api)
+    install_host(api)
     sys.excepthook = safe_excepthook
 
     # coloring in StdOutBroker
