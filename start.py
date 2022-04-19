@@ -328,28 +328,12 @@ def set_avalon_environments():
     before avalon module is imported because avalon works with globals set with
     environment variables.
     """
-    from openpype import PACKAGE_DIR
 
-    # Path to OpenPype's schema
-    schema_path = os.path.join(
-        os.path.dirname(PACKAGE_DIR),
-        "schema"
-    )
-    # Avalon mongo URL
-    avalon_mongo_url = (
-        os.environ.get("AVALON_MONGO")
-        or os.environ["OPENPYPE_MONGO"]
-    )
     avalon_db = os.environ.get("AVALON_DB") or "avalon"  # for tests
     os.environ.update({
-        # Mongo url (use same as OpenPype has)
-        "AVALON_MONGO": avalon_mongo_url,
-
-        "AVALON_SCHEMA": schema_path,
         # Mongo DB name where avalon docs are stored
         "AVALON_DB": avalon_db,
         # Name of config
-        "AVALON_CONFIG": "openpype",
         "AVALON_LABEL": "OpenPype"
     })
 
