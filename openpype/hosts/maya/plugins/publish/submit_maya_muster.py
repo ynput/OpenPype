@@ -488,7 +488,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "MAYA_RENDER_DESC_PATH",
             "MAYA_MODULE_PATH",
             "ARNOLD_PLUGIN_PATH",
-            "AVALON_SCHEMA",
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
@@ -547,4 +546,3 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
-

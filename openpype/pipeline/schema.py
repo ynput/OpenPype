@@ -118,15 +118,12 @@ _cache = {
 
 
 def _precache():
+    """Store available schemas in-memory for reduced disk access"""
     global _CACHED
 
-    if os.environ.get('AVALON_SCHEMA'):
-        schema_dir = os.environ['AVALON_SCHEMA']
-    else:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        schema_dir = os.path.join(current_dir, "schema")
+    repos_root = os.environ["OPENPYPE_REPOS_ROOT"]
+    schema_dir = os.path.join(repos_root, "schema")
 
-    """Store available schemas in-memory for reduced disk access"""
     for schema in os.listdir(schema_dir):
         if schema.startswith(("_", ".")):
             continue
