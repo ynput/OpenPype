@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
+from abc import ABC, abstractmethod
 import os
 import sys
 import json
@@ -43,50 +44,60 @@ def find_paths_by_hash(texture_hash):
     key = "data.sourceHashes.{0}".format(texture_hash)
     return io.distinct(key, {"type": "version"})
 
+class TextureProcessor(metaclass=ABC.ABCMeta):
+    def __init__(self):
+        #TODO: Figure out design for predetermined objects to be initialized.
+    
+    @abstractmethod
+    def process(self, filepath):
 
-def rstex(source, *args):
-    """Make `.rstexbin` using `redshiftTextureProcessor`
-    with some default settings.
+        
 
-    This function requires the `REDSHIFT_COREDATAPATH`
-    to be in `PATH`.
+class MakeRSTexBin(TextureProcessor):
+    
+    def process(source, *args):
+        """Make `.rstexbin` using `redshiftTextureProcessor`
+        with some default settings.
 
-    Args:
-        source (str): Path to source file.
-        *args: Additional arguments for `redshiftTextureProcessor`.
+        This function requires the `REDSHIFT_COREDATAPATH`
+        to be in `PATH`.
 
-    Returns:
-        str: Output of `redshiftTextureProcessor` command.
+        Args:
+            source (str): Path to source file.
+            *args: Additional arguments for `redshiftTextureProcessor`.
 
-    """
-    if "REDSHIFT_COREDATAPATH" not in os.environ:
-        raise RuntimeError("Must have Redshift available.")
+        Returns:
+            str: Output of `redshiftTextureProcessor` command.
 
-    texture_processor_path = get_redshift_tool("TextureProcessor")
+        """
+        if "REDSHIFT_COREDATAPATH" not in os.environ:
+            raise RuntimeError("Must have Redshift available.")
 
-    cmd = [
-        texture_processor_path,
-        escape_space(source),
-    ]
+        texture_processor_path = get_redshift_tool("TextureProcessor")
 
-    cmd.extend(args)
+        cmd = [
+            texture_processor_path,
+            escape_space(source),
+        ]
 
-    cmd = " ".join(cmd)
+        cmd.extend(args)
 
-    CREATE_NO_WINDOW = 0x08000000
-    kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
+        cmd = " ".join(cmd)
 
-    if sys.platform == "win32":
-        kwargs["creationflags"] = CREATE_NO_WINDOW
-    try:
-        out = subprocess.check_output(**kwargs)
-    except subprocess.CalledProcessError as exc:
-        print(exc)
-        import traceback
+        CREATE_NO_WINDOW = 0x08000000
+        kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
 
-        traceback.print_exc()
-        raise
-    return out
+        if sys.platform == "win32":
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+        try:
+            processed_filepath = subprocess.check_output(**kwargs)
+        except subprocess.CalledProcessError as exc:
+            print(exc)
+            import traceback
+
+            traceback.print_exc()
+            raise
+        return processed_filepath
 
 
 def maketx(source, destination, *args):
