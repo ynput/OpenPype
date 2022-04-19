@@ -374,9 +374,15 @@ class ExtractLook(openpype.api.Extractor):
         # might be included more than once amongst the resources as they could
         # be the input file to multiple nodes.
         resources = instance.data["resources"]
+        # Specify texture processing executables to activate
+        processors = []
         do_maketx = instance.data.get("maketx", False)
+        if do_maketx:
+            processors.append(MakeTX)
         # Option to convert textures to native redshift textures
         do_rstex = instance.data.get("rstex", False)
+        if do_rstex:
+            processors.append(MakeRSTexBin)
         # Collect all unique files used in the resources
         files_metadata = {}
         for resource in resources:
