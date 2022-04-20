@@ -123,11 +123,14 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
-    "repos",
     "schema",
     "LICENSE",
     "README.md"
 ]
+
+repos_path = openpype_root / "repos"
+if repos_path.exists():
+    include_files.append("repos")
 
 if IS_WINDOWS:
     install_requires.extend([
