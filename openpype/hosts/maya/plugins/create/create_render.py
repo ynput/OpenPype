@@ -1,28 +1,30 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
-import os
 import json
+import os
+import sys
+
 import appdirs
 import requests
 import six
-import sys
 
 from maya import cmds
-import maya.app.renderSetup.model.renderSetup as renderSetup
+from maya.app.renderSetup.model import renderSetup
 
-from openpype.hosts.maya.api import (
-    lib,
-    plugin
-)
+from avalon.api import Session
 from openpype.api import (
     get_system_settings,
-    get_project_settings,
-    get_asset)
+    get_project_settings
+)
+from openpype.hosts.maya.api import (
+    lib,
+    plugin,
+    render_settings
+)
 from openpype.modules import ModulesManager
 from openpype.pipeline import CreatorError
 
 from avalon.api import Session
-
 
 class CreateRender(plugin.Creator):
     """Create *render* instance.
@@ -69,31 +71,6 @@ class CreateRender(plugin.Creator):
     _user = None
     _password = None
 
-    # renderSetup instance
-    _rs = None
-
-    _image_prefix_nodes = {
-        'mentalray': 'defaultRenderGlobals.imageFilePrefix',
-        'vray': 'vraySettings.fileNamePrefix',
-        'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
-    }
-
-    _image_prefixes = {
-        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
-        'vray': 'maya/<scene>/<Layer>/<Layer>',
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
-        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
-    }
-
-    _aov_chars = {
-        "dot": ".",
-        "dash": "-",
-        "underscore": "_"
-    }
-
     _project_settings = None
 
     def __init__(self, *args, **kwargs):
@@ -105,17 +82,6 @@ class CreateRender(plugin.Creator):
             return
         self._project_settings = get_project_settings(
             Session["AVALON_PROJECT"])
-
-        # project_settings/maya/create/CreateRender/aov_separator
-        try:
-            self.aov_separator = self._aov_chars[(
-                self._project_settings["maya"]
-                                      ["create"]
-                                      ["CreateRender"]
-                                      ["aov_separator"]
-            )]
-        except KeyError:
-            self.aov_separator = "_"
 
         try:
             default_servers = deadline_settings["deadline_urls"]
@@ -173,13 +139,13 @@ class CreateRender(plugin.Creator):
                     ])
 
             cmds.setAttr("{}.machineList".format(self.instance), lock=True)
-            self._rs = renderSetup.instance()
-            layers = self._rs.getRenderLayers()
+            rs = renderSetup.instance()
+            layers = rs.getRenderLayers()
             if use_selection:
-                print(">>> processing existing layers")
+                self.log.info("Processing existing layers")
                 sets = []
                 for layer in layers:
-                    print("  - creating set for {}:{}".format(
+                    self.log.info("  - creating set for {}:{}".format(
                         namespace, layer.name()))
                     render_set = cmds.sets(
                         n="{}:{}".format(namespace, layer.name()))
@@ -189,17 +155,12 @@ class CreateRender(plugin.Creator):
             # if no render layers are present, create default one with
             # asterisk selector
             if not layers:
-                render_layer = self._rs.createRenderLayer('Main')
+                render_layer = rs.createRenderLayer('Main')
                 collection = render_layer.createCollection("defaultCollection")
                 collection.getSelector().setPattern('*')
 
-            renderer = cmds.getAttr(
-                'defaultRenderGlobals.currentRenderer').lower()
-            # handle various renderman names
-            if renderer.startswith('renderman'):
-                renderer = 'renderman'
-
-            self._set_default_renderer_settings(renderer)
+            self.log.info("Applying default render settings..")
+            render_settings.RenderSettings.apply_defaults()
         return self.instance
 
     def _deadline_webservice_changed(self):
