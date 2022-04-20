@@ -213,14 +213,19 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         gazu.project.update_project(project)
 
     # Update data
-    project_data.update(
-        {
-            "code": project_code,
-            "fps": project["fps"],
-            "resolutionWidth": project["resolution"].split("x")[0],
-            "resolutionHeight": project["resolution"].split("x")[1],
-        }
-    )
+    project_data.update({"code": project_code})
+
+    if project.get("fps"):
+        project_data.update({"fps": project["fps"]})
+
+    resolution = project.get("resolution", "")
+    if "x" in resolution:
+        project_data.update(
+            {
+                "resolutionWidth": resolution.split("x")[0],
+                "resolutionHeight": resolution.split("x")[1],
+            }
+        )
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
