@@ -409,6 +409,12 @@ def convert_for_ffmpeg(
     if logger is None:
         logger = logging.getLogger(__name__)
 
+    logger.warning((
+        "DEPRECATED: 'openpype.lib.transcoding.convert_for_ffmpeg' is"
+        " deprecated function of conversion for FFMpeg. Please replace usage"
+        " with 'openpype.lib.transcoding.convert_input_paths_for_ffmpeg'"
+    ))
+
     ext = os.path.splitext(first_input_path)[1].lower()
     if ext != ".exr":
         raise ValueError((
