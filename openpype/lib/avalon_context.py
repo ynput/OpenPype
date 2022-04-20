@@ -1990,13 +1990,14 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
     Returns:
         (list) of ObjectId - linked representations
     """
+    # Create new dbcon if not passed and use passed project name
     if not dbcon:
-        log.debug("Using `avalon.io` for query.")
-        dbcon = avalon.io
-        # Make sure is installed
-        dbcon.install()
-
-    dbcon.Session["AVALON_PROJECT"] = project_name
+        from avalon.api import AvalonMongoDB
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+    # Validate that passed dbcon has same project
+    elif dbcon.Session["AVALON_PROJECT"] != project_name:
+        raise ValueError("Passed connection does not have right project")
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
