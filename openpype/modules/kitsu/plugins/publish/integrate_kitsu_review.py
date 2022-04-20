@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-from typing import Optional
 import gazu
 import pyblish.api
 
