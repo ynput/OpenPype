@@ -148,11 +148,7 @@ class DictMutableKeysEntity(EndpointEntity):
         ):
             raise InvalidKeySymbols(self.path, key)
 
-        if self.value_is_env_group:
-            item_schema = copy.deepcopy(self.item_schema)
-            item_schema["env_group_key"] = key
-        else:
-            item_schema = self.item_schema
+        item_schema = self.item_schema
 
         new_child = self.create_schema_object(item_schema, self, True)
         self.children_by_key[key] = new_child
@@ -216,9 +212,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.children_label_by_id = {}
 
         self.store_as_list = self.schema_data.get("store_as_list") or False
-        self.value_is_env_group = (
-            self.schema_data.get("value_is_env_group") or False
-        )
+
         self.required_keys = self.schema_data.get("required_keys") or []
         self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
@@ -241,9 +235,6 @@ class DictMutableKeysEntity(EndpointEntity):
                 object_type.update(input_modifiers)
         self.item_schema = object_type
 
-        if self.value_is_env_group:
-            self.item_schema["env_group_key"] = ""
-
         if self.group_item is None:
             self.is_group = True
 
@@ -258,10 +249,6 @@ class DictMutableKeysEntity(EndpointEntity):
         super(DictMutableKeysEntity, self).schema_validations()
         if used_temp_label:
             self.label = None
-
-        if self.value_is_env_group and self.store_as_list:
-            reason = "Item can't store environments metadata to list output."
-            raise EntitySchemaError(self, reason)
 
         if not self.schema_data.get("object_type"):
             reason = (
@@ -579,18 +566,10 @@ class DictMutableKeysEntity(EndpointEntity):
                 output.append([key, child_value])
             return output
 
-        output = {}
-        for key, child_entity in self.children_by_key.items():
-            child_value = child_entity.settings_value()
-            # TODO child should have setter of env group key se child can
-            #   know what env group represents.
-            if self.value_is_env_group:
-                if key not in child_value[M_ENVIRONMENT_KEY]:
-                    _metadata = child_value[M_ENVIRONMENT_KEY]
-                    _m_keykey = tuple(_metadata.keys())[0]
-                    env_keys = child_value[M_ENVIRONMENT_KEY].pop(_m_keykey)
-                    child_value[M_ENVIRONMENT_KEY][key] = env_keys
-            output[key] = child_value
+        output = {
+            key: child_entity.settings_value()
+            for key, child_entity in self.children_by_key.items()
+        }
         output.update(self.metadata)
         return output
 
