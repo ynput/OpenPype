@@ -2,7 +2,7 @@ import sys
 import contextlib
 
 
-from avalon.vendor.Qt import QtCore, QtWidgets
+from Qt import QtCore, QtWidgets
 
 
 class Popup(QtWidgets.QDialog):
