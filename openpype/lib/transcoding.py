@@ -516,6 +516,128 @@ def convert_for_ffmpeg(
     run_subprocess(oiio_cmd, logger=logger)
 
 
+def convert_input_paths_for_ffmpeg(
+    input_paths,
+    output_dir,
+    logger=None
+):
+    """Contert source file to format supported in ffmpeg.
+
+    Currently can convert only exrs. The input filepaths should be files
+    with same type. Information about input is loaded only from first found
+    file.
+
+    Filenames of input files are kept so make sure that output directory
+    is not the same directory as input files have.
+
+    Args:
+        input_paths (str): Paths that should be converted. It is expected that
+            contains single file or image sequence of samy type.
+        output_dir (str): Path to directory where output will be rendered.
+            Must not be same as input's directory.
+        logger (logging.Logger): Logger used for logging.
+
+    Raises:
+        ValueError: If input filepath has extension not supported by function.
+            Currently is supported only ".exr" extension.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    first_input_path = input_paths[0]
+    ext = os.path.splitext(first_input_path)[1].lower()
+    if ext != ".exr":
+        raise ValueError((
+            "Function 'convert_for_ffmpeg' currently support only"
+            " \".exr\" extension. Got \"{}\"."
+        ).format(ext))
+
+    input_info = get_oiio_info_for_input(first_input_path)
+
+    # Change compression only if source compression is "dwaa" or "dwab"
+    #   - they're not supported in ffmpeg
+    compression = input_info["attribs"].get("compression")
+    if compression in ("dwaa", "dwab"):
+        compression = "none"
+
+    # Collect channels to export
+    channel_names = input_info["channelnames"]
+    review_channels = get_convert_rgb_channels(channel_names)
+    if review_channels is None:
+        raise ValueError(
+            "Couldn't find channels that can be used for conversion."
+        )
+
+    red, green, blue, alpha = review_channels
+    input_channels = [red, green, blue]
+    channels_arg = "R={},G={},B={}".format(red, green, blue)
+    if alpha is not None:
+        channels_arg += ",A={}".format(alpha)
+        input_channels.append(alpha)
+    input_channels_str = ",".join(input_channels)
+
+    for input_path in input_paths:
+        # Prepare subprocess arguments
+        oiio_cmd = [
+            get_oiio_tools_path(),
+
+            # Don't add any additional attributes
+            "--nosoftwareattrib",
+        ]
+        # Add input compression if available
+        if compression:
+            oiio_cmd.extend(["--compression", compression])
+
+        oiio_cmd.extend([
+            # Tell oiiotool which channels should be loaded
+            # - other channels are not loaded to memory so helps to
+            #       avoid memory leak issues
+            "-i:ch={}".format(input_channels_str), input_path,
+            # Tell oiiotool which channels should be put to top stack
+            #   (and output)
+            "--ch", channels_arg
+        ])
+
+        for attr_name, attr_value in input_info["attribs"].items():
+            if not isinstance(attr_value, str):
+                continue
+
+            # Remove attributes that have string value longer than allowed length
+            #   for ffmpeg or when containt unallowed symbols
+            erase_reason = "Missing reason"
+            erase_attribute = False
+            if len(attr_value) > MAX_FFMPEG_STRING_LEN:
+                erase_reason = "has too long value ({} chars).".format(
+                    len(attr_value)
+                )
+
+            if erase_attribute:
+                for char in NOT_ALLOWED_FFMPEG_CHARS:
+                    if char in attr_value:
+                        erase_attribute = True
+                        erase_reason = (
+                            "contains unsupported character \"{}\"."
+                        ).format(char)
+                        break
+
+            if erase_attribute:
+                # Set attribute to empty string
+                logger.info((
+                    "Removed attribute \"{}\" from metadata because {}."
+                ).format(attr_name, erase_reason))
+                oiio_cmd.extend(["--eraseattrib", attr_name])
+
+        # Add last argument - path to output
+        base_filename = os.path.basename(first_input_path)
+        output_path = os.path.join(output_dir, base_filename)
+        oiio_cmd.extend([
+            "-o", output_path
+        ])
+
+        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+        run_subprocess(oiio_cmd, logger=logger)
+
+
 # FFMPEG functions
 def get_ffprobe_data(path_to_file, logger=None):
     """Load data about entered filepath via ffprobe.
