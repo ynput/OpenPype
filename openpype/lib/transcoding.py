@@ -615,8 +615,8 @@ def convert_input_paths_for_ffmpeg(
             if not isinstance(attr_value, str):
                 continue
 
-            # Remove attributes that have string value longer than allowed length
-            #   for ffmpeg or when containt unallowed symbols
+            # Remove attributes that have string value longer than allowed
+            #   length for ffmpeg or when containt unallowed symbols
             erase_reason = "Missing reason"
             erase_attribute = False
             if len(attr_value) > MAX_FFMPEG_STRING_LEN:
