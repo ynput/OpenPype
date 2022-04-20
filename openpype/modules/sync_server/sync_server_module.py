@@ -1423,7 +1423,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             pause (bool or None): if True - pause, False - unpause
             force (bool): hard reset - currently only for add_site
 
-        Throws:
+        Raises:
             SiteAlreadyPresentError - if adding already existing site and
                 not 'force'
             ValueError - other errors (repre not found, misconfiguration)
