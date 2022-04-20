@@ -15,10 +15,7 @@ from .exceptions import (
     EntitySchemaError
 )
 
-from openpype.settings.constants import (
-    METADATA_KEYS,
-    M_ENVIRONMENT_KEY
-)
+from openpype.settings.constants import METADATA_KEYS
 
 
 class EndpointEntity(ItemEntity):

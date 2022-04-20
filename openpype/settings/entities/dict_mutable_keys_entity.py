@@ -15,7 +15,6 @@ from .exceptions import (
 from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL,
-    M_ENVIRONMENT_KEY,
     KEY_REGEX,
     KEY_ALLOWED_SYMBOLS
 )
