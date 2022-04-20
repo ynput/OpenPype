@@ -48,8 +48,8 @@ from openpype.tools.publisher.window import PublisherWindow
 
 def main():
     """Main function for testing purposes."""
-    import avalon.api
     import pyblish.api
+    from openpype.pipeline import install_host
     from openpype.modules import ModulesManager
     from openpype.hosts.testhost import api as testhost
 
@@ -57,7 +57,7 @@ def main():
     for plugin_path in manager.collect_plugin_paths()["publish"]:
         pyblish.api.register_plugin_path(plugin_path)
 
-    avalon.api.install(testhost)
+    install_host(testhost)
 
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication([])

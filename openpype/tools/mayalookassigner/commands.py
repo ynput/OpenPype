@@ -5,9 +5,12 @@ import os
 from bson.objectid import ObjectId
 import maya.cmds as cmds
 
-from avalon import io, api
+from avalon import io
 
-from openpype.pipeline import remove_container
+from openpype.pipeline import (
+    remove_container,
+    registered_host,
+)
 from openpype.hosts.maya.api import lib
 
 from .vray_proxies import get_alembic_ids_cache
@@ -79,7 +82,7 @@ def get_all_asset_nodes():
         list: list of dictionaries
     """
 
-    host = api.registered_host()
+    host = registered_host()
 
     nodes = []
     for container in host.ls():
@@ -192,7 +195,7 @@ def remove_unused_looks():
 
     """
 
-    host = api.registered_host()
+    host = registered_host()
 
     unused = []
     for container in host.ls():

@@ -34,14 +34,7 @@ AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
 def install():
-    """
-    Installing Hiero integration for avalon
-
-    Args:
-        config (obj): avalon config module `pype` in our case, it is not
-        used but required by avalon.api.install()
-
-    """
+    """Installing Hiero integration."""
 
     # adding all events
     events.register_events()

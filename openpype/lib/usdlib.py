@@ -9,6 +9,7 @@ except ImportError:
     from mvpxr import Usd, UsdGeom, Sdf, Kind
 
 from avalon import io, api
+from openpype.pipeline import registered_root
 
 log = logging.getLogger(__name__)
 
@@ -323,7 +324,7 @@ def get_usd_master_path(asset, subset, representation):
 
     path = template.format(
         **{
-            "root": api.registered_root(),
+            "root": registered_root(),
             "project": api.Session["AVALON_PROJECT"],
             "asset": asset_doc["name"],
             "subset": subset,

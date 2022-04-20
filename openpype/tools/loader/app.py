@@ -5,6 +5,7 @@ from avalon import api, io
 
 from openpype import style
 from openpype.lib import register_event_callback
+from openpype.pipeline import install_openpype_plugins
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -608,14 +609,6 @@ def cli(args):
     # Store settings
     api.Session["AVALON_PROJECT"] = project
 
-    from avalon import pipeline
-
-    # Find the set config
-    _config = pipeline.find_config()
-    if hasattr(_config, "install"):
-        _config.install()
-    else:
-        print("Config `%s` has no function `install`" %
-              _config.__name__)
+    install_openpype_plugins(project)
 
     show()

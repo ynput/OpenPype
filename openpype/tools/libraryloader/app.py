@@ -16,8 +16,6 @@ from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from openpype.modules import ModulesManager
 
-from . import lib
-
 module = sys.modules[__name__]
 module.window = None
 
@@ -259,14 +257,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         project_name = index.data(QtCore.Qt.UserRole + 1)
 
         self.dbcon.Session["AVALON_PROJECT"] = project_name
-
-        _config = lib.find_config()
-        if hasattr(_config, "install"):
-            _config.install()
-        else:
-            print(
-                "Config `%s` has no function `install`" % _config.__name__
-            )
 
         self._subsets_widget.on_project_change(project_name)
         if self._repres_widget:
