@@ -113,6 +113,19 @@ class RenderSettings(object):
 
             self._set_global_output_settings()
 
+    def _set_redshift_settings(self):
+        """Sets settings for Arnold."""
+
+        img_ext = self.redshift_renderer.get("image_format")
+        self._set_global_output_settings()
+        # Resolution
+        resWidth = self.attributes.get("resolutionWidth")
+        resHeight = self.attributes.get("resolutionHeight")
+
+        cmds.setAttr("redshiftOptions.imageFormat", img_ext)
+        cmds.setAttr("defaultResolution.width", resWidth)
+        cmds.setAttr("defaultResolution.height", resHeight)
+
     def _set_vray_settings(self, aov_separator, width, height):
         # type: (str, int, int) -> None
         """Sets important settings for Vray."""
