@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 import os
+from typing import Optional
 import gazu
 import pyblish.api
 
 
-class IntegrateKitsuVersion(pyblish.api.InstancePlugin):
+class IntegrateKitsuReview(pyblish.api.InstancePlugin):
     """Integrate Kitsu Review"""
 
     order = pyblish.api.IntegratorOrder + 0.01
     label = "Kitsu Review"
     # families = ["kitsu"]
+    optional = True
 
     def process(self, instance):
 
@@ -20,14 +22,16 @@ class IntegrateKitsuVersion(pyblish.api.InstancePlugin):
         for representation in instance.data.get("representations", []):
 
             local_path = representation.get("published_path")
-            self.log.info("*"*40)
-            self.log.info(local_path)
-            self.log.info(representation.get("tags", []))
 
-            # code = os.path.basename(local_path)
-
-            if representation.get("tags", []):
+            if 'review' not in representation.get("tags", []):
                 continue
             
-            # gazu.task.upload_preview_file(preview, file_path, normalize_movie=True)
-            gazu.task.add_preview(task, comment, local_path, normalize_movie=True)
+            self.log.debug("Found review at: {}".format(local_path))
+
+            gazu.task.add_preview(
+                task,
+                comment,
+                local_path,
+                normalize_movie=True
+            )
+            self.log.info("Review upload on comment")
