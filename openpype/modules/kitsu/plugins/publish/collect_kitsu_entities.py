@@ -21,7 +21,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
         zoo_task_data = asset_data["tasks"][os.environ["AVALON_TASK"]].get("zou")
         if not zoo_task_data:
-            raise AssertionError("Zoo task data not found in OpenPype!")
+            self.log.warning("Zoo task data not found in OpenPype!")
         self.log.debug("Collected zoo task data: {}".format(zoo_task_data))
 
         kitsu_project = gazu.project.get_project(zoo_asset_data["project_id"])
@@ -36,8 +36,29 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
         context.data["kitsu_asset"] = kitsu_asset
         self.log.debug("Collect kitsu asset: {}".format(kitsu_asset))
 
-        kitsu_task = gazu.task.get_task(zoo_task_data["id"]) 
-        if not kitsu_task:
-            raise AssertionError("Task not not found in kitsu!")
-        context.data["kitsu_task"] = kitsu_task
-        self.log.debug("Collect kitsu task: {}".format(kitsu_task))
+        if zoo_task_data:
+            kitsu_task = gazu.task.get_task(zoo_task_data["id"]) 
+            if not kitsu_task:
+                raise AssertionError("Task not not found in kitsu!")
+            context.data["kitsu_task"] = kitsu_task
+            self.log.debug("Collect kitsu task: {}".format(kitsu_task))
+        
+        else:
+            kitsu_task_type = gazu.task.get_task_type_by_name(
+                os.environ["AVALON_TASK"]
+            )
+            if not kitsu_task_type:
+                raise AssertionError(
+                    "Task type {} not found in Kitsu!".format(
+                        os.environ["AVALON_TASK"]
+                    )
+                )
+
+            kitsu_task = gazu.task.get_task_by_name(
+                kitsu_asset,
+                kitsu_task_type
+            )
+            if not kitsu_task:
+                raise AssertionError("Task not not found in kitsu!")
+            context.data["kitsu_task"] = kitsu_task
+            self.log.debug("Collect kitsu task: {}".format(kitsu_task))
