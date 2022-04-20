@@ -13,4 +13,4 @@ class KitsuLogOut(pyblish.api.ContextPlugin):
     label = "Kitsu Log Out"
 
     def process(self, context):
-        gazu.client.log_out()
+        gazu.log_out()
