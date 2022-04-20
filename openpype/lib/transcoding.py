@@ -641,7 +641,7 @@ def convert_input_paths_for_ffmpeg(
                 oiio_cmd.extend(["--eraseattrib", attr_name])
 
         # Add last argument - path to output
-        base_filename = os.path.basename(first_input_path)
+        base_filename = os.path.basename(input_path)
         output_path = os.path.join(output_dir, base_filename)
         oiio_cmd.extend([
             "-o", output_path
