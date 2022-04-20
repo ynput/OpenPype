@@ -382,6 +382,11 @@ def should_convert_for_ffmpeg(src_filepath):
     return False
 
 
+# Deprecated since 2022 4 20
+# - Reason - Doesn't convert sequences right way: Can't handle gaps, reuse
+#       first frame for all frames and changes filenames when input
+#       is sequence.
+# - use 'convert_input_paths_for_ffmpeg' instead
 def convert_for_ffmpeg(
     first_input_path,
     output_dir,
@@ -535,6 +540,8 @@ def convert_input_paths_for_ffmpeg(
 
     Filenames of input files are kept so make sure that output directory
     is not the same directory as input files have.
+    - This way it can handle gaps and can keep input filenames without handling
+        frame template
 
     Args:
         input_paths (str): Paths that should be converted. It is expected that
