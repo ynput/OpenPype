@@ -14,7 +14,8 @@ from maya.app.renderSetup.model import renderSetup
 from avalon.api import Session
 from openpype.api import (
     get_system_settings,
-    get_project_settings
+    get_project_settings,
+    get_asset,
 )
 from openpype.hosts.maya.api import (
     lib,
@@ -421,7 +422,6 @@ class CreateRender(plugin.Creator):
 
         asset = get_asset()
 
-        
         if renderer == "vray":
             self._set_vray_settings(asset)
         if renderer == "redshift":
