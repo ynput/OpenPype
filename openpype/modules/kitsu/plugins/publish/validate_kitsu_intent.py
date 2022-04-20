@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 import gazu
 
@@ -9,7 +10,7 @@ class ValidateKitsuIntent(pyblish.api.ContextPlugin):
     label = "Kitsu Intent/Status"
     # families = ["kitsu"]
     optional = True
-    
+
     def process(self, context):
 
         publish_status = context.data.get("intent", {}).get("value")
@@ -19,7 +20,7 @@ class ValidateKitsuIntent(pyblish.api.ContextPlugin):
         kitsu_status = gazu.task.get_task_status_by_short_name(publish_status)
         if not kitsu_status:
             raise AssertionError(
-                "Status `{}` not not found in kitsu!".format(kitsu_status)
+                "Status `{}` not found in kitsu!".format(kitsu_status)
             )
         self.log.debug("Collect kitsu status: {}".format(kitsu_status))
 

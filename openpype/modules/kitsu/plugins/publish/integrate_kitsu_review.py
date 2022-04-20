@@ -19,17 +19,17 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
 
         for representation in instance.data.get("representations", []):
 
-            local_path = representation.get("published_path")
+            review_path = representation.get("published_path")
 
             if 'review' not in representation.get("tags", []):
                 continue
-            
-            self.log.debug("Found review at: {}".format(local_path))
+
+            self.log.debug("Found review at: {}".format(review_path))
 
             gazu.task.add_preview(
                 task,
                 comment,
-                local_path,
+                review_path,
                 normalize_movie=True
             )
             self.log.info("Review upload on comment")
