@@ -34,7 +34,6 @@
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
-            "env_group_key": "global",
             "require_restart": true
         },
         {
