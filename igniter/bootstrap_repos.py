@@ -1097,7 +1097,7 @@ class BootstrapRepos:
         sys.path.insert(0, directory.as_posix())
         directory /= "repos"
         if not directory.exists() and not directory.is_dir():
-            raise ValueError("directory is invalid")
+            return
 
         roots = []
         for item in directory.iterdir():
