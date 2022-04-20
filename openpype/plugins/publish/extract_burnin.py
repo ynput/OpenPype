@@ -16,7 +16,7 @@ from openpype.lib import (
     run_openpype_process,
 
     get_transcode_temp_directory,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     should_convert_for_ffmpeg,
 
     CREATE_NO_WINDOW
@@ -187,8 +187,13 @@ class ExtractBurnin(openpype.api.Extractor):
             repre_files = repre["files"]
             if isinstance(repre_files, (tuple, list)):
                 filename = repre_files[0]
+                src_filepaths = [
+                    os.path.join(src_repre_staging_dir, filename)
+                    for filename in repre_files
+                ]
             else:
                 filename = repre_files
+                src_filepaths = [os.path.join(src_repre_staging_dir, filename)]
 
             first_input_path = os.path.join(src_repre_staging_dir, filename)
             # Determine if representation requires pre conversion for ffmpeg
@@ -209,11 +214,9 @@ class ExtractBurnin(openpype.api.Extractor):
                 new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
-                convert_for_ffmpeg(
-                    first_input_path,
+                convert_input_paths_for_ffmpeg(
+                    src_filepaths,
                     new_staging_dir,
-                    _temp_data["frameStart"],
-                    _temp_data["frameEnd"],
                     self.log
                 )
 
