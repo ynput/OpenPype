@@ -421,9 +421,7 @@ class CreateRender(plugin.Creator):
 
         asset = get_asset()
 
-        if renderer == "arnold":
-            # set format to exr
-            self._set_Arnold_settings()
+        
         if renderer == "vray":
             self._set_vray_settings(asset)
         if renderer == "redshift":

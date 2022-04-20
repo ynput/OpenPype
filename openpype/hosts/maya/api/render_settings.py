@@ -54,6 +54,20 @@ class RenderSettings(object):
         render_settings = RenderSettings(project_settings)
         render_settings.set_default_renderer_settings(renderer)
 
+    def _set_Arnold_settings(self):
+        """Sets settings for Arnold."""
+
+        img_ext = self.arnold_renderer.get("image_format")
+        self._set_global_output_settings()
+        # Resolution
+        resWidth = self.attributes.get("resolutionWidth")
+        resHeight = self.attributes.get("resolutionHeight")
+
+        cmds.setAttr("defaultArnoldDriver.ai_translator",
+                    img_ext, type="string")
+        cmds.setAttr("defaultResolution.width", resWidth)
+        cmds.setAttr("defaultResolution.height", resHeight)
+
     def set_default_renderer_settings(self, renderer):
         """Set basic settings based on renderer.
 
@@ -83,14 +97,8 @@ class RenderSettings(object):
         height = asset["data"].get("resolutionHeight")
 
         if renderer == "arnold":
-            # set format to exr
-            cmds.setAttr(
-                "defaultArnoldDriver.ai_translator", "exr", type="string")
-            self._set_global_output_settings()
-
-            # resolution
-            cmds.setAttr("defaultResolution.width", width)
-            cmds.setAttr("defaultResolution.height", height)
+            # set renderer settings for Arnold from project settings
+            self._set_Arnold_settings()
 
         if renderer == "vray":
             self._set_vray_settings(aov_separator, width, height)
