@@ -1,11 +1,8 @@
 import sys
-import logging
 import contextlib
 
 
 from avalon.vendor.Qt import QtCore, QtWidgets
-
-log = logging.getLogger(__name__)
 
 
 class Popup(QtWidgets.QDialog):
