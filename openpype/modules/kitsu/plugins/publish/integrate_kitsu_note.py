@@ -9,7 +9,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder
     label = "Kitsu Note and Status"
     # families = ["kitsu"]
-    optional = True
+    # optional = True
 
     def process(self, context):
 
@@ -30,8 +30,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             kitsu_status = context.data["kitsu_task"].get("task_status")
         self.log.debug("Kitsu status: {}".format(kitsu_status))
 
-        gazu.task.add_comment(
+        kitsu_comment = gazu.task.add_comment(
             context.data["kitsu_task"], 
             kitsu_status, 
             comment = publish_comment
         )
+
+        context.data["kitsu_comment"] = kitsu_comment

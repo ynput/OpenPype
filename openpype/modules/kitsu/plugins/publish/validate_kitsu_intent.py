@@ -1,10 +1,9 @@
-from typing import Optional
 import pyblish.api
 import gazu
 
 
-class IntegrateKitsuNote(pyblish.api.ContextPlugin):
-    """Integrate Kitsu Note"""
+class ValidateKitsuIntent(pyblish.api.ContextPlugin):
+    """Validate Kitsu Status"""
 
     order = pyblish.api.ValidatorOrder
     label = "Kitsu Intent/Status"
