@@ -3,6 +3,7 @@ import logging
 
 from avalon import api
 
+from openpype.pipeline import registered_host
 from openpype.tools.utils import qt_app_context
 from .window import Window
 
@@ -47,7 +48,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
     except (AttributeError, RuntimeError):
         pass
 
-    host = api.registered_host()
+    host = registered_host()
     validate_host_requirements(host)
 
     if debug:

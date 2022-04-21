@@ -356,7 +356,7 @@ class CreatedInstance:
             already existing instance.
         creator(BaseCreator): Creator responsible for instance.
         host(ModuleType): Host implementation loaded with
-            `avalon.api.registered_host`.
+            `openpype.pipeline.registered_host`.
         new(bool): Is instance new.
     """
     # Keys that can't be changed or removed from data after loading using

@@ -729,6 +729,31 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "CollectFtrackCustomAttributeData",
+                    "label": "Collect Custom Attribute Data",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Collect custom attributes from ftrack for ftrack entities that can be used in some templates during publishing."
+                        },
+                        {
+                            "type": "list",
+                            "key": "custom_attribute_keys",
+                            "label": "Custom attribute keys",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
                     "is_group": true,
