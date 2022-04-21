@@ -173,7 +173,7 @@ class BlendModelLoader(plugin.AssetLoader):
             object = bpy.data.objects.get(object_name)
             if object:
                 for modifier in object.modifiers:
-                    if modifier:
+                    if modifier is not None:
                         modifier_description = modfier_description(modifier)
                         # Set the modifier properties of an object in a dict
                         modifier_list.append(modifier_description)

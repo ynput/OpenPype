@@ -47,7 +47,6 @@ class BlendRigLoader(plugin.AssetLoader):
                 Vector(bone.rotation_quaternion),
             ]
             bone_transforms_list[bone.name] = transform
-        print(bone_transforms_list)
         return bone_transforms_list
 
     def _set_object_transforms_list(self, object_transforms_list):
@@ -63,7 +62,6 @@ class BlendRigLoader(plugin.AssetLoader):
         objects = plugin.get_all_objects_in_collection(container)
         armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
         bones = armature.pose.bones
-        print(bone_transforms_list)
         for bone_name in bone_transforms_list.keys():
             if bones.get(bone_name) is not None:
                 bone = bones.get(bone_name)

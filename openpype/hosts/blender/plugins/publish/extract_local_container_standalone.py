@@ -1,4 +1,6 @@
 import bpy
+import sys
+
 from openpype.hosts.blender.api.workio import save_file
 import pyblish.api
 from avalon import io
@@ -127,8 +129,6 @@ def extract(file_to_open, filepath, collection_name):
     # Quit blender
     bpy.ops.wm.quit_blender()
 
-
-import sys
 
 if __name__ == "__main__":
     argv = sys.argv
