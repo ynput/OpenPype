@@ -106,18 +106,14 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings()
 
-    def _set_redshift_settings(self):
+    def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
 
         img_ext = self.redshift_renderer.get("image_format")
         self._set_global_output_settings()
-        # Resolution
-        resWidth = self.attributes.get("resolutionWidth")
-        resHeight = self.attributes.get("resolutionHeight")
-
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
-        cmds.setAttr("defaultResolution.width", resWidth)
-        cmds.setAttr("defaultResolution.height", resHeight)
+        cmds.setAttr("defaultResolution.width", width)
+        cmds.setAttr("defaultResolution.height", height)
 
     def _set_vray_settings(self, aov_separator, width, height):
         # type: (str, int, int) -> None
