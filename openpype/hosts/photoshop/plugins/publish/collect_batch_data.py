@@ -7,6 +7,10 @@ Provides:
         - taskType
         - project_name
         - variant
+
+Code is practically copy of `openype/hosts/webpublish/collect_batch_data` as
+webpublisher should be eventually ejected as an addon, eg. mentioned plugin
+shouldn't be pushed into general publish plugins.
 """
 
 import os
@@ -17,7 +21,6 @@ from openpype.lib.plugin_tools import (
     parse_json,
     get_batch_asset_task_info
 )
-from openpype.lib.remote_publish import get_webpublish_conn, IN_PROGRESS_STATUS
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):
@@ -29,9 +32,11 @@ class CollectBatchData(pyblish.api.ContextPlugin):
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.495
     label = "Collect batch data"
-    hosts = ["webpublisher"]
+    hosts = ["photoshop"]
+    targets = ["remotepublish"]
 
     def process(self, context):
+        self.log.info("CollectBatchData")
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
 
         assert batch_dir, (
@@ -66,26 +71,3 @@ class CollectBatchData(pyblish.api.ContextPlugin):
         context.data["taskType"] = task_type
         context.data["project_name"] = project_name
         context.data["variant"] = batch_data["variant"]
-
-        self._set_ctx_path(batch_data)
-
-    def _set_ctx_path(self, batch_data):
-        dbcon = get_webpublish_conn()
-
-        batch_id = batch_data["batch"]
-        ctx_path = batch_data["context"]["path"]
-        self.log.info("ctx_path: {}".format(ctx_path))
-        self.log.info("batch_id: {}".format(batch_id))
-        if ctx_path and batch_id:
-            self.log.info("Updating log record")
-            dbcon.update_one(
-                {
-                    "batch_id": batch_id,
-                    "status": IN_PROGRESS_STATUS
-                },
-                {
-                    "$set": {
-                        "path": ctx_path
-                    }
-                }
-            )
