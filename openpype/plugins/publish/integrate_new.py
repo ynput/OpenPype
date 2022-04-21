@@ -309,9 +309,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # version instance instead of an individual representation) so
         # we can re-use those file infos per representation
         anatomy = instance.context.data["anatomy"]
-        resource_file_infos = self.prepare_file_info(resource_destinations,
-                                                     sites=sites,
-                                                     anatomy=anatomy)
+        resource_file_infos = self.get_files_info(resource_destinations,
+                                                  sites=sites,
+                                                  anatomy=anatomy)
 
         # Finalize the representations now the published files are integrated
         # Get 'files' info for representations and its attached resources
