@@ -22,7 +22,6 @@ from openpype.hosts.maya.api import (
     render_settings
 )
 from openpype.modules import ModulesManager
-from openpype.pipeline import CreatorError
 
 
 class CreateRender(plugin.Creator):
