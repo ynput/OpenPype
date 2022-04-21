@@ -104,14 +104,7 @@ class RenderSettings(object):
             self._set_vray_settings(aov_separator, width, height)
 
         if renderer == "redshift":
-            # set format to exr
-            cmds.setAttr("RedshiftOptions.imageFormat", 1)
-
-            # resolution
-            cmds.setAttr("defaultResolution.width", width)
-            cmds.setAttr("defaultResolution.height", height)
-
-            self._set_global_output_settings()
+            self._set_redshift_settings()
 
     def _set_redshift_settings(self):
         """Sets settings for Arnold."""
