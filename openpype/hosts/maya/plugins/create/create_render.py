@@ -456,11 +456,3 @@ class CreateRender(plugin.Creator):
         cmds.setAttr(
             "{}.height".format(node),
             asset["data"].get("resolutionHeight"))
-
-    @staticmethod
-    def _set_global_output_settings():
-        # enable animation
-        cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
-        cmds.setAttr("defaultRenderGlobals.animation", 1)
-        cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
-        cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
