@@ -24,7 +24,6 @@ from openpype.hosts.maya.api import (
 from openpype.modules import ModulesManager
 from openpype.pipeline import CreatorError
 
-from avalon.api import Session
 
 class CreateRender(plugin.Creator):
     """Create *render* instance.
