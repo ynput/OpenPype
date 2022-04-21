@@ -1,18 +1,38 @@
 # Changelog
 
+## [3.10.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.4...HEAD)
+
+### 📖 Documentation
+
+- Nuke docs with videos [\#3052](https://github.com/pypeclub/OpenPype/pull/3052)
+
+**🚀 Enhancements**
+
+- Update collect\_render.py [\#3055](https://github.com/pypeclub/OpenPype/pull/3055)
+
+**🐛 Bug fixes**
+
+- Nuke: Add aov matching even for remainder and prerender [\#3060](https://github.com/pypeclub/OpenPype/pull/3060)
+
+**🔀 Refactored code**
+
+- General: Move host install [\#3009](https://github.com/pypeclub/OpenPype/pull/3009)
+
 ## [3.9.4](https://github.com/pypeclub/OpenPype/tree/3.9.4) (2022-04-15)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.3...3.9.4)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.9.4-nightly.2...3.9.4)
 
 ### 📖 Documentation
 
 - Documentation: more info about Tasks [\#3062](https://github.com/pypeclub/OpenPype/pull/3062)
 - Documentation: Python requirements to 3.7.9 [\#3035](https://github.com/pypeclub/OpenPype/pull/3035)
+- Website Docs: Remove unused pages [\#2974](https://github.com/pypeclub/OpenPype/pull/2974)
 
 **🆕 New features**
 
 - General: Local overrides for environment variables [\#3045](https://github.com/pypeclub/OpenPype/pull/3045)
-- Flame: Flare integration preparation [\#2928](https://github.com/pypeclub/OpenPype/pull/2928)
 
 **🚀 Enhancements**
 
@@ -79,6 +99,10 @@
 - Nuke: fixing unicode type detection in effect loaders [\#3002](https://github.com/pypeclub/OpenPype/pull/3002)
 - Nuke: removing redundant Ftrack asset when farm publishing [\#2996](https://github.com/pypeclub/OpenPype/pull/2996)
 
+**🔀 Refactored code**
+
+- General: Move plugins register and discover [\#2935](https://github.com/pypeclub/OpenPype/pull/2935)
+
 **Merged pull requests:**
 
 - Maya: Allow to select invalid camera contents if no cameras found [\#3030](https://github.com/pypeclub/OpenPype/pull/3030)
@@ -91,7 +115,6 @@
 ### 📖 Documentation
 
 - Documentation: Added mention of adding My Drive as a root [\#2999](https://github.com/pypeclub/OpenPype/pull/2999)
-- Website Docs: Remove unused pages [\#2974](https://github.com/pypeclub/OpenPype/pull/2974)
 - Docs: Added MongoDB requirements [\#2951](https://github.com/pypeclub/OpenPype/pull/2951)
 
 **🆕 New features**
@@ -103,13 +126,13 @@
 - Photoshop: create image without instance [\#3001](https://github.com/pypeclub/OpenPype/pull/3001)
 - TVPaint: Render scene family [\#3000](https://github.com/pypeclub/OpenPype/pull/3000)
 - Nuke: ReviewDataMov Read RAW attribute [\#2985](https://github.com/pypeclub/OpenPype/pull/2985)
+- SiteSync: Added compute\_resource\_sync\_sites to sync\_server\_module [\#2983](https://github.com/pypeclub/OpenPype/pull/2983)
 - General: `METADATA\_KEYS` constant as `frozenset` for optimal immutable lookup [\#2980](https://github.com/pypeclub/OpenPype/pull/2980)
 - General: Tools with host filters [\#2975](https://github.com/pypeclub/OpenPype/pull/2975)
 - Hero versions: Use custom templates [\#2967](https://github.com/pypeclub/OpenPype/pull/2967)
 - Slack: Added configurable maximum file size of review upload to Slack [\#2945](https://github.com/pypeclub/OpenPype/pull/2945)
 - NewPublisher: Prepared implementation of optional pyblish plugin [\#2943](https://github.com/pypeclub/OpenPype/pull/2943)
 - TVPaint: Extractor to convert PNG into EXR [\#2942](https://github.com/pypeclub/OpenPype/pull/2942)
-- Workfiles: Open published workfiles [\#2925](https://github.com/pypeclub/OpenPype/pull/2925)
 
 **🐛 Bug fixes**
 
@@ -133,14 +156,6 @@
 - General: Python specific vendor paths on env injection [\#2939](https://github.com/pypeclub/OpenPype/pull/2939)
 - General: More fail safe delete old versions [\#2936](https://github.com/pypeclub/OpenPype/pull/2936)
 - Settings UI: Collapsed of collapsible wrapper works as expected [\#2934](https://github.com/pypeclub/OpenPype/pull/2934)
-- Maya: Do not pass `set` to maya commands \(fixes support for older maya versions\) [\#2932](https://github.com/pypeclub/OpenPype/pull/2932)
-- General: Don't print log record on OSError [\#2926](https://github.com/pypeclub/OpenPype/pull/2926)
-
-**🔀 Refactored code**
-
-- General: Move plugins register and discover [\#2935](https://github.com/pypeclub/OpenPype/pull/2935)
-- General: Move Attribute Definitions from pipeline [\#2931](https://github.com/pypeclub/OpenPype/pull/2931)
-- General: Removed silo references and terminal splash [\#2927](https://github.com/pypeclub/OpenPype/pull/2927)
 
 **Merged pull requests:**
 

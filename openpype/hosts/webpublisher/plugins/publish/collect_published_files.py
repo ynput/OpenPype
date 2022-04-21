@@ -40,7 +40,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
     label = "Collect rendered frames"
-    host = ["webpublisher"]
+    hosts = ["webpublisher"]
     targets = ["filespublish"]
 
     # from Settings
@@ -61,6 +61,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         task_name = context.data["task"]
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
+        variant = context.data["variant"]
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
@@ -76,7 +77,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension.replace(".", ''))
 
             subset_name = get_subset_name_with_asset_doc(
-                family, task_data["variant"], task_name, asset_doc,
+                family, variant, task_name, asset_doc,
                 project_name=project_name, host_name="webpublisher"
             )
             version = self._get_last_version(asset_name, subset_name) + 1
