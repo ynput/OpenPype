@@ -29,6 +29,14 @@ from ..constants import (
 SEPARATORS = ("---separator---", "---")
 
 
+class VariantInputsWidget(QtWidgets.QWidget):
+    resized = QtCore.Signal()
+
+    def resizeEvent(self, event):
+        super(VariantInputsWidget, self).resizeEvent(event)
+        self.resized.emit()
+
+
 class CreateErrorMessageBox(ErrorMessageBox):
     def __init__(
         self,
@@ -247,22 +255,25 @@ class CreateDialog(QtWidgets.QDialog):
         creators_model = QtGui.QStandardItemModel()
         creators_view.setModel(creators_model)
 
-        variant_input = QtWidgets.QLineEdit(self)
+        variant_widget = VariantInputsWidget(self)
+
+        variant_input = QtWidgets.QLineEdit(variant_widget)
         variant_input.setObjectName("VariantInput")
         variant_input.setToolTip(VARIANT_TOOLTIP)
 
-        variant_hints_btn = QtWidgets.QPushButton(self)
-        variant_hints_btn.setFixedWidth(18)
+        variant_hints_btn = QtWidgets.QToolButton(variant_widget)
+        variant_hints_btn.setArrowType(QtCore.Qt.DownArrow)
+        variant_hints_btn.setIconSize(QtCore.QSize(12, 12))
 
-        variant_hints_menu = QtWidgets.QMenu(variant_hints_btn)
+        variant_hints_menu = QtWidgets.QMenu(variant_widget)
         variant_hints_group = QtWidgets.QActionGroup(variant_hints_menu)
-        variant_hints_btn.setMenu(variant_hints_menu)
+        # variant_hints_btn.setMenu(variant_hints_menu)
 
-        variant_layout = QtWidgets.QHBoxLayout()
+        variant_layout = QtWidgets.QHBoxLayout(variant_widget)
         variant_layout.setContentsMargins(0, 0, 0, 0)
         variant_layout.setSpacing(0)
         variant_layout.addWidget(variant_input, 1)
-        variant_layout.addWidget(variant_hints_btn, 0)
+        variant_layout.addWidget(variant_hints_btn, 0, QtCore.Qt.AlignVCenter)
 
         subset_name_input = QtWidgets.QLineEdit(self)
         subset_name_input.setEnabled(False)
@@ -271,7 +282,7 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.setEnabled(False)
 
         form_layout = QtWidgets.QFormLayout()
-        form_layout.addRow("Variant:", variant_layout)
+        form_layout.addRow("Variant:", variant_widget)
         form_layout.addRow("Subset:", subset_name_input)
 
         mid_widget = QtWidgets.QWidget(self)
@@ -341,11 +352,13 @@ class CreateDialog(QtWidgets.QDialog):
         help_btn.resized.connect(self._on_help_btn_resize)
 
         create_btn.clicked.connect(self._on_create)
+        variant_widget.resized.connect(self._on_variant_widget_resize)
         variant_input.returnPressed.connect(self._on_create)
         variant_input.textChanged.connect(self._on_variant_change)
         creators_view.selectionModel().currentChanged.connect(
             self._on_creator_item_change
         )
+        variant_hints_btn.clicked.connect(self._on_variant_btn_click)
         variant_hints_menu.triggered.connect(self._on_variant_action)
         assets_widget.selection_changed.connect(self._on_asset_change)
         assets_widget.current_context_required.connect(
@@ -659,6 +672,14 @@ class CreateDialog(QtWidgets.QDialog):
                 self.variant_hints_menu.addAction(variant)
 
         self.variant_input.setText(default_variant or "Main")
+
+    def _on_variant_widget_resize(self):
+        self.variant_hints_btn.setFixedHeight(self.variant_input.height())
+
+    def _on_variant_btn_click(self):
+        pos = self.variant_hints_btn.rect().bottomLeft()
+        point = self.variant_hints_btn.mapToGlobal(pos)
+        self.variant_hints_menu.popup(point)
 
     def _on_variant_action(self, action):
         value = action.text()
