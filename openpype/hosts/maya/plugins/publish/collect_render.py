@@ -325,10 +325,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     if instance.data['family'] == "workfile":
                         instance.data["version"] = context.data["version"]
 
-            # Apply each user defined attribute as data
-            for attr, value in avalon.maya.read(layer).items():
-                data[attr] = value
-
             # handle standalone renderers
             if render_instance.data.get("vrayScene") is True:
                 data["families"].append("vrayscene_render")
