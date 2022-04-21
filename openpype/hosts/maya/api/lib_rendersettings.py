@@ -142,7 +142,7 @@ class RenderSettings(object):
             type="string"
         )
 
-        # set format to exr
+        # Set render file format to exr
         cmds.setAttr("{}.imageFormatStr".format(node), "exr", type="string")
 
         # animType
