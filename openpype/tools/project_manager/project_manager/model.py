@@ -1819,12 +1819,16 @@ class AssetItem(BaseItem):
     }
     query_projection = {
         "_id": 1,
-        "data.tasks": 1,
-        "data.visualParent": 1,
-        "schema": 1,
-
         "name": 1,
+        "schema": 1,
         "type": 1,
+        "parent": 1,
+
+        "data.visualParent": 1,
+        "data.parents": 1,
+
+        "data.tasks": 1,
+
         "data.frameStart": 1,
         "data.frameEnd": 1,
         "data.fps": 1,
@@ -1835,7 +1839,7 @@ class AssetItem(BaseItem):
         "data.clipIn": 1,
         "data.clipOut": 1,
         "data.pixelAspect": 1,
-        "data.tools_env": 1
+        "data.tools_env": 1,
     }
 
     def __init__(self, asset_doc):
