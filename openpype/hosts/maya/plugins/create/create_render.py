@@ -18,8 +18,8 @@ from openpype.api import (
 )
 from openpype.hosts.maya.api import (
     lib,
-    plugin,
-    render_settings
+    lib_rendersettings,
+    plugin
 )
 from openpype.modules import ModulesManager
 
@@ -158,7 +158,7 @@ class CreateRender(plugin.Creator):
                 collection.getSelector().setPattern('*')
 
             self.log.info("Applying default render settings..")
-            render_settings.RenderSettings.apply_defaults()
+            lib_rendersettings.RenderSettings.apply_defaults()
         return self.instance
 
     def _deadline_webservice_changed(self):
@@ -209,7 +209,7 @@ class CreateRender(plugin.Creator):
 
     def _create_render_settings(self):
         """Create instance settings."""
-        # get pools
+        # get pools (slave machines of the render farm)
         pool_names = []
         default_priority = 50
 
