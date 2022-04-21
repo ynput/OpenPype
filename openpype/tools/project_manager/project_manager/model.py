@@ -1377,8 +1377,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         to_process = collections.deque()
         to_process.append(project_item)
 
-        updated_count = 0
         created_count = 0
+        updated_count = 0
         removed_count = 0
         bulk_writes = []
         while to_process:
@@ -1391,7 +1391,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 to_process.append(item)
 
                 if item.is_new:
-                    created_count += 1
                     insert_list.append(item)
 
                 elif item.data(REMOVED_ROLE):
@@ -1422,13 +1421,16 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 result = project_col.insert_many(new_docs)
                 for idx, mongo_id in enumerate(result.inserted_ids):
+                    created_count += 1
                     insert_list[idx].mongo_id = mongo_id
 
-        if not bulk_writes:
+        if sum([created_count, updated_count, removed_count]) == 0:
             self.log.info("Nothing has changed")
             return
 
-        project_col.bulk_write(bulk_writes)
+        if bulk_writes:
+            project_col.bulk_write(bulk_writes)
+
         self.log.info((
             "Save finished."
             " Created {} | Updated {} | Removed {} asset documents"
