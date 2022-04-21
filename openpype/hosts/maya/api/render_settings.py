@@ -107,7 +107,7 @@ class RenderSettings(object):
             self._set_redshift_settings()
 
     def _set_redshift_settings(self):
-        """Sets settings for Arnold."""
+        """Sets settings for Redshift."""
 
         img_ext = self.redshift_renderer.get("image_format")
         self._set_global_output_settings()
