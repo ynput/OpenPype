@@ -837,6 +837,23 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "AssetDependency0": data["filepath"],
             }
 
+        renderer = self._instance.data["renderer"]
+        
+        # This hack is here because of how Deadline handles Renderman version.
+        # it considers everything with `renderman` set as version older than
+        # Renderman 22, and so if we are using renderman > 21 we need to set
+        # renderer string on the job to `renderman22`. We will have to change
+        # this when Deadline releases new version handling this.
+        if self._instance.data["renderer"] == "renderman":
+            try:
+                from rfm2.config import cfg  # noqa
+            except ImportError:
+                raise Exception("Cannot determine renderman version")
+
+            rman_version = cfg().build_info.version()  # type: str
+            if int(rman_version.split(".")[0]) > 22:
+                renderer = "renderman22"
+
         plugin_info = {
             "SceneFile": data["filepath"],
             # Output directory and filename
@@ -850,7 +867,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "RenderLayer": data["renderlayer"],
 
             # Determine which renderer to use from the file itself
-            "Renderer": self._instance.data["renderer"],
+            "Renderer": renderer,
 
             # Resolve relative references
             "ProjectPath": data["workspace"],
