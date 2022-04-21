@@ -5,7 +5,7 @@ from openpype.api import (
     get_asset)
 
 from avalon.api import Session
-from avalon.api import CreatorError
+from openpype.pipeline import CreatorError
 
 
 class RenderSettings(object):
