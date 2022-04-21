@@ -67,11 +67,8 @@ instances=2
 
 
 def install():
-    """Install Maya-specific functionality of avalon-core.
+    """Install TVPaint-specific functionality."""
 
-    This function is called automatically on calling `api.install(maya)`.
-
-    """
     log.info("OpenPype - Installing TVPaint integration")
     io.install()
 
@@ -96,11 +93,11 @@ def install():
 
 
 def uninstall():
-    """Uninstall TVPaint-specific functionality of avalon-core.
+    """Uninstall TVPaint-specific functionality.
 
-    This function is called automatically on calling `api.uninstall()`.
-
+    This function is called automatically on calling `uninstall_host()`.
     """
+
     log.info("OpenPype - Uninstalling TVPaint integration")
     pyblish.api.deregister_host("tvpaint")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
