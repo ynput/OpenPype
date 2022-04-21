@@ -253,7 +253,8 @@ class CreateRender(plugin.Creator):
                 # if 'default' server is not between selected,
                 # use first one for initial list of pools.
                 deadline_url = next(iter(self.deadline_servers.values()))
-
+            # Uses function to get pool machines from the assigned deadline
+            # url in settings
             pool_names = self._get_deadline_pools(deadline_url)
             maya_submit_dl = self._project_settings.get(
                 "deadline", {}).get(
