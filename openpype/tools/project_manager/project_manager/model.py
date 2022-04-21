@@ -1925,7 +1925,6 @@ class AssetItem(BaseItem):
                 tasks.update(item.to_doc_data())
 
         doc_data = {
-            "parents": self.parent().child_parents(),
             "visualParent": self.parent().asset_id,
             "tasks": tasks
         }
@@ -1939,7 +1938,6 @@ class AssetItem(BaseItem):
             "type": self.data(QtCore.Qt.EditRole, "type"),
             "schema": schema_name,
             "data": doc_data,
-            "parent": self.project_id
         }
         if self.mongo_id:
             doc["_id"] = self.mongo_id
