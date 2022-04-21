@@ -241,8 +241,6 @@ class HarmonySubmitDeadline(
 
     optional = True
     use_published = False
-    primary_pool = ""
-    secondary_pool = ""
     priority = 50
     chunk_size = 1000000
     group = "none"
@@ -259,8 +257,8 @@ class HarmonySubmitDeadline(
         # for now, get those from presets. Later on it should be
         # configurable in Harmony UI directly.
         job_info.Priority = self.priority
-        job_info.Pool = self.primary_pool
-        job_info.SecondaryPool = self.secondary_pool
+        job_info.Pool = self._instance.data.get("primaryPool")
+        job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
         job_info.BatchName = os.path.basename(self._instance.data["source"])
         job_info.Department = self.department

@@ -1,10 +1,13 @@
-from avalon import api, io
+from avalon import io
+
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 from openpype.api import Logger
-log = Logger().get_logger(__name__)
+from openpype.pipeline import LauncherAction
+
+log = Logger.get_logger(__name__)
 
 
-class ClockifySync(api.Action):
+class ClockifySync(LauncherAction):
 
     name = "sync_to_clockify"
     label = "Sync to Clockify"

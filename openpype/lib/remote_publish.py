@@ -1,13 +1,12 @@
 import os
 from datetime import datetime
-import sys
-from bson.objectid import ObjectId
 import collections
+
+from bson.objectid import ObjectId
 
 import pyblish.util
 import pyblish.api
 
-from openpype import uninstall
 from openpype.lib.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
@@ -81,7 +80,6 @@ def publish(log, close_plugin_name=None):
 
         if result["error"]:
             log.error(error_format.format(**result))
-            uninstall()
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
@@ -118,7 +116,6 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
 
         if result["error"]:
             log.error(error_format.format(**result))
-            uninstall()
             log_lines = [error_format.format(**result)] + log_lines
             dbcon.update_one(
                 {"_id": _id},

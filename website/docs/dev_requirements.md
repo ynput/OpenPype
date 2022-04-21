@@ -14,7 +14,7 @@ The main things you will need to run and build pype are:
 - **Terminal** in your OS
     - PowerShell 5.0+ (Windows)
     - Bash (Linux)
-- [**Python 3.7.8**](#python) or higher
+- [**Python 3.7.9**](#python) or higher
 - [**MongoDB**](#database)
 
 

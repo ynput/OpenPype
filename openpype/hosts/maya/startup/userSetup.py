@@ -1,11 +1,10 @@
 import os
-import avalon.api
 from openpype.api import get_project_settings
+from openpype.pipeline import install_host
 from openpype.hosts.maya import api
-import openpype.hosts.maya.api.lib as mlib
 from maya import cmds
 
-avalon.api.install(api)
+install_host(api)
 
 
 print("starting OpenPype usersetup")
