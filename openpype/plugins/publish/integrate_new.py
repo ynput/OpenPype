@@ -4,14 +4,13 @@ import sys
 import copy
 import clique
 import six
-from collections import deque, defaultdict
 
 from bson.objectid import ObjectId
 from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 from avalon import io
 import openpype.api
-from datetime import datetime
+from openpype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 
@@ -299,11 +298,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Retrieving Representation Site Sync information ...")
 
         # Get the accessible sites for Site Sync
-        sites = SiteSync.compute_resource_sync_sites(
-            system_settings=instance.context.data["system_settings"],
-            project_settings=instance.context.data["project_settings"]
+        manager = ModulesManager()
+        sync_server_module = manager.modules_by_name["sync_server"]
+        sites = sync_server_module.compute_resource_sync_sites(
+            project_name=instance.data["projectEntity"]["name"]
         )
-        self.log.debug("Site Sync Sites: {}".format(sites))
+        self.log.debug("Sync Server Sites: {}".format(sites))
 
         # Compute the resource file infos once (files belonging to the
         # version instance instead of an individual representation) so
@@ -828,156 +828,3 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "hash": openpype.api.source_hash(path),
             "sites": sites
         }
-
-
-class SiteSync(object):
-    """Logic for Site Sync Module functionality"""
-
-    @classmethod
-    def compute_resource_sync_sites(cls,
-                                    system_settings,
-                                    project_settings):
-        """Get available resource sync sites"""
-
-        def create_metadata(name, created=True):
-            """Create sync site metadata for site with `name`"""
-            metadata = {"name": name}
-            if created:
-                metadata["created_dt"] = datetime.now()
-            return metadata
-
-        default_sites = [create_metadata("studio")]
-
-        # If sync site module is disabled return default fallback site
-        system_sync_server_presets = system_settings["modules"]["sync_server"]
-        log.debug("system_sett:: {}".format(system_sync_server_presets))
-        if not system_sync_server_presets["enabled"]:
-            return default_sites
-
-        # If sync site module is disabled in current
-        # project return default fallback site
-        sync_project_presets = project_settings["global"]["sync_server"]
-        if not sync_project_presets["enabled"]:
-            return default_sites
-
-        local_site, remote_site = cls._get_sites(sync_project_presets)
-
-        # Attached sites metadata by site name
-        # That is the local site, remote site, the always accesible sites
-        # and their alternate sites (alias of sites with different protocol)
-        attached_sites = dict()
-        attached_sites[local_site] = create_metadata(local_site)
-
-        if remote_site and remote_site != local_site:
-            attached_sites[remote_site] = create_metadata(remote_site,
-                                                          created=False)
-
-        # add alternative sites
-        cls._add_alternative_sites(system_sync_server_presets, attached_sites)
-
-        # add skeleton for sites where it should be always synced to
-        always_accessible_sites = (
-            sync_project_presets["config"].get("always_accessible_on", [])
-        )
-        for site in set(always_accessible_sites):
-            site = site.strip()
-            if site not in attached_sites:
-                attached_sites[site] = create_metadata(site, created=False)
-
-        return list(attached_sites.values())
-
-    @staticmethod
-    def _get_sites(sync_project_presets):
-        """Returns tuple (local_site, remote_site)"""
-        local_site_id = openpype.api.get_local_site_id()
-        local_site = sync_project_presets["config"]. \
-            get("active_site", "studio").strip()
-
-        if local_site == 'local':
-            local_site = local_site_id
-
-        remote_site = sync_project_presets["config"].get("remote_site")
-        if remote_site:
-            remote_site.strip()
-
-        if remote_site == 'local':
-            remote_site = local_site_id
-
-        return local_site, remote_site
-
-    @classmethod
-    def _add_alternative_sites(cls,
-                               system_sync_server_presets,
-                               attached_sites):
-        """Loop through all configured sites and add alternatives.
-
-        For all sites if an alternative site is detected that has an
-        accessible site then we can also register to that alternative site
-        with the same "created" state. So we match the existing data.
-
-            See SyncServerModule.handle_alternate_site
-        """
-        conf_sites = system_sync_server_presets.get("sites", {})
-        alt_site_pairs = cls._get_alt_site_pairs(conf_sites)
-
-        for site_name, alt_sites in alt_site_pairs.items():
-
-            # Skip if already defined
-            if site_name in attached_sites:
-                continue
-
-            # If no alternative sites we don't need to add
-            if not alt_sites:
-                continue
-
-            # Take a copy of data of the first alternate site that is already
-            # defined as an attached site to match the same state.
-            match_meta = next((attached_sites[site] for site in alt_sites
-                               if site in attached_sites), None)
-            if not match_meta:
-                continue
-
-            alt_site_meta = copy.deepcopy(match_meta)
-            alt_site_meta["name"] = site_name
-
-            # Note: We change mutable `attached_site` dict in-place
-            attached_sites[site_name] = alt_site_meta
-
-    @staticmethod
-    def _get_alt_site_pairs(conf_sites):
-        """Returns dict of site and its alternative sites.
-        If `site` has alternative site, it means that alt_site has
-        'site' as
-        alternative site
-        Args:
-            conf_sites (dict)
-        Returns:
-            (dict): {'site': [alternative sites]...}
-        """
-        alt_site_pairs = defaultdict(set)
-        for site_name, site_info in conf_sites.items():
-            alt_sites = set(site_info.get("alternative_sites", []))
-            alt_site_pairs[site_name].update(alt_sites)
-
-            for alt_site in alt_sites:
-                alt_site_pairs[alt_site].add(site_name)
-
-        for site_name, alt_sites in alt_site_pairs.items():
-            sites_queue = deque(alt_sites)
-            while sites_queue:
-                alt_site = sites_queue.popleft()
-
-                # safety against wrong config
-                # {"SFTP": {"alternative_site": "SFTP"}
-                if alt_site == site_name or alt_site not in alt_site_pairs:
-                    continue
-
-                for alt_alt_site in alt_site_pairs[alt_site]:
-                    if (
-                            alt_alt_site != site_name
-                            and alt_alt_site not in alt_sites
-                    ):
-                        alt_sites.add(alt_alt_site)
-                        sites_queue.append(alt_alt_site)
-
-        return alt_site_pairs
