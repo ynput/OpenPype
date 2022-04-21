@@ -7,6 +7,11 @@ from pymongo import UpdateOne, DeleteOne
 
 from Qt import QtCore, QtGui
 
+from openpype.lib import (
+    CURRENT_DOC_SCHEMAS,
+    PypeLogger,
+)
+
 from .constants import (
     IDENTIFIER_ROLE,
     ITEM_TYPE_ROLE,
@@ -17,8 +22,6 @@ from .constants import (
     PROJECT_NAME_ROLE
 )
 from .style import ResourceCache
-
-from openpype.lib import CURRENT_DOC_SCHEMAS
 
 
 class ProjectModel(QtGui.QStandardItemModel):
@@ -185,6 +188,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             for key in self.multiselection_columns
         }
 
+        self._log = None
         # TODO Reset them on project change
         self._current_project = None
         self._root_item = None
@@ -193,6 +197,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.dbcon = dbcon
 
         self._reset_root_item()
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = PypeLogger.get_logger("ProjectManagerModel")
+        return self._log
 
     @property
     def items_by_id(self):
@@ -1367,6 +1377,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         to_process = collections.deque()
         to_process.append(project_item)
 
+        updated_count = 0
+        created_count = 0
+        removed_count = 0
         bulk_writes = []
         while to_process:
             parent = to_process.popleft()
@@ -1378,9 +1391,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 to_process.append(item)
 
                 if item.is_new:
+                    created_count += 1
                     insert_list.append(item)
 
                 elif item.data(REMOVED_ROLE):
+                    removed_count += 1
                     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
                         bulk_writes.append(DeleteOne(
                             {"_id": item.asset_id}
@@ -1394,6 +1409,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 else:
                     update_data = item.update_data()
                     if update_data:
+                        updated_count += 1
                         bulk_writes.append(UpdateOne(
                             {"_id": item.asset_id},
                             update_data
@@ -1408,8 +1424,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 for idx, mongo_id in enumerate(result.inserted_ids):
                     insert_list[idx].mongo_id = mongo_id
 
-        if bulk_writes:
-            project_col.bulk_write(bulk_writes)
+        if not bulk_writes:
+            self.log.info("Nothing has changed")
+            return
+
+        project_col.bulk_write(bulk_writes)
+        self.log.info((
+            "Save finished."
+            " Created {} | Updated {} | Removed {} asset documents"
+        ).format(created_count, updated_count, removed_count))
 
         self.refresh_project()
 
