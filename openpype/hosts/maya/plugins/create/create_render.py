@@ -15,7 +15,6 @@ from avalon.api import Session
 from openpype.api import (
     get_system_settings,
     get_project_settings,
-    get_asset,
 )
 from openpype.hosts.maya.api import (
     lib,
