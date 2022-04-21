@@ -53,6 +53,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_maya_render_settings"
+        },
+        {
+            "type": "schema",
             "name": "schema_maya_create"
         },
         {
