@@ -392,23 +392,3 @@ class CreateRender(plugin.Creator):
         if "verify" not in kwargs:
             kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         return requests.get(*args, **kwargs)
-
-    def _set_default_renderer_settings(self, renderer):
-        """Set basic settings based on renderer.
-
-        Args:
-            renderer (str): Renderer name.
-
-        """
-        prefix = self._image_prefixes[renderer]
-        prefix = prefix.replace("{aov_separator}", self.aov_separator)
-        cmds.setAttr(self._image_prefix_nodes[renderer],
-                     prefix,
-                     type="string")
-
-        asset = get_asset()
-
-        if renderer == "vray":
-            self._set_vray_settings(asset)
-        if renderer == "redshift":
-            self._set_redshift_settings()
