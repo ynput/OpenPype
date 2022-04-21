@@ -31,10 +31,13 @@ TOPIC_STATUS_SERVER = "openpype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "openpype.event.server.status.result"
 
 
-def check_ftrack_url(url, log_errors=True):
+def check_ftrack_url(url, log_errors=True, logger=None):
     """Checks if Ftrack server is responding"""
+    if logger is None:
+        logger = Logger.get_logger(__name__)
+
     if not url:
-        print('ERROR: Ftrack URL is not set!')
+        logger.error("Ftrack URL is not set!")
         return None
 
     url = url.strip('/ ')
@@ -48,15 +51,15 @@ def check_ftrack_url(url, log_errors=True):
         result = requests.get(url, allow_redirects=False)
     except requests.exceptions.RequestException:
         if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
+            logger.error("Entered Ftrack URL is not accesible!")
         return False
 
     if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
         if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
+            logger.error("Entered Ftrack URL is not accesible!")
         return False
 
-    print('DEBUG: Ftrack server {} is accessible.'.format(url))
+    logger.debug("Ftrack server {} is accessible.".format(url))
 
     return url
 
@@ -133,7 +136,7 @@ class ProcessEventHub(SocketBaseEventHub):
     hearbeat_msg = b"processor"
 
     is_collection_created = False
-    pypelog = Logger().get_logger("Session Processor")
+    pypelog = Logger.get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
         self.mongo_url = None
