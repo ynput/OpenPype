@@ -2,7 +2,6 @@ import os
 import re
 import tempfile
 import attr
-from copy import deepcopy
 
 import pyblish.api
 
@@ -23,6 +22,7 @@ class AERenderInstance(RenderInstance):
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
     publish_attributes = attr.ib(default=None)
+    file_name = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -64,8 +64,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             if family not in ["render", "renderLocal"]:  # legacy
                 continue
 
-            asset_entity = inst.data["assetEntity"]
-
             item_id = inst.data["members"][0]
 
             work_area_info = CollectAERender.get_stub().get_work_area(
@@ -84,8 +82,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             fps = work_area_info.frameRate
             # TODO add resolution when supported by extension
 
-            task_name = (inst.data.get("task") or
-                         list(asset_entity["data"]["tasks"].keys())[0])  # lega
+            task_name = inst.data.get("task")  # legacy
+
+            render_q = CollectAERender.get_stub().get_render_info()
+            if not render_q:
+                raise ValueError("No file extension set in Render Queue")
 
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
@@ -103,12 +104,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 publish=True,
                 renderer='aerender',
                 name=subset_name,
-                resolutionWidth=asset_entity["data"].get(
-                    "resolutionWidth",
-                    project_entity["data"]["resolutionWidth"]),
-                resolutionHeight=asset_entity["data"].get(
-                    "resolutionHeight",
-                    project_entity["data"]["resolutionHeight"]),
+                resolutionWidth=render_q.width,
+                resolutionHeight=render_q.height,
                 pixelAspect=1,
                 tileRendering=False,
                 tilesX=0,
@@ -119,8 +116,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 toBeRenderedOn='deadline',
                 fps=fps,
                 app_version=app_version,
-                anatomyData=deepcopy(inst.data["anatomyData"]),
-                publish_attributes=inst.data.get("publish_attributes")
+                publish_attributes=inst.data.get("publish_attributes"),
+                file_name=render_q.file_name
             )
 
             comp = compositions_by_id.get(int(item_id))
@@ -165,15 +162,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        # pull file name from Render Queue Output module
-        render_q = CollectAERender.get_stub().get_render_info()
-        if not render_q:
-            raise ValueError("No file extension set in Render Queue")
-        _, ext = os.path.splitext(os.path.basename(render_q.file_name))
+        _, ext = os.path.splitext(os.path.basename(render_instance.file_name))
 
         base_dir = self._get_output_dir(render_instance)
         expected_files = []
-        if "#" not in render_q.file_name:  # single frame (mov)W
+        if "#" not in render_instance.file_name:  # single frame (mov)W
             path = os.path.join(base_dir, "{}_{}_{}.{}".format(
                 render_instance.asset,
                 render_instance.subset,
@@ -216,8 +209,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
     def _update_for_local(self, instance, project_entity):
         """Update old saved instances to current publishing format"""
-        instance.anatomyData["version"] = instance.version
-        instance.anatomyData["subset"] = instance.subset
         instance.stagingDir = tempfile.mkdtemp()
         instance.projectEntity = project_entity
         fam = "render.local"
