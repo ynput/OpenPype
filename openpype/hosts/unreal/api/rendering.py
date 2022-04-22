@@ -1,5 +1,8 @@
+import os
+
 import unreal
 
+from openpype.api import Anatomy
 from openpype.hosts.unreal.api import pipeline
 
 
@@ -45,6 +48,15 @@ def start_rendering():
         data = pipeline.parse_container(i.get_path_name())
         if data["family"] == "render":
             inst_data.append(data)
+
+    try:
+        project = os.environ.get("AVALON_PROJECT")
+        anatomy = Anatomy(project)
+        root = anatomy.roots['renders']
+    except:
+        raise("Could not find render root in anatomy settings.")
+
+    render_dir = f"{root}/{project}"
 
     # subsystem = unreal.get_editor_subsystem(
     #     unreal.MoviePipelineQueueSubsystem)
@@ -105,7 +117,7 @@ def start_rendering():
             settings.custom_end_frame = r.get("frame_range")[1]
             settings.use_custom_playback_range = True
             settings.file_name_format = "{sequence_name}.{frame_number}"
-            settings.output_directory.path += r.get('output')
+            settings.output_directory.path = f"{render_dir}/{r.get('output')}"
 
             renderPass = job.get_configuration().find_or_add_setting_by_class(
                 unreal.MoviePipelineDeferredPassBase)
