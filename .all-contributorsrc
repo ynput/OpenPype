@@ -173,6 +173,16 @@
         "code",
         "review"
       ]
+    },
+    {
+      "login": "2-REC",
+      "name": "Derek ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42170307?v=4",
+      "profile": "https://github.com/2-REC",
+      "contributions": [
+        "code",
+        "review"
+      ]
     }
   ],
   "contributorsPerLine": 7
