@@ -3,7 +3,6 @@
     "collapsible": true,
     "key": "RenderSettings",
     "label": "Render Settings",
-    "checkbox_key": "enabled",
     "children": [
         {
             "type": "boolean",
