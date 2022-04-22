@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-23-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-24-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -325,6 +325,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://github.com/BenoitConnan"><img src="https://avatars.githubusercontent.com/u/82808268?v=4?s=80" width="80px;" alt=""/><br /><sub><b>BenoitConnan</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=BenoitConnan" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/Malthaldar"><img src="https://avatars.githubusercontent.com/u/33671694?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Malthaldar</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=Malthaldar" title="Code">💻</a></td>
+    <td align="center"><a href="http://www.svenneve.com/"><img src="https://avatars.githubusercontent.com/u/2472863?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Sven Neve</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=svenneve" title="Code">💻</a></td>
   </tr>
 </table>
 
