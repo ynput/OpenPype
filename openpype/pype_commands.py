@@ -125,13 +125,14 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        env = get_app_environments_for_context(
-            os.environ["AVALON_PROJECT"],
-            os.environ["AVALON_ASSET"],
-            os.environ["AVALON_TASK"],
-            os.environ["AVALON_APP_NAME"]
-        )
-        os.environ.update(env)
+        if os.getenv("AVALON_APP_NAME"):
+            env = get_app_environments_for_context(
+                os.environ["AVALON_PROJECT"],
+                os.environ["AVALON_ASSET"],
+                os.environ["AVALON_TASK"],
+                os.environ["AVALON_APP_NAME"]
+            )
+            os.environ.update(env)
 
         pyblish.api.register_host("shell")
 
