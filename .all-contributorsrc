@@ -103,7 +103,8 @@
         "infra",
         "projectManagement",
         "maintenance",
-        "content"
+        "content",
+        "userTesting"
       ]
     },
     {
@@ -130,6 +131,20 @@
         "review",
         "mentoring",
         "question"
+      ]
+    },
+    {
+      "login": "jrsndl",
+      "name": "Jiri Sindelar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45896205?v=4",
+      "profile": "https://github.com/jrsndl",
+      "contributions": [
+        "code",
+        "review",
+        "doc",
+        "content",
+        "tutorial",
+        "userTesting"
       ]
     },
     {
@@ -263,20 +278,6 @@
       "profile": "https://github.com/Malthaldar",
       "contributions": [
         "code"
-      ]
-    },
-    {
-      "login": "jrsndl",
-      "name": "Jiri Sindelar",
-      "avatar_url": "https://avatars.githubusercontent.com/u/45896205?v=4",
-      "profile": "https://github.com/jrsndl",
-      "contributions": [
-        "code",
-        "review",
-        "doc",
-        "content",
-        "tutorial",
-        "userTesting"
       ]
     }
   ],
