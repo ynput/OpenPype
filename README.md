@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -297,6 +297,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <table>
   <tr>
     <td align="center"><a href="http://pype.club/"><img src="https://avatars.githubusercontent.com/u/3333008?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Milan Kolar</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=mkolar" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=mkolar" title="Documentation">📖</a> <a href="#infra-mkolar" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/antirotor"><img src="https://avatars.githubusercontent.com/u/33513211?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Ondřej Samohel</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=antirotor" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=antirotor" title="Documentation">📖</a> <a href="#infra-antirotor" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
   </tr>
 </table>
 

@@ -20,6 +20,17 @@
         "doc",
         "infra"
       ]
+    },
+    {
+      "login": "antirotor",
+      "name": "Ondřej Samohel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33513211?v=4",
+      "profile": "https://github.com/antirotor",
+      "contributions": [
+        "code",
+        "doc",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7
