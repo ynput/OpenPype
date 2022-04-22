@@ -3,7 +3,6 @@ from Qt import QtWidgets
 from bson.objectid import ObjectId
 
 import pyblish.api
-import avalon.api
 from avalon import io
 
 from openpype.api import Logger
@@ -16,6 +15,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
+    registered_host,
 )
 import openpype.hosts.photoshop
 
@@ -35,7 +35,7 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = avalon.api.registered_host()
+    host = registered_host()
     outdated_containers = []
     for container in host.ls():
         representation = container['representation']

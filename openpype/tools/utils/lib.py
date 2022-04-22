@@ -6,16 +6,17 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-import avalon.api
-
-from openpype.style import get_default_entity_icon_color
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_objected_colors,
+)
+from openpype.resources import get_image_path
+from openpype.lib import filter_profiles
 from openpype.api import (
     get_project_settings,
     Logger
 )
-from openpype.lib import filter_profiles
-from openpype.style import get_objected_colors
-from openpype.resources import get_image_path
+from openpype.pipeline import registered_host
 
 log = Logger.get_logger(__name__)
 
@@ -402,13 +403,14 @@ class FamilyConfigCache:
 
         self.family_configs.clear()
         # Skip if we're not in host context
-        if not avalon.api.registered_host():
+        if not registered_host():
             return
 
         # Update the icons from the project configuration
         project_name = os.environ.get("AVALON_PROJECT")
         asset_name = os.environ.get("AVALON_ASSET")
         task_name = os.environ.get("AVALON_TASK")
+        host_name = os.environ.get("AVALON_APP")
         if not all((project_name, asset_name, task_name)):
             return
 
@@ -422,15 +424,21 @@ class FamilyConfigCache:
             ["family_filter_profiles"]
         )
         if profiles:
-            asset_doc = self.dbcon.find_one(
+            # Make sure connection is installed
+            # - accessing attribute which does not have auto-install
+            self.dbcon.install()
+            database = getattr(self.dbcon, "database", None)
+            if database is None:
+                database = self.dbcon._database
+            asset_doc = database[project_name].find_one(
                 {"type": "asset", "name": asset_name},
                 {"data.tasks": True}
-            )
+            ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")
             profiles_filter = {
                 "task_types": task_type,
-                "hosts": os.environ["AVALON_APP"]
+                "hosts": host_name
             }
             matching_item = filter_profiles(profiles, profiles_filter)
 

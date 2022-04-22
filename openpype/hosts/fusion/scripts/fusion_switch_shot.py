@@ -7,6 +7,10 @@ import logging
 import avalon.api
 from avalon import io
 
+from openpype.pipeline import (
+    install_host,
+    registered_host,
+)
 from openpype.lib import version_up
 from openpype.hosts.fusion import api
 from openpype.hosts.fusion.api import lib
@@ -218,7 +222,7 @@ def switch(asset_name, filepath=None, new=True):
         assert current_comp is not None, (
             "Fusion could not load '{}'").format(filepath)
 
-    host = avalon.api.registered_host()
+    host = registered_host()
     containers = list(host.ls())
     assert containers, "Nothing to update"
 
@@ -279,7 +283,7 @@ if __name__ == '__main__':
 
     args, unknown = parser.parse_args()
 
-    avalon.api.install(api)
+    install_host(api)
     switch(args.asset_name, args.file_path)
 
     sys.exit(0)

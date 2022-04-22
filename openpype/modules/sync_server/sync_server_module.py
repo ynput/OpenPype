@@ -4,7 +4,7 @@ from datetime import datetime
 import threading
 import platform
 import copy
-from collections import deque
+from collections import deque, defaultdict
 
 from avalon.api import AvalonMongoDB
 
@@ -157,7 +157,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                           representation_id,
                                           site_name=site_name, force=force)
 
-    # public facing API
     def remove_site(self, collection, representation_id, site_name,
                     remove_local_files=False):
         """
@@ -183,6 +182,151 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                           remove=True)
         if remove_local_files:
             self._remove_local_file(collection, representation_id, site_name)
+
+    def compute_resource_sync_sites(self, project_name):
+        """Get available resource sync sites state for publish process.
+
+        Returns dict with prepared state of sync sites for 'project_name'.
+        It checks if Site Sync is enabled, handles alternative sites.
+        Publish process stores this dictionary as a part of representation
+        document in DB.
+
+        Example:
+        [
+            {
+                'name': '42abbc09-d62a-44a4-815c-a12cd679d2d7',
+                'created_dt': datetime.datetime(2022, 3, 30, 12, 16, 9, 778637)
+            },
+            {'name': 'studio'},
+            {'name': 'SFTP'}
+        ] -- representation is published locally, artist or Settings have set
+        remote site as 'studio'. 'SFTP' is alternate site to 'studio'. Eg.
+        whenever file is on 'studio', it is also on 'SFTP'.
+        """
+
+        def create_metadata(name, created=True):
+            """Create sync site metadata for site with `name`"""
+            metadata = {"name": name}
+            if created:
+                metadata["created_dt"] = datetime.now()
+            return metadata
+
+        if (
+                not self.sync_system_settings["enabled"] or
+                not self.sync_project_settings[project_name]["enabled"]):
+            return [create_metadata(self.DEFAULT_SITE)]
+
+        local_site = self.get_active_site(project_name)
+        remote_site = self.get_remote_site(project_name)
+
+        # Attached sites metadata by site name
+        # That is the local site, remote site, the always accesible sites
+        # and their alternate sites (alias of sites with different protocol)
+        attached_sites = dict()
+        attached_sites[local_site] = create_metadata(local_site)
+
+        if remote_site and remote_site not in attached_sites:
+            attached_sites[remote_site] = create_metadata(remote_site,
+                                                          created=False)
+
+        attached_sites = self._add_alternative_sites(attached_sites)
+        # add skeleton for sites where it should be always synced to
+        # usually it would be a backup site which is handled by separate
+        # background process
+        for site in self._get_always_accessible_sites(project_name):
+            if site not in attached_sites:
+                attached_sites[site] = create_metadata(site, created=False)
+
+        return list(attached_sites.values())
+
+    def _get_always_accessible_sites(self, project_name):
+        """Sites that synced to as a part of background process.
+
+        Artist machine doesn't handle those, explicit Tray with that site name
+        as a local id must be running.
+        Example is dropbox site serving as a backup solution
+        """
+        always_accessible_sites = (
+            self.get_sync_project_setting(project_name)["config"].
+            get("always_accessible_on", [])
+        )
+        return [site.strip() for site in always_accessible_sites]
+
+    def _add_alternative_sites(self, attached_sites):
+        """Add skeleton document for alternative sites
+
+        Each new configured site in System Setting could serve as a alternative
+        site, it's a kind of alias. It means that files on 'a site' are
+        physically accessible also on 'a alternative' site.
+        Example is sftp site serving studio files via sftp protocol, physically
+        file is only in studio, sftp server has this location mounted.
+        """
+        additional_sites = self.sync_system_settings.get("sites", {})
+
+        alt_site_pairs = self._get_alt_site_pairs(additional_sites)
+
+        for site_name in additional_sites.keys():
+            # Get alternate sites (stripped names) for this site name
+            alt_sites = alt_site_pairs.get(site_name)
+            alt_sites = [site.strip() for site in alt_sites]
+            alt_sites = set(alt_sites)
+
+            # If no alternative sites we don't need to add
+            if not alt_sites:
+                continue
+
+            # Take a copy of data of the first alternate site that is already
+            # defined as an attached site to match the same state.
+            match_meta = next((attached_sites[site] for site in alt_sites
+                               if site in attached_sites), None)
+            if not match_meta:
+                continue
+
+            alt_site_meta = copy.deepcopy(match_meta)
+            alt_site_meta["name"] = site_name
+
+            # Note: We change mutable `attached_site` dict in-place
+            attached_sites[site_name] = alt_site_meta
+
+        return attached_sites
+
+    def _get_alt_site_pairs(self, conf_sites):
+        """Returns dict of site and its alternative sites.
+
+        If `site` has alternative site, it means that alt_site has 'site' as
+        alternative site
+        Args:
+            conf_sites (dict)
+        Returns:
+            (dict): {'site': [alternative sites]...}
+        """
+        alt_site_pairs = defaultdict(set)
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            alt_site_pairs[site_name].update(alt_sites)
+
+            for alt_site in alt_sites:
+                alt_site_pairs[alt_site].add(site_name)
+
+        for site_name, alt_sites in alt_site_pairs.items():
+            sites_queue = deque(alt_sites)
+            while sites_queue:
+                alt_site = sites_queue.popleft()
+
+                # safety against wrong config
+                # {"SFTP": {"alternative_site": "SFTP"}
+                if alt_site == site_name or alt_site not in alt_site_pairs:
+                    continue
+
+                for alt_alt_site in alt_site_pairs[alt_site]:
+                    if (
+                            alt_alt_site != site_name
+                            and alt_alt_site not in alt_sites
+                    ):
+                        alt_sites.add(alt_alt_site)
+                        sites_queue.append(alt_alt_site)
+
+        return alt_site_pairs
 
     def clear_project(self, collection, site_name):
         """
@@ -847,6 +991,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         sites = [self.DEFAULT_SITE]
         if self.enabled and sync_settings.get('enabled'):
             sites.append(self.LOCAL_SITE)
+
+        active_site = sync_settings["config"]["active_site"]
+        # for Tray running background process
+        if active_site not in sites and active_site == get_local_site_id():
+            sites.append(active_site)
 
         return sites
 

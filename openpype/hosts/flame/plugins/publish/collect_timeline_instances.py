@@ -21,19 +21,12 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
     audio_track_items = []
 
-    # TODO: add to settings
     # settings
-    xml_preset_attrs_from_comments = {
-        "width": "number",
-        "height": "number",
-        "pixelRatio": "float",
-        "resizeType": "string",
-        "resizeFilter": "string"
-    }
+    xml_preset_attrs_from_comments = []
+    add_tasks = []
 
     def process(self, context):
         project = context.data["flameProject"]
-        sequence = context.data["flameSequence"]
         selected_segments = context.data["flameSelectedSegments"]
         self.log.debug("__ selected_segments: {}".format(selected_segments))
 
@@ -79,9 +72,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             # solve handles length
             marker_data["handleStart"] = min(
-                marker_data["handleStart"], head)
+                marker_data["handleStart"], abs(head))
             marker_data["handleEnd"] = min(
-                marker_data["handleEnd"], tail)
+                marker_data["handleEnd"], abs(tail))
 
             with_audio = bool(marker_data.pop("audio"))
 
@@ -112,7 +105,11 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "fps": self.fps,
                 "flameSourceClip": source_clip,
                 "sourceFirstFrame": int(first_frame),
-                "path": file_path
+                "path": file_path,
+                "flameAddTasks": self.add_tasks,
+                "tasks": {
+                    task["name"]: {"type": task["type"]}
+                    for task in self.add_tasks}
             })
 
             # get otio clip data
@@ -187,7 +184,10 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         # split to key and value
         key, value = split.split(":")
 
-        for a_name, a_type in self.xml_preset_attrs_from_comments.items():
+        for attr_data in self.xml_preset_attrs_from_comments:
+            a_name = attr_data["name"]
+            a_type = attr_data["type"]
+
             # exclude all not related attributes
             if a_name.lower() not in key.lower():
                 continue
@@ -247,6 +247,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         head = clip_data.get("segment_head")
         tail = clip_data.get("segment_tail")
 
+        # HACK: it is here to serve for versions bellow 2021.1
         if not head:
             head = int(clip_data["source_in"]) - int(first_frame)
         if not tail:

@@ -4,7 +4,7 @@ title: Ftrack
 sidebar_label: Project Manager
 ---
 
-Ftrack is currently the main project management option for OpenPype. This documentation assumes that you are familiar with Ftrack and it's basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](http://ftrack.rtd.ftrack.com/en/stable/).
+Ftrack is currently the main project management option for OpenPype. This documentation assumes that you are familiar with Ftrack and it's basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](https://help.ftrack.com/en/).
 
 ## Project management
 Setting project attributes is the key to properly working pipeline.
@@ -31,7 +31,7 @@ This process describes how data from Ftrack will get into Avalon database.
 ### How to synchronize
 You can trigger synchronization manually using [Sync To Avalon](manager_ftrack_actions.md#sync-to-avalon) action.
 
-Synchronization can also be automated with OpenPype's [event server](#event-server) and synchronization events. If your Ftrack is [prepared for OpenPype](#prepare-ftrack-for-openpype), the project should have custom attribute `Avalon auto-sync`. Check the custom attribute to allow auto-updates with event server.
+Synchronization can also be automated with OpenPype's [event server](#event-server) and synchronization events. If your Ftrack is [prepared for OpenPype](module_ftrack.md#prepare-ftrack-for-openpype), the project should have custom attribute `Avalon auto-sync`. Check the custom attribute to allow auto-updates with event server.
 
 :::tip
 Always use `Sync To Avalon` action before you enable `Avalon auto-sync`!

@@ -40,6 +40,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.debug("instance {}".format(instance))
 
+        instance_repres = instance.data.get("representations")
+        if not instance_repres:
+            self.log.info((
+                "Skipping instance. Does not have any representations {}"
+            ).format(str(instance)))
+            return
+
         instance_version = instance.data.get("version")
         if instance_version is None:
             raise ValueError("Instance version not set")
@@ -53,8 +60,12 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         if not asset_type and family_low in self.family_mapping:
             asset_type = self.family_mapping[family_low]
 
-        self.log.debug(self.family_mapping)
-        self.log.debug(family_low)
+        if not asset_type:
+            asset_type = "upload"
+
+        self.log.debug(
+            "Family: {}\nMapping: {}".format(family_low, self.family_mapping)
+        )
 
         # Ignore this instance if neither "ftrackFamily" or a family mapping is
         # found.
@@ -62,13 +73,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             self.log.info((
                 "Family \"{}\" does not match any asset type mapping"
             ).format(family))
-            return
-
-        instance_repres = instance.data.get("representations")
-        if not instance_repres:
-            self.log.info((
-                "Skipping instance. Does not have any representations {}"
-            ).format(str(instance)))
             return
 
         # Prepare FPS
@@ -175,33 +179,40 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Create copy of base comp item and append it
             review_item = copy.deepcopy(base_component_item)
 
-            # condition for multiple reviewable representations
-            # expand name to better label componenst
+            # get asset name and define extended name variant
+            asset_name = review_item["asset_data"]["name"]
+            extended_asset_name = "_".join(
+                (asset_name, repre["name"])
+            )
+
+            # reset extended if no need for extended asset name
             if (
-                not self.keep_first_subset_name_for_review
-                and multiple_reviewable
+                self.keep_first_subset_name_for_review
+                and is_first_review_repre
             ):
-                asset_name = review_item["asset_data"]["name"]
-                # define new extended name
-                extended_asset_name = "_".join(
-                    (asset_name, repre["name"])
-                )
-                review_item["asset_data"]["name"] = extended_asset_name
+                extended_asset_name = ""
+            else:
+                # only rename if multiple reviewable
+                if multiple_reviewable:
+                    review_item["asset_data"]["name"] = extended_asset_name
+                else:
+                    extended_asset_name = ""
 
-                # rename asset name only if multiple reviewable repre
-                if is_first_review_repre:
-                    # and rename all already created components
-                    for _ci in component_list:
-                        _ci["asset_data"]["name"] = extended_asset_name
+            # rename all already created components
+            # only if first repre and extended name available
+            if is_first_review_repre and extended_asset_name:
+                # and rename all already created components
+                for _ci in component_list:
+                    _ci["asset_data"]["name"] = extended_asset_name
 
-                    # and rename all already created src components
-                    for _sci in src_components_to_add:
-                        _sci["asset_data"]["name"] = extended_asset_name
+                # and rename all already created src components
+                for _sci in src_components_to_add:
+                    _sci["asset_data"]["name"] = extended_asset_name
 
-                    # rename also first thumbnail component if any
-                    if first_thumbnail_component is not None:
-                        first_thumbnail_component[
-                            "asset_data"]["name"] = extended_asset_name
+                # rename also first thumbnail component if any
+                if first_thumbnail_component is not None:
+                    first_thumbnail_component[
+                        "asset_data"]["name"] = extended_asset_name
 
             frame_start = repre.get("frameStartFtrack")
             frame_end = repre.get("frameEndFtrack")
@@ -236,6 +247,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             if is_first_review_repre:
                 is_first_review_repre = False
             else:
+                # later detection for thumbnail duplication
                 not_first_components.append(review_item)
 
             # Create copy of item before setting location
@@ -280,7 +292,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             other_item = copy.deepcopy(base_component_item)
 
             # add extended name if any
-            if extended_asset_name:
+            if (
+                not self.keep_first_subset_name_for_review
+                and extended_asset_name
+            ):
                 other_item["asset_data"]["name"] = extended_asset_name
 
             other_item["component_data"] = {

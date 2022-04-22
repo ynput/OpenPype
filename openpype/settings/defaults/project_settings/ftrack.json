@@ -364,10 +364,20 @@
                 }
             ]
         },
+        "CollectFtrackCustomAttributeData": {
+            "enabled": false,
+            "custom_attribute_keys": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
-            "note_with_intent_template": "{intent}: {comment}",
+            "note_template": "{intent}: {comment}",
             "note_labels": []
+        },
+        "IntegrateFtrackDescription": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "description_template": "{comment}"
         },
         "ValidateFtrackAttributes": {
             "enabled": false,

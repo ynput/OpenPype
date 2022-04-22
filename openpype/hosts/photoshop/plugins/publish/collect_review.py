@@ -29,7 +29,7 @@ class CollectReview(pyblish.api.ContextPlugin):
         family = "review"
         subset = get_subset_name_with_asset_doc(
             family,
-            "",
+            context.data.get("variant", ''),
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],

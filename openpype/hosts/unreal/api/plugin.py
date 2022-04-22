@@ -10,6 +10,7 @@ from openpype.pipeline import (
 class Creator(LegacyCreator):
     """This serves as skeleton for future OpenPype specific functionality"""
     defaults = ['Main']
+    maintain_selection = False
 
 
 class Loader(LoaderPlugin, ABC):

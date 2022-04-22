@@ -17,11 +17,17 @@ class DropboxHandler(AbstractProvider):
         self.active = False
         self.site_name = site_name
         self.presets = presets
+        self.dbx = None
 
         if not self.presets:
             log.info(
                 "Sync Server: There are no presets for {}.".format(site_name)
             )
+            return
+
+        if not self.presets["enabled"]:
+            log.debug("Sync Server: Site {} not enabled for {}.".
+                      format(site_name, project_name))
             return
 
         token = self.presets.get("token", "")
@@ -44,16 +50,13 @@ class DropboxHandler(AbstractProvider):
             log.info(msg)
             return
 
-        self.dbx = None
-
-        if self.presets["enabled"]:
-            try:
-                self.dbx = self._get_service(
-                    token, acting_as_member, team_folder_name
-                )
-            except Exception as e:
-                log.info("Could not establish dropbox object: {}".format(e))
-                return
+        try:
+            self.dbx = self._get_service(
+                token, acting_as_member, team_folder_name
+            )
+        except Exception as e:
+            log.info("Could not establish dropbox object: {}".format(e))
+            return
 
         super(AbstractProvider, self).__init__()
 

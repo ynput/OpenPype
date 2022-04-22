@@ -4,6 +4,10 @@
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": false
         },
+        "CollectDeadlinePools": {
+            "primary_pool": "",
+            "secondary_pool": ""
+        },
         "ValidateExpectedFiles": {
             "enabled": true,
             "active": true,
@@ -22,6 +26,8 @@
             "tile_assembler_plugin": "OpenPypeTileAssembler",
             "use_published": true,
             "asset_dependencies": true,
+            "priority": 50,
+            "tile_priority": 50,
             "group": "none",
             "limit": [],
             "jobInfo": {},
@@ -36,8 +42,6 @@
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
-            "primary_pool": "",
-            "secondary_pool": "",
             "group": "",
             "department": "",
             "use_gpu": true,
@@ -52,8 +56,6 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10000,
-            "primary_pool": "",
-            "secondary_pool": "",
             "group": "",
             "department": ""
         },
@@ -64,8 +66,6 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10000,
-            "primary_pool": "",
-            "secondary_pool": "",
             "group": "",
             "department": "",
             "multiprocess": true
@@ -81,7 +81,7 @@
             "skip_integration_repre_list": [],
             "aov_filter": {
                 "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
+                    ".*([Bb]eauty).*"
                 ],
                 "nuke": [
                     ".*"

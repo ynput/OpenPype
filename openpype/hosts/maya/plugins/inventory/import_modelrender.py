@@ -4,7 +4,6 @@ from bson.objectid import ObjectId
 from openpype.pipeline import (
     InventoryAction,
     get_representation_context,
-    get_representation_path_from_context,
 )
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
@@ -80,10 +79,10 @@ class ImportModelRender(InventoryAction):
         })
 
         context = get_representation_context(look_repr["_id"])
-        maya_file = get_representation_path_from_context(context)
+        maya_file = self.filepath_from_context(context)
 
         context = get_representation_context(json_repr["_id"])
-        json_file = get_representation_path_from_context(context)
+        json_file = self.filepath_from_context(context)
 
         # Import the look file
         with maintained_selection():
