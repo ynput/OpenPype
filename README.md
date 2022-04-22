@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -301,6 +301,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/iLLiCiTiT"><img src="https://avatars.githubusercontent.com/u/43494761?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Jakub Trllo</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=iLLiCiTiT" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=iLLiCiTiT" title="Documentation">📖</a> <a href="#infra-iLLiCiTiT" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3AiLLiCiTiT" title="Reviewed Pull Requests">👀</a> <a href="#maintenance-iLLiCiTiT" title="Maintenance">🚧</a></td>
     <td align="center"><a href="https://www.linkedin.com/in/jakubjezek79"><img src="https://avatars.githubusercontent.com/u/40640033?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Jakub Ježek</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=jakubjezek001" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/kalisp"><img src="https://avatars.githubusercontent.com/u/4457962?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Petr Kalis</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=kalisp" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/aardschok"><img src="https://avatars.githubusercontent.com/u/26920875?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Wijnand Koreman</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=aardschok" title="Code">💻</a></td>
   </tr>
 </table>
 
