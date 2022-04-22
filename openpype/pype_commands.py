@@ -25,7 +25,7 @@ class PypeCommands:
     Most of its methods are called by :mod:`cli` module.
     """
     @staticmethod
-    def launch_tray(debug=False):
+    def launch_tray():
         PypeLogger.set_process_name("Tray")
 
         from openpype.tools import tray
