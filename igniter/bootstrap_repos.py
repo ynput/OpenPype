@@ -1405,6 +1405,7 @@ class BootstrapRepos:
             # create destination parent directories even if they don't exist.
             destination.mkdir(parents=True)
 
+        remove_source_file = False
         # version is directory
         if openpype_version.path.is_dir():
             # create zip inside temporary directory.
@@ -1438,6 +1439,8 @@ class BootstrapRepos:
                 self._progress_callback(35)
                 openpype_version.path = self._copy_zip(
                     openpype_version.path, destination)
+                # Mark zip to be deleted when done
+                remove_source_file = True
 
         # extract zip there
         self._print("extracting zip to destination ...")
@@ -1445,6 +1448,10 @@ class BootstrapRepos:
             self._progress_callback(75)
             zip_ref.extractall(destination)
             self._progress_callback(100)
+
+        # Remove zip file copied to local app data
+        if remove_source_file:
+            os.remove(openpype_version.path)
 
         return destination
 
