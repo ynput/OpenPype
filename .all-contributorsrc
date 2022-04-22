@@ -22,10 +22,10 @@
         "business",
         "content",
         "fundingFinding",
-        "ideas",
         "maintenance",
         "projectManagement",
-        "review"
+        "review",
+        "mentoring"
       ]
     },
     {
@@ -36,7 +36,11 @@
       "contributions": [
         "code",
         "doc",
-        "infra"
+        "infra",
+        "content",
+        "review",
+        "maintenance",
+        "mentoring"
       ]
     },
     {
@@ -47,7 +51,18 @@
       "contributions": [
         "code",
         "doc",
-        "infra"
+        "infra",
+        "review",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "jakubjezek001",
+      "name": "Jakub Ježek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40640033?v=4",
+      "profile": "https://www.linkedin.com/in/jakubjezek79",
+      "contributions": [
+        "code"
       ]
     }
   ],
