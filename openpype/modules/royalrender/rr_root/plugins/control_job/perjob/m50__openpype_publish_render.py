@@ -119,7 +119,7 @@ class OpenPypeContextSelector:
         # app names and versions, but since app_name is not used
         # currently down the line (but it is required by OP publish command
         # right now).
-        self.context["app_name"] = "maya/2020"
+        self.context["app_name"] = "celaction/local"
         return True
 
     @staticmethod
