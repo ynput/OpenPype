@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Load camera from FBX."""
-import os
+from pathlib import Path
 
 import unreal
 from unreal import EditorAssetLibrary
@@ -325,11 +325,96 @@ class CameraLoader(plugin.Loader):
         )
 
     def remove(self, container):
-        path = container["namespace"]
-        parent_path = os.path.dirname(path)
+        path = Path(container.get("namespace"))
+        parent_path = str(path.parent.as_posix())
 
-        EditorAssetLibrary.delete_directory(path)
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        filter = unreal.ARFilter(
+            class_names=["LevelSequence"],
+            package_paths=[f"{str(path.as_posix())}"],
+            recursive_paths=False)
+        sequences = ar.get_assets(filter)
 
+        if not sequences:
+            raise("Could not find sequence.")
+
+        world = ar.get_asset_by_object_path(
+            EditorLevelLibrary.get_editor_world().get_path_name())
+
+        filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=[f"{parent_path}"],
+            recursive_paths=True)
+        maps = ar.get_assets(filter)
+
+        # There should be only one map in the list
+        if not maps:
+            raise("Could not find map.")
+
+        map = maps[0]
+
+        EditorLevelLibrary.save_all_dirty_levels()
+        EditorLevelLibrary.load_level(map.get_full_name())
+
+        # Remove the camera from the level.
+        actors = EditorLevelLibrary.get_all_level_actors()
+
+        for a in actors:
+            if a.__class__ == unreal.CineCameraActor:
+                EditorLevelLibrary.destroy_actor(a)
+
+        EditorLevelLibrary.save_all_dirty_levels()
+        EditorLevelLibrary.load_level(world.get_full_name())
+
+        # There should be only one sequence in the path.
+        sequence_name = sequences[0].asset_name
+
+        # Remove the Level Sequence from the parent.
+        # We need to traverse the hierarchy from the master sequence to find
+        # the level sequence.
+        root = "/Game/OpenPype"
+        namespace = container.get('namespace').replace(f"{root}/", "")
+        ms_asset = namespace.split('/')[0]
+        filter = unreal.ARFilter(
+            class_names=["LevelSequence"],
+            package_paths=[f"{root}/{ms_asset}"],
+            recursive_paths=False)
+        sequences = ar.get_assets(filter)
+        master_sequence = sequences[0].get_asset()
+
+        sequences = [master_sequence]
+
+        parent = None
+        for s in sequences:
+            tracks = s.get_master_tracks()
+            subscene_track = None
+            for t in tracks:
+                if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+                    subscene_track = t
+                    break
+            if subscene_track:
+                sections = subscene_track.get_sections()
+                for ss in sections:
+                    if ss.get_sequence().get_name() == sequence_name:
+                        parent = s
+                        subscene_track.remove_section(ss)
+                        break
+                    sequences.append(ss.get_sequence())
+                # Update subscenes indexes.
+                i = 0
+                for ss in sections:
+                    ss.set_row_index(i)
+                    i += 1
+
+            if parent:
+                break
+
+        assert parent, "Could not find the parent sequence"
+
+        EditorAssetLibrary.delete_directory(str(path.as_posix()))
+
+        # Check if there isn't any more assets in the parent folder, and
+        # delete it if not.
         asset_content = EditorAssetLibrary.list_assets(
             parent_path, recursive=False, include_folder=True
         )
