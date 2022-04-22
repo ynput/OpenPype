@@ -1057,27 +1057,11 @@ class BootstrapRepos:
         if not archive.is_file() and not archive.exists():
             raise ValueError("Archive is not file.")
 
-        with ZipFile(archive, "r") as zip_file:
-            name_list = zip_file.namelist()
-
-        roots = []
-        paths = []
-        for item in name_list:
-            if not item.startswith("repos/"):
-                continue
-
-            root = item.split("/")[1]
-
-            if root not in roots:
-                roots.append(root)
-                paths.append(
-                    f"{archive}{os.path.sep}repos{os.path.sep}{root}")
-                sys.path.insert(0, paths[-1])
-
-        sys.path.insert(0, f"{archive}")
+        archive_path = str(archive)
+        sys.path.insert(0, archive_path)
         pythonpath = os.getenv("PYTHONPATH", "")
         python_paths = pythonpath.split(os.pathsep)
-        python_paths += paths
+        python_paths.insert(0, archive_path)
 
         os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
