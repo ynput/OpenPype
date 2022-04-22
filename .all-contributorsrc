@@ -91,6 +91,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "tokejepsen",
+      "name": "Toke Jepsen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1860085?v=4",
+      "profile": "https://github.com/tokejepsen",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
