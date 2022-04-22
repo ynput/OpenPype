@@ -1,8 +1,12 @@
+import os
 import re
 import collections
 import uuid
+import json
 from abc import ABCMeta, abstractmethod
+
 import six
+import clique
 
 
 class AbstractAttrDefMeta(ABCMeta):
@@ -302,6 +306,126 @@ class BoolDef(AbtractAttrDef):
         return self.default
 
 
+class FileDefItem(object):
+    def __init__(
+        self, directory, filenames, frames=None, template=None
+    ):
+        self.directory = directory
+
+        self.filenames = []
+        self.is_sequence = False
+        self.template = None
+        self.frames = []
+
+        self.set_filenames(filenames, frames, template)
+
+    def __str__(self):
+        return json.dumps(self.to_dict())
+
+    def __repr__(self):
+        if self.is_sequence:
+            filename = self.template
+        else:
+            filename = self.filenames[0]
+
+        return "<{}: \"{}\">".format(
+            self.__class__.__name__,
+            os.path.join(self.directory, filename)
+        )
+
+    def set_directory(self, directory):
+        self.directory = directory
+
+    def set_filenames(self, filenames, frames=None, template=None):
+        if frames is None:
+            frames = []
+        is_sequence = False
+        if frames:
+            is_sequence = True
+
+        if is_sequence and not template:
+            raise ValueError("Missing template for sequence")
+
+        self.filenames = filenames
+        self.template = template
+        self.frames = frames
+        self.is_sequence = is_sequence
+
+    @classmethod
+    def create_empty_item(cls):
+        return cls("", "")
+
+    @classmethod
+    def from_value(cls, value):
+        multi = isinstance(value, (list, tuple, set))
+        if not multi:
+            value = [value]
+
+        output = []
+        for item in value:
+            if isinstance(item, dict):
+                output.append(cls.from_dict(item))
+            elif isinstance(item, six.string_types):
+                output.extend(cls.from_paths([item]))
+            else:
+                raise TypeError(
+                    "Unknown type \"{}\". Can't convert to {}".format(
+                        str(type(item)), cls.__name__
+                    )
+                )
+        if multi:
+            return output
+        return output[0]
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            data["directory"],
+            data["filenames"],
+            data.get("frames"),
+            data.get("template")
+        )
+
+    @classmethod
+    def from_paths(cls, paths):
+        filenames_by_dir = collections.defaultdict(list)
+        for path in paths:
+            normalized = os.path.normpath(path)
+            directory, filename = os.path.split(normalized)
+            filenames_by_dir[directory].append(filename)
+
+        output = []
+        for directory, filenames in filenames_by_dir.items():
+            cols, remainders = clique.assemble(filenames)
+            for remainder in remainders:
+                output.append(cls(directory, [remainder]))
+
+            for col in cols:
+                frames = list(col.indexes)
+                paths = [filename for filename in col]
+                template = col.format("{head}{padding}{tail}")
+
+                output.append(cls(
+                    directory, paths, frames, template
+                ))
+
+        return output
+
+    def to_dict(self):
+        output = {
+            "is_sequence": self.is_sequence,
+            "directory": self.directory,
+            "filenames": list(self.filenames),
+        }
+        if self.is_sequence:
+            output.update({
+                "template": self.template,
+                "frames": list(sorted(self.frames)),
+            })
+
+        return output
+
+
 class FileDef(AbtractAttrDef):
     """File definition.
     It is possible to define filters of allowed file extensions and if supports
@@ -326,7 +450,7 @@ class FileDef(AbtractAttrDef):
             if multipath:
                 default = []
             else:
-                default = ""
+                default = FileDefItem.create_empty_item().to_dict()
         else:
             if multipath:
                 if not isinstance(default, (tuple, list, set)):
@@ -336,11 +460,16 @@ class FileDef(AbtractAttrDef):
                     ).format(type(default)))
 
             else:
-                if not isinstance(default, six.string_types):
+                if isinstance(default, dict):
+                    FileDefItem.from_dict(default)
+
+                elif isinstance(default, six.string_types):
+                    default = FileDefItem.from_paths([default.strip()])[0]
+
+                else:
                     raise TypeError((
-                        "'default' argument must be 'str' not '{}'"
+                        "'default' argument must be 'str' or 'dict' not '{}'"
                     ).format(type(default)))
-                default = default.strip()
 
         # Change horizontal label
         is_label_horizontal = kwargs.get("is_label_horizontal")
@@ -366,24 +495,36 @@ class FileDef(AbtractAttrDef):
         )
 
     def convert_value(self, value):
-        if isinstance(value, six.string_types):
-            if self.multipath:
-                value = [value.strip()]
-            else:
-                value = value.strip()
-            return value
+        if isinstance(value, six.string_types) or isinstance(value, dict):
+            value = [value]
 
         if isinstance(value, (tuple, list, set)):
-            _value = []
+            string_paths = []
+            dict_items = []
             for item in value:
                 if isinstance(item, six.string_types):
-                    _value.append(item.strip())
+                    string_paths.append(item.strip())
+                elif isinstance(item, dict):
+                    try:
+                        FileDefItem.from_dict(item)
+                        dict_items.append(item)
+                    except (ValueError, KeyError):
+                        pass
+
+            if string_paths:
+                file_items = FileDefItem.from_paths(string_paths)
+                dict_items.extend([
+                    file_item.to_dict()
+                    for file_item in file_items
+                ])
 
             if self.multipath:
-                return _value
+                return dict_items
 
-            if not _value:
+            if not dict_items:
                 return self.default
-            return _value[0].strip()
+            return dict_items[0]
 
-        return str(value).strip()
+        if self.multipath:
+            return []
+        return FileDefItem.create_empty_item().to_dict()
