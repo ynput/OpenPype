@@ -100,6 +100,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "simonebarbieri",
+      "name": "Simone Barbieri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1087869?v=4",
+      "profile": "https://barbierisimone.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
