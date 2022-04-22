@@ -36,6 +36,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         instance.data["representations"].append(representation)
 
+        instance.data["publish"] = instance.data["active"]  # for DL
+
     def _get_new_instance(self, context, scene_file):
         task = api.Session["AVALON_TASK"]
         version = context.data["version"]
@@ -83,8 +85,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "representations": list()
         })
 
-        # Create instance
-        instance = context.create_instance(subset)
         instance.data.update(instance_data)
 
         return instance
