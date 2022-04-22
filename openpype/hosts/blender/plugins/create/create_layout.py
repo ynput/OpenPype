@@ -83,18 +83,19 @@ class CreateLayout(plugin.Creator):
             ):
                 # Then append the collection in the collections_to_copy
                 collections_to_copy.append(collection)
-                # And remove the collection objects of the selected objects
+                # And remove the collection objects of
+                # the selected objects list
                 for object in all_object_in_collection:
                     if object in self.objects_selected:
                         self.objects_selected.remove(object)
 
         # Remove collection if it is in another one
-        # make a copy of the list to keep thzm when objects are remove
+        # make a copy of the list to keep them when objects are remove
         # from the original
-        collections_to_copy_duplicate = collections_to_copy.copy()
+        collections_to_copy_duplicate = list(collections_to_copy)
         # Loop on the collections to copy
         for collection_to_copy in collections_to_copy_duplicate:
-            # Get All the collection in the collection to copy
+            # Get All the collections in the collection to copy
             collections_in_collection = (
                 plugin.get_all_collections_in_collection(collection_to_copy)
             )
@@ -111,9 +112,9 @@ class CreateLayout(plugin.Creator):
         """
         Create the container with the given name
         """
-        # Search in the container already exists
+        # Search if the container already exists
         container = bpy.data.collections.get(name)
-        # If Container doesn't exist create it
+        # If container doesn't exist create it
         if container is None:
             container = bpy.data.collections.new(name=name)
             plugin.link_collection_to_collection(
@@ -123,6 +124,7 @@ class CreateLayout(plugin.Creator):
         else:
             dialog.container_already_exist_dialog()
             return None
+        container.color_tag = "COLOR_05"
         return container
 
     def _link_objects_in_container(self, objects, container):
@@ -152,7 +154,7 @@ class CreateLayout(plugin.Creator):
         link all the scene to the container
         """
 
-        # If all the collection isn't already in the container
+        # If all the collections aren't already in the container
         if len(self.scene_collection.children) != 1:
             # Get collections under the scene collection
             collections = self.scene_collection.children
@@ -196,29 +198,27 @@ class CreateLayout(plugin.Creator):
         if container is None:
             return
 
-        # Add custom property on the instance container with the data
+        # Add avalon custom property on the instance container with the data
         self.data["task"] = api.Session.get("AVALON_TASK")
         lib.imprint(container, self.data)
 
         # Fill the Container with all the scene or the selection
         self.objects_selected = lib.get_selection()
-        if all_in_container:
-            self._link_all_in_container(container)
-        else:
+        if not all_in_container:
             self._link_selection_in_container(container)
 
-        # Remove the lone collection in container
+        # Unlink the lone collection in container
         # But link its contain to the container
         # If the lone collection is in the conainer
         if lone_collection in container.children.values():
             # Loop on the collection in the lone collection
             for collection in lone_collection.children.values():
+                # And link the collection to the container
                 plugin.link_collection_to_collection(collection, container)
             for object in lone_collection.objects.values():
+                # And link the collection to the container
                 plugin.link_object_to_collection(object, container)
+            # Unlink the lone collection in container
             container.children.unlink(lone_collection)
 
-        # If the container is empty remove it
-        if not container.objects and not container.children:
-            bpy.data.collections.remove(container)
         return container

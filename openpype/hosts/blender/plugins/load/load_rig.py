@@ -37,20 +37,31 @@ class BlendRigLoader(plugin.AssetLoader):
 
     def _get_bone_transforms_list(self, container):
         objects = plugin.get_all_objects_in_collection(container)
-        armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
-        bones = armature.pose.bones
+        armature = None
         bone_transforms_list = dict()
-        for bone in bones:
-            transform = [
-                Vector(bone.location),
-                Vector(bone.scale),
-                Vector(bone.rotation_quaternion),
-            ]
-            bone_transforms_list[bone.name] = transform
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if armatures:
+            armature = armatures[0]
+        if armature is not None:
+            bones = armature.pose.bones
+            for bone in bones:
+                transform = [
+                    Vector(bone.location),
+                    Vector(bone.scale),
+                    Vector(bone.rotation_quaternion),
+                ]
+                bone_transforms_list[bone.name] = transform
         return bone_transforms_list
 
+    def _get_objects_parent_list(self, container):
+        objects = plugin.get_all_objects_in_collection(container)
+        object_parent_list = dict()
+        for object in objects:
+            if object.parent is not None:
+                object_parent_list[object.name] = object.parent.name
+        return object_parent_list
+
     def _set_object_transforms_list(self, object_transforms_list):
-        object_transforms_list = dict()
         for object_name in object_transforms_list.keys():
             if bpy.data.objects.get(object_name) is not None:
                 object = bpy.data.objects.get(object_name)
@@ -60,14 +71,32 @@ class BlendRigLoader(plugin.AssetLoader):
 
     def _set_bone_transforms_list(self, container, bone_transforms_list):
         objects = plugin.get_all_objects_in_collection(container)
-        armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
-        bones = armature.pose.bones
-        for bone_name in bone_transforms_list.keys():
-            if bones.get(bone_name) is not None:
-                bone = bones.get(bone_name)
-                bone.location = bone_transforms_list[bone_name][0]
-                bone.scale = bone_transforms_list[bone_name][1]
-                bone.rotation_quaternion = bone_transforms_list[bone_name][2]
+        armature = None
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if armatures:
+            armature = armatures[0]
+        if armature is not None:
+            bones = armature.pose.bones
+            for bone_name in bone_transforms_list.keys():
+                if bones.get(bone_name) is not None:
+                    bone = bones.get(bone_name)
+                    bone.location = bone_transforms_list[bone_name][0]
+                    bone.scale = bone_transforms_list[bone_name][1]
+                    bone.rotation_quaternion = bone_transforms_list[bone_name][
+                        2
+                    ]
+
+    def _set_objects_parent_list(self, object_parent_list):
+        for object_name in object_parent_list.keys():
+            if bpy.data.objects.get(object_name) is not None:
+                object = bpy.data.objects.get(object_name)
+                parent = bpy.data.objects.get(object_parent_list[object.name])
+                if parent is not None:
+                    if parent is not object.parent:
+                        object.parent = parent
+                        object.matrix_parent_inverse = (
+                            parent.matrix_world.inverted()
+                        )
 
     def _remove(self, container):
         """Remove the container and used data"""
@@ -238,7 +267,10 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Get the armature of the rig
         objects = avalon_container.objects
-        armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
+        armature = None
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if armatures:
+            armature = armatures[0]
 
         # Store the transform of the objects and the bones
         # that are in the container for restore them after the update
@@ -246,14 +278,15 @@ class BlendRigLoader(plugin.AssetLoader):
             avalon_container
         )
         bone_transforms_list = self._get_bone_transforms_list(avalon_container)
-
+        objects_parent_list = self._get_objects_parent_list(avalon_container)
         # Get the action on the armature to restore the animation after the
         # update
 
         action = None
-        if armature.animation_data and armature.animation_data.action:
-            action = armature.animation_data.action
-            armature.animation_data.action.use_fake_user = True
+        if armature is not None:
+            if armature.animation_data and armature.animation_data.action:
+                action = armature.animation_data.action
+                armature.animation_data.action.use_fake_user = True
 
         # Remove the container
         self._remove(avalon_container)
@@ -266,17 +299,22 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Get the armature of the rig
         objects = container_override.objects
-        armature = [obj for obj in objects if obj.type == "ARMATURE"][0]
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if armatures:
+            armature = armatures[0]
+
         # Create the animation_data if doesn't exist
-        if armature.animation_data is None:
-            armature.animation_data_create()
-        # Set the action on the armature
-        if armature.animation_data:
-            armature.animation_data.action = action
-            try:
-                action.use_fake_user = False
-            except Exception as e:
-                print("Remove Fake User Failed", e)
+        if armature is not None:
+            if armature.animation_data is None:
+                armature.animation_data_create()
+            # Set the action on the armature
+            if armature.animation_data:
+                armature.animation_data.action = action
+                try:
+                    action.use_fake_user = False
+                except Exception as e:
+                    print("Remove Fake User Failed", e)
+
         # Relink the container on the good collection
         if parent_collections:
             if (
@@ -293,10 +331,10 @@ class BlendRigLoader(plugin.AssetLoader):
         # restore the transform of the objects and the bones
         # that are in the container
         self._set_object_transforms_list(object_transforms_list)
+        self._set_objects_parent_list(objects_parent_list)
         self._set_bone_transforms_list(
             container_override, bone_transforms_list
         )
-
         has_namespace = api.Session["AVALON_TASK"] not in [
             "Rigging",
             "Modeling",

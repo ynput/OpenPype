@@ -91,7 +91,7 @@ class CreateRig(plugin.Creator):
         # Remove collection if it is in another one
         # make a copy of the list to keep thzm when objects are remove
         # from the original
-        collections_to_copy_duplicate = collections_to_copy.copy()
+        collections_to_copy_duplicate = list(collections_to_copy)
         # Loop on the collections to copy
         for collection_to_copy in collections_to_copy_duplicate:
             # Get All the collection in the collection to copy
@@ -123,6 +123,7 @@ class CreateRig(plugin.Creator):
         else:
             dialog.container_already_exist_dialog()
             return None
+        container.color_tag = "COLOR_05"
         return container
 
     def _link_objects_in_container(self, objects, container):
@@ -202,9 +203,7 @@ class CreateRig(plugin.Creator):
 
         # Fill the Container with all the scene or the selection
         self.objects_selected = lib.get_selection()
-        if all_in_container:
-            self._link_all_in_container(container)
-        else:
+        if not all_in_container:
             self._link_selection_in_container(container)
 
         # Remove the lone collection in container
@@ -216,7 +215,4 @@ class CreateRig(plugin.Creator):
                 plugin.link_object_to_collection(object, container)
             container.children.unlink(lone_collection)
 
-        # If the container is empty remove them
-        if not container.objects and not container.children:
-            bpy.data.collections.remove(container)
         return container

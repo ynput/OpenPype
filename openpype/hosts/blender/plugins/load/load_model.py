@@ -199,6 +199,26 @@ class BlendModelLoader(plugin.AssetLoader):
                     except Exception as ex:
                         print(ex)
 
+    def _get_objects_parent_list(self, container):
+        objects = plugin.get_all_objects_in_collection(container)
+        object_parent_list = dict()
+        for object in objects:
+            if object.parent is not None:
+                object_parent_list[object.name] = object.parent.name
+        return object_parent_list
+
+    def _set_objects_parent_list(self, object_parent_list):
+        for object_name in object_parent_list.keys():
+            if bpy.data.objects.get(object_name) is not None:
+                object = bpy.data.objects.get(object_name)
+                parent = bpy.data.objects.get(object_parent_list[object.name])
+                if parent is not None:
+                    if parent is not object.parent:
+                        object.parent = parent
+                        object.matrix_parent_inverse = (
+                            parent.matrix_world.inverted()
+                        )
+
     def _remove(self, container):
         """Remove the container and used data"""
         plugin.remove_container(container)
@@ -369,7 +389,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Get a list of the driver targets to reset them after the update
         empty = self._store_drivers_in_an_empty(avalon_container)
-
+        objects_parent_list = self._get_objects_parent_list(avalon_container)
         # Remove the container
         self._remove(avalon_container)
 
@@ -393,6 +413,8 @@ class BlendModelLoader(plugin.AssetLoader):
                     )
 
         # Reset the modifier parameters and the driver targets
+        self._set_objects_parent_list(objects_parent_list)
+
         self._set_modifiers(modifiers_dict)
         self._set_drivers_from_empty(empty)
 
