@@ -165,7 +165,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         instance_name = data.get("instance_name")
 
-        animation = self._process(asset_dir, container_name, instance_name)
+        animation = self._process(asset_dir, asset_name, instance_name)
 
         asset_content = EditorAssetLibrary.list_assets(
             hierarchy_dir, recursive=True, include_folder=False)
