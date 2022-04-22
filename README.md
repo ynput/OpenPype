@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-21-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-22-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -321,6 +321,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/dmo-j-cube"><img src="https://avatars.githubusercontent.com/u/89823400?v=4?s=80" width="80px;" alt=""/><br /><sub><b>David Morris-Oliveros</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=dmo-j-cube" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/BenoitConnan"><img src="https://avatars.githubusercontent.com/u/82808268?v=4?s=80" width="80px;" alt=""/><br /><sub><b>BenoitConnan</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=BenoitConnan" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/Malthaldar"><img src="https://avatars.githubusercontent.com/u/33671694?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Malthaldar</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=Malthaldar" title="Code">💻</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/64qam"><img src="https://avatars.githubusercontent.com/u/26925793?v=4?s=80" width="80px;" alt=""/><br /><sub><b>64qam</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=64qam" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3A64qam" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=64qam" title="Documentation">📖</a> <a href="#infra-64qam" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#projectManagement-64qam" title="Project Management">📆</a> <a href="#maintenance-64qam" title="Maintenance">🚧</a> <a href="#content-64qam" title="Content">🖋</a></td>
   </tr>
 </table>
 
