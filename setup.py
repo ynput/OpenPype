@@ -128,10 +128,6 @@ include_files = [
     "README.md"
 ]
 
-repos_path = openpype_root / "repos"
-if repos_path.exists():
-    include_files.append("repos")
-
 if IS_WINDOWS:
     install_requires.extend([
         # `pywin32` packages
