@@ -82,6 +82,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "BigRoy",
+      "name": "Roy Nieterau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2439881?v=4",
+      "profile": "http://www.colorbleed.nl/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
