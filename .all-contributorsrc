@@ -181,7 +181,19 @@
       "profile": "https://github.com/2-REC",
       "contributions": [
         "code",
-        "review"
+        "review",
+        "doc"
+      ]
+    },
+    {
+      "login": "Allan-I",
+      "name": "Allan I. A.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76656700?v=4",
+      "profile": "https://github.com/Allan-I",
+      "contributions": [
+        "code",
+        "review",
+        "doc"
       ]
     }
   ],

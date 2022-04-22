@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-15-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -311,7 +311,10 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="http://jedimaster.cnblogs.com/"><img src="https://avatars.githubusercontent.com/u/1798206?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Bo Zhou</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=zhoub" title="Code">💻</a></td>
     <td align="center"><a href="https://www.linkedin.com/in/clementhector/"><img src="https://avatars.githubusercontent.com/u/7068597?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Clément Hector</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=ClementHector" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3AClementHector" title="Reviewed Pull Requests">👀</a></td>
     <td align="center"><a href="https://twitter.com/davidlatwe"><img src="https://avatars.githubusercontent.com/u/3357009?v=4?s=80" width="80px;" alt=""/><br /><sub><b>David Lai</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=davidlatwe" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3Adavidlatwe" title="Reviewed Pull Requests">👀</a></td>
-    <td align="center"><a href="https://github.com/2-REC"><img src="https://avatars.githubusercontent.com/u/42170307?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Derek </b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=2-REC" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3A2-REC" title="Reviewed Pull Requests">👀</a></td>
+    <td align="center"><a href="https://github.com/2-REC"><img src="https://avatars.githubusercontent.com/u/42170307?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Derek </b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=2-REC" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3A2-REC" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=2-REC" title="Documentation">📖</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/Allan-I"><img src="https://avatars.githubusercontent.com/u/76656700?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Allan I. A.</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=Allan-I" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3AAllan-I" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=Allan-I" title="Documentation">📖</a></td>
   </tr>
 </table>
 
