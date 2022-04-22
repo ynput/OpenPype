@@ -107,15 +107,6 @@
       ]
     },
     {
-      "login": "aardschok",
-      "name": "Wijnand Koreman",
-      "avatar_url": "https://avatars.githubusercontent.com/u/26920875?v=4",
-      "profile": "https://github.com/aardschok",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "BigRoy",
       "name": "Roy Nieterau",
       "avatar_url": "https://avatars.githubusercontent.com/u/2439881?v=4",
@@ -161,6 +152,24 @@
       ]
     },
     {
+      "login": "Allan-I",
+      "name": "Allan I. A.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76656700?v=4",
+      "profile": "https://github.com/Allan-I",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "aardschok",
+      "name": "Wijnand Koreman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26920875?v=4",
+      "profile": "https://github.com/aardschok",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "zhoub",
       "name": "Bo Zhou",
       "avatar_url": "https://avatars.githubusercontent.com/u/1798206?v=4",
@@ -198,15 +207,6 @@
         "code",
         "review",
         "doc"
-      ]
-    },
-    {
-      "login": "Allan-I",
-      "name": "Allan I. A.",
-      "avatar_url": "https://avatars.githubusercontent.com/u/76656700?v=4",
-      "profile": "https://github.com/Allan-I",
-      "contributions": [
-        "code"
       ]
     },
     {
