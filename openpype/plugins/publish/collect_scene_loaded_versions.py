@@ -43,12 +43,15 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
             io.find({"_id": {"$in": _repr_ids}}, projection={"parent": 1})
         }
 
+        # QUESTION should we add same representation id when loaded multiple
+        #   times?
         for con in _containers:
             repre_id = con["representation"]
             version_id = version_by_repr.get(repre_id)
             if version_id is None:
                 self.log.warning((
-                    "Skipping container, did not find version document. {}"
+                    "Skipping container,"
+                    " did not find representation document. {}"
                 ).format(str(con)))
                 continue
 
