@@ -118,6 +118,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "zhoub",
+      "name": "Bo Zhou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1798206?v=4",
+      "profile": "http://jedimaster.cnblogs.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7

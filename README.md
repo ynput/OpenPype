@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -308,6 +308,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/tokejepsen"><img src="https://avatars.githubusercontent.com/u/1860085?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Toke Jepsen</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=tokejepsen" title="Code">💻</a></td>
     <td align="center"><a href="https://barbierisimone.com/"><img src="https://avatars.githubusercontent.com/u/1087869?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Simone Barbieri</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=simonebarbieri" title="Code">💻</a></td>
     <td align="center"><a href="http://karimmozilla.xyz/"><img src="https://avatars.githubusercontent.com/u/82811760?v=4?s=80" width="80px;" alt=""/><br /><sub><b>karimmozilla</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=karimmozilla" title="Code">💻</a></td>
+    <td align="center"><a href="http://jedimaster.cnblogs.com/"><img src="https://avatars.githubusercontent.com/u/1798206?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Bo Zhou</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=zhoub" title="Code">💻</a></td>
   </tr>
 </table>
 
