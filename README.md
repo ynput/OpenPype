@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-15-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-16-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -315,6 +315,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/Allan-I"><img src="https://avatars.githubusercontent.com/u/76656700?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Allan I. A.</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=Allan-I" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/pulls?q=is%3Apr+reviewed-by%3AAllan-I" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=Allan-I" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/gabormarinov"><img src="https://avatars.githubusercontent.com/u/8620515?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Gábor Marinov</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=gabormarinov" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=gabormarinov" title="Documentation">📖</a></td>
   </tr>
 </table>
 

@@ -195,6 +195,16 @@
         "review",
         "doc"
       ]
+    },
+    {
+      "login": "gabormarinov",
+      "name": "Gábor Marinov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8620515?v=4",
+      "profile": "https://github.com/gabormarinov",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
