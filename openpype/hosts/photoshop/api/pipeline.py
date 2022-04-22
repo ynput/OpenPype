@@ -3,16 +3,17 @@ from Qt import QtWidgets
 from bson.objectid import ObjectId
 
 import pyblish.api
-import avalon.api
 from avalon import io
 
 from openpype.api import Logger
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
+    registered_host,
 )
 import openpype.hosts.photoshop
 
@@ -32,7 +33,7 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = avalon.api.registered_host()
+    host = registered_host()
     outdated_containers = []
     for container in host.ls():
         representation = container['representation']
@@ -75,7 +76,7 @@ def install():
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     pyblish.api.register_callback(
@@ -88,7 +89,7 @@ def install():
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def ls():

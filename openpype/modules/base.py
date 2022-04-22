@@ -28,26 +28,17 @@ from openpype.settings.lib import (
 )
 from openpype.lib import PypeLogger
 
-
-DEFAULT_OPENPYPE_MODULES = (
-    "avalon_apps",
-    "clockify",
-    "log_viewer",
-    "deadline",
-    "muster",
-    "royalrender",
-    "python_console_interpreter",
-    "ftrack",
-    "slack",
-    "webserver",
-    "launcher_action",
-    "project_manager_action",
-    "settings_action",
-    "standalonepublish_action",
-    "traypublish_action",
-    "job_queue",
-    "timers_manager",
-    "sync_server",
+# Files that will be always ignored on modules import
+IGNORED_FILENAMES = (
+    "__pycache__",
+)
+# Files ignored on modules import from "./openpype/modules"
+IGNORED_DEFAULT_FILENAMES = (
+    "__init__.py",
+    "base.py",
+    "interfaces.py",
+    "example_addons",
+    "default_modules",
 )
 
 
@@ -146,9 +137,16 @@ class _LoadCache:
 
 def get_default_modules_dir():
     """Path to default OpenPype modules."""
+
     current_dir = os.path.abspath(os.path.dirname(__file__))
 
-    return os.path.join(current_dir, "default_modules")
+    output = []
+    for folder_name in ("default_modules", ):
+        path = os.path.join(current_dir, folder_name)
+        if os.path.exists(path) and os.path.isdir(path):
+            output.append(path)
+
+    return output
 
 
 def get_dynamic_modules_dirs():
@@ -186,7 +184,7 @@ def get_dynamic_modules_dirs():
 def get_module_dirs():
     """List of paths where OpenPype modules can be found."""
     _dirpaths = []
-    _dirpaths.append(get_default_modules_dir())
+    _dirpaths.extend(get_default_modules_dir())
     _dirpaths.extend(get_dynamic_modules_dirs())
 
     dirpaths = []
@@ -292,25 +290,54 @@ def _load_modules():
 
     log = PypeLogger.get_logger("ModulesLoader")
 
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    processed_paths = set()
+    processed_paths.add(current_dir)
     # Import default modules imported from 'openpype.modules'
-    for default_module_name in DEFAULT_OPENPYPE_MODULES:
+    for filename in os.listdir(current_dir):
+        # Ignore filenames
+        if (
+            filename in IGNORED_FILENAMES
+            or filename in IGNORED_DEFAULT_FILENAMES
+        ):
+            continue
+
+        fullpath = os.path.join(current_dir, filename)
+        basename, ext = os.path.splitext(filename)
+
+        if os.path.isdir(fullpath):
+            # Check existence of init fil
+            init_path = os.path.join(fullpath, "__init__.py")
+            if not os.path.exists(init_path):
+                log.debug((
+                    "Module directory does not contan __init__.py file {}"
+                ).format(fullpath))
+                continue
+
+        elif ext not in (".py", ):
+            continue
+
         try:
-            import_str = "openpype.modules.{}".format(default_module_name)
-            new_import_str = "{}.{}".format(modules_key, default_module_name)
+            import_str = "openpype.modules.{}".format(basename)
+            new_import_str = "{}.{}".format(modules_key, basename)
             default_module = __import__(import_str, fromlist=("", ))
             sys.modules[new_import_str] = default_module
-            setattr(openpype_modules, default_module_name, default_module)
+            setattr(openpype_modules, basename, default_module)
 
         except Exception:
             msg = (
                 "Failed to import default module '{}'."
-            ).format(default_module_name)
+            ).format(basename)
             log.error(msg, exc_info=True)
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
-    dirpaths = get_module_dirs()
-    for dirpath in dirpaths:
+    for dirpath in get_module_dirs():
+        # Skip already processed paths
+        if dirpath in processed_paths:
+            continue
+        processed_paths.add(dirpath)
+
         if not os.path.exists(dirpath):
             log.warning((
                 "Could not find path when loading OpenPype modules \"{}\""
@@ -319,11 +346,23 @@ def _load_modules():
 
         for filename in os.listdir(dirpath):
             # Ignore filenames
-            if filename in ("__pycache__", ):
+            if filename in IGNORED_FILENAMES:
                 continue
 
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
+
+            if os.path.isdir(fullpath):
+                # Check existence of init fil
+                init_path = os.path.join(fullpath, "__init__.py")
+                if not os.path.exists(init_path):
+                    log.debug((
+                        "Module directory does not contan __init__.py file {}"
+                    ).format(fullpath))
+                    continue
+
+            elif ext not in (".py", ):
+                continue
 
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest

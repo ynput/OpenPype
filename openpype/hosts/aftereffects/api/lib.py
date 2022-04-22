@@ -6,6 +6,7 @@ import logging
 
 from Qt import QtWidgets
 
+from openpype.pipeline import install_host
 from openpype.lib.remote_publish import headless_publish
 
 from openpype.tools.utils import host_tools
@@ -22,10 +23,9 @@ def safe_excepthook(*args):
 def main(*subprocess_args):
     sys.excepthook = safe_excepthook
 
-    import avalon.api
     from openpype.hosts.aftereffects import api
 
-    avalon.api.install(api)
+    install_host(api)
 
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])

@@ -1,12 +1,14 @@
-from avalon import api, io
+from avalon import io
+
 from openpype.api import Logger
+from openpype.pipeline import LauncherAction
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
-class ClockifyStart(api.Action):
+class ClockifyStart(LauncherAction):
 
     name = "clockify_start_timer"
     label = "Clockify - Start Timer"

@@ -1,6 +1,8 @@
 import os
 import pyblish.api
 
+from openpype.lib import get_subset_name_with_asset_doc
+
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -11,8 +13,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "workfile"
-        task = os.getenv("AVALON_TASK", None)
-        subset = family + task.capitalize()
+        subset = get_subset_name_with_asset_doc(
+            family,
+            "",
+            context.data["anatomyData"]["task"]["name"],
+            context.data["assetEntity"],
+            context.data["anatomyData"]["project"]["name"],
+            host_name=context.data["hostName"]
+        )
 
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)

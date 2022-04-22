@@ -16,7 +16,7 @@ class RenderCreator(Creator):
     family = "render"
     description = "Render creator"
 
-    create_allow_context_change = False
+    create_allow_context_change = True
 
     def __init__(
         self, create_context, system_settings, project_settings, headless=False

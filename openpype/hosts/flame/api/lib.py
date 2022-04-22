@@ -3,7 +3,12 @@ import os
 import re
 import json
 import pickle
+import tempfile
+import itertools
 import contextlib
+import xml.etree.cElementTree as cET
+from copy import deepcopy
+from xml.etree import ElementTree as ET
 from pprint import pformat
 from .constants import (
     MARKER_COLOR,
@@ -12,11 +17,13 @@ from .constants import (
     COLOR_MAP,
     MARKER_PUBLISH_DEFAULT
 )
-from openpype.api import Logger
 
-log = Logger.get_logger(__name__)
+import openpype.api as openpype
+
+log = openpype.Logger.get_logger(__name__)
 
 FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
+
 
 class CTX:
     # singleton used for passing data between api modules
@@ -226,16 +233,6 @@ class FlameAppFramework(object):
         return True
 
 
-def get_project_manager():
-    # TODO: get_project_manager
-    return
-
-
-def get_media_storage():
-    # TODO: get_media_storage
-    return
-
-
 def get_current_project():
     import flame
     return flame.project.current_project
@@ -265,11 +262,6 @@ def get_current_sequence(selection):
     return process_timeline
 
 
-def create_bin(name, root=None):
-    # TODO: create_bin
-    return
-
-
 def rescan_hooks():
     import flame
     try:
@@ -279,6 +271,7 @@ def rescan_hooks():
 
 
 def get_metadata(project_name, _log=None):
+    # TODO: can be replaced by MediaInfoFile class method
     from adsk.libwiretapPythonClientAPI import (
         WireTapClient,
         WireTapServerHandle,
@@ -538,9 +531,17 @@ def get_segment_attributes(segment):
 
     # head and tail with forward compatibility
     if segment.head:
-        clip_data["segment_head"] = int(segment.head)
+        # `infinite` can be also returned
+        if isinstance(segment.head, str):
+            clip_data["segment_head"] = 0
+        else:
+            clip_data["segment_head"] = int(segment.head)
     if segment.tail:
-        clip_data["segment_tail"] = int(segment.tail)
+        # `infinite` can be also returned
+        if isinstance(segment.tail, str):
+            clip_data["segment_tail"] = 0
+        else:
+            clip_data["segment_tail"] = int(segment.tail)
 
     # add all available shot tokens
     shot_tokens = _get_shot_tokens_values(segment, [
@@ -695,6 +696,25 @@ def maintained_object_duplication(item):
         flame.delete(duplicate)
 
 
+@contextlib.contextmanager
+def maintained_temp_file_path(suffix=None):
+    _suffix = suffix or ""
+
+    try:
+        # Store dumped json to temporary file
+        temporary_file = tempfile.mktemp(
+            suffix=_suffix, prefix="flame_maintained_")
+        yield temporary_file.replace("\\", "/")
+
+    except IOError as _error:
+        raise IOError(
+            "Not able to create temp json file: {}".format(_error))
+
+    finally:
+        # Remove the temporary json
+        os.remove(temporary_file)
+
+
 def get_clip_segment(flame_clip):
     name = flame_clip.name.get_value()
     version = flame_clip.versions[0]
@@ -708,3 +728,213 @@ def get_clip_segment(flame_clip):
         raise ValueError("Clip `{}` has too many segments!".format(name))
 
     return segments[0]
+
+
+def get_batch_group_from_desktop(name):
+    project = get_current_project()
+    project_desktop = project.current_workspace.desktop
+
+    for bgroup in project_desktop.batch_groups:
+        if bgroup.name.get_value() in name:
+            return bgroup
+
+
+class MediaInfoFile(object):
+    """Class to get media info file clip data
+
+    Raises:
+        IOError: MEDIA_SCRIPT_PATH path doesn't exists
+        TypeError: Not able to generate clip xml data file
+        ET.ParseError: Missing clip in xml clip data
+        IOError: Not able to save xml clip data to file
+
+    Attributes:
+        str: `MEDIA_SCRIPT_PATH` path to flame binary
+        logging.Logger: `log` logger
+
+    TODO: add method for getting metadata to dict
+    """
+    MEDIA_SCRIPT_PATH = "/opt/Autodesk/mio/current/dl_get_media_info"
+
+    log = log
+
+    _clip_data = None
+    _start_frame = None
+    _fps = None
+    _drop_mode = None
+
+    def __init__(self, path, **kwargs):
+
+        # replace log if any
+        if kwargs.get("logger"):
+            self.log = kwargs["logger"]
+
+        # test if `dl_get_media_info` paht exists
+        self._validate_media_script_path()
+
+        # derivate other feed variables
+        self.feed_basename = os.path.basename(path)
+        self.feed_dir = os.path.dirname(path)
+        self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
+
+        with maintained_temp_file_path(".clip") as tmp_path:
+            self.log.info("Temp File: {}".format(tmp_path))
+            self._generate_media_info_file(tmp_path)
+
+            # get clip data and make them single if there is multiple
+            # clips data
+            xml_data = self._make_single_clip_media_info(tmp_path)
+            self.log.debug("xml_data: {}".format(xml_data))
+            self.log.debug("type: {}".format(type(xml_data)))
+
+            # get all time related data and assign them
+            self._get_time_info_from_origin(xml_data)
+            self.log.debug("start_frame: {}".format(self.start_frame))
+            self.log.debug("fps: {}".format(self.fps))
+            self.log.debug("drop frame: {}".format(self.drop_mode))
+            self.clip_data = xml_data
+
+    @property
+    def clip_data(self):
+        """Clip's xml clip data
+
+        Returns:
+            xml.etree.ElementTree: xml data
+        """
+        return self._clip_data
+
+    @clip_data.setter
+    def clip_data(self, data):
+        self._clip_data = data
+
+    @property
+    def start_frame(self):
+        """ Clip's starting frame found in timecode
+
+        Returns:
+            int: number of frames
+        """
+        return self._start_frame
+
+    @start_frame.setter
+    def start_frame(self, number):
+        self._start_frame = int(number)
+
+    @property
+    def fps(self):
+        """ Clip's frame rate
+
+        Returns:
+            float: frame rate
+        """
+        return self._fps
+
+    @fps.setter
+    def fps(self, fl_number):
+        self._fps = float(fl_number)
+
+    @property
+    def drop_mode(self):
+        """ Clip's drop frame mode
+
+        Returns:
+            str: drop frame flag
+        """
+        return self._drop_mode
+
+    @drop_mode.setter
+    def drop_mode(self, text):
+        self._drop_mode = str(text)
+
+    def _validate_media_script_path(self):
+        if not os.path.isfile(self.MEDIA_SCRIPT_PATH):
+            raise IOError("Media Scirpt does not exist: `{}`".format(
+                self.MEDIA_SCRIPT_PATH))
+
+    def _generate_media_info_file(self, fpath):
+        # Create cmd arguments for gettig xml file info file
+        cmd_args = [
+            self.MEDIA_SCRIPT_PATH,
+            "-e", self.feed_ext,
+            "-o", fpath,
+            self.feed_dir
+        ]
+
+        try:
+            # execute creation of clip xml template data
+            openpype.run_subprocess(cmd_args)
+        except TypeError as error:
+            raise TypeError(
+                "Error creating `{}` due: {}".format(fpath, error))
+
+    def _make_single_clip_media_info(self, fpath):
+        with open(fpath) as f:
+            lines = f.readlines()
+            _added_root = itertools.chain(
+                "<root>", deepcopy(lines)[1:], "</root>")
+            new_root = ET.fromstringlist(_added_root)
+
+        # find the clip which is matching to my input name
+        xml_clips = new_root.findall("clip")
+        matching_clip = None
+        for xml_clip in xml_clips:
+            if xml_clip.find("name").text in self.feed_basename:
+                matching_clip = xml_clip
+
+        if matching_clip is None:
+            # return warning there is missing clip
+            raise ET.ParseError(
+                "Missing clip in `{}`. Available clips {}".format(
+                    self.feed_basename, [
+                        xml_clip.find("name").text
+                        for xml_clip in xml_clips
+                    ]
+                ))
+
+        return matching_clip
+
+    def _get_time_info_from_origin(self, xml_data):
+        try:
+            for out_track in xml_data.iter('track'):
+                for out_feed in out_track.iter('feed'):
+                    # start frame
+                    out_feed_nb_ticks_obj = out_feed.find(
+                        'startTimecode/nbTicks')
+                    self.start_frame = out_feed_nb_ticks_obj.text
+
+                    # fps
+                    out_feed_fps_obj = out_feed.find(
+                        'startTimecode/rate')
+                    self.fps = out_feed_fps_obj.text
+
+                    # drop frame mode
+                    out_feed_drop_mode_obj = out_feed.find(
+                        'startTimecode/dropMode')
+                    self.drop_mode = out_feed_drop_mode_obj.text
+                    break
+                else:
+                    continue
+        except Exception as msg:
+            self.log.warning(msg)
+
+    @staticmethod
+    def write_clip_data_to_file(fpath, xml_element_data):
+        """ Write xml element of clip data to file
+
+        Args:
+            fpath (string): file path
+            xml_element_data (xml.etree.ElementTree.Element): xml data
+
+        Raises:
+            IOError: If data could not be written to file
+        """
+        try:
+            # save it as new file
+            tree = cET.ElementTree(xml_element_data)
+            tree.write(
+                fpath, xml_declaration=True,
+                method='xml', encoding='UTF-8'
+            )
+        except IOError as error:
+            raise IOError(
+                "Not able to write data to file: {}".format(error))

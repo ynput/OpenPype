@@ -286,21 +286,6 @@ def from_dict_to_set(data, is_project):
     return result
 
 
-def get_avalon_project_template(project_name):
-    """Get avalon template
-    Args:
-        project_name: (string)
-    Returns:
-        dictionary with templates
-    """
-    templates = Anatomy(project_name).templates
-    return {
-        "workfile": templates["avalon"]["workfile"],
-        "work": templates["avalon"]["work"],
-        "publish": templates["avalon"]["publish"]
-    }
-
-
 def get_project_apps(in_app_list):
     """ Application definitions for app name.
 

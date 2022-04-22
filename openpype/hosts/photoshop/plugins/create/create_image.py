@@ -1,9 +1,9 @@
 from Qt import QtWidgets
-from openpype.pipeline import create
+from openpype.pipeline import LegacyCreator
 from openpype.hosts.photoshop import api as photoshop
 
 
-class CreateImage(create.LegacyCreator):
+class CreateImage(LegacyCreator):
     """Image folder for publish."""
 
     name = "imageDefault"

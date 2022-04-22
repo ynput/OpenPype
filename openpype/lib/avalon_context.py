@@ -161,9 +161,10 @@ def is_latest(representation):
 @with_avalon
 def any_outdated():
     """Return whether the current scene has any outdated content"""
+    from openpype.pipeline import registered_host
 
     checked = set()
-    host = avalon.api.registered_host()
+    host = registered_host()
     for container in host.ls():
         representation = container['representation']
         if representation in checked:
@@ -1604,13 +1605,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     Returns:
         Creator: Return first matching plugin or `None`.
     """
-    from openpype.pipeline import LegacyCreator
+    from openpype.pipeline import discover_legacy_creator_plugins
 
     # Lower input creator name if is not case sensitive
     if not case_sensitive:
         creator_name = creator_name.lower()
 
-    for creator_plugin in avalon.api.discover(LegacyCreator):
+    for creator_plugin in discover_legacy_creator_plugins():
         _creator_name = creator_plugin.__name__
 
         # Lower creator plugin name if is not case sensitive
@@ -1965,6 +1966,7 @@ def get_last_workfile(
         data.pop("comment", None)
         if not data.get("ext"):
             data["ext"] = extensions[0]
+        data["ext"] = data["ext"].replace('.', '')
         filename = StringTemplate.format_strict_template(file_template, data)
 
     if full_path:

@@ -29,6 +29,8 @@ class AEItem(object):
     frameRate = attr.ib(default=None)
     file_name = attr.ib(default=None)
     instance_id = attr.ib(default=None)  # New Publisher
+    width = attr.ib(default=None)
+    height = attr.ib(default=None)
 
 
 class AfterEffectsServerStub():
@@ -609,7 +611,9 @@ class AfterEffectsServerStub():
                           d.get('workAreaDuration'),
                           d.get('frameRate'),
                           d.get('file_name'),
-                          d.get("instance_id"))
+                          d.get("instance_id"),
+                          d.get("width"),
+                          d.get("height"))
 
             ret.append(item)
         return ret

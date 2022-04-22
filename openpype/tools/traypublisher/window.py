@@ -8,8 +8,8 @@ publishing plugins.
 
 from Qt import QtWidgets, QtCore
 
-import avalon.api
 from avalon.api import AvalonMongoDB
+from openpype.pipeline import install_host
 from openpype.hosts.traypublisher import (
     api as traypublisher
 )
@@ -163,7 +163,7 @@ class TrayPublishWindow(PublisherWindow):
 
 
 def main():
-    avalon.api.install(traypublisher)
+    install_host(traypublisher)
     app = QtWidgets.QApplication([])
     window = TrayPublishWindow()
     window.show()

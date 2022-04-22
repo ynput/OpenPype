@@ -2,18 +2,26 @@ import os
 
 import pyblish.api
 
+from openpype.lib import get_subset_name_with_asset_doc
+
 
 class CollectReview(pyblish.api.ContextPlugin):
     """Gather the active document as review instance."""
 
     label = "Review"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.1
     hosts = ["photoshop"]
 
     def process(self, context):
         family = "review"
-        task = os.getenv("AVALON_TASK", None)
-        subset = family + task.capitalize()
+        subset = get_subset_name_with_asset_doc(
+            family,
+            context.data.get("variant", ''),
+            context.data["anatomyData"]["task"]["name"],
+            context.data["assetEntity"],
+            context.data["anatomyData"]["project"]["name"],
+            host_name=context.data["hostName"]
+        )
 
         file_path = context.data["currentFile"]
         base_name = os.path.basename(file_path)

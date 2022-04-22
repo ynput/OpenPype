@@ -33,6 +33,24 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectDeadlinePools",
+                    "label": "Default Deadline Pools",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "primary_pool",
+                            "label": "Primary Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "secondary_pool",
+                            "label": "Secondary Pool"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ValidateExpectedFiles",
                     "label": "Validate Expected Files",
                     "checkbox_key": "enabled",
@@ -118,6 +136,16 @@
                             "label": "Use Asset dependencies"
                         },
                         {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "tile_priority",
+                            "label": "Tile Assembler Priority"
+                        },
+                        {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
@@ -193,6 +221,9 @@
                             "label": "Use Published scene"
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "number",
                             "key": "priority",
                             "label": "Priority"
@@ -203,19 +234,20 @@
                             "label": "Chunk Size"
                         },
                         {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
+                            "type": "number",
+                            "key": "concurrent_tasks",
+                            "label": "Number of concurrent tasks"
                         },
                         {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
+                            "type": "splitter"
                         },
                         {
                             "type": "text",
                             "key": "group",
                             "label": "Group"
+                        },
+                        {
+                            "type": "splitter"
                         },
                         {
                             "type": "text",
@@ -291,16 +323,6 @@
                         },
                         {
                             "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        },
-                        {
-                            "type": "text",
                             "key": "group",
                             "label": "Group"
                         },
@@ -347,16 +369,6 @@
                             "type": "number",
                             "key": "chunk_size",
                             "label": "Chunk Size"
-                        },
-                        {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
                         },
                         {
                             "type": "text",

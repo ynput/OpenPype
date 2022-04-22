@@ -1,8 +1,8 @@
 import pyblish.api
-import avalon.api
 
 from openpype.api import version_up
 from openpype.action import get_errored_plugins_from_data
+from openpype.pipeline import registered_host
 
 
 class IncrementCurrentFile(pyblish.api.InstancePlugin):
@@ -41,7 +41,7 @@ class IncrementCurrentFile(pyblish.api.InstancePlugin):
             )
 
         # Filename must not have changed since collecting
-        host = avalon.api.registered_host()
+        host = registered_host()
         current_file = host.current_file()
         assert (
             context.data["currentFile"] == current_file

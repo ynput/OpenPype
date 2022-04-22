@@ -1,7 +1,12 @@
-"""Loads batch context from json and continues in publish process.
+"""Parses batch context from json and continues in publish process.
 
 Provides:
     context -> Loaded batch file.
+        - asset
+        - task  (task name)
+        - taskType
+        - project_name
+        - variant
 """
 
 import os
@@ -24,7 +29,7 @@ class CollectBatchData(pyblish.api.ContextPlugin):
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.495
     label = "Collect batch data"
-    host = ["webpublisher"]
+    hosts = ["webpublisher"]
 
     def process(self, context):
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
@@ -60,6 +65,7 @@ class CollectBatchData(pyblish.api.ContextPlugin):
         context.data["task"] = task_name
         context.data["taskType"] = task_type
         context.data["project_name"] = project_name
+        context.data["variant"] = batch_data["variant"]
 
         self._set_ctx_path(batch_data)
 

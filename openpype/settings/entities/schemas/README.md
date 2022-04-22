@@ -745,6 +745,7 @@ How output of the schema could look like on save:
 ### label
 - add label with note or explanations
 - it is possible to use html tags inside the label
+- set `work_wrap` to `true`/`false` if you want to enable word wrapping in UI (default: `false`)
 
 ```
 {

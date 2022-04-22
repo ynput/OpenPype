@@ -123,6 +123,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         if generated_repres:
             # assign to representations
             instance.data["representations"] += generated_repres
+            instance.data["useSequenceForReview"] = False
         else:
             instance.data["families"].remove("review")
             self.log.info((
