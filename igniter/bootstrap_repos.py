@@ -668,9 +668,9 @@ class BootstrapRepos:
         self._progress_callback = progress_callback
 
         if getattr(sys, "frozen", False):
-            self.live_repo_dir = Path(sys.executable).parent / "repos"
+            self.live_repo_dir = Path(sys.executable).parent
         else:
-            self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
+            self.live_repo_dir = Path(Path(__file__).parent / "..")
 
     @staticmethod
     def get_version_path_from_list(
@@ -756,7 +756,7 @@ class BootstrapRepos:
                 Path(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
-            self._create_openpype_zip(temp_zip, repo_dir.parent)
+            self._create_openpype_zip(temp_zip, repo_dir)
             if not os.path.exists(temp_zip):
                 self._print("make archive failed.", LOG_ERROR)
                 return None
