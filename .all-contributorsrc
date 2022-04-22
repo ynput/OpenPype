@@ -176,6 +176,19 @@
       ]
     },
     {
+      "login": "m-u-r-p-h-y",
+      "name": "murphy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/352795?v=4",
+      "profile": "https://www.linkedin.com/in/mmuurrpphhyy/",
+      "contributions": [
+        "code",
+        "review",
+        "userTesting",
+        "doc",
+        "projectManagement"
+      ]
+    }
+    {
       "login": "aardschok",
       "name": "Wijnand Koreman",
       "avatar_url": "https://avatars.githubusercontent.com/u/26920875?v=4",
@@ -295,19 +308,6 @@
       "profile": "https://github.com/zafrs",
       "contributions": [
         "code"
-      ]
-    },
-    {
-      "login": "m-u-r-p-h-y",
-      "name": "murphy",
-      "avatar_url": "https://avatars.githubusercontent.com/u/352795?v=4",
-      "profile": "https://www.linkedin.com/in/mmuurrpphhyy/",
-      "contributions": [
-        "code",
-        "review",
-        "userTesting",
-        "doc",
-        "projectManagement"
       ]
     }
   ],
