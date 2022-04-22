@@ -11,55 +11,59 @@ class CreateFolders(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "CreateFolders.svg")
 
     def discover(self, session, entities, event):
-        if len(entities) != 1:
-            return False
-
-        not_allowed = ["assetversion", "project"]
-        if entities[0].entity_type.lower() in not_allowed:
-            return False
-
-        return True
+        for entity_item in event["data"]["selection"]:
+            if entity_item.get("entityType").lower() in ("task", "show"):
+                return True
+        return False
 
     def interface(self, session, entities, event):
         if event["data"].get("values", {}):
             return
-        entity = entities[0]
-        without_interface = True
-        for child in entity["children"]:
-            if child["object_type"]["name"].lower() != "task":
-                without_interface = False
+
+        with_interface = False
+        for entity in entities:
+            if entity.entity_type.lower() != "task":
+                with_interface = True
                 break
-        self.without_interface = without_interface
-        if without_interface:
+
+        if "values" not in event["data"]:
+            event["data"]["values"] = {}
+
+        event["data"]["values"]["with_interface"] = with_interface
+        if not with_interface:
             return
+
         title = "Create folders"
 
         entity_name = entity["name"]
         msg = (
             "<h2>Do you want create folders also"
-            " for all children of \"{}\"?</h2>"
+            " for all children of your selection?</h2>"
         )
         if entity.entity_type.lower() == "project":
             entity_name = entity["full_name"]
             msg = msg.replace(" also", "")
             msg += "<h3>(Project root won't be created if not checked)</h3>"
-        items = []
-        item_msg = {
-            "type": "label",
-            "value": msg.format(entity_name)
-        }
-        item_label = {
-            "type": "label",
-            "value": "With all chilren entities"
-        }
-        item = {
-            "name": "children_included",
-            "type": "boolean",
-            "value": False
-        }
-        items.append(item_msg)
-        items.append(item_label)
-        items.append(item)
+        items = [
+            {
+                "type": "label",
+                "value": msg.format(entity_name)
+            },
+            {
+                "type": "label",
+                "value": "With all chilren entities"
+            },
+            {
+                "name": "children_included",
+                "type": "boolean",
+                "value": False
+            },
+            {
+                "type": "hidden",
+                "name": "with_interface",
+                "value": with_interface
+            }
+        ]
 
         return {
             "items": items,
@@ -68,25 +72,33 @@ class CreateFolders(BaseAction):
 
     def launch(self, session, entities, event):
         '''Callback method for custom action.'''
+
+        if "values" not in event["data"]:
+            return
+
+        with_interface = event["data"]["values"]["with_interface"]
         with_childrens = True
-        if self.without_interface is False:
-            if "values" not in event["data"]:
-                return
+        if with_interface:
             with_childrens = event["data"]["values"]["children_included"]
 
-        entity = entities[0]
-        if entity.entity_type.lower() == "project":
-            proj = entity
-        else:
-            proj = entity["project"]
-        project_name = proj["full_name"]
-        project_code = proj["name"]
+        filtered_entities = []
+        for entity in entities:
+            low_context_type = entity["context_type"].lower()
+            if low_context_type in ("task", "show"):
+                if not with_childrens and low_context_type == "show":
+                    continue
+                filtered_entities.append(entity)
 
-        if entity.entity_type.lower() == 'project' and with_childrens is False:
+        if not filtered_entities:
             return {
-                'success': True,
-                'message': 'Nothing was created'
+                "success": True,
+                "message": 'Nothing was created'
             }
+
+        project_entity = self.get_project_from_entity(filtered_entities[0])
+
+        project_name = project_entity["full_name"]
+        project_code = project_entity["name"]
 
         task_entities = []
         other_entities = []
@@ -209,7 +221,7 @@ class CreateFolders(BaseAction):
 
         no_task_entity_ids = [entity["id"] for entity in no_task_entities]
         next_entities = session.query((
-            "select id, object_type_id, parent_id"
+            "select id, parent_id"
             " from TypedContext where parent_id in ({})"
         ).format(self.join_query_keys(no_task_entity_ids))).all()
 
