@@ -1,4 +1,7 @@
 
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
 
@@ -283,3 +286,23 @@ Running tests
 To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
 
 **Note that it needs existing virtual environment.**
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="http://pype.club/"><img src="https://avatars.githubusercontent.com/u/3333008?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Milan Kolar</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=mkolar" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=mkolar" title="Documentation">📖</a> <a href="#infra-mkolar" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

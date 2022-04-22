@@ -1,0 +1,26 @@
+{
+  "projectName": "OpenPype",
+  "projectOwner": "pypeclub",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 80,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "mkolar",
+      "name": "Milan Kolar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3333008?v=4",
+      "profile": "http://pype.club/",
+      "contributions": [
+        "code",
+        "doc",
+        "infra"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7
+}
