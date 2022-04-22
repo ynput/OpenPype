@@ -160,7 +160,18 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/7068597?v=4",
       "profile": "https://www.linkedin.com/in/clementhector/",
       "contributions": [
-        "code"
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "davidlatwe",
+      "name": "David Lai",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3357009?v=4",
+      "profile": "https://twitter.com/davidlatwe",
+      "contributions": [
+        "code",
+        "review"
       ]
     }
   ],
