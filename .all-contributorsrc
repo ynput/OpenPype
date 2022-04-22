@@ -64,6 +64,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "kalisp",
+      "name": "Petr Kalis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4457962?v=4",
+      "profile": "https://github.com/kalisp",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
