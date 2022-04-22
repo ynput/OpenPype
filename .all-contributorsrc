@@ -31,6 +31,17 @@
         "doc",
         "infra"
       ]
+    },
+    {
+      "login": "iLLiCiTiT",
+      "name": "Jakub Trllo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43494761?v=4",
+      "profile": "https://github.com/iLLiCiTiT",
+      "contributions": [
+        "code",
+        "doc",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7
