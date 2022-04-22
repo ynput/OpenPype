@@ -15,6 +15,8 @@ from openpype.lib.attribute_definitions import (
 )
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
+from .files_widget import FilesWidget
+
 
 def create_widget_for_attr_def(attr_def, parent=None):
     if not isinstance(attr_def, AbtractAttrDef):
@@ -337,15 +339,8 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
 class FileAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         self.multipath = self.attr_def.multipath
-        if self.multipath:
-            from .files_widget import MultiFilesWidget
 
-            input_widget = MultiFilesWidget(self)
-
-        else:
-            from .files_widget import SingleFileWidget
-
-            input_widget = SingleFileWidget(self)
+        input_widget = FilesWidget(self.multipath, self)
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)

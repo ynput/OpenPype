@@ -87,14 +87,28 @@ class FilesModel(QtGui.QStandardItemModel):
         ".xpm", ".xwd"
     ]
 
-    def __init__(self):
+    def __init__(self, multivalue):
         super(FilesModel, self).__init__()
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
 
+        self._multivalue = multivalue
+
     def add_filepaths(self, filepaths):
         if not filepaths:
             return
+
+        if not self._multivalue:
+            filepaths = [filepaths[0]]
+            item_ids = []
+            for items in self._items_by_dirpath.values():
+                for item in items:
+                    item_id = item.data(ITEM_ID_ROLE)
+                    if item_id:
+                        item_ids.append(item_id)
+
+            if item_ids:
+                self.remove_item_by_ids(item_ids)
 
         new_dirpaths = set()
         for filepath in filepaths:
@@ -368,16 +382,16 @@ class FilesView(QtWidgets.QListView):
         return super(FilesView, self).event(event)
 
 
-class MultiFilesWidget(QtWidgets.QFrame):
+class FilesWidget(QtWidgets.QFrame):
     value_changed = QtCore.Signal()
 
-    def __init__(self, parent):
-        super(MultiFilesWidget, self).__init__(parent)
+    def __init__(self, multiselect, parent):
+        super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
         empty_widget = DropEmpty(self)
 
-        files_model = FilesModel()
+        files_model = FilesModel(multiselect)
         files_proxy_model = FilesProxyModel()
         files_proxy_model.setSourceModel(files_model)
         files_view = FilesView(self)
@@ -391,6 +405,11 @@ class MultiFilesWidget(QtWidgets.QFrame):
 
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
+
+        drag_label = DragLabel()
+        drag_label.setVisible(False)
+
+        self._drag_label = drag_label
 
         self._in_set_value = False
 
@@ -501,7 +520,7 @@ class MultiFilesWidget(QtWidgets.QFrame):
 
     def sizeHint(self):
         # Get size hints of widget and visible widgets
-        result = super(MultiFilesWidget, self).sizeHint()
+        result = super(FilesWidget, self).sizeHint()
         if not self._files_view.isVisible():
             not_visible_hint = self._files_view.sizeHint()
         else:
@@ -557,90 +576,11 @@ class MultiFilesWidget(QtWidgets.QFrame):
         self._empty_widget.setVisible(not files_exists)
 
 
-class SingleFileWidget(QtWidgets.QWidget):
-    value_changed = QtCore.Signal()
+class DragLabel(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(DragLabel, self).__init__(parent)
 
-    def __init__(self, parent):
-        super(SingleFileWidget, self).__init__(parent)
-
-        self.setAcceptDrops(True)
-
-        filepath_input = QtWidgets.QLineEdit(self)
-
-        browse_btn = QtWidgets.QPushButton("Browse", self)
-        browse_btn.setVisible(False)
-
+        t_label = QtWidgets.QLabel("TESTING", self)
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(filepath_input, 1)
-        layout.addWidget(browse_btn, 0)
-
-        browse_btn.clicked.connect(self._on_browse_clicked)
-        filepath_input.textChanged.connect(self._on_text_change)
-
-        self._in_set_value = False
-
-        self._filepath_input = filepath_input
-        self._folders_allowed = False
-        self._exts_filter = []
-
-    def set_value(self, value, multivalue):
-        self._in_set_value = True
-
-        if multivalue:
-            set_value = set(value)
-            if len(set_value) == 1:
-                value = tuple(set_value)[0]
-            else:
-                value = "< Multiselection >"
-        self._filepath_input.setText(value)
-
-        self._in_set_value = False
-
-    def current_value(self):
-        return self._filepath_input.text()
-
-    def set_filters(self, folders_allowed, exts_filter):
-        self._folders_allowed = folders_allowed
-        self._exts_filter = exts_filter
-
-    def _on_text_change(self, text):
-        if not self._in_set_value:
-            self.value_changed.emit()
-
-    def _on_browse_clicked(self):
-        # TODO implement file dialog logic in '_on_browse_clicked'
-        print("_on_browse_clicked")
-
-    def dragEnterEvent(self, event):
-        mime_data = event.mimeData()
-        if not mime_data.hasUrls():
-            return
-
-        filepaths = []
-        for url in mime_data.urls():
-            filepath = url.toLocalFile()
-            if os.path.exists(filepath):
-                filepaths.append(filepath)
-
-        # TODO add folder, extensions check
-        if len(filepaths) == 1:
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-
-    def dragLeaveEvent(self, event):
-        event.accept()
-
-    def dropEvent(self, event):
-        mime_data = event.mimeData()
-        if mime_data.hasUrls():
-            filepaths = []
-            for url in mime_data.urls():
-                filepath = url.toLocalFile()
-                if os.path.exists(filepath):
-                    filepaths.append(filepath)
-            # TODO filter check
-            if len(filepaths) == 1:
-                self._filepath_input.setText(filepaths[0])
-
-        event.accept()
+        layout.addWidget(t_label)
+        self._t_label = t_label
