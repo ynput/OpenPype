@@ -29,6 +29,22 @@
       ]
     },
     {
+      "login": "jakubjezek001",
+      "name": "Jakub Ježek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40640033?v=4",
+      "profile": "https://www.linkedin.com/in/jakubjezek79",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "content",
+        "review",
+        "maintenance",
+        "mentoring",
+        "projectManagement"
+      ]
+    },
+    {
       "login": "antirotor",
       "name": "Ondřej Samohel",
       "avatar_url": "https://avatars.githubusercontent.com/u/33513211?v=4",
@@ -40,7 +56,8 @@
         "content",
         "review",
         "maintenance",
-        "mentoring"
+        "mentoring",
+        "projectManagement"
       ]
     },
     {
@@ -57,21 +74,16 @@
       ]
     },
     {
-      "login": "jakubjezek001",
-      "name": "Jakub Ježek",
-      "avatar_url": "https://avatars.githubusercontent.com/u/40640033?v=4",
-      "profile": "https://www.linkedin.com/in/jakubjezek79",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "kalisp",
       "name": "Petr Kalis",
       "avatar_url": "https://avatars.githubusercontent.com/u/4457962?v=4",
       "profile": "https://github.com/kalisp",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "infra",
+        "review",
+        "maintenance"
       ]
     },
     {
@@ -124,6 +136,15 @@
       "name": "Bo Zhou",
       "avatar_url": "https://avatars.githubusercontent.com/u/1798206?v=4",
       "profile": "http://jedimaster.cnblogs.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ClementHector",
+      "name": "Clément Hector",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7068597?v=4",
+      "profile": "https://www.linkedin.com/in/clementhector/",
       "contributions": [
         "code"
       ]
