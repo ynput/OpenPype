@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-19-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-20-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -319,6 +319,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/icyvapor"><img src="https://avatars.githubusercontent.com/u/1195278?v=4?s=80" width="80px;" alt=""/><br /><sub><b>icyvapor</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=icyvapor" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=icyvapor" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/jlorrain"><img src="https://avatars.githubusercontent.com/u/7955673?v=4?s=80" width="80px;" alt=""/><br /><sub><b>Jérôme LORRAIN</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=jlorrain" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/dmo-j-cube"><img src="https://avatars.githubusercontent.com/u/89823400?v=4?s=80" width="80px;" alt=""/><br /><sub><b>David Morris-Oliveros</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=dmo-j-cube" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/BenoitConnan"><img src="https://avatars.githubusercontent.com/u/82808268?v=4?s=80" width="80px;" alt=""/><br /><sub><b>BenoitConnan</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=BenoitConnan" title="Code">💻</a></td>
   </tr>
 </table>
 
