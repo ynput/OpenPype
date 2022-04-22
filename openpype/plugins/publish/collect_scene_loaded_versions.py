@@ -44,12 +44,20 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
         }
 
         for con in _containers:
+            repre_id = con["representation"]
+            version_id = version_by_repr.get(repre_id)
+            if version_id is None:
+                self.log.warning((
+                    "Skipping container, did not find version document. {}"
+                ).format(str(con)))
+                continue
+
             # NOTE:
             # may have more then one representation that are same version
             version = {
                 "subsetName": con["name"],
-                "representation": ObjectId(con["representation"]),
-                "version": version_by_repr[con["representation"]],  # _id
+                "representation": ObjectId(repre_id),
+                "version": version_id,
             }
             loaded_versions.append(version)
 
