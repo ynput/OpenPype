@@ -34,6 +34,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir,
         }
 
+        if not instance.data.get("representations"):
+            instance.data["representations"] = []
         instance.data["representations"].append(representation)
 
         instance.data["publish"] = instance.data["active"]  # for DL
@@ -45,6 +47,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         project_entity = context.data["projectEntity"]
 
         instance_data = {
+            "active": True,
             "asset": asset_entity["name"],
             "task": task,
             "frameStart": asset_entity["data"]["frameStart"],
