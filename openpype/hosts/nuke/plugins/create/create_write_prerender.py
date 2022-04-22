@@ -1,10 +1,10 @@
 import nuke
 
+from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import create_write_node
-from openpype.hosts.nuke.plugins.create import create_write_render
 
 
-class CreateWritePrerender(create_write_render.CreateWriteRender):
+class CreateWritePrerender(plugin.AbstractWriteRender):
     # change this to template preset
     name = "WritePrerender"
     label = "Create Write Prerender"
