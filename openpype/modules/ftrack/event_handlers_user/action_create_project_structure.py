@@ -1,6 +1,4 @@
-import os
 import re
-import json
 
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype.api import get_project_basic_paths, create_project_folders
