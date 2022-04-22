@@ -16,7 +16,7 @@ class RenderCreator(Creator):
     family = "render"
     description = "Render creator"
 
-    create_allow_context_change = False
+    create_allow_context_change = True
 
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
