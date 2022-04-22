@@ -68,6 +68,22 @@ from .actions import (
     deregister_inventory_action_path,
 )
 
+from .context_tools import (
+    install_openpype_plugins,
+    install_host,
+    uninstall_host,
+    is_installed,
+
+    register_root,
+    registered_root,
+
+    register_host,
+    registered_host,
+    deregister_host,
+)
+install = install_host
+uninstall = uninstall_host
+
 
 __all__ = (
     "AVALON_CONTAINER_ID",
@@ -137,4 +153,21 @@ __all__ = (
     "register_inventory_action_path",
     "deregister_inventory_action",
     "deregister_inventory_action_path",
+
+    # --- Process context ---
+    "install_openpype_plugins",
+    "install_host",
+    "uninstall_host",
+    "is_installed",
+
+    "register_root",
+    "registered_root",
+
+    "register_host",
+    "registered_host",
+    "deregister_host",
+
+    # Backwards compatible function names
+    "install",
+    "uninstall",
 )

@@ -1,7 +1,6 @@
 import os
 import logging
 
-from avalon import api as avalon
 from avalon import io
 from pyblish import api as pyblish
 import openpype.hosts.webpublisher

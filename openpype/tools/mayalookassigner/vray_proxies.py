@@ -11,13 +11,14 @@ from bson.objectid import ObjectId
 import alembic.Abc
 from maya import cmds
 
-from avalon import io, api
+from avalon import io
 
 from openpype.pipeline import (
     load_container,
     loaders_from_representation,
     discover_loader_plugins,
     get_representation_path,
+    registered_host,
 )
 from openpype.hosts.maya.api import lib
 
@@ -188,7 +189,7 @@ def load_look(version_id):
                                        "name": "ma"})
 
     # See if representation is already loaded, if so reuse it.
-    host = api.registered_host()
+    host = registered_host()
     representation_id = str(look_representation['_id'])
     for container in host.ls():
         if (container['loader'] == "LookLoader" and

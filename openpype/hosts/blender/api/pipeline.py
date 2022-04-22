@@ -19,6 +19,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
+    uninstall_host,
 )
 from openpype.api import Logger
 from openpype.lib import (
@@ -209,11 +210,10 @@ def reload_pipeline(*args):
 
     """
 
-    avalon.api.uninstall()
+    uninstall_host()
 
     for module in (
         "avalon.io",
-        "avalon.lib",
         "avalon.pipeline",
         "avalon.api",
     ):

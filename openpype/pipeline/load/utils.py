@@ -10,7 +10,7 @@ import six
 from bson.objectid import ObjectId
 
 from avalon import io, schema
-from avalon.api import Session, registered_root
+from avalon.api import Session
 
 from openpype.lib import Anatomy
 
@@ -532,6 +532,8 @@ def get_representation_path(representation, root=None, dbcon=None):
         dbcon = io
 
     if root is None:
+        from openpype.pipeline import registered_root
+
         root = registered_root()
 
     def path_from_represenation():
