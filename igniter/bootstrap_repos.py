@@ -627,8 +627,6 @@ class BootstrapRepos:
 
     Attributes:
         data_dir (Path): local OpenPype installation directory.
-        live_repo_dir (Path): path to repos directory if running live,
-            otherwise `None`.
         registry (OpenPypeSettingsRegistry): OpenPype registry object.
         zip_filter (list): List of files to exclude from zip
         openpype_filter (list): list of top level directories to
@@ -666,11 +664,6 @@ class BootstrapRepos:
         if not progress_callback:
             progress_callback = empty_progress
         self._progress_callback = progress_callback
-
-        if getattr(sys, "frozen", False):
-            self.live_repo_dir = Path(sys.executable).parent
-        else:
-            self.live_repo_dir = Path(Path(__file__).parent / "..")
 
     @staticmethod
     def get_version_path_from_list(
@@ -736,11 +729,16 @@ class BootstrapRepos:
         # if repo dir is not set, we detect local "live" OpenPype repository
         # version and use it as a source. Otherwise repo_dir is user
         # entered location.
-        if not repo_dir:
-            version = OpenPypeVersion.get_installed_version_str()
-            repo_dir = self.live_repo_dir
-        else:
+        if repo_dir:
             version = self.get_version(repo_dir)
+        else:
+            version = OpenPypeVersion.get_installed_version_str()
+            # QUESTION Can we use 'OPENPYPE_ROOT' env variable or it may
+            #   not be defined yet?
+            if getattr(sys, "frozen", False):
+                repo_dir = Path(sys.executable).parent
+            else:
+                repo_dir = Path(Path(__file__).parent / "..")
 
         if not version:
             self._print("OpenPype not found.", LOG_ERROR)
