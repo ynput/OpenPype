@@ -92,6 +92,21 @@
       ]
     },
     {
+      "login": "64qam",
+      "name": "64qam",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26925793?v=4",
+      "profile": "https://github.com/64qam",
+      "contributions": [
+        "code",
+        "review",
+        "doc",
+        "infra",
+        "projectManagement",
+        "maintenance",
+        "content"
+      ]
+    },
+    {
       "login": "aardschok",
       "name": "Wijnand Koreman",
       "avatar_url": "https://avatars.githubusercontent.com/u/26920875?v=4",
@@ -251,18 +266,17 @@
       ]
     },
     {
-      "login": "64qam",
-      "name": "64qam",
-      "avatar_url": "https://avatars.githubusercontent.com/u/26925793?v=4",
-      "profile": "https://github.com/64qam",
+      "login": "jrsndl",
+      "name": "Jiri Sindelar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45896205?v=4",
+      "profile": "https://github.com/jrsndl",
       "contributions": [
         "code",
         "review",
         "doc",
-        "infra",
-        "projectManagement",
-        "maintenance",
-        "content"
+        "content",
+        "tutorial",
+        "userTesting"
       ]
     }
   ],
