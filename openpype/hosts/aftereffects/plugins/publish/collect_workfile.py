@@ -42,10 +42,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
-        # workfile instance
-        family = "workfile"
-        subset = family + task.capitalize()   # TOOD use method
-
         instance_data = {
             "asset": asset_entity["name"],
             "task": task,
