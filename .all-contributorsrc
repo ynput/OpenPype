@@ -25,7 +25,8 @@
         "maintenance",
         "projectManagement",
         "review",
-        "mentoring"
+        "mentoring",
+        "question"
       ]
     },
     {
@@ -41,7 +42,8 @@
         "review",
         "maintenance",
         "mentoring",
-        "projectManagement"
+        "projectManagement",
+        "question"
       ]
     },
     {
@@ -57,7 +59,8 @@
         "review",
         "maintenance",
         "mentoring",
-        "projectManagement"
+        "projectManagement",
+        "question"
       ]
     },
     {
@@ -70,7 +73,8 @@
         "doc",
         "infra",
         "review",
-        "maintenance"
+        "maintenance",
+        "question"
       ]
     },
     {
@@ -83,7 +87,8 @@
         "doc",
         "infra",
         "review",
-        "maintenance"
+        "maintenance",
+        "question"
       ]
     },
     {
@@ -101,7 +106,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/2439881?v=4",
       "profile": "http://www.colorbleed.nl/",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "review",
+        "mentoring",
+        "question"
       ]
     },
     {
@@ -110,7 +119,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1860085?v=4",
       "profile": "https://github.com/tokejepsen",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "review",
+        "mentoring",
+        "question"
       ]
     },
     {
@@ -119,7 +132,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1087869?v=4",
       "profile": "https://barbierisimone.com/",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
