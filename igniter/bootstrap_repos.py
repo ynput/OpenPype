@@ -732,13 +732,9 @@ class BootstrapRepos:
         if repo_dir:
             version = self.get_version(repo_dir)
         else:
-            version = OpenPypeVersion.get_installed_version_str()
-            # QUESTION Can we use 'OPENPYPE_ROOT' env variable or it may
-            #   not be defined yet?
-            if getattr(sys, "frozen", False):
-                repo_dir = Path(sys.executable).parent
-            else:
-                repo_dir = Path(Path(__file__).parent / "..")
+            installed_version = OpenPypeVersion.get_installed_version()
+            version = str(installed_version)
+            repo_dir = installed_version.path
 
         if not version:
             self._print("OpenPype not found.", LOG_ERROR)
