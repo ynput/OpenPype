@@ -113,7 +113,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip"]
+    exclude_families = ["clip", "render.farm"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
@@ -131,11 +131,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     subset_grouping_profiles = None
 
     def process(self, instance):
-        self.integrated_file_sizes = {}
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
-            return
+        for ef in self.exclude_families:
+            if (
+                    instance.data["family"] == ef or
+                    ef in instance.data["families"]):
+                self.log.debug("Excluded family '{}' in '{}' or {}".format(
+                    ef, instance.data["family"], instance.data["families"]))
+                return
 
+        self.integrated_file_sizes = {}
         try:
             self.register(instance)
             self.log.info("Integrated Asset in to the database ...")
@@ -228,7 +232,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Ensure at least one file is set up for transfer in staging dir.
         repres = instance.data.get("representations")
-        assert repres, "Instance has no files to transfer"
+        repres = instance.data.get("representations")
+        msg = "Instance {} has no files to transfer".format(
+            instance.data["family"])
+        assert repres, msg
         assert isinstance(repres, (list, tuple)), (
             "Instance 'files' must be a list, got: {0} {1}".format(
                 str(type(repres)), str(repres)
