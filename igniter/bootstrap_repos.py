@@ -1094,24 +1094,8 @@ class BootstrapRepos:
             directory (Path): path to directory.
 
         """
+
         sys.path.insert(0, directory.as_posix())
-        directory /= "repos"
-        if not directory.exists() and not directory.is_dir():
-            return
-
-        roots = []
-        for item in directory.iterdir():
-            if item.is_dir():
-                root = item.as_posix()
-                if root not in roots:
-                    roots.append(root)
-                    sys.path.insert(0, root)
-
-        pythonpath = os.getenv("PYTHONPATH", "")
-        paths = pythonpath.split(os.pathsep)
-        paths += roots
-
-        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
     @staticmethod
     def find_openpype_version(version, staging):

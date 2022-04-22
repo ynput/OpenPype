@@ -824,6 +824,7 @@ def _bootstrap_from_code(use_version, use_staging):
         os.environ["OPENPYPE_REPOS_ROOT"] = _openpype_root
 
     # add self to sys.path of current process
+    # NOTE: this seems to be duplicate of 'add_paths_from_directory'
     sys.path.insert(0, _openpype_root)
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
