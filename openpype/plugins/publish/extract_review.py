@@ -18,7 +18,7 @@ from openpype.lib import (
     path_to_subprocess_arg,
 
     should_convert_for_ffmpeg,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory
 )
 import speedcopy
@@ -194,16 +194,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
             src_repre_staging_dir = repre["stagingDir"]
             # Receive filepath to first file in representation
             first_input_path = None
+            input_filepaths = []
             if not self.input_is_sequence(repre):
                 first_input_path = os.path.join(
                     src_repre_staging_dir, repre["files"]
                 )
+                input_filepaths.append(first_input_path)
             else:
                 for filename in repre["files"]:
-                    first_input_path = os.path.join(
+                    filepath = os.path.join(
                         src_repre_staging_dir, filename
                     )
-                    break
+                    input_filepaths.append(filepath)
+                    if first_input_path is None:
+                        first_input_path = filepath
 
             # Skip if file is not set
             if first_input_path is None:
@@ -230,13 +234,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
-                frame_start = instance.data["frameStart"]
-                frame_end = instance.data["frameEnd"]
-                convert_for_ffmpeg(
-                    first_input_path,
+                convert_input_paths_for_ffmpeg(
+                    input_filepaths,
                     new_staging_dir,
-                    frame_start,
-                    frame_end,
                     self.log
                 )
 
