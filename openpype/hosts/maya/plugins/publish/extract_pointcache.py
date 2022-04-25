@@ -6,7 +6,8 @@ import openpype.api
 from openpype.hosts.maya.api.lib import (
     extract_alembic,
     suspended_refresh,
-    maintained_selection
+    maintained_selection,
+    get_visible_in_frame_range
 )
 
 
@@ -72,6 +73,16 @@ class ExtractAlembic(openpype.api.Extractor):
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
             options["writeUVSets"] = True
+
+        if instance.data.get("visibleOnly", False):
+            # If we only want to include nodes that are visible in the frame
+            # range then we need to do our own check. Alembic's `visibleOnly`
+            # flag does not filter out those that are only hidden on some
+            # frames as it counts "animated" or "connected" visibilities as
+            # if it's always visible.
+            nodes = get_visible_in_frame_range(nodes,
+                                               start=start,
+                                               end=end)
 
         with suspended_refresh():
             with maintained_selection():
