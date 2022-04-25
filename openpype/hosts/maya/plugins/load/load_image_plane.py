@@ -1,7 +1,7 @@
 from Qt import QtWidgets, QtCore
 
-from avalon import io
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path
 )
@@ -216,9 +216,9 @@ class ImagePlaneLoader(load.LoaderPlugin):
         )
 
         # Set frame range.
-        version = io.find_one({"_id": representation["parent"]})
-        subset = io.find_one({"_id": version["parent"]})
-        asset = io.find_one({"_id": subset["parent"]})
+        version = legacy_io.find_one({"_id": representation["parent"]})
+        subset = legacy_io.find_one({"_id": version["parent"]})
+        asset = legacy_io.find_one({"_id": subset["parent"]})
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
         image_plane_shape.frameOffset.set(1 - start_frame)

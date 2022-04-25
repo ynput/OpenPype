@@ -8,8 +8,10 @@ publishing plugins.
 
 from Qt import QtWidgets, QtCore
 
-from avalon.api import AvalonMongoDB
-from openpype.pipeline import install_host
+from openpype.pipeline import (
+    install_host,
+    AvalonMongoDB,
+)
 from openpype.hosts.traypublisher import (
     api as traypublisher
 )

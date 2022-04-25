@@ -11,8 +11,6 @@ import platform
 import pyblish.api
 from pyblish.lib import MessageHandler
 
-from avalon import io, Session
-
 import openpype
 from openpype.modules import load_modules
 from openpype.settings import get_project_settings
@@ -24,6 +22,7 @@ from openpype.lib import (
 )
 
 from . import (
+    legacy_io,
     register_loader_plugin_path,
     register_inventory_action,
     register_creator_plugin_path,
@@ -57,7 +56,7 @@ def registered_root():
     if root:
         return root
 
-    root = Session.get("AVALON_PROJECTS")
+    root = legacy_io.Session.get("AVALON_PROJECTS")
     if root:
         return os.path.normpath(root)
     return ""
@@ -74,20 +73,20 @@ def install_host(host):
 
     _is_installed = True
 
-    io.install()
+    legacy_io.install()
 
     missing = list()
     for key in ("AVALON_PROJECT", "AVALON_ASSET"):
-        if key not in Session:
+        if key not in legacy_io.Session:
             missing.append(key)
 
     assert not missing, (
         "%s missing from environment, %s" % (
             ", ".join(missing),
-            json.dumps(Session, indent=4, sort_keys=True)
+            json.dumps(legacy_io.Session, indent=4, sort_keys=True)
         ))
 
-    project_name = Session["AVALON_PROJECT"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
     log.info("Activating %s.." % project_name)
 
     # Optional host install function
@@ -170,7 +169,7 @@ def uninstall_host():
 
     deregister_host()
 
-    io.uninstall()
+    legacy_io.uninstall()
 
     log.info("Successfully uninstalled Avalon!")
 
