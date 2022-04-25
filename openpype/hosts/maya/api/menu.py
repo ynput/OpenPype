@@ -11,7 +11,7 @@ import avalon.api
 from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
-from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
 
@@ -93,6 +93,15 @@ def install():
         cmds.menuItem(
             "Library...",
             command=lambda *args: host_tools.show_library_loader(
+                parent=parent_widget
+            )
+        )
+
+        cmds.menuItem(divider=True)
+
+        cmds.menuItem(
+            "Set Render Settings",
+            command=lambda *args: lib_rendersettings.set_default_renderer_settings( # noqa
                 parent=parent_widget
             )
         )
