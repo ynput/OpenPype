@@ -13,6 +13,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
+    legacy_io,
 )
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
@@ -142,9 +143,9 @@ def check_inventory():
     outdated_containers = []
     for container in host.ls():
         representation = container['representation']
-        representation_doc = io.find_one(
+        representation_doc = legacy_io.find_one(
             {
-                "_id": io.ObjectId(representation),
+                "_id": legacy_io.ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -280,11 +281,10 @@ def update_context_data(data, changes):
 
 def get_context_title():
     """Returns title for Creator window"""
-    import avalon.api
 
-    project_name = avalon.api.Session["AVALON_PROJECT"]
-    asset_name = avalon.api.Session["AVALON_ASSET"]
-    task_name = avalon.api.Session["AVALON_TASK"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
     return "{}/{}/{}".format(project_name, asset_name, task_name)
 
 

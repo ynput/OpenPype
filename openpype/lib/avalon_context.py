@@ -1969,7 +1969,7 @@ def get_last_workfile(
     return filename
 
 
-@with_avalon
+@with_pipeline_io
 def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
                                        link_type=None, max_depth=0):
     """Returns list of linked ids of particular type (if provided).
@@ -1987,7 +1987,7 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
     """
     # Create new dbcon if not passed and use passed project name
     if not dbcon:
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
     # Validate that passed dbcon has same project

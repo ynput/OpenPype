@@ -260,9 +260,8 @@ def update_context_data(data, changes):
 
 def get_context_title():
     """Returns title for Creator window"""
-    import avalon.api
 
-    project_name = avalon.api.Session["AVALON_PROJECT"]
-    asset_name = avalon.api.Session["AVALON_ASSET"]
-    task_name = avalon.api.Session["AVALON_TASK"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
     return "{}/{}/{}".format(project_name, asset_name, task_name)
