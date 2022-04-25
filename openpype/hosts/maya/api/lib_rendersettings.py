@@ -81,10 +81,10 @@ class RenderSettings(object):
         asset = get_asset()
         width = asset["data"].get("resolutionWidth")
         height = asset["data"].get("resolutionHeight")
-
+        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"]
         if renderer == "arnold":
             # set renderer settings for Arnold from project settings
-            self._set_Arnold_settings(width, height)
+            self._set_Arnold_settings(arnold_render_presets, width, height)
 
         if renderer == "vray":
             self._set_vray_settings(aov_separator, width, height)
@@ -92,13 +92,12 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
 
-    def _set_Arnold_settings(self, width, height):
+    def _set_Arnold_settings(self, settings, width, height):
         """Sets settings for Arnold."""
 
-        img_ext = self.arnold_renderer.get("image_format")
+        img_ext = settings["image_format"]
         self._set_global_output_settings()
-        cmds.setAttr("defaultArnoldDriver.ai_translator",
-                    img_ext, type="string")
+        cmds.setAttr("defaultArnoldDriver.ai_translator", img_ext, type="string")
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
 
