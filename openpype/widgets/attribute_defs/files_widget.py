@@ -89,31 +89,26 @@ class FilesModel(QtGui.QStandardItemModel):
         if not items:
             return
 
-        obj_items = FileDefItem.from_value(items, self._sequence_exts)
-        if not obj_items:
+        file_items = FileDefItem.from_value(items, self._sequence_exts)
+        if not file_items:
             return
 
         if self._single_item:
-            obj_items = [obj_items[0]]
+            file_items = [file_items[0]]
             current_ids = list(self._file_items_by_id.keys())
             if current_ids:
                 self.remove_item_by_ids(current_ids)
 
         new_model_items = []
-        for obj_item in obj_items:
-            _, ext = os.path.splitext(obj_item.filenames[0])
-            if ext:
-                icon_pixmap = get_pixmap(filename="file.png")
-            else:
-                icon_pixmap = get_pixmap(filename="folder.png")
-
-            item_id, model_item = self._create_item(obj_item, icon_pixmap)
+        for file_item in file_items:
+            item_id, model_item = self._create_item(file_item)
             new_model_items.append(model_item)
-            self._file_items_by_id[item_id] = obj_item
+            self._file_items_by_id[item_id] = file_item
             self._items_by_id[item_id] = model_item
 
         if new_model_items:
-            self.invisibleRootItem().appendRows(new_model_items)
+            roow_item = self.invisibleRootItem()
+            roow_item.appendRows(new_model_items)
 
     def remove_item_by_ids(self, item_ids):
         if not item_ids:
@@ -134,7 +129,16 @@ class FilesModel(QtGui.QStandardItemModel):
     def get_file_item_by_id(self, item_id):
         return self._file_items_by_id.get(item_id)
 
-    def _create_item(self, file_item, icon_pixmap=None):
+    def _create_item(self, file_item):
+        if file_item.is_dir:
+            icon_pixmap = paint_image_with_color(
+                get_image(filename="folder.png"), QtCore.Qt.white
+            )
+        else:
+            icon_pixmap = paint_image_with_color(
+                get_image(filename="file.png"), QtCore.Qt.white
+            )
+
         item = QtGui.QStandardItem()
         item_id = str(uuid.uuid4())
         item.setData(item_id, ITEM_ID_ROLE)
@@ -223,7 +227,7 @@ class ItemWidget(QtWidgets.QWidget):
         label_widget = QtWidgets.QLabel(label, self)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(5, 5, 0, 5)
         layout.addWidget(icon_widget, 0)
         layout.addWidget(label_widget, 1)
 
