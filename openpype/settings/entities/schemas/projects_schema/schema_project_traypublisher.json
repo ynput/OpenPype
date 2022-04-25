@@ -1,0 +1,50 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "traypublisher",
+    "label": "Tray Publisher",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": false,
+                    "key": "TranscodeCreator",
+                    "label": "TranscodeCreator",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "key": "preset_templates",
+                            "label": "Output presets",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "key": "args",
+                                        "label": "Args",
+                                        "object_type": {
+                                            "type": "text"
+                                        }
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "output_extension",
+                                        "label": "Output extension"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
