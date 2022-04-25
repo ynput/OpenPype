@@ -1,4 +1,4 @@
-from maya import cmds
+from maya import cmds, mel
 
 from openpype.api import (
     get_project_settings,
@@ -94,12 +94,16 @@ class RenderSettings(object):
 
     def _set_Arnold_settings(self, settings, width, height):
         """Sets settings for Arnold."""
+        mel.eval('unifiedRenderGlobalsWindow;')
 
+        if cmds.window("unifiedRenderGlobalsWindow", exists=True):
+            cmds.deleteUI("unifiedRenderGlobalsWindow")
+
+        cmds.setAttr("defaultResolution.width", width)
+        cmds.setAttr("defaultResolution.height", height)
         img_ext = settings["image_format"]
         self._set_global_output_settings()
         cmds.setAttr("defaultArnoldDriver.ai_translator", img_ext, type="string")
-        cmds.setAttr("defaultResolution.width", width)
-        cmds.setAttr("defaultResolution.height", height)
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
