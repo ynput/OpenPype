@@ -74,7 +74,7 @@ def get_editor_executable_path(engine_path: Path) -> Path:
     """Get UE4 Editor executable path."""
     ue4_path = engine_path / "Engine/Binaries"
     if platform.system().lower() == "windows":
-        ue4_path /= "Win64/UE4Editor.exe"
+        ue4_path /= "Win64/UnrealEditor.exe"
 
     elif platform.system().lower() == "linux":
         ue4_path /= "Linux/UE4Editor"
@@ -420,7 +420,7 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
         f.write(game_mode_h)
 
     u_build_tool = Path(
-        engine_path / "Engine/Binaries/DotNET/UnrealBuildTool.exe")
+        engine_path / "Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe")
     u_header_tool = None
 
     arch = "Win64"
