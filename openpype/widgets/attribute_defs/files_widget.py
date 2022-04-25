@@ -73,32 +73,19 @@ class DropEmpty(QtWidgets.QWidget):
 
 
 class FilesModel(QtGui.QStandardItemModel):
-    sequence_exts = [
-        ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
-        ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
-        ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
-        ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
-        ".jng", ".jpeg", ".jpeg-ls", ".2000", ".jpg", ".xr",
-        ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
-        ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-        ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
-        ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
-        ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
-        ".xpm", ".xwd"
-    ]
-
-    def __init__(self, multivalue):
+    def __init__(self, allow_multiple_items, sequence_exts):
         super(FilesModel, self).__init__()
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
 
-        self._multivalue = multivalue
+        self._allow_multiple_items = allow_multiple_items
+        self.sequence_exts = sequence_exts
 
     def add_filepaths(self, filepaths):
         if not filepaths:
             return
 
-        if not self._multivalue:
+        if not self._allow_multiple_items:
             filepaths = [filepaths[0]]
             item_ids = []
             for items in self._items_by_dirpath.values():
@@ -281,6 +268,17 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
             self._allowed_extensions = extensions
             self.invalidateFilter()
 
+    def are_valid_files(self, filepaths):
+        for filepath in filepaths:
+            if os.path.isfile(filepath):
+                _, ext = os.path.splitext(filepath)
+                if ext in self._allowed_extensions:
+                    return True
+
+            elif self._allow_folders:
+                return True
+        return False
+
     def filterAcceptsRow(self, row, parent_index):
         model = self.sourceModel()
         index = model.index(row, self.filterKeyColumn(), parent_index)
@@ -385,13 +383,13 @@ class FilesView(QtWidgets.QListView):
 class FilesWidget(QtWidgets.QFrame):
     value_changed = QtCore.Signal()
 
-    def __init__(self, multiselect, parent):
+    def __init__(self, allow_multiple_items, sequence_exts, parent):
         super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
         empty_widget = DropEmpty(self)
 
-        files_model = FilesModel(multiselect)
+        files_model = FilesModel(allow_multiple_items, sequence_exts)
         files_proxy_model = FilesProxyModel()
         files_proxy_model.setSourceModel(files_model)
         files_view = FilesView(self)
@@ -406,13 +404,9 @@ class FilesWidget(QtWidgets.QFrame):
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
 
-        drag_label = DragLabel()
-        drag_label.setVisible(False)
-
-        self._drag_label = drag_label
-
         self._in_set_value = False
 
+        self._allow_multiple_items = allow_multiple_items
         self._empty_widget = empty_widget
         self._files_model = files_model
         self._files_proxy_model = files_proxy_model
@@ -544,8 +538,15 @@ class FilesWidget(QtWidgets.QFrame):
     def dragEnterEvent(self, event):
         mime_data = event.mimeData()
         if mime_data.hasUrls():
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
+            filepaths = []
+            for url in mime_data.urls():
+                filepath = url.toLocalFile()
+                if os.path.exists(filepath):
+                    filepaths.append(filepath)
+
+            if self._files_proxy_model.are_valid_files(filepaths):
+                event.setDropAction(QtCore.Qt.CopyAction)
+                event.accept()
 
     def dragLeaveEvent(self, event):
         event.accept()
@@ -574,13 +575,3 @@ class FilesWidget(QtWidgets.QFrame):
         files_exists = self._files_proxy_model.rowCount() > 0
         self._files_view.setVisible(files_exists)
         self._empty_widget.setVisible(not files_exists)
-
-
-class DragLabel(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super(DragLabel, self).__init__(parent)
-
-        t_label = QtWidgets.QLabel("TESTING", self)
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(t_label)
-        self._t_label = t_label

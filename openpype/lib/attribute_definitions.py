@@ -3,6 +3,7 @@ import re
 import collections
 import uuid
 import json
+import copy
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -438,9 +439,23 @@ class FileDef(AbtractAttrDef):
         default(str, list<str>): Defautl value.
     """
 
+    default_sequence_extensions = [
+        ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave",
+        ".cal", ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr",
+        ".fits", ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc",
+        ".icer", ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig",
+        ".jbig2", ".jng", ".jpeg", ".jpeg-ls", ".2000", ".jpg", ".xr",
+        ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
+        ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+        ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+        ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff",
+        ".tiff/ep", ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp",
+        ".xbm", ".xcf", ".xpm", ".xwd"
+    ]
+
     def __init__(
         self, key, multipath=False, folders=None, extensions=None,
-        default=None, **kwargs
+        sequence_extensions=None, default=None, **kwargs
     ):
         if folders is None and extensions is None:
             folders = True
@@ -479,9 +494,13 @@ class FileDef(AbtractAttrDef):
                 is_label_horizontal = False
             kwargs["is_label_horizontal"] = is_label_horizontal
 
+        if sequence_extensions is None:
+            sequence_extensions = self.default_sequence_extensions
+
         self.multipath = multipath
         self.folders = folders
-        self.extensions = extensions
+        self.extensions = set(extensions)
+        self.sequence_extensions = set(sequence_extensions)
         super(FileDef, self).__init__(key, default=default, **kwargs)
 
     def __eq__(self, other):
@@ -492,6 +511,7 @@ class FileDef(AbtractAttrDef):
             self.multipath == other.multipath
             and self.folders == other.folders
             and self.extensions == other.extensions
+            and self.sequence_extensions == self.sequence_extensions
         )
 
     def convert_value(self, value):

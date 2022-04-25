@@ -340,7 +340,9 @@ class FileAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         self.multipath = self.attr_def.multipath
 
-        input_widget = FilesWidget(self.multipath, self)
+        input_widget = FilesWidget(
+            self.multipath, self.attr_def.sequence_extensions, self
+        )
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
