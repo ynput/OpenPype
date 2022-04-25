@@ -45,7 +45,7 @@ def install():
             parent="MayaWindow"
         )
 
-        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()  
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             avalon.api.Session["AVALON_ASSET"],
