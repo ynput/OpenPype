@@ -8,7 +8,7 @@ from avalon.api import Session
 from openpype.pipeline import CreatorError
 
 
-class RenderSettzings(object):
+class RenderSettings(object):
 
     _image_prefix_nodes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
