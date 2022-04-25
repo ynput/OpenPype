@@ -338,10 +338,8 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
 
 class FileAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
-        self.multipath = self.attr_def.multipath
-
         input_widget = FilesWidget(
-            self.multipath, self.attr_def.sequence_extensions, self
+             self.attr_def.single_item, self.attr_def.sequence_extensions, self
         )
 
         if self.attr_def.tooltip:

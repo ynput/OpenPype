@@ -75,10 +75,10 @@ class DropEmpty(QtWidgets.QWidget):
 
 
 class FilesModel(QtGui.QStandardItemModel):
-    def __init__(self, allow_multiple_items, sequence_exts):
+    def __init__(self, single_item, sequence_exts):
         super(FilesModel, self).__init__()
 
-        self._allow_multiple_items = allow_multiple_items
+        self._single_item = single_item
         self._sequence_exts = sequence_exts
 
         self._items_by_id = {}
@@ -94,7 +94,7 @@ class FilesModel(QtGui.QStandardItemModel):
         if not obj_items:
             return
 
-        if not self._allow_multiple_items:
+        if self._single_item:
             obj_items = [obj_items[0]]
             current_ids = list(self._file_items_by_id.keys())
             if current_ids:
@@ -288,13 +288,13 @@ class FilesView(QtWidgets.QListView):
 class FilesWidget(QtWidgets.QFrame):
     value_changed = QtCore.Signal()
 
-    def __init__(self, allow_multiple_items, sequence_exts, parent):
+    def __init__(self, single_item, sequence_exts, parent):
         super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
         empty_widget = DropEmpty(self)
 
-        files_model = FilesModel(allow_multiple_items, sequence_exts)
+        files_model = FilesModel(single_item, sequence_exts)
         files_proxy_model = FilesProxyModel()
         files_proxy_model.setSourceModel(files_model)
         files_view = FilesView(self)
@@ -311,7 +311,6 @@ class FilesWidget(QtWidgets.QFrame):
 
         self._in_set_value = False
 
-        self._allow_multiple_items = allow_multiple_items
         self._empty_widget = empty_widget
         self._files_model = files_model
         self._files_proxy_model = files_proxy_model

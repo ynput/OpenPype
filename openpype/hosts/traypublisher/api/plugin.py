@@ -74,7 +74,7 @@ class SettingsCreator(TrayPublishCreator):
             folders=False,
             extensions=self.extensions,
             sequence_extensions=self.sequence_extensions,
-            label="Filepath"
+            label="Filepath",
         )
         output.append(file_def)
         if self.enable_review:

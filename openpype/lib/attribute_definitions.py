@@ -505,7 +505,7 @@ class FileDef(AbtractAttrDef):
     It is possible to define filters of allowed file extensions and if supports
     folders.
     Args:
-        multipath(bool): Allow multiple path.
+        single_item(bool): Allow only single path item.
         folders(bool): Allow folder paths.
         extensions(list<str>): Allow files with extensions. Empty list will
             allow all extensions and None will disable files completely.
@@ -527,7 +527,7 @@ class FileDef(AbtractAttrDef):
     ]
 
     def __init__(
-        self, key, multipath=False, folders=None, extensions=None,
+        self, key, single_item=True, folders=None, extensions=None,
         sequence_extensions=None, default=None, **kwargs
     ):
         if folders is None and extensions is None:
@@ -535,19 +535,12 @@ class FileDef(AbtractAttrDef):
             extensions = []
 
         if default is None:
-            if multipath:
-                default = []
-            else:
+            if single_item:
                 default = FileDefItem.create_empty_item().to_dict()
-        else:
-            if multipath:
-                if not isinstance(default, (tuple, list, set)):
-                    raise TypeError((
-                        "'default' argument must be 'list', 'tuple' or 'set'"
-                        ", not '{}'"
-                    ).format(type(default)))
-
             else:
+                default = []
+        else:
+            if single_item:
                 if isinstance(default, dict):
                     FileDefItem.from_dict(default)
 
@@ -559,18 +552,26 @@ class FileDef(AbtractAttrDef):
                         "'default' argument must be 'str' or 'dict' not '{}'"
                     ).format(type(default)))
 
+            else:
+                if not isinstance(default, (tuple, list, set)):
+                    raise TypeError((
+                        "'default' argument must be 'list', 'tuple' or 'set'"
+                        ", not '{}'"
+                    ).format(type(default)))
+
         # Change horizontal label
         is_label_horizontal = kwargs.get("is_label_horizontal")
         if is_label_horizontal is None:
-            is_label_horizontal = True
-            if multipath:
+            if single_item:
+                is_label_horizontal = True
+            else:
                 is_label_horizontal = False
             kwargs["is_label_horizontal"] = is_label_horizontal
 
         if sequence_extensions is None:
             sequence_extensions = self.default_sequence_extensions
 
-        self.multipath = multipath
+        self.single_item = single_item
         self.folders = folders
         self.extensions = set(extensions)
         self.sequence_extensions = set(sequence_extensions)
@@ -581,7 +582,7 @@ class FileDef(AbtractAttrDef):
             return False
 
         return (
-            self.multipath == other.multipath
+            self.single_item == other.single_item
             and self.folders == other.folders
             and self.extensions == other.extensions
             and self.sequence_extensions == self.sequence_extensions
@@ -611,13 +612,13 @@ class FileDef(AbtractAttrDef):
                     for file_item in file_items
                 ])
 
-            if self.multipath:
+            if not self.single_item:
                 return dict_items
 
             if not dict_items:
                 return self.default
             return dict_items[0]
 
-        if self.multipath:
-            return []
-        return FileDefItem.create_empty_item().to_dict()
+        if self.single_item:
+            return FileDefItem.create_empty_item().to_dict()
+        return []
