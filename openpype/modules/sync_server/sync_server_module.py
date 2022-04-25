@@ -212,36 +212,38 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     def create_validate_project_task(self, collection, site_name):
         """Adds metadata about project files validation on a queue.
 
-            This process will loop through all representation and check if
-            their files actually exist on an active site.
+        This process will loop through all representation and check if
+        their files actually exist on an active site.
 
-            This might be useful for edge cases when artists is switching
-            between sites, remote site is actually physically mounted and
-            active site has same file urls etc.
+        It also checks if site is set in DB, but file is physically not
+        present
 
-            Task will run on a asyncio loop, shouldn't be blocking.
+        This might be useful for edge cases when artists is switching
+        between sites, remote site is actually physically mounted and
+        active site has same file urls etc.
+
+        Task will run on a asyncio loop, shouldn't be blocking.
         """
         task = {
             "type": "validate",
             "project_name": collection,
-            "func": lambda: self.validate_project(collection, site_name)
+            "func": lambda: self.validate_project(collection, site_name,
+                                                  reset_missing=True)
         }
         self.projects_processed.add(collection)
         self.long_running_tasks.append(task)
 
-    def validate_project(self, collection, site_name, remove_missing=False):
-        """
-            Validate 'collection' of 'site_name' and its local files
+    def validate_project(self, collection, site_name, reset_missing=False):
+        """Validate 'collection' of 'site_name' and its local files
 
-            If file present and not marked with a 'site_name' in DB, DB is
-            updated with site name and file modified date.
+        If file present and not marked with a 'site_name' in DB, DB is
+        updated with site name and file modified date.
 
-            Args:
-                module (SyncServerModule)
-                collection (string): project name
-                site_name (string): active site name
-                remove_missing (bool): if True remove sites in DB if missing
-                    physically
+        Args:
+            collection (string): project name
+            site_name (string): active site name
+            reset_missing (bool): if True reset site in DB if missing
+                physically
         """
         self.log.debug("Validation of {} for {} started".format(collection,
                                                                 site_name))
@@ -256,18 +258,17 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             return
 
         sites_added = 0
-        sites_removed = 0
+        sites_reset = 0
         for repre in representations:
             repre_id = repre["_id"]
             for repre_file in repre.get("files", []):
                 try:
-                    has_site = site_name in [site["name"]
-                                             for site in repre_file["sites"]]
-                except TypeError:
+                    is_on_site = site_name in [site["name"]
+                                               for site in repre_file["sites"]
+                                               if (site.get("created_dt") and
+                                               not site.get("error"))]
+                except (TypeError, AttributeError):
                     self.log.debug("Structure error in {}".format(repre_id))
-                    continue
-
-                if has_site and not remove_missing:
                     continue
 
                 file_path = repre_file.get("path", "")
@@ -275,10 +276,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                                            site_name,
                                                            file_path)
 
-                if local_file_path and os.path.exists(local_file_path):
-                    self.log.debug("Adding site {} for {}".format(site_name,
-                                                                  repre_id))
-                    if not has_site:
+                file_exists = (local_file_path and
+                               os.path.exists(local_file_path))
+                if not is_on_site:
+                    if file_exists:
+                        self.log.debug(
+                            "Adding site {} for {}".format(site_name,
+                                                           repre_id))
+
                         query = {
                             "_id": repre_id
                         }
@@ -288,25 +293,25 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                 "created_dt": created_dt}
                         self._add_site(collection, query, repre, elem,
                                        site_name=site_name,
-                                       file_id=repre_file["_id"])
+                                       file_id=repre_file["_id"],
+                                       force=True)
                         sites_added += 1
                 else:
-                    if has_site and remove_missing:
-                        self.log.debug("Removing site {} for {}".
+                    if not file_exists and reset_missing:
+                        self.log.debug("Resetting site {} for {}".
                                        format(site_name, repre_id))
-                        self.reset_provider_for_file(collection,
-                                                     repre_id,
-                                                     file_id=repre_file["_id"],
-                                                     remove=True)
-                        sites_removed += 1
+                        self.reset_site_on_representation(
+                            collection, repre_id, site_name=site_name,
+                            file_id=repre_file["_id"])
+                        sites_reset += 1
 
         if sites_added % 100 == 0:
             self.log.debug("Sites added {}".format(sites_added))
 
         self.log.debug("Validation of {} for {} ended".format(collection,
                                                               site_name))
-        self.log.info("Sites added {}, sites removed {}".format(sites_added,
-                                                                sites_removed))
+        self.log.info("Sites added {}, sites reset {}".format(sites_added,
+                                                              reset_missing))
 
     def pause_representation(self, collection, representation_id, site_name):
         """
