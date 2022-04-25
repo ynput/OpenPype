@@ -8,7 +8,7 @@ from avalon.api import Session
 from openpype.pipeline import CreatorError
 
 
-class RenderSettings(object):
+class RenderSettzings(object):
 
     _image_prefix_nodes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
@@ -84,7 +84,7 @@ class RenderSettings(object):
 
         if renderer == "arnold":
             # set renderer settings for Arnold from project settings
-            self._set_Arnold_settings()
+            self._set_Arnold_settings(width, height)
 
         if renderer == "vray":
             self._set_vray_settings(aov_separator, width, height)
