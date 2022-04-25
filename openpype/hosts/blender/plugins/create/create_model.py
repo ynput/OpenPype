@@ -4,7 +4,11 @@ import bpy
 
 from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+
+from openpype.hosts.blender.api.pluginplus import (
+    link_objects_to_collection,
+    create_container,
+)
 
 
 class CreateModel(plugin.Creator):
@@ -16,18 +20,13 @@ class CreateModel(plugin.Creator):
     icon = "cube"
 
     def process(self):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread"""
         mti = ops.MainThreadItem(self._process)
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
 
-        # Create instance object
+        # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
@@ -37,13 +36,19 @@ class CreateModel(plugin.Creator):
         self.data['task'] = legacy_io.Session.get('AVALON_TASK')
         lib.imprint(asset_group, self.data)
 
-        # Add selected objects to instance
-        if (self.options or {}).get("useSelection"):
-            bpy.context.view_layer.objects.active = asset_group
-            selected = lib.get_selection()
-            for obj in selected:
-                obj.select_set(True)
-            selected.append(asset_group)
-            bpy.ops.object.parent_set(keep_transform=True)
+        # Create the container
+        container = create_container(name)
+        if container is None:
+            return
 
-        return asset_group
+        # Add custom property on the instance container with the data
+        self.data["task"] = api.Session.get("AVALON_TASK")
+        lib.imprint(container, self.data)
+
+        # Add selected objects to container
+        if (self.options or {}).get("useSelection"):
+            # if has no selected object ask for adding all scene content
+            selected = lib.get_selection()
+            link_objects_to_collection(selected, container)
+
+        return container

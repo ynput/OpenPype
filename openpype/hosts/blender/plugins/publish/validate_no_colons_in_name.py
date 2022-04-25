@@ -1,5 +1,7 @@
 from typing import List
 
+import bpy
+
 import pyblish.api
 import openpype.hosts.blender.api.action
 
@@ -23,6 +25,8 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance) -> List:
         invalid = []
         for obj in [obj for obj in instance]:
+            if isinstance(obj, bpy.types.Collection):
+                continue
             if ':' in obj.name:
                 invalid.append(obj)
             if obj.type == 'ARMATURE':
