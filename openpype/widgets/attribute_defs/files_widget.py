@@ -1,8 +1,7 @@
 import os
 import collections
 import uuid
-import clique
-import six
+
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.lib import FileDefItem
@@ -213,8 +212,6 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 
 
 class ItemWidget(QtWidgets.QWidget):
-    remove_requested = QtCore.Signal(str)
-
     def __init__(self, item_id, label, pixmap_icon, parent=None):
         self._item_id = item_id
 
@@ -224,30 +221,20 @@ class ItemWidget(QtWidgets.QWidget):
 
         icon_widget = PixmapLabel(pixmap_icon, self)
         label_widget = QtWidgets.QLabel(label, self)
-        pixmap = paint_image_with_color(
-            get_image(filename="delete.png"), QtCore.Qt.white
-        )
-        remove_btn = IconButton(self)
-        remove_btn.setIcon(QtGui.QIcon(pixmap))
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(icon_widget, 0)
         layout.addWidget(label_widget, 1)
-        layout.addWidget(remove_btn, 0)
-
-        remove_btn.clicked.connect(self._on_remove_clicked)
 
         self._icon_widget = icon_widget
         self._label_widget = label_widget
-        self._remove_btn = remove_btn
-
-    def _on_remove_clicked(self):
-        self.remove_requested.emit(self._item_id)
 
 
 class FilesView(QtWidgets.QListView):
     """View showing instances and their groups."""
+
+    remove_requested = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
         super(FilesView, self).__init__(*args, **kwargs)
@@ -256,6 +243,17 @@ class FilesView(QtWidgets.QListView):
         self.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
+
+        remove_btn = IconButton(self)
+        pix = paint_image_with_color(
+            get_image(filename="delete.png"), QtCore.Qt.white
+        )
+        icon = QtGui.QIcon(pix)
+        remove_btn.setIcon(icon)
+
+        remove_btn.clicked.connect(self._on_remove_clicked)
+
+        self._remove_btn = remove_btn
 
     def get_selected_item_ids(self):
         """Ids of selected instances."""
@@ -284,6 +282,24 @@ class FilesView(QtWidgets.QListView):
 
         return super(FilesView, self).event(event)
 
+    def _on_remove_clicked(self):
+        self.remove_requested.emit()
+
+    def _update_remove_btn(self):
+        viewport = self.viewport()
+        height = viewport.height()
+        pos_x = viewport.width() - self._remove_btn.width() - 5
+        pos_y = height - self._remove_btn.height() - 5
+        self._remove_btn.move(max(0, pos_x), max(0, pos_y))
+
+    def resizeEvent(self, event):
+        super(FilesView, self).resizeEvent(event)
+        self._update_remove_btn()
+
+    def showEvent(self, event):
+        super(FilesView, self).showEvent(event)
+        self._update_remove_btn()
+
 
 class FilesWidget(QtWidgets.QFrame):
     value_changed = QtCore.Signal()
@@ -308,7 +324,7 @@ class FilesWidget(QtWidgets.QFrame):
 
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
-
+        files_view.remove_requested.connect(self._on_remove_requested)
         self._in_set_value = False
 
         self._empty_widget = empty_widget
@@ -373,7 +389,6 @@ class FilesWidget(QtWidgets.QFrame):
             self._files_proxy_model.setData(
                 index, widget.sizeHint(), QtCore.Qt.SizeHintRole
             )
-            widget.remove_requested.connect(self._on_remove_request)
             self._widgets_by_id[item_id] = widget
 
         self._files_proxy_model.sort(0)
@@ -401,23 +416,10 @@ class FilesWidget(QtWidgets.QFrame):
         if not self._in_set_value:
             self.value_changed.emit()
 
-    def _on_remove_request(self, item_id):
-        found_index = None
-        for row in range(self._files_model.rowCount()):
-            index = self._files_model.index(row, 0)
-            _item_id = index.data(ITEM_ID_ROLE)
-            if item_id == _item_id:
-                found_index = index
-                break
-
-        if found_index is None:
-            return
-
+    def _on_remove_requested(self):
         items_to_delete = self._files_view.get_selected_item_ids()
-        if item_id not in items_to_delete:
-            items_to_delete = [item_id]
-
-        self._remove_item_by_ids(items_to_delete)
+        if items_to_delete:
+            self._remove_item_by_ids(items_to_delete)
 
     def sizeHint(self):
         # Get size hints of widget and visible widgets
