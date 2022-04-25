@@ -1772,7 +1772,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             (int) - number of failed attempts
         """
         _, rec = self._get_site_rec(file.get("sites", []), provider)
-        return rec.get("tries", 0)
+        return self._get_tries_count_from_rec(rec)
 
     def _get_progress_dict(self, progress):
         """
