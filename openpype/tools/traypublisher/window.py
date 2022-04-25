@@ -108,6 +108,13 @@ class TrayPublishWindow(PublisherWindow):
     def __init__(self, *args, **kwargs):
         super(TrayPublishWindow, self).__init__(reset_on_show=False)
 
+        flags = self.windowFlags()
+        # Disable always on top hint
+        if flags & QtCore.Qt.WindowStaysOnTopHint:
+            flags ^= QtCore.Qt.WindowStaysOnTopHint
+
+        self.setWindowFlags(flags)
+
         overlay_widget = StandaloneOverlayWidget(self)
 
         btns_widget = QtWidgets.QWidget(self)
