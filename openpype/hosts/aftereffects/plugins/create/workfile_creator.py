@@ -41,7 +41,10 @@ class AEWorkfileCreator(AutoCreator):
         host_name = legacy_io.Session["AVALON_APP"]
 
         if existing_instance is None:
-            asset_doc = legacy_io.find_one({"type": "asset", "name": asset_name})
+            asset_doc = legacy_io.find_one({
+                "type": "asset",
+                "name": asset_name
+            })
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
