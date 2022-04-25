@@ -324,6 +324,7 @@ class MongoSettingsHandler(SettingsHandler):
     global_general_keys = (
         "openpype_path",
         "admin_password",
+        "log_to_server",
         "disk_mapping",
         "production_version",
         "staging_version"
