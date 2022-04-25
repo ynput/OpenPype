@@ -1063,6 +1063,14 @@ def add_deadline_tab(node):
     knob.setValue(0)
     node.addKnob(knob)
 
+    knob = nuke.Text_Knob("divd", '')
+    knob.setValue('')
+    node.addKnob(knob)
+
+    knob = nuke.Boolean_Knob("suspend_publish", "Suspend publish")
+    knob.setValue(False)
+    node.addKnob(knob)
+
 
 def get_deadline_knob_names():
     return [

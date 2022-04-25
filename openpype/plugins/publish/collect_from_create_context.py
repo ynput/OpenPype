@@ -26,7 +26,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         # Update global data to context
         context.data.update(create_context.context_data_to_store())
-
+        context.data["newPublishing"] = True
         # Update context data
         for key in ("AVALON_PROJECT", "AVALON_ASSET", "AVALON_TASK"):
             value = create_context.dbcon.Session.get(key)

@@ -149,13 +149,9 @@ def list_instances():
     instances = []
     layers_meta = stub.get_layers_metadata()
     if layers_meta:
-        for key, instance in layers_meta.items():
-            schema = instance.get("schema")
-            if schema and "container" in schema:
-                continue
-
-            instance['uuid'] = key
-            instances.append(instance)
+        for instance in layers_meta:
+            if instance.get("id") == "pyblish.avalon.instance":
+                instances.append(instance)
 
     return instances
 
@@ -176,11 +172,18 @@ def remove_instance(instance):
     if not stub:
         return
 
-    stub.remove_instance(instance.get("uuid"))
-    layer = stub.get_layer(instance.get("uuid"))
-    if layer:
-        stub.rename_layer(instance.get("uuid"),
-                          layer.name.replace(stub.PUBLISH_ICON, ''))
+    inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
+    if not inst_id:
+        log.warning("No instance identifier for {}".format(instance))
+        return
+
+    stub.remove_instance(inst_id)
+
+    if instance.get("members"):
+        item = stub.get_layer(instance["members"][0])
+        if item:
+            stub.rename_layer(item.id,
+                              item.name.replace(stub.PUBLISH_ICON, ''))
 
 
 def _get_stub():
@@ -232,6 +235,34 @@ def containerise(
         "members": [str(layer.id)]
     }
     stub = lib.stub()
-    stub.imprint(layer, data)
+    stub.imprint(layer.id, data)
 
     return layer
+
+
+def get_context_data():
+    """Get stored values for context (validation enable/disable etc)"""
+    meta = _get_stub().get_layers_metadata()
+    for item in meta:
+        if item.get("id") == "publish_context":
+            item.pop("id")
+            return item
+
+    return {}
+
+
+def update_context_data(data, changes):
+    """Store value needed for context"""
+    item = data
+    item["id"] = "publish_context"
+    _get_stub().imprint(item["id"], item)
+
+
+def get_context_title():
+    """Returns title for Creator window"""
+    import avalon.api
+
+    project_name = avalon.api.Session["AVALON_PROJECT"]
+    asset_name = avalon.api.Session["AVALON_ASSET"]
+    task_name = avalon.api.Session["AVALON_TASK"]
+    return "{}/{}/{}".format(project_name, asset_name, task_name)

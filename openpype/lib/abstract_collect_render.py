@@ -31,6 +31,7 @@ class RenderInstance(object):
     source = attr.ib()  # path to source scene file
     label = attr.ib()  # label to show in GUI
     subset = attr.ib()  # subset name
+    task = attr.ib()  # task name
     asset = attr.ib()  # asset name (AVALON_ASSET)
     attachTo = attr.ib()  # subset name to attach render to
     setMembers = attr.ib()  # list of nodes/members producing render output
@@ -139,7 +140,9 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
             try:
                 if "workfile" in instance.data["families"]:
                     instance.data["publish"] = True
-                if "renderFarm" in instance.data["families"]:
+                # TODO merge renderFarm and render.farm
+                if ("renderFarm" in instance.data["families"] or
+                        "render.farm" in instance.data["families"]):
                     instance.data["remove"] = True
             except KeyError:
                 # be tolerant if 'families' is missing.

@@ -2226,15 +2226,17 @@ def validate_fps():
 
         parent = get_main_window()
 
-        dialog = popup.Popup2(parent=parent)
+        dialog = popup.PopupUpdateKeys(parent=parent)
         dialog.setModal(True)
-        dialog.setWindowTitle("Maya scene not in line with project")
-        dialog.setMessage("The FPS is out of sync, please fix")
+        dialog.setWindowTitle("Maya scene does not match project FPS")
+        dialog.setMessage("Scene %i FPS does not match project %i FPS" %
+                          (current_fps, fps))
+        dialog.setButtonText("Fix")
 
         # Set new text for button (add optional argument for the popup?)
         toggle = dialog.widgets["toggle"]
         update = toggle.isChecked()
-        dialog.on_show.connect(lambda: set_scene_fps(fps, update))
+        dialog.on_clicked_state.connect(lambda: set_scene_fps(fps, update))
 
         dialog.show()
 

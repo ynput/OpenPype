@@ -248,7 +248,8 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 self.log.debug("collecting sequence: {}".format(collections))
                 instance.data["frameStart"] = int(component["frameStart"])
                 instance.data["frameEnd"] = int(component["frameEnd"])
-                instance.data["fps"] = int(component["fps"])
+                if component.get("fps"):
+                    instance.data["fps"] = int(component["fps"])
 
             ext = component["ext"]
             if ext.startswith("."):

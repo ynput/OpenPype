@@ -12,7 +12,6 @@ from .create import (
     Creator,
     AutoCreator,
     CreatedInstance,
-
     CreatorError,
 
     LegacyCreator,
@@ -102,6 +101,7 @@ __all__ = (
     "Creator",
     "AutoCreator",
     "CreatedInstance",
+    "CreatorError",
 
     "CreatorError",
 

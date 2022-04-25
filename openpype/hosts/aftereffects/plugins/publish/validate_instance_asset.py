@@ -31,7 +31,7 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
             data = stub.read(instance[0])
 
             data["asset"] = legacy_io.Session["AVALON_ASSET"]
-            stub.imprint(instance[0], data)
+            stub.imprint(instance[0].instance_id, data)
 
 
 class ValidateInstanceAsset(pyblish.api.InstancePlugin):

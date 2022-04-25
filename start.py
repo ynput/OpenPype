@@ -191,6 +191,51 @@ else:
     if os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
         os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
+# Enabled logging debug mode when "--debug" is passed
+if "--verbose" in sys.argv:
+    expected_values = (
+        "Expected: notset, debug, info, warning, error, critical"
+        " or integer [0-50]."
+    )
+    idx = sys.argv.index("--verbose")
+    sys.argv.pop(idx)
+    if idx < len(sys.argv):
+        value = sys.argv.pop(idx)
+    else:
+        raise RuntimeError((
+            "Expect value after \"--verbose\" argument. {}"
+        ).format(expected_values))
+
+    log_level = None
+    low_value = value.lower()
+    if low_value.isdigit():
+        log_level = int(low_value)
+    elif low_value == "notset":
+        log_level = 0
+    elif low_value == "debug":
+        log_level = 10
+    elif low_value == "info":
+        log_level = 20
+    elif low_value == "warning":
+        log_level = 30
+    elif low_value == "error":
+        log_level = 40
+    elif low_value == "critical":
+        log_level = 50
+
+    if log_level is None:
+        raise RuntimeError((
+            "Unexpected value after \"--verbose\" argument \"{}\". {}"
+        ).format(value, expected_values))
+
+    os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
+
+# Enable debug mode, may affect log level if log level is not defined
+if "--debug" in sys.argv:
+    sys.argv.remove("--debug")
+    os.environ["OPENPYPE_DEBUG"] = "1"
+
+
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
@@ -909,6 +954,16 @@ def boot():
 
     _print(">>> run disk mapping command ...")
     run_disk_mapping_commands(global_settings)
+
+    # Logging to server enabled/disabled
+    log_to_server = global_settings.get("log_to_server", True)
+    if log_to_server:
+        os.environ["OPENPYPE_LOG_TO_SERVER"] = "1"
+        log_to_server_msg = "ON"
+    else:
+        os.environ.pop("OPENPYPE_LOG_TO_SERVER", None)
+        log_to_server_msg = "OFF"
+    _print(f">>> Logging to server is turned {log_to_server_msg}")
 
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.

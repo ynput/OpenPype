@@ -285,6 +285,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
+        if instance.data.get("suspend_publish"):
+            payload["JobInfo"]["InitialStatus"] = "Suspended"
+
         index = 0
         for key in environment:
             if key.upper() in self.enviro_filter:
