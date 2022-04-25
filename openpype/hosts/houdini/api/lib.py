@@ -155,7 +155,7 @@ def validate_fps():
         if parent is None:
             pass
         else:
-            dialog = popup.Popup(parent=parent)
+            dialog = popup.PopupUpdateKeys(parent=parent)
             dialog.setModal(True)
             dialog.setWindowTitle("Houdini scene does not match project FPS")
             dialog.setMessage("Scene %i FPS does not match project %i FPS" %
@@ -163,7 +163,7 @@ def validate_fps():
             dialog.setButtonText("Fix")
 
             # on_show is the Fix button clicked callback
-            dialog.on_clicked.connect(lambda: set_scene_fps(fps))
+            dialog.on_clicked_state.connect(lambda: set_scene_fps(fps))
 
             dialog.show()
 
