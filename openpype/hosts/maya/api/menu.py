@@ -45,6 +45,7 @@ def install():
             parent="MayaWindow"
         )
 
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()  
         # Create context menu
         context_label = "{}, {}".format(
             avalon.api.Session["AVALON_ASSET"],
@@ -101,9 +102,7 @@ def install():
 
         cmds.menuItem(
             "Set Render Settings",
-            command=lambda *args: lib_rendersettings.set_default_renderer_settings( # noqa
-                parent=parent_widget
-            )
+            command=lambda *args: lib_rendersettings.RenderSettings.set_default_renderer_settings(renderer)    # noqa
         )
 
         cmds.menuItem(divider=True)
