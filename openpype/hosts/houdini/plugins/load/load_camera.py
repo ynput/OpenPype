@@ -106,18 +106,20 @@ class CameraLoader(load.LoaderPlugin):
         node_name = "{}_{}".format(namespace, name) if namespace else name
 
         # Create a archive node
-        container = self.create_and_connect(obj, "alembicarchive", node_name)
+        node = self.create_and_connect(obj, "alembicarchive", node_name)
 
         # TODO: add FPS of project / asset
-        container.setParms({"fileName": file_path,
-                            "channelRef": True})
+        node.setParms({"fileName": file_path, "channelRef": True})
 
         # Apply some magic
-        container.parm("buildHierarchy").pressButton()
-        container.moveToGoodPosition()
+        node.parm("buildHierarchy").pressButton()
+        node.moveToGoodPosition()
 
         # Create an alembic xform node
-        nodes = [container]
+        nodes = [node]
+
+        camera = self._get_camera(node)
+        self._match_maya_render_mask(root=node, camera=camera)
 
         self[:] = nodes
 
@@ -158,6 +160,8 @@ class CameraLoader(load.LoaderPlugin):
                                     # "icon_scale" just skip that completely
                                     ignore={"scale"})
 
+        self._match_maya_render_mask(root=node, camera=new_camera)
+
         temp_camera.destroy()
 
     def remove(self, container):
@@ -193,3 +197,31 @@ class CameraLoader(load.LoaderPlugin):
 
         new_node.moveToGoodPosition()
         return new_node
+
+    def _match_maya_render_mask(self, root, camera):
+        """Workaround to match Maya render mask in Houdini"""
+        import hou
+
+        to_root = camera.relativePathTo(root)
+        to_camera = root.relativePathTo(camera)
+
+        expression = """
+# Get aperture from alembic
+node = hou.pwd()
+root = node.node('{to_root}')
+aperture =  __import__("_alembic_hom_extensions").alembicGetCameraDict(
+    root.hdaModule().GetFileName(root), 
+    "{to_camera}", 
+    root.evalParm("frame")/root.evalParm("fps")
+).get('aperture')
+
+# Match maya render mask (logic from Houdini's own FBX importer)
+resx = node.evalParm('resx')
+resy = node.evalParm('resy')
+aspect = node.evalParm('aspect')
+aperture *= min(1, (resx / resy * aspect) / 1.5)
+return aperture
+""".strip().format(to_root=to_root, to_camera=to_camera)
+
+        camera.parm("aperture").setExpression(expression,
+                                              language=hou.exprLanguage.Python)
