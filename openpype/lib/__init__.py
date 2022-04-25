@@ -42,6 +42,7 @@ from .attribute_definitions import (
     EnumDef,
     BoolDef,
     FileDef,
+    FileDefItem,
 )
 
 from .env_tools import (
@@ -266,6 +267,7 @@ __all__ = [
     "EnumDef",
     "BoolDef",
     "FileDef",
+    "FileDefItem",
 
     "import_filepath",
     "modules_from_path",

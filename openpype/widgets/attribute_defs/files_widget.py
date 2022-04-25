@@ -2,8 +2,10 @@ import os
 import collections
 import uuid
 import clique
+import six
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.lib import FileDefItem
 from openpype.tools.utils import paint_image_with_color
 # TODO change imports
 from openpype.tools.resources import (
@@ -75,174 +77,76 @@ class DropEmpty(QtWidgets.QWidget):
 class FilesModel(QtGui.QStandardItemModel):
     def __init__(self, allow_multiple_items, sequence_exts):
         super(FilesModel, self).__init__()
+
+        self._allow_multiple_items = allow_multiple_items
+        self._sequence_exts = sequence_exts
+
+        self._items_by_id = {}
+        self._file_items_by_id = {}
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
 
-        self._allow_multiple_items = allow_multiple_items
-        self.sequence_exts = sequence_exts
+    def add_filepaths(self, items):
+        if not items:
+            return
 
-    def add_filepaths(self, filepaths):
-        if not filepaths:
+        obj_items = FileDefItem.from_value(items, self._sequence_exts)
+        if not obj_items:
             return
 
         if not self._allow_multiple_items:
-            filepaths = [filepaths[0]]
-            item_ids = []
-            for items in self._items_by_dirpath.values():
-                for item in items:
-                    item_id = item.data(ITEM_ID_ROLE)
-                    if item_id:
-                        item_ids.append(item_id)
+            obj_items = [obj_items[0]]
+            current_ids = list(self._file_items_by_id.keys())
+            if current_ids:
+                self.remove_item_by_ids(current_ids)
 
-            if item_ids:
-                self.remove_item_by_ids(item_ids)
+        new_model_items = []
+        for obj_item in obj_items:
+            _, ext = os.path.splitext(obj_item.filenames[0])
+            if ext:
+                icon_pixmap = get_pixmap(filename="file.png")
+            else:
+                icon_pixmap = get_pixmap(filename="folder.png")
 
-        new_dirpaths = set()
-        for filepath in filepaths:
-            filename = os.path.basename(filepath)
-            dirpath = os.path.dirname(filepath)
-            filenames = self._filenames_by_dirpath[dirpath]
-            if filename not in filenames:
-                new_dirpaths.add(dirpath)
-                filenames.add(filename)
-        self._refresh_items(new_dirpaths)
+            item_id, model_item = self._create_item(obj_item, icon_pixmap)
+            new_model_items.append(model_item)
+            self._file_items_by_id[item_id] = obj_item
+            self._items_by_id[item_id] = model_item
+
+        if new_model_items:
+            self.invisibleRootItem().appendRows(new_model_items)
 
     def remove_item_by_ids(self, item_ids):
         if not item_ids:
             return
 
-        remaining_ids = set(item_ids)
-        result = collections.defaultdict(list)
-        for dirpath, items in self._items_by_dirpath.items():
-            if not remaining_ids:
-                break
+        items = []
+        for item_id in set(item_ids):
+            if item_id not in self._items_by_id:
+                continue
+            item = self._items_by_id.pop(item_id)
+            self._file_items_by_id.pop(item_id)
+            items.append(item)
+
+        if items:
             for item in items:
-                if not remaining_ids:
-                    break
-                item_id = item.data(ITEM_ID_ROLE)
-                if item_id in remaining_ids:
-                    remaining_ids.remove(item_id)
-                    result[dirpath].append(item)
-
-        if not result:
-            return
-
-        dirpaths = set(result.keys())
-        for dirpath, items in result.items():
-            filenames_cache = self._filenames_by_dirpath[dirpath]
-            for item in items:
-                filenames = item.data(FILENAMES_ROLE)
-
-                self._items_by_dirpath[dirpath].remove(item)
-                self.removeRows(item.row(), 1)
-                for filename in filenames:
-                    if filename in filenames_cache:
-                        filenames_cache.remove(filename)
-
-        self._refresh_items(dirpaths)
-
-    def _refresh_items(self, dirpaths=None):
-        if dirpaths is None:
-            dirpaths = set(self._items_by_dirpath.keys())
-
-        new_items = []
-        for dirpath in dirpaths:
-            items_to_remove = list(self._items_by_dirpath[dirpath])
-            cols, remainders = clique.assemble(
-                self._filenames_by_dirpath[dirpath]
-            )
-            filtered_cols = []
-            for collection in cols:
-                filenames = set(collection)
-                valid_col = True
-                for filename in filenames:
-                    ext = os.path.splitext(filename)[-1]
-                    valid_col = ext in self.sequence_exts
-                    break
-
-                if valid_col:
-                    filtered_cols.append(collection)
-                else:
-                    for filename in filenames:
-                        remainders.append(filename)
-
-            for filename in remainders:
-                found = False
-                for item in items_to_remove:
-                    item_filenames = item.data(FILENAMES_ROLE)
-                    if filename in item_filenames and len(item_filenames) == 1:
-                        found = True
-                        items_to_remove.remove(item)
-                        break
-
-                if found:
-                    continue
-
-                fullpath = os.path.join(dirpath, filename)
-                if os.path.isdir(fullpath):
-                    icon_pixmap = get_pixmap(filename="folder.png")
-                else:
-                    icon_pixmap = get_pixmap(filename="file.png")
-                label = filename
-                filenames = [filename]
-                item = self._create_item(
-                    label, filenames, dirpath, icon_pixmap
-                )
-                new_items.append(item)
-                self._items_by_dirpath[dirpath].append(item)
-
-            for collection in filtered_cols:
-                filenames = set(collection)
-                found = False
-                for item in items_to_remove:
-                    item_filenames = item.data(FILENAMES_ROLE)
-                    if item_filenames == filenames:
-                        found = True
-                        items_to_remove.remove(item)
-                        break
-
-                if found:
-                    continue
-
-                col_range = collection.format("{ranges}")
-                label = "{}<{}>{}".format(
-                    collection.head, col_range, collection.tail
-                )
-                icon_pixmap = get_pixmap(filename="files.png")
-                item = self._create_item(
-                    label, filenames, dirpath, icon_pixmap
-                )
-                new_items.append(item)
-                self._items_by_dirpath[dirpath].append(item)
-
-            for item in items_to_remove:
-                self._items_by_dirpath[dirpath].remove(item)
                 self.removeRows(item.row(), 1)
 
-        if new_items:
-            self.invisibleRootItem().appendRows(new_items)
+    def get_file_item_by_id(self, item_id):
+        return self._file_items_by_id.get(item_id)
 
-    def _create_item(self, label, filenames, dirpath, icon_pixmap=None):
-        first_filename = None
-        for filename in filenames:
-            first_filename = filename
-            break
-        ext = os.path.splitext(first_filename)[-1]
-        is_dir = False
-        if len(filenames) == 1:
-            filepath = os.path.join(dirpath, first_filename)
-            is_dir = os.path.isdir(filepath)
-
+    def _create_item(self, file_item, icon_pixmap=None):
         item = QtGui.QStandardItem()
-        item.setData(str(uuid.uuid4()), ITEM_ID_ROLE)
-        item.setData(label, ITEM_LABEL_ROLE)
-        item.setData(filenames, FILENAMES_ROLE)
-        item.setData(dirpath, DIRPATH_ROLE)
+        item_id = str(uuid.uuid4())
+        item.setData(item_id, ITEM_ID_ROLE)
+        item.setData(file_item.label, ITEM_LABEL_ROLE)
+        item.setData(file_item.filenames, FILENAMES_ROLE)
+        item.setData(file_item.directory, DIRPATH_ROLE)
         item.setData(icon_pixmap, ITEM_ICON_ROLE)
-        item.setData(ext, EXT_ROLE)
-        item.setData(is_dir, IS_DIR_ROLE)
+        item.setData(file_item.ext, EXT_ROLE)
+        item.setData(file_item.is_dir, IS_DIR_ROLE)
 
-        return item
+        return item_id, item
 
 
 class FilesProxyModel(QtCore.QSortFilterProxyModel):
@@ -344,6 +248,7 @@ class ItemWidget(QtWidgets.QWidget):
 
 class FilesView(QtWidgets.QListView):
     """View showing instances and their groups."""
+
     def __init__(self, *args, **kwargs):
         super(FilesView, self).__init__(*args, **kwargs)
 
@@ -439,14 +344,17 @@ class FilesWidget(QtWidgets.QFrame):
 
     def current_value(self):
         model = self._files_proxy_model
-        filepaths = set()
+        item_ids = set()
         for row in range(model.rowCount()):
             index = model.index(row, 0)
-            dirpath = index.data(DIRPATH_ROLE)
-            filenames = index.data(FILENAMES_ROLE)
-            for filename in filenames:
-                filepaths.add(os.path.join(dirpath, filename))
-        return list(filepaths)
+            item_ids.add(index.data(ITEM_ID_ROLE))
+
+        file_items = []
+        for item_id in item_ids:
+            file_item = self._files_model.get_file_item_by_id(item_id)
+            if file_item is not None:
+                file_items.append(file_item.to_dict())
+        return file_items
 
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)

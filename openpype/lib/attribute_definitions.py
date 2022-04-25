@@ -334,6 +334,61 @@ class FileDefItem(object):
             os.path.join(self.directory, filename)
         )
 
+    @property
+    def label(self):
+        if not self.is_sequence:
+            return self.filenames[0]
+
+        frame_start = self.frames[0]
+        filename_template = os.path.basename(self.template)
+        if len(self.frames) == 1:
+            return "{} [{}]".format(filename_template, frame_start)
+
+        frame_end = self.frames[-1]
+        expected_len = (frame_end - frame_start) + 1
+        if expected_len == len(self.frames):
+            return "{} [{}-{}]".format(
+                filename_template, frame_start, frame_end
+            )
+
+        ranges = []
+        _frame_start = None
+        _frame_end = None
+        for frame in range(frame_start, frame_end + 1):
+            if frame not in self.frames:
+                add_to_ranges = _frame_start is not None
+            elif _frame_start is None:
+                _frame_start = _frame_end = frame
+                add_to_ranges = frame == frame_end
+            else:
+                _frame_end = frame
+                add_to_ranges = frame == frame_end
+
+            if add_to_ranges:
+                if _frame_start != _frame_end:
+                    _range = "{}-{}".format(_frame_start, _frame_end)
+                else:
+                    _range = str(_frame_start)
+                ranges.append(_range)
+                _frame_start = _frame_end = None
+        return "{} [{}]".format(
+            filename_template, ",".join(ranges)
+        )
+
+    @property
+    def ext(self):
+        _, ext = os.path.splitext(self.filenames[0])
+        if ext:
+            return ext
+        return None
+
+    @property
+    def is_dir(self):
+        # QUESTION a better way how to define folder (in init argument?)
+        if self.ext:
+            return False
+        return True
+
     def set_directory(self, directory):
         self.directory = directory
 
@@ -357,23 +412,30 @@ class FileDefItem(object):
         return cls("", "")
 
     @classmethod
-    def from_value(cls, value):
+    def from_value(cls, value, sequence_extensions):
         multi = isinstance(value, (list, tuple, set))
         if not multi:
             value = [value]
 
         output = []
+        str_filepaths = []
         for item in value:
-            if isinstance(item, dict):
+            if isinstance(item, FileDefItem):
+                output.append(item)
+            elif isinstance(item, dict):
                 output.append(cls.from_dict(item))
             elif isinstance(item, six.string_types):
-                output.extend(cls.from_paths([item]))
+                str_filepaths.append(item)
             else:
                 raise TypeError(
                     "Unknown type \"{}\". Can't convert to {}".format(
                         str(type(item)), cls.__name__
                     )
                 )
+
+        if str_filepaths:
+            output.extend(cls.from_paths(str_filepaths, sequence_extensions))
+
         if multi:
             return output
         return output[0]
@@ -388,7 +450,7 @@ class FileDefItem(object):
         )
 
     @classmethod
-    def from_paths(cls, paths):
+    def from_paths(cls, paths, sequence_extensions):
         filenames_by_dir = collections.defaultdict(list)
         for path in paths:
             normalized = os.path.normpath(path)
@@ -397,7 +459,18 @@ class FileDefItem(object):
 
         output = []
         for directory, filenames in filenames_by_dir.items():
-            cols, remainders = clique.assemble(filenames)
+            filtered_filenames = []
+            for filename in filenames:
+                _, ext = os.path.splitext(filename)
+                if ext in sequence_extensions:
+                    filtered_filenames.append(filename)
+                else:
+                    output.append(cls(directory, [filename]))
+
+            if not filtered_filenames:
+                continue
+
+            cols, remainders = clique.assemble(filtered_filenames)
             for remainder in remainders:
                 output.append(cls(directory, [remainder]))
 
