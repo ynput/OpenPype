@@ -27,6 +27,15 @@ def transfer_non_default_values(src, dest, ignore=None):
     """
     import hou
 
+    ignore_types = {
+        hou.parmTemplateType.Toggle,
+        hou.parmTemplateType.Menu,
+        hou.parmTemplateType.Button,
+        hou.parmTemplateType.FolderSet,
+        hou.parmTemplateType.Separator,
+        hou.parmTemplateType.Label,
+    }
+
     src.updateParmStates()
 
     for parm in src.allParms():
@@ -62,14 +71,6 @@ def transfer_non_default_values(src, dest, ignore=None):
             continue
 
         # Ignore folders, separators, etc.
-        ignore_types = {
-            hou.parmTemplateType.Toggle,
-            hou.parmTemplateType.Menu,
-            hou.parmTemplateType.Button,
-            hou.parmTemplateType.FolderSet,
-            hou.parmTemplateType.Separator,
-            hou.parmTemplateType.Label,
-        }
         if parm.parmTemplate().type() in ignore_types:
             continue
 
