@@ -6,8 +6,8 @@
     "children": [
         {
             "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
+            "key": "apply_render_settings",
+            "label": "Apply Render Settings on creation"
         },
         {
             "type": "text",
