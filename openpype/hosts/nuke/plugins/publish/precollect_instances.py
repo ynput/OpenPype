@@ -69,6 +69,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             instance = context.create_instance(subset)
             instance.append(node)
 
+            suspend_publish = False
+            if "suspend_publish" in node.knobs():
+                suspend_publish = node["suspend_publish"].value()
+            instance.data["suspend_publish"] = suspend_publish
+
             # get review knob value
             review = False
             if "review" in node.knobs():
