@@ -33,22 +33,11 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = legacy_io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
     # Warn about outdated containers.
-    print("Starting new QApplication..")
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
