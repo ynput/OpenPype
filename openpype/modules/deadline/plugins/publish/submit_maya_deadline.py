@@ -858,7 +858,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             }
 
         renderer = self._instance.data["renderer"]
-        
+
         # This hack is here because of how Deadline handles Renderman version.
         # it considers everything with `renderman` set as version older than
         # Renderman 22, and so if we are using renderman > 21 we need to set
