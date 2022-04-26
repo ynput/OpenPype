@@ -379,11 +379,11 @@ class FileDefItem(object):
         if not self.is_sequence:
             raise ValueError("Cannot split single file item")
 
-        output = []
-        for filename in self.filenames:
-            path = os.path.join(self.directory, filename)
-            output.append(self.from_paths([path]))
-        return output
+        paths = [
+            os.path.join(self.directory, filename)
+            for filename in self.filenames
+        ]
+        return self.from_paths(paths, False)
 
     @property
     def ext(self):
