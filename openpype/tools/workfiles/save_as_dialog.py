@@ -5,13 +5,14 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from avalon import api, io
-
 from openpype.lib import (
     get_last_workfile_with_version,
     get_workdir_data,
 )
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 from openpype.tools.utils import PlaceholderLineEdit
 
 log = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def build_workfile_data(session):
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
-    project_doc = io.find_one(
+    project_doc = legacy_io.find_one(
         {"type": "project"},
         {
             "name": True,
@@ -33,7 +34,7 @@ def build_workfile_data(session):
         }
     )
 
-    asset_doc = io.find_one(
+    asset_doc = legacy_io.find_one(
         {
             "type": "asset",
             "name": asset_name
@@ -208,7 +209,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         if not session:
             # Fallback to active session
-            session = api.Session
+            session = legacy_io.Session
 
         self.data = build_workfile_data(session)
 
@@ -283,7 +284,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             if current_filepath:
                 # We match the current filename against the current session
                 # instead of the session where the user is saving to.
-                current_data = build_workfile_data(api.Session)
+                current_data = build_workfile_data(legacy_io.Session)
                 matcher = CommentMatcher(anatomy, template_key, current_data)
                 comment = matcher.parse_comment(current_filepath)
                 if comment:

@@ -8,7 +8,7 @@ from openpype.lib import (
     path_to_subprocess_arg,
 
     get_transcode_temp_directory,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     should_convert_for_ffmpeg
 )
 
@@ -79,11 +79,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if do_convert:
                 convert_dir = get_transcode_temp_directory()
                 filename = os.path.basename(full_input_path)
-                convert_for_ffmpeg(
-                    full_input_path,
+                convert_input_paths_for_ffmpeg(
+                    [full_input_path],
                     convert_dir,
-                    None,
-                    None,
                     self.log
                 )
                 full_input_path = os.path.join(convert_dir, filename)
