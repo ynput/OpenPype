@@ -40,5 +40,8 @@
     },
     "Compositing": {
         "short_name": "comp"
+    },
+    "Background": {
+        "short_name": "back"
     }
 }
