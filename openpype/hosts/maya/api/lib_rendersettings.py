@@ -78,10 +78,12 @@ class RenderSettings(object):
                      prefix,
                      type="string")
 
-        asset = get_asset()
-        width = asset["data"].get("resolutionWidth")
-        height = asset["data"].get("resolutionHeight")
+        asset_doc = get_asset()
+        # TODO: handle not having res values in the doc
+        width = asset_doc["data"].get("resolutionWidth")
+        height = asset_doc["data"].get("resolutionHeight")# TODO: don't camelcase 
         arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"]
+
         if renderer == "arnold":
             # set renderer settings for Arnold from project settings
             self._set_Arnold_settings(arnold_render_presets, width, height)
