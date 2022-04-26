@@ -1,4 +1,5 @@
-from maya import cmds, mel
+from maya import cmds
+from mtoa.core import createOptions
 
 from openpype.api import (
     get_project_settings,
@@ -96,11 +97,7 @@ class RenderSettings(object):
 
     def _set_Arnold_settings(self, settings, width, height):
         """Sets settings for Arnold."""
-        mel.eval('unifiedRenderGlobalsWindow;')
-
-        if cmds.window("unifiedRenderGlobalsWindow", exists=True):
-            cmds.deleteUI("unifiedRenderGlobalsWindow")
-
+        createOptions()
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
         img_ext = settings["image_format"]
