@@ -3,11 +3,11 @@ import json
 import getpass
 
 import requests
-from avalon import api
-
 import pyblish.api
 
 # import hou  ???
+
+from openpype.pipeline import legacy_io
 
 
 class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
@@ -107,7 +107,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -141,7 +141,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
 
     def submit(self, instance, payload):
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        AVALON_DEADLINE = legacy_io.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
         assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 

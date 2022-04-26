@@ -1,6 +1,5 @@
 import os
 import sys
-import importlib
 import traceback
 from typing import Callable, Dict, Iterator, List, Optional
 
@@ -10,16 +9,15 @@ from . import lib
 from . import ops
 
 import pyblish.api
-import avalon.api
-from avalon import io, schema
 
 from openpype.pipeline import (
+    schema,
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    uninstall_host,
 )
 from openpype.api import Logger
 from openpype.lib import (
@@ -85,8 +83,8 @@ def uninstall():
 
 
 def set_start_end_frames():
-    asset_name = io.Session["AVALON_ASSET"]
-    asset_doc = io.find_one({
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset_doc = legacy_io.find_one({
         "type": "asset",
         "name": asset_name
     })
@@ -190,7 +188,7 @@ def _on_task_changed():
     # `directory` attribute, so it opens in that directory (does it?).
     # https://docs.blender.org/api/blender2.8/bpy.types.Operator.html#calling-a-file-selector
     # https://docs.blender.org/api/blender2.8/bpy.types.WindowManager.html#bpy.types.WindowManager.fileselect_add
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
     log.debug("New working directory: %s", workdir)
 
 
@@ -199,26 +197,6 @@ def _register_events():
 
     register_event_callback("taskChanged", _on_task_changed)
     log.info("Installed event callback for 'taskChanged'...")
-
-
-def reload_pipeline(*args):
-    """Attempt to reload pipeline at run-time.
-
-    Warning:
-        This is primarily for development and debugging purposes and not well
-        tested.
-
-    """
-
-    uninstall_host()
-
-    for module in (
-        "avalon.io",
-        "avalon.pipeline",
-        "avalon.api",
-    ):
-        module = importlib.import_module(module)
-        importlib.reload(module)
 
 
 def _discover_gui() -> Optional[Callable]:

@@ -2,7 +2,8 @@ import os
 import re
 import nuke
 import pyblish.api
-from avalon import io, api
+
+from openpype.pipeline import legacy_io
 
 
 @pyblish.api.log
@@ -15,8 +16,10 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
     families = ["source"]
 
     def process(self, instance):
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]})
+        asset_data = legacy_io.find_one({
+            "type": "asset",
+            "name": legacy_io.Session["AVALON_ASSET"]
+        })
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
 

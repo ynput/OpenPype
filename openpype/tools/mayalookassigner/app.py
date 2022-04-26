@@ -4,8 +4,8 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from avalon import io
 from openpype import style
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.lib import qt_app_context
 from openpype.hosts.maya.api.lib import assign_look_by_version
 
@@ -227,9 +227,13 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
                 continue
 
             # Get the latest version of this asset's look subset
-            version = io.find_one({"type": "version",
-                                   "parent": assign_look["_id"]},
-                                  sort=[("name", -1)])
+            version = legacy_io.find_one(
+                {
+                    "type": "version",
+                    "parent": assign_look["_id"]
+                },
+                sort=[("name", -1)]
+            )
 
             subset_name = assign_look["name"]
             self.echo("{} Assigning {} to {}\t".format(prefix,

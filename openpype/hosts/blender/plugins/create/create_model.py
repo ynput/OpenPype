@@ -1,6 +1,8 @@
 """Create a model asset."""
 
-from avalon import api
+import bpy
+
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin, lib, ops
 
 from openpype.hosts.blender.api.pluginplus import (
@@ -35,7 +37,7 @@ class CreateModel(plugin.Creator):
             return
 
         # Add custom property on the instance container with the data
-        self.data["task"] = api.Session.get("AVALON_TASK")
+        self.data["task"] = legacy_io.Session.get("AVALON_TASK")
         lib.imprint(container, self.data)
 
         # Add selected objects to container

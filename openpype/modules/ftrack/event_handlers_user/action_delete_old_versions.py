@@ -5,10 +5,10 @@ import uuid
 import clique
 from pymongo import UpdateOne
 
-from avalon.api import AvalonMongoDB
 
 from openpype.api import Anatomy
 from openpype.lib import StringTemplate, TemplateUnsolved
+from openpype.pipeline import AvalonMongoDB
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
