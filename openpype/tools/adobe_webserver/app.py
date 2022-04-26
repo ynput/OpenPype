@@ -16,7 +16,7 @@ from wsrpc_aiohttp import (
     WSRPCClient
 )
 
-from avalon import api
+from openpype.pipeline import legacy_io
 
 log = logging.getLogger(__name__)
 
@@ -80,9 +80,9 @@ class WebServerTool:
                              loop=asyncio.get_event_loop())
         await client.connect()
 
-        project = api.Session["AVALON_PROJECT"]
-        asset = api.Session["AVALON_ASSET"]
-        task = api.Session["AVALON_TASK"]
+        project = legacy_io.Session["AVALON_PROJECT"]
+        asset = legacy_io.Session["AVALON_ASSET"]
+        task = legacy_io.Session["AVALON_TASK"]
         log.info("Sending context change to {}-{}-{}".format(project,
                                                              asset,
                                                              task))

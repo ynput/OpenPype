@@ -2,8 +2,8 @@ import sys
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.api import AvalonMongoDB
 from openpype import style
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
     ThumbnailWidget,

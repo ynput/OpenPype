@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """Validate model nodes names."""
+import os
+import re
 from maya import cmds
 import pyblish.api
+
 import openpype.api
-import avalon.api
+from openpype.pipeline import legacy_io
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
 from openpype.lib.mongo import OpenPypeMongoConnection
 import gridfs
-import re
-import os
 
 
 class ValidateModelName(pyblish.api.InstancePlugin):
@@ -68,7 +69,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
             invalid.append(top_group)
         else:
             if "asset" in r.groupindex:
-                if m.group("asset") != avalon.api.Session["AVALON_ASSET"]:
+                if m.group("asset") != legacy_io.Session["AVALON_ASSET"]:
                     cls.log.error("Invalid asset name in top level group.")
                     return top_group
             if "subset" in r.groupindex:
@@ -76,7 +77,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
                     cls.log.error("Invalid subset name in top level group.")
                     return top_group
             if "project" in r.groupindex:
-                if m.group("project") != avalon.api.Session["AVALON_PROJECT"]:
+                if m.group("project") != legacy_io.Session["AVALON_PROJECT"]:
                     cls.log.error("Invalid project name in top level group.")
                     return top_group
 
