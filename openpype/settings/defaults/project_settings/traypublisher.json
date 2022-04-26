@@ -11,6 +11,7 @@
             "enable_review": false,
             "description": "Publish workfile backup",
             "detailed_description": "",
+            "allow_sequences": true,
             "extensions": [
                 ".ma",
                 ".mb",
@@ -29,10 +30,7 @@
                 ".psd",
                 ".psb",
                 ".aep"
-            ],
-            "allow_sequences": {
-                "allow": "no"
-            }
+            ]
         }
     ]
 }

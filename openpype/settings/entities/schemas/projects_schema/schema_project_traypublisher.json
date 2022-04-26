@@ -69,6 +69,11 @@
                         "type": "separator"
                     },
                     {
+                        "key": "allow_sequences",
+                        "label": "Allow sequences",
+                        "type": "boolean"
+                    },
+                    {
                         "type": "list",
                         "key": "extensions",
                         "label": "Extensions",
@@ -76,39 +81,6 @@
                         "collapsible_key": true,
                         "collapsed": false,
                         "object_type": "text"
-                    },
-                    {
-                        "key": "allow_sequences",
-                        "label": "Allow sequences",
-                        "type": "dict-conditional",
-                        "use_label_wrap": true,
-                        "collapsible_key": true,
-                        "enum_key": "allow",
-                        "enum_children": [
-                            {
-                                "key": "all",
-                                "label": "Yes (all extensions)"
-                            },
-                            {
-                                "key": "selection",
-                                "label": "Yes (limited extensions)",
-                                "children": [
-                                    {
-                                        "type": "list",
-                                        "key": "extensions",
-                                        "label": "Extensions",
-                                        "use_label_wrap": true,
-                                        "collapsible_key": true,
-                                        "collapsed": false,
-                                        "object_type": "text"
-                                    }
-                                ]
-                            },
-                            {
-                                "key": "no",
-                                "label": "No"
-                            }
-                        ]
                     }
                 ]
             }

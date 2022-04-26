@@ -375,6 +375,16 @@ class FileDefItem(object):
             filename_template, ",".join(ranges)
         )
 
+    def split_sequence(self):
+        if not self.is_sequence:
+            raise ValueError("Cannot split single file item")
+
+        output = []
+        for filename in self.filenames:
+            path = os.path.join(self.directory, filename)
+            output.append(self.from_paths([path]))
+        return output
+
     @property
     def ext(self):
         _, ext = os.path.splitext(self.filenames[0])
@@ -412,7 +422,7 @@ class FileDefItem(object):
         return cls("", "")
 
     @classmethod
-    def from_value(cls, value, sequence_extensions):
+    def from_value(cls, value, allow_sequences):
         multi = isinstance(value, (list, tuple, set))
         if not multi:
             value = [value]
@@ -420,10 +430,15 @@ class FileDefItem(object):
         output = []
         str_filepaths = []
         for item in value:
+            if isinstance(item, dict):
+                item = cls.from_dict(item)
+
             if isinstance(item, FileDefItem):
-                output.append(item)
-            elif isinstance(item, dict):
-                output.append(cls.from_dict(item))
+                if not allow_sequences and item.is_sequence:
+                    output.extend(item.split_sequence())
+                else:
+                    output.append(item)
+
             elif isinstance(item, six.string_types):
                 str_filepaths.append(item)
             else:
@@ -434,7 +449,7 @@ class FileDefItem(object):
                 )
 
         if str_filepaths:
-            output.extend(cls.from_paths(str_filepaths, sequence_extensions))
+            output.extend(cls.from_paths(str_filepaths, allow_sequences))
 
         if multi:
             return output
@@ -450,7 +465,7 @@ class FileDefItem(object):
         )
 
     @classmethod
-    def from_paths(cls, paths, sequence_extensions):
+    def from_paths(cls, paths, allow_sequences):
         filenames_by_dir = collections.defaultdict(list)
         for path in paths:
             normalized = os.path.normpath(path)
@@ -459,18 +474,12 @@ class FileDefItem(object):
 
         output = []
         for directory, filenames in filenames_by_dir.items():
-            filtered_filenames = []
-            for filename in filenames:
-                _, ext = os.path.splitext(filename)
-                if ext in sequence_extensions:
-                    filtered_filenames.append(filename)
-                else:
-                    output.append(cls(directory, [filename]))
+            if allow_sequences:
+                cols, remainders = clique.assemble(filenames)
+            else:
+                cols = []
+                remainders = filenames
 
-            if not filtered_filenames:
-                continue
-
-            cols, remainders = clique.assemble(filtered_filenames)
             for remainder in remainders:
                 output.append(cls(directory, [remainder]))
 
@@ -512,23 +521,9 @@ class FileDef(AbtractAttrDef):
         default(str, list<str>): Defautl value.
     """
 
-    default_sequence_extensions = [
-        ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave",
-        ".cal", ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr",
-        ".fits", ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc",
-        ".icer", ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig",
-        ".jbig2", ".jng", ".jpeg", ".jpeg-ls", ".2000", ".jpg", ".xr",
-        ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
-        ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-        ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
-        ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff",
-        ".tiff/ep", ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp",
-        ".xbm", ".xcf", ".xpm", ".xwd"
-    ]
-
     def __init__(
         self, key, single_item=True, folders=None, extensions=None,
-        sequence_extensions=None, default=None, **kwargs
+        allow_sequences=True, default=None, **kwargs
     ):
         if folders is None and extensions is None:
             folders = True
@@ -568,13 +563,10 @@ class FileDef(AbtractAttrDef):
                 is_label_horizontal = False
             kwargs["is_label_horizontal"] = is_label_horizontal
 
-        if sequence_extensions is None:
-            sequence_extensions = self.default_sequence_extensions
-
         self.single_item = single_item
         self.folders = folders
         self.extensions = set(extensions)
-        self.sequence_extensions = set(sequence_extensions)
+        self.allow_sequences = allow_sequences
         super(FileDef, self).__init__(key, default=default, **kwargs)
 
     def __eq__(self, other):
@@ -585,7 +577,7 @@ class FileDef(AbtractAttrDef):
             self.single_item == other.single_item
             and self.folders == other.folders
             and self.extensions == other.extensions
-            and self.sequence_extensions == self.sequence_extensions
+            and self.allow_sequences == other.allow_sequences
         )
 
     def convert_value(self, value):

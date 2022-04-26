@@ -45,7 +45,6 @@ class SettingsCreator(TrayPublishCreator):
 
     enable_review = False
     extensions = []
-    sequence_extensions = []
 
     def collect_instances(self):
         for instance_data in list_instances():
@@ -73,7 +72,7 @@ class SettingsCreator(TrayPublishCreator):
             "filepath",
             folders=False,
             extensions=self.extensions,
-            sequence_extensions=self.sequence_extensions,
+            allow_sequences=self.allow_sequences,
             label="Filepath",
         )
         output.append(file_def)
@@ -98,7 +97,7 @@ class SettingsCreator(TrayPublishCreator):
                 "description": item_data["description"],
                 "enable_review": item_data["enable_review"],
                 "extensions": item_data["extensions"],
-                "sequence_extensions": item_data["sequence_extensions"],
+                "allow_sequences": item_data["allow_sequences"],
                 "default_variants": item_data["default_variants"]
             }
         )
