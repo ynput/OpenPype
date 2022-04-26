@@ -467,7 +467,7 @@ class CreateRender(plugin.Creator):
 
         if renderer == "renderman":
             cmds.setAttr("rmanGlobals.imageOutputDir",
-                         "<ws>/maya/<scene>/<layer>", type="string")
+                         "maya/<scene>/<layer>", type="string")
 
     def _set_vray_settings(self, asset):
         # type: (dict) -> None
