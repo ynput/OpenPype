@@ -227,7 +227,6 @@ def get_renderer_variables(renderlayer, root):
             "d_it": None,
             "d_null": None,
             "d_openexr": "exr",
-            "d_openexr3": "exr",
             "d_png": "png",
             "d_pointcloud": "ptc",
             "d_targa": "tga",
@@ -236,8 +235,9 @@ def get_renderer_variables(renderlayer, root):
         }
 
         extension = display_types.get(
-            cmds.listConnections("rmanDefaultDisplay.displayType")[0]
-        )
+            cmds.listConnections("rmanDefaultDisplay.displayType")[0],
+            "exr"
+        ) or "exr"
 
         filename_prefix = "{}/{}".format(
             cmds.getAttr("rmanGlobals.imageOutputDir"),
