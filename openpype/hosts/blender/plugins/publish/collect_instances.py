@@ -13,7 +13,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["blender"]
     label = "Collect Instances"
     order = pyblish.api.CollectorOrder
-    data = dict()
 
     @staticmethod
     def get_collections() -> Generator:
