@@ -1876,7 +1876,7 @@ def iter_parents(node):
     """
     while True:
         split = node.rsplit("|", 1)
-        if len(split) == 1:
+        if len(split) == 1 or not split[0]:
             return
 
         node = split[0]
