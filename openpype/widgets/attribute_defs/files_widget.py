@@ -5,12 +5,12 @@ import uuid
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.lib import FileDefItem
-from openpype.tools.utils import paint_image_with_color
-# TODO change imports
-from openpype.tools.resources import (
-    get_pixmap,
-    get_image,
+from openpype.tools.utils import (
+    paint_image_with_color,
+    ClickableLabel,
 )
+# TODO change imports
+from openpype.tools.resources import get_image
 from openpype.tools.utils import (
     IconButton,
     PixmapLabel
@@ -22,7 +22,8 @@ ITEM_ICON_ROLE = QtCore.Qt.UserRole + 3
 FILENAMES_ROLE = QtCore.Qt.UserRole + 4
 DIRPATH_ROLE = QtCore.Qt.UserRole + 5
 IS_DIR_ROLE = QtCore.Qt.UserRole + 6
-EXT_ROLE = QtCore.Qt.UserRole + 7
+IS_SEQUENCE_ROLE = QtCore.Qt.UserRole + 7
+EXT_ROLE = QtCore.Qt.UserRole + 8
 
 
 class DropEmpty(QtWidgets.QWidget):
@@ -148,6 +149,7 @@ class FilesModel(QtGui.QStandardItemModel):
         item.setData(icon_pixmap, ITEM_ICON_ROLE)
         item.setData(file_item.ext, EXT_ROLE)
         item.setData(file_item.is_dir, IS_DIR_ROLE)
+        item.setData(file_item.is_sequence, IS_SEQUENCE_ROLE)
 
         return item_id, item
 
@@ -216,7 +218,9 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 
 
 class ItemWidget(QtWidgets.QWidget):
-    def __init__(self, item_id, label, pixmap_icon, parent=None):
+    split_requested = QtCore.Signal(str)
+
+    def __init__(self, item_id, label, pixmap_icon, is_sequence, parent=None):
         self._item_id = item_id
 
         super(ItemWidget, self).__init__(parent)
@@ -226,13 +230,67 @@ class ItemWidget(QtWidgets.QWidget):
         icon_widget = PixmapLabel(pixmap_icon, self)
         label_widget = QtWidgets.QLabel(label, self)
 
+        label_size_hint = label_widget.sizeHint()
+        height = label_size_hint.height()
+        actions_menu_pix = paint_image_with_color(
+            get_image(filename="menu.png"), QtCore.Qt.white
+        )
+
+        split_btn = ClickableLabel(self)
+        split_btn.setFixedSize(height, height)
+        split_btn.setPixmap(actions_menu_pix)
+        split_btn.setVisible(is_sequence)
+
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(5, 5, 0, 5)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(icon_widget, 0)
         layout.addWidget(label_widget, 1)
+        layout.addWidget(split_btn, 0)
+
+        split_btn.clicked.connect(self._on_actions_clicked)
 
         self._icon_widget = icon_widget
         self._label_widget = label_widget
+        self._split_btn = split_btn
+        self._actions_menu_pix = actions_menu_pix
+        self._last_scaled_pix_height = None
+
+    def _update_btn_size(self):
+        label_size_hint = self._label_widget.sizeHint()
+        height = label_size_hint.height()
+        if height == self._last_scaled_pix_height:
+            return
+        self._last_scaled_pix_height = height
+        self._split_btn.setFixedSize(height, height)
+        pix = self._actions_menu_pix.scaled(
+            height, height,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        self._split_btn.setPixmap(pix)
+
+    def showEvent(self, event):
+        super(ItemWidget, self).showEvent(event)
+        self._update_btn_size()
+
+    def resizeEvent(self, event):
+        super(ItemWidget, self).resizeEvent(event)
+        self._update_btn_size()
+
+    def _on_actions_clicked(self):
+        menu = QtWidgets.QMenu(self._split_btn)
+
+        action = QtWidgets.QAction("Split sequence", menu)
+        action.triggered.connect(self._on_split_sequence)
+
+        menu.addAction(action)
+
+        pos = self._split_btn.rect().bottomLeft()
+        point = self._split_btn.mapToGlobal(pos)
+        menu.popup(point)
+
+    def _on_split_sequence(self):
+        self.split_requested.emit(self._item_id)
 
 
 class InViewButton(IconButton):
@@ -404,8 +462,10 @@ class FilesWidget(QtWidgets.QFrame):
                 continue
             label = index.data(ITEM_LABEL_ROLE)
             pixmap_icon = index.data(ITEM_ICON_ROLE)
+            is_sequence = index.data(IS_SEQUENCE_ROLE)
 
-            widget = ItemWidget(item_id, label, pixmap_icon)
+            widget = ItemWidget(item_id, label, pixmap_icon, is_sequence)
+            widget.split_requested.connect(self._on_split_request)
             self._files_view.setIndexWidget(index, widget)
             self._files_proxy_model.setData(
                 index, widget.sizeHint(), QtCore.Qt.SizeHintRole
@@ -436,6 +496,15 @@ class FilesWidget(QtWidgets.QFrame):
 
         if not self._in_set_value:
             self.value_changed.emit()
+
+    def _on_split_request(self, item_id):
+        file_item = self._files_model.get_file_item_by_id(item_id)
+        if not file_item:
+            return
+
+        new_items = file_item.split_sequence()
+        self._remove_item_by_ids([item_id])
+        self._add_filepaths(new_items)
 
     def _on_remove_requested(self):
         items_to_delete = self._files_view.get_selected_item_ids()
