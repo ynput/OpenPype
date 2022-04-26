@@ -696,10 +696,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #OverlayMessageWidget:hover {
     background: {color:bg-button-hover};
 }
-#OverlayMessageWidget[type="success"] {
+#OverlayMessageWidget {
     background: {color:overlay-messages:bg-success};
 }
-#OverlayMessageWidget[type="success"]:hover {
+#OverlayMessageWidget:hover {
     background: {color:overlay-messages:bg-success-hover};
 }
 
