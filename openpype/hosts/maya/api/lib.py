@@ -3340,40 +3340,47 @@ def get_visible_in_frame_range(nodes, start, end):
         dag = sel.getDagPath(0)
         return om.MFnDagNode(dag).findPlug("visibility", True)
 
+    @contextlib.contextmanager
+    def dgcontext(mtime):
+        """MDGContext context manager"""
+        context = om.MDGContext(mtime)
+        try:
+            previous = context.makeCurrent()
+            yield context
+        finally:
+            previous.makeCurrent()
+
     # We skip the first frame as we already used that frame to check for
     # overall visibilities. And end+1 to include the end frame.
     scene_units = om.MTime.uiUnit()
     for frame in range(start + 1, end + 1):
-
         mtime = om.MTime(frame, unit=scene_units)
-        context = om.MDGContext(mtime)
 
         # Build little cache so we don't query the same MPlug's value
         # again if it was checked on this frame and also is a dependency
         # for another node
         frame_visibilities = {}
+        with dgcontext(mtime) as context:
+            for node, dependencies in list(node_dependencies.items()):
+                for dependency in dependencies:
+                    dependency_visible = frame_visibilities.get(dependency,
+                                                                None)
+                    if dependency_visible is None:
+                        mplug = get_visibility_mplug(dependency)
+                        dependency_visible = mplug.asBool(context)
+                        frame_visibilities[dependency] = dependency_visible
 
-        for node, dependencies in list(node_dependencies.items()):
+                    if not dependency_visible:
+                        # One dependency is not visible, thus the
+                        # node is not visible.
+                        break
 
-            for dependency in dependencies:
-
-                dependency_visible = frame_visibilities.get(dependency, None)
-                if dependency_visible is None:
-                    mplug = get_visibility_mplug(dependency)
-                    dependency_visible = mplug.asBool(context)
-                    frame_visibilities[dependency] = dependency_visible
-
-                if not dependency_visible:
-                    # One dependency is not visible, thus the
-                    # node is not visible.
-                    break
-
-            else:
-                # All dependencies are visible.
-                visible.add(node)
-                # Remove node with dependencies for next iterations
-                # because it was visible at least once.
-                node_dependencies.pop(node)
+                else:
+                    # All dependencies are visible.
+                    visible.add(node)
+                    # Remove node with dependencies for next frame iterations
+                    # because it was visible at least once.
+                    node_dependencies.pop(node)
 
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
