@@ -1,16 +1,19 @@
 import sys
-import logging
 import contextlib
 
 
 from Qt import QtCore, QtWidgets
 
-log = logging.getLogger(__name__)
-
 
 class Popup(QtWidgets.QDialog):
+    """A Popup that moves itself to bottom right of screen on show event.
 
-    on_show = QtCore.Signal()
+    The UI contains a message label and a red highlighted button to "show"
+    or perform another custom action from this pop-up.
+
+    """
+
+    on_clicked = QtCore.Signal()
 
     def __init__(self, parent=None, *args, **kwargs):
         super(Popup, self).__init__(parent=parent, *args, **kwargs)
@@ -19,32 +22,34 @@ class Popup(QtWidgets.QDialog):
         # Layout
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(10, 5, 10, 10)
+
+        # Increase spacing slightly for readability
+        layout.setSpacing(10)
+
         message = QtWidgets.QLabel("")
         message.setStyleSheet("""
         QLabel {
             font-size: 12px;
         }
         """)
-        show = QtWidgets.QPushButton("Show")
-        show.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+        button = QtWidgets.QPushButton("Show")
+        button.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
                            QtWidgets.QSizePolicy.Maximum)
-        show.setStyleSheet("""QPushButton { background-color: #BB0000 }""")
+        button.setStyleSheet("""QPushButton { background-color: #BB0000 }""")
 
         layout.addWidget(message)
-        layout.addWidget(show)
+        layout.addWidget(button)
 
-        # Size
+        # Default size
         self.resize(400, 40)
-        geometry = self.calculate_window_geometry()
-        self.setGeometry(geometry)
 
         self.widgets = {
             "message": message,
-            "show": show,
+            "button": button,
         }
 
         # Signals
-        show.clicked.connect(self._on_show_clicked)
+        button.clicked.connect(self._on_clicked)
 
         # Set default title
         self.setWindowTitle("Popup")
@@ -52,7 +57,10 @@ class Popup(QtWidgets.QDialog):
     def setMessage(self, message):
         self.widgets['message'].setText(message)
 
-    def _on_show_clicked(self):
+    def setButtonText(self, text):
+        self.widgets["button"].setText(text)
+
+    def _on_clicked(self):
         """Callback for when the 'show' button is clicked.
 
         Raises the parent (if any)
@@ -63,10 +71,18 @@ class Popup(QtWidgets.QDialog):
         self.close()
 
         # Trigger the signal
-        self.on_show.emit()
+        self.on_clicked.emit()
 
         if parent:
             parent.raise_()
+
+    def showEvent(self, event):
+
+        # Position popup based on contents on show event
+        geo = self.calculate_window_geometry()
+        self.setGeometry(geo)
+
+        return super(Popup, self).showEvent(event)
 
     def calculate_window_geometry(self):
         """Respond to status changes
@@ -104,45 +120,29 @@ class Popup(QtWidgets.QDialog):
         return QtCore.QRect(x, y, width, height)
 
 
-class Popup2(Popup):
+class PopupUpdateKeys(Popup):
+    """Popup with Update Keys checkbox (intended for Maya)"""
 
-    on_show = QtCore.Signal()
+    on_clicked_state = QtCore.Signal(bool)
 
     def __init__(self, parent=None, *args, **kwargs):
         Popup.__init__(self, parent=parent, *args, **kwargs)
 
         layout = self.layout()
 
-        # Add toggle
+        # Insert toggle for Update keys
         toggle = QtWidgets.QCheckBox("Update Keys")
         layout.insertWidget(1, toggle)
         self.widgets["toggle"] = toggle
 
+        self.on_clicked.connect(self.emit_click_with_state)
+
         layout.insertStretch(1, 1)
 
-        # Update button text
-        fix = self.widgets["show"]
-        fix.setText("Fix")
-
-    def calculate_window_geometry(self):
-        """Respond to status changes
-
-        On creation, align window with screen bottom right.
-
-        """
-        parent_widget = self.parent()
-
-        desktop = QtWidgets.QApplication.desktop()
-        if parent_widget:
-            screen = desktop.screenNumber(parent_widget)
-        else:
-            screen = desktop.screenNumber(desktop.cursor().pos())
-        center_point = desktop.screenGeometry(screen).center()
-
-        frame_geo = self.frameGeometry()
-        frame_geo.moveCenter(center_point)
-
-        return frame_geo
+    def emit_click_with_state(self):
+        """Emit the on_clicked_state signal with the toggled state"""
+        checked = self.widgets["toggle"].isChecked()
+        self.on_clicked_state.emit(checked)
 
 
 @contextlib.contextmanager

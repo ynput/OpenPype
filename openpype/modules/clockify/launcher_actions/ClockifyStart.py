@@ -1,12 +1,15 @@
-from avalon import api, io
 from openpype.api import Logger
+from openpype.pipeline import (
+    legacy_io,
+    LauncherAction,
+)
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
-class ClockifyStart(api.Action):
+class ClockifyStart(LauncherAction):
 
     name = "clockify_start_timer"
     label = "Clockify - Start Timer"
@@ -26,7 +29,7 @@ class ClockifyStart(api.Action):
         task_name = session['AVALON_TASK']
 
         description = asset_name
-        asset = io.find_one({
+        asset = legacy_io.find_one({
             'type': 'asset',
             'name': asset_name
         })

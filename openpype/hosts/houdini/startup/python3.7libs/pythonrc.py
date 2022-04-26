@@ -1,10 +1,10 @@
-import avalon.api
+from openpype.pipeline import install_host
 from openpype.hosts.houdini import api
 
 
 def main():
     print("Installing OpenPype ...")
-    avalon.api.install(api)
+    install_host(api)
 
 
 main()

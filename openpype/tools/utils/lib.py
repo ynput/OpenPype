@@ -6,16 +6,17 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-import avalon.api
-
-from openpype.style import get_default_entity_icon_color
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_objected_colors,
+)
+from openpype.resources import get_image_path
+from openpype.lib import filter_profiles
 from openpype.api import (
     get_project_settings,
     Logger
 )
-from openpype.lib import filter_profiles
-from openpype.style import get_objected_colors
-from openpype.resources import get_image_path
+from openpype.pipeline import registered_host
 
 log = Logger.get_logger(__name__)
 
@@ -402,7 +403,7 @@ class FamilyConfigCache:
 
         self.family_configs.clear()
         # Skip if we're not in host context
-        if not avalon.api.registered_host():
+        if not registered_host():
             return
 
         # Update the icons from the project configuration
@@ -726,11 +727,11 @@ def is_sync_loader(loader):
 
 
 def is_remove_site_loader(loader):
-    return hasattr(loader, "remove_site_on_representation")
+    return hasattr(loader, "is_remove_site_loader")
 
 
 def is_add_site_loader(loader):
-    return hasattr(loader, "add_site_to_representation")
+    return hasattr(loader, "is_add_site_loader")
 
 
 class WrappedCallbackItem:
