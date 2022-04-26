@@ -58,6 +58,7 @@ class SettingsCreator(TrayPublishCreator):
     def create(self, subset_name, data, pre_create_data):
         # Pass precreate data to creator attributes
         data["creator_attributes"] = pre_create_data
+        data["settings_creator"] = True
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name, data, self)
         # Host implementation of storing metadata about instance

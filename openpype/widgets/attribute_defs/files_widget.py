@@ -405,6 +405,7 @@ class FilesWidget(QtWidgets.QFrame):
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
         files_view.remove_requested.connect(self._on_remove_requested)
         self._in_set_value = False
+        self._single_item = single_item
 
         self._empty_widget = empty_widget
         self._files_model = files_model
@@ -432,6 +433,9 @@ class FilesWidget(QtWidgets.QFrame):
                     all_same = False
             value = new_value
 
+        if not isinstance(value, (list, tuple, set)):
+            value = [value]
+
         if value:
             self._add_filepaths(value)
         self._in_set_value = False
@@ -448,7 +452,12 @@ class FilesWidget(QtWidgets.QFrame):
             file_item = self._files_model.get_file_item_by_id(item_id)
             if file_item is not None:
                 file_items.append(file_item.to_dict())
-        return file_items
+
+        if not self._single_item:
+            return file_items
+        if file_items:
+            return file_items[0]
+        return FileDefItem.create_empty_item()
 
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)
