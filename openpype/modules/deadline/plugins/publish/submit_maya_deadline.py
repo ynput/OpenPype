@@ -32,11 +32,11 @@ import requests
 
 from maya import cmds
 
-from avalon import api
 import pyblish.api
 
 from openpype.lib import requests_post
 from openpype.hosts.maya.api import lib
+from openpype.pipeline import legacy_io
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
@@ -489,7 +489,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_MAYA_VERSION"] = cmds.about(v=True)
         # to recognize job from PYPE for turning Event On/Off

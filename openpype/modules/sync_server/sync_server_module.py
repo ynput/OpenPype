@@ -6,7 +6,6 @@ import platform
 import copy
 from collections import deque, defaultdict
 
-from avalon.api import AvalonMongoDB
 
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
@@ -14,11 +13,14 @@ from openpype.api import (
     Anatomy,
     get_project_settings,
     get_system_settings,
-    get_local_site_id)
+    get_local_site_id
+)
 from openpype.lib import PypeLogger
+from openpype.pipeline import AvalonMongoDB
 from openpype.settings.lib import (
     get_default_anatomy_settings,
-    get_anatomy_settings)
+    get_anatomy_settings
+)
 
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib

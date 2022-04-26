@@ -1,11 +1,14 @@
 import sys
+import traceback
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io
 
 from openpype import style
 from openpype.lib import register_event_callback
-from openpype.pipeline import install_openpype_plugins
+from openpype.pipeline import (
+    install_openpype_plugins,
+    legacy_io,
+)
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -36,14 +39,14 @@ class LoaderWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(LoaderWindow, self).__init__(parent)
         title = "Asset Loader 2.1"
-        project_name = api.Session.get("AVALON_PROJECT")
+        project_name = legacy_io.Session.get("AVALON_PROJECT")
         if project_name:
             title += " - {}".format(project_name)
         self.setWindowTitle(title)
 
         # Groups config
-        self.groups_config = lib.GroupsConfig(io)
-        self.family_config_cache = lib.FamilyConfigCache(io)
+        self.groups_config = lib.GroupsConfig(legacy_io)
+        self.family_config_cache = lib.FamilyConfigCache(legacy_io)
 
         # Enable minimize and maximize for app
         window_flags = QtCore.Qt.Window
@@ -60,13 +63,13 @@ class LoaderWindow(QtWidgets.QDialog):
 
         # Assets widget
         assets_widget = MultiSelectAssetsWidget(
-            io, parent=left_side_splitter
+            legacy_io, parent=left_side_splitter
         )
         assets_widget.set_current_asset_btn_visibility(True)
 
         # Families widget
         families_filter_view = FamilyListView(
-            io, self.family_config_cache, left_side_splitter
+            legacy_io, self.family_config_cache, left_side_splitter
         )
         left_side_splitter.addWidget(assets_widget)
         left_side_splitter.addWidget(families_filter_view)
@@ -76,7 +79,7 @@ class LoaderWindow(QtWidgets.QDialog):
         # --- Middle part ---
         # Subsets widget
         subsets_widget = SubsetWidget(
-            io,
+            legacy_io,
             self.groups_config,
             self.family_config_cache,
             tool_name=self.tool_name,
@@ -87,8 +90,12 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
 
-        thumbnail_widget = ThumbnailWidget(io, parent=thumb_ver_splitter)
-        version_info_widget = VersionWidget(io, parent=thumb_ver_splitter)
+        thumbnail_widget = ThumbnailWidget(
+            legacy_io, parent=thumb_ver_splitter
+        )
+        version_info_widget = VersionWidget(
+            legacy_io, parent=thumb_ver_splitter
+        )
 
         thumb_ver_splitter.addWidget(thumbnail_widget)
         thumb_ver_splitter.addWidget(version_info_widget)
@@ -105,7 +112,7 @@ class LoaderWindow(QtWidgets.QDialog):
         repres_widget = None
         if sync_server_enabled:
             repres_widget = RepresentationWidget(
-                io, self.tool_name, parent=thumb_ver_splitter
+                legacy_io, self.tool_name, parent=thumb_ver_splitter
             )
             thumb_ver_splitter.addWidget(repres_widget)
 
@@ -259,13 +266,15 @@ class LoaderWindow(QtWidgets.QDialog):
         # Refresh families config
         self._families_filter_view.refresh()
         # Change to context asset on context change
-        self._assets_widget.select_asset_by_name(io.Session["AVALON_ASSET"])
+        self._assets_widget.select_asset_by_name(
+            legacy_io.Session["AVALON_ASSET"]
+        )
 
     def _refresh(self):
         """Load assets from database"""
 
         # Ensure a project is loaded
-        project = io.find_one({"type": "project"}, {"type": 1})
+        project = legacy_io.find_one({"type": "project"}, {"type": 1})
         assert project, "Project was not found! This is a bug"
 
         self._assets_widget.refresh()
@@ -562,17 +571,16 @@ def show(debug=False, parent=None, use_context=False):
             module.window = None
 
     if debug:
-        import traceback
         sys.excepthook = lambda typ, val, tb: traceback.print_last()
 
-        io.install()
+        legacy_io.install()
 
         any_project = next(
-            project for project in io.projects()
+            project for project in legacy_io.projects()
             if project.get("active", True) is not False
         )
 
-        api.Session["AVALON_PROJECT"] = any_project["name"]
+        legacy_io.Session["AVALON_PROJECT"] = any_project["name"]
         module.project = any_project["name"]
 
     with lib.qt_app_context():
@@ -580,7 +588,7 @@ def show(debug=False, parent=None, use_context=False):
         window.show()
 
         if use_context:
-            context = {"asset": api.Session["AVALON_ASSET"]}
+            context = {"asset": legacy_io.Session["AVALON_ASSET"]}
             window.set_context(context, refresh=True)
         else:
             window.refresh()
@@ -604,10 +612,10 @@ def cli(args):
 
     print("Entering Project: %s" % project)
 
-    io.install()
+    legacy_io.install()
 
     # Store settings
-    api.Session["AVALON_PROJECT"] = project
+    legacy_io.Session["AVALON_PROJECT"] = project
 
     install_openpype_plugins(project)
 

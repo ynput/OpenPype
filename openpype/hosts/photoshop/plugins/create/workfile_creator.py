@@ -1,9 +1,8 @@
-from avalon import io
-
 import openpype.hosts.photoshop.api as api
 from openpype.pipeline import (
     AutoCreator,
-    CreatedInstance
+    CreatedInstance,
+    legacy_io
 )
 
 
@@ -36,12 +35,15 @@ class PSWorkfileCreator(AutoCreator):
                 break
 
         variant = ''
-        project_name = io.Session["AVALON_PROJECT"]
-        asset_name = io.Session["AVALON_ASSET"]
-        task_name = io.Session["AVALON_TASK"]
-        host_name = io.Session["AVALON_APP"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        host_name = legacy_io.Session["AVALON_APP"]
         if existing_instance is None:
-            asset_doc = io.find_one({"type": "asset", "name": asset_name})
+            asset_doc = legacy_io.find_one({
+                "type": "asset",
+                "name": asset_name
+            })
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
@@ -65,7 +67,10 @@ class PSWorkfileCreator(AutoCreator):
             existing_instance["asset"] != asset_name
             or existing_instance["task"] != task_name
         ):
-            asset_doc = io.find_one({"type": "asset", "name": asset_name})
+            asset_doc = legacy_io.find_one({
+                "type": "asset",
+                "name": asset_name
+            })
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
