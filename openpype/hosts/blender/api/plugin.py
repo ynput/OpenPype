@@ -17,6 +17,7 @@ from .lib import (
     imprint,
     get_selection
 )
+from .pipeline import AVALON_PROPERTY
 from .container import *
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -38,6 +39,11 @@ def get_unique_number(
 ) -> str:
     """Return a unique number based on the asset name."""
     container_names = [c.name for c in bpy.data.collections]
+    container_names += [
+        obj.name
+        for obj in bpy.data.objects
+        if obj.instance_collection and obj.instance_type == 'COLLECTION'
+    ]
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
