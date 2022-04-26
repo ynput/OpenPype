@@ -9,7 +9,6 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
 )
-from .pipeline import AVALON_PROPERTY
 from .ops import (
     MainThreadItem,
     execute_in_main_thread
@@ -38,16 +37,9 @@ def get_unique_number(
     asset: str, subset: str
 ) -> str:
     """Return a unique number based on the asset name."""
-    data_collections = bpy.data.collections
-    container_names = [
-        c.name for c in data_collections if c.get(AVALON_PROPERTY)
-    ]
-    if container_names:
-        return "01"
+    container_names = [c.name for c in bpy.data.collections]
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
-    # increment the name as long as it's in container_names.
-    # If it's not inside it's the right increment
     while name in container_names:
         count += 1
         name = f"{asset}_{count:0>2}_{subset}"
@@ -55,24 +47,18 @@ def get_unique_number(
 
 
 def prepare_data(data, container_name=None):
-    # name = data.name
-    # local_data = data.make_local()
-    # if container_name:
-    #     local_data.name = f"{container_name}:{name}"
-    # else:
-    #     local_data.name = f"{name}"
-    # return local_data
-
     name = data.name
+
     name_split = name.split(":")
     if len(name_split) > 1:
-        name = name_split[1]
-    if container_name is not None:
-        data.name = f"{container_name}:{name}"
-    else:
-        data.name = f"{name}"
+        name = name.split(":")[-1]
 
-    return data.name
+    local_data = data.make_local()
+    if container_name:
+        local_data.name = f"{container_name}:{name}"
+    else:
+        local_data.name = f"{name}"
+    return local_data
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
