@@ -28,7 +28,7 @@ class ExtractABC(api.Extractor):
         selected = []
 
         for obj in instance:
-            if not isinstance(obj, bpy.types.Collection):
+            if isinstance(obj, bpy.types.Object):
                 obj.select_set(True)
                 selected.append(obj)
 

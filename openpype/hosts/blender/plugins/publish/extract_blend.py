@@ -30,7 +30,7 @@ class ExtractBlend(openpype.api.Extractor):
 
         for obj in instance:
             data_blocks.add(obj)
-            if isinstance(obj, bpy.types.Collection):
+            if not isinstance(obj, bpy.types.Object):
                 continue
             # Pack used images in the blend files.
             if obj.type == 'MESH':

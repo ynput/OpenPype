@@ -31,7 +31,7 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance) -> List:
         invalid = []
         for obj in [obj for obj in instance]:
-            if isinstance(obj, bpy.types.Collection):
+            if not isinstance(obj, bpy.types.Object):
                 continue
             if obj.matrix_basis != cls._identity:
                 invalid.append(obj)

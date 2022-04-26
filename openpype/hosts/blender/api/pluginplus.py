@@ -2,11 +2,7 @@
 
 import bpy
 
-from .dialog import (
-    use_selection_behaviour_dialog,
-    container_already_exist_dialog,
-)
-from .plugin import (
+from .container import (
     get_all_objects_in_collection,
     get_all_collections_in_collection,
 )
@@ -117,76 +113,3 @@ def get_collections_with_all_objects_selected(objects_selected):
                 if collection_to_copy_current in collections_to_copy:
                     collections_to_copy.remove(collection_to_copy_current)
     return collections_to_copy
-
-
-def create_container(name):
-    """
-    Create the container with the given name
-    """
-    # search in the container already exists
-    container = bpy.data.collections.get(name)
-    # if container doesn't exist create them
-    if container is None:
-        container = bpy.data.collections.new(name)
-        container.color_tag = "COLOR_05"
-        bpy.context.scene.collection.children.link(container)
-        return container
-    # else show a dialog box which say that the container already exist
-    container_already_exist_dialog()
-
-
-def link_all_in_container(container):
-    # confirmation dialog
-    if not use_selection_behaviour_dialog():
-        return []
-    # link all collections under the scene collection to the container
-    for collection in bpy.context.scene.collection.children:
-        if (
-            collection is not container and
-            collection not in container.children.values()
-        ):
-            container.children.link(collection)
-
-    return bpy.context.scene.collection.objects
-
-
-def link_collections_in_container(collections, container):
-    """
-    link the collections given to the container
-    """
-    for collection in collections:
-        # If the collection is not yet in the container
-        # And is not the container
-        if (
-            collection not in container.children.values()
-            and collection is not container
-        ):
-            # Link them to the container
-            link_collection_to_collection(collection, container)
-
-
-def link_all_in_container(container):
-    """
-    link all the scene to the container
-    """
-
-    # If all the collection isn't already in the container
-    if len(bpy.data.collections.children) != 1:
-        # Get collections under the scene collection
-        collections = bpy.data.collections.children
-        link_collections_in_container(collections, container)
-
-    # Get objects under the scene collection
-    objects = bpy.context.scene.collection.objects
-    link_objects_in_container(objects, container)
-
-
-def link_selection_in_container(objects_selected, container):
-    """
-    link the selection to the container
-    """
-    # Get collections with all objects selected first because
-    # if they exist their objects will be removed from the selection
-    collections_to_copy = get_collections_with_all_objects_selected()
-    link_objects_in_container(objects_selected, container)
-    link_collections_in_container(collections_to_copy, container)
