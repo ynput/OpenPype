@@ -2,19 +2,18 @@
 import bpy
 
 from typing import Optional
+from collections.abc import Iterable
 
 from .pipeline import AVALON_PROPERTY
 
-
 __all__ = [
+    "create_container",
     "remove_container",
+    "link_to_collection",
     "remove_orphan_datablocks",
-    "link_collection_to_collection",
-    "link_object_to_collection",
     "set_fake_user_on_orphans",
     "remove_fake_user_on_orphans",
     "model_asset_name",
-    "get_parent_collections",
     "get_container_collections",
     "set_original_name_for_objects_container",
     "set_temp_namespace_for_objects_container",
@@ -60,6 +59,20 @@ property_names = [
 ]
 
 
+def create_container(name):
+    """
+    Create the container with the given name
+    """
+    # search in the container already exists
+    container = bpy.data.collections.get(name)
+    # if container doesn't exist create them
+    if container is None:
+        container = bpy.data.collections.new(name)
+        container.color_tag = "COLOR_05"
+        bpy.context.scene.collection.children.link(container)
+        return container
+
+
 def remove_container(container):
     items_with_fake_user_list = set_fake_user_on_orphans()
     objects = get_all_objects_in_collection(container)
@@ -74,6 +87,24 @@ def remove_container(container):
     bpy.data.collections.remove(container)
     remove_orphan_datablocks()
     remove_fake_user_on_orphans(items_with_fake_user_list)
+
+
+def link_to_collection(entity, collection):
+    """link a entity to a collection"""
+    if isinstance(entity, Iterable):
+        for i in entity:
+            link_to_collection(i, collection)
+    elif (
+        isinstance(entity, bpy.types.Collection) and
+        entity not in collection.children.values() and
+        collection not in entity.children.values()
+    ):
+        collection.children.link(entity)
+    elif (
+        isinstance(entity, bpy.types.Object) and
+        entity not in collection.objects.values()
+    ):
+        collection.objects.link(entity)
 
 
 def remove_orphan_datablocks():
@@ -95,18 +126,6 @@ def remove_orphan_datablocks():
             if not block.users_id and not block.use_fake_user:
                 orphan_block_users_find = True
                 bpy.data.libraries.remove(block)
-
-
-def link_collection_to_collection(collection_to_link, collection):
-    """link an item to a collection"""
-    if collection_to_link not in collection.children.values():
-        collection.children.link(collection_to_link)
-
-
-def link_object_to_collection(object_to_link, collection):
-    """link an item to a collection"""
-    if object_to_link not in collection.objects.values():
-        collection.objects.link(object_to_link)
 
 
 def set_fake_user_on_orphans():
@@ -141,15 +160,6 @@ def model_asset_name(model_name: str, namespace: Optional[str] = None) -> str:
     if namespace:
         name = f"{name}_{namespace}"
     return name
-
-
-def get_parent_collections(collection):
-    """Return the parent collection of a collection"""
-    collections = list()
-    for parent_collection in bpy.data.collections:
-        if collection in parent_collection.children.values():
-            collections.append(parent_collection)
-    return collections
 
 
 def get_container_collections() -> list:

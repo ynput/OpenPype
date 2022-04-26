@@ -1,14 +1,7 @@
 """Create a model asset."""
 
-import bpy
-
 from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin, lib, ops
-
-from openpype.hosts.blender.api.pluginplus import (
-    link_objects_to_collection,
-    create_container,
-)
 
 
 class CreateModel(plugin.Creator):
@@ -32,9 +25,9 @@ class CreateModel(plugin.Creator):
         name = plugin.asset_name(asset, subset)
 
         # Create the container
-        container = create_container(name)
+        container = plugin.create_container(name)
         if container is None:
-            return
+            raise RuntimeError(f"This instance already exists: {name}")
 
         # Add custom property on the instance container with the data
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
@@ -44,6 +37,6 @@ class CreateModel(plugin.Creator):
         if (self.options or {}).get("useSelection"):
             # if has no selected object ask for adding all scene content
             selected = lib.get_selection()
-            link_objects_to_collection(selected, container)
+            plugin.link_to_collection(selected, container)
 
         return container

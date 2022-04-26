@@ -102,6 +102,25 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
     raise Exception("Could not create a custom Blender context.")
 
 
+def get_parent_collection(collection):
+    """Get the parent of the input collection"""
+    check_list = [bpy.context.scene.collection]
+
+    for c in check_list:
+        if collection.name in c.children.keys():
+            return c
+        check_list.extend(c.children)
+
+    return None
+
+
+def get_local_collection_with_name(name):
+    for collection in bpy.data.collections:
+        if collection.name == name and collection.library is None:
+            return collection
+    return None
+
+
 def deselect_all():
     """Deselect all objects in the scene.
 
@@ -224,7 +243,7 @@ class AssetLoader(LoaderPlugin):
               name: Optional[str] = None,
               namespace: Optional[str] = None,
               options: Optional[Dict] = None
-              ) -> Optional[bpy.types.Collection]:
+    ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:
