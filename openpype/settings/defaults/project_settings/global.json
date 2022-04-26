@@ -315,6 +315,7 @@
                         "workfile"
                     ],
                     "hosts": [
+                        "aftereffects",
                         "tvpaint"
                     ],
                     "task_types": [],

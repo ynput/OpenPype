@@ -2,8 +2,10 @@
 """Load camera from FBX."""
 import os
 
-from avalon import io
-from openpype.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import (
+    AVALON_CONTAINER_ID,
+    legacy_io,
+)
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 import unreal  # noqa
@@ -87,8 +89,8 @@ class CameraLoader(plugin.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        io_asset = io.Session["AVALON_ASSET"]
-        asset_doc = io.find_one({
+        io_asset = legacy_io.Session["AVALON_ASSET"]
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": io_asset
         })
@@ -172,8 +174,8 @@ class CameraLoader(plugin.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        io_asset = io.Session["AVALON_ASSET"]
-        asset_doc = io.find_one({
+        io_asset = legacy_io.Session["AVALON_ASSET"]
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": io_asset
         })

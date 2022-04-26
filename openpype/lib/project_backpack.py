@@ -25,7 +25,7 @@ from bson.json_util import (
     CANONICAL_JSON_OPTIONS
 )
 
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 DOCUMENTS_FILE_NAME = "database"
 METADATA_FILE_NAME = "metadata"

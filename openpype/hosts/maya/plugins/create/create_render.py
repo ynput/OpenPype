@@ -18,9 +18,10 @@ from openpype.api import (
     get_project_settings,
     get_asset)
 from openpype.modules import ModulesManager
-from openpype.pipeline import CreatorError
-
-from avalon.api import Session
+from openpype.pipeline import (
+    CreatorError,
+    legacy_io,
+)
 
 
 class CreateRender(plugin.Creator):
@@ -103,7 +104,7 @@ class CreateRender(plugin.Creator):
             self.deadline_servers = {}
             return
         self._project_settings = get_project_settings(
-            Session["AVALON_PROJECT"])
+            legacy_io.Session["AVALON_PROJECT"])
 
         # project_settings/maya/create/CreateRender/aov_separator
         try:

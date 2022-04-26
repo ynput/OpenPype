@@ -324,6 +324,7 @@ class MongoSettingsHandler(SettingsHandler):
     global_general_keys = (
         "openpype_path",
         "admin_password",
+        "log_to_server",
         "disk_mapping",
         "production_version",
         "staging_version"
@@ -337,7 +338,7 @@ class MongoSettingsHandler(SettingsHandler):
     def __init__(self):
         # Get mongo connection
         from openpype.lib import OpenPypeMongoConnection
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         settings_collection = OpenPypeMongoConnection.get_mongo_client()
 

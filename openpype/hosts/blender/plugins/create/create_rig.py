@@ -2,7 +2,7 @@
 
 import bpy
 
-from avalon import api
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
@@ -34,7 +34,7 @@ class CreateRig(plugin.Creator):
         asset_group = bpy.data.objects.new(name=name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
-        self.data['task'] = api.Session.get('AVALON_TASK')
+        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
         lib.imprint(asset_group, self.data)
 
         # Add selected objects to instance

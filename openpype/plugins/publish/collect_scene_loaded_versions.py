@@ -1,8 +1,11 @@
 from bson.objectid import ObjectId
 
 import pyblish.api
-from avalon import io
-from openpype.pipeline import registered_host
+
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 
 
 class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
@@ -38,7 +41,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
         loaded_versions = []
         _containers = list(host.ls())
         _repr_ids = [ObjectId(c["representation"]) for c in _containers]
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {"_id": {"$in": _repr_ids}},
             projection={"_id": 1, "parent": 1}
         )

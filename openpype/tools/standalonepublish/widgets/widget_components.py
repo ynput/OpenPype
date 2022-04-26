@@ -5,16 +5,18 @@ import random
 import string
 
 from Qt import QtWidgets, QtCore
-from . import DropDataFrame
-from .constants import HOST_NAME
-from avalon import io
+
 from openpype.api import execute, Logger
+from openpype.pipeline import legacy_io
 from openpype.lib import (
     get_openpype_execute_args,
     apply_project_environments_value
 )
 
-log = Logger().get_logger("standalonepublisher")
+from . import DropDataFrame
+from .constants import HOST_NAME
+
+log = Logger.get_logger("standalonepublisher")
 
 
 class ComponentsWidget(QtWidgets.QWidget):
@@ -152,18 +154,18 @@ def set_context(project, asset, task):
     :type asset: str
     '''
     os.environ["AVALON_PROJECT"] = project
-    io.Session["AVALON_PROJECT"] = project
+    legacy_io.Session["AVALON_PROJECT"] = project
     os.environ["AVALON_ASSET"] = asset
-    io.Session["AVALON_ASSET"] = asset
+    legacy_io.Session["AVALON_ASSET"] = asset
     if not task:
         task = ''
     os.environ["AVALON_TASK"] = task
-    io.Session["AVALON_TASK"] = task
+    legacy_io.Session["AVALON_TASK"] = task
 
-    io.Session["current_dir"] = os.path.normpath(os.getcwd())
+    legacy_io.Session["current_dir"] = os.path.normpath(os.getcwd())
 
     os.environ["AVALON_APP"] = HOST_NAME
-    io.Session["AVALON_APP"] = HOST_NAME
+    legacy_io.Session["AVALON_APP"] = HOST_NAME
 
 
 def cli_publish(data, publish_paths, gui=True):
@@ -171,7 +173,7 @@ def cli_publish(data, publish_paths, gui=True):
         os.path.dirname(os.path.dirname(__file__)),
         "publish.py"
     )
-    io.install()
+    legacy_io.install()
 
     # Create hash name folder in temp
     chars = "".join([random.choice(string.ascii_letters) for i in range(15)])
@@ -203,6 +205,6 @@ def cli_publish(data, publish_paths, gui=True):
 
     log.info(f"Publish result: {result}")
 
-    io.uninstall()
+    legacy_io.uninstall()
 
     return False
