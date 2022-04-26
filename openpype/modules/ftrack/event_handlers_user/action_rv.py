@@ -4,8 +4,11 @@ import traceback
 import json
 
 import ftrack_api
-from avalon import io, api
-from openpype.pipeline import get_representation_path
+
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
@@ -253,8 +256,8 @@ class RVAction(BaseAction):
         )["version"]["asset"]["parent"]["link"][0]
         project = session.get(link["type"], link["id"])
         os.environ["AVALON_PROJECT"] = project["name"]
-        api.Session["AVALON_PROJECT"] = project["name"]
-        io.install()
+        legacy_io.Session["AVALON_PROJECT"] = project["name"]
+        legacy_io.install()
 
         location = ftrack_api.Session().pick_location()
 
@@ -278,22 +281,22 @@ class RVAction(BaseAction):
             if online_source:
                 continue
 
-            asset = io.find_one({"type": "asset", "name": parent_name})
-            subset = io.find_one(
+            asset = legacy_io.find_one({"type": "asset", "name": parent_name})
+            subset = legacy_io.find_one(
                 {
                     "type": "subset",
                     "name": component["version"]["asset"]["name"],
                     "parent": asset["_id"]
                 }
             )
-            version = io.find_one(
+            version = legacy_io.find_one(
                 {
                     "type": "version",
                     "name": component["version"]["version"],
                     "parent": subset["_id"]
                 }
             )
-            representation = io.find_one(
+            representation = legacy_io.find_one(
                 {
                     "type": "representation",
                     "parent": version["_id"],
@@ -301,7 +304,7 @@ class RVAction(BaseAction):
                 }
             )
             if representation is None:
-                representation = io.find_one(
+                representation = legacy_io.find_one(
                     {
                         "type": "representation",
                         "parent": version["_id"],

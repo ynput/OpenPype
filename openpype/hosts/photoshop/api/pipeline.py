@@ -3,11 +3,11 @@ from Qt import QtWidgets
 from bson.objectid import ObjectId
 
 import pyblish.api
-from avalon import io
 
 from openpype.api import Logger
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
@@ -33,22 +33,11 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
     # Warn about outdated containers.
-    print("Starting new QApplication..")
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
@@ -149,13 +138,9 @@ def list_instances():
     instances = []
     layers_meta = stub.get_layers_metadata()
     if layers_meta:
-        for key, instance in layers_meta.items():
-            schema = instance.get("schema")
-            if schema and "container" in schema:
-                continue
-
-            instance['uuid'] = key
-            instances.append(instance)
+        for instance in layers_meta:
+            if instance.get("id") == "pyblish.avalon.instance":
+                instances.append(instance)
 
     return instances
 
@@ -176,11 +161,18 @@ def remove_instance(instance):
     if not stub:
         return
 
-    stub.remove_instance(instance.get("uuid"))
-    layer = stub.get_layer(instance.get("uuid"))
-    if layer:
-        stub.rename_layer(instance.get("uuid"),
-                          layer.name.replace(stub.PUBLISH_ICON, ''))
+    inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
+    if not inst_id:
+        log.warning("No instance identifier for {}".format(instance))
+        return
+
+    stub.remove_instance(inst_id)
+
+    if instance.get("members"):
+        item = stub.get_layer(instance["members"][0])
+        if item:
+            stub.rename_layer(item.id,
+                              item.name.replace(stub.PUBLISH_ICON, ''))
 
 
 def _get_stub():
@@ -232,6 +224,33 @@ def containerise(
         "members": [str(layer.id)]
     }
     stub = lib.stub()
-    stub.imprint(layer, data)
+    stub.imprint(layer.id, data)
 
     return layer
+
+
+def get_context_data():
+    """Get stored values for context (validation enable/disable etc)"""
+    meta = _get_stub().get_layers_metadata()
+    for item in meta:
+        if item.get("id") == "publish_context":
+            item.pop("id")
+            return item
+
+    return {}
+
+
+def update_context_data(data, changes):
+    """Store value needed for context"""
+    item = data
+    item["id"] = "publish_context"
+    _get_stub().imprint(item["id"], item)
+
+
+def get_context_title():
+    """Returns title for Creator window"""
+
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
+    return "{}/{}/{}".format(project_name, asset_name, task_name)

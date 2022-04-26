@@ -349,6 +349,18 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "photoshop"
+                    ],
+                    "families": [
+                        "review"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
