@@ -49,8 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import api
 from openpype.lib import get_formatted_current_time
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -93,7 +93,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
-        asset = api.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
         deadline_settings = (
@@ -207,6 +207,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         product_name: layer_render_products.get_files(
                             product)
                     })
+
+            has_cameras = any(product.camera for product in render_products)
+            assert has_cameras, "No render cameras found."
 
             self.log.info("multipart: {}".format(
                 multipart))

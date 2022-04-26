@@ -6,10 +6,9 @@ from Qt import QtWidgets, QtCore
 import qtawesome
 from bson.objectid import ObjectId
 
-from avalon import io
-
 from openpype import style
 from openpype.pipeline import (
+    legacy_io,
     HeroVersionType,
     update_container,
     remove_container,
@@ -84,7 +83,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if item_id not in repre_ids:
                 repre_ids.append(item_id)
 
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "type": "representation",
                 "_id": {"$in": repre_ids}
@@ -98,7 +97,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if version_id not in version_ids:
                 version_ids.append(version_id)
 
-        loaded_versions = io.find({
+        loaded_versions = legacy_io.find({
             "_id": {"$in": version_ids},
             "type": {"$in": ["version", "hero_version"]}
         })
@@ -115,7 +114,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 if parent_id not in version_parents:
                     version_parents.append(parent_id)
 
-        all_versions = io.find({
+        all_versions = legacy_io.find({
             "type": {"$in": ["hero_version", "version"]},
             "parent": {"$in": version_parents}
         })
@@ -151,7 +150,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     if item_id not in repre_ids:
                         repre_ids.append(item_id)
 
-                repre_docs = io.find(
+                repre_docs = legacy_io.find(
                     {
                         "type": "representation",
                         "_id": {"$in": repre_ids}
@@ -166,7 +165,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     version_id_by_repre_id[repre_doc["_id"]] = version_id
                     if version_id not in version_ids:
                         version_ids.append(version_id)
-                hero_versions = io.find(
+                hero_versions = legacy_io.find(
                     {
                         "_id": {"$in": version_ids},
                         "type": "hero_version"
@@ -184,7 +183,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                         if current_version_id == hero_version_id:
                             version_id_by_repre_id[_repre_id] = version_id
 
-                version_docs = io.find(
+                version_docs = legacy_io.find(
                     {
                         "_id": {"$in": list(version_ids)},
                         "type": "version"
@@ -367,11 +366,11 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 repre_ids (list)
                 side (str): 'active_site'|'remote_site'
         """
-        project_name = io.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
         active_site = self.sync_server.get_active_site(project_name)
         remote_site = self.sync_server.get_remote_site(project_name)
 
-        repre_docs = io.find({
+        repre_docs = legacy_io.find({
             "type": "representation",
             "_id": {"$in": repre_ids}
         })
@@ -661,12 +660,12 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         # Get available versions for active representation
         representation_id = ObjectId(active["representation"])
-        representation = io.find_one({"_id": representation_id})
-        version = io.find_one({
+        representation = legacy_io.find_one({"_id": representation_id})
+        version = legacy_io.find_one({
             "_id": representation["parent"]
         })
 
-        versions = list(io.find(
+        versions = list(legacy_io.find(
             {
                 "parent": version["parent"],
                 "type": "version"
@@ -674,7 +673,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             sort=[("name", 1)]
         ))
 
-        hero_version = io.find_one({
+        hero_version = legacy_io.find_one({
             "parent": version["parent"],
             "type": "hero_version"
         })
