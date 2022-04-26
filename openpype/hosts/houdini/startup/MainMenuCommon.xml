@@ -5,61 +5,85 @@
             <label>OpenPype</label>
 
             <scriptItem id="avalon_create">
-                <label>Create ...</label>
+                <label>Create...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import creator
-creator.show()
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_creator(parent)
 ]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_load">
-                <label>Load ...</label>
+                <label>Load...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import cbloader
-cbloader.show(use_context=True)
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_loader(parent=parent, use_context=True)
+]]> </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="publish">
+                <label>Publish...</label>
+                <scriptCode><![CDATA[
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_publish(parent)
 ]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_manage">
-                <label>Manage ...</label>
+                <label>Manage...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import cbsceneinventory
-cbsceneinventory.show()
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_scene_inventory(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="publish">
-                <label>Publish ...</label>
+            <scriptItem id="library_load">
+                <label>Library...</label>
                 <scriptCode><![CDATA[
 import hou
-from avalon.tools import publish
+from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-publish.show(parent)
-                ]]></scriptCode>
+host_tools.show_library_loader(parent=parent)
+]]></scriptCode>
             </scriptItem>
 
             <separatorItem/>
 
             <scriptItem id="workfiles">
-                <label>Work Files ...</label>
+                <label>Work Files...</label>
                 <scriptCode><![CDATA[
-import hou, os
-from openpype.tools import workfiles
-workfiles.show(os.environ["AVALON_WORKDIR"])
-                ]]></scriptCode>
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_workfiles(parent)
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="reset_frame_range">
+                <label>Reset Frame Range</label>
+                <scriptCode><![CDATA[
+import openpype.hosts.houdini.api.lib
+openpype.hosts.houdini.api.lib.reset_framerange()
+]]></scriptCode>
             </scriptItem>
 
             <separatorItem/>
-
-            <subMenu id="avalon_reload_pipeline">
-                <label>System</label>
-                <scriptItem>
-                    <label>Reload Pipeline (unstable)</label>
-                    <scriptCode><![CDATA[
-from avalon.houdini import pipeline
-pipeline.reload_pipeline()]]></scriptCode>
-                </scriptItem>
-            </subMenu>
+            <scriptItem id="experimental_tools">
+                <label>Experimental tools...</label>
+                <scriptCode><![CDATA[
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_experimental_tools_dialog(parent)
+]]></scriptCode>
+            </scriptItem>
         </subMenu>
     </menuBar>
 </mainMenu>

@@ -4,8 +4,6 @@ import os
 import json
 import appdirs
 import requests
-import six
-import sys
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -14,13 +12,16 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import requests_get
 from openpype.api import (
     get_system_settings,
     get_project_settings,
     get_asset)
 from openpype.modules import ModulesManager
-
-from avalon.api import Session
+from openpype.pipeline import (
+    CreatorError,
+    legacy_io,
+)
 
 
 class CreateRender(plugin.Creator):
@@ -52,8 +53,8 @@ class CreateRender(plugin.Creator):
             renderer.
         ass (bool): Submit as ``ass`` file for standalone Arnold renderer.
         tileRendering (bool): Instance is set to tile rendering mode. We
-            won't submit actuall render, but we'll make publish job to wait
-            for Tile Assemly job done and then publish.
+            won't submit actual render, but we'll make publish job to wait
+            for Tile Assembly job done and then publish.
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -63,7 +64,6 @@ class CreateRender(plugin.Creator):
     label = "Render"
     family = "rendering"
     icon = "eye"
-    defaults = ["Main"]
 
     _token = None
     _user = None
@@ -81,12 +81,20 @@ class CreateRender(plugin.Creator):
     }
 
     _image_prefixes = {
-        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'vray': 'maya/<scene>/<Layer>/<Layer>',
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
-        'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
+        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
     }
+
+    _aov_chars = {
+        "dot": ".",
+        "dash": "-",
+        "underscore": "_"
+    }
+
+    _project_settings = None
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
@@ -95,12 +103,26 @@ class CreateRender(plugin.Creator):
         if not deadline_settings["enabled"]:
             self.deadline_servers = {}
             return
-        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        self._project_settings = get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"])
+
+        # project_settings/maya/create/CreateRender/aov_separator
+        try:
+            self.aov_separator = self._aov_chars[(
+                self._project_settings["maya"]
+                                      ["create"]
+                                      ["CreateRender"]
+                                      ["aov_separator"]
+            )]
+        except KeyError:
+            self.aov_separator = "_"
+
+        manager = ModulesManager()
+        self.deadline_module = manager.modules_by_name["deadline"]
         try:
             default_servers = deadline_settings["deadline_urls"]
             project_servers = (
-                project_settings["deadline"]
-                                ["deadline_servers"]
+                self._project_settings["deadline"]["deadline_servers"]
             )
             self.deadline_servers = {
                 k: default_servers[k]
@@ -113,10 +135,8 @@ class CreateRender(plugin.Creator):
 
         except AttributeError:
             # Handle situation were we had only one url for deadline.
-            manager = ModulesManager()
-            deadline_module = manager.modules_by_name["deadline"]
             # get default deadline webservice url from deadline module
-            self.deadline_servers = deadline_module.deadline_urls
+            self.deadline_servers = self.deadline_module.deadline_urls
 
     def process(self):
         """Entry point."""
@@ -185,62 +205,47 @@ class CreateRender(plugin.Creator):
     def _deadline_webservice_changed(self):
         """Refresh Deadline server dependent options."""
         # get selected server
-        from maya import cmds
         webservice = self.deadline_servers[
             self.server_aliases[
                 cmds.getAttr("{}.deadlineServers".format(self.instance))
             ]
         ]
-        pools = self._get_deadline_pools(webservice)
+        pools = self.deadline_module.get_deadline_pools(webservice, self.log)
         cmds.deleteAttr("{}.primaryPool".format(self.instance))
         cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+
+        pool_setting = (self._project_settings["deadline"]
+                                              ["publish"]
+                                              ["CollectDeadlinePools"])
+
+        primary_pool = pool_setting["primary_pool"]
+        sorted_pools = self._set_default_pool(list(pools), primary_pool)
         cmds.addAttr(self.instance, longName="primaryPool",
                      attributeType="enum",
-                     enumName=":".join(pools))
-        cmds.addAttr(self.instance, longName="secondaryPool",
+                     enumName=":".join(sorted_pools))
+
+        pools = ["-"] + pools
+        secondary_pool = pool_setting["secondary_pool"]
+        sorted_pools = self._set_default_pool(list(pools), secondary_pool)
+        cmds.addAttr("{}.secondaryPool".format(self.instance),
                      attributeType="enum",
-                     enumName=":".join(["-"] + pools))
-
-    def _get_deadline_pools(self, webservice):
-        # type: (str) -> list
-        """Get pools from Deadline.
-        Args:
-            webservice (str): Server url.
-        Returns:
-            list: Pools.
-        Throws:
-            RuntimeError: If deadline webservice is unreachable.
-
-        """
-        argument = "{}/api/pools?NamesOnly=true".format(webservice)
-        try:
-            response = self._requests_get(argument)
-        except requests.exceptions.ConnectionError as exc:
-            msg = 'Cannot connect to deadline web service'
-            self.log.error(msg)
-            six.reraise(
-                RuntimeError,
-                RuntimeError('{} - {}'.format(msg, exc)),
-                sys.exc_info()[2])
-        if not response.ok:
-            self.log.warning("No pools retrieved")
-            return []
-
-        return response.json()
+                     enumName=":".join(sorted_pools))
 
     def _create_render_settings(self):
         """Create instance settings."""
         # get pools
         pool_names = []
+        default_priority = 50
 
-        self.server_aliases = self.deadline_servers.keys()
+        self.server_aliases = list(self.deadline_servers.keys())
         self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
         self.data["review"] = True
         self.data["extendFrames"] = False
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
-        self.data["priority"] = 50
+        self.data["priority"] = default_priority
+        self.data["tile_priority"] = default_priority
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
         self.data["machineList"] = ""
@@ -266,17 +271,25 @@ class CreateRender(plugin.Creator):
             raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_enabled:
-            # if default server is not between selected, use first one for
-            # initial list of pools.
             try:
                 deadline_url = self.deadline_servers["default"]
             except KeyError:
-                deadline_url = [
-                    self.deadline_servers[k]
-                    for k in self.deadline_servers.keys()
-                ][0]
+                # if 'default' server is not between selected,
+                # use first one for initial list of pools.
+                deadline_url = next(iter(self.deadline_servers.values()))
 
-            pool_names = self._get_deadline_pools(deadline_url)
+            pool_names = self.deadline_module.get_deadline_pools(deadline_url,
+                                                                 self.log)
+            maya_submit_dl = self._project_settings.get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {})
+            priority = maya_submit_dl.get("priority", default_priority)
+            self.data["priority"] = priority
+
+            tile_priority = maya_submit_dl.get("tile_priority",
+                                               default_priority)
+            self.data["tile_priority"] = tile_priority
 
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
@@ -297,11 +310,26 @@ class CreateRender(plugin.Creator):
                 self.log.info("  - pool: {}".format(pool["name"]))
                 pool_names.append(pool["name"])
 
-        self.data["primaryPool"] = pool_names
+        pool_setting = (self._project_settings["deadline"]
+                                              ["publish"]
+                                              ["CollectDeadlinePools"])
+        primary_pool = pool_setting["primary_pool"]
+        self.data["primaryPool"] = self._set_default_pool(pool_names,
+                                                          primary_pool)
         # We add a string "-" to allow the user to not
         # set any secondary pools
-        self.data["secondaryPool"] = ["-"] + pool_names
+        pool_names = ["-"] + pool_names
+        secondary_pool = pool_setting["secondary_pool"]
+        self.data["secondaryPool"] = self._set_default_pool(pool_names,
+                                                            secondary_pool)
         self.options = {"useSelection": False}  # Force no content
+
+    def _set_default_pool(self, pool_names, pool_value):
+        """Reorder pool names, default should come first"""
+        if pool_value and pool_value in pool_names:
+            pool_names.remove(pool_value)
+            pool_names = [pool_value] + pool_names
+        return pool_names
 
     def _load_credentials(self):
         """Load Muster credentials.
@@ -337,7 +365,7 @@ class CreateRender(plugin.Creator):
         """
         params = {"authToken": self._token}
         api_entry = "/api/pools/list"
-        response = self._requests_get(self.MUSTER_REST_URL + api_entry,
+        response = requests_get(self.MUSTER_REST_URL + api_entry,
                                       params=params)
         if response.status_code != 200:
             if response.status_code == 401:
@@ -363,44 +391,10 @@ class CreateRender(plugin.Creator):
         api_url = "{}/muster/show_login".format(
             os.environ["OPENPYPE_WEBSERVER_URL"])
         self.log.debug(api_url)
-        login_response = self._requests_get(api_url, timeout=1)
+        login_response = requests_get(api_url, timeout=1)
         if login_response.status_code != 200:
             self.log.error("Cannot show login form to Muster")
             raise Exception("Cannot show login form to Muster")
-
-    def _requests_post(self, *args, **kwargs):
-        """Wrap request post method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if "verify" not in kwargs:
-            kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """Wrap request get method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if "verify" not in kwargs:
-            kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
-        return requests.get(*args, **kwargs)
 
     def _set_default_renderer_settings(self, renderer):
         """Set basic settings based on renderer.
@@ -409,8 +403,10 @@ class CreateRender(plugin.Creator):
             renderer (str): Renderer name.
 
         """
+        prefix = self._image_prefixes[renderer]
+        prefix = prefix.replace("{aov_separator}", self.aov_separator)
         cmds.setAttr(self._image_prefix_nodes[renderer],
-                     self._image_prefixes[renderer],
+                     prefix,
                      type="string")
 
         asset = get_asset()
@@ -432,9 +428,7 @@ class CreateRender(plugin.Creator):
         if renderer == "vray":
             self._set_vray_settings(asset)
         if renderer == "redshift":
-            _ = self._set_renderer_option(
-                "RedshiftOptions", "{}.imageFormat", 1
-            )
+            cmds.setAttr("redshiftOptions.imageFormat", 1)
 
             # resolution
             cmds.setAttr(
@@ -446,37 +440,37 @@ class CreateRender(plugin.Creator):
 
             self._set_global_output_settings()
 
-    @staticmethod
-    def _set_renderer_option(renderer_node, arg=None, value=None):
-        # type: (str, str, str) -> str
-        """Set option on renderer node.
-
-        If renderer settings node doesn't exists, it is created first.
-
-        Args:
-             renderer_node (str): Renderer name.
-             arg (str, optional): Argument name.
-             value (str, optional): Argument value.
-
-        Returns:
-            str: Renderer settings node.
-
-        """
-        settings = cmds.ls(type=renderer_node)
-        result = settings[0] if settings else cmds.createNode(renderer_node)
-        cmds.setAttr(arg.format(result), value)
-        return result
-
     def _set_vray_settings(self, asset):
         # type: (dict) -> None
         """Sets important settings for Vray."""
-        node = self._set_renderer_option(
-            "VRaySettingsNode", "{}.fileNameRenderElementSeparator", "_"
-        )
+        settings = cmds.ls(type="VRaySettingsNode")
+        node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
 
+        # set separator
+        # set it in vray menu
+        if cmds.optionMenuGrp("vrayRenderElementSeparator", exists=True,
+                              q=True):
+            items = cmds.optionMenuGrp(
+                "vrayRenderElementSeparator", ill=True, query=True)
+
+            separators = [cmds.menuItem(i, label=True, query=True) for i in items]  # noqa: E501
+            try:
+                sep_idx = separators.index(self.aov_separator)
+            except ValueError:
+                raise CreatorError(
+                    "AOV character {} not in {}".format(
+                        self.aov_separator, separators))
+
+            cmds.optionMenuGrp(
+                "vrayRenderElementSeparator", sl=sep_idx + 1, edit=True)
+        cmds.setAttr(
+            "{}.fileNameRenderElementSeparator".format(node),
+            self.aov_separator,
+            type="string"
+        )
         # set format to exr
         cmds.setAttr(
-            "{}.imageFormatStr".format(node), 5)
+            "{}.imageFormatStr".format(node), "exr", type="string")
 
         # animType
         cmds.setAttr(

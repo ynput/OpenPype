@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class CollectAudio(pyblish.api.ContextPlugin):
@@ -17,11 +17,11 @@ class CollectAudio(pyblish.api.ContextPlugin):
 
     def process(self, context):
         for instance in context:
-            if instance.data["family"] == 'render.farm':
+            if 'render.farm' in instance.data.get("families", []):
                 comp_id = instance.data["comp_id"]
                 if not comp_id:
                     self.log.debug("No comp_id filled in instance")
-                    return
+                    continue
                 context.data["audioFile"] = os.path.normpath(
-                    aftereffects.stub().get_audio_url(comp_id)
+                    get_stub().get_audio_url(comp_id)
                 ).replace("\\", "/")

@@ -1,19 +1,29 @@
-"""Loads publishing context from json and continues in publish process.
+"""Create instances from batch data and continues in publish process.
 
 Requires:
-    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
+    CollectBatchData
 
 Provides:
     context, instances -> All data from previous publishing process.
 """
 
 import os
-import json
 import clique
+import tempfile
+import math
 
 import pyblish.api
-from avalon import io
-from openpype.lib import prepare_template_data
+from openpype.lib import (
+    prepare_template_data,
+    get_asset,
+    get_ffprobe_streams,
+    convert_ffprobe_fps_value,
+)
+from openpype.lib.plugin_tools import (
+    parse_json,
+    get_subset_name_with_asset_doc
+)
+from openpype.pipeline import legacy_io
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -21,85 +31,65 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     This collector will try to find json files in provided
     `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
+    This covers 'basic' webpublishes, eg artists uses Standalone Publisher to
+    publish rendered frames or assets.
+
+    This is not applicable for 'studio' processing where host application is
+    called to process uploaded workfile and render frames itself.
     """
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
     label = "Collect rendered frames"
-    host = ["webpublisher"]
-
-    _context = None
+    hosts = ["webpublisher"]
+    targets = ["filespublish"]
 
     # from Settings
-    task_type_to_family = {}
+    task_type_to_family = []
 
-    def _load_json(self, path):
-        path = path.strip('\"')
-        assert os.path.isfile(path), (
-            "Path to json file doesn't exist. \"{}\"".format(path)
-        )
-        data = None
-        with open(path, "r") as json_file:
-            try:
-                data = json.load(json_file)
-            except Exception as exc:
-                self.log.error(
-                    "Error loading json: "
-                    "{} - Exception: {}".format(path, exc)
-                )
-        return data
+    def process(self, context):
+        batch_dir = context.data["batchDir"]
+        task_subfolders = []
+        for folder_name in os.listdir(batch_dir):
+            full_path = os.path.join(batch_dir, folder_name)
+            if os.path.isdir(full_path):
+                task_subfolders.append(full_path)
 
-    def _process_batch(self, dir_url):
-        task_subfolders = [
-            os.path.join(dir_url, o)
-            for o in os.listdir(dir_url)
-            if os.path.isdir(os.path.join(dir_url, o))]
         self.log.info("task_sub:: {}".format(task_subfolders))
-        for task_dir in task_subfolders:
-            task_data = self._load_json(os.path.join(task_dir,
-                                                     "manifest.json"))
-            self.log.info("task_data:: {}".format(task_data))
-            ctx = task_data["context"]
-            task_type = "default_task_type"
-            task_name = None
 
-            if ctx["type"] == "task":
-                items = ctx["path"].split('/')
-                asset = items[-2]
-                os.environ["AVALON_TASK"] = ctx["name"]
-                task_name = ctx["name"]
-                task_type = ctx["attributes"]["type"]
-            else:
-                asset = ctx["name"]
-                os.environ["AVALON_TASK"] = ""
+        asset_name = context.data["asset"]
+        asset_doc = get_asset()
+        task_name = context.data["task"]
+        task_type = context.data["taskType"]
+        project_name = context.data["project_name"]
+        variant = context.data["variant"]
+        for task_dir in task_subfolders:
+            task_data = parse_json(os.path.join(task_dir,
+                                                "manifest.json"))
+            self.log.info("task_data:: {}".format(task_data))
 
             is_sequence = len(task_data["files"]) > 1
 
             _, extension = os.path.splitext(task_data["files"][0])
-            family, families, subset_template, tags = self._get_family(
+            family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset = self._get_subset_name(family, subset_template, task_name,
-                                           task_data["variant"])
+            subset_name = get_subset_name_with_asset_doc(
+                family, variant, task_name, asset_doc,
+                project_name=project_name, host_name="webpublisher"
+            )
+            version = self._get_last_version(asset_name, subset_name) + 1
 
-            os.environ["AVALON_ASSET"] = asset
-            io.Session["AVALON_ASSET"] = asset
-
-            instance = self._context.create_instance(subset)
-            instance.data["asset"] = asset
-            instance.data["subset"] = subset
+            instance = context.create_instance(subset_name)
+            instance.data["asset"] = asset_name
+            instance.data["subset"] = subset_name
             instance.data["family"] = family
             instance.data["families"] = families
-            instance.data["version"] = \
-                self._get_last_version(asset, subset) + 1
-            instance.data["stagingDir"] = task_dir
+            instance.data["version"] = version
+            instance.data["stagingDir"] = tempfile.mkdtemp()
             instance.data["source"] = "webpublisher"
-
-            # to store logging info into DB openpype.webpublishes
-            instance.data["ctx_path"] = ctx["path"]
-            instance.data["batch_id"] = task_data["batch"]
 
             # to convert from email provided into Ftrack username
             instance.data["user_email"] = task_data["user"]
@@ -113,9 +103,30 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 instance.data["frameEnd"] = \
                     instance.data["representations"][0]["frameEnd"]
             else:
+                frame_start = asset_doc["data"]["frameStart"]
+                instance.data["frameStart"] = frame_start
+                instance.data["frameEnd"] = asset_doc["data"]["frameEnd"]
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"], tags
                 )
+                if family != 'workfile':
+                    file_url = os.path.join(task_dir, task_data["files"][0])
+                    try:
+                        no_of_frames = self._get_number_of_frames(file_url)
+                        if no_of_frames:
+                            frame_end = int(frame_start) + \
+                                        math.ceil(no_of_frames)
+                            frame_end = math.ceil(frame_end) - 1
+                            instance.data["frameEnd"] = frame_end
+                            self.log.debug("frameEnd:: {}".format(
+                                instance.data["frameEnd"]))
+                    except Exception:
+                        self.log.warning("Unable to count frames "
+                                         "duration {}".format(no_of_frames))
+
+            # raise ValueError("STOP")
+            instance.data["handleStart"] = asset_doc["data"]["handleStart"]
+            instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
 
             self.log.info("instance.data:: {}".format(instance.data))
 
@@ -141,7 +152,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         return [repre_data]
 
     def _process_sequence(self, files, task_dir, tags):
-        """Prepare reprentations for sequence of files."""
+        """Prepare representation for sequence of files."""
         collections, remainder = clique.assemble(files)
         assert len(collections) == 1, \
             "Too many collections in {}".format(files)
@@ -171,19 +182,32 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension (str): without '.'
 
             Returns:
-                (family, [families], subset_template_name, tags) tuple
+                (family, [families], tags) tuple
                 AssertionError if not matching family found
         """
-        task_obj = settings.get(task_type)
+        task_type = task_type.lower()
+        lower_cased_task_types = {}
+        for t_type, task in settings.items():
+            lower_cased_task_types[t_type.lower()] = task
+        task_obj = lower_cased_task_types.get(task_type)
         assert task_obj, "No family configuration for '{}'".format(task_type)
 
         found_family = None
-        for family, content in task_obj.items():
-            if is_sequence != content["is_sequence"]:
+        families_config = []
+        # backward compatibility, should be removed pretty soon
+        if isinstance(task_obj, dict):
+            for family, config in task_obj:
+                config["result_family"] = family
+                families_config.append(config)
+        else:
+            families_config = task_obj
+
+        for config in families_config:
+            if is_sequence != config["is_sequence"]:
                 continue
-            if extension in content["extensions"] or \
-                    '' in content["extensions"]:  # all extensions setting
-                found_family = family
+            if (extension in config["extensions"] or
+                    '' in config["extensions"]):  # all extensions setting
+                found_family = config["result_family"]
                 break
 
         msg = "No family found for combination of " +\
@@ -191,10 +215,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                   task_type, is_sequence, extension)
         assert found_family, msg
 
-        return found_family, \
-            content["families"], \
-            content["subset_template_name"], \
-            content["tags"]
+        return (found_family,
+                config["families"],
+                config["tags"])
 
     def _get_last_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""
@@ -239,29 +262,49 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 }
             }
         ]
-        version = list(io.aggregate(query))
+        version = list(legacy_io.aggregate(query))
 
         if version:
             return version[0].get("version") or 0
         else:
             return 0
 
-    def process(self, context):
-        self._context = context
+    def _get_number_of_frames(self, file_url):
+        """Return duration in frames"""
+        try:
+            streams = get_ffprobe_streams(file_url, self.log)
+        except Exception as exc:
+            raise AssertionError((
+                "FFprobe couldn't read information about input file: \"{}\"."
+                " Error message: {}"
+            ).format(file_url, str(exc)))
 
-        batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
+        first_video_stream = None
+        for stream in streams:
+            if "width" in stream and "height" in stream:
+                first_video_stream = stream
+                break
 
-        assert batch_dir, (
-            "Missing `OPENPYPE_PUBLISH_DATA`")
+        if first_video_stream:
+            nb_frames = stream.get("nb_frames")
+            if nb_frames:
+                try:
+                    return int(nb_frames)
+                except ValueError:
+                    self.log.warning(
+                        "nb_frames {} not convertible".format(nb_frames))
 
-        assert batch_dir, \
-            "Folder {} doesn't exist".format(batch_dir)
+                    duration = stream.get("duration")
+                    frame_rate = convert_ffprobe_fps_value(
+                        stream.get("r_frame_rate", '0/0')
+                    )
+                    self.log.debug("duration:: {} frame_rate:: {}".format(
+                        duration, frame_rate))
+                    try:
+                        return float(duration) * float(frame_rate)
+                    except ValueError:
+                        self.log.warning(
+                            "{} or {} cannot be converted".format(duration,
+                                                                  frame_rate))
 
-        project_name = os.environ.get("AVALON_PROJECT")
-        if project_name is None:
-            raise AssertionError(
-                "Environment `AVALON_PROJECT` was not found."
-                "Could not set project `root` which may cause issues."
-            )
-
-        self._process_batch(batch_dir)
+        self.log.warning("Cannot get number of frames")

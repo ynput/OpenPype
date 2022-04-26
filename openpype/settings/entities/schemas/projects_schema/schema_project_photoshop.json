@@ -34,12 +34,126 @@
             "label": "Publish plugins",
             "children": [
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "is_group": true,
+                    "key": "CollectColorCodedInstances",
+                    "label": "Collect Color Coded Instances",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "create_flatten_image",
+                            "label": "Create flatten image"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
+                        },
+                        {
+                            "type": "list",
+                            "key": "color_code_mapping",
+                            "label": "Color code mappings",
+                            "use_label_wrap": false,
+                            "collapsible": false,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "key": "color_code",
+                                        "label": "Color codes for layers",
+                                        "type": "enum",
+                                        "multiselection": true,
+                                        "enum_items": [
+                                            { "red": "red" },
+                                            { "orange": "orange" },
+                                            { "yellowColor": "yellow" },
+                                            { "grain": "green" },
+                                            { "blue": "blue" },
+                                            { "violet": "violet" },
+                                            { "gray": "gray" }
+                                        ]
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "layer_name_regex",
+                                        "label": "Layer name regex",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "splitter"
+                                    },
+                                    {
+                                        "key": "family",
+                                        "label": "Resulting family",
+                                        "type": "enum",
+                                        "enum_items": [
+                                            {
+                                                "image": "image"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "subset_template_name",
+                                        "label": "Subset template name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectInstances",
+                    "label": "Collect Instances",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Name for flatten image created if no image instance present"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [
                         {
                             "key": "ValidateContainers",
                             "label": "ValidateContainers"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateNaming",
+                    "label": "Validate naming of subsets and layers",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Subset cannot contain invalid characters or extract to file would fail"
+                        },
+                        {
+                            "type": "text",
+                            "key": "invalid_chars",
+                            "label": "Regex pattern of invalid characters"
+                        },
+                        {
+                            "type": "text",
+                            "key": "replace_char",
+                            "label": "Replacement character"
                         }
                     ]
                 },
@@ -60,7 +174,44 @@
                             "object_type": "text"
                         }
                     ]
-                }                
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractReview",
+                    "label": "Extract Review",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "make_image_sequence",
+                            "label": "Makes an image sequence instead of a flatten image"
+                        },
+                        {
+                            "type": "dict",
+                            "collapsible": false,
+                            "key": "jpg_options",
+                            "label": "Extracted jpg Options",
+                            "children": [
+                                {
+                                    "type": "schema",
+                                    "name": "schema_representation_tags"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "dict",
+                            "collapsible": false,
+                            "key": "mov_options",
+                            "label": "Extracted mov Options",
+                            "children": [
+                                {
+                                    "type": "schema",
+                                    "name": "schema_representation_tags"
+                                }
+                            ]
+                        }
+                    ]
+                }
             ]
         },
         {

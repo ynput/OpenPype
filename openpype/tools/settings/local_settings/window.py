@@ -1,7 +1,7 @@
 import logging
 from Qt import QtWidgets, QtGui
 
-from ..settings import style
+from openpype import style
 
 from openpype.settings.lib import (
     get_local_settings,
@@ -9,27 +9,33 @@ from openpype.settings.lib import (
 )
 from openpype.tools.settings import CHILD_OFFSET
 from openpype.api import (
+    Logger,
     SystemSettings,
     ProjectSettings
 )
 from openpype.modules import ModulesManager
 
 from .widgets import (
-    SpacerWidget,
     ExpandingWidget
 )
 from .mongo_widget import OpenPypeMongoWidget
 from .general_widget import LocalGeneralWidgets
+from .experimental_widget import (
+    LocalExperimentalToolsWidgets,
+    LOCAL_EXPERIMENTAL_KEY
+)
 from .apps_widget import LocalApplicationsWidgets
+from .environments_widget import LocalEnvironmentsWidgets
 from .projects_widget import ProjectSettingsWidget
 
 from .constants import (
     LOCAL_GENERAL_KEY,
     LOCAL_PROJECTS_KEY,
+    LOCAL_ENV_KEY,
     LOCAL_APPS_KEY
 )
 
-log = logging.getLogger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class LocalSettingsWidget(QtWidgets.QWidget):
@@ -44,18 +50,21 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         self.pype_mongo_widget = None
         self.general_widget = None
+        self.experimental_widget = None
+        self.envs_widget = None
         self.apps_widget = None
         self.projects_widget = None
 
-        self._create_pype_mongo_ui()
+        self._create_mongo_url_ui()
         self._create_general_ui()
+        self._create_experimental_ui()
+        self._create_environments_ui()
         self._create_app_ui()
         self._create_project_ui()
 
-        # Add spacer to main layout
-        self.main_layout.addWidget(SpacerWidget(self), 1)
+        self.main_layout.addStretch(1)
 
-    def _create_pype_mongo_ui(self):
+    def _create_mongo_url_ui(self):
         pype_mongo_expand_widget = ExpandingWidget("OpenPype Mongo URL", self)
         pype_mongo_content = QtWidgets.QWidget(self)
         pype_mongo_layout = QtWidgets.QVBoxLayout(pype_mongo_content)
@@ -84,6 +93,42 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(general_expand_widget)
 
         self.general_widget = general_widget
+
+    def _create_experimental_ui(self):
+        # General
+        experimental_expand_widget = ExpandingWidget(
+            "Experimental tools", self
+        )
+
+        experimental_content = QtWidgets.QWidget(self)
+        experimental_layout = QtWidgets.QVBoxLayout(experimental_content)
+        experimental_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        experimental_expand_widget.set_content_widget(experimental_content)
+
+        experimental_widget = LocalExperimentalToolsWidgets(
+            experimental_content
+        )
+        experimental_layout.addWidget(experimental_widget)
+
+        self.main_layout.addWidget(experimental_expand_widget)
+
+        self.experimental_widget = experimental_widget
+
+    def _create_environments_ui(self):
+        envs_expand_widget = ExpandingWidget("Environments", self)
+        envs_content = QtWidgets.QWidget(self)
+        envs_layout = QtWidgets.QVBoxLayout(envs_content)
+        envs_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        envs_expand_widget.set_content_widget(envs_content)
+
+        envs_widget = LocalEnvironmentsWidgets(
+            self.system_settings, envs_content
+        )
+        envs_layout.addWidget(envs_widget)
+
+        self.main_layout.addWidget(envs_expand_widget)
+
+        self.envs_widget = envs_widget
 
     def _create_app_ui(self):
         # Applications
@@ -129,11 +174,17 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.general_widget.update_local_settings(
             value.get(LOCAL_GENERAL_KEY)
         )
+        self.envs_widget.update_local_settings(
+            value.get(LOCAL_ENV_KEY)
+        )
         self.app_widget.update_local_settings(
             value.get(LOCAL_APPS_KEY)
         )
         self.projects_widget.update_local_settings(
             value.get(LOCAL_PROJECTS_KEY)
+        )
+        self.experimental_widget.update_local_settings(
+            value.get(LOCAL_EXPERIMENTAL_KEY)
         )
 
     def settings_value(self):
@@ -142,6 +193,10 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         if general_value:
             output[LOCAL_GENERAL_KEY] = general_value
 
+        envs_value = self.envs_widget.settings_value()
+        if envs_value:
+            output[LOCAL_ENV_KEY] = envs_value
+
         app_value = self.app_widget.settings_value()
         if app_value:
             output[LOCAL_APPS_KEY] = app_value
@@ -149,6 +204,10 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         projects_value = self.projects_widget.settings_value()
         if projects_value:
             output[LOCAL_PROJECTS_KEY] = projects_value
+
+        experimental_value = self.experimental_widget.settings_value()
+        if experimental_value:
+            output[LOCAL_EXPERIMENTAL_KEY] = experimental_value
         return output
 
 
@@ -177,7 +236,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         footer_layout = QtWidgets.QHBoxLayout(footer)
         footer_layout.addWidget(reset_btn, 0)
-        footer_layout.addWidget(SpacerWidget(footer), 1)
+        footer_layout.addStretch(1)
         footer_layout.addWidget(save_btn, 0)
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -191,7 +250,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         # Do not create local settings widget in init phase as it's using
         #   settings objects that must be OK to be able create this widget
         #   - we want to show dialog if anything goes wrong
-        #   - without reseting nothing is shown
+        #   - without resetting nothing is shown
         self._settings_widget = None
         self._scroll_widget = scroll_widget
         self.reset_btn = reset_btn
@@ -219,6 +278,9 @@ class LocalSettingsWindow(QtWidgets.QWidget):
             self._settings_widget.update_local_settings(value)
 
         except Exception as exc:
+            log.warning(
+                "Failed to create local settings window", exc_info=True
+            )
             error_msg = str(exc)
 
         crashed = error_msg is not None

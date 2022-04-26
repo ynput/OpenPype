@@ -3,8 +3,9 @@ import json
 import tempfile
 
 import pyblish.api
-import avalon.api
-from avalon.tvpaint import pipeline, lib
+
+from openpype.pipeline import legacy_io
+from openpype.hosts.tvpaint.api import pipeline, lib
 
 
 class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
@@ -49,9 +50,9 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
 
         # Collect and store current context to have reference
         current_context = {
-            "project": avalon.api.Session["AVALON_PROJECT"],
-            "asset": avalon.api.Session["AVALON_ASSET"],
-            "task": avalon.api.Session["AVALON_TASK"]
+            "project": legacy_io.Session["AVALON_PROJECT"],
+            "asset": legacy_io.Session["AVALON_ASSET"],
+            "task": legacy_io.Session["AVALON_TASK"]
         }
         context.data["previous_context"] = current_context
         self.log.debug("Current context is: {}".format(current_context))
@@ -69,7 +70,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
                 ("AVALON_TASK", "task")
             )
             for env_key, key in key_map:
-                avalon.api.Session[env_key] = workfile_context[key]
+                legacy_io.Session[env_key] = workfile_context[key]
                 os.environ[env_key] = workfile_context[key]
             self.log.info("Context changed to: {}".format(workfile_context))
 

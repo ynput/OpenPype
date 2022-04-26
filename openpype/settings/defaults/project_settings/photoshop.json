@@ -7,16 +7,40 @@
         }
     },
     "publish": {
+        "CollectColorCodedInstances": {
+            "create_flatten_image": false,
+            "flatten_subset_template": "",
+            "color_code_mapping": []
+        },
+        "CollectInstances": {
+            "flatten_subset_template": ""
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateNaming": {
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,;]",
+            "replace_char": "_"
         },
         "ExtractImage": {
             "formats": [
                 "png",
                 "jpg"
             ]
+        },
+        "ExtractReview": {
+            "make_image_sequence": false,
+            "jpg_options": {
+                "tags": []
+            },
+            "mov_options": {
+                "tags": [
+                    "review",
+                    "ftrackreview"
+                ]
+            }
         }
     },
     "workfile_builder": {

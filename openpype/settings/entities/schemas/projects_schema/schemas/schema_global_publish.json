@@ -7,6 +7,41 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectAnatomyInstanceData",
+            "label": "Collect Anatomy Instance Data",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "follow_workfile_version",
+                    "label": "Follow workfile version"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectSceneVersion",
+            "label": "Collect Version from Workfile",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "hosts",
+                    "label": "Host names",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                },
+                {
+                    "key": "skip_hosts_headless_publish",
+                    "label": "Skip for host if headless publish",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
@@ -25,32 +60,21 @@
             ]
         },
         {
-            "type": "dict",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "key": "ValidateVersion",
-            "label": "Validate Version",
-            "is_group": true,
-            "children": [
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
                 {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
+                    "key": "ValidateVersion",
+                    "label": "Validate Version"
                 }
             ]
         },
         {
             "type": "dict",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "key": "IntegrateHeroVersion",
-            "label": "IntegrateHeroVersion",
+            "label": "Validate Intent",
+            "key": "ValidateIntent",
             "is_group": true,
+            "checkbox_key": "enabled",
             "children": [
                 {
                     "type": "boolean",
@@ -58,15 +82,43 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
+                    "type": "label",
+                    "label": "Validate if Publishing intent was selected. It is possible to disable validation for specific publishing context with profiles."
                 },
                 {
-                    "key": "families",
-                    "label": "Families",
                     "type": "list",
-                    "object_type": "text"
+                    "collapsible": true,
+                    "key": "profiles",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "hosts",
+                                "label": "Host names",
+                                "type": "hosts-enum",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "key": "validate",
+                                "label": "Validate",
+                                "type": "boolean"
+                            }
+                        ]
+                    }
                 }
             ]
         },
@@ -156,6 +208,12 @@
                                             "name": "schema_representation_tags"
                                         },
                                         {
+                                            "key": "burnins",
+                                            "label": "Link to a burnin by name",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        },
+                                        {
                                             "key": "ffmpeg_args",
                                             "label": "FFmpeg arguments",
                                             "type": "dict",
@@ -205,6 +263,15 @@
                                                 {
                                                     "key": "families",
                                                     "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "separator"
+                                                },
+                                                {
+                                                    "key": "subsets",
+                                                    "label": "Subsets",
                                                     "type": "list",
                                                     "object_type": "text"
                                                 }
@@ -281,19 +348,6 @@
                                                     "default": 0,
                                                     "minimum": 0,
                                                     "maximum": 10000
-                                                },
-                                                {
-                                                    "key": "state",
-                                                    "label": "Type",
-                                                    "type": "enum",
-                                                    "enum_items": [
-                                                        {
-                                                            "letterbox": "Letterbox"
-                                                        },
-                                                        {
-                                                            "pillar": "Pillar"
-                                                        }
-                                                    ]
                                                 },
                                                 {
                                                     "type": "color",
@@ -503,6 +557,11 @@
                                 "multiselection": true
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Task names",
                                 "type": "list",
@@ -544,6 +603,11 @@
                                 "multiselection": true
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Task names",
                                 "type": "list",
@@ -556,6 +620,80 @@
                                 "type": "text",
                                 "key": "template",
                                 "label": "Template"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "IntegrateHeroVersion",
+            "label": "IntegrateHeroVersion",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "template_name_profiles",
+                    "label": "Template name profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "task_names",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template_name",
+                                "label": "Template name",
+                                "tooltip": "Name of template from Anatomy templates"
                             }
                         ]
                     }
@@ -583,8 +721,22 @@
                     "label": "Remove Temp renders",
                     "default": false
                 }
-
             ]
+        },
+        {
+          "type": "dict",
+          "collapsible": false,
+          "key": "CleanUpFarm",
+          "label": "Clean Up Farm",
+          "is_group": true,
+          "checkbox_key": "enabled",
+          "children": [
+              {
+                  "type": "boolean",
+                  "key": "enabled",
+                  "label": "Enabled"
+              }
+          ]
         }
     ]
 }

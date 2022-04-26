@@ -1,8 +1,12 @@
 import contextlib
 from Qt import QtWidgets, QtCore
+import qtawesome
+
+from openpype.tools.utils import PlaceholderLineEdit
+
+from openpype.style import get_default_tools_icon_color
+
 from . import RecursiveSortFilterProxyModel, AssetModel
-from avalon.vendor import qtawesome
-from avalon import style
 from . import TasksTemplateModel, DeselectableTreeView
 from . import _iter_model_rows
 
@@ -14,7 +18,7 @@ def preserve_expanded_rows(tree_view,
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -64,7 +68,7 @@ def preserve_selection(tree_view,
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -161,11 +165,13 @@ class AssetWidget(QtWidgets.QWidget):
         # Header
         header = QtWidgets.QHBoxLayout()
 
-        icon = qtawesome.icon("fa.refresh", color=style.colors.light)
+        icon = qtawesome.icon(
+            "fa.refresh", color=get_default_tools_icon_color()
+        )
         refresh = QtWidgets.QPushButton(icon, "")
         refresh.setToolTip("Refresh items")
 
-        filter = QtWidgets.QLineEdit()
+        filter = PlaceholderLineEdit()
         filter.textChanged.connect(proxy.setFilterFixedString)
         filter.setPlaceholderText("Filter assets..")
 
@@ -223,7 +229,6 @@ class AssetWidget(QtWidgets.QWidget):
         data = {
             'project': project['name'],
             'asset': asset['name'],
-            'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
             'task': task
         }
@@ -273,8 +278,11 @@ class AssetWidget(QtWidgets.QWidget):
 
     def _set_projects(self):
         project_names = list()
-        for project in self.dbcon.projects():
-            project_name = project.get("name")
+
+        for doc in self.dbcon.projects(projection={"name": 1},
+                                       only_active=True):
+
+            project_name = doc.get("name")
             if project_name:
                 project_names.append(project_name)
 
@@ -299,7 +307,9 @@ class AssetWidget(QtWidgets.QWidget):
 
     def on_project_change(self):
         projects = list()
-        for project in self.dbcon.projects():
+
+        for project in self.dbcon.projects(projection={"name": 1},
+                                           only_active=True):
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:
@@ -381,7 +391,7 @@ class AssetWidget(QtWidgets.QWidget):
             assets, (tuple, list)
         ), "Assets must be list or tuple"
 
-        # convert to list - tuple cant be modified
+        # convert to list - tuple can't be modified
         assets = list(assets)
 
         # Clear selection

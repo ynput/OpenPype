@@ -3,6 +3,12 @@ from uuid import uuid4
 from Qt import QtWidgets, QtCore, QtGui
 
 from .base import BaseWidget
+from .lib import (
+    create_deffered_value_change_timer,
+    create_add_btn,
+    create_remove_btn,
+    create_confirm_btn
+)
 from .widgets import (
     ExpandingWidget,
     IconButton
@@ -18,92 +24,6 @@ KEY_INPUT_TOOLTIP = (
     "Keys can't be duplicated and may contain alphabetical character (a-Z)"
     "\nnumerical characters (0-9) dash (\"-\") or underscore (\"_\")."
 )
-
-
-class PaintHelper:
-    cached_icons = {}
-
-    @classmethod
-    def _draw_image(cls, width, height, brush):
-        image = QtGui.QPixmap(width, height)
-        image.fill(QtCore.Qt.transparent)
-
-        icon_path_stroker = QtGui.QPainterPathStroker()
-        icon_path_stroker.setCapStyle(QtCore.Qt.RoundCap)
-        icon_path_stroker.setJoinStyle(QtCore.Qt.RoundJoin)
-        icon_path_stroker.setWidth(height / 5)
-
-        painter = QtGui.QPainter(image)
-        painter.setPen(QtCore.Qt.transparent)
-        painter.setBrush(brush)
-        rect = QtCore.QRect(0, 0, image.width(), image.height())
-        fifteenth = rect.height() / 15
-        # Left point
-        p1 = QtCore.QPoint(
-            rect.x() + (5 * fifteenth),
-            rect.y() + (9 * fifteenth)
-        )
-        # Middle bottom point
-        p2 = QtCore.QPoint(
-            rect.center().x(),
-            rect.y() + (11 * fifteenth)
-        )
-        # Top right point
-        p3 = QtCore.QPoint(
-            rect.x() + (10 * fifteenth),
-            rect.y() + (5 * fifteenth)
-        )
-
-        path = QtGui.QPainterPath(p1)
-        path.lineTo(p2)
-        path.lineTo(p3)
-
-        stroked_path = icon_path_stroker.createStroke(path)
-        painter.drawPath(stroked_path)
-
-        painter.end()
-
-        return image
-
-    @classmethod
-    def get_confirm_icon(cls, width, height):
-        key = "{}x{}-confirm_image".format(width, height)
-        icon = cls.cached_icons.get(key)
-
-        if icon is None:
-            image = cls._draw_image(width, height, QtCore.Qt.white)
-            icon = QtGui.QIcon(image)
-            cls.cached_icons[key] = icon
-        return icon
-
-
-def create_add_btn(parent):
-    add_btn = QtWidgets.QPushButton("+", parent)
-    add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    add_btn.setProperty("btn-type", "tool-item")
-    add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-    return add_btn
-
-
-def create_remove_btn(parent):
-    remove_btn = QtWidgets.QPushButton("-", parent)
-    remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    remove_btn.setProperty("btn-type", "tool-item")
-    remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-    return remove_btn
-
-
-def create_confirm_btn(parent):
-    confirm_btn = QtWidgets.QPushButton(parent)
-
-    icon = PaintHelper.get_confirm_icon(
-        BTN_FIXED_SIZE, BTN_FIXED_SIZE
-    )
-    confirm_btn.setIcon(icon)
-    confirm_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    confirm_btn.setProperty("btn-type", "tool-item")
-    confirm_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-    return confirm_btn
 
 
 class ModifiableDictEmptyItem(QtWidgets.QWidget):
@@ -127,9 +47,9 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def add_new_item(self, key=None, label=None):
         input_field = self.entity_widget.add_new_key(key, label)
         if self.collapsible_key:
-            self.key_input.setFocus(True)
+            self.key_input.setFocus()
         else:
-            input_field.key_input.setFocus(True)
+            input_field.key_input.setFocus()
         return input_field
 
     def _on_add_clicked(self):
@@ -284,6 +204,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.confirm_btn = None
 
+        self._key_change_timer = create_deffered_value_change_timer(
+            self._on_timeout
+        )
+
         if collapsible_key:
             self.create_collapsible_ui()
         else:
@@ -370,7 +294,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
         )
         edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        edit_btn.setProperty("btn-type", "tool-item-icon")
+        edit_btn.setObjectName("SettingsToolIconBtn")
         edit_btn.setFixedHeight(BTN_FIXED_SIZE)
 
         confirm_btn = create_confirm_btn(self)
@@ -430,7 +354,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.entity.has_unsaved_changes:
             return "modified"
         if self.entity.has_project_override:
-            return "overriden"
+            return "overridden"
         if self.entity.has_studio_override:
             return "studio"
         return ""
@@ -516,6 +440,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.ignore_input_changes:
             return
 
+        self._key_change_timer.start()
+
+    def _on_timeout(self):
+        key = self.key_value()
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )
@@ -554,7 +482,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def on_add_clicked(self):
         widget = self.entity_widget.add_new_key(None, None)
-        widget.key_input.setFocus(True)
+        widget.key_input.setFocus()
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():
@@ -672,8 +600,8 @@ class DictMutableKeysWidget(BaseWidget):
         self.input_fields = []
         self.required_inputs_by_key = {}
 
-        if self.entity.hightlight_content:
-            content_state = "hightlighted"
+        if self.entity.highlight_content:
+            content_state = "highlighted"
             bottom_margin = 5
         else:
             content_state = ""

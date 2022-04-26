@@ -1,10 +1,17 @@
 import os
 
 import pyblish.api
-import openpype.api
-import openpype.lib
-from openpype.lib import should_decompress, \
-    get_decompress_dir, decompress
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+
+    run_subprocess,
+    path_to_subprocess_arg,
+
+    get_transcode_temp_directory,
+    convert_input_paths_for_ffmpeg,
+    should_convert_for_ffmpeg
+)
+
 import shutil
 
 
@@ -17,7 +24,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d",
         "source", "plate", "take"
     ]
-    hosts = ["shell", "fusion", "resolve", "webpublisher"]
+    hosts = ["shell", "fusion", "resolve"]
     enabled = False
 
     # presetable attribute
@@ -25,57 +32,59 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.info("subset {}".format(instance.data['subset']))
-        if 'crypto' in instance.data['subset']:
+
+        # skip crypto passes.
+        # TODO: This is just a quick fix and has its own side-effects - it is
+        #       affecting every subset name with `crypto` in its name.
+        #       This must be solved properly, maybe using tags on
+        #       representation that can be determined much earlier and
+        #       with better precision.
+        if 'crypto' in instance.data['subset'].lower():
+            self.log.info("Skipping crypto passes.")
             return
 
-        do_decompress = False
-        # ffmpeg doesn't support multipart exrs, use oiiotool if available
-        if instance.data.get("multipartExr") is True:
-            return
-
-        # Skip review when requested.
+        # Skip if review not set.
         if not instance.data.get("review", True):
+            self.log.info("Skipping - no review set on instance.")
             return
 
-        # get representation and loop them
-        representations = instance.data["representations"]
-
-        # filter out mov and img sequences
-        representations_new = representations[:]
-
-        for repre in representations:
-            tags = repre.get("tags", [])
-            self.log.debug(repre)
-            valid = 'review' in tags or "thumb-nuke" in tags
-            if not valid:
-                continue
-
-            if not isinstance(repre['files'], (list, tuple)):
-                input_file = repre['files']
+        filtered_repres = self._get_filtered_repres(instance)
+        for repre in filtered_repres:
+            repre_files = repre["files"]
+            if not isinstance(repre_files, (list, tuple)):
+                input_file = repre_files
             else:
-                file_index = int(float(len(repre['files'])) * 0.5)
-                input_file = repre['files'][file_index]
+                file_index = int(float(len(repre_files)) * 0.5)
+                input_file = repre_files[file_index]
 
-            stagingdir = os.path.normpath(repre.get("stagingDir"))
+            stagingdir = os.path.normpath(repre["stagingDir"])
 
-            # input_file = (
-            #     collections[0].format('{head}{padding}{tail}') % start
-            # )
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
 
-            decompressed_dir = ''
-            do_decompress = should_decompress(full_input_path)
-            if do_decompress:
-                decompressed_dir = get_decompress_dir()
+            do_convert = should_convert_for_ffmpeg(full_input_path)
+            # If result is None the requirement of conversion can't be
+            #   determined
+            if do_convert is None:
+                self.log.info((
+                    "Can't determine if representation requires conversion."
+                    " Skipped."
+                ))
+                continue
 
-                decompress(
-                    decompressed_dir,
-                    full_input_path)
-                # input path changed, 'decompressed' added
-                full_input_path = os.path.join(
-                    decompressed_dir,
-                    input_file)
+            # Do conversion if needed
+            #   - change staging dir of source representation
+            #   - must be set back after output definitions processing
+            convert_dir = None
+            if do_convert:
+                convert_dir = get_transcode_temp_directory()
+                filename = os.path.basename(full_input_path)
+                convert_input_paths_for_ffmpeg(
+                    [full_input_path],
+                    convert_dir,
+                    self.log
+                )
+                full_input_path = os.path.join(convert_dir, filename)
 
             filename = os.path.splitext(input_file)[0]
             if not filename.endswith('.'):
@@ -85,17 +94,19 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             self.log.info("output {}".format(full_output_path))
 
-            ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+            ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
             ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
-            jpeg_items.append("\"{}\"".format(ffmpeg_path))
+            jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov
             jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
-            jpeg_items.append("-i \"{}\"".format(full_input_path))
+            jpeg_items.append("-i {}".format(
+                path_to_subprocess_arg(full_input_path)
+            ))
             # output arguments from presets
             jpeg_items.extend(ffmpeg_args.get("output") or [])
 
@@ -104,40 +115,57 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 jpeg_items.append("-vframes 1")
 
             # output file
-            jpeg_items.append("\"{}\"".format(full_output_path))
+            jpeg_items.append(path_to_subprocess_arg(full_output_path))
 
-            subprocess_jpeg = " ".join(jpeg_items)
+            subprocess_command = " ".join(jpeg_items)
 
             # run subprocess
-            self.log.debug("{}".format(subprocess_jpeg))
+            self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
-                openpype.api.run_subprocess(
-                    subprocess_jpeg, shell=True, logger=self.log
+                run_subprocess(
+                    subprocess_command, shell=True, logger=self.log
                 )
             except RuntimeError as exp:
                 if "Compression" in str(exp):
-                    self.log.debug("Unsupported compression on input files. " +
-                                   "Skipping!!!")
+                    self.log.debug(
+                        "Unsupported compression on input files. Skipping!!!"
+                    )
                     return
+                self.log.warning("Conversion crashed", exc_info=True)
                 raise
 
-            if "representations" not in instance.data:
-                instance.data["representations"] = []
-
-            representation = {
-                'name': 'thumbnail',
-                'ext': 'jpg',
-                'files': jpeg_file,
+            new_repre = {
+                "name": "thumbnail",
+                "ext": "jpg",
+                "files": jpeg_file,
                 "stagingDir": stagingdir,
                 "thumbnail": True,
-                "tags": ['thumbnail']
+                "tags": ["thumbnail"]
             }
 
             # adding representation
-            self.log.debug("Adding: {}".format(representation))
-            representations_new.append(representation)
+            self.log.debug("Adding: {}".format(new_repre))
+            instance.data["representations"].append(new_repre)
 
-            if do_decompress and os.path.exists(decompressed_dir):
-                shutil.rmtree(decompressed_dir)
+            # Cleanup temp folder
+            if convert_dir is not None and os.path.exists(convert_dir):
+                shutil.rmtree(convert_dir)
 
-        instance.data["representations"] = representations_new
+    def _get_filtered_repres(self, instance):
+        filtered_repres = []
+        src_repres = instance.data.get("representations") or []
+        for repre in src_repres:
+            self.log.debug(repre)
+            tags = repre.get("tags") or []
+            valid = "review" in tags or "thumb-nuke" in tags
+            if not valid:
+                continue
+
+            if not repre.get("files"):
+                self.log.info((
+                    "Representation \"{}\" don't have files. Skipping"
+                ).format(repre["name"]))
+                continue
+
+            filtered_repres.append(repre)
+        return filtered_repres

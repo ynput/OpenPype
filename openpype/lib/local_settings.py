@@ -522,6 +522,11 @@ def get_local_site_id():
 
     Identifier is created if does not exists yet.
     """
+    # override local id from environment
+    # used for background syncing
+    if os.environ.get("OPENPYPE_LOCAL_ID"):
+        return os.environ["OPENPYPE_LOCAL_ID"]
+
     registry = OpenPypeSettingsRegistry()
     try:
         return registry.get_item("localId")

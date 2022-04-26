@@ -57,7 +57,7 @@ from .exceptions import (
     SchemaError,
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
-    BaseInvalidValueType,
+    BaseInvalidValue,
     InvalidValueType,
     InvalidKeySymbols,
     SchemaMissingFileInfo,
@@ -105,23 +105,32 @@ from .enum_entity import (
     AppsEnumEntity,
     ToolsEnumEntity,
     TaskTypeEnumEntity,
-    ProvidersEnum,
     DeadlineUrlEnumEntity,
-    AnatomyTemplatesEnumEntity
+    AnatomyTemplatesEnumEntity,
 )
 
 from .list_entity import ListEntity
-from .dict_immutable_keys_entity import DictImmutableKeysEntity
+from .dict_immutable_keys_entity import (
+    DictImmutableKeysEntity,
+    RootsDictEntity,
+    SyncServerSites
+)
 from .dict_mutable_keys_entity import DictMutableKeysEntity
-from .dict_conditional import DictConditionalEntity
+from .dict_conditional import (
+    DictConditionalEntity,
+    SyncServerProviders
+)
 
 from .anatomy_entities import AnatomyEntity
-
+from .op_version_entity import (
+    ProductionVersionsInputEntity,
+    StagingVersionsInputEntity
+)
 
 __all__ = (
     "DefaultsNotDefined",
     "StudioDefaultsNotDefined",
-    "BaseInvalidValueType",
+    "BaseInvalidValue",
     "InvalidValueType",
     "InvalidKeySymbols",
     "SchemaMissingFileInfo",
@@ -161,17 +170,22 @@ __all__ = (
     "AppsEnumEntity",
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
-    "ProvidersEnum",
     "DeadlineUrlEnumEntity",
     "AnatomyTemplatesEnumEntity",
 
     "ListEntity",
 
     "DictImmutableKeysEntity",
+    "RootsDictEntity",
+    "SyncServerSites",
 
     "DictMutableKeysEntity",
 
     "DictConditionalEntity",
+    "SyncServerProviders",
 
-    "AnatomyEntity"
+    "AnatomyEntity",
+
+    "ProductionVersionsInputEntity",
+    "StagingVersionsInputEntity"
 )

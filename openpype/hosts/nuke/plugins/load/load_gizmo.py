@@ -1,10 +1,23 @@
-from avalon import api, style, io
 import nuke
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
+
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    get_avalon_knob_data,
+    set_avalon_knob_data
+)
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
-class LoadGizmo(api.Loader):
+class LoadGizmo(load.LoaderPlugin):
     """Loading nuke Gizmo"""
 
     representations = ["gizmo"]
@@ -13,7 +26,7 @@ class LoadGizmo(api.Loader):
     label = "Load Gizmo"
     order = 0
     icon = "dropbox"
-    color = style.colors.light
+    color = "white"
     node_color = "0x75338eff"
 
     def load(self, context, name, namespace, data):
@@ -61,7 +74,7 @@ class LoadGizmo(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             # add group from nk
             nuke.nodePaste(file)
 
@@ -88,14 +101,14 @@ class LoadGizmo(api.Loader):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)
@@ -122,21 +135,21 @@ class LoadGizmo(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             xpos = GN.xpos()
             ypos = GN.ypos()
-            avalon_data = anlib.get_avalon_knob_data(GN)
+            avalon_data = get_avalon_knob_data(GN)
             nuke.delete(GN)
             # add group from nk
             nuke.nodePaste(file)
 
             GN = nuke.selectedNode()
-            anlib.set_avalon_knob_data(GN, avalon_data)
+            set_avalon_knob_data(GN, avalon_data)
             GN.setXYpos(xpos, ypos)
             GN["name"].setValue(object_name)
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -149,7 +162,7 @@ class LoadGizmo(api.Loader):
         else:
             GN["tile_color"].setValue(int(self.node_color, 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(GN, data_imprint)
 
@@ -157,7 +170,6 @@ class LoadGizmo(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

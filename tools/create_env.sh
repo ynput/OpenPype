@@ -88,6 +88,7 @@ done
 ###############################################################################
 detect_python () {
   echo -e "${BIGreen}>>>${RST} Using python \c"
+  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}- NOT FOUND${RST} ${BIYellow}You need Python 3.7 installed to continue.${RST}"; return 1; }
   local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version="$(python <<< ${version_command})"
   oIFS="$IFS"
@@ -125,7 +126,7 @@ clean_pyc () {
   local path
   path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -path ./build -prune -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  find "$path" -path ./build -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
 
@@ -166,7 +167,7 @@ main () {
     echo -e "${BIGreen}OK${RST}"
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
-    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return 1; }
   fi
 
   if [ -f "$openpype_root/poetry.lock" ]; then
@@ -175,7 +176,11 @@ main () {
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
   fi
 
-  "$POETRY_HOME/bin/poetry" install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  "$POETRY_HOME/bin/poetry" install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return 1; }
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Virtual environment creation failed."
+    return 1
+  fi
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
@@ -183,11 +188,14 @@ main () {
   # reinstall these because of bug in poetry? or cx_freeze?
   # cx_freeze will crash on missing __pychache__ on these but
   # reinstalling them solves the problem.
-  echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
-  "$POETRY_HOME/bin/poetry" run python -m pip install --force-reinstall pip
-  "$POETRY_HOME/bin/poetry" run pip install --force-reinstall setuptools
-  "$POETRY_HOME/bin/poetry" run pip install --force-reinstall wheel
-  "$POETRY_HOME/bin/poetry" run python -m pip install --force-reinstall pip
+  echo -e "${BIGreen}>>>${RST} Post-venv creation fixes ..."
+  local openpype_index=$("$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/parse_pyproject.py" tool.poetry.source.0.url)
+  echo -e "${BIGreen}-   ${RST} Using index: ${BIWhite}$openpype_index${RST}" 
+  "$POETRY_HOME/bin/poetry" run pip install setuptools==49.6.0
+  "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall wheel
+  "$POETRY_HOME/bin/poetry" run python -m pip install --disable-pip-version-check --force-reinstall pip
 }
 
-main -3
+return_code=0
+main || return_code=$?
+exit $return_code

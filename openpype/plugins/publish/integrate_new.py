@@ -8,17 +8,22 @@ import errno
 import six
 import re
 import shutil
+from collections import deque, defaultdict
+from datetime import datetime
 
+from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
-from avalon import io
-from avalon.api import format_template_with_optional_keys
-from avalon.vendor import filelink
+
 import openpype.api
-from datetime import datetime
-# from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.lib import prepare_template_data
+from openpype.lib import (
+    prepare_template_data,
+    create_hard_link,
+    StringTemplate,
+    TemplateUnsolved
+)
+from openpype.pipeline import legacy_io
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -63,6 +68,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "animation",
                 "model",
                 "mayaAscii",
+                "mayaScene",
                 "setdress",
                 "layout",
                 "ass",
@@ -98,27 +104,42 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "camerarig",
                 "redshiftproxy",
                 "effect",
-                "xgen"
+                "xgen",
+                "hda",
+                "usd",
+                "staticMesh",
+                "skeletalMesh",
+                "usdComposition",
+                "usdOverride",
+                "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip"]
+    exclude_families = ["clip", "render.farm"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
     ]
     default_template_name = "publish"
-    template_name_profiles = None
+
+    # suffix to denote temporary files, use without '.'
+    TMP_FILE_EXT = 'tmp'
 
     # file_url : file_size of all published and uploaded files
     integrated_file_sizes = {}
 
-    TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
+    # Attributes set by settings
+    template_name_profiles = None
+    subset_grouping_profiles = None
 
     def process(self, instance):
-        self.integrated_file_sizes = {}
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
-            return
+        for ef in self.exclude_families:
+            if (
+                    instance.data["family"] == ef or
+                    ef in instance.data["families"]):
+                self.log.debug("Excluded family '{}' in '{}' or {}".format(
+                    ef, instance.data["family"], instance.data["families"]))
+                return
 
+        self.integrated_file_sizes = {}
         try:
             self.register(instance)
             self.log.info("Integrated Asset in to the database ...")
@@ -135,18 +156,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Required environment variables
         anatomy_data = instance.data["anatomyData"]
 
-        io.install()
+        legacy_io.install()
 
         context = instance.context
 
         project_entity = instance.data["projectEntity"]
 
-        context_asset_name = context.data["assetEntity"]["name"]
+        context_asset_name = None
+        context_asset_doc = context.data.get("assetEntity")
+        if context_asset_doc:
+            context_asset_name = context_asset_doc["name"]
 
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")
         if not asset_entity or asset_entity["name"] != context_asset_name:
-            asset_entity = io.find_one({
+            asset_entity = legacy_io.find_one({
                 "type": "asset",
                 "name": asset_name,
                 "parent": project_entity["_id"]
@@ -165,10 +189,33 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 hierarchy = "/".join(parents)
             anatomy_data["hierarchy"] = hierarchy
 
+        # Make sure task name in anatomy data is same as on instance.data
+        asset_tasks = (
+            asset_entity.get("data", {}).get("tasks")
+        ) or {}
         task_name = instance.data.get("task")
         if task_name:
-            anatomy_data["task"] = task_name
+            task_info = asset_tasks.get(task_name) or {}
+            task_type = task_info.get("type")
 
+            project_task_types = project_entity["config"]["tasks"]
+            task_code = project_task_types.get(task_type, {}).get("short_name")
+            anatomy_data["task"] = {
+                "name": task_name,
+                "type": task_type,
+                "short": task_code
+            }
+
+        elif "task" in anatomy_data:
+            # Just set 'task_name' variable to context task
+            task_name = anatomy_data["task"]["name"]
+            task_type = anatomy_data["task"]["type"]
+
+        else:
+            task_name = None
+            task_type = None
+
+        # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
 
         stagingdir = instance.data.get("stagingDir")
@@ -185,7 +232,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Ensure at least one file is set up for transfer in staging dir.
         repres = instance.data.get("representations")
-        assert repres, "Instance has no files to transfer"
+        repres = instance.data.get("representations")
+        msg = "Instance {} has no files to transfer".format(
+            instance.data["family"])
+        assert repres, msg
         assert isinstance(repres, (list, tuple)), (
             "Instance 'files' must be a list, got: {0} {1}".format(
                 str(type(repres)), str(repres)
@@ -216,14 +266,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         new_repre_names_low = [_repre["name"].lower() for _repre in repres]
 
-        existing_version = io.find_one({
+        existing_version = legacy_io.find_one({
             'type': 'version',
             'parent': subset["_id"],
             'name': version_number
         })
 
         if existing_version is None:
-            version_id = io.insert_one(version).inserted_id
+            version_id = legacy_io.insert_one(version).inserted_id
         else:
             # Check if instance have set `append` mode which cause that
             # only replicated representations are set to archive
@@ -231,7 +281,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Update version data
             # TODO query by _id and
-            io.update_many({
+            legacy_io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
                 'name': version_number
@@ -241,7 +291,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             version_id = existing_version['_id']
 
             # Find representations of existing version and archive them
-            current_repres = list(io.find({
+            current_repres = list(legacy_io.find({
                 "type": "representation",
                 "parent": version_id
             }))
@@ -258,20 +308,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 bulk_writes.append(DeleteOne({"_id": repre_id}))
 
                 repre["orig_id"] = repre_id
-                repre["_id"] = io.ObjectId()
+                repre["_id"] = ObjectId()
                 repre["type"] = "archived_representation"
                 bulk_writes.append(InsertOne(repre))
 
             # bulk updates
             if bulk_writes:
-                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                project_name = legacy_io.Session["AVALON_PROJECT"]
+                legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
 
-        version = io.find_one({"_id": version_id})
+        version = legacy_io.find_one({"_id": version_id})
         instance.data["versionEntity"] = version
 
-        existing_repres = list(io.find({
+        existing_repres = list(legacy_io.find({
             "parent": version_id,
             "type": "archived_representation"
         }))
@@ -298,18 +349,25 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         else:
             orig_transfers = list(instance.data['transfers'])
 
-        task_name = io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
 
-        key_values = {"families": family,
-                      "tasks": task_name,
-                      "hosts": instance.data["anatomyData"]["app"]}
-        profile = filter_profiles(self.template_name_profiles, key_values,
-                                  logger=self.log)
+        key_values = {
+            "families": family,
+            "tasks": task_name,
+            "hosts": instance.context.data["hostName"],
+            "task_types": task_type
+        }
+        profile = filter_profiles(
+            self.template_name_profiles,
+            key_values,
+            logger=self.log
+        )
 
         template_name = "publish"
         if profile:
             template_name = profile["template_name"]
+
+
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
@@ -339,6 +397,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if resolution_width:
                 template_data["fps"] = fps
 
+            if "originalBasename" in instance.data:
+                template_data.update({
+                    "originalBasename": instance.data.get("originalBasename")
+                })
+
             files = repre['files']
             if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']
@@ -359,6 +422,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             repre["ext"] = ext
             template_data["ext"] = ext
 
+            self.log.info(template_name)
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
@@ -446,6 +510,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if index_frame_start is not None:
                         dst_padding_exp = "%0{}d".format(frame_start_padding)
                         dst_padding = dst_padding_exp % (index_frame_start + frame_number)  # noqa: E501
+                    elif repre.get("udim"):
+                        dst_padding = int(i)
 
                     dst = "{0}{1}{2}".format(
                         dst_head,
@@ -507,6 +573,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
 
+            if not instance.data.get("publishDir"):
+                instance.data["publishDir"] = (
+                    anatomy_filled
+                    [template_name]
+                    ["folder"]
+                )
             if repre.get("udim"):
                 repre_context["udim"] = repre.get("udim")  # store list
 
@@ -529,7 +601,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Create new id if existing representations does not match
             if repre_id is None:
-                repre_id = io.ObjectId()
+                repre_id = ObjectId()
 
             data = repre.get("data") or {}
             data.update({'path': dst, 'template': template})
@@ -550,7 +622,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("outputName"):
                 representation["context"]["output"] = repre['outputName']
 
-            if sequence_repre and repre.get("frameStart"):
+            if sequence_repre and repre.get("frameStart") is not None:
                 representation['context']['frame'] = (
                     dst_padding_exp % int(repre.get("frameStart"))
                 )
@@ -590,12 +662,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             repre_ids_to_remove = []
             for repre in existing_repres:
                 repre_ids_to_remove.append(repre["_id"])
-            io.delete_many({"_id": {"$in": repre_ids_to_remove}})
+            legacy_io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
         for rep in instance.data["representations"]:
             self.log.debug("__ rep: {}".format(rep))
 
-        io.insert_many(representations)
+        legacy_io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations
         )
@@ -693,11 +765,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
 
-        filelink.create(src, dst, filelink.HARDLINK)
+        create_hard_link(src, dst)
 
     def get_subset(self, asset, instance):
         subset_name = instance.data["subset"]
-        subset = io.find_one({
+        subset = legacy_io.find_one({
             "type": "subset",
             "parent": asset["_id"],
             "name": subset_name
@@ -718,7 +790,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if _family not in families:
                     families.append(_family)
 
-            _id = io.insert_one({
+            _id = legacy_io.insert_one({
                 "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
@@ -728,15 +800,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "parent": asset["_id"]
             }).inserted_id
 
-            subset = io.find_one({"_id": _id})
+            subset = legacy_io.find_one({"_id": _id})
 
+        # QUESTION Why is changing of group and updating it's
+        #   families in 'get_subset'?
         self._set_subset_group(instance, subset["_id"])
 
         # Update families on subset.
         families = [instance.data["family"]]
         families.extend(instance.data.get("families", []))
-        io.update_many(
-            {"type": "subset", "_id": io.ObjectId(subset["_id"])},
+        legacy_io.update_many(
+            {"type": "subset", "_id": ObjectId(subset["_id"])},
             {"$set": {"data.families": families}}
         )
 
@@ -753,53 +827,75 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 subset_id (str): DB's subset _id
 
         """
-        # add group if available
-        integrate_new_sett = (instance.context.data["project_settings"]
-                                                   ["global"]
-                                                   ["publish"]
-                                                   ["IntegrateAssetNew"])
+        # Fist look into instance data
+        subset_group = instance.data.get("subsetGroup")
+        if not subset_group:
+            subset_group = self._get_subset_group(instance)
 
-        profiles = integrate_new_sett["subset_grouping_profiles"]
+        if subset_group:
+            legacy_io.update_many({
+                'type': 'subset',
+                '_id': ObjectId(subset_id)
+            }, {'$set': {'data.subsetGroup': subset_group}})
 
+    def _get_subset_group(self, instance):
+        """Look into subset group profiles set by settings.
+
+        Attribute 'subset_grouping_profiles' is defined by OpenPype settings.
+        """
+        # Skip if 'subset_grouping_profiles' is empty
+        if not self.subset_grouping_profiles:
+            return None
+
+        # QUESTION
+        #   - is there a chance that task name is not filled in anatomy
+        #       data?
+        #   - should we use context task in that case?
+        anatomy_data = instance.data["anatomyData"]
+        task_name = None
+        task_type = None
+        if "task" in anatomy_data:
+            task_name = anatomy_data["task"]["name"]
+            task_type = anatomy_data["task"]["type"]
         filtering_criteria = {
             "families": instance.data["family"],
-            "hosts": instance.data["anatomyData"]["app"],
-            "tasks": instance.data["anatomyData"]["task"] or
-                io.Session["AVALON_TASK"]
+            "hosts": instance.context.data["hostName"],
+            "tasks": task_name,
+            "task_types": task_type
         }
-        matching_profile = filter_profiles(profiles, filtering_criteria)
+        matching_profile = filter_profiles(
+            self.subset_grouping_profiles,
+            filtering_criteria
+        )
+        # Skip if there is not matchin profile
+        if not matching_profile:
+            return None
 
         filled_template = None
-        if matching_profile:
-            template = matching_profile["template"]
-            fill_pairs = (
-                ("family", filtering_criteria["families"]),
-                ("task", filtering_criteria["tasks"]),
-                ("host", filtering_criteria["hosts"]),
-                ("subset", instance.data["subset"]),
-                ("renderlayer", instance.data.get("renderlayer"))
+        template = matching_profile["template"]
+        fill_pairs = (
+            ("family", filtering_criteria["families"]),
+            ("task", filtering_criteria["tasks"]),
+            ("host", filtering_criteria["hosts"]),
+            ("subset", instance.data["subset"]),
+            ("renderlayer", instance.data.get("renderlayer"))
+        )
+        fill_pairs = prepare_template_data(fill_pairs)
+
+        try:
+            filled_template = StringTemplate.format_strict_template(
+                template, fill_pairs
             )
-            fill_pairs = prepare_template_data(fill_pairs)
+        except (KeyError, TemplateUnsolved):
+            keys = []
+            if fill_pairs:
+                keys = fill_pairs.keys()
 
-            try:
-                filled_template = \
-                    format_template_with_optional_keys(fill_pairs, template)
-            except KeyError:
-                keys = []
-                if fill_pairs:
-                    keys = fill_pairs.keys()
+            msg = "Subset grouping failed. " \
+                  "Only {} are expected in Settings".format(','.join(keys))
+            self.log.warning(msg)
 
-                msg = "Subset grouping failed. " \
-                      "Only {} are expected in Settings".format(','.join(keys))
-                self.log.warning(msg)
-
-        if instance.data.get("subsetGroup") or filled_template:
-            subset_group = instance.data.get('subsetGroup') or filled_template
-
-            io.update_many({
-                'type': 'subset',
-                '_id': io.ObjectId(subset_id)
-            }, {'$set': {'data.subsetGroup': subset_group}})
+        return filled_template
 
     def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
@@ -982,32 +1078,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         local_site = 'studio'  # default
         remote_site = None
-        sync_server_presets = None
-
-        if (instance.context.data["system_settings"]
-                                 ["modules"]
-                                 ["sync_server"]
-                                 ["enabled"]):
-            sync_server_presets = (instance.context.data["project_settings"]
-                                                        ["global"]
-                                                        ["sync_server"])
-
-            local_site_id = openpype.api.get_local_site_id()
-            if sync_server_presets["enabled"]:
-                local_site = sync_server_presets["config"].\
-                    get("active_site", "studio").strip()
-                if local_site == 'local':
-                    local_site = local_site_id
-
-                remote_site = sync_server_presets["config"].get("remote_site")
-                if remote_site == local_site:
-                    remote_site = None
-
-                if remote_site == 'local':
-                    remote_site = local_site_id
+        always_accesible = []
+        sync_project_presets = None
 
         rec = {
-            "_id": io.ObjectId(),
+            "_id": ObjectId(),
             "path": path
         }
         if size:
@@ -1019,14 +1094,132 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if sites:
             rec["sites"] = sites
         else:
+            system_sync_server_presets = (
+                instance.context.data["system_settings"]
+                                     ["modules"]
+                                     ["sync_server"])
+            log.debug("system_sett:: {}".format(system_sync_server_presets))
+
+            if system_sync_server_presets["enabled"]:
+                sync_project_presets = (
+                    instance.context.data["project_settings"]
+                                         ["global"]
+                                         ["sync_server"])
+
+            if sync_project_presets and sync_project_presets["enabled"]:
+                local_site, remote_site = self._get_sites(sync_project_presets)
+
+                always_accesible = sync_project_presets["config"]. \
+                    get("always_accessible_on", [])
+
+            already_attached_sites = {}
             meta = {"name": local_site, "created_dt": datetime.now()}
             rec["sites"] = [meta]
+            already_attached_sites[meta["name"]] = meta["created_dt"]
 
-            if remote_site:
-                meta = {"name": remote_site.strip()}
-                rec["sites"].append(meta)
+            if sync_project_presets and sync_project_presets["enabled"]:
+                if remote_site and \
+                        remote_site not in already_attached_sites.keys():
+                    # add remote
+                    meta = {"name": remote_site.strip()}
+                    rec["sites"].append(meta)
+                    already_attached_sites[meta["name"]] = None
+
+                # add alternative sites
+                rec, already_attached_sites = self._add_alternative_sites(
+                    system_sync_server_presets, already_attached_sites, rec)
+
+                # add skeleton for site where it should be always synced to
+                for always_on_site in set(always_accesible):
+                    if always_on_site not in already_attached_sites.keys():
+                        meta = {"name": always_on_site.strip()}
+                        rec["sites"].append(meta)
+                        already_attached_sites[meta["name"]] = None
+
+            log.debug("final sites:: {}".format(rec["sites"]))
 
         return rec
+
+    def _get_sites(self, sync_project_presets):
+        """Returns tuple (local_site, remote_site)"""
+        local_site_id = openpype.api.get_local_site_id()
+        local_site = sync_project_presets["config"]. \
+            get("active_site", "studio").strip()
+
+        if local_site == 'local':
+            local_site = local_site_id
+
+        remote_site = sync_project_presets["config"].get("remote_site")
+
+        if remote_site == 'local':
+            remote_site = local_site_id
+
+        return local_site, remote_site
+
+    def _add_alternative_sites(self,
+                               system_sync_server_presets,
+                               already_attached_sites,
+                               rec):
+        """Loop through all configured sites and add alternatives.
+
+            See SyncServerModule.handle_alternate_site
+        """
+        conf_sites = system_sync_server_presets.get("sites", {})
+
+        alt_site_pairs = self._get_alt_site_pairs(conf_sites)
+
+        already_attached_keys = list(already_attached_sites.keys())
+        for added_site in already_attached_keys:
+            real_created = already_attached_sites[added_site]
+            for alt_site in alt_site_pairs.get(added_site, []):
+                if alt_site in already_attached_sites.keys():
+                    continue
+                meta = {"name": alt_site}
+                # alt site inherits state of 'created_dt'
+                if real_created:
+                    meta["created_dt"] = real_created
+                rec["sites"].append(meta)
+                already_attached_sites[meta["name"]] = real_created
+
+        return rec, already_attached_sites
+
+    def _get_alt_site_pairs(self, conf_sites):
+        """Returns dict of site and its alternative sites.
+
+        If `site` has alternative site, it means that alt_site has 'site' as
+        alternative site
+        Args:
+            conf_sites (dict)
+        Returns:
+            (dict): {'site': [alternative sites]...}
+        """
+        alt_site_pairs = defaultdict(list)
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            alt_site_pairs[site_name].extend(alt_sites)
+
+            for alt_site in alt_sites:
+                alt_site_pairs[alt_site].append(site_name)
+
+        for site_name, alt_sites in alt_site_pairs.items():
+            sites_queue = deque(alt_sites)
+            while sites_queue:
+                alt_site = sites_queue.popleft()
+
+                # safety against wrong config
+                # {"SFTP": {"alternative_site": "SFTP"}
+                if alt_site == site_name or alt_site not in alt_site_pairs:
+                    continue
+
+                for alt_alt_site in alt_site_pairs[alt_site]:
+                    if (
+                            alt_alt_site != site_name
+                            and alt_alt_site not in alt_sites
+                    ):
+                        alt_sites.append(alt_alt_site)
+                        sites_queue.append(alt_alt_site)
+
+        return alt_site_pairs
 
     def handle_destination_files(self, integrated_file_sizes, mode):
         """ Clean destination files

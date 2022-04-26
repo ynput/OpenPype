@@ -10,6 +10,10 @@
       "name": "schema_maya"
     },
     {
+      "type": "schema",
+      "name": "schema_flame"
+    },
+    {
       "type": "schema_template",
       "name": "template_nuke",
       "template_data": {
@@ -83,11 +87,50 @@
     },
     {
       "type": "schema",
-      "name": "schema_shell"
+      "name": "schema_djv"
     },
     {
-      "type": "schema",
-      "name": "schema_djv"
+      "type": "dict-modifiable",
+      "key": "additional_apps",
+      "label": "Additional",
+      "collapsible": true,
+      "collapsible_key": true,
+      "object_type": {
+          "type": "dict",
+          "children": [
+              {
+                  "type": "boolean",
+                  "key": "enabled",
+                  "label": "Enabled"
+              },
+              {
+                  "type": "schema_template",
+                  "name": "template_host_unchangables",
+                  "skip_paths": ["host_name", "label"]
+              },
+              {
+                  "key": "environment",
+                  "label": "Environment",
+                  "type": "raw-json"
+              },
+              {
+                  "type": "dict-modifiable",
+                  "key": "variants",
+                  "collapsible_key": true,
+                  "use_label_wrap": false,
+                  "object_type": {
+                      "type": "dict",
+                      "collapsible": true,
+                      "children": [
+                          {
+                              "type": "schema_template",
+                              "name": "template_host_variant_items"
+                          }
+                      ]
+                  }
+              }
+          ]
+      }
     }
   ]
 }

@@ -3,6 +3,7 @@ import re
 import json
 import copy
 import inspect
+import collections
 import contextlib
 
 from .exceptions import (
@@ -10,6 +11,12 @@ from .exceptions import (
     SchemaDuplicatedEnvGroupKeys
 )
 
+from openpype.settings.constants import (
+    SYSTEM_SETTINGS_KEY,
+    PROJECT_SETTINGS_KEY,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS
+)
 try:
     STRING_TYPE = basestring
 except Exception:
@@ -22,6 +29,10 @@ OVERRIDE_VERSION = 1
 DEFAULT_VALUES_KEY = "__default_values__"
 TEMPLATE_METADATA_KEYS = (
     DEFAULT_VALUES_KEY,
+)
+
+SCHEMA_EXTEND_TYPES = (
+    "schema", "template", "schema_template", "dynamic_schema"
 )
 
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
@@ -90,7 +101,7 @@ class OverrideState:
     - DEFAULTS - Entity cares only about default values. It is not
         possible to set higher state if any entity does not have filled
         default value.
-    - STUDIO - First layer of overrides. Hold only studio overriden values
+    - STUDIO - First layer of overrides. Hold only studio overridden values
         that are applied on top of defaults.
     - PROJECT - Second layer of overrides. Hold only project overrides that are
         applied on top of defaults and studio overrides.
@@ -102,8 +113,8 @@ class OverrideState:
 
 
 class SchemasHub:
-    def __init__(self, schema_subfolder, reset=True):
-        self._schema_subfolder = schema_subfolder
+    def __init__(self, schema_type, reset=True):
+        self._schema_type = schema_type
 
         self._loaded_types = {}
         self._gui_types = tuple()
@@ -112,24 +123,59 @@ class SchemasHub:
         self._loaded_templates = {}
         self._loaded_schemas = {}
 
+        # Attributes for modules settings
+        self._dynamic_schemas_defs_by_id = {}
+        self._dynamic_schemas_by_id = {}
+
         # Store validating and validated dynamic template or schemas
         self._validating_dynamic = set()
         self._validated_dynamic = set()
-
-        # It doesn't make sence to reload types on each reset as they can't be
-        #   changed
-        self._load_types()
 
         # Trigger reset
         if reset:
             self.reset()
 
+    @property
+    def schema_type(self):
+        return self._schema_type
+
     def reset(self):
+        self._load_modules_settings_defs()
+        self._load_types()
         self._load_schemas()
+
+    def _load_modules_settings_defs(self):
+        from openpype.modules import get_module_settings_defs
+
+        module_settings_defs = get_module_settings_defs()
+        for module_settings_def_cls in module_settings_defs:
+            module_settings_def = module_settings_def_cls()
+            def_id = module_settings_def.id
+            self._dynamic_schemas_defs_by_id[def_id] = module_settings_def
 
     @property
     def gui_types(self):
         return self._gui_types
+
+    def resolve_dynamic_schema(self, dynamic_key):
+        output = []
+        for def_id, def_keys in self._dynamic_schemas_by_id.items():
+            if dynamic_key in def_keys:
+                def_schema = def_keys[dynamic_key]
+                if not def_schema:
+                    continue
+
+                if isinstance(def_schema, dict):
+                    def_schema = [def_schema]
+
+                all_def_schema = []
+                for item in def_schema:
+                    items = self.resolve_schema_data(item)
+                    for _item in items:
+                        _item["_dynamic_schema_id"] = def_id
+                    all_def_schema.extend(items)
+                output.extend(all_def_schema)
+        return output
 
     def get_template_name(self, item_def, default=None):
         """Get template name from passed item definition.
@@ -260,13 +306,16 @@ class SchemasHub:
             list: Resolved schema data.
         """
         schema_type = schema_data["type"]
-        if schema_type not in ("schema", "template", "schema_template"):
+        if schema_type not in SCHEMA_EXTEND_TYPES:
             return [schema_data]
 
         if schema_type == "schema":
             return self.resolve_schema_data(
                 self.get_schema(schema_data["name"])
             )
+
+        if schema_type == "dynamic_schema":
+            return self.resolve_dynamic_schema(schema_data["name"])
 
         template_name = schema_data["name"]
         template_def = self.get_template(template_name)
@@ -368,14 +417,16 @@ class SchemasHub:
         self._crashed_on_load = {}
         self._loaded_templates = {}
         self._loaded_schemas = {}
+        self._dynamic_schemas_by_id = {}
 
         dirpath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "schemas",
-            self._schema_subfolder
+            self.schema_type
         )
         loaded_schemas = {}
         loaded_templates = {}
+        dynamic_schemas_by_id = {}
         for root, _, filenames in os.walk(dirpath):
             for filename in filenames:
                 basename, ext = os.path.splitext(filename)
@@ -425,8 +476,34 @@ class SchemasHub:
                         )
                     loaded_schemas[basename] = schema_data
 
+        defs_iter = self._dynamic_schemas_defs_by_id.items()
+        for def_id, module_settings_def in defs_iter:
+            dynamic_schemas_by_id[def_id] = (
+                module_settings_def.get_dynamic_schemas(self.schema_type)
+            )
+            module_schemas = module_settings_def.get_settings_schemas(
+                self.schema_type
+            )
+            for key, schema_data in module_schemas.items():
+                if isinstance(schema_data, list):
+                    if key in loaded_templates:
+                        raise KeyError(
+                            "Duplicated template key \"{}\"".format(key)
+                        )
+                    loaded_templates[key] = schema_data
+                else:
+                    if key in loaded_schemas:
+                        raise KeyError(
+                            "Duplicated schema key \"{}\"".format(key)
+                        )
+                    loaded_schemas[key] = schema_data
+
         self._loaded_templates = loaded_templates
         self._loaded_schemas = loaded_schemas
+        self._dynamic_schemas_by_id = dynamic_schemas_by_id
+
+    def get_dynamic_modules_settings_defs(self, schema_def_id):
+        return self._dynamic_schemas_defs_by_id.get(schema_def_id)
 
     def _fill_template(self, child_data, template_def):
         """Fill template based on schema definition and template definition.
@@ -660,3 +737,38 @@ class SchemasHub:
         if found_idx is not None:
             metadata_item = template_def.pop(found_idx)
         return metadata_item
+
+
+class DynamicSchemaValueCollector:
+    # Map schema hub type to store keys
+    schema_hub_type_map = {
+        SCHEMA_KEY_SYSTEM_SETTINGS: SYSTEM_SETTINGS_KEY,
+        SCHEMA_KEY_PROJECT_SETTINGS: PROJECT_SETTINGS_KEY
+    }
+
+    def __init__(self, schema_hub):
+        self._schema_hub = schema_hub
+        self._dynamic_entities = []
+
+    def add_entity(self, entity):
+        self._dynamic_entities.append(entity)
+
+    def create_hierarchy(self):
+        output = collections.defaultdict(dict)
+        for entity in self._dynamic_entities:
+            output[entity.dynamic_schema_id][entity.path] = (
+                entity.settings_value()
+            )
+        return output
+
+    def save_values(self):
+        hierarchy = self.create_hierarchy()
+
+        for schema_def_id, schema_def_value in hierarchy.items():
+            schema_def = self._schema_hub.get_dynamic_modules_settings_defs(
+                schema_def_id
+            )
+            top_key = self.schema_hub_type_map.get(
+                self._schema_hub.schema_type
+            )
+            schema_def.save_defaults(top_key, schema_def_value)

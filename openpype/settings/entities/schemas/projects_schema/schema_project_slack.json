@@ -53,16 +53,36 @@
                                         "object_type": "text"
                                     },
                                     {
+                                        "type": "hosts-enum",
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
                                         "key": "tasks",
                                         "label": "Task names",
                                         "type": "list",
                                         "object_type": "text"
                                     },
                                     {
-                                        "type": "hosts-enum",
-                                        "key": "hosts",
-                                        "label": "Host names",
-                                        "multiselection": true
+                                        "key": "subsets",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "review_upload_limit",
+                                        "label": "Upload review maximum file size (MB)",
+                                        "decimal": 2,
+                                        "default": 50,
+                                        "minimum": 0,
+                                        "maximum": 1000000
                                     },
                                     {
                                         "type": "separator"
@@ -85,6 +105,11 @@
                                                     "type": "boolean",
                                                     "key": "upload_thumbnail",
                                                     "label": "Upload thumbnail"
+                                                },
+                                                {
+                                                    "type": "boolean",
+                                                    "key": "upload_review",
+                                                    "label": "Upload review"
                                                 },
                                                 {
                                                     "type": "text",

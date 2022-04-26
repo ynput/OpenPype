@@ -19,7 +19,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
     order = api.ExtractorOrder
     label = "Extract OTIO trim longer video"
     families = ["trim"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
         self.staging_dir = self.staging_dir(instance)
@@ -75,7 +75,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
         output_path = self._get_ffmpeg_output(input_file_path)
 
         # start command list
-        command = ['"{}"'.format(ffmpeg_path)]
+        command = [ffmpeg_path]
 
         video_path = input_file_path
         frame_start = otio_range.start_time.value
@@ -86,17 +86,17 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
 
         # form command for rendering gap files
         command.extend([
-            "-ss {}".format(sec_start),
-            "-t {}".format(sec_duration),
-            "-i \"{}\"".format(video_path),
-            "-c copy",
+            "-ss", str(sec_start),
+            "-t", str(sec_duration),
+            "-i", video_path,
+            "-c", "copy",
             output_path
         ])
 
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
         output = openpype.api.run_subprocess(
-            " ".join(command), logger=self.log
+            command, logger=self.log
         )
         self.log.debug("Output: {}".format(output))
 

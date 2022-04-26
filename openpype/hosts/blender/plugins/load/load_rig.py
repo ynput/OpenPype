@@ -6,12 +6,20 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
 from openpype import lib
-from openpype.hosts.blender.api import plugin
+from openpype.pipeline import (
+    legacy_create,
+    get_representation_path,
+    AVALON_CONTAINER_ID,
+)
+from openpype.hosts.blender.api import (
+    plugin,
+    get_selection,
+)
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+)
 
 
 class BlendRigLoader(plugin.AssetLoader):
@@ -66,12 +74,16 @@ class BlendRigLoader(plugin.AssetLoader):
         objects = []
         nodes = list(container.children)
 
-        for obj in nodes:
-            obj.parent = asset_group
+        allowed_types = ['ARMATURE', 'MESH']
 
         for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
+            if obj.type in allowed_types:
+                obj.parent = asset_group
+
+        for obj in nodes:
+            if obj.type in allowed_types:
+                objects.append(obj)
+                nodes.extend(list(obj.children))
 
         objects.reverse()
 
@@ -106,8 +118,11 @@ class BlendRigLoader(plugin.AssetLoader):
                 plugin.prepare_data(local_obj.data, group_name)
 
                 if action is not None:
+                    if local_obj.animation_data is None:
+                        local_obj.animation_data_create()
                     local_obj.animation_data.action = action
-                elif local_obj.animation_data.action is not None:
+                elif (local_obj.animation_data and
+                      local_obj.animation_data.action is not None):
                     plugin.prepare_data(
                         local_obj.animation_data.action, group_name)
 
@@ -126,9 +141,32 @@ class BlendRigLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        bpy.data.orphans_purge(do_local_ids=False)
+        curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
 
-        bpy.ops.object.select_all(action='DESELECT')
+        for curve in curves:
+            local_obj = plugin.prepare_data(curve, group_name)
+            plugin.prepare_data(local_obj.data, group_name)
+
+            local_obj.use_fake_user = True
+
+            for mod in local_obj.modifiers:
+                mod_target_name = mod.object.name
+                mod.object = bpy.data.objects.get(
+                    f"{group_name}:{mod_target_name}")
+
+            if not local_obj.get(AVALON_PROPERTY):
+                local_obj[AVALON_PROPERTY] = dict()
+
+            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
+
+            local_obj.parent = asset_group
+            objects.append(local_obj)
+
+        while bpy.data.orphans_purge(do_local_ids=False):
+            pass
+
+        plugin.deselect_all()
 
         return objects
 
@@ -163,15 +201,17 @@ class BlendRigLoader(plugin.AssetLoader):
 
         action = None
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         create_animation = False
+        anim_file = None
 
         if options is not None:
             parent = options.get('parent')
             transform = options.get('transform')
             action = options.get('action')
             create_animation = options.get('create_animation')
+            anim_file = options.get('animation_file')
 
             if parent and transform:
                 location = transform.get('translation')
@@ -199,7 +239,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
                 bpy.ops.object.parent_set(keep_transform=True)
 
-                bpy.ops.object.select_all(action='DESELECT')
+                plugin.deselect_all()
 
         objects = self._process(libpath, asset_group, group_name, action)
 
@@ -213,7 +253,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
             animation_asset = options.get('animation_asset')
 
-            api.create(
+            legacy_create(
                 creator_plugin,
                 name=namespace + "_animation",
                 # name=f"{unique_number}_{subset}_animation",
@@ -222,7 +262,27 @@ class BlendRigLoader(plugin.AssetLoader):
                 data={"dependencies": str(context["representation"]["_id"])}
             )
 
-            bpy.ops.object.select_all(action='DESELECT')
+            plugin.deselect_all()
+
+        if anim_file:
+            bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
+
+            imported = get_selection()
+
+            armature = [
+                o for o in asset_group.children if o.type == 'ARMATURE'][0]
+
+            imported_group = [
+                o for o in imported if o.type == 'EMPTY'][0]
+
+            for obj in imported:
+                if obj.type == 'ARMATURE':
+                    if not armature.animation_data:
+                        armature.animation_data_create()
+                    armature.animation_data.action = obj.animation_data.action
+
+            self._remove(imported_group)
+            bpy.data.objects.remove(imported_group)
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -251,7 +311,7 @@ class BlendRigLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(
@@ -320,6 +380,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
+        metadata["parent"] = str(representation["parent"])
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing asset group from a Blender scene.

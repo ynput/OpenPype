@@ -5,11 +5,17 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-import openpype.lib
+
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
+    convert_ffprobe_fps_value,
+)
 
 
-ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
-ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
+ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+ffprobe_path = get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
@@ -37,7 +43,7 @@ TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
-def _streams(source):
+def _get_ffprobe_data(source):
     """Reimplemented from otio burnins to be able use full path to ffprobe
     :param str source: source media file
     :rtype: [{}, ...]
@@ -47,111 +53,7 @@ def _streams(source):
     out = proc.communicate()[0]
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
-    return json.loads(out)['streams']
-
-
-def get_fps(str_value):
-    if str_value == "0/0":
-        print("WARNING: Source has \"r_frame_rate\" value set to \"0/0\".")
-        return "Unknown"
-
-    items = str_value.split("/")
-    if len(items) == 1:
-        fps = float(items[0])
-
-    elif len(items) == 2:
-        fps = float(items[0]) / float(items[1])
-
-    # Check if fps is integer or float number
-    if int(fps) == fps:
-        fps = int(fps)
-
-    return str(fps)
-
-
-def _prores_codec_args(ffprobe_data):
-    output = []
-
-    tags = ffprobe_data.get("tags") or {}
-    encoder = tags.get("encoder") or ""
-    if encoder.endswith("prores_ks"):
-        codec_name = "prores_ks"
-
-    elif encoder.endswith("prores_aw"):
-        codec_name = "prores_aw"
-
-    else:
-        codec_name = "prores"
-
-    output.extend(["-codec:v", codec_name])
-
-    pix_fmt = ffprobe_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    # Rest of arguments is prores_kw specific
-    if codec_name == "prores_ks":
-        codec_tag_to_profile_map = {
-            "apco": "proxy",
-            "apcs": "lt",
-            "apcn": "standard",
-            "apch": "hq",
-            "ap4h": "4444",
-            "ap4x": "4444xq"
-        }
-        codec_tag_str = ffprobe_data.get("codec_tag_string")
-        if codec_tag_str:
-            profile = codec_tag_to_profile_map.get(codec_tag_str)
-            if profile:
-                output.extend(["-profile:v", profile])
-
-    return output
-
-
-def _h264_codec_args(ffprobe_data):
-    output = []
-
-    output.extend(["-codec:v", "h264"])
-
-    bit_rate = ffprobe_data.get("bit_rate")
-    if bit_rate:
-        output.extend(["-b:v", bit_rate])
-
-    pix_fmt = ffprobe_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    output.extend(["-intra"])
-    output.extend(["-g", "1"])
-
-    return output
-
-
-def get_codec_args(ffprobe_data):
-    codec_name = ffprobe_data.get("codec_name")
-    # Codec "prores"
-    if codec_name == "prores":
-        return _prores_codec_args(ffprobe_data)
-
-    # Codec "h264"
-    if codec_name == "h264":
-        return _h264_codec_args(ffprobe_data)
-
-    output = []
-    if codec_name:
-        output.extend(["-codec:v", codec_name])
-
-    bit_rate = ffprobe_data.get("bit_rate")
-    if bit_rate:
-        output.extend(["-b:v", bit_rate])
-
-    pix_fmt = ffprobe_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    output.extend(["-g", "1"])
-
-    return output
+    return json.loads(out)
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
@@ -186,7 +88,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         - required IF start frame is not set when using frames or timecode burnins
 
     On initializing class can be set General options through "options_init" arg.
-    General can be overriden when adding burnin
+    General can be overridden when adding burnin
 
     '''
     TOP_CENTERED = ffmpeg_burnins.TOP_CENTERED
@@ -206,15 +108,16 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
     }
 
     def __init__(
-        self, source, streams=None, options_init=None, first_frame=None
+        self, source, ffprobe_data=None, options_init=None, first_frame=None
     ):
-        if not streams:
-            streams = _streams(source)
+        if not ffprobe_data:
+            ffprobe_data = _get_ffprobe_data(source)
 
+        self.ffprobe_data = ffprobe_data
         self.first_frame = first_frame
         self.input_args = []
 
-        super().__init__(source, streams)
+        super().__init__(source, ffprobe_data["streams"])
 
         if options_init:
             self.options_init.update(options_init)
@@ -302,7 +205,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             if frame_start is None:
                 replacement_final = replacement_size = str(MISSING_KEY_VALUE)
             else:
-                replacement_final = "%{eif:n+" + str(frame_start) + ":d}"
+                replacement_final = "%{eif:n+" + str(frame_start) + ":d:" + \
+                                    str(len(str(frame_end))) + "}"
                 replacement_size = str(frame_end)
 
             final_text = final_text.replace(
@@ -454,8 +358,6 @@ def example(input_path, output_path):
         'bg_opacity': 0.5,
         'font_size': 52
     }
-    # First frame in burnin
-    start_frame = 2000
     # Options init sets burnin look
     burnin = ModifiedBurnins(input_path, options_init=options_init)
     # Static text
@@ -469,7 +371,7 @@ def example(input_path, output_path):
 def burnins_from_data(
     input_path, output_path, data,
     codec_data=None, options=None, burnin_values=None, overwrite=True,
-    full_input_path=None, first_frame=None
+    full_input_path=None, first_frame=None, source_ffmpeg_cmd=None
 ):
     """This method adds burnins to video/image file based on presets setting.
 
@@ -483,7 +385,7 @@ def burnins_from_data(
         codec_data (list): All codec related arguments in list.
         options (dict): Options for burnins.
         burnin_values (dict): Contain positioned values.
-        overwrite (bool): Output will be overriden if already exists,
+        overwrite (bool): Output will be overwritten if already exists,
             True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
@@ -526,11 +428,11 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
-    streams = None
+    ffprobe_data = None
     if full_input_path:
-        streams = _streams(full_input_path)
+        ffprobe_data = _get_ffprobe_data(full_input_path)
 
-    burnin = ModifiedBurnins(input_path, streams, options, first_frame)
+    burnin = ModifiedBurnins(input_path, ffprobe_data, options, first_frame)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -544,7 +446,9 @@ def burnins_from_data(
         data["resolution_height"] = stream.get("height", MISSING_KEY_VALUE)
 
     if "fps" not in data:
-        data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
+        data["fps"] = convert_ffprobe_fps_value(
+            stream.get("r_frame_rate", "0/0")
+        )
 
     # Check frame start and add expression if is available
     if frame_start is not None:
@@ -556,6 +460,14 @@ def burnins_from_data(
     source_timecode = stream.get("timecode")
     if source_timecode is None:
         source_timecode = stream.get("tags", {}).get("timecode")
+
+    # Use "format" key from ffprobe data
+    #   - this is used e.g. in mxf extension
+    if source_timecode is None:
+        input_format = burnin.ffprobe_data.get("format") or {}
+        source_timecode = input_format.get("timecode")
+        if source_timecode is None:
+            source_timecode = input_format.get("tags", {}).get("timecode")
 
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
@@ -646,8 +558,21 @@ def burnins_from_data(
         ffmpeg_args.append("-g 1")
 
     else:
-        ffprobe_data = burnin._streams[0]
-        ffmpeg_args.extend(get_codec_args(ffprobe_data))
+        ffmpeg_args.extend(
+            get_ffmpeg_format_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+        )
+        ffmpeg_args.extend(
+            get_ffmpeg_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+        )
+        # Use arguments from source if are available source arguments
+        if source_ffmpeg_cmd:
+            copy_args = (
+                "-metadata",
+            )
+            args = source_ffmpeg_cmd.split(" ")
+            for idx, arg in enumerate(args):
+                if arg in copy_args:
+                    ffmpeg_args.extend([arg, args[idx + 1]])
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args_str = " ".join(ffmpeg_args)
@@ -670,6 +595,7 @@ if __name__ == "__main__":
         options=in_data.get("options"),
         burnin_values=in_data.get("values"),
         full_input_path=in_data.get("full_input_path"),
-        first_frame=in_data.get("first_frame")
+        first_frame=in_data.get("first_frame"),
+        source_ffmpeg_cmd=in_data.get("ffmpeg_cmd")
     )
     print("* Burnin script has finished")

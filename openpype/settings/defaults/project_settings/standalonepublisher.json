@@ -133,6 +133,22 @@
             ],
             "help": "Texture files with UDIM together with worfile"
         },
+        "create_simple_unreal_texture": {
+            "name": "simple_unreal_texture",
+            "label": "Simple Unreal Texture",
+            "family": "simpleUnrealTexture",
+            "icon": "Image",
+            "defaults": [],
+            "help": "Texture files with Unreal naming convention"
+        },
+        "create_vdb": {
+            "name": "vdb",
+            "label": "VDB Volumetric Data",
+            "family": "vdbcache",
+            "icon": "cloud",
+            "defaults": [],
+            "help": "Hierarchical data structure for the efficient storage and manipulation of sparse volumetric data discretized on three-dimensional grids"
+        },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",
             "create_model": "Model",
@@ -145,7 +161,9 @@
             "create_matchmove": "Matchmove",
             "create_render": "Render",
             "create_mov_batch": "Batch Mov",
-            "create_texture_batch": "Batch Texture"
+            "create_texture_batch": "Batch Texture",
+            "create_simple_unreal_texture": "Simple Unreal Texture",
+            "create_vdb": "VDB Cache"
         }
     },
     "publish": {
@@ -173,9 +191,9 @@
             "workfile_families": [],
             "texture_families": [],
             "color_space": [
-                "linsRGB",
-                "raw",
-                "acesg"
+                "sRGB",
+                "Raw",
+                "ACEScg"
             ],
             "input_naming_patterns": {
                 "workfile": [

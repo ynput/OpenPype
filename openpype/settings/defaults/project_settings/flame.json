@@ -1,0 +1,119 @@
+{
+    "create": {
+        "CreateShotClip": {
+            "hierarchy": "{folder}/{sequence}",
+            "useShotName": true,
+            "clipRename": false,
+            "clipName": "{sequence}{shot}",
+            "segmentIndex": true,
+            "countFrom": 10,
+            "countSteps": 10,
+            "folder": "shots",
+            "episode": "ep01",
+            "sequence": "a",
+            "track": "{_track_}",
+            "shot": "####",
+            "vSyncOn": false,
+            "workfileFrameStart": 1001,
+            "handleStart": 5,
+            "handleEnd": 5
+        }
+    },
+    "publish": {
+        "CollectTimelineInstances": {
+            "xml_preset_attrs_from_comments": [
+                {
+                    "name": "width",
+                    "type": "number"
+                },
+                {
+                    "name": "height",
+                    "type": "number"
+                },
+                {
+                    "name": "pixelRatio",
+                    "type": "float"
+                },
+                {
+                    "name": "resizeType",
+                    "type": "string"
+                },
+                {
+                    "name": "resizeFilter",
+                    "type": "string"
+                }
+            ],
+            "add_tasks": [
+                {
+                    "name": "compositing",
+                    "type": "Compositing",
+                    "create_batch_group": true
+                }
+            ]
+        },
+        "ExtractSubsetResources": {
+            "keep_original_representation": false,
+            "export_presets_mapping": {
+                "exr16fpdwaa": {
+                    "ext": "exr",
+                    "xml_preset_file": "OpenEXR (16-bit fp DWAA).xml",
+                    "xml_preset_dir": "",
+                    "export_type": "File Sequence",
+                    "ignore_comment_attrs": false,
+                    "colorspace_out": "ACES - ACEScg",
+                    "representation_add_range": true,
+                    "representation_tags": [],
+                    "load_to_batch_group": true,
+                    "batch_group_loader_name": "LoadClip"
+                }
+            }
+        }
+    },
+    "load": {
+        "LoadClip": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "review"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "h264",
+                "mov",
+                "mp4"
+            ],
+            "reel_group_name": "OpenPype_Reels",
+            "reel_name": "Loaded",
+            "clip_name_template": "{asset}_{subset}_{output}"
+        },
+        "LoadClipBatch": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "review"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "h264",
+                "mov",
+                "mp4"
+            ],
+            "reel_name": "OP_LoadedReel",
+            "clip_name_template": "{asset}_{subset}_{output}"
+        }
+    }
+}

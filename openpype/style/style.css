@@ -19,8 +19,8 @@ Enabled vs Disabled logic in most of stylesheets
 */
 
 * {
-    font-size: 9pt;
-    font-family: "Spartan";
+    font-size: 10pt;
+    font-family: "Noto Sans";
     font-weight: 450;
     outline: none;
 }
@@ -57,10 +57,73 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
     border-color: {color:border-focus};
 }
 
+QAbstractSpinBox:up-button {
+    margin: 0px;
+    background-color: transparent;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-top-right-radius: 0.3em;
+    border-top: 0px solid transparent;
+    border-right: 0px solid transparent;
+    border-left: 1px solid {color:border};
+    border-bottom: 1px solid {color:border};
+}
+
+QAbstractSpinBox:down-button {
+    margin: 0px;
+    background-color: transparent;
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    border-bottom-right-radius: 0.3em;
+    border-bottom: 0px solid transparent;
+    border-right: 0px solid transparent;
+    border-left: 1px solid {color:border};
+    border-top: 1px solid {color:border};
+}
+
+QAbstractSpinBox:up-button:focus, QAbstractSpinBox:down-button:focus {
+    border-color: {color:border-focus};
+}
+QAbstractSpinBox::up-arrow, QAbstractSpinBox::up-arrow:off {
+    image: url(:/openpype/images/up_arrow.png);
+    width: 0.5em;
+    height: 1em;
+    border-width: 1px;
+}
+QAbstractSpinBox::up-arrow:hover {
+    image: url(:/openpype/images/up_arrow_on.png);
+    bottom: 1;
+}
+QAbstractSpinBox::up-arrow:disabled {
+    image: url(:/openpype/images/up_arrow_disabled.png);
+}
+QAbstractSpinBox::up-arrow:pressed {
+    image: url(:/openpype/images/up_arrow_on.png);
+    bottom: 0;
+}
+
+QAbstractSpinBox::down-arrow, QAbstractSpinBox::down-arrow:off {
+    image: url(:/openpype/images/down_arrow.png);
+    width: 0.5em;
+    height: 1em;
+    border-width: 1px;
+}
+QAbstractSpinBox::down-arrow:hover {
+    image: url(:/openpype/images/down_arrow_on.png);
+    bottom: 1;
+}
+QAbstractSpinBox::down-arrow:disabled {
+    image: url(:/openpype/images/down_arrow_disabled.png);
+}
+QAbstractSpinBox::down-arrow:hover:pressed {
+    image: url(:/openpype/images/down_arrow_on.png);
+    bottom: 0;
+}
+
 /* Buttons */
 QPushButton {
     text-align:center center;
-    border: 1px solid transparent;
+    border: 0px solid transparent;
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
@@ -86,15 +149,15 @@ QPushButton::menu-indicator  {
 }
 
 QToolButton {
-    border: none;
-    background: transparent;
+    border: 0px solid transparent;
+    background: {color:bg-buttons};
     border-radius: 0.2em;
     padding: 2px;
 }
 
 QToolButton:hover {
-    background: #333840;
-    border-color: {color:border-hover};
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
 }
 
 QToolButton:disabled {
@@ -104,14 +167,15 @@ QToolButton:disabled {
 QToolButton[popupMode="1"], QToolButton[popupMode="MenuButtonPopup"] {
     /* make way for the popup button */
     padding-right: 20px;
-    border: 1px solid {color:bg-buttons};
 }
 
 QToolButton::menu-button {
     width: 16px;
-    /* Set border only of left side. */
+    background: transparent;
     border: 1px solid transparent;
-    border-left: 1px solid {color:bg-buttons};
+    border-left: 1px solid qlineargradient(x1:0, y1:0, x2:0, y2:1, stop: 0 transparent, stop:0.2 {color:font}, stop:0.8 {color:font}, stop: 1 transparent);
+    padding: 3px 0px 3px 0px;
+    border-radius: 0;
 }
 
 QToolButton::menu-arrow {
@@ -200,12 +264,13 @@ QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QC
 }
 
 /* Splitter */
-QSplitter {
-    border: none;
+QSplitter::handle {
+    border: 3px solid transparent;
 }
 
-QSplitter::handle {
-    border: 1px dotted {color:bg-menu-separator};
+QSplitter::handle:horizontal, QSplitter::handle:vertical, QSplitter::handle:horizontal:hover, QSplitter::handle:vertical:hover {
+    /* must be single like because of Nuke*/
+    background: transparent;
 }
 
 /* SLider */
@@ -232,18 +297,15 @@ QSlider::groove:focus {
     border-color: {color:border-focus};
 }
 QSlider::handle {
-    background: qlineargradient(
-        x1: 0, y1: 0.5,
-        x2: 1, y2: 0.5,
-        stop: 0 {palette:blue-base},
-        stop: 1 {palette:green-base}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5,stop: 0 {palette:blue-base},stop: 1 {palette:green-base});
     border: 1px solid #5c5c5c;
     width: 10px;
     height: 10px;
 
     border-radius: 5px;
 }
+
 QSlider::handle:horizontal {
     margin: -2px 0;
 }
@@ -252,12 +314,8 @@ QSlider::handle:vertical {
 }
 
 QSlider::handle:disabled {
-    background: qlineargradient(
-        x1:0, y1:0,
-        x2:1, y2:1,
-        stop:0 {color:bg-buttons},
-        stop:1 {color:bg-buttons-disabled}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0,x2:1, y2:1,stop:0 {color:bg-buttons},stop:1 {color:bg-buttons-disabled});
 }
 
 /* Tab widget*/
@@ -267,55 +325,42 @@ QTabWidget::pane {
 
 /* move to the right to not mess with borders of widget underneath */
 QTabWidget::tab-bar {
-    left: 2px;
+    alignment: left;
 }
 
 QTabBar::tab {
-    padding: 5px;
-    border-left: 3px solid transparent;
     border-top: 1px solid {color:border};
+    border-left: 1px solid {color:border};
     border-right: 1px solid {color:border};
-    background: qlineargradient(
-        x1: 0, y1: 1, x2: 0, y2: 0,
-        stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs}
-    );
+    padding: 5px;
+    background: {color:tab-widget:bg};
+    color: {color:tab-widget:color};
 }
 
 QTabBar::tab:selected {
-    background: {color:grey-lighter};
-    border-left: 3px solid {color:border-focus};
-    background: qlineargradient(
-        x1: 0, y1: 1, x2: 0, y2: 0,
-        stop: 0.5 {color:bg}, stop: 1.0 {color:border}
-    );
+    border-left-color: {color:tab-widget:bg-selected};
+    border-right-color: {color:tab-widget:bg-selected};
+    border-top-color: {color:border-focus};
+    background: {color:tab-widget:bg-selected};
+    color: {color:tab-widget:color-selected};
 }
 
-QTabBar::tab:!selected {
-    background: {color:grey-light};
-}
-
+QTabBar::tab:!selected {}
 QTabBar::tab:!selected:hover {
-    background: {color:grey-lighter};
+    background: {color:tab-widget:bg-hover};
+    color: {color:tab-widget:color-hover};
 }
-QTabBar::tab:first {
-    border-left: 1px solid {color:border};
+QTabBar::tab:first {}
+QTabBar::tab:first:selected {}
+QTabBar::tab:last:!selected {
+    border-right: 1px solid {color:border};
 }
-QTabBar::tab:first:selected {
-    margin-left: 0;
-    border-left: 3px solid {color:border-focus};
-}
-
-QTabBar::tab:last:selected {
-    margin-right: 0;
-}
-
-QTabBar::tab:only-one {
-    margin: 0;
-}
+QTabBar::tab:last:selected {}
+QTabBar::tab:only-one {}
 
 QHeaderView {
-    border: none;
-    border-radius: 2px;
+    border: 0px solid {color:border};
+    border-radius: 0px;
     margin: 0px;
     padding: 0px;
 }
@@ -335,10 +380,78 @@ QHeaderView::section:first {
 QHeaderView::section:last {
     border-right: none;
 }
+QHeaderView::section:only-one {
+    border-left: none;
+    border-right: none;
+}
+
+QHeaderView::down-arrow {
+    image: url(:/openpype/images/down_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+}
+
+QHeaderView::up-arrow {
+    image: url(:/openpype/images/up_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+}
+
+/* Checkboxes */
+QCheckBox {
+    background: transparent;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+}
+
+QAbstractItemView::indicator:checked, QCheckBox::indicator:checked {
+    image: url(:/openpype/images/checkbox_checked.png);
+}
+QAbstractItemView::indicator:checked:focus, QCheckBox::indicator:checked:focus {
+    image: url(:/openpype/images/checkbox_checked_focus.png);
+}
+QAbstractItemView::indicator:checked:hover, QAbstractItemView::indicator:checked:pressed, QCheckBox::indicator:checked:hover, QCheckBox::indicator:checked:pressed {
+    image: url(:/openpype/images/checkbox_checked_hover.png);
+}
+QAbstractItemView::indicator:checked:disabled, QCheckBox::indicator:checked:disabled {
+    image: url(:/openpype/images/checkbox_checked_disabled.png);
+}
+
+QAbstractItemView::indicator:unchecked, QCheckBox::indicator:unchecked {
+    image: url(:/openpype/images/checkbox_unchecked.png);
+}
+QAbstractItemView::indicator:unchecked:focus, QCheckBox::indicator:unchecked:focus {
+    image: url(:/openpype/images/checkbox_unchecked_focus.png);
+}
+QAbstractItemView::indicator:unchecked:hover, QAbstractItemView::indicator:unchecked:pressed, QCheckBox::indicator:unchecked:hover, QCheckBox::indicator:unchecked:pressed {
+    image: url(:/openpype/images/checkbox_unchecked_hover.png);
+}
+QAbstractItemView::indicator:unchecked:disabled, QCheckBox::indicator:unchecked:disabled {
+    image: url(:/openpype/images/checkbox_unchecked_disabled.png);
+}
+
+QAbstractItemView::indicator:indeterminate, QCheckBox::indicator:indeterminate {
+    image: url(:/openpype/images/checkbox_indeterminate.png);
+}
+QAbstractItemView::indicator:indeterminate:focus, QCheckBox::indicator:indeterminate:focus {
+    image: url(:/openpype/images/checkbox_indeterminate_focus.png);
+}
+QAbstractItemView::indicator:indeterminate:hover, QAbstractItemView::indicator:indeterminate:pressed, QCheckBox::indicator:indeterminate:hover, QCheckBox::indicator:indeterminate:pressed {
+    image: url(:/openpype/images/checkbox_indeterminate_hover.png);
+}
+QAbstractItemView::indicator:indeterminate:disabled, QCheckBox::indicator:indeterminate:disabled {
+    image: url(:/openpype/images/checkbox_indeterminate_disabled.png);
+}
+
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 0px solid {color:border};
-    border-radius: 0.2em;
+    border-radius: 0px;
     background: {color:bg-view};
     alternate-background-color: {color:bg-view-alternate};
     /* Mac shows selection color on branches. */
@@ -353,6 +466,7 @@ QAbstractItemView::item {
 QAbstractItemView:disabled{
     background: {color:bg-view-disabled};
     alternate-background-color: {color:bg-view-alternate-disabled};
+    border: 1px solid {color:border};
 }
 
 QAbstractItemView::item:hover {
@@ -393,21 +507,61 @@ QAbstractItemView::branch:open:has-children:has-siblings {
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_open_on.png);
+    image: url(:/openpype/images/branch_open_on.png);
     background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
-    image: url(:/openpype/images//branch_closed.png);
+    image: url(:/openpype/images/branch_closed.png);
     background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_closed_on.png);
+    image: url(:/openpype/images/branch_closed_on.png);
     background: transparent;
+}
+
+QAbstractItemView::branch:has-siblings:!adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+CompleterView {
+    border: 1px solid #555555;
+    background: {color:bg-inputs};
+}
+
+CompleterView::item:selected {
+    background: {color:bg-view-hover};
+}
+
+CompleterView::item:selected:hover {
+    background: {color:bg-view-hover};
+}
+
+CompleterView::right-arrow {
+    min-width: 10px;
+}
+CompleterView::separator {
+    background: {color:bg-menu-separator};
+    height: 2px;
+    margin-right: 5px;
 }
 
 /* Progress bar */
@@ -425,12 +579,8 @@ QProgressBar:vertical {
 }
 
 QProgressBar::chunk {
-    background: qlineargradient(
-        x1: 0, y1: 0.5,
-        x2: 1, y2: 0.5,
-        stop: 0 {palette:blue-base},
-        stop: 1 {palette:green-base}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 0.5,x2: 1, y2: 0.5,stop: 0 {palette:blue-base},stop: 1 {palette:green-base});
 }
 
 /* Scroll bars */
@@ -537,13 +687,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
-/* Globally used names */
-#Separator {
-    background: {color:bg-menu-separator};
-}
-
-#IconBtn {}
-
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -566,6 +709,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     padding-right: 3px;
 }
 
+#InfoText {
+    padding-left: 30px;
+    padding-top: 20px;
+    background: transparent;
+    border: 1px solid {color:border};
+}
+
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
     background: transparent;
     border-radius: 0.3em;
@@ -581,20 +731,26 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #CompleterView::item {
-    padding: 2px 4px 2px 4px;
-    border-left: 3px solid {color:bg-view};
+    background: {color:bg-view-hover};
+    color: {color:font};
+    padding-left: 0px;
 }
 
 #CompleterView::item:hover {
-    border-left-color: {palette:blue-base};
-    background: {color:bg-view-selection};
-    color: {color:font};
+    background: {color:bg-view-hover};
+}
+
+#DeleteButton {
+    background: {color:delete-btn-bg};
+}
+#DeleteButton:disabled {
+    background: {color:delete-btn-bg-disabled};
 }
 
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
     /* font size can't be set on items */
-    font-size: 8pt;
+    font-size: 9pt;
     border: 0px;
     padding: 0px;
     margin: 0px;
@@ -625,7 +781,553 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-radius: 0.1em;
 }
 
+/* Subset Manager */
+#SubsetManagerDetailsText {}
+#SubsetManagerDetailsText[state="invalid"] {
+    border: 1px solid #ff0000;
+}
+
+/* Creator */
+#CreatorsView::item {
+    padding: 1px 5px;
+}
+
+#CreatorFamilyLabel {
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+/* Scene Inventory */
+#ButtonWithMenu {
+    padding-right: 16px;
+    border: 1px solid #4A4949;
+    border-radius: 2px;
+}
+#ButtonWithMenu::menu-button {
+    border: 1px solid #4A4949;
+    width: 12px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+}
+
+#ButtonWithMenu[state="1"], #ButtonWithMenu[state="1"]::menu-button, #ButtonWithMenu[state="1"]::menu-button:hover {
+    border-color: green;
+}
+
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
-    font-family: "Roboto Mono";
+    font-family: "Noto Sans Mono";
+    border-radius: 0px;
+}
+
+#SubsetView::item, #RepresentationView:item {
+    padding: 5px 1px;
+    border: 0px;
+}
+
+#OptionalActionBody, #OptionalActionOption {
+    background: transparent;
+}
+
+#OptionalActionBody[state="hover"], #OptionalActionOption[state="hover"] {
+    background: {color:bg-view-hover};
+}
+
+/* New Create/Publish UI */
+#CreateDialogHelpButton {
+    background: rgba(255, 255, 255, 31);
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: 3px 3px 3px 3px;
+}
+
+#CreateDialogHelpButton:hover {
+    background: rgba(255, 255, 255, 63);
+}
+
+#PublishLogConsole {
+    font-family: "Noto Sans Mono";
+}
+
+#VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
+    border-color: {color:publisher:success};
+}
+#VariantInput[state="invalid"], #VariantInput[state="invalid"]:focus, #VariantInput[state="invalid"]:hover {
+    border-color: {color:publisher:error};
+}
+
+#VariantInput[state="empty"], #VariantInput[state="empty"]:focus, #VariantInput[state="empty"]:hover {
+    border-color: {color:bg-inputs};
+}
+
+#VariantInput[state="exists"], #VariantInput[state="exists"]:focus, #VariantInput[state="exists"]:hover {
+    border-color: #4E76BB;
+}
+
+#MultipleItemView {
+    background: transparent;
+    border: none;
+}
+
+#MultipleItemView:item {
+    background: {color:bg-view-selection};
+    border-radius: 0.4em;
+}
+
+#InstanceListView::item {
+    border-radius: 0.3em;
+    margin: 1px;
+}
+#InstanceListGroupWidget {
+    border: none;
+    background: transparent;
+}
+
+#CardViewWidget {
+    background: {color:bg-buttons};
+    border-radius: 0.2em;
+}
+#CardViewWidget:hover {
+    background: {color:bg-button-hover};
+}
+#CardViewWidget[state="selected"] {
+    background: {color:bg-view-selection};
+}
+
+#ListViewSubsetName[state="invalid"] {
+    color: {color:publisher:error};
+}
+
+#PublishFrame {
+    background: rgba(0, 0, 0, 127);
+}
+#PublishFrame[state="1"] {
+    background: rgb(22, 25, 29);
+}
+#PublishFrame[state="2"] {
+    background: {color:bg};
+}
+
+#PublishInfoFrame {
+    background: {color:bg};
+    border: 2px solid black;
+    border-radius: 0.3em;
+}
+
+#PublishInfoFrame[state="-1"] {
+    background: rgb(194, 226, 236);
+}
+
+#PublishInfoFrame[state="0"] {
+	background: {color:publisher:error};
+}
+
+#PublishInfoFrame[state="1"] {
+	background: {color:publisher:success};
+}
+
+#PublishInfoFrame[state="2"] {
+	background: {color:publisher:warning};
+}
+
+#PublishInfoFrame QLabel {
+    color: black;
+    font-style: bold;
+}
+
+#PublishInfoMainLabel {
+    font-size: 12pt;
+}
+
+#PublishContextLabel {
+    font-size: 13pt;
+}
+
+#ValidationActionButton {
+    border-radius: 0.2em;
+    padding: 4px 6px 4px 6px;
+    background: {color:bg-buttons};
+}
+
+#ValidationActionButton:hover {
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
+}
+
+#ValidationActionButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+#ValidationErrorTitleFrame {
+    background: {color:bg-inputs};
+    border-left: 4px solid transparent;
+}
+
+#ValidationErrorTitleFrame:hover {
+    border-left-color: {color:border};
+}
+
+#ValidationErrorTitleFrame[selected="1"] {
+    background: {color:bg};
+    border-left-color: {palette:blue-light};
+}
+
+#ValidationErrorInstanceList {
+    border-radius: 0;
+}
+
+#ValidationErrorInstanceList::item {
+    border-bottom: 1px solid {color:border};
+    border-left: 1px solid {color:border};
+}
+
+#TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"] {
+    border-color: {color:publisher:error};
+}
+
+#PublishProgressBar[state="0"]::chunk {
+    background: {color:bg-buttons};
+}
+
+#PublishDetailViews {
+    background: transparent;
+}
+#PublishDetailViews::item {
+    margin: 1px 0px 1px 0px;
+}
+#PublishCommentInput {
+    padding: 0.2em;
+}
+#FamilyIconLabel {
+    font-size: 14pt;
+}
+#ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
+    background: transparent;
+}
+
+/* Settings - NOT USED YET
+- we need to define font family for settings UI */
+
+#SettingsMainWidget {
+    background: #141a1f;
+}
+/* Change focus borders. */
+#SettingsMainWidget QAbstractSpinBox:focus, #SettingsMainWidget QLineEdit:focus, #SettingsMainWidget QPlainTextEdit:focus, #SettingsMainWidget QTextEdit:focus {
+    border-color: {color:settings:focus-border};
+}
+/* Modify tab widget for settings */
+#SettingsMainWidget QTabWidget::pane {
+    border-top-style: none;
+}
+
+#SettingsMainWidget QTabBar {
+   background: transparent;
+}
+
+#SettingsMainWidget QTabBar::tab {
+    border: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px;
+}
+
+#SettingsMainWidget QTabBar::tab:selected {
+    background: {color:bg};
+    border-color: #9B9B9B;
+    border-bottom-color: #C2C7CB;
+}
+
+#SettingsMainWidget QTabBar::tab:!selected {
+    margin-top: 2px;
+    background: #21252B;
+}
+
+#SettingsMainWidget QTabBar::tab:!selected:hover {
+    background: #333840;
+}
+
+#SettingsMainWidget QTabBar::tab:first:selected {
+    margin-left: 0;
+}
+
+#SettingsMainWidget QTabBar::tab:last:selected {
+    margin-right: 0;
+}
+
+#SettingsMainWidget QTabBar::tab:only-one {
+    margin: 0;
+}
+
+#SettingsToolIconBtn {
+    border: 0px solid #bfccd6;
+    background-color: transparent;
+}
+
+#SettingsToolBtn {
+    border: 1px solid #bfccd6;
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+#SettingsToolBtn:hover {
+    border-color: #189aea;
+    color: {color:settings:modified-light};
+    background-color: transparent;
+}
+#SettingsToolBtn:disabled {
+    background-color: #464b54;
+}
+
+#ExpandToggleBtn {
+    background: transparent;
+}
+
+#SettingsLabel {
+    background: transparent;
+    color: {color:settings:label-fg};
+}
+#SettingsLabel:hover {color: {color:settings:label-fg-hover};}
+
+#ExpandLabel {
+    font-weight: bold;
+    color: {color:settings:label-fg};
+}
+#ExpandLabel:hover {
+    color: {color:settings:label-fg-hover};
+}
+
+#ExpandLabel[state="studio"], #SettingsLabel[state="studio"] {
+    color: {color:settings:studio-light};
+}
+#ExpandLabel[state="studio"]:hover, #SettingsLabel[state="studio"]:hover {
+    color: {color:settings:studio-label-hover};
+}
+#ExpandLabel[state="modified"], #SettingsLabel[state="modified"] {
+    color: {color:settings:modified-mid};
+}
+#ExpandLabel[state="modified"]:hover, #SettingsLabel[state="modified"]:hover {
+    color: {color:settings:modified-light};
+}
+#ExpandLabel[state="overridden-modified"], #SettingsLabel[state="overridden-modified"] {
+    color: {color:settings:modified-mid};
+}
+#ExpandLabel[state="overridden-modified"]:hover, #SettingsLabel[state="overridden-modified"]:hover {
+    color: {color:settings:modified-light};
+}
+#ExpandLabel[state="overridden"], #SettingsLabel[state="overridden"] {
+    color: {color:settings:project-mid};
+}
+#ExpandLabel[state="overridden"]:hover, #SettingsLabel[state="overridden"]:hover {
+    color: {color:settings:project-light};
+}
+#ExpandLabel[state="invalid"], #SettingsLabel[state="invalid"] {
+    color:{color:settings:invalid-dark};
+}
+#ExpandLabel[state="invalid"]:hover, #SettingsLabel[state="invalid"]:hover {
+    color: {color:settings:invalid-dark};
+}
+#SettingsOutdatedSourceVersion {
+    color: {color:settings:source-version-outdated};
+}
+#SourceVersionLabel {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+#SourceVersionLabel[state="same"] {
+    color: {color:settings:source-version};
+}
+#SourceVersionLabel[state="different"] {
+    color: {color:settings:source-version-outdated};
+}
+
+/* TODO Replace these with explicit widget types if possible */
+#SettingsMainWidget QWidget[input-state="modified"] {
+    border-color: {color:settings:modified-mid};
+}
+#SettingsMainWidget QWidget[input-state="overridden-modified"] {
+    border-color: {color:settings:modified-mid};
+}
+#SettingsMainWidget QWidget[input-state="overridden"] {
+    border-color: {color:settings:project-mid};
+}
+#SettingsMainWidget QWidget[input-state="invalid"] {
+    border-color: {color:settings:invalid-dark};
+}
+
+#SettingsFooter {
+    border-top: 1px solid #21252B;
+}
+
+#ProjectListWidget QLabel {
+    background: transparent;
+    font-weight: bold;
+}
+
+#ProjectListContentWidget {
+    background: {color:bg-view};
+}
+
+#MultiSelectionComboBox {
+    font-size: 12px;
+}
+
+#DictKey[state="modified"] {border-color: {color:settings:modified-mid};}
+#DictKey[state="invalid"] {border-color: {color:settings:invalid-dark};}
+
+#ContentWidget {
+    background-color: transparent;
+}
+#ContentWidget[content_state="highlighted"] {
+    background-color: {color:settings:content-highlighted};
+}
+
+#SideLineWidget {
+    background-color: #333942;
+    border-style: solid;
+    border-color: #4e5254;
+    border-left-width: 3px;
+    border-bottom-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 0px;
+}
+
+#SideLineWidget:hover {
+    border-color: #7d8386;
+}
+
+#SideLineWidget[state="child-studio"] {border-color: {color:settings:studio-dark};}
+#SideLineWidget[state="child-studio"]:hover {border-color: {color:settings:studio-light};}
+
+#SideLineWidget[state="child-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-modified"]:hover {border-color: {color:settings:modified-mid};}
+
+#SideLineWidget[state="child-invalid"] {border-color: {color:settings:invalid-dark};}
+#SideLineWidget[state="child-invalid"]:hover {border-color: {color:settings:invalid-light};}
+
+#SideLineWidget[state="child-overridden"] {border-color: {color:settings:project-dark};}
+#SideLineWidget[state="child-overridden"]:hover {border-color: {color:settings:project-mid};}
+
+#SideLineWidget[state="child-overridden-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-overridden-modified"]:hover {border-color: {color:settings:modified-mid};}
+
+#DictAsWidgetBody {
+    background: transparent;
+}
+#DictAsWidgetBody[show_borders="1"] {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+}
+
+#OpenPypeVersionLabel[state="success"] {
+    color: {color:settings:version-exists};
+}
+
+#OpenPypeVersionLabel[state="warning"] {
+    color: {color:settings:version-not-found};
+}
+
+#ShadowWidget {
+    font-size: 36pt;
+}
+
+#OverlayFrame {
+    background: rgba(0, 0, 0, 127);
+}
+
+#BreadcrumbsPathInput {
+    padding: 2px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton {
+    padding-right: 12px;
+    font-size: 9pt;
+    background: transparent;
+}
+
+#BreadcrumbsButton[empty="1"] {
+    padding-right: 0px;
+}
+
+#BreadcrumbsButton::menu-button {
+    border: none;
+    width: 12px;
+    background: {color:settings:breadcrumbs-btn-bg};
+}
+#BreadcrumbsButton::menu-button:hover {
+    background: {color:settings:breadcrumbs-btn-bg-hover};
+}
+
+#BreadcrumbsPanel {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+    background: #21252B;
+}
+
+/* Workfiles */
+#WorkfilesPublishedContextSelect {
+    background: rgba(0, 0, 0, 127);
+}
+#WorkfilesPublishedContextSelect QLabel {
+    font-size: 17pt;
+}
+
+/* Tray */
+#TrayRestartButton {
+    background: {color:restart-btn-bg};
+}
+
+/* Tray publisher */
+#ChooseProjectLabel {
+    font-size: 15pt;
+    font-weight: 750;
+}
+#ChooseProjectFrame {
+    border-radius: 10px;
+}
+#ChooseProjectView {
+    background: transparent;
+}
+
+/* Globally used names */
+#Separator {
+    background: {color:bg-menu-separator};
+}
+
+#IconButton {
+    padding: 4px 4px 4px 4px;
+}
+
+#NiceCheckbox {
+    /* Default size hint of NiceCheckbox is defined by font size. */
+    font-size: 7pt;
+}
+
+#ImageButton {
+    padding: 0;
+    background: transparent;
+    font-size: 11pt;
+}
+
+#ImageButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+/* Input field that looks like disabled
+- QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit
+- usage: QLineEdit that is not editable but has selectable color
+ */
+#LikeDisabledInput {
+    background: {color:bg-inputs-disabled};
+}
+#LikeDisabledInput:hover {
+    border-color: {color:border};
+}
+#LikeDisabledInput:focus {
+    border-color: {color:border};
 }

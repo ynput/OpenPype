@@ -1,22 +1,26 @@
 import os
-import pyblish.api
-import hiero.ui
-from openpype.hosts.hiero import api as phiero
-from avalon import api as avalon
-from pprint import pformat
-from openpype.hosts.hiero.otio import hiero_export
-from Qt.QtGui import QPixmap
 import tempfile
+from pprint import pformat
+
+import pyblish.api
+from Qt.QtGui import QPixmap
+
+import hiero.ui
+
+from openpype.pipeline import legacy_io
+from openpype.hosts.hiero import api as phiero
+from openpype.hosts.hiero.api.otio import hiero_export
+
 
 class PrecollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     label = "Precollect Workfile"
-    order = pyblish.api.CollectorOrder - 0.6
+    order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
 
-        asset = avalon.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         subset = "workfile"
         project = phiero.get_current_project()
         active_timeline = hiero.ui.activeSequence()

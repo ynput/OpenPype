@@ -55,7 +55,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["render", "prerender"]
+    families = ["render", "prerender", "still"]
 
     label = "Validate rendered frame"
     hosts = ["nuke", "nukestudio"]
@@ -67,9 +67,14 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             if not repre.get("files"):
                 msg = ("no frames were collected, "
-                       "you need to render them")
+                       "you need to render them.\n"
+                       "Check properties of write node (group) and"
+                       "select 'Local' option in 'Publish' dropdown.")
                 self.log.error(msg)
                 raise ValidationException(msg)
+
+            if isinstance(repre["files"], str):
+                return
 
             collections, remainder = clique.assemble(repre["files"])
             self.log.info("collections: {}".format(str(collections)))

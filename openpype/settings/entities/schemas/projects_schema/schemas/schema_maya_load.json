@@ -47,8 +47,13 @@
                 },
                 {
                     "type": "color",
-                    "label": "Maya Scene:",
+                    "label": "Maya Ascii:",
                     "key": "mayaAscii"
+                },
+                {
+                    "type": "color",
+                    "label": "Maya Scene:",
+                    "key": "mayaScene"
                 },
                 {
                     "type": "color",
@@ -69,6 +74,11 @@
                     "type": "color",
                     "label": "Vray Proxy:",
                     "key": "vrayproxy"
+                },
+                {
+                    "type": "color",
+                    "label": "Vray Scene:",
+                    "key": "vrayscene_layer"
                 },
                 {
                     "type": "color",

@@ -1,14 +1,19 @@
+# -*- coding: utf-8 -*-
+"""Load FBX with animations."""
 import os
 import json
 
-from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-import unreal
+from openpype.pipeline import (
+    get_representation_path,
+    AVALON_CONTAINER_ID
+)
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+import unreal  # noqa
 
 
-class AnimationFBXLoader(api.Loader):
-    """Load Unreal SkeletalMesh from FBX"""
+class AnimationFBXLoader(plugin.Loader):
+    """Load Unreal SkeletalMesh from FBX."""
 
     families = ["animation"]
     label = "Import FBX Animation"
@@ -37,10 +42,10 @@ class AnimationFBXLoader(api.Loader):
 
         Returns:
             list(str): list of container content
-        """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        """
+        # Create directory for asset and OpenPype container
+        root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -62,17 +67,27 @@ class AnimationFBXLoader(api.Loader):
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
 
-        libpath = self.fname.replace("fbx", "json")
+        lib_path = self.fname.replace("fbx", "json")
 
-        with open(libpath, "r") as fp:
+        with open(lib_path, "r") as fp:
             data = json.load(fp)
 
         instance_name = data.get("instance_name")
 
         if instance_name:
             automated = True
-            actor_name = 'PersistentLevel.' + instance_name
-            actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            # Old method to get the actor
+            # actor_name = 'PersistentLevel.' + instance_name
+            # actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            actors = unreal.EditorLevelLibrary.get_all_level_actors()
+            for a in actors:
+                if a.get_class().get_name() != "SkeletalMeshActor":
+                    continue
+                if a.get_actor_label() == instance_name:
+                    actor = a
+                    break
+            if not actor:
+                raise Exception(f"Could not find actor {instance_name}")
             skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
             task.options.set_editor_property('skeleton', skeleton)
 
@@ -117,12 +132,12 @@ class AnimationFBXLoader(api.Loader):
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -161,7 +176,7 @@ class AnimationFBXLoader(api.Loader):
 
     def update(self, container, representation):
         name = container["asset_name"]
-        source_path = api.get_representation_path(representation)
+        source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
         task = unreal.AssetImportTask()
@@ -173,20 +188,35 @@ class AnimationFBXLoader(api.Loader):
         task.set_editor_property('destination_name', name)
         task.set_editor_property('replace_existing', True)
         task.set_editor_property('automated', True)
-        task.set_editor_property('save', False)
+        task.set_editor_property('save', True)
 
         # set import options here
         task.options.set_editor_property(
-            'automated_import_should_detect_type', True)
+            'automated_import_should_detect_type', False)
         task.options.set_editor_property(
-            'original_import_type', unreal.FBXImportType.FBXIT_ANIMATION)
+            'original_import_type', unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+        task.options.set_editor_property(
+            'mesh_type_to_import', unreal.FBXImportType.FBXIT_ANIMATION)
         task.options.set_editor_property('import_mesh', False)
         task.options.set_editor_property('import_animations', True)
+        task.options.set_editor_property('override_full_name', True)
 
-        task.options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type',
-            unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
+        task.options.anim_sequence_import_data.set_editor_property(
+            'animation_length',
+            unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
         )
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_meshes_in_bone_hierarchy', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'use_default_sample_rate', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_custom_attribute', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_bone_tracks', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'remove_redundant_keys', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'convert_scene', True)
 
         skeletal_mesh = unreal.EditorAssetLibrary.load_asset(
             container.get('namespace') + "/" + container.get('asset_name'))
@@ -219,7 +249,7 @@ class AnimationFBXLoader(api.Loader):
         unreal.EditorAssetLibrary.delete_directory(path)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
-            parent_path, recursive=False
+            parent_path, recursive=False, include_folder=True
         )
 
         if len(asset_content) == 0:

@@ -4,20 +4,26 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon.tools import workfiles
-from avalon import api as avalon
-from avalon import schema
-from avalon.pipeline import AVALON_CONTAINER_ID
+
 from pyblish import api as pyblish
+
 from openpype.api import Logger
+from openpype.pipeline import (
+    schema,
+    register_loader_plugin_path,
+    register_creator_plugin_path,
+    deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    AVALON_CONTAINER_ID,
+)
 from . import lib
 from . import PLUGINS_DIR
+from openpype.tools.utils import host_tools
 log = Logger().get_logger(__name__)
 
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
@@ -35,27 +41,14 @@ def install():
     """
     from .. import get_resolve_module
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "render2d",
-        "plate",
-        "render",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
     log.info("openpype.hosts.resolve installed")
 
     pyblish.register_host("resolve")
     pyblish.register_plugin_path(PUBLISH_PATH)
     log.info("Registering DaVinci Resovle plug-ins..")
 
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    register_loader_plugin_path(LOAD_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -64,7 +57,7 @@ def install():
 
 
 def uninstall():
-    """Uninstall all tha was installed
+    """Uninstall all that was installed
 
     This is where you undo everything that was done in `install()`.
     That means, removing menus, deregistering families and  data
@@ -78,9 +71,8 @@ def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     log.info("Deregistering DaVinci Resovle plug-ins..")
 
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -212,14 +204,12 @@ def update_container(timeline_item, data=None):
 
 
 def launch_workfiles_app(*args):
-    workdir = os.environ["AVALON_WORKDIR"]
-    workfiles.show(workdir)
+    host_tools.show_workfiles()
 
 
 def publish(parent):
     """Shorthand to publish from within host"""
-    from avalon.tools import publish
-    return publish.show(parent)
+    return host_tools.show_publish()
 
 
 @contextlib.contextmanager

@@ -7,7 +7,7 @@ import pyblish.api
 class CollectModules(pyblish.api.ContextPlugin):
     """Collect OpenPype modules."""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.45
     label = "OpenPype Modules"
 
     def process(self, context):

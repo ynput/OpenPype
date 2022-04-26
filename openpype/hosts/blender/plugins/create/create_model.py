@@ -2,10 +2,9 @@
 
 import bpy
 
-from avalon import api
-from avalon.blender import lib, ops
-from avalon.blender.pipeline import AVALON_INSTANCES
-from openpype.hosts.blender.api import plugin
+from openpype.pipeline import legacy_io
+from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
 class CreateModel(plugin.Creator):
@@ -22,7 +21,7 @@ class CreateModel(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-        # Get Instance Containter or create it if it does not exist
+        # Get Instance Container or create it if it does not exist
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if not instances:
             instances = bpy.data.collections.new(name=AVALON_INSTANCES)
@@ -35,7 +34,7 @@ class CreateModel(plugin.Creator):
         asset_group = bpy.data.objects.new(name=name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
-        self.data['task'] = api.Session.get('AVALON_TASK')
+        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
         lib.imprint(asset_group, self.data)
 
         # Add selected objects to instance

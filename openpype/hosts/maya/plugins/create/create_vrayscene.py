@@ -12,7 +12,17 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from openpype.api import get_system_settings
+from openpype.api import (
+    get_system_settings,
+    get_project_settings
+)
+
+from openpype.lib import requests_get
+from openpype.pipeline import (
+    CreatorError,
+    legacy_io,
+)
+from openpype.modules import ModulesManager
 
 
 class CreateVRayScene(plugin.Creator):
@@ -22,11 +32,42 @@ class CreateVRayScene(plugin.Creator):
     family = "vrayscene"
     icon = "cubes"
 
+    _project_settings = None
+
     def __init__(self, *args, **kwargs):
         """Entry."""
         super(CreateVRayScene, self).__init__(*args, **kwargs)
         self._rs = renderSetup.instance()
         self.data["exportOnFarm"] = False
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+
+        manager = ModulesManager()
+        self.deadline_module = manager.modules_by_name["deadline"]
+
+        if not deadline_settings["enabled"]:
+            self.deadline_servers = {}
+            return
+        self._project_settings = get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"])
+
+        try:
+            default_servers = deadline_settings["deadline_urls"]
+            project_servers = (
+                self._project_settings["deadline"]["deadline_servers"]
+            )
+            self.deadline_servers = {
+                k: default_servers[k]
+                for k in project_servers
+                if k in default_servers
+            }
+
+            if not self.deadline_servers:
+                self.deadline_servers = default_servers
+
+        except AttributeError:
+            # Handle situation were we had only one url for deadline.
+            # get default deadline webservice url from deadline module
+            self.deadline_servers = self.deadline_module.deadline_urls
 
     def process(self):
         """Entry point."""
@@ -37,10 +78,10 @@ class CreateVRayScene(plugin.Creator):
         use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
             self._create_vray_instance_settings()
-            instance = super(CreateVRayScene, self).process()
+            self.instance = super(CreateVRayScene, self).process()
 
             index = 1
-            namespace_name = "_{}".format(str(instance))
+            namespace_name = "_{}".format(str(self.instance))
             try:
                 cmds.namespace(rm=namespace_name)
             except RuntimeError:
@@ -48,10 +89,19 @@ class CreateVRayScene(plugin.Creator):
                 pass
 
             while(cmds.namespace(exists=namespace_name)):
-                namespace_name = "_{}{}".format(str(instance), index)
+                namespace_name = "_{}{}".format(str(self.instance), index)
                 index += 1
 
             namespace = cmds.namespace(add=namespace_name)
+
+            # add Deadline server selection list
+            if self.deadline_servers:
+                cmds.scriptJob(
+                    attributeChange=[
+                        "{}.deadlineServers".format(self.instance),
+                        self._deadline_webservice_changed
+                    ])
+
             # create namespace with instance
             layers = self._rs.getRenderLayers()
             if use_selection:
@@ -62,7 +112,7 @@ class CreateVRayScene(plugin.Creator):
                     render_set = cmds.sets(
                         n="{}:{}".format(namespace, layer.name()))
                     sets.append(render_set)
-                cmds.sets(sets, forceElement=instance)
+                cmds.sets(sets, forceElement=self.instance)
 
             # if no render layers are present, create default one with
             # asterix selector
@@ -70,6 +120,25 @@ class CreateVRayScene(plugin.Creator):
                 render_layer = self._rs.createRenderLayer('Main')
                 collection = render_layer.createCollection("defaultCollection")
                 collection.getSelector().setPattern('*')
+
+    def _deadline_webservice_changed(self):
+        """Refresh Deadline server dependent options."""
+        # get selected server
+        from maya import cmds
+        webservice = self.deadline_servers[
+            self.server_aliases[
+                cmds.getAttr("{}.deadlineServers".format(self.instance))
+            ]
+        ]
+        pools = self.deadline_module.get_deadline_pools(webservice)
+        cmds.deleteAttr("{}.primaryPool".format(self.instance))
+        cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+        cmds.addAttr(self.instance, longName="primaryPool",
+                     attributeType="enum",
+                     enumName=":".join(pools))
+        cmds.addAttr(self.instance, longName="secondaryPool",
+                     attributeType="enum",
+                     enumName=":".join(["-"] + pools))
 
     def _create_vray_instance_settings(self):
         # get pools
@@ -79,31 +148,29 @@ class CreateVRayScene(plugin.Creator):
 
         deadline_enabled = system_settings["deadline"]["enabled"]
         muster_enabled = system_settings["muster"]["enabled"]
-        deadline_url = system_settings["deadline"]["DEADLINE_REST_URL"]
         muster_url = system_settings["muster"]["MUSTER_REST_URL"]
 
         if deadline_enabled and muster_enabled:
             self.log.error(
                 "Both Deadline and Muster are enabled. " "Cannot support both."
             )
-            raise RuntimeError("Both Deadline and Muster are enabled")
+            raise CreatorError("Both Deadline and Muster are enabled")
+
+        self.server_aliases = self.deadline_servers.keys()
+        self.data["deadlineServers"] = self.server_aliases
 
         if deadline_enabled:
-            argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
+            # if default server is not between selected, use first one for
+            # initial list of pools.
             try:
-                response = self._requests_get(argument)
-            except requests.exceptions.ConnectionError as e:
-                msg = 'Cannot connect to deadline web service'
-                self.log.error(msg)
-                raise RuntimeError('{} - {}'.format(msg, e))
-            if not response.ok:
-                self.log.warning("No pools retrieved")
-            else:
-                pools = response.json()
-                self.data["primaryPool"] = pools
-                # We add a string "-" to allow the user to not
-                # set any secondary pools
-                self.data["secondaryPool"] = ["-"] + pools
+                deadline_url = self.deadline_servers["default"]
+            except KeyError:
+                deadline_url = [
+                    self.deadline_servers[k]
+                    for k in self.deadline_servers.keys()
+                ][0]
+
+            pool_names = self.deadline_module.get_deadline_pools(deadline_url)
 
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
@@ -115,10 +182,10 @@ class CreateVRayScene(plugin.Creator):
                 if e.startswith("401"):
                     self.log.warning("access token expired")
                     self._show_login()
-                    raise RuntimeError("Access token expired")
+                    raise CreatorError("Access token expired")
             except requests.exceptions.ConnectionError:
                 self.log.error("Cannot connect to Muster API endpoint.")
-                raise RuntimeError("Cannot connect to {}".format(muster_url))
+                raise CreatorError("Cannot connect to {}".format(muster_url))
             pool_names = []
             for pool in pools:
                 self.log.info("  - pool: {}".format(pool["name"]))
@@ -140,7 +207,7 @@ class CreateVRayScene(plugin.Creator):
         ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
 
         Raises:
-            RuntimeError: If loaded credentials are invalid.
+            CreatorError: If loaded credentials are invalid.
             AttributeError: If ``MUSTER_REST_URL`` is not set.
 
         """
@@ -152,7 +219,7 @@ class CreateVRayScene(plugin.Creator):
         self._token = muster_json.get("token", None)
         if not self._token:
             self._show_login()
-            raise RuntimeError("Invalid access token for Muster")
+            raise CreatorError("Invalid access token for Muster")
         file.close()
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
         if not self.MUSTER_REST_URL:
@@ -162,13 +229,13 @@ class CreateVRayScene(plugin.Creator):
         """Get render pools from Muster.
 
         Raises:
-            Exception: If pool list cannot be obtained from Muster.
+            CreatorError: If pool list cannot be obtained from Muster.
 
         """
         params = {"authToken": self._token}
         api_entry = "/api/pools/list"
-        response = self._requests_get(self.MUSTER_REST_URL + api_entry,
-                                      params=params)
+        response = requests_get(self.MUSTER_REST_URL + api_entry,
+                                params=params)
         if response.status_code != 200:
             if response.status_code == 401:
                 self.log.warning("Authentication token expired.")
@@ -178,12 +245,12 @@ class CreateVRayScene(plugin.Creator):
                     ("Cannot get pools from "
                      "Muster: {}").format(response.status_code)
                 )
-                raise Exception("Cannot get pools from Muster")
+                raise CreatorError("Cannot get pools from Muster")
         try:
             pools = response.json()["ResponseData"]["pools"]
         except ValueError as e:
             self.log.error("Invalid response from Muster server {}".format(e))
-            raise Exception("Invalid response from Muster server")
+            raise CreatorError("Invalid response from Muster server")
 
         return pools
 
@@ -193,45 +260,7 @@ class CreateVRayScene(plugin.Creator):
         api_url = "{}/muster/show_login".format(
             os.environ["OPENPYPE_WEBSERVER_URL"])
         self.log.debug(api_url)
-        login_response = self._requests_get(api_url, timeout=1)
+        login_response = requests_get(api_url, timeout=1)
         if login_response.status_code != 200:
             self.log.error("Cannot show login form to Muster")
-            raise Exception("Cannot show login form to Muster")
-
-    def _requests_post(self, *args, **kwargs):
-        """Wrap request post method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if "verify" not in kwargs:
-            kwargs["verify"] = (
-                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
-            )  # noqa
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """Wrap request get method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if "verify" not in kwargs:
-            kwargs["verify"] = (
-                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
-            )  # noqa
-        return requests.get(*args, **kwargs)
+            raise CreatorError("Cannot show login form to Muster")

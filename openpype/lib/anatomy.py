@@ -9,6 +9,12 @@ from openpype.settings.lib import (
     get_default_anatomy_settings,
     get_anatomy_settings
 )
+from .path_templates import (
+    TemplateUnsolved,
+    TemplateResult,
+    TemplatesDict,
+    FormatObject,
+)
 from .log import PypeLogger
 
 log = PypeLogger().get_logger(__name__)
@@ -17,32 +23,6 @@ try:
     StringType = basestring
 except NameError:
     StringType = str
-
-
-def merge_dict(main_dict, enhance_dict):
-    """Merges dictionaries by keys.
-
-    Function call itself if value on key is again dictionary.
-
-    Args:
-        main_dict (dict): First dict to merge second one into.
-        enhance_dict (dict): Second dict to be merged.
-
-    Returns:
-        dict: Merged result.
-
-    .. note:: does not overrides whole value on first found key
-              but only values differences from enhance_dict
-
-    """
-    for key, value in enhance_dict.items():
-        if key not in main_dict:
-            main_dict[key] = value
-        elif isinstance(value, dict) and isinstance(main_dict[key], dict):
-            main_dict[key] = merge_dict(main_dict[key], value)
-        else:
-            main_dict[key] = value
-    return main_dict
 
 
 class ProjectNotSet(Exception):
@@ -59,7 +39,7 @@ class RootCombinationError(Exception):
         # TODO better error message
         msg = (
             "Combination of root with and"
-            " without root name in Templates. {}"
+            " without root name in AnatomyTemplates. {}"
         ).format(joined_roots)
 
         super(RootCombinationError, self).__init__(msg)
@@ -68,7 +48,7 @@ class RootCombinationError(Exception):
 class Anatomy:
     """Anatomy module helps to keep project settings.
 
-    Wraps key project specifications, Templates and Roots.
+    Wraps key project specifications, AnatomyTemplates and Roots.
 
     Args:
         project_name (str): Project name to look on overrides.
@@ -89,9 +69,11 @@ class Anatomy:
 
         self.project_name = project_name
 
-        self._data = get_anatomy_settings(project_name, site_name)
-
-        self._templates_obj = Templates(self)
+        self._data = self._prepare_anatomy_data(
+            get_anatomy_settings(project_name, site_name)
+        )
+        self._site_name = site_name
+        self._templates_obj = AnatomyTemplates(self)
         self._roots_obj = Roots(self)
 
     # Anatomy used as dictionary
@@ -121,20 +103,47 @@ class Anatomy:
         """
         return get_default_anatomy_settings(clear_metadata=False)
 
+    @staticmethod
+    def _prepare_anatomy_data(anatomy_data):
+        """Prepare anatomy data for further processing.
+
+        Method added to replace `{task}` with `{task[name]}` in templates.
+        """
+        templates_data = anatomy_data.get("templates")
+        if templates_data:
+            # Replace `{task}` with `{task[name]}` in templates
+            value_queue = collections.deque()
+            value_queue.append(templates_data)
+            while value_queue:
+                item = value_queue.popleft()
+                if not isinstance(item, dict):
+                    continue
+
+                for key in tuple(item.keys()):
+                    value = item[key]
+                    if isinstance(value, dict):
+                        value_queue.append(value)
+
+                    elif isinstance(value, StringType):
+                        item[key] = value.replace("{task}", "{task[name]}")
+        return anatomy_data
+
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
-        self._data = get_anatomy_settings(self.project_name)
+        self._data = self._prepare_anatomy_data(
+            get_anatomy_settings(self.project_name, self._site_name)
+        )
         self.templates_obj.reset()
         self.roots_obj.reset()
 
     @property
     def templates(self):
-        """Wrap property `templates` of Anatomy's Templates instance."""
+        """Wrap property `templates` of Anatomy's AnatomyTemplates instance."""
         return self._templates_obj.templates
 
     @property
     def templates_obj(self):
-        """Return `Templates` object of current Anatomy instance."""
+        """Return `AnatomyTemplates` object of current Anatomy instance."""
         return self._templates_obj
 
     def format(self, *args, **kwargs):
@@ -346,203 +355,45 @@ class Anatomy:
         return rootless_path.format(**data)
 
 
-class TemplateMissingKey(Exception):
-    """Exception for cases when key does not exist in Anatomy."""
-
-    msg = "Anatomy key does not exist: `anatomy{0}`."
-
-    def __init__(self, parents):
-        parent_join = "".join(["[\"{0}\"]".format(key) for key in parents])
-        super(TemplateMissingKey, self).__init__(
-            self.msg.format(parent_join)
-        )
-
-
-class TemplateUnsolved(Exception):
+class AnatomyTemplateUnsolved(TemplateUnsolved):
     """Exception for unsolved template when strict is set to True."""
 
     msg = "Anatomy template \"{0}\" is unsolved.{1}{2}"
-    invalid_types_msg = " Keys with invalid DataType: `{0}`."
-    missing_keys_msg = " Missing keys: \"{0}\"."
 
-    def __init__(self, template, missing_keys, invalid_types):
-        invalid_type_items = []
-        for _key, _type in invalid_types.items():
-            invalid_type_items.append(
-                "\"{0}\" {1}".format(_key, str(_type))
-            )
 
-        invalid_types_msg = ""
-        if invalid_type_items:
-            invalid_types_msg = self.invalid_types_msg.format(
-                ", ".join(invalid_type_items)
-            )
+class AnatomyTemplateResult(TemplateResult):
+    rootless = None
 
-        missing_keys_msg = ""
-        if missing_keys:
-            missing_keys_msg = self.missing_keys_msg.format(
-                ", ".join(missing_keys)
-            )
-        super(TemplateUnsolved, self).__init__(
-            self.msg.format(template, missing_keys_msg, invalid_types_msg)
+    def __new__(cls, result, rootless_path):
+        new_obj = super(AnatomyTemplateResult, cls).__new__(
+            cls,
+            str(result),
+            result.template,
+            result.solved,
+            result.used_values,
+            result.missing_keys,
+            result.invalid_types
         )
-
-
-class TemplateResult(str):
-    """Result (formatted template) of anatomy with most of information in.
-
-    Args:
-        used_values (dict): Dictionary of template filling data with
-            only used keys.
-        solved (bool): For check if all required keys were filled.
-        template (str): Original template.
-        missing_keys (list): Missing keys that were not in the data. Include
-            missing optional keys.
-        invalid_types (dict): When key was found in data, but value had not
-            allowed DataType. Allowed data types are `numbers`,
-            `str`(`basestring`) and `dict`. Dictionary may cause invalid type
-            when value of key in data is dictionary but template expect string
-            of number.
-    """
-
-    def __new__(
-        cls, filled_template, template, solved, rootless_path,
-        used_values, missing_keys, invalid_types
-    ):
-        new_obj = super(TemplateResult, cls).__new__(cls, filled_template)
-        new_obj.used_values = used_values
-        new_obj.solved = solved
-        new_obj.template = template
         new_obj.rootless = rootless_path
-        new_obj.missing_keys = list(set(missing_keys))
-        _invalid_types = {}
-        for invalid_type in invalid_types:
-            for key, val in invalid_type.items():
-                if key in _invalid_types:
-                    continue
-                _invalid_types[key] = val
-        new_obj.invalid_types = _invalid_types
         return new_obj
 
-
-class TemplatesDict(dict):
-    """Holds and wrap TemplateResults for easy bug report."""
-
-    def __init__(self, in_data, key=None, parent=None, strict=None):
-        super(TemplatesDict, self).__init__()
-        for _key, _value in in_data.items():
-            if isinstance(_value, dict):
-                _value = self.__class__(_value, _key, self)
-            self[_key] = _value
-
-        self.key = key
-        self.parent = parent
-        self.strict = strict
-        if self.parent is None and strict is None:
-            self.strict = True
-
-    def __getitem__(self, key):
-        # Raise error about missing key in anatomy.yaml
-        if key not in self.keys():
-            hier = self.hierarchy()
-            hier.append(key)
-            raise TemplateMissingKey(hier)
-
-        value = super(TemplatesDict, self).__getitem__(key)
-        if isinstance(value, self.__class__):
-            return value
-
-        # Raise exception when expected solved templates and it is not.
-        if (
-            self.raise_on_unsolved
-            and (hasattr(value, "solved") and not value.solved)
-        ):
-            raise TemplateUnsolved(
-                value.template, value.missing_keys, value.invalid_types
+    def validate(self):
+        if not self.solved:
+            raise AnatomyTemplateUnsolved(
+                self.template,
+                self.missing_keys,
+                self.invalid_types
             )
-        return value
-
-    @property
-    def raise_on_unsolved(self):
-        """To affect this change `strict` attribute."""
-        if self.strict is not None:
-            return self.strict
-        return self.parent.raise_on_unsolved
-
-    def hierarchy(self):
-        """Return dictionary keys one by one to root parent."""
-        if self.parent is None:
-            return []
-
-        hier_keys = []
-        par_hier = self.parent.hierarchy()
-        if par_hier:
-            hier_keys.extend(par_hier)
-        hier_keys.append(self.key)
-
-        return hier_keys
-
-    @property
-    def missing_keys(self):
-        """Return missing keys of all children templates."""
-        missing_keys = []
-        for value in self.values():
-            missing_keys.extend(value.missing_keys)
-        return list(set(missing_keys))
-
-    @property
-    def invalid_types(self):
-        """Return invalid types of all children templates."""
-        invalid_types = {}
-        for value in self.values():
-            for invalid_type in value.invalid_types:
-                _invalid_types = {}
-                for key, val in invalid_type.items():
-                    if key in invalid_types:
-                        continue
-                    _invalid_types[key] = val
-                invalid_types = merge_dict(invalid_types, _invalid_types)
-        return invalid_types
-
-    @property
-    def used_values(self):
-        """Return used values for all children templates."""
-        used_values = {}
-        for value in self.values():
-            used_values = merge_dict(used_values, value.used_values)
-        return used_values
-
-    def get_solved(self):
-        """Get only solved key from templates."""
-        result = {}
-        for key, value in self.items():
-            if isinstance(value, self.__class__):
-                value = value.get_solved()
-                if not value:
-                    continue
-                result[key] = value
-
-            elif (
-                not hasattr(value, "solved") or
-                value.solved
-            ):
-                result[key] = value
-        return self.__class__(result, key=self.key, parent=self.parent)
 
 
-class Templates:
-    key_pattern = re.compile(r"(\{.*?[^{0]*\})")
-    key_padding_pattern = re.compile(r"([^:]+)\S+[><]\S+")
-    sub_dict_pattern = re.compile(r"([^\[\]]+)")
-    optional_pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
-
+class AnatomyTemplates(TemplatesDict):
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
 
     def __init__(self, anatomy):
+        super(AnatomyTemplates, self).__init__()
         self.anatomy = anatomy
         self.loaded_project = None
-        self._templates = None
 
     def __getitem__(self, key):
         return self.templates[key]
@@ -551,7 +402,9 @@ class Templates:
         return self.templates.get(key, default)
 
     def reset(self):
+        self._raw_templates = None
         self._templates = None
+        self._objected_templates = None
 
     @property
     def project_name(self):
@@ -563,17 +416,66 @@ class Templates:
 
     @property
     def templates(self):
+        self._validate_discovery()
+        return self._templates
+
+    @property
+    def objected_templates(self):
+        self._validate_discovery()
+        return self._objected_templates
+
+    def _validate_discovery(self):
         if self.project_name != self.loaded_project:
-            self._templates = None
+            self.reset()
 
         if self._templates is None:
-            self._templates = self._discover()
+            self._discover()
             self.loaded_project = self.project_name
-        return self._templates
+
+    def _format_value(self, value, data):
+        if isinstance(value, RootItem):
+            return self._solve_dict(value, data)
+
+        result = super(AnatomyTemplates, self)._format_value(value, data)
+        if isinstance(result, TemplateResult):
+            rootless_path = self._rootless_path(result, data)
+            result = AnatomyTemplateResult(result, rootless_path)
+        return result
+
+    def set_templates(self, templates):
+        if not templates:
+            self.reset()
+            return
+
+        self._raw_templates = copy.deepcopy(templates)
+        templates = copy.deepcopy(templates)
+        v_queue = collections.deque()
+        v_queue.append(templates)
+        while v_queue:
+            item = v_queue.popleft()
+            if not isinstance(item, dict):
+                continue
+
+            for key in tuple(item.keys()):
+                value = item[key]
+                if isinstance(value, dict):
+                    v_queue.append(value)
+
+                elif (
+                    isinstance(value, StringType)
+                    and "{task}" in value
+                ):
+                    item[key] = value.replace("{task}", "{task[name]}")
+
+        solved_templates = self.solve_template_inner_links(templates)
+        self._templates = solved_templates
+        self._objected_templates = self.create_ojected_templates(
+            solved_templates
+        )
 
     def default_templates(self):
         """Return default templates data with solved inner keys."""
-        return Templates.solve_template_inner_links(
+        return self.solve_template_inner_links(
             self.anatomy["templates"]
         )
 
@@ -584,7 +486,7 @@ class Templates:
         TODO: create templates if not exist.
 
         Returns:
-            TemplatesDict: Contain templates data for current project of
+            TemplatesResultDict: Contain templates data for current project of
                 default templates.
         """
 
@@ -595,7 +497,7 @@ class Templates:
                 " Trying to use default."
             ).format(self.project_name))
 
-        return Templates.solve_template_inner_links(self.anatomy["templates"])
+        self.set_templates(self.anatomy["templates"])
 
     @classmethod
     def replace_inner_keys(cls, matches, value, key_values, key):
@@ -693,7 +595,7 @@ class Templates:
         First is collecting all global keys (keys in top hierarchy where value
         is not dictionary). All global keys are set for all group keys (keys
         in top hierarchy where value is dictionary). Value of a key is not
-        overriden in group if already contain value for the key.
+        overridden in group if already contain value for the key.
 
         In second part all keys with "at" symbol in value are replaced with
         value of the key afterward "at" symbol from the group.
@@ -762,149 +664,6 @@ class Templates:
 
         return keys_by_subkey
 
-    def _filter_optional(self, template, data):
-        """Filter invalid optional keys.
-
-        Invalid keys may be missing keys of with invalid value DataType.
-
-        Args:
-            template (str): Anatomy template which will be formatted.
-            data (dict): Containing keys to be filled into template.
-
-        Result:
-            tuple: Contain origin template without missing optional keys and
-                withoud optional keys identificator ("<" and ">"), information
-                about missing optional keys and invalid types of optional keys.
-
-        """
-
-        # Remove optional missing keys
-        missing_keys = []
-        invalid_types = []
-        for optional_group in self.optional_pattern.findall(template):
-            _missing_keys = []
-            _invalid_types = []
-            for optional_key in self.key_pattern.findall(optional_group):
-                key = str(optional_key[1:-1])
-                key_padding = list(
-                    self.key_padding_pattern.findall(key)
-                )
-                if key_padding:
-                    key = key_padding[0]
-
-                validation_result = self._validate_data_key(
-                    key, data
-                )
-                missing_key = validation_result["missing_key"]
-                invalid_type = validation_result["invalid_type"]
-
-                valid = True
-                if missing_key is not None:
-                    _missing_keys.append(missing_key)
-                    valid = False
-
-                if invalid_type is not None:
-                    _invalid_types.append(invalid_type)
-                    valid = False
-
-                if valid:
-                    try:
-                        optional_key.format(**data)
-                    except KeyError:
-                        _missing_keys.append(key)
-                        valid = False
-
-            valid = len(_invalid_types) == 0 and len(_missing_keys) == 0
-            missing_keys.extend(_missing_keys)
-            invalid_types.extend(_invalid_types)
-            replacement = ""
-            if valid:
-                replacement = optional_group[1:-1]
-
-            template = template.replace(optional_group, replacement)
-        return (template, missing_keys, invalid_types)
-
-    def _validate_data_key(self, key, data):
-        """Check and prepare missing keys and invalid types of template."""
-        result = {
-            "missing_key": None,
-            "invalid_type": None
-        }
-
-        # check if key expects subdictionary keys (e.g. project[name])
-        key_subdict = list(self.sub_dict_pattern.findall(key))
-        used_keys = []
-        if len(key_subdict) <= 1:
-            if key not in data:
-                result["missing_key"] = key
-                return result
-
-            used_keys.append(key)
-            value = data[key]
-
-        else:
-            value = data
-            missing_key = False
-            invalid_type = False
-            for sub_key in key_subdict:
-                if (
-                    value is None
-                    or (hasattr(value, "items") and sub_key not in value)
-                ):
-                    missing_key = True
-                    used_keys.append(sub_key)
-                    break
-
-                elif not hasattr(value, "items"):
-                    invalid_type = True
-                    break
-
-                used_keys.append(sub_key)
-                value = value.get(sub_key)
-
-            if missing_key or invalid_type:
-                if len(used_keys) == 0:
-                    invalid_key = key_subdict[0]
-                else:
-                    invalid_key = used_keys[0]
-                    for idx, sub_key in enumerate(used_keys):
-                        if idx == 0:
-                            continue
-                        invalid_key += "[{0}]".format(sub_key)
-
-                if missing_key:
-                    result["missing_key"] = invalid_key
-
-                elif invalid_type:
-                    result["invalid_type"] = {invalid_key: type(value)}
-
-                return result
-
-        if isinstance(value, (numbers.Number, Roots, RootItem)):
-            return result
-
-        for inh_class in type(value).mro():
-            if inh_class == StringType:
-                return result
-
-        result["missing_key"] = key
-        result["invalid_type"] = {key: type(value)}
-        return result
-
-    def _merge_used_values(self, current_used, keys, value):
-        key = keys[0]
-        _keys = keys[1:]
-        if len(_keys) == 0:
-            current_used[key] = value
-        else:
-            next_dict = {}
-            if key in current_used:
-                next_dict = current_used[key]
-            current_used[key] = self._merge_used_values(
-                next_dict, _keys, value
-            )
-        return current_used
-
     def _dict_to_subkeys_list(self, subdict, pre_keys=None):
         if pre_keys is None:
             pre_keys = []
@@ -927,9 +686,11 @@ class Templates:
             return {key_list[0]: value}
         return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
 
-    def _rootless_path(
-        self, template, used_values, final_data, missing_keys, invalid_types
-    ):
+    def _rootless_path(self, result, final_data):
+        used_values = result.used_values
+        missing_keys = result.missing_keys
+        template = result.template
+        invalid_types = result.invalid_types
         if (
             "root" not in used_values
             or "root" in missing_keys
@@ -945,197 +706,49 @@ class Templates:
         if not root_keys:
             return
 
-        roots_dict = {}
+        output = str(result)
         for used_root_keys in root_keys:
             if not used_root_keys:
                 continue
 
+            used_value = used_values
             root_key = None
             for key in used_root_keys:
+                used_value = used_value[key]
                 if root_key is None:
                     root_key = key
                 else:
                     root_key += "[{}]".format(key)
 
             root_key = "{" + root_key + "}"
-
-            roots_dict = merge_dict(
-                roots_dict,
-                self._keys_to_dicts(used_root_keys, root_key)
-            )
-
-        final_data["root"] = roots_dict["root"]
-        return template.format(**final_data)
-
-    def _format(self, orig_template, data):
-        """ Figure out with whole formatting.
-
-        Separate advanced keys (*Like '{project[name]}') from string which must
-        be formatted separatelly in case of missing or incomplete keys in data.
-
-        Args:
-            template (str): Anatomy template which will be formatted.
-            data (dict): Containing keys to be filled into template.
-
-        Returns:
-            TemplateResult: Filled or partially filled template containing all
-                data needed or missing for filling template.
-        """
-        template, missing_optional, invalid_optional = (
-            self._filter_optional(orig_template, data)
-        )
-        # Remove optional missing keys
-        used_values = {}
-        invalid_required = []
-        missing_required = []
-        replace_keys = []
-        for group in self.key_pattern.findall(template):
-            orig_key = group[1:-1]
-            key = str(orig_key)
-            key_padding = list(self.key_padding_pattern.findall(key))
-            if key_padding:
-                key = key_padding[0]
-
-            validation_result = self._validate_data_key(key, data)
-            missing_key = validation_result["missing_key"]
-            invalid_type = validation_result["invalid_type"]
-
-            if invalid_type is not None:
-                invalid_required.append(invalid_type)
-                replace_keys.append(key)
-                continue
-
-            if missing_key is not None:
-                missing_required.append(missing_key)
-                replace_keys.append(key)
-                continue
-
-            try:
-                value = group.format(**data)
-                key_subdict = list(self.sub_dict_pattern.findall(key))
-                if len(key_subdict) <= 1:
-                    used_values[key] = value
-
-                else:
-                    used_values = self._merge_used_values(
-                        used_values, key_subdict, value
-                    )
-
-            except (TypeError, KeyError):
-                missing_required.append(key)
-                replace_keys.append(key)
-
-        final_data = copy.deepcopy(data)
-        for key in replace_keys:
-            key_subdict = list(self.sub_dict_pattern.findall(key))
-            if len(key_subdict) <= 1:
-                final_data[key] = "{" + key + "}"
-                continue
-
-            replace_key_dst = "---".join(key_subdict)
-            replace_key_dst_curly = "{" + replace_key_dst + "}"
-            replace_key_src_curly = "{" + key + "}"
-            template = template.replace(
-                replace_key_src_curly, replace_key_dst_curly
-            )
-            final_data[replace_key_dst] = replace_key_src_curly
-
-        solved = len(missing_required) == 0 and len(invalid_required) == 0
-
-        missing_keys = missing_required + missing_optional
-        invalid_types = invalid_required + invalid_optional
-
-        filled_template = template.format(**final_data)
-        # WARNING `_rootless_path` change values in `final_data` please keep
-        # in midn when changing order
-        rootless_path = self._rootless_path(
-            template, used_values, final_data, missing_keys, invalid_types
-        )
-        if rootless_path is None:
-            rootless_path = filled_template
-
-        result = TemplateResult(
-            filled_template, orig_template, solved, rootless_path,
-            used_values, missing_keys, invalid_types
-        )
-        return result
-
-    def solve_dict(self, templates, data):
-        """ Solves templates with entered data.
-
-        Args:
-            templates (dict): All Anatomy templates which will be formatted.
-            data (dict): Containing keys to be filled into template.
-
-        Returns:
-            dict: With `TemplateResult` in values containing filled or
-                partially filled templates.
-        """
-        output = collections.defaultdict(dict)
-        for key, orig_value in templates.items():
-            if isinstance(orig_value, StringType):
-                output[key] = self._format(orig_value, data)
-                continue
-
-            # Check if orig_value has items attribute (any dict inheritance)
-            if not hasattr(orig_value, "items"):
-                # TODO we should handle this case
-                output[key] = orig_value
-                continue
-
-            for s_key, s_value in self.solve_dict(orig_value, data).items():
-                output[key][s_key] = s_value
+            output = output.replace(str(used_value), root_key)
 
         return output
+
+    def format(self, data, strict=True):
+        copy_data = copy.deepcopy(data)
+        roots = self.roots
+        if roots:
+            copy_data["root"] = roots
+        result = super(AnatomyTemplates, self).format(copy_data)
+        result.strict = strict
+        return result
 
     def format_all(self, in_data, only_keys=True):
         """ Solves templates based on entered data.
 
         Args:
             data (dict): Containing keys to be filled into template.
-            only_keys (bool, optional): Decides if environ will be used to
-                fill templates or only keys in data.
 
         Returns:
-            TemplatesDict: Output `TemplateResult` have `strict` attribute
-                set to False so accessing unfilled keys in templates won't
-                raise any exceptions.
+            TemplatesResultDict: Output `TemplateResult` have `strict`
+                attribute set to False so accessing unfilled keys in templates
+                won't raise any exceptions.
         """
-        output = self.format(in_data, only_keys)
-        output.strict = False
-        return output
-
-    def format(self, in_data, only_keys=True):
-        """ Solves templates based on entered data.
-
-        Args:
-            data (dict): Containing keys to be filled into template.
-            only_keys (bool, optional): Decides if environ will be used to
-                fill templates or only keys in data.
-
-        Returns:
-            TemplatesDict: Output `TemplateResult` have `strict` attribute
-                set to True so accessing unfilled keys in templates will
-                raise exceptions with explaned error.
-        """
-        # Create a copy of inserted data
-        data = copy.deepcopy(in_data)
-
-        # Add environment variable to data
-        if only_keys is False:
-            for key, val in os.environ.items():
-                data["$" + key] = val
-
-        # override root value
-        roots = self.roots
-        if roots:
-            data["root"] = roots
-        solved = self.solve_dict(self.templates, data)
-
-        return TemplatesDict(solved)
+        return self.format(in_data, strict=False)
 
 
-class RootItem:
+class RootItem(FormatObject):
     """Represents one item or roots.
 
     Holds raw data of root item specification. Raw data contain value
@@ -1526,8 +1139,11 @@ class Roots:
             key_items = [self.env_prefix]
             for _key in keys:
                 key_items.append(_key.upper())
+
             key = "_".join(key_items)
-            return {key: roots.value}
+            # Make sure key and value does not contain unicode
+            #   - can happen in Python 2 hosts
+            return {str(key): str(roots.value)}
 
         output = {}
         for _key, _value in roots.items():
@@ -1583,7 +1199,7 @@ class Roots:
         This property returns roots for current project or default root values.
         Warning:
             Default roots value may cause issues when project use different
-            roots settings. That may happend when project use multiroot
+            roots settings. That may happen when project use multiroot
             templates but default roots miss their keys.
         """
         if self.project_name != self.loaded_project:

@@ -2,14 +2,12 @@ import platform
 import copy
 from Qt import QtWidgets, QtCore, QtGui
 from openpype.tools.settings.settings import ProjectListWidget
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     DEFAULT_PROJECT_KEY
 )
-from .widgets import (
-    SpacerWidget,
-    ProxyLabelWidget
-)
+from .widgets import ProxyLabelWidget
 from .constants import (
     LABEL_REMOVE_DEFAULT,
     LABEL_ADD_DEFAULT,
@@ -48,7 +46,7 @@ class DynamicInputItem(QtCore.QObject):
         parent
     ):
         super(DynamicInputItem, self).__init__()
-        input_widget = QtWidgets.QLineEdit(parent)
+        input_widget = PlaceholderLineEdit(parent)
 
         settings_value = input_def.get("value")
         placeholder = input_def.get("placeholder")
@@ -128,7 +126,7 @@ class DynamicInputItem(QtCore.QObject):
                 return "studio"
         else:
             if current_value:
-                return "overriden"
+                return "overridden"
 
             if self.value_item.default_value:
                 return "studio"
@@ -238,9 +236,9 @@ class SitesWidget(QtWidgets.QWidget):
 
         comboboxes_layout = QtWidgets.QHBoxLayout(comboboxes_widget)
         comboboxes_layout.setContentsMargins(0, 0, 0, 0)
-        comboboxes_layout.addWidget(active_site_widget)
-        comboboxes_layout.addWidget(remote_site_widget)
-        comboboxes_layout.addWidget(SpacerWidget(comboboxes_widget), 1)
+        comboboxes_layout.addWidget(active_site_widget, 0)
+        comboboxes_layout.addWidget(remote_site_widget, 0)
+        comboboxes_layout.addStretch(1)
 
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -259,7 +257,9 @@ class SitesWidget(QtWidgets.QWidget):
     def _clear_widgets(self):
         while self.content_layout.count():
             item = self.content_layout.itemAt(0)
-            item.widget().hide()
+            widget = item.widget()
+            if widget is not None:
+                widget.setVisible(False)
             self.content_layout.removeItem(item)
         self.input_objects = {}
 
@@ -383,7 +383,7 @@ class SitesWidget(QtWidgets.QWidget):
             self.input_objects[site_name] = site_input_objects
 
         # Add spacer so other widgets are squeezed to top
-        self.content_layout.addWidget(SpacerWidget(self), 1)
+        self.content_layout.addStretch(1)
 
     def _on_input_value_change(self, site_name, key):
         if (
@@ -456,6 +456,8 @@ class _SiteCombobox(QtWidgets.QWidget):
             self
         )
         combobox_input = QtWidgets.QComboBox(self)
+        combobox_delegate = QtWidgets.QStyledItemDelegate()
+        combobox_input.setItemDelegate(combobox_delegate)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(label_widget)
@@ -464,6 +466,7 @@ class _SiteCombobox(QtWidgets.QWidget):
         combobox_input.currentIndexChanged.connect(self._on_index_change)
         self.label_widget = label_widget
         self.combobox_input = combobox_input
+        self._combobox_delegate = combobox_delegate
 
     def _set_current_text(self, text):
         index = None
@@ -509,7 +512,7 @@ class _SiteCombobox(QtWidgets.QWidget):
                 return "studio"
         else:
             if current_value:
-                return "overriden"
+                return "overridden"
 
             studio_value = self._get_local_settings_item(DEFAULT_PROJECT_KEY)
             if studio_value:
@@ -777,7 +780,7 @@ class RootSiteWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(sites_widget)
-        main_layout.addWidget(SpacerWidget(self), 1)
+        main_layout.addStretch(1)
 
         self.sites_widget = sites_widget
 
@@ -809,7 +812,7 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
 
         self.modules_manager = modules_manager
 
-        projects_widget = _ProjectListWidget(self)
+        projects_widget = _ProjectListWidget(self, only_active=True)
         roos_site_widget = RootSiteWidget(
             modules_manager, project_settings, self
         )

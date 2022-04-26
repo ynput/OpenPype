@@ -1,24 +1,28 @@
 import nuke
 import pyblish.api
-from avalon import io, api
-from avalon.nuke import lib as anlib
+
+from openpype.pipeline import legacy_io
+from openpype.hosts.nuke.api.lib import (
+    add_publish_knob,
+    get_avalon_knob_data
+)
 
 
 @pyblish.api.log
 class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder - 0.59
+    order = pyblish.api.CollectorOrder - 0.49
     label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 
     # presets
-    sync_workfile_version = False
+    sync_workfile_version_on_families = []
 
     def process(self, context):
-        asset_data = io.find_one({
+        asset_data = legacy_io.find_one({
             "type": "asset",
-            "name": api.Session["AVALON_ASSET"]
+            "name": legacy_io.Session["AVALON_ASSET"]
         })
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
@@ -39,7 +43,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 self.log.warning(E)
 
             # get data from avalon knob
-            avalon_knob_data = anlib.get_avalon_knob_data(
+            avalon_knob_data = get_avalon_knob_data(
                 node, ["avalon:", "ak:"])
 
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
@@ -66,6 +70,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             instance = context.create_instance(subset)
             instance.append(node)
 
+            suspend_publish = False
+            if "suspend_publish" in node.knobs():
+                suspend_publish = node["suspend_publish"].value()
+            instance.data["suspend_publish"] = suspend_publish
+
             # get review knob value
             review = False
             if "review" in node.knobs():
@@ -77,7 +86,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             # Add all nodes in group instances.
             if node.Class() == "Group":
                 # only alter families for render family
-                if "write" in families_ak.lower():
+                if families_ak and "write" in families_ak.lower():
                     target = node["render"].value()
                     if target == "Use existing frames":
                         # Local rendering
@@ -115,16 +124,17 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
 
             # get publish knob value
             if "publish" not in node.knobs():
-                anlib.add_publish_knob(node)
+                add_publish_knob(node)
 
             # sync workfile version
             _families_test = [family] + families
             self.log.debug("__ _families_test: `{}`".format(_families_test))
-            if not next((f for f in _families_test
-                         if "prerender" in f),
-                        None) and self.sync_workfile_version:
-                # get version to instance for integration
-                instance.data['version'] = instance.context.data['version']
+            for family_test in _families_test:
+                if family_test in self.sync_workfile_version_on_families:
+                    self.log.debug("Syncing version with workfile for '{}'"
+                                   .format(family_test))
+                    # get version to instance for integration
+                    instance.data['version'] = instance.context.data['version']
 
             instance.data.update({
                 "subset": subset,

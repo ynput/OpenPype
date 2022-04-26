@@ -3,17 +3,8 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
-from .pipeline import (
-    publish,
-    launch_workfiles_app
-)
-
-from avalon.tools import (
-    creator,
-    loader,
-    sceneinventory,
-    libraryloader
-)
+from openpype import style
+from openpype.tools.utils import host_tools
 
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
@@ -34,7 +25,7 @@ def load_stylesheet():
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(Spacer, self).__init__(*args, **kwargs)
 
         self.setFixedHeight(height)
 
@@ -51,7 +42,7 @@ class Spacer(QtWidgets.QWidget):
 
 class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
         self.setObjectName("OpenPypeMenu")
 
@@ -64,13 +55,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
         self.render_mode_widget = None
         self.setWindowTitle("OpenPype")
-        workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
-        create_btn = QtWidgets.QPushButton("Create ...", self)
-        publish_btn = QtWidgets.QPushButton("Publish ...", self)
-        load_btn = QtWidgets.QPushButton("Load ...", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
-        libload_btn = QtWidgets.QPushButton("Library ...", self)
-        rendermode_btn = QtWidgets.QPushButton("Set render mode ...", self)
+        workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
+        create_btn = QtWidgets.QPushButton("Create...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
+        load_btn = QtWidgets.QPushButton("Load...", self)
+        manager_btn = QtWidgets.QPushButton("Manage...", self)
+        libload_btn = QtWidgets.QPushButton("Library...", self)
+        rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
         )
@@ -85,7 +76,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         layout.addWidget(create_btn)
         layout.addWidget(publish_btn)
         layout.addWidget(load_btn)
-        layout.addWidget(inventory_btn)
+        layout.addWidget(manager_btn)
 
         layout.addWidget(Spacer(15, self))
 
@@ -106,7 +97,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         create_btn.clicked.connect(self.on_create_clicked)
         publish_btn.clicked.connect(self.on_publish_clicked)
         load_btn.clicked.connect(self.on_load_clicked)
-        inventory_btn.clicked.connect(self.on_inventory_clicked)
+        manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
         rendermode_btn.clicked.connect(self.on_rendernode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
@@ -115,30 +106,29 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
-        launch_workfiles_app()
+        host_tools.show_workfiles()
 
     def on_create_clicked(self):
         print("Clicked Create")
-        creator.show()
+        host_tools.show_creator()
 
     def on_publish_clicked(self):
         print("Clicked Publish")
-        publish(None)
+        host_tools.show_publish()
 
     def on_load_clicked(self):
         print("Clicked Load")
-        loader.show(use_context=True)
+        host_tools.show_loader(use_context=True)
 
-    def on_inventory_clicked(self):
-        print("Clicked Inventory")
-        sceneinventory.show()
+    def on_manager_clicked(self):
+        print("Clicked Manager")
+        host_tools.show_scene_inventory()
 
     def on_libload_clicked(self):
         print("Clicked Library")
-        libraryloader.show()
+        host_tools.show_library_loader()
 
     def on_rendernode_clicked(self):
-        from avalon import style
         print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()

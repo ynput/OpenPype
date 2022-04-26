@@ -10,9 +10,13 @@ from openpype.lib import (
     PROJECT_NAME_REGEX
 )
 from openpype.style import load_stylesheet
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    get_warning_pixmap
+)
 
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 
 class NameTextEdit(QtWidgets.QLineEdit):
@@ -288,3 +292,168 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
             project_codes.add(project_code)
         return project_names, project_codes
+
+
+# TODO PixmapLabel should be moved to 'utils' in other future PR so should be
+#   imported from there
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._empty_pixmap = QtGui.QPixmap(0, 0)
+        self._source_pixmap = pixmap
+
+    def set_source_pixmap(self, pixmap):
+        """Change source image."""
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
+
+    def _get_pix_size(self):
+        size = self.fontMetrics().height() * 4
+        return size, size
+
+    def _set_resized_pix(self):
+        if self._source_pixmap is None:
+            self.setPixmap(self._empty_pixmap)
+            return
+        width, height = self._get_pix_size()
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(PixmapLabel, self).resizeEvent(event)
+
+
+class ConfirmProjectDeletion(QtWidgets.QDialog):
+    """Dialog which confirms deletion of a project."""
+    def __init__(self, project_name, parent):
+        super(ConfirmProjectDeletion, self).__init__(parent)
+
+        self.setWindowTitle("Delete project?")
+
+        top_widget = QtWidgets.QWidget(self)
+
+        warning_pixmap = get_warning_pixmap()
+        warning_icon_label = PixmapLabel(warning_pixmap, top_widget)
+
+        message_label = QtWidgets.QLabel(top_widget)
+        message_label.setWordWrap(True)
+        message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        message_label.setText((
+            "<b>WARNING: This cannot be undone.</b><br/><br/>"
+            "Project <b>\"{}\"</b> with all related data will be"
+            " permanently removed from the database. (This action won't remove"
+            " any files on disk.)"
+        ).format(project_name))
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addWidget(
+            warning_icon_label, 0,
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+        )
+        top_layout.addWidget(message_label, 1)
+
+        question_label = QtWidgets.QLabel("<b>Are you sure?</b>", self)
+
+        confirm_input = PlaceholderLineEdit(self)
+        confirm_input.setPlaceholderText(
+            "Type \"{}\" to confirm...".format(project_name)
+        )
+
+        cancel_btn = QtWidgets.QPushButton("Cancel", self)
+        cancel_btn.setToolTip("Cancel deletion of the project")
+        confirm_btn = QtWidgets.QPushButton("Permanently Delete Project", self)
+        confirm_btn.setObjectName("DeleteButton")
+        confirm_btn.setEnabled(False)
+        confirm_btn.setToolTip("Confirm deletion")
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(cancel_btn, 0)
+        btns_layout.addWidget(confirm_btn, 0)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(top_widget, 0)
+        layout.addStretch(1)
+        layout.addWidget(question_label, 0)
+        layout.addWidget(confirm_input, 0)
+        layout.addLayout(btns_layout)
+
+        cancel_btn.clicked.connect(self._on_cancel_click)
+        confirm_btn.clicked.connect(self._on_confirm_click)
+        confirm_input.textChanged.connect(self._on_confirm_text_change)
+        confirm_input.returnPressed.connect(self._on_enter_clicked)
+
+        self._cancel_btn = cancel_btn
+        self._confirm_btn = confirm_btn
+        self._confirm_input = confirm_input
+        self._result = 0
+        self._project_name = project_name
+
+        self.setMinimumWidth(480)
+        self.setMaximumWidth(650)
+        self.setMaximumHeight(250)
+
+    def exec_(self, *args, **kwargs):
+        super(ConfirmProjectDeletion, self).exec_(*args, **kwargs)
+        return self._result
+
+    def showEvent(self, event):
+        """Reset result on show."""
+        super(ConfirmProjectDeletion, self).showEvent(event)
+        self._result = 0
+        minimum_size_hint = self.minimumSizeHint()
+        self.resize(self.width(), minimum_size_hint.height() + 30)
+
+    def result(self):
+        """Get result of dialog 1 for confirm 0 for cancel."""
+        return self._result
+
+    def _on_cancel_click(self):
+        self.close()
+
+    def _on_confirm_click(self):
+        self._result = 1
+        self.close()
+
+    def _on_enter_clicked(self):
+        if self._confirm_btn.isEnabled():
+            self._on_confirm_click()
+
+    def _on_confirm_text_change(self):
+        enabled = self._confirm_input.text() == self._project_name
+        self._confirm_btn.setEnabled(enabled)
+
+
+class SpinBoxScrollFixed(QtWidgets.QSpinBox):
+    """QSpinBox which only allow edits change with scroll wheel when active"""
+    def __init__(self, *args, **kwargs):
+        super(SpinBoxScrollFixed, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(SpinBoxScrollFixed, self).wheelEvent(event)
+
+
+class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
+    """QDoubleSpinBox which only allow edits with scroll wheel when active"""
+    def __init__(self, *args, **kwargs):
+        super(DoubleSpinBoxScrollFixed, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(DoubleSpinBoxScrollFixed, self).wheelEvent(event)

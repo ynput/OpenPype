@@ -12,15 +12,15 @@ import openpype.lib
 from pprint import pformat
 
 
-class CollectOcioFrameRanges(pyblish.api.InstancePlugin):
+class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
     """Getting otio ranges from otio_clip
 
     Adding timeline and source ranges to instance data"""
 
     label = "Collect OTIO Frame Ranges"
-    order = pyblish.api.CollectorOrder - 0.58
+    order = pyblish.api.CollectorOrder - 0.08
     families = ["shot", "clip"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
         # get basic variables

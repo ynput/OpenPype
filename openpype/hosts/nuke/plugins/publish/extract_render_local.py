@@ -17,7 +17,7 @@ class NukeRenderLocal(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["render.local", "prerender.local"]
+    families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
         families = instance.data["families"]
@@ -42,10 +42,14 @@ class NukeRenderLocal(openpype.api.Extractor):
         self.log.info("Start frame: {}".format(first_frame))
         self.log.info("End frame: {}".format(last_frame))
 
+        # write node url might contain nuke's ctl expressin
+        # as [python ...]/path...
+        path = node["file"].evaluate()
+
         # Ensure output directory exists.
-        directory = os.path.dirname(node["file"].value())
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        out_dir = os.path.dirname(path)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
 
         # Render frames
         nuke.execute(
@@ -58,21 +62,28 @@ class NukeRenderLocal(openpype.api.Extractor):
         if "slate" in families:
             first_frame += 1
 
-        path = node['file'].value()
-        out_dir = os.path.dirname(path)
         ext = node["file_type"].value()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         collected_frames = os.listdir(out_dir)
-        repre = {
-            'name': ext,
-            'ext': ext,
-            'frameStart': "%0{}d".format(len(str(last_frame))) % first_frame,
-            'files': collected_frames,
-            "stagingDir": out_dir
-        }
+        if len(collected_frames) == 1:
+            repre = {
+                'name': ext,
+                'ext': ext,
+                'files': collected_frames.pop(),
+                "stagingDir": out_dir
+            }
+        else:
+            repre = {
+                'name': ext,
+                'ext': ext,
+                'frameStart': "%0{}d".format(
+                    len(str(last_frame))) % first_frame,
+                'files': collected_frames,
+                "stagingDir": out_dir
+            }
         instance.data["representations"].append(repre)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
@@ -89,6 +100,9 @@ class NukeRenderLocal(openpype.api.Extractor):
             instance.data['family'] = 'prerender'
             families.remove('prerender.local')
             families.insert(0, "prerender")
+        elif "still.local" in families:
+            instance.data['family'] = 'image'
+            families.remove('still.local')
         instance.data["families"] = families
 
         collections, remainder = clique.assemble(collected_frames)

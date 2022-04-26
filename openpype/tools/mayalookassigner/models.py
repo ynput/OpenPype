@@ -1,14 +1,20 @@
 from collections import defaultdict
-from avalon.tools import models
 
-from avalon.vendor.Qt import QtCore
-from avalon.vendor import qtawesome
-from avalon.style import colors
+from Qt import QtCore
+import qtawesome
+
+from openpype.tools.utils import models
+from openpype.style import get_default_entity_icon_color
 
 
 class AssetModel(models.TreeModel):
 
     Columns = ["label"]
+
+    def __init__(self, *args, **kwargs):
+        super(AssetModel, self).__init__(*args, **kwargs)
+
+        self._icon_color = get_default_entity_icon_color()
 
     def add_items(self, items):
         """
@@ -64,8 +70,10 @@ class AssetModel(models.TreeModel):
                 node = index.internalPointer()
                 icon = node.get("icon")
                 if icon:
-                    return qtawesome.icon("fa.{0}".format(icon),
-                                          color=colors.default)
+                    return qtawesome.icon(
+                        "fa.{0}".format(icon),
+                        color=self._icon_color
+                    )
 
         return super(AssetModel, self).data(index, role)
 
@@ -100,7 +108,8 @@ class LookModel(models.TreeModel):
             for look in asset_item["looks"]:
                 look_subsets[look["name"]].append(asset)
 
-        for subset, assets in sorted(look_subsets.iteritems()):
+        for subset in sorted(look_subsets.keys()):
+            assets = look_subsets[subset]
 
             # Define nice label without "look" prefix for readability
             label = subset if not subset.startswith("look") else subset[4:]

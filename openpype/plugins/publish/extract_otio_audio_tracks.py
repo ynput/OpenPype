@@ -2,7 +2,8 @@ import os
 import pyblish
 import openpype.api
 from openpype.lib import (
-    get_ffmpeg_tool_path
+    get_ffmpeg_tool_path,
+    path_to_subprocess_arg
 )
 import tempfile
 import opentimelineio as otio
@@ -18,7 +19,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ExtractorOrder - 0.44
     label = "Extract OTIO Audio Tracks"
-    hosts = ["hiero", "resolve"]
+    hosts = ["hiero", "resolve", "flame"]
 
     # FFmpeg tools paths
     ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
@@ -56,14 +57,14 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         audio_inputs.insert(0, empty)
 
         # create cmd
-        cmd = '"{}"'.format(self.ffmpeg_path) + " "
+        cmd = path_to_subprocess_arg(self.ffmpeg_path) + " "
         cmd += self.create_cmd(audio_inputs)
-        cmd += "\"{}\"".format(audio_temp_fpath)
+        cmd += path_to_subprocess_arg(audio_temp_fpath)
 
         # run subprocess
         self.log.debug("Executing: {}".format(cmd))
         openpype.api.run_subprocess(
-            cmd, logger=self.log
+            cmd, shell=True, logger=self.log
         )
 
         # remove empty
@@ -99,16 +100,16 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
                 # temp audio file
                 audio_fpath = self.create_temp_file(name)
 
-                cmd = " ".join([
-                    '"{}"'.format(self.ffmpeg_path),
-                    "-ss {}".format(start_sec),
-                    "-t {}".format(duration_sec),
-                    "-i \"{}\"".format(audio_file),
+                cmd = [
+                    self.ffmpeg_path,
+                    "-ss", str(start_sec),
+                    "-t", str(duration_sec),
+                    "-i", audio_file,
                     audio_fpath
-                ])
+                ]
 
                 # run subprocess
-                self.log.debug("Executing: {}".format(cmd))
+                self.log.debug("Executing: {}".format(" ".join(cmd)))
                 openpype.api.run_subprocess(
                     cmd, logger=self.log
                 )
@@ -220,17 +221,17 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         max_duration_sec = max(end_secs)
 
         # create empty cmd
-        cmd = " ".join([
-            '"{}"'.format(self.ffmpeg_path),
-            "-f lavfi",
-            "-i anullsrc=channel_layout=stereo:sample_rate=48000",
-            "-t {}".format(max_duration_sec),
-            "\"{}\"".format(empty_fpath)
-        ])
+        cmd = [
+            self.ffmpeg_path,
+            "-f", "lavfi",
+            "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+            "-t", str(max_duration_sec),
+            empty_fpath
+        ]
 
         # generate empty with ffmpeg
         # run subprocess
-        self.log.debug("Executing: {}".format(cmd))
+        self.log.debug("Executing: {}".format(" ".join(cmd)))
 
         openpype.api.run_subprocess(
             cmd, logger=self.log
@@ -261,10 +262,14 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         for index, input in enumerate(inputs):
             input_format = input.copy()
             input_format.update({"i": index})
+            input_format["mediaPath"] = path_to_subprocess_arg(
+                input_format["mediaPath"]
+            )
+
             _inputs += (
                 "-ss {startSec} "
                 "-t {durationSec} "
-                "-i \"{mediaPath}\" "
+                "-i {mediaPath} "
             ).format(**input_format)
 
             _filters += "[{i}]adelay={delayMilSec}:all=1[r{i}]; ".format(

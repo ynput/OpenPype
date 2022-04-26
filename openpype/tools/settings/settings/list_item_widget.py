@@ -1,13 +1,17 @@
 from Qt import QtWidgets, QtCore
 
-from .base import InputWidget
-from .widgets import ExpandingWidget
 from openpype.tools.settings import (
-    BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
 
-from avalon.vendor import qtawesome
+from .base import InputWidget
+from .widgets import ExpandingWidget
+from .lib import (
+    create_add_btn,
+    create_remove_btn,
+    create_up_btn,
+    create_down_btn
+)
 
 
 class EmptyListItem(QtWidgets.QWidget):
@@ -16,17 +20,10 @@ class EmptyListItem(QtWidgets.QWidget):
 
         self.entity_widget = entity_widget
 
-        add_btn = QtWidgets.QPushButton("+", self)
-        remove_btn = QtWidgets.QPushButton("-", self)
+        add_btn = create_add_btn(self)
+        remove_btn = create_remove_btn(self)
 
-        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         remove_btn.setEnabled(False)
-
-        add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-        remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-
-        add_btn.setProperty("btn-type", "tool-item")
-        remove_btn.setProperty("btn-type", "tool-item")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -52,32 +49,10 @@ class ListItem(QtWidgets.QWidget):
 
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
-        char_up = qtawesome.charmap("fa.angle-up")
-        char_down = qtawesome.charmap("fa.angle-down")
-
-        add_btn = QtWidgets.QPushButton("+")
-        remove_btn = QtWidgets.QPushButton("-")
-        up_btn = QtWidgets.QPushButton(char_up)
-        down_btn = QtWidgets.QPushButton(char_down)
-
-        font_up_down = qtawesome.font("fa", 13)
-        up_btn.setFont(font_up_down)
-        down_btn.setFont(font_up_down)
-
-        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-
-        add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-        remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-        up_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-        down_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-
-        add_btn.setProperty("btn-type", "tool-item")
-        remove_btn.setProperty("btn-type", "tool-item")
-        up_btn.setProperty("btn-type", "tool-item")
-        down_btn.setProperty("btn-type", "tool-item")
+        add_btn = create_add_btn(self)
+        remove_btn = create_remove_btn(self)
+        up_btn = create_up_btn(self)
+        down_btn = create_down_btn(self)
 
         add_btn.clicked.connect(self._on_add_clicked)
         remove_btn.clicked.connect(self._on_remove_clicked)
@@ -357,7 +332,7 @@ class ListWidget(InputWidget):
         new_entity = self.entity.add_new_item(row)
         input_field = self._input_fields_by_entity_id.get(new_entity.id)
         if input_field is not None:
-            input_field.input_field.setFocus(True)
+            input_field.input_field.setFocus()
         return new_entity
 
     def add_row(self, child_entity, row=None):

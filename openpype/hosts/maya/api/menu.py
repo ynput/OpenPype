@@ -1,146 +1,181 @@
-import sys
 import os
 import logging
 
-from avalon.vendor.Qt import QtWidgets, QtGui
-from avalon.maya import pipeline
-from openpype.api import BuildWorkfile
-import maya.cmds as cmds
-from openpype.settings import get_project_settings
+from Qt import QtWidgets, QtGui
 
-self = sys.modules[__name__]
+import maya.utils
+import maya.cmds as cmds
+
+from openpype.api import BuildWorkfile
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
+from openpype.tools.utils import host_tools
+from openpype.hosts.maya.api import lib
+from .lib import get_main_window, IS_HEADLESS
+from .commands import reset_frame_range
 
 
 log = logging.getLogger(__name__)
+
+MENU_NAME = "op_maya_menu"
 
 
 def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
     if menu_name is None:
-        menu_name = pipeline._menu
+        menu_name = MENU_NAME
 
-    widgets = dict((
-        w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
-    menu = widgets.get(menu_name)
-    return menu
+    widgets = {w.objectName(): w for w in QtWidgets.QApplication.allWidgets()}
+    return widgets.get(menu_name)
 
 
-def deferred():
-    def add_build_workfiles_item():
-        # Add build first workfile
-        cmds.menuItem(divider=True, parent=pipeline._menu)
+def install():
+    if cmds.about(batch=True):
+        log.info("Skipping openpype.menu initialization in batch mode..")
+        return
+
+    def deferred():
+        pyblish_icon = host_tools.get_pyblish_icon()
+        parent_widget = get_main_window()
+        cmds.menu(
+            MENU_NAME,
+            label=legacy_io.Session["AVALON_LABEL"],
+            tearOff=True,
+            parent="MayaWindow"
+        )
+
+        # Create context menu
+        context_label = "{}, {}".format(
+            legacy_io.Session["AVALON_ASSET"],
+            legacy_io.Session["AVALON_TASK"]
+        )
+        cmds.menuItem(
+            "currentContext",
+            label=context_label,
+            parent=MENU_NAME,
+            enable=False
+        )
+
+        cmds.setParent("..", menu=True)
+
+        cmds.menuItem(divider=True)
+
+        # Create default items
+        cmds.menuItem(
+            "Create...",
+            command=lambda *args: host_tools.show_creator(parent=parent_widget)
+        )
+
+        cmds.menuItem(
+            "Load...",
+            command=lambda *args: host_tools.show_loader(
+                parent=parent_widget,
+                use_context=True
+            )
+        )
+
+        cmds.menuItem(
+            "Publish...",
+            command=lambda *args: host_tools.show_publish(
+                parent=parent_widget
+            ),
+            image=pyblish_icon
+        )
+
+        cmds.menuItem(
+            "Manage...",
+            command=lambda *args: host_tools.show_scene_inventory(
+                parent=parent_widget
+            )
+        )
+
+        cmds.menuItem(
+            "Library...",
+            command=lambda *args: host_tools.show_library_loader(
+                parent=parent_widget
+            )
+        )
+
+        cmds.menuItem(divider=True)
+
+        cmds.menuItem(
+            "Work Files...",
+            command=lambda *args: host_tools.show_workfiles(
+                parent=parent_widget
+            ),
+        )
+
+        cmds.menuItem(
+            "Reset Frame Range",
+            command=lambda *args: reset_frame_range()
+        )
+
+        cmds.menuItem(
+            "Reset Resolution",
+            command=lambda *args: lib.reset_scene_resolution()
+        )
+
+        cmds.menuItem(
+            "Set Colorspace",
+            command=lambda *args: lib.set_colorspace(),
+        )
+        cmds.menuItem(divider=True, parent=MENU_NAME)
         cmds.menuItem(
             "Build First Workfile",
-            parent=pipeline._menu,
+            parent=MENU_NAME,
             command=lambda *args: BuildWorkfile().process()
         )
 
-    def add_look_assigner_item():
-        import mayalookassigner
         cmds.menuItem(
-            "Look assigner",
-            parent=pipeline._menu,
-            command=lambda *args: mayalookassigner.show()
-        )
-
-    def modify_workfiles():
-        from openpype.tools import workfiles
-
-        def launch_workfiles_app(*_args, **_kwargs):
-            workfiles.show(
-                os.path.join(
-                    cmds.workspace(query=True, rootDirectory=True),
-                    cmds.workspace(fileRuleEntry="scene")
-                ),
-                parent=pipeline._parent
+            "Look assigner...",
+            command=lambda *args: host_tools.show_look_assigner(
+                parent_widget
             )
-
-        # Find the pipeline menu
-        top_menu = _get_menu()
-
-        # Try to find workfile tool action in the menu
-        workfile_action = None
-        for action in top_menu.actions():
-            if action.text() == "Work Files":
-                workfile_action = action
-                break
-
-        # Add at the top of menu if "Work Files" action was not found
-        after_action = ""
-        if workfile_action:
-            # Use action's object name for `insertAfter` argument
-            after_action = workfile_action.objectName()
-
-        # Insert action to menu
-        cmds.menuItem(
-            "Work Files",
-            parent=pipeline._menu,
-            command=launch_workfiles_app,
-            insertAfter=after_action
         )
 
-        # Remove replaced action
-        if workfile_action:
-            top_menu.removeAction(workfile_action)
+        cmds.menuItem(
+            "Experimental tools...",
+            command=lambda *args: host_tools.show_experimental_tools_dialog(
+                parent_widget
+            )
+        )
+        cmds.setParent(MENU_NAME, menu=True)
 
-    def remove_project_manager():
-        top_menu = _get_menu()
-
-        # Try to find "System" menu action in the menu
-        system_menu = None
-        for action in top_menu.actions():
-            if action.text() == "System":
-                system_menu = action
-                break
-
-        if system_menu is None:
+    def add_scripts_menu():
+        try:
+            import scriptsmenu.launchformaya as launchformaya
+        except ImportError:
+            log.warning(
+                "Skipping studio.menu install, because "
+                "'scriptsmenu' module seems unavailable."
+            )
             return
 
-        # Try to find "Project manager" action in "System" menu
-        project_manager_action = None
-        for action in system_menu.menu().children():
-            if hasattr(action, "text") and action.text() == "Project Manager":
-                project_manager_action = action
-                break
+        # load configuration of custom menu
+        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        config = project_settings["maya"]["scriptsmenu"]["definition"]
+        _menu = project_settings["maya"]["scriptsmenu"]["name"]
 
-        # Remove "Project manager" action if was found
-        if project_manager_action is not None:
-            system_menu.menu().removeAction(project_manager_action)
+        if not config:
+            log.warning("Skipping studio menu, no definition found.")
+            return
 
-    log.info("Attempting to install scripts menu ...")
-
-    add_build_workfiles_item()
-    add_look_assigner_item()
-    modify_workfiles()
-    remove_project_manager()
-
-    try:
-        import scriptsmenu.launchformaya as launchformaya
-        import scriptsmenu.scriptsmenu as scriptsmenu
-    except ImportError:
-        log.warning(
-            "Skipping studio.menu install, because "
-            "'scriptsmenu' module seems unavailable."
+        # run the launcher for Maya menu
+        studio_menu = launchformaya.main(
+            title=_menu.title(),
+            objectName=_menu.title().lower().replace(" ", "_")
         )
-        return
 
-    # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    config = project_settings["maya"]["scriptsmenu"]["definition"]
-    _menu = project_settings["maya"]["scriptsmenu"]["name"]
+        # apply configuration
+        studio_menu.build_from_configuration(studio_menu, config)
 
-    if not config:
-        log.warning("Skipping studio menu, no definition found.")
-        return
-
-    # run the launcher for Maya menu
-    studio_menu = launchformaya.main(
-        title=_menu.title(),
-        objectName=_menu.title().lower().replace(" ", "_")
-    )
-
-    # apply configuration
-    studio_menu.build_from_configuration(studio_menu, config)
+    # Allow time for uninstallation to finish.
+    # We use Maya's executeDeferred instead of QTimer.singleShot
+    # so that it only gets called after Maya UI has initialized too.
+    # This is crucial with Maya 2020+ which initializes without UI
+    # first as a QCoreApplication
+    maya.utils.executeDeferred(deferred)
+    cmds.evalDeferred(add_scripts_menu, lowestPriority=True)
 
 
 def uninstall():
@@ -155,18 +190,27 @@ def uninstall():
             log.error(e)
 
 
-def install():
-    if cmds.about(batch=True):
-        log.info("Skipping openpype.menu initialization in batch mode..")
-        return
-
-    # Allow time for uninstallation to finish.
-    cmds.evalDeferred(deferred)
-
-
 def popup():
     """Pop-up the existing menu near the mouse cursor."""
     menu = _get_menu()
     cursor = QtGui.QCursor()
     point = cursor.pos()
     menu.exec_(point)
+
+
+def update_menu_task_label():
+    """Update the task label in Avalon menu to current session"""
+
+    if IS_HEADLESS:
+        return
+
+    object_name = "{}|currentContext".format(MENU_NAME)
+    if not cmds.menuItem(object_name, query=True, exists=True):
+        log.warning("Can't find menuItem: {}".format(object_name))
+        return
+
+    label = "{}, {}".format(
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
+    )
+    cmds.menuItem(object_name, edit=True, label=label)

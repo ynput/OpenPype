@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import tempfile
+import platform
 import contextlib
 import subprocess
 from collections import OrderedDict
@@ -11,15 +12,19 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-import avalon.maya
-from avalon import io, api
 
 import openpype.api
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
 COPY = 1
 HARDLINK = 2
+
+
+def escape_space(path):
+    """Ensure path is enclosed by quotes to allow paths with spaces"""
+    return '"{}"'.format(path) if " " in path else path
 
 
 def find_paths_by_hash(texture_hash):
@@ -35,7 +40,7 @@ def find_paths_by_hash(texture_hash):
 
     """
     key = "data.sourceHashes.{0}".format(texture_hash)
-    return io.distinct(key, {"type": "version"})
+    return legacy_io.distinct(key, {"type": "version"})
 
 
 def maketx(source, destination, *args):
@@ -55,8 +60,17 @@ def maketx(source, destination, *args):
         str: Output of `maketx` command.
 
     """
+    from openpype.lib import get_oiio_tools_path
+
+    maketx_path = get_oiio_tools_path("maketx")
+
+    if not os.path.exists(maketx_path):
+        print(
+            "OIIO tool not found in {}".format(maketx_path))
+        raise AssertionError("OIIO tool not found")
+
     cmd = [
-        "maketx",
+        maketx_path,
         "-v",  # verbose
         "-u",  # update mode
         # unpremultiply before conversion (recommended when alpha present)
@@ -68,7 +82,7 @@ def maketx(source, destination, *args):
     ]
 
     cmd.extend(args)
-    cmd.extend(["-o", destination, source])
+    cmd.extend(["-o", escape_space(destination), escape_space(source)])
 
     cmd = " ".join(cmd)
 
@@ -122,7 +136,7 @@ def no_workspace_dir():
 
 
 class ExtractLook(openpype.api.Extractor):
-    """Extract Look (Maya Ascii + JSON)
+    """Extract Look (Maya Scene + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
     that stores it relationships for the sets and "attribute" data for the
@@ -130,11 +144,12 @@ class ExtractLook(openpype.api.Extractor):
 
     """
 
-    label = "Extract Look (Maya ASCII + JSON)"
+    label = "Extract Look (Maya Scene + JSON)"
     hosts = ["maya"]
     families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
     scene_type = "ma"
+    look_data_type = "json"
 
     @staticmethod
     def get_renderer_name():
@@ -176,6 +191,8 @@ class ExtractLook(openpype.api.Extractor):
                     # no preset found
                     pass
 
+        return "mayaAscii" if self.scene_type == "ma" else "mayaBinary"
+
     def process(self, instance):
         """Plugin entry point.
 
@@ -183,10 +200,12 @@ class ExtractLook(openpype.api.Extractor):
             instance: Instance to process.
 
         """
+        _scene_type = self.get_maya_scene_type(instance)
+
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         maya_fname = "{0}.{1}".format(instance.name, self.scene_type)
-        json_fname = "{0}.json".format(instance.name)
+        json_fname = "{0}.{1}".format(instance.name, self.look_data_type)
 
         # Make texture dump folder
         maya_path = os.path.join(dir_path, maya_fname)
@@ -196,10 +215,102 @@ class ExtractLook(openpype.api.Extractor):
 
         # Remove all members of the sets so they are not included in the
         # exported file by accident
-        self.log.info("Extract sets (Maya ASCII) ...")
+        self.log.info("Extract sets (%s) ..." % _scene_type)
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
-        sets = relationships.keys()
+        sets = list(relationships.keys())
+        if not sets:
+            self.log.info("No sets found")
+            return
+
+        results = self.process_resources(instance, staging_dir=dir_path)
+        transfers = results["fileTransfers"]
+        hardlinks = results["fileHardlinks"]
+        hashes = results["fileHashes"]
+        remap = results["attrRemap"]
+
+        # Extract in correct render layer
+        layer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with lib.renderlayer(layer):
+            # TODO: Ensure membership edits don't become renderlayer overrides
+            with lib.empty_sets(sets, force=True):
+                # To avoid Maya trying to automatically remap the file
+                # textures relative to the `workspace -directory` we force
+                # it to a fake temporary workspace. This fixes textures
+                # getting incorrectly remapped. (LKD-17, PLN-101)
+                with no_workspace_dir():
+                    with lib.attribute_values(remap):
+                        with lib.maintained_selection():
+                            cmds.select(sets, noExpand=True)
+                            cmds.file(
+                                maya_path,
+                                force=True,
+                                typ=_scene_type,
+                                exportSelected=True,
+                                preserveReferences=False,
+                                channels=True,
+                                constraints=True,
+                                expressions=True,
+                                constructionHistory=True,
+                            )
+
+        # Write the JSON data
+        self.log.info("Extract json..")
+        data = {
+            "attributes": lookdata["attributes"],
+            "relationships": relationships
+        }
+
+        with open(json_path, "w") as f:
+            json.dump(data, f)
+
+        if "files" not in instance.data:
+            instance.data["files"] = []
+        if "hardlinks" not in instance.data:
+            instance.data["hardlinks"] = []
+        if "transfers" not in instance.data:
+            instance.data["transfers"] = []
+
+        instance.data["files"].append(maya_fname)
+        instance.data["files"].append(json_fname)
+
+        if instance.data.get("representations") is None:
+            instance.data["representations"] = []
+
+        instance.data["representations"].append(
+            {
+                "name": self.scene_type,
+                "ext": self.scene_type,
+                "files": os.path.basename(maya_fname),
+                "stagingDir": os.path.dirname(maya_fname),
+            }
+        )
+        instance.data["representations"].append(
+            {
+                "name": self.look_data_type,
+                "ext": self.look_data_type,
+                "files": os.path.basename(json_fname),
+                "stagingDir": os.path.dirname(json_fname),
+            }
+        )
+
+        # Set up the resources transfers/links for the integrator
+        instance.data["transfers"].extend(transfers)
+        instance.data["hardlinks"].extend(hardlinks)
+
+        # Source hash for the textures
+        instance.data["sourceHashes"] = hashes
+
+        """
+        self.log.info("Returning colorspaces to their original values ...")
+        for attr, value in remap.items():
+            self.log.info("  - {}: {}".format(attr, value))
+            cmds.setAttr(attr, value, type="string")
+        """
+        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
+                                                          maya_path))
+
+    def process_resources(self, instance, staging_dir):
 
         # Extract the textures to transfer, possibly convert with maketx and
         # remap the node paths to the destination path. Note that a source
@@ -209,7 +320,6 @@ class ExtractLook(openpype.api.Extractor):
         do_maketx = instance.data.get("maketx", False)
 
         # Collect all unique files used in the resources
-        files = set()
         files_metadata = {}
         for resource in resources:
             # Preserve color space values (force value after filepath change)
@@ -218,33 +328,37 @@ class ExtractLook(openpype.api.Extractor):
             color_space = resource.get("color_space")
 
             for f in resource["files"]:
-
                 files_metadata[os.path.normpath(f)] = {
                     "color_space": color_space}
-                # files.update(os.path.normpath(f))
 
         # Process the resource files
         transfers = []
         hardlinks = []
         hashes = {}
-        force_copy = instance.data.get("forceCopy", False)
+        # Temporary fix to NOT create hardlinks on windows machines
+        if platform.system().lower() == "windows":
+            self.log.info(
+                "Forcing copy instead of hardlink due to issues on Windows..."
+            )
+            force_copy = True
+        else:
+            force_copy = instance.data.get("forceCopy", False)
 
-        self.log.info(files)
         for filepath in files_metadata:
 
             linearize = False
             if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
                 linearize = True
                 # set its file node to 'raw' as tx will be linearized
-                files_metadata[filepath]["color_space"] = "raw"
+                files_metadata[filepath]["color_space"] = "Raw"
 
-            if do_maketx:
-                color_space = "raw"
+            # if do_maketx:
+            #     color_space = "Raw"
 
             source, mode, texture_hash = self._process_texture(
                 filepath,
                 do_maketx,
-                staging=dir_path,
+                staging=staging_dir,
                 linearize=linearize,
                 force=force_copy
             )
@@ -287,11 +401,11 @@ class ExtractLook(openpype.api.Extractor):
                 color_space = cmds.getAttr(color_space_attr)
             except ValueError:
                 # node doesn't have color space attribute
-                color_space = "raw"
+                color_space = "Raw"
             else:
-                if files_metadata[source]["color_space"] == "raw":
+                if files_metadata[source]["color_space"] == "Raw":
                     # set color space to raw if we linearized it
-                    color_space = "raw"
+                    color_space = "Raw"
                 # Remap file node filename to destination
                 remap[color_space_attr] = color_space
             attr = resource["attribute"]
@@ -299,84 +413,12 @@ class ExtractLook(openpype.api.Extractor):
 
         self.log.info("Finished remapping destinations ...")
 
-        # Extract in correct render layer
-        layer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with lib.renderlayer(layer):
-            # TODO: Ensure membership edits don't become renderlayer overrides
-            with lib.empty_sets(sets, force=True):
-                # To avoid Maya trying to automatically remap the file
-                # textures relative to the `workspace -directory` we force
-                # it to a fake temporary workspace. This fixes textures
-                # getting incorrectly remapped. (LKD-17, PLN-101)
-                with no_workspace_dir():
-                    with lib.attribute_values(remap):
-                        with avalon.maya.maintained_selection():
-                            cmds.select(sets, noExpand=True)
-                            cmds.file(
-                                maya_path,
-                                force=True,
-                                typ="mayaAscii",
-                                exportSelected=True,
-                                preserveReferences=False,
-                                channels=True,
-                                constraints=True,
-                                expressions=True,
-                                constructionHistory=True,
-                            )
-
-        # Write the JSON data
-        self.log.info("Extract json..")
-        data = {
-            "attributes": lookdata["attributes"],
-            "relationships": relationships
+        return {
+            "fileTransfers": transfers,
+            "fileHardlinks": hardlinks,
+            "fileHashes": hashes,
+            "attrRemap": remap,
         }
-
-        with open(json_path, "w") as f:
-            json.dump(data, f)
-
-        if "files" not in instance.data:
-            instance.data["files"] = []
-        if "hardlinks" not in instance.data:
-            instance.data["hardlinks"] = []
-        if "transfers" not in instance.data:
-            instance.data["transfers"] = []
-
-        instance.data["files"].append(maya_fname)
-        instance.data["files"].append(json_fname)
-
-        instance.data["representations"] = []
-        instance.data["representations"].append(
-            {
-                "name": "ma",
-                "ext": "ma",
-                "files": os.path.basename(maya_fname),
-                "stagingDir": os.path.dirname(maya_fname),
-            }
-        )
-        instance.data["representations"].append(
-            {
-                "name": "json",
-                "ext": "json",
-                "files": os.path.basename(json_fname),
-                "stagingDir": os.path.dirname(json_fname),
-            }
-        )
-
-        # Set up the resources transfers/links for the integrator
-        instance.data["transfers"].extend(transfers)
-        instance.data["hardlinks"].extend(hardlinks)
-
-        # Source hash for the textures
-        instance.data["sourceHashes"] = hashes
-
-        """
-        self.log.info("Returning colorspaces to their original values ...")
-        for attr, value in remap.items():
-            self.log.info("  - {}: {}".format(attr, value))
-            cmds.setAttr(attr, value, type="string")
-        """
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          maya_path))
 
     def resource_destination(self, instance, filepath, do_maketx):
         """Get resource destination path.
@@ -460,10 +502,33 @@ class ExtractLook(openpype.api.Extractor):
                 # Include `source-hash` as string metadata
                 "-sattrib",
                 "sourceHash",
-                texture_hash,
+                escape_space(texture_hash),
                 colorconvert,
             )
 
             return converted, COPY, texture_hash
 
         return filepath, COPY, texture_hash
+
+
+class ExtractModelRenderSets(ExtractLook):
+    """Extract model render attribute sets as model metadata
+
+    Only extracts the render attrib sets (NO shadingEngines) alongside
+    a .json file that stores it relationships for the sets and "attribute"
+    data for the instance members.
+
+    """
+
+    label = "Model Render Sets"
+    hosts = ["maya"]
+    families = ["model"]
+    scene_type_prefix = "meta.render."
+    look_data_type = "meta.render.json"
+
+    def get_maya_scene_type(self, instance):
+        typ = super(ExtractModelRenderSets, self).get_maya_scene_type(instance)
+        # add prefix
+        self.scene_type = self.scene_type_prefix + self.scene_type
+
+        return typ

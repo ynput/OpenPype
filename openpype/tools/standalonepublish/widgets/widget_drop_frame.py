@@ -37,6 +37,10 @@ class DropDataFrame(QtWidgets.QFrame):
         "video_file": video_extensions
     }
 
+    sequence_types = [
+        ".bgeo", ".vdb"
+    ]
+
     def __init__(self, parent):
         super().__init__()
         self.parent_widget = parent
@@ -101,7 +105,7 @@ class DropDataFrame(QtWidgets.QFrame):
         return paths
 
     def _add_item(self, data, actions=[]):
-        # Assign to self so garbage collector wont remove the component
+        # Assign to self so garbage collector won't remove the component
         # during initialization
         new_component = ComponentItem(self.components_list, self)
         new_component.set_context(data)
@@ -176,7 +180,7 @@ class DropDataFrame(QtWidgets.QFrame):
         non_collectionable_paths = []
         for path in in_paths:
             ext = os.path.splitext(path)[1]
-            if ext in self.image_extensions:
+            if ext in self.image_extensions or ext in self.sequence_types:
                 collectionable_paths.append(path)
             else:
                 non_collectionable_paths.append(path)
@@ -289,7 +293,7 @@ class DropDataFrame(QtWidgets.QFrame):
     def get_file_data(self, data):
         filepath = data['files'][0]
         ext = data['ext'].lower()
-        output = {}
+        output = {"fps": None}
 
         file_info = None
         if 'file_info' in data:

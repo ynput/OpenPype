@@ -3,20 +3,25 @@ import copy
 import json
 from uuid import uuid4
 
+from pymongo import UpdateOne, DeleteOne
+
+from Qt import QtCore, QtGui
+
+from openpype.lib import (
+    CURRENT_DOC_SCHEMAS,
+    PypeLogger,
+)
+
 from .constants import (
     IDENTIFIER_ROLE,
     ITEM_TYPE_ROLE,
     DUPLICATED_ROLE,
     HIERARCHY_CHANGE_ABLE_ROLE,
     REMOVED_ROLE,
-    EDITOR_OPENED_ROLE
+    EDITOR_OPENED_ROLE,
+    PROJECT_NAME_ROLE
 )
 from .style import ResourceCache
-
-from openpype.lib import CURRENT_DOC_SCHEMAS
-from pymongo import UpdateOne, DeleteOne
-from avalon.vendor import qtawesome
-from Qt import QtCore, QtGui
 
 
 class ProjectModel(QtGui.QStandardItemModel):
@@ -29,7 +34,7 @@ class ProjectModel(QtGui.QStandardItemModel):
     def __init__(self, dbcon, *args, **kwargs):
         self.dbcon = dbcon
 
-        self._project_names = set()
+        self._items_by_name = {}
 
         super(ProjectModel, self).__init__(*args, **kwargs)
 
@@ -37,33 +42,62 @@ class ProjectModel(QtGui.QStandardItemModel):
         """Reload projects."""
         self.dbcon.Session["AVALON_PROJECT"] = None
 
-        project_items = []
+        new_project_items = []
 
-        none_project = QtGui.QStandardItem("< Select Project >")
-        none_project.setData(None)
-        project_items.append(none_project)
+        if None not in self._items_by_name:
+            none_project = QtGui.QStandardItem("< Select Project >")
+            self._items_by_name[None] = none_project
+            new_project_items.append(none_project)
 
-        database = self.dbcon.database
+        project_docs = self.dbcon.projects(
+            projection={"name": 1},
+            only_active=True
+        )
         project_names = set()
-        for project_name in database.collection_names():
-            # Each collection will have exactly one project document
-            project_doc = database[project_name].find_one(
-                {"type": "project"},
-                {"name": 1}
-            )
-            if not project_doc:
+        for project_doc in project_docs:
+            project_name = project_doc.get("name")
+            if not project_name:
                 continue
 
-            project_name = project_doc.get("name")
-            if project_name:
-                project_names.add(project_name)
-                project_items.append(QtGui.QStandardItem(project_name))
+            project_names.add(project_name)
+            if project_name not in self._items_by_name:
+                project_item = QtGui.QStandardItem(project_name)
+                project_item.setData(project_name, PROJECT_NAME_ROLE)
 
-        self.clear()
+                self._items_by_name[project_name] = project_item
+                new_project_items.append(project_item)
 
-        self._project_names = project_names
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name is None or project_name in project_names:
+                continue
+            project_item = self._items_by_name.pop(project_name)
+            root_item.removeRow(project_item.row())
 
-        self.invisibleRootItem().appendRows(project_items)
+        if new_project_items:
+            root_item.appendRows(new_project_items)
+
+
+class ProjectProxyFilter(QtCore.QSortFilterProxyModel):
+    """Filters default project item."""
+    def __init__(self, *args, **kwargs):
+        super(ProjectProxyFilter, self).__init__(*args, **kwargs)
+        self._filter_default = False
+
+    def set_filter_default(self, enabled=True):
+        """Set if filtering of default item is enabled."""
+        if enabled == self._filter_default:
+            return
+        self._filter_default = enabled
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        if not self._filter_default:
+            return True
+
+        model = self.sourceModel()
+        source_index = model.index(row, self.filterKeyColumn(), parent)
+        return source_index.data(PROJECT_NAME_ROLE) is not None
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
@@ -93,12 +127,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     Main part of ProjectManager.
 
     Model should be able to load existing entities, create new, handle their
-    validations like name duplication and validate if is possible to save it's
+    validations like name duplication and validate if is possible to save its
     data.
 
     Args:
         dbcon (AvalonMongoDB): Connection to MongoDB with set AVALON_PROJECT in
-            it's Session to current project.
+            its Session to current project.
     """
 
     # Definition of all possible columns with their labels in default order
@@ -154,6 +188,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             for key in self.multiselection_columns
         }
 
+        self._log = None
         # TODO Reset them on project change
         self._current_project = None
         self._root_item = None
@@ -162,6 +197,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.dbcon = dbcon
 
         self._reset_root_item()
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = PypeLogger.get_logger("ProjectManagerModel")
+        return self._log
 
     @property
     def items_by_id(self):
@@ -768,7 +809,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 for row in range(parent_item.rowCount()):
                     child_item = parent_item.child(row)
                     child_id = child_item.id
-                    # Not sure if this can happend
+                    # Not sure if this can happen
                     # TODO validate this line it seems dangerous as start/end
                     #   row is not changed
                     if child_id not in children:
@@ -1336,6 +1377,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         to_process = collections.deque()
         to_process.append(project_item)
 
+        created_count = 0
+        updated_count = 0
+        removed_count = 0
         bulk_writes = []
         while to_process:
             parent = to_process.popleft()
@@ -1350,6 +1394,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     insert_list.append(item)
 
                 elif item.data(REMOVED_ROLE):
+                    removed_count += 1
                     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
                         bulk_writes.append(DeleteOne(
                             {"_id": item.asset_id}
@@ -1363,6 +1408,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 else:
                     update_data = item.update_data()
                     if update_data:
+                        updated_count += 1
                         bulk_writes.append(UpdateOne(
                             {"_id": item.asset_id},
                             update_data
@@ -1375,10 +1421,20 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 result = project_col.insert_many(new_docs)
                 for idx, mongo_id in enumerate(result.inserted_ids):
+                    created_count += 1
                     insert_list[idx].mongo_id = mongo_id
+
+        if sum([created_count, updated_count, removed_count]) == 0:
+            self.log.info("Nothing has changed")
+            return
 
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
+
+        self.log.info((
+            "Save finished."
+            " Created {} | Updated {} | Removed {} asset documents"
+        ).format(created_count, updated_count, removed_count))
 
         self.refresh_project()
 
@@ -1426,7 +1482,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return
 
         raw_data = mime_data.data("application/copy_task")
-        encoded_data = QtCore.QByteArray.fromRawData(raw_data)
+        if isinstance(raw_data, QtCore.QByteArray):
+            # Raw data are already QByteArrat and we don't have to load them
+            encoded_data = raw_data
+        else:
+            encoded_data = QtCore.QByteArray.fromRawData(raw_data)
         stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
         text = stream.readQString()
         try:
@@ -1784,12 +1844,16 @@ class AssetItem(BaseItem):
     }
     query_projection = {
         "_id": 1,
-        "data.tasks": 1,
-        "data.visualParent": 1,
-        "schema": 1,
-
         "name": 1,
+        "schema": 1,
         "type": 1,
+        "parent": 1,
+
+        "data.visualParent": 1,
+        "data.parents": 1,
+
+        "data.tasks": 1,
+
         "data.frameStart": 1,
         "data.frameEnd": 1,
         "data.fps": 1,
@@ -1800,7 +1864,7 @@ class AssetItem(BaseItem):
         "data.clipIn": 1,
         "data.clipOut": 1,
         "data.pixelAspect": 1,
-        "data.tools_env": 1
+        "data.tools_env": 1,
     }
 
     def __init__(self, asset_doc):
@@ -1867,7 +1931,7 @@ class AssetItem(BaseItem):
         return self._data["name"]
 
     def child_parents(self):
-        """Chilren AssetItem can use this method to get it's parent names.
+        """Children AssetItem can use this method to get it's parent names.
 
         This is used for `data.parents` key on document.
         """
@@ -1971,7 +2035,7 @@ class AssetItem(BaseItem):
     @classmethod
     def data_from_doc(cls, asset_doc):
         """Convert asset document from Mongo to item data."""
-        # Minimum required data for cases that it is new AssetItem withoud doc
+        # Minimum required data for cases that it is new AssetItem without doc
         data = {
             "name": None,
             "type": "asset"
@@ -2218,7 +2282,7 @@ class TaskItem(BaseItem):
     """Item representing Task item on Asset document.
 
     Always should be AssetItem children and never should have any other
-    childrens.
+    children.
 
     It's name value should be validated with it's parent which only knows if
     has same name as other sibling under same parent.

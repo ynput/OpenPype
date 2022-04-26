@@ -60,6 +60,12 @@ class DictMutableKeysEntity(EndpointEntity):
     def pop(self, key, *args, **kwargs):
         if key in self.required_keys:
             raise RequiredKeyModified(self.path, key)
+
+        if self._override_state is OverrideState.STUDIO:
+            self._has_studio_override = True
+        elif self._override_state is OverrideState.PROJECT:
+            self._has_project_override = True
+
         result = self.children_by_key.pop(key, *args, **kwargs)
         self.on_change()
         return result
@@ -191,7 +197,10 @@ class DictMutableKeysEntity(EndpointEntity):
         child_entity = self.children_by_key[key]
         self.set_child_label(child_entity, label)
 
-    def _item_initalization(self):
+    def has_child_with_key(self, key):
+        return key in self.children_by_key
+
+    def _item_initialization(self):
         self._default_metadata = {}
         self._studio_override_metadata = {}
         self._project_override_metadata = {}
@@ -213,7 +222,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.required_keys = self.schema_data.get("required_keys") or []
         self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
-        self.hightlight_content = (
+        self.highlight_content = (
             self.schema_data.get("highlight_content") or False
         )
 
@@ -261,7 +270,7 @@ class DictMutableKeysEntity(EndpointEntity):
             raise EntitySchemaError(self, reason)
 
         # TODO Ability to store labels should be defined with different key
-        if self.collapsible_key and not self.file_item:
+        if self.collapsible_key and self.file_item is None:
             reason = (
                 "Modifiable dictionary with collapsible keys is not under"
                 " file item so can't store metadata."
@@ -384,11 +393,15 @@ class DictMutableKeysEntity(EndpointEntity):
             value = self.value_on_not_set
 
         using_values_from_state = False
+        log_invalid_types = True
         if state is OverrideState.PROJECT:
+            log_invalid_types = self._project_log_invalid_types
             using_values_from_state = using_project_overrides
         elif state is OverrideState.STUDIO:
+            log_invalid_types = self._studio_log_invalid_types
             using_values_from_state = using_studio_overrides
         elif state is OverrideState.DEFAULTS:
+            log_invalid_types = self._default_log_invalid_types
             using_values_from_state = using_default_values
 
         new_value = copy.deepcopy(value)
@@ -428,11 +441,11 @@ class DictMutableKeysEntity(EndpointEntity):
                 if not label:
                     label = metadata_labels.get(new_key)
 
-            child_entity.update_default_value(_value)
+            child_entity.update_default_value(_value, log_invalid_types)
             if using_project_overrides:
-                child_entity.update_project_value(_value)
+                child_entity.update_project_value(_value, log_invalid_types)
             elif using_studio_overrides:
-                child_entity.update_studio_value(_value)
+                child_entity.update_studio_value(_value, log_invalid_types)
 
             if label:
                 children_label_by_id[child_entity.id] = label
@@ -589,8 +602,11 @@ class DictMutableKeysEntity(EndpointEntity):
                     metadata[key] = value.pop(key)
         return value, metadata
 
-    def update_default_value(self, value):
-        value = self._check_update_value(value, "default")
+    def update_default_value(self, value, log_invalid_types=True):
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         has_default_value = value is not NOT_SET
         if has_default_value:
             for required_key in self.required_keys:
@@ -602,15 +618,21 @@ class DictMutableKeysEntity(EndpointEntity):
         self._default_value = value
         self._default_metadata = metadata
 
-    def update_studio_value(self, value):
-        value = self._check_update_value(value, "studio override")
+    def update_studio_value(self, value, log_invalid_types=True):
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self._studio_override_metadata = metadata
         self.had_studio_override = value is not NOT_SET
 
-    def update_project_value(self, value):
-        value = self._check_update_value(value, "project override")
+    def update_project_value(self, value, log_invalid_types=True):
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         value, metadata = self._prepare_value(value)
         self._project_override_value = value
         self._project_override_metadata = metadata
@@ -677,9 +699,12 @@ class DictMutableKeysEntity(EndpointEntity):
         if not self._can_remove_from_project_override:
             return
 
+        log_invalid_types = True
         if self._has_studio_override:
+            log_invalid_types = self._studio_log_invalid_types
             value = self._studio_override_value
         elif self.has_default_value:
+            log_invalid_types = self._default_log_invalid_types
             value = self._default_value
         else:
             value = self.value_on_not_set
@@ -700,9 +725,9 @@ class DictMutableKeysEntity(EndpointEntity):
         for _key, _value in new_value.items():
             new_key = self._convert_to_regex_valid_key(_key)
             child_entity = self._add_key(new_key)
-            child_entity.update_default_value(_value)
+            child_entity.update_default_value(_value, log_invalid_types)
             if self._has_studio_override:
-                child_entity.update_studio_value(_value)
+                child_entity.update_studio_value(_value, log_invalid_types)
 
             label = metadata_labels.get(_key)
             if label:

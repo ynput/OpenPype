@@ -2,6 +2,9 @@ import os
 import pyblish.api
 import openpype.api
 
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+)
 from pprint import pformat
 
 
@@ -27,7 +30,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             instance.data["representations"] = list()
 
         # get ffmpet path
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         # get staging dir
         staging_dir = self.staging_dir(instance)
@@ -44,7 +47,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             clip_trimed_path = os.path.join(
                 staging_dir, instance.data["name"] + ext)
             # # check video file metadata
-            # input_data = plib.ffprobe_streams(video_file_path)[0]
+            # input_data = plib.get_ffprobe_streams(video_file_path)[0]
             # self.log.debug(f"__ input_data: `{input_data}`")
 
             start = float(instance.data["clipInH"])
@@ -59,32 +62,35 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
                     if "trimming" not in fml
                 ]
 
-            args = [
-                f"\"{ffmpeg_path}\"",
+            ffmpeg_args = [
+                ffmpeg_path,
                 "-ss", str(start / fps),
-                "-i", f"\"{video_file_path}\"",
+                "-i", video_file_path,
                 "-t", str(dur / fps)
             ]
             if ext in [".mov", ".mp4"]:
-                args.extend([
+                ffmpeg_args.extend([
                     "-crf", "18",
-                    "-pix_fmt", "yuv420p"])
+                    "-pix_fmt", "yuv420p"
+                ])
             elif ext in ".wav":
-                args.extend([
-                    "-vn -acodec pcm_s16le",
-                    "-ar 48000 -ac 2"
+                ffmpeg_args.extend([
+                    "-vn",
+                    "-acodec", "pcm_s16le",
+                    "-ar", "48000",
+                    "-ac", "2"
                 ])
 
             # add output path
-            args.append(f"\"{clip_trimed_path}\"")
+            ffmpeg_args.append(clip_trimed_path)
 
-            self.log.info(f"Processing: {args}")
-            ffmpeg_args = " ".join(args)
+            joined_args = " ".join(ffmpeg_args)
+            self.log.info(f"Processing: {joined_args}")
             openpype.api.run_subprocess(
-                ffmpeg_args, shell=True, logger=self.log
+                ffmpeg_args, logger=self.log
             )
 
-            repr = {
+            repre = {
                 "name": ext[1:],
                 "ext": ext[1:],
                 "files": os.path.basename(clip_trimed_path),
@@ -97,10 +103,10 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             }
 
             if ext in [".mov", ".mp4"]:
-                repr.update({
+                repre.update({
                     "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"]})
 
-            instance.data["representations"].append(repr)
+            instance.data["representations"].append(repre)
 
             self.log.debug(f"Instance data: {pformat(instance.data)}")

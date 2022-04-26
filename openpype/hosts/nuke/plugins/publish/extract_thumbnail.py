@@ -1,8 +1,13 @@
+import sys
 import os
 import nuke
-from avalon.nuke import lib as anlib
 import pyblish.api
 import openpype
+from openpype.hosts.nuke.api.lib import maintained_selection
+
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class ExtractThumbnail(openpype.api.Extractor):
@@ -25,7 +30,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if "render.farm" in instance.data["families"]:
             return
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
@@ -112,24 +117,26 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead + "jpeg"
+        file = fhead + "jpg"
         name = "thumbnail"
         path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["thumbnail"] = path
         write_node["file"].setValue(path)
-        write_node["file_type"].setValue("jpeg")
+        write_node["file_type"].setValue("jpg")
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
         tags = ["thumbnail", "publish_on_farm"]
 
         # retime for
+        mid_frame = int((int(last_frame) - int(first_frame)) / 2) \
+            + int(first_frame)
         first_frame = int(last_frame) / 2
         last_frame = int(last_frame) / 2
 
         repre = {
             'name': name,
-            'ext': "jpeg",
+            'ext': "jpg",
             "outputName": "thumb",
             'files': file,
             "stagingDir": staging_dir,
@@ -140,7 +147,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         instance.data["representations"].append(repre)
 
         # Render frames
-        nuke.execute(write_node.name(), int(first_frame), int(last_frame))
+        nuke.execute(write_node.name(), int(mid_frame), int(mid_frame))
 
         self.log.debug(
             "representations: {}".format(instance.data["representations"]))

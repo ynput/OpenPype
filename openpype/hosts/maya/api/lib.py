@@ -1,31 +1,41 @@
 """Standalone helper functions"""
 
-import re
 import os
+import sys
+import platform
 import uuid
 import math
 
-import bson
 import json
 import logging
-import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
+from six import string_types
+import bson
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
-from avalon import api, maya, io, pipeline
-from avalon.vendor.six import string_types
-import avalon.maya.lib
-import avalon.maya.interactive
-
 from openpype import lib
+from openpype.api import get_anatomy_settings
+from openpype.pipeline import (
+    legacy_io,
+    discover_loader_plugins,
+    loaders_from_representation,
+    get_representation_path,
+    load_container,
+    registered_host,
+)
+from .commands import reset_frame_range
 
+
+self = sys.modules[__name__]
+self._parent = None
 
 log = logging.getLogger(__name__)
 
+IS_HEADLESS = not hasattr(cmds, "about") or cmds.about(batch=True)
 ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
                   "str": {"dataType": "string"},
                   "unicode": {"dataType": "string"},
@@ -98,6 +108,141 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 
+def get_main_window():
+    """Acquire Maya's main window"""
+    from Qt import QtWidgets
+
+    if self._parent is None:
+        self._parent = {
+            widget.objectName(): widget
+            for widget in QtWidgets.QApplication.topLevelWidgets()
+        }["MayaWindow"]
+    return self._parent
+
+
+@contextlib.contextmanager
+def suspended_refresh():
+    """Suspend viewport refreshes"""
+
+    try:
+        cmds.refresh(suspend=True)
+        yield
+    finally:
+        cmds.refresh(suspend=False)
+
+
+@contextlib.contextmanager
+def maintained_selection():
+    """Maintain selection during context
+
+    Example:
+        >>> scene = cmds.file(new=True, force=True)
+        >>> node = cmds.createNode("transform", name="Test")
+        >>> cmds.select("persp")
+        >>> with maintained_selection():
+        ...     cmds.select("Test", replace=True)
+        >>> "Test" in cmds.ls(selection=True)
+        False
+
+    """
+
+    previous_selection = cmds.ls(selection=True)
+    try:
+        yield
+    finally:
+        if previous_selection:
+            cmds.select(previous_selection,
+                        replace=True,
+                        noExpand=True)
+        else:
+            cmds.select(clear=True)
+
+
+def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
+    """Return unique namespace
+
+    Arguments:
+        namespace (str): Name of namespace to consider
+        format (str, optional): Formatting of the given iteration number
+        suffix (str, optional): Only consider namespaces with this suffix.
+
+    >>> unique_namespace("bar")
+    # bar01
+    >>> unique_namespace(":hello")
+    # :hello01
+    >>> unique_namespace("bar:", suffix="_NS")
+    # bar01_NS:
+
+    """
+
+    def current_namespace():
+        current = cmds.namespaceInfo(currentNamespace=True,
+                                     absoluteName=True)
+        # When inside a namespace Maya adds no trailing :
+        if not current.endswith(":"):
+            current += ":"
+        return current
+
+    # Always check against the absolute namespace root
+    # There's no clash with :x if we're defining namespace :a:x
+    ROOT = ":" if namespace.startswith(":") else current_namespace()
+
+    # Strip trailing `:` tokens since we might want to add a suffix
+    start = ":" if namespace.startswith(":") else ""
+    end = ":" if namespace.endswith(":") else ""
+    namespace = namespace.strip(":")
+    if ":" in namespace:
+        # Split off any nesting that we don't uniqify anyway.
+        parents, namespace = namespace.rsplit(":", 1)
+        start += parents + ":"
+        ROOT += start
+
+    def exists(n):
+        # Check for clash with nodes and namespaces
+        fullpath = ROOT + n
+        return cmds.objExists(fullpath) or cmds.namespace(exists=fullpath)
+
+    iteration = 1
+    while True:
+        nr_namespace = namespace + format % iteration
+        unique = prefix + nr_namespace + suffix
+
+        if not exists(unique):
+            return start + unique + end
+
+        iteration += 1
+
+
+def read(node):
+    """Return user-defined attributes from `node`"""
+
+    data = dict()
+
+    for attr in cmds.listAttr(node, userDefined=True) or list():
+        try:
+            value = cmds.getAttr(node + "." + attr, asString=True)
+
+        except RuntimeError:
+            # For Message type attribute or others that have connections,
+            # take source node name as value.
+            source = cmds.listConnections(node + "." + attr,
+                                          source=True,
+                                          destination=False)
+            source = cmds.ls(source, long=True) or [None]
+            value = source[0]
+
+        except ValueError:
+            # Some attributes cannot be read directly,
+            # such as mesh and color attributes. These
+            # are considered non-essential to this
+            # particular publishing pipeline.
+            value = None
+
+        data[attr] = value
+
+    return data
+
+
 def _get_mel_global(name):
     """Return the value of a mel global variable"""
     return mel.eval("$%s = $%s;" % (name, name))
@@ -127,158 +272,80 @@ def float_round(num, places=0, direction=ceil):
 
 def pairwise(iterable):
     """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
+    from six.moves import zip
+
     a = iter(iterable)
-    return itertools.izip(a, a)
+    return zip(a, a)
 
 
-def unique(name):
-    assert isinstance(name, string_types), "`name` must be string"
+def export_alembic(nodes,
+                   file,
+                   frame_range=None,
+                   write_uv=True,
+                   write_visibility=True,
+                   attribute_prefix=None):
+    """Wrap native MEL command with limited set of arguments
 
-    while cmds.objExists(name):
-        matches = re.findall(r"\d+$", name)
+    Arguments:
+        nodes (list): Long names of nodes to cache
 
-        if matches:
-            match = matches[-1]
-            name = name.rstrip(match)
-            number = int(match) + 1
-        else:
-            number = 1
+        file (str): Absolute path to output destination
 
-        name = name + str(number)
+        frame_range (tuple, optional): Start- and end-frame of cache,
+            default to current animation range.
 
-    return name
+        write_uv (bool, optional): Whether or not to include UVs,
+            default to True
 
+        write_visibility (bool, optional): Turn on to store the visibility
+        state of objects in the Alembic file. Otherwise, all objects are
+        considered visible, default to True
 
-def uv_from_element(element):
-    """Return the UV coordinate of given 'element'
-
-    Supports components, meshes, nurbs.
-
-    """
-
-    supported = ["mesh", "nurbsSurface"]
-
-    uv = [0.5, 0.5]
-
-    if "." not in element:
-        type = cmds.nodeType(element)
-        if type == "transform":
-            geometry_shape = cmds.listRelatives(element, shapes=True)
-
-            if len(geometry_shape) >= 1:
-                geometry_shape = geometry_shape[0]
-            else:
-                return
-
-        elif type in supported:
-            geometry_shape = element
-
-        else:
-            cmds.error("Could not do what you wanted..")
-            return
-    else:
-        # If it is indeed a component - get the current Mesh
-        try:
-            parent = element.split(".", 1)[0]
-
-            # Maya is funny in that when the transform of the shape
-            # of the component elemen has children, the name returned
-            # by that elementection is the shape. Otherwise, it is
-            # the transform. So lets see what type we're dealing with here.
-            if cmds.nodeType(parent) in supported:
-                geometry_shape = parent
-            else:
-                geometry_shape = cmds.listRelatives(parent, shapes=1)[0]
-
-            if not geometry_shape:
-                cmds.error("Skipping %s: Could not find shape." % element)
-                return
-
-            if len(cmds.ls(geometry_shape)) > 1:
-                cmds.warning("Multiple shapes with identical "
-                             "names found. This might not work")
-
-        except TypeError as e:
-            cmds.warning("Skipping %s: Didn't find a shape "
-                         "for component elementection. %s" % (element, e))
-            return
-
-        try:
-            type = cmds.nodeType(geometry_shape)
-
-            if type == "nurbsSurface":
-                # If a surfacePoint is elementected on a nurbs surface
-                root, u, v = element.rsplit("[", 2)
-                uv = [float(u[:-1]), float(v[:-1])]
-
-            if type == "mesh":
-                # -----------
-                # Average the U and V values
-                # ===========
-                uvs = cmds.polyListComponentConversion(element, toUV=1)
-                if not uvs:
-                    cmds.warning("Couldn't derive any UV's from "
-                                 "component, reverting to default U and V")
-                    raise TypeError
-
-                # Flatten list of Uv's as sometimes it returns
-                # neighbors like this [2:3] instead of [2], [3]
-                flattened = []
-
-                for uv in uvs:
-                    flattened.extend(cmds.ls(uv, flatten=True))
-
-                uvs = flattened
-
-                sumU = 0
-                sumV = 0
-                for uv in uvs:
-                    try:
-                        u, v = cmds.polyEditUV(uv, query=True)
-                    except Exception:
-                        cmds.warning("Couldn't find any UV coordinated, "
-                                     "reverting to default U and V")
-                        raise TypeError
-
-                    sumU += u
-                    sumV += v
-
-                averagedU = sumU / len(uvs)
-                averagedV = sumV / len(uvs)
-
-                uv = [averagedU, averagedV]
-        except TypeError:
-            pass
-
-    return uv
-
-
-def shape_from_element(element):
-    """Return shape of given 'element'
-
-    Supports components, meshes, and surfaces
+        attribute_prefix (str, optional): Include all user-defined
+            attributes with this prefix.
 
     """
 
-    try:
-        # Get either shape or transform, based on element-type
-        node = cmds.ls(element, objectsOnly=True)[0]
-    except Exception:
-        cmds.warning("Could not find node in %s" % element)
-        return None
+    if frame_range is None:
+        frame_range = (
+            cmds.playbackOptions(query=True, ast=True),
+            cmds.playbackOptions(query=True, aet=True)
+        )
 
-    if cmds.nodeType(node) == 'transform':
-        try:
-            return cmds.listRelatives(node, shapes=True)[0]
-        except Exception:
-            cmds.warning("Could not find shape in %s" % element)
-            return None
+    options = [
+        ("file", file),
+        ("frameRange", "%s %s" % frame_range),
+    ] + [("root", mesh) for mesh in nodes]
 
-    else:
-        return node
+    if isinstance(attribute_prefix, string_types):
+        # Include all attributes prefixed with "mb"
+        # TODO(marcus): This would be a good candidate for
+        #   external registration, so that the developer
+        #   doesn't have to edit this function to modify
+        #   the behavior of Alembic export.
+        options.append(("attrPrefix", str(attribute_prefix)))
+
+    if write_uv:
+        options.append(("uvWrite", ""))
+
+    if write_visibility:
+        options.append(("writeVisibility", ""))
+
+    # Generate MEL command
+    mel_args = list()
+    for key, value in options:
+        mel_args.append("-{0} {1}".format(key, value))
+
+    mel_args_string = " ".join(mel_args)
+    mel_cmd = "AbcExport -j \"{0}\"".format(mel_args_string)
+
+    # For debuggability, put the string passed to MEL in the Script editor.
+    print("mel.eval('%s')" % mel_cmd)
+
+    return mel.eval(mel_cmd)
 
 
-def collect_animation_data():
+def collect_animation_data(fps=False):
     """Get the basic animation data
 
     Returns:
@@ -289,17 +356,149 @@ def collect_animation_data():
     # get scene values as defaults
     start = cmds.playbackOptions(query=True, animationStartTime=True)
     end = cmds.playbackOptions(query=True, animationEndTime=True)
-    fps = mel.eval('currentTimeUnitToFPS()')
 
     # build attributes
     data = OrderedDict()
     data["frameStart"] = start
     data["frameEnd"] = end
-    data["handles"] = 0
+    data["handleStart"] = 0
+    data["handleEnd"] = 0
     data["step"] = 1.0
-    data["fps"] = fps
+
+    if fps:
+        data["fps"] = mel.eval('currentTimeUnitToFPS()')
 
     return data
+
+
+def imprint(node, data):
+    """Write `data` to `node` as userDefined attributes
+
+    Arguments:
+        node (str): Long name of node
+        data (dict): Dictionary of key/value pairs
+
+    Example:
+        >>> from maya import cmds
+        >>> def compute():
+        ...   return 6
+        ...
+        >>> cube, generator = cmds.polyCube()
+        >>> imprint(cube, {
+        ...   "regularString": "myFamily",
+        ...   "computedValue": lambda: compute()
+        ... })
+        ...
+        >>> cmds.getAttr(cube + ".computedValue")
+        6
+
+    """
+
+    for key, value in data.items():
+
+        if callable(value):
+            # Support values evaluated at imprint
+            value = value()
+
+        if isinstance(value, bool):
+            add_type = {"attributeType": "bool"}
+            set_type = {"keyable": False, "channelBox": True}
+        elif isinstance(value, string_types):
+            add_type = {"dataType": "string"}
+            set_type = {"type": "string"}
+        elif isinstance(value, int):
+            add_type = {"attributeType": "long"}
+            set_type = {"keyable": False, "channelBox": True}
+        elif isinstance(value, float):
+            add_type = {"attributeType": "double"}
+            set_type = {"keyable": False, "channelBox": True}
+        elif isinstance(value, (list, tuple)):
+            add_type = {"attributeType": "enum", "enumName": ":".join(value)}
+            set_type = {"keyable": False, "channelBox": True}
+            value = 0  # enum default
+        else:
+            raise TypeError("Unsupported type: %r" % type(value))
+
+        cmds.addAttr(node, longName=key, **add_type)
+        cmds.setAttr(node + "." + key, value, **set_type)
+
+
+def lsattr(attr, value=None):
+    """Return nodes matching `key` and `value`
+
+    Arguments:
+        attr (str): Name of Maya attribute
+        value (object, optional): Value of attribute. If none
+            is provided, return all nodes with this attribute.
+
+    Example:
+        >> lsattr("id", "myId")
+        ["myNode"]
+        >> lsattr("id")
+        ["myNode", "myOtherNode"]
+
+    """
+
+    if value is None:
+        return cmds.ls("*.%s" % attr,
+                       recursive=True,
+                       objectsOnly=True,
+                       long=True)
+    return lsattrs({attr: value})
+
+
+def lsattrs(attrs):
+    """Return nodes with the given attribute(s).
+
+    Arguments:
+        attrs (dict): Name and value pairs of expected matches
+
+    Example:
+        >> # Return nodes with an `age` of five.
+        >> lsattr({"age": "five"})
+        >> # Return nodes with both `age` and `color` of five and blue.
+        >> lsattr({"age": "five", "color": "blue"})
+
+    Return:
+         list: matching nodes.
+
+    """
+
+    dep_fn = om.MFnDependencyNode()
+    dag_fn = om.MFnDagNode()
+    selection_list = om.MSelectionList()
+
+    first_attr = next(iter(attrs))
+
+    try:
+        selection_list.add("*.{0}".format(first_attr),
+                           searchChildNamespaces=True)
+    except RuntimeError as exc:
+        if str(exc).endswith("Object does not exist"):
+            return []
+
+    matches = set()
+    for i in range(selection_list.length()):
+        node = selection_list.getDependNode(i)
+        if node.hasFn(om.MFn.kDagNode):
+            fn_node = dag_fn.setObject(node)
+            full_path_names = [path.fullPathName()
+                               for path in fn_node.getAllPaths()]
+        else:
+            fn_node = dep_fn.setObject(node)
+            full_path_names = [fn_node.name()]
+
+        for attr in attrs:
+            try:
+                plug = fn_node.findPlug(attr, True)
+                if plug.asString() != attrs[attr]:
+                    break
+            except RuntimeError:
+                break
+        else:
+            matches.update(full_path_names)
+
+    return list(matches)
 
 
 @contextlib.contextmanager
@@ -311,13 +510,7 @@ def attribute_values(attr_values):
 
     """
 
-    # NOTE(antirotor): this didn't work for some reason for Yeti attributes
-    # original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
-    original = []
-    for attr in attr_values:
-        type = cmds.getAttr(attr, type=True)
-        value = cmds.getAttr(attr)
-        original.append((attr, str(value) if type == "string" else value))
+    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
     try:
         for attr, value in attr_values.items():
             if isinstance(value, string_types):
@@ -329,6 +522,12 @@ def attribute_values(attr_values):
         for attr, value in original:
             if isinstance(value, string_types):
                 cmds.setAttr(attr, value, type="string")
+            elif value is None and cmds.getAttr(attr, type=True) == "string":
+                # In some cases the maya.cmds.getAttr command returns None
+                # for string attributes but this value cannot assigned.
+                # Note: After setting it once to "" it will then return ""
+                #       instead of None. So this would only happen once.
+                cmds.setAttr(attr, "", type="string")
             else:
                 cmds.setAttr(attr, value)
 
@@ -381,26 +580,6 @@ def evaluation(mode="off"):
 
 
 @contextlib.contextmanager
-def no_refresh():
-    """Temporarily disables Maya's UI updates
-
-    Note:
-        This only disabled the main pane and will sometimes still
-        trigger updates in torn off panels.
-
-    """
-
-    pane = _get_mel_global('gMainPane')
-    state = cmds.paneLayout(pane, query=True, manage=True)
-    cmds.paneLayout(pane, edit=True, manage=False)
-
-    try:
-        yield
-    finally:
-        cmds.paneLayout(pane, edit=True, manage=state)
-
-
-@contextlib.contextmanager
 def empty_sets(sets, force=False):
     """Remove all members of the sets during the context"""
 
@@ -437,7 +616,8 @@ def empty_sets(sets, force=False):
             cmds.connectAttr(src, dest)
 
         # Restore original members
-        for origin_set, members in original.iteritems():
+        _iteritems = getattr(original, "iteritems", original.items)
+        for origin_set, members in _iteritems():
             cmds.sets(members, forceElement=origin_set)
 
 
@@ -581,7 +761,7 @@ def get_shader_assignments_from_shapes(shapes, components=True):
 
         # Build a mapping from parent to shapes to include in lookup.
         transforms = {shape.rsplit("|", 1)[0]: shape for shape in shapes}
-        lookup = set(shapes + transforms.keys())
+        lookup = set(shapes) | set(transforms.keys())
 
         component_assignments = defaultdict(list)
         for shading_group in assignments.keys():
@@ -669,7 +849,8 @@ def displaySmoothness(nodes,
         yield
     finally:
         # Revert state
-        for node, state in originals.iteritems():
+        _iteritems = getattr(originals, "iteritems", originals.items)
+        for node, state in _iteritems():
             if state:
                 cmds.displaySmoothness(node, **state)
 
@@ -712,7 +893,8 @@ def no_display_layers(nodes):
         yield
     finally:
         # Restore original members
-        for layer, members in original.iteritems():
+        _iteritems = getattr(original, "iteritems", original.items)
+        for layer, members in _iteritems():
             cmds.editDisplayLayerMembers(layer, members, noRecurse=True)
 
 
@@ -728,9 +910,9 @@ def namespaced(namespace, new=True):
         str: The namespace that is used during the context
 
     """
-    original = cmds.namespaceInfo(cur=True)
+    original = cmds.namespaceInfo(cur=True, absoluteName=True)
     if new:
-        namespace = avalon.maya.lib.unique_namespace(namespace)
+        namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
 
     try:
@@ -738,6 +920,33 @@ def namespaced(namespace, new=True):
         yield namespace
     finally:
         cmds.namespace(set=original)
+
+
+@contextlib.contextmanager
+def maintained_selection_api():
+    """Maintain selection using the Maya Python API.
+
+    Warning: This is *not* added to the undo stack.
+
+    """
+    original = om.MGlobal.getActiveSelectionList()
+    try:
+        yield
+    finally:
+        om.MGlobal.setActiveSelectionList(original)
+
+
+@contextlib.contextmanager
+def tool(context):
+    """Set a tool context during the context manager.
+
+    """
+    original = cmds.currentCtx()
+    try:
+        cmds.setToolTo(context)
+        yield
+    finally:
+        cmds.setToolTo(original)
 
 
 def polyConstraint(components, *args, **kwargs):
@@ -758,17 +967,25 @@ def polyConstraint(components, *args, **kwargs):
     kwargs.pop('mode', None)
 
     with no_undo(flush=False):
-        with maya.maintained_selection():
-            # Apply constraint using mode=2 (current and next) so
-            # it applies to the selection made before it; because just
-            # a `maya.cmds.select()` call will not trigger the constraint.
-            with reset_polySelectConstraint():
-                cmds.select(components, r=1, noExpand=True)
-                cmds.polySelectConstraint(*args, mode=2, **kwargs)
-                result = cmds.ls(selection=True)
-                cmds.select(clear=True)
-
-    return result
+        # Reverting selection to the original selection using
+        # `maya.cmds.select` can be slow in rare cases where previously
+        # `maya.cmds.polySelectConstraint` had set constrain to "All and Next"
+        # and the "Random" setting was activated. To work around this we
+        # revert to the original selection using the Maya API. This is safe
+        # since we're not generating any undo change anyway.
+        with tool("selectSuperContext"):
+            # Selection can be very slow when in a manipulator mode.
+            # So we force the selection context which is fast.
+            with maintained_selection_api():
+                # Apply constraint using mode=2 (current and next) so
+                # it applies to the selection made before it; because just
+                # a `maya.cmds.select()` call will not trigger the constraint.
+                with reset_polySelectConstraint():
+                    cmds.select(components, r=1, noExpand=True)
+                    cmds.polySelectConstraint(*args, mode=2, **kwargs)
+                    result = cmds.ls(selection=True)
+                    cmds.select(clear=True)
+                    return result
 
 
 @contextlib.contextmanager
@@ -1028,15 +1245,6 @@ def extract_alembic(file,
     return file
 
 
-def maya_temp_folder():
-    scene_dir = os.path.dirname(cmds.file(query=True, sceneName=True))
-    tmp_dir = os.path.abspath(os.path.join(scene_dir, "..", "tmp"))
-    if not os.path.isdir(tmp_dir):
-        os.makedirs(tmp_dir)
-
-    return tmp_dir
-
-
 # region ID
 def get_id_required_nodes(referenced_nodes=False, nodes=None):
     """Filter out any node which are locked (reference) or readOnly
@@ -1179,9 +1387,13 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]},
-                                 projection={"_id": True})
+        asset_data = legacy_io.find_one(
+            {
+                "type": "asset",
+                "name": legacy_io.Session["AVALON_ASSET"]
+            },
+            projection={"_id": True}
+        )
         assert asset_data, "No current asset found in Session"
         asset_id = asset_data['_id']
 
@@ -1219,22 +1431,6 @@ def set_id(node, unique_id, overwrite=False):
     if not exists or overwrite:
         attr = "{0}.cbId".format(node)
         cmds.setAttr(attr, unique_id, type="string")
-
-
-def remove_id(node):
-    """Remove the id attribute from the input node.
-
-    Args:
-        node (str): The node name
-
-    Returns:
-        bool: Whether an id attribute was deleted
-
-    """
-    if cmds.attributeQuery("cbId", node=node, exists=True):
-        cmds.deleteAttr("{}.cbId".format(node))
-        return True
-    return False
 
 
 # endregion ID
@@ -1309,6 +1505,40 @@ def apply_attributes(attributes, nodes_by_id):
                 set_attribute(attr, value, node)
 
 
+def get_container_members(container):
+    """Returns the members of a container.
+    This includes the nodes from any loaded references in the container.
+    """
+    if isinstance(container, dict):
+        # Assume it's a container dictionary
+        container = container["objectName"]
+
+    members = cmds.sets(container, query=True) or []
+    members = cmds.ls(members, long=True, objectsOnly=True) or []
+    all_members = set(members)
+
+    # Include any referenced nodes from any reference in the container
+    # This is required since we've removed adding ALL nodes of a reference
+    # into the container set and only add the reference node now.
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.ls(reference_members,
+                                    long=True,
+                                    objectsOnly=True)
+        all_members.update(reference_members)
+
+    return list(all_members)
+
+
 # region LOOKDEV
 def list_looks(asset_id):
     """Return all look subsets for the given asset
@@ -1318,9 +1548,11 @@ def list_looks(asset_id):
 
     # # get all subsets with look leading in
     # the name associated with the asset
-    subset = io.find({"parent": bson.ObjectId(asset_id),
-                      "type": "subset",
-                      "name": {"$regex": "look*"}})
+    subset = legacy_io.find({
+        "parent": bson.ObjectId(asset_id),
+        "type": "subset",
+        "name": {"$regex": "look*"}
+    })
 
     return list(subset)
 
@@ -1339,16 +1571,20 @@ def assign_look_by_version(nodes, version_id):
     """
 
     # Get representations of shader file and relationships
-    look_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "ma"})
+    look_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "ma"
+    })
 
-    json_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "json"})
+    json_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "json"
+    })
 
     # See if representation is already loaded, if so reuse it.
-    host = api.registered_host()
+    host = registered_host()
     representation_id = str(look_representation['_id'])
     for container in host.ls():
         if (container['loader'] == "LookLoader" and
@@ -1360,21 +1596,21 @@ def assign_look_by_version(nodes, version_id):
         log.info("Using look for the first time ..")
 
         # Load file
-        loaders = api.loaders_from_representation(api.discover(api.Loader),
-                                                  representation_id)
+        _loaders = discover_loader_plugins()
+        loaders = loaders_from_representation(_loaders, representation_id)
         Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
         if Loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
-        with maya.maintained_selection():
-            container_node = pipeline.load(Loader, look_representation)
+        with maintained_selection():
+            container_node = load_container(Loader, look_representation)
 
     # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
+    shader_nodes = get_container_members(container_node)
 
     # Load relationships
-    shader_relation = api.get_representation_path(json_representation)
+    shader_relation = get_representation_path(json_representation)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 
@@ -1410,9 +1646,11 @@ def assign_look(nodes, subset="lookDefault"):
         except bson.errors.InvalidId:
             log.warning("Asset ID is not compatible with bson")
             continue
-        subset_data = io.find_one({"type": "subset",
-                                   "name": subset,
-                                   "parent": asset_id})
+        subset_data = legacy_io.find_one({
+            "type": "subset",
+            "name": subset,
+            "parent": asset_id
+        })
 
         if not subset_data:
             log.warning("No subset '{}' found for {}".format(subset, asset_id))
@@ -1420,13 +1658,18 @@ def assign_look(nodes, subset="lookDefault"):
 
         # get last version
         # with backwards compatibility
-        version = io.find_one({"parent": subset_data['_id'],
-                               "type": "version",
-                               "data.families":
-                                   {"$in": ["look"]}
-                               },
-                              sort=[("name", -1)],
-                              projection={"_id": True, "name": True})
+        version = legacy_io.find_one(
+            {
+                "parent": subset_data['_id'],
+                "type": "version",
+                "data.families": {"$in": ["look"]}
+            },
+            sort=[("name", -1)],
+            projection={
+                "_id": True,
+                "name": True
+            }
+        )
 
         log.debug("Assigning look '{}' <v{:03d}>".format(subset,
                                                          version["name"]))
@@ -1590,14 +1833,14 @@ def get_container_transforms(container, members=None, root=False):
     Args:
         container (dict): the container
         members (list): optional and convenience argument
-        root (bool): return highest node in hierachy if True
+        root (bool): return highest node in hierarchy if True
 
     Returns:
         root (list / str):
     """
 
     if not members:
-        members = cmds.sets(container["objectName"], query=True)
+        members = get_container_members(container)
 
     results = cmds.ls(members, type="transform", long=True)
     if root:
@@ -1711,18 +1954,26 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
-def get_id_from_history(node):
+def get_id_from_sibling(node, history_only=True):
     """Return first node id in the history chain that matches this node.
 
     The nodes in history must be of the exact same node type and must be
     parented under the same parent.
 
+    Optionally, if no matching node is found from the history, all the
+    siblings of the node that are of the same type are checked.
+    Additionally to having the same parent, the sibling must be marked as
+    'intermediate object'.
+
     Args:
-        node (str): node to retrieve the
+        node (str): node to retrieve the history from
+        history_only (bool): if True and if nothing found in history,
+            look for an 'intermediate object' in all the node's siblings
+            of same type
 
     Returns:
-        str or None: The id from the node in history or None when no id found
-            on any valid nodes in the history.
+        str or None: The id from the sibling node or None when no id found
+            on any valid nodes in the history or siblings.
 
     """
 
@@ -1750,6 +2001,45 @@ def get_id_from_history(node):
         _id = get_id(similar_node)
         if _id:
             return _id
+
+    if not history_only:
+        # Get siblings of same type
+        similar_nodes = cmds.listRelatives(parent,
+                                           type=node_type,
+                                           fullPath=True)
+        similar_nodes = cmds.ls(similar_nodes, exactType=node_type, long=True)
+
+        # Exclude itself
+        similar_nodes = [x for x in similar_nodes if x != node]
+
+        # Get all unique ids from siblings in order since
+        # we consistently take the first one found
+        sibling_ids = OrderedDict()
+        for similar_node in similar_nodes:
+            # Check if "intermediate object"
+            if not cmds.getAttr(similar_node + ".intermediateObject"):
+                continue
+
+            _id = get_id(similar_node)
+            if not _id:
+                continue
+
+            if _id in sibling_ids:
+                sibling_ids[_id].append(similar_node)
+            else:
+                sibling_ids[_id] = [similar_node]
+
+        if sibling_ids:
+            first_id, found_nodes = next(iter(sibling_ids.items()))
+
+            # Log a warning if we've found multiple unique ids
+            if len(sibling_ids) > 1:
+                log.warning(("Found more than 1 intermediate shape with"
+                             " unique id for '{}'. Using id of first"
+                             " found: '{}'".format(node, found_nodes[0])))
+
+            return first_id
+
 
 
 # Project settings
@@ -1819,7 +2109,7 @@ def set_scene_fps(fps, update=True):
     cmds.file(modified=True)
 
 
-def set_scene_resolution(width, height):
+def set_scene_resolution(width, height, pixelAspect):
     """Set the render resolution
 
     Args:
@@ -1847,6 +2137,37 @@ def set_scene_resolution(width, height):
     cmds.setAttr("%s.width" % control_node, width)
     cmds.setAttr("%s.height" % control_node, height)
 
+    deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
+    cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
+    cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
+
+
+def reset_scene_resolution():
+    """Apply the scene resolution  from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+
+    Returns:
+        None
+    """
+
+    project_doc = legacy_io.find_one({"type": "project"})
+    project_data = project_doc["data"]
+    asset_data = lib.get_asset()["data"]
+
+    # Set project resolution
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
+    pixelAspect_key = "pixelAspect"
+
+    width = asset_data.get(width_key, project_data.get(width_key, 1920))
+    height = asset_data.get(height_key, project_data.get(height_key, 1080))
+    pixelAspect = asset_data.get(pixelAspect_key,
+                                 project_data.get(pixelAspect_key, 1))
+
+    set_scene_resolution(width, height, pixelAspect)
+
 
 def set_context_settings():
     """Apply the project settings from the project definition
@@ -1864,26 +2185,22 @@ def set_context_settings():
     """
 
     # Todo (Wijnand): apply renderer and resolution of project
-    project_doc = io.find_one({"type": "project"})
+    project_doc = legacy_io.find_one({"type": "project"})
     project_data = project_doc["data"]
     asset_data = lib.get_asset()["data"]
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
-    api.Session["AVALON_FPS"] = str(fps)
+    legacy_io.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
-    # Set project resolution
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-
-    width = asset_data.get(width_key, project_data.get(width_key, 1920))
-    height = asset_data.get(height_key, project_data.get(height_key, 1080))
-
-    set_scene_resolution(width, height)
+    reset_scene_resolution()
 
     # Set frame range.
-    avalon.maya.interactive.reset_frame_range()
+    reset_frame_range()
+
+    # Set colorspace
+    set_colorspace()
 
 
 # Valid FPS
@@ -1903,34 +2220,29 @@ def validate_fps():
     # rounding, we have to round those numbers coming from Maya.
     current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
 
-    if current_fps != fps:
+    fps_match = current_fps == fps
+    if not fps_match and not IS_HEADLESS:
+        from openpype.widgets import popup
 
-        from avalon.vendor.Qt import QtWidgets
-        from ...widgets import popup
+        parent = get_main_window()
 
-        # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
+        dialog = popup.PopupUpdateKeys(parent=parent)
+        dialog.setModal(True)
+        dialog.setWindowTitle("Maya scene does not match project FPS")
+        dialog.setMessage("Scene %i FPS does not match project %i FPS" %
+                          (current_fps, fps))
+        dialog.setButtonText("Fix")
 
-        parent = top_level_widgets.get("MayaWindow", None)
-        if parent is None:
-            pass
-        else:
-            dialog = popup.Popup2(parent=parent)
-            dialog.setModal(True)
-            dialog.setWindowTitle("Maya scene not in line with project")
-            dialog.setMessage("The FPS is out of sync, please fix")
+        # Set new text for button (add optional argument for the popup?)
+        toggle = dialog.widgets["toggle"]
+        update = toggle.isChecked()
+        dialog.on_clicked_state.connect(lambda: set_scene_fps(fps, update))
 
-            # Set new text for button (add optional argument for the popup?)
-            toggle = dialog.widgets["toggle"]
-            update = toggle.isChecked()
-            dialog.on_show.connect(lambda: set_scene_fps(fps, update))
+        dialog.show()
 
-            dialog.show()
+        return False
 
-            return False
-
-    return True
+    return fps_match
 
 
 def bake(nodes,
@@ -2152,10 +2464,11 @@ def load_capture_preset(data=None):
     for key in preset['Display Options']:
         if key.startswith('background'):
             disp_options[key] = preset['Display Options'][key]
-            disp_options[key][0] = (float(disp_options[key][0])/255)
-            disp_options[key][1] = (float(disp_options[key][1])/255)
-            disp_options[key][2] = (float(disp_options[key][2])/255)
-            disp_options[key].pop()
+            if len(disp_options[key]) == 4:
+                disp_options[key][0] = (float(disp_options[key][0])/255)
+                disp_options[key][1] = (float(disp_options[key][1])/255)
+                disp_options[key][2] = (float(disp_options[key][2])/255)
+                disp_options[key].pop()
         else:
             disp_options['displayGradient'] = True
 
@@ -2316,9 +2629,9 @@ def get_attr_in_layer(attr, layer):
 
 
 def fix_incompatible_containers():
-    """Return whether the current scene has any outdated content"""
+    """Backwards compatibility: old containers to use new ReferenceLoader"""
 
-    host = avalon.api.registered_host()
+    host = registered_host()
     for container in host.ls():
         loader = container['loader']
 
@@ -2450,7 +2763,7 @@ class shelf():
 def _get_render_instances():
     """Return all 'render-like' instances.
 
-    This returns list of instance sets that needs to receive informations
+    This returns list of instance sets that needs to receive information
     about render layer changes.
 
     Returns:
@@ -2555,7 +2868,7 @@ class RenderSetupListObserver:
                 cmds.delete(render_layer_set_name)
 
 
-class RenderSetupItemObserver():
+class RenderSetupItemObserver:
     """Handle changes in render setup items."""
 
     def __init__(self, item):
@@ -2640,7 +2953,7 @@ def update_content_on_context_change():
     This will update scene content to match new asset on context change
     """
     scene_sets = cmds.listSets(allSets=True)
-    new_asset = api.Session["AVALON_ASSET"]
+    new_asset = legacy_io.Session["AVALON_ASSET"]
     new_data = lib.get_asset()["data"]
     for s in scene_sets:
         try:
@@ -2662,7 +2975,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from avalon.vendor.Qt import QtWidgets
+    from Qt import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -2740,3 +3053,142 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
                "uuid": data["uuid"],
                "nodes": nodes,
                "attributes": attr_value}
+
+
+def set_colorspace():
+    """Set Colorspace from project configuration
+    """
+    project_name = os.getenv("AVALON_PROJECT")
+    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
+
+    # Maya 2022+ introduces new OCIO v2 color management settings that
+    # can override the old color managenement preferences. OpenPype has
+    # separate settings for both so we fall back when necessary.
+    use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
+    required_maya_version = 2022
+    maya_version = int(cmds.about(version=True))
+    maya_supports_ocio_v2 = maya_version >= required_maya_version
+    if use_ocio_v2 and not maya_supports_ocio_v2:
+        # Fallback to legacy behavior with a warning
+        log.warning("Color Management Preference v2 is enabled but not "
+                    "supported by current Maya version: {} (< {}). Falling "
+                    "back to legacy settings.".format(
+                        maya_version, required_maya_version)
+                    )
+        use_ocio_v2 = False
+
+    if use_ocio_v2:
+        root_dict = imageio["colorManagementPreference_v2"]
+    else:
+        root_dict = imageio["colorManagementPreference"]
+
+    if not isinstance(root_dict, dict):
+        msg = "set_colorspace(): argument should be dictionary"
+        log.error(msg)
+
+    log.debug(">> root_dict: {}".format(root_dict))
+
+    # enable color management
+    cmds.colorManagementPrefs(e=True, cmEnabled=True)
+    cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+
+    # set config path
+    custom_ocio_config = False
+    if root_dict.get("configFilePath"):
+        unresolved_path = root_dict["configFilePath"]
+        ocio_paths = unresolved_path[platform.system().lower()]
+
+        resolved_path = None
+        for ocio_p in ocio_paths:
+            resolved_path = str(ocio_p).format(**os.environ)
+            if not os.path.exists(resolved_path):
+                continue
+
+        if resolved_path:
+            filepath = str(resolved_path).replace("\\", "/")
+            cmds.colorManagementPrefs(e=True, configFilePath=filepath)
+            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
+            log.debug("maya '{}' changed to: {}".format(
+                "configFilePath", resolved_path))
+            custom_ocio_config = True
+        else:
+            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
+            cmds.colorManagementPrefs(e=True, configFilePath="")
+
+    # If no custom OCIO config file was set we make sure that Maya 2022+
+    # either chooses between Maya's newer default v2 or legacy config based
+    # on OpenPype setting to use ocio v2 or not.
+    if maya_supports_ocio_v2 and not custom_ocio_config:
+        if use_ocio_v2:
+            # Use Maya 2022+ default OCIO v2 config
+            log.info("Setting default Maya OCIO v2 config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="")
+        else:
+            # Set the Maya default config file path
+            log.info("Setting default Maya OCIO v1 legacy config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
+
+    # set color spaces for rendering space and view transforms
+    def _colormanage(**kwargs):
+        """Wrapper around `cmds.colorManagementPrefs`.
+
+        This logs errors instead of raising an error so color management
+        settings get applied as much as possible.
+
+        """
+        assert len(kwargs) == 1, "Must receive one keyword argument"
+        try:
+            cmds.colorManagementPrefs(edit=True, **kwargs)
+            log.debug("Setting Color Management Preference: {}".format(kwargs))
+        except RuntimeError as exc:
+            log.error(exc)
+
+    if use_ocio_v2:
+        _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        _colormanage(displayName=root_dict["displayName"])
+        _colormanage(viewName=root_dict["viewName"])
+    else:
+        _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        if maya_supports_ocio_v2:
+            _colormanage(viewName=root_dict["viewTransform"])
+            _colormanage(displayName="legacy")
+        else:
+            _colormanage(viewTransformName=root_dict["viewTransform"])
+
+
+@contextlib.contextmanager
+def parent_nodes(nodes, parent=None):
+    # type: (list, str) -> list
+    """Context manager to un-parent provided nodes and return them back."""
+    import pymel.core as pm  # noqa
+
+    parent_node = None
+    delete_parent = False
+
+    if parent:
+        if not cmds.objExists(parent):
+            parent_node = pm.createNode("transform", n=parent, ss=False)
+            delete_parent = True
+        else:
+            parent_node = pm.PyNode(parent)
+    node_parents = []
+    for node in nodes:
+        n = pm.PyNode(node)
+        try:
+            root = pm.listRelatives(n, parent=1)[0]
+        except IndexError:
+            root = None
+        node_parents.append((n, root))
+    try:
+        for node in node_parents:
+            if not parent:
+                node[0].setParent(world=True)
+            else:
+                node[0].setParent(parent_node)
+        yield
+    finally:
+        for node in node_parents:
+            if node[1]:
+                node[0].setParent(node[1])
+        if delete_parent:
+            pm.delete(parent_node)

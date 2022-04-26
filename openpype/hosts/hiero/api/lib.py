@@ -4,15 +4,17 @@ Host specific functions where host api is connected
 import os
 import re
 import sys
+import platform
 import ast
+import shutil
 import hiero
-import avalon.api as avalon
-import avalon.io
-from avalon.vendor.Qt import QtWidgets
+
+from Qt import QtWidgets
+from bson.objectid import ObjectId
+
+from openpype.pipeline import legacy_io
 from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
-import shutil
-from compiler.ast import flatten
 
 try:
     from PySide.QtCore import QFile, QTextStream
@@ -30,11 +32,19 @@ self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
+self._parent = None
 self.pype_tag_name = "openpypeData"
 self.default_sequence_name = "openpypeSequence"
 self.default_bin_name = "openpypeBin"
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+
+def flatten(_list):
+    for item in _list:
+        if isinstance(item, (list, tuple)):
+            for sub_item in flatten(item):
+                yield sub_item
+        else:
+            yield item
 
 
 def get_current_project(remove_untitled=False):
@@ -249,7 +259,7 @@ def set_track_item_pype_tag(track_item, data=None):
     Returns:
         hiero.core.Tag
     """
-    data = data or dict()
+    data = data or {}
 
     # basic Tag's attribute
     tag_data = {
@@ -283,14 +293,14 @@ def get_track_item_pype_data(track_item):
     Returns:
         dict: data found on pype tag
     """
-    data = dict()
+    data = {}
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
 
     if not tag:
         return None
 
-    # get tag metadata attribut
+    # get tag metadata attribute
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names and values to correct types
     for k, v in dict(tag_data).items():
@@ -298,8 +308,20 @@ def get_track_item_pype_data(track_item):
 
         try:
             # capture exceptions which are related to strings only
-            value = ast.literal_eval(v)
-        except (ValueError, SyntaxError):
+            if re.match(r"^[\d]+$", v):
+                value = int(v)
+            elif re.match(r"^True$", v):
+                value = True
+            elif re.match(r"^False$", v):
+                value = False
+            elif re.match(r"^None$", v):
+                value = None
+            elif re.match(r"^[\w\d_]+$", v):
+                value = v
+            else:
+                value = ast.literal_eval(v)
+        except (ValueError, SyntaxError) as msg:
+            log.warning(msg)
             value = v
 
         data.update({key: value})
@@ -360,7 +382,7 @@ def get_publish_attribute(tag):
 
 def sync_avalon_data_to_workfile():
     # import session to get project dir
-    project_name = avalon.Session["AVALON_PROJECT"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
 
     anatomy = Anatomy(project_name)
     work_template = anatomy.templates["work"]["path"]
@@ -381,11 +403,11 @@ def sync_avalon_data_to_workfile():
     try:
         project.setProjectDirectory(active_project_root)
     except Exception:
-        # old way of seting it
+        # old way of setting it
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_doc = avalon.io.find_one({"type": "project"})
+    project_doc = legacy_io.find_one({"type": "project"})
     project_data = project_doc["data"]
 
     log.debug("project_data: {}".format(project_data))
@@ -593,7 +615,7 @@ def create_nuke_workfile_clips(nuke_workfiles, seq=None):
     if not seq:
         seq = hiero.core.Sequence('NewSequences')
         root.addItem(hiero.core.BinItem(seq))
-    # todo will ned to define this better
+    # todo will need to define this better
     # track = seq[1]  # lazy example to get a destination#  track
     clips_lst = []
     for nk in nuke_workfiles:
@@ -728,9 +750,14 @@ def get_selected_track_items(sequence=None):
 def set_selected_track_items(track_items_list, sequence=None):
     _sequence = sequence or get_current_sequence()
 
+    # make sure only trackItems are in list selection
+    only_track_items = [
+        i for i in track_items_list
+        if isinstance(i, hiero.core.TrackItem)]
+
     # Getting selection
     timeline_editor = hiero.ui.getTimelineEditor(_sequence)
-    return timeline_editor.setSelection(track_items_list)
+    return timeline_editor.setSelection(only_track_items)
 
 
 def _read_doc_from_path(path):
@@ -758,6 +785,13 @@ def _set_hrox_project_knobs(doc, **knobs):
     # set attributes to Project Tag
     proj_elem = doc.documentElement().firstChildElement("Project")
     for k, v in knobs.items():
+        if "ocioconfigpath" in k:
+            paths_to_format = v[platform.system().lower()]
+            for _path in paths_to_format:
+                v = _path.format(**os.environ)
+                if not os.path.exists(v):
+                    continue
+        log.debug("Project colorspace knob `{}` was set to `{}`".format(k, v))
         if isinstance(v, dict):
             continue
         proj_elem.setAttribute(str(k), v)
@@ -805,7 +839,7 @@ def apply_colorspace_project():
         # remove the TEMP file as we dont need it
         os.remove(copy_current_file_tmp)
 
-    # use the code from bellow for changing xml hrox Attributes
+    # use the code from below for changing xml hrox Attributes
     presets.update({"name": os.path.basename(copy_current_file)})
 
     # read HROX in as QDomSocument
@@ -841,7 +875,7 @@ def apply_colorspace_clips():
         if "default" in clip_colorspace:
             continue
 
-        # check if any colorspace presets for read is mathing
+        # check if any colorspace presets for read is matching
         preset_clrsp = None
         for k in presets:
             if not bool(re.search(k["regex"], clip_media_source_path)):
@@ -898,7 +932,7 @@ def get_sequence_pattern_and_padding(file):
         Can find file.0001.ext, file.%02d.ext, file.####.ext
 
     Return:
-        string: any matching sequence patern
+        string: any matching sequence pattern
         int: padding of sequnce numbering
     """
     foundall = re.findall(
@@ -917,7 +951,7 @@ def get_sequence_pattern_and_padding(file):
 
 
 def sync_clip_name_to_data_asset(track_items_list):
-    # loop trough all selected clips
+    # loop through all selected clips
     for track_item in track_items_list:
         # ignore if parent track is locked or disabled
         if track_item.parent().isLocked():
@@ -959,7 +993,6 @@ def check_inventory_versions():
     it to red.
     """
     from . import parse_container
-    from avalon import io
 
     # presets
     clip_color_last = "green"
@@ -971,19 +1004,19 @@ def check_inventory_versions():
 
         if container:
             # get representation from io
-            representation = io.find_one({
+            representation = legacy_io.find_one({
                 "type": "representation",
-                "_id": io.ObjectId(container["representation"])
+                "_id": ObjectId(container["representation"])
             })
 
             # Get start frame from version data
-            version = io.find_one({
+            version = legacy_io.find_one({
                 "type": "version",
                 "_id": representation["parent"]
             })
 
             # get all versions in list
-            versions = io.find({
+            versions = legacy_io.find({
                 "type": "version",
                 "parent": version["parent"]
             }).distinct('name')
@@ -1029,3 +1062,15 @@ def before_project_save(event):
 
     # also mark old versions of loaded containers
     check_inventory_versions()
+
+
+def get_main_window():
+    """Acquire Nuke's main window"""
+    if self._parent is None:
+        top_widgets = QtWidgets.QApplication.topLevelWidgets()
+        name = "Foundry::UI::DockMainWindow"
+        main_window = next(widget for widget in top_widgets if
+                           widget.inherits("QMainWindow") and
+                           widget.metaObject().className() == name)
+        self._parent = main_window
+    return self._parent

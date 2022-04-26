@@ -1,17 +1,25 @@
 """Load a layout in Blender."""
 
+import json
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, Optional
 
 import bpy
-import json
 
-from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
-from avalon.blender.pipeline import AVALON_INSTANCES
+from openpype.pipeline import (
+    discover_loader_plugins,
+    remove_container,
+    load_container,
+    get_representation_path,
+    loaders_from_representation,
+    AVALON_CONTAINER_ID,
+)
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_INSTANCES,
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+)
 from openpype.hosts.blender.api import plugin
 
 
@@ -31,7 +39,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         objects = list(asset_group.children)
 
         for obj in objects:
-            api.remove(obj.get(AVALON_PROPERTY))
+            remove_container(obj.get(AVALON_PROPERTY))
 
     def _remove_animation_instances(self, asset_group):
         instances = bpy.data.collections.get(AVALON_INSTANCES)
@@ -59,18 +67,18 @@ class JsonLayoutLoader(plugin.AssetLoader):
         return None
 
     def _process(self, libpath, asset, asset_group, actions):
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
-        all_loaders = api.discover(api.Loader)
+        all_loaders = discover_loader_plugins()
 
         for element in data:
             reference = element.get('reference')
             family = element.get('family')
 
-            loaders = api.loaders_from_representation(all_loaders, reference)
+            loaders = loaders_from_representation(all_loaders, reference)
             loader = self._get_loader(loaders, family)
 
             if not loader:
@@ -91,17 +99,38 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 'animation_asset': asset
             }
 
+            if element.get('animation'):
+                options['animation_file'] = str(Path(libpath).with_suffix(
+                    '')) + "." + element.get('animation')
+
             # This should return the loaded asset, but the load call will be
             # added to the queue to run in the Blender main thread, so
             # at this time it will not return anything. The assets will be
             # loaded in the next Blender cycle, so we use the options to
             # set the transform, parent and assign the action, if there is one.
-            api.load(
+            load_container(
                 loader,
                 reference,
                 namespace=instance_name,
                 options=options
             )
+
+        # Camera creation when loading a layout is not necessary for now,
+        # but the code is worth keeping in case we need it in the future.
+        # # Create the camera asset and the camera instance
+        # creator_plugin = lib.get_creator_by_name("CreateCamera")
+        # if not creator_plugin:
+        #     raise ValueError("Creator plugin \"CreateCamera\" was "
+        #                      "not found.")
+
+        # legacy_create(
+        #     creator_plugin,
+        #     name="camera",
+        #     # name=f"{unique_number}_{subset}_animation",
+        #     asset=asset,
+        #     options={"useSelection": False}
+        #     # data={"dependencies": str(context["representation"]["_id"])}
+        # )
 
     def process_asset(self,
                       context: dict,
@@ -165,7 +194,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

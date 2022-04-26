@@ -6,11 +6,15 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype.pipeline import (
+    get_representation_path,
+    AVALON_CONTAINER_ID,
+)
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+)
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -81,7 +85,8 @@ class BlendModelLoader(plugin.AssetLoader):
                 plugin.prepare_data(local_obj.data, group_name)
 
                 for material_slot in local_obj.material_slots:
-                    plugin.prepare_data(material_slot.material, group_name)
+                    if material_slot.material:
+                        plugin.prepare_data(material_slot.material, group_name)
 
             if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
@@ -93,7 +98,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         bpy.data.orphans_purge(do_local_ids=False)
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 
@@ -126,7 +131,7 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         if options is not None:
             parent = options.get('parent')
@@ -158,7 +163,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
                 bpy.ops.object.parent_set(keep_transform=True)
 
-                bpy.ops.object.select_all(action='DESELECT')
+                plugin.deselect_all()
 
         objects = self._process(libpath, asset_group, group_name)
 
@@ -192,7 +197,7 @@ class BlendModelLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(
@@ -245,7 +250,8 @@ class BlendModelLoader(plugin.AssetLoader):
         # If it is the last object to use that library, remove it
         if count == 1:
             library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
-            bpy.data.libraries.remove(library)
+            if library:
+                bpy.data.libraries.remove(library)
 
         self._process(str(libpath), asset_group, object_name)
 
@@ -253,6 +259,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
+        metadata["parent"] = str(representation["parent"])
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.

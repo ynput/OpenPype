@@ -13,12 +13,12 @@ Ftrack is currently the main project management option for OpenPype. This docume
 ## Prepare Ftrack for OpenPype
 
 ### Server URL
-If you want to connect Ftrack to OpenPype you might need to make few changes in Ftrack settings. These changes would take a long time to do manually, so we prepared a few Ftrack actions to help you out. First, you'll need to launch OpenPype settings, enable [Ftrack module](admin_settings_system#Ftrack), and enter the address to your Ftrack server. 
+If you want to connect Ftrack to OpenPype you might need to make few changes in Ftrack settings. These changes would take a long time to do manually, so we prepared a few Ftrack actions to help you out. First, you'll need to launch OpenPype settings, enable [Ftrack module](admin_settings_system.md#Ftrack), and enter the address to your Ftrack server. 
 
 ### Login
-Once your server is configured, restart OpenPype and you should be prompted to enter your [Ftrack credentials](artist_ftrack#How-to-use-Ftrack-in-OpenPype) to be able to run our Ftrack actions. If you are already logged in to Ftrack in your browser, it is enough to press `Ftrack login` and it will connect automatically.
+Once your server is configured, restart OpenPype and you should be prompted to enter your [Ftrack credentials](artist_ftrack.md#How-to-use-Ftrack-in-OpenPype) to be able to run our Ftrack actions. If you are already logged in to Ftrack in your browser, it is enough to press `Ftrack login` and it will connect automatically.
 
-For more details step by step on how to login to Ftrack in OpenPype to go [artist Ftrack login](artist_ftrack#How-to-use-Ftrack-in-OpenPype) documentation.
+For more details step by step on how to login to Ftrack in OpenPype to go [artist Ftrack login](artist_ftrack.md#How-to-use-Ftrack-in-OpenPype) documentation.
 
 You can only use our Ftrack Actions and publish to Ftrack if each artist is logged in.
 
@@ -26,7 +26,7 @@ You can only use our Ftrack Actions and publish to Ftrack if each artist is logg
 ### Custom Attributes
 After successfully connecting OpenPype with you Ftrack, you can right click on any project in Ftrack and you should see a bunch of actions available. The most important one is called `OpenPype Admin` and contains multiple options inside.
 
-To prepare Ftrack for working with OpenPype you'll need to run [OpenPype Admin - Create/Update Avalon Attributes](manager_ftrack_actions#create-update-avalon-attributes), which creates and sets the Custom Attributes necessary for OpenPype to function. 
+To prepare Ftrack for working with OpenPype you'll need to run [OpenPype Admin - Create/Update Avalon Attributes](manager_ftrack_actions.md#create-update-avalon-attributes), which creates and sets the Custom Attributes necessary for OpenPype to function. 
 
 
 
@@ -51,10 +51,7 @@ There are specific launch arguments for event server. With `openpype_console eve
 
 -  **`--ftrack-user "your.username"`** : Ftrack Username
 -   **`--ftrack-api-key "00000aaa-11bb-22cc-33dd-444444eeeee"`** : User's API key
--   **`--store-crededentials`** : Entered credentials will be stored for next launch with this argument _(It is not needed to enter **ftrackuser** and **ftrackapikey** args on next launch)_
--   **`--no-stored-credentials`** : Stored credentials are loaded first so if you want to change credentials use this argument
 -   `--ftrack-url "https://yourdomain.ftrackapp.com/"` : Ftrack server URL _(it is not needed to enter if you have set `FTRACK_SERVER` in OpenPype' environments)_
--   `--ftrack-events-path "//Paths/To/Events/"` : Paths to events folder. May contain multiple paths separated by `;`. _(it is not needed to enter if you have set `FTRACK_EVENTS_PATH` in OpenPype' environments)_
 
 So if you want to use OpenPype's environments then you can launch event server for first time with these arguments `openpype_console.exe eventserver --ftrack-user "my.username" --ftrack-api-key "00000aaa-11bb-22cc-33dd-444444eeeee" --store-credentials`. Since that time, if everything was entered correctly, you can launch event server with `openpype_console.exe eventserver`.
 
@@ -64,8 +61,6 @@ So if you want to use OpenPype's environments then you can launch event server f
 - `FTRACK_API_USER` - Username _("your.username")_
 - `FTRACK_API_KEY` - User's API key _("00000aaa-11bb-22cc-33dd-444444eeeee")_
 - `FTRACK_SERVER` - Ftrack server url _("<https://yourdomain.ftrackapp.com/">)_
-- `FTRACK_EVENTS_PATH` - Paths to events _("//Paths/To/Events/")_
-    We do not recommend you this way.
 
 </TabItem>
 </Tabs>
@@ -103,10 +98,12 @@ Event server should **not** run more than once! It may cause major issues.
     `sudo vi /opt/openpype/run_event_server.sh`
 -   add content to the file:
 ```sh
-#!/usr/bin/env
-export OPENPYPE_DEBUG=3
-pushd /mnt/pipeline/prod/openpype-setup
-. openpype_console eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key>
+#!/usr/bin/env bash
+export OPENPYPE_DEBUG=1
+export OPENPYPE_MONGO=<openpype-mongo-url>
+
+pushd /mnt/path/to/openpype
+./openpype_console eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key>
 ```
 -   change file permission:
     `sudo chmod 0755 /opt/openpype/run_event_server.sh`
@@ -146,9 +143,11 @@ WantedBy=multi-user.target
 -   add content to the service file: 
 ```sh
 @echo off
-set OPENPYPE_DEBUG=3
-pushd \\path\to\file\
-openpype_console.exe eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key> 
+set OPENPYPE_DEBUG=1
+set OPENPYPE_MONGO=<openpype-mongo-url>
+
+pushd \\path\to\openpype
+openpype_console.exe eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key>
 ```
 -   download and install `nssm.cc`
 -   create Windows service according to nssm.cc manual
@@ -167,19 +166,19 @@ Events are helpers for automation. They react to Ftrack Web Server events like c
 
 ### Sync to Avalon
 
-Automatic [synchronization to pipeline database](manager_ftrack#synchronization-to-avalon-database).
+Automatic [synchronization to pipeline database](manager_ftrack.md#synchronization-to-avalon-database).
 
-This event updates entities on their changes Ftrack. When new entity is created or existing entity is modified. Interface with listing information is shown to users when [synchronization rules](manager_ftrack#synchronization-rules) are not met. This event may also undo changes when they might break pipeline. Namely _change name of synchronized entity_, _move synchronized entity in hierarchy_.
+This event updates entities on their changes Ftrack. When new entity is created or existing entity is modified. Interface with listing information is shown to users when [synchronization rules](manager_ftrack.md#synchronization-rules) are not met. This event may also undo changes when they might break pipeline. Namely _change name of synchronized entity_, _move synchronized entity in hierarchy_.
 
 :::important
-Deleting an entity by Ftrack's default is not processed for security reasons _(to delete entity use [Delete Asset/Subset action](manager_ftrack_actions#delete-asset-subset))_.
+Deleting an entity by Ftrack's default is not processed for security reasons _(to delete entity use [Delete Asset/Subset action](manager_ftrack_actions.md#delete-asset-subset))_.
 :::
 
 ### Synchronize Hierarchical and Entity Attributes 
 
 Auto-synchronization of hierarchical attributes from Ftrack entities.
 
-Related to [Synchronize to Avalon database](manager_ftrack#synchronization-to-avalon-database) event _(without it, it makes no sense to use this event)_. Hierarchical attributes must be synchronized with special way so we needed to split synchronization into 2 parts. There are [synchronization rules](manager_ftrack#synchronization-rules) for hierarchical attributes that must be met otherwise interface with messages about not meeting conditions is shown to user.
+Related to [Synchronize to Avalon database](manager_ftrack.md#synchronization-to-avalon-database) event _(without it, it makes no sense to use this event)_. Hierarchical attributes must be synchronized with special way so we needed to split synchronization into 2 parts. There are [synchronization rules](manager_ftrack.md#synchronization-rules) for hierarchical attributes that must be met otherwise interface with messages about not meeting conditions is shown to user.
 
 ### Update Hierarchy thumbnails
 
@@ -213,7 +212,7 @@ This event makes sure statuses Asset Version get synced to it's task. After chan
 
 This event handler allows setting of different status to a first created Asset Version in Ftrack.
 
-This is usefull for example if first version publish doesn't contain any actual reviewable work, but is only used for roundtrip conform check, in which case this version could receive status `pending conform` instead of standard `pending review`
+This is useful for example if first version publish doesn't contain any actual reviewable work, but is only used for roundtrip conform check, in which case this version could receive status `pending conform` instead of standard `pending review`
 
 ### Update status on next task
 Change status on next task by task types order when task status state changed to "Done". All tasks with the same Task mapping of next task status changes From → To. Some status can be ignored. 

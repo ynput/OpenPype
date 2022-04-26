@@ -1,0 +1,315 @@
+{
+  "projectName": "OpenPype",
+  "projectOwner": "pypeclub",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "mkolar",
+      "name": "Milan Kolar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3333008?v=4",
+      "profile": "http://pype.club/",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "business",
+        "content",
+        "fundingFinding",
+        "maintenance",
+        "projectManagement",
+        "review",
+        "mentoring",
+        "question"
+      ]
+    },
+    {
+      "login": "jakubjezek001",
+      "name": "Jakub Ježek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40640033?v=4",
+      "profile": "https://www.linkedin.com/in/jakubjezek79",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "content",
+        "review",
+        "maintenance",
+        "mentoring",
+        "projectManagement",
+        "question"
+      ]
+    },
+    {
+      "login": "antirotor",
+      "name": "Ondřej Samohel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33513211?v=4",
+      "profile": "https://github.com/antirotor",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "content",
+        "review",
+        "maintenance",
+        "mentoring",
+        "projectManagement",
+        "question"
+      ]
+    },
+    {
+      "login": "iLLiCiTiT",
+      "name": "Jakub Trllo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43494761?v=4",
+      "profile": "https://github.com/iLLiCiTiT",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "review",
+        "maintenance",
+        "question"
+      ]
+    },
+    {
+      "login": "kalisp",
+      "name": "Petr Kalis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4457962?v=4",
+      "profile": "https://github.com/kalisp",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "review",
+        "maintenance",
+        "question"
+      ]
+    },
+    {
+      "login": "64qam",
+      "name": "64qam",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26925793?v=4",
+      "profile": "https://github.com/64qam",
+      "contributions": [
+        "code",
+        "review",
+        "doc",
+        "infra",
+        "projectManagement",
+        "maintenance",
+        "content",
+        "userTesting"
+      ]
+    },
+    {
+      "login": "BigRoy",
+      "name": "Roy Nieterau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2439881?v=4",
+      "profile": "http://www.colorbleed.nl/",
+      "contributions": [
+        "code",
+        "doc",
+        "review",
+        "mentoring",
+        "question"
+      ]
+    },
+    {
+      "login": "tokejepsen",
+      "name": "Toke Jepsen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1860085?v=4",
+      "profile": "https://github.com/tokejepsen",
+      "contributions": [
+        "code",
+        "doc",
+        "review",
+        "mentoring",
+        "question"
+      ]
+    },
+    {
+      "login": "jrsndl",
+      "name": "Jiri Sindelar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45896205?v=4",
+      "profile": "https://github.com/jrsndl",
+      "contributions": [
+        "code",
+        "review",
+        "doc",
+        "content",
+        "tutorial",
+        "userTesting"
+      ]
+    },
+    {
+      "login": "simonebarbieri",
+      "name": "Simone Barbieri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1087869?v=4",
+      "profile": "https://barbierisimone.com/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "karimmozilla",
+      "name": "karimmozilla",
+      "avatar_url": "https://avatars.githubusercontent.com/u/82811760?v=4",
+      "profile": "http://karimmozilla.xyz/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Allan-I",
+      "name": "Allan I. A.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76656700?v=4",
+      "profile": "https://github.com/Allan-I",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "m-u-r-p-h-y",
+      "name": "murphy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/352795?v=4",
+      "profile": "https://www.linkedin.com/in/mmuurrpphhyy/",
+      "contributions": [
+        "code",
+        "review",
+        "userTesting",
+        "doc",
+        "projectManagement"
+      ]
+    },
+    {
+      "login": "aardschok",
+      "name": "Wijnand Koreman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26920875?v=4",
+      "profile": "https://github.com/aardschok",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "zhoub",
+      "name": "Bo Zhou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1798206?v=4",
+      "profile": "http://jedimaster.cnblogs.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ClementHector",
+      "name": "Clément Hector",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7068597?v=4",
+      "profile": "https://www.linkedin.com/in/clementhector/",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "davidlatwe",
+      "name": "David Lai",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3357009?v=4",
+      "profile": "https://twitter.com/davidlatwe",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "2-REC",
+      "name": "Derek ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42170307?v=4",
+      "profile": "https://github.com/2-REC",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "gabormarinov",
+      "name": "Gábor Marinov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8620515?v=4",
+      "profile": "https://github.com/gabormarinov",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "icyvapor",
+      "name": "icyvapor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1195278?v=4",
+      "profile": "https://github.com/icyvapor",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "jlorrain",
+      "name": "Jérôme LORRAIN",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7955673?v=4",
+      "profile": "https://github.com/jlorrain",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "dmo-j-cube",
+      "name": "David Morris-Oliveros",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89823400?v=4",
+      "profile": "https://github.com/dmo-j-cube",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "BenoitConnan",
+      "name": "BenoitConnan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/82808268?v=4",
+      "profile": "https://github.com/BenoitConnan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Malthaldar",
+      "name": "Malthaldar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33671694?v=4",
+      "profile": "https://github.com/Malthaldar",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "svenneve",
+      "name": "Sven Neve",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2472863?v=4",
+      "profile": "http://www.svenneve.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "zafrs",
+      "name": "zafrs",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26890002?v=4",
+      "profile": "https://github.com/zafrs",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7
+}

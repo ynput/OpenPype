@@ -9,7 +9,9 @@ SINGLE_FILE_FORMATS = ['avi', 'mp4', 'mxf', 'mov', 'mpg', 'mpeg', 'wmv', 'm4v',
                        'm2v']
 
 
-def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
+def evaluate_filepath_new(
+        k_value, k_eval, project_dir, first_frame, allow_relative):
+
     # get combined relative path
     combined_relative_path = None
     if k_eval is not None and project_dir is not None:
@@ -26,8 +28,9 @@ def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
             combined_relative_path = None
 
     try:
-        k_value = k_value % first_frame
-        if os.path.exists(k_value):
+        # k_value = k_value % first_frame
+        if os.path.isdir(os.path.basename(k_value)):
+            # doesn't check for file, only parent dir
             filepath = k_value
         elif os.path.exists(k_eval):
             filepath = k_eval
@@ -37,10 +40,12 @@ def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
 
         filepath = os.path.abspath(filepath)
     except Exception as E:
-        log.error("Cannot create Read node. Perhaps it needs to be rendered first :) Error: `{}`".format(E))
+        log.error("Cannot create Read node. Perhaps it needs to be \
+                  rendered first :) Error: `{}`".format(E))
         return None
 
     filepath = filepath.replace('\\', '/')
+    # assumes last number is a sequence counter
     current_frame = re.findall(r'\d+', filepath)[-1]
     padding = len(current_frame)
     basename = filepath[: filepath.rfind(current_frame)]
@@ -51,11 +56,13 @@ def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
         pass
     else:
         # Image sequence needs hashes
+        # to do still with no number not handled
         filepath = basename + '#' * padding + '.' + filetype
 
     # relative path? make it relative again
-    if not isinstance(project_dir, type(None)):
-        filepath = filepath.replace(project_dir, '.')
+    if allow_relative:
+        if (not isinstance(project_dir, type(None))) and project_dir != "":
+            filepath = filepath.replace(project_dir, '.')
 
     # get first and last frame from disk
     frames = []
@@ -69,7 +76,8 @@ def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
     frames = sorted(frames)
     firstframe = frames[0]
     lastframe = frames[len(frames) - 1]
-    if lastframe < 0:
+
+    if int(lastframe) < 0:
         lastframe = firstframe
 
     return filepath, firstframe, lastframe
@@ -94,41 +102,40 @@ def create_read_node(ndata, comp_start):
     return
 
 
-def write_to_read(gn):
+def write_to_read(gn,
+                  allow_relative=False):
+
     comp_start = nuke.Root().knob('first_frame').value()
-    comp_end = nuke.Root().knob('last_frame').value()
     project_dir = nuke.Root().knob('project_directory').getValue()
     if not os.path.exists(project_dir):
         project_dir = nuke.Root().knob('project_directory').evaluate()
 
     group_read_nodes = []
-
     with gn:
         height = gn.screenHeight()  # get group height and position
         new_xpos = int(gn.knob('xpos').value())
         new_ypos = int(gn.knob('ypos').value()) + height + 20
         group_writes = [n for n in nuke.allNodes() if n.Class() == "Write"]
-        print("__ group_writes: {}".format(group_writes))
         if group_writes != []:
             # there can be only 1 write node, taking first
             n = group_writes[0]
 
             if n.knob('file') is not None:
-                file_path_new = evaluate_filepath_new(
+                myfile, firstFrame, lastFrame = evaluate_filepath_new(
                     n.knob('file').getValue(),
                     n.knob('file').evaluate(),
                     project_dir,
-                    comp_start
+                    comp_start,
+                    allow_relative
                 )
-                if not file_path_new:
+                if not myfile:
                     return
 
-                myfiletranslated, firstFrame, lastFrame = file_path_new
                 # get node data
                 ndata = {
-                    'filepath': myfiletranslated,
-                    'firstframe': firstFrame,
-                    'lastframe': lastFrame,
+                    'filepath': myfile,
+                    'firstframe': int(firstFrame),
+                    'lastframe': int(lastFrame),
                     'new_xpos': new_xpos,
                     'new_ypos': new_ypos,
                     'colorspace': n.knob('colorspace').getValue(),
@@ -137,7 +144,6 @@ def write_to_read(gn):
                     'write_frame': n.knob('frame').value()
                 }
                 group_read_nodes.append(ndata)
-
 
     # create reads in one go
     for oneread in group_read_nodes:

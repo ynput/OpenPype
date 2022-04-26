@@ -1,7 +1,8 @@
-from avalon import api, style
+from openpype.style import get_default_entity_icon_color
+from openpype.pipeline import load
 
 
-class CopyFile(api.Loader):
+class CopyFile(load.LoaderPlugin):
     """Copy the published file to be pasted at the desired location"""
 
     representations = ["*"]
@@ -10,7 +11,7 @@ class CopyFile(api.Loader):
     label = "Copy File"
     order = 10
     icon = "copy"
-    color = style.colors.default
+    color = get_default_entity_icon_color()
 
     def load(self, context, name=None, namespace=None, data=None):
         self.log.info("Added copy to clipboard: {0}".format(self.fname))
@@ -18,7 +19,7 @@ class CopyFile(api.Loader):
 
     @staticmethod
     def copy_file_to_clipboard(path):
-        from avalon.vendor.Qt import QtCore, QtWidgets
+        from Qt import QtCore, QtWidgets
 
         clipboard = QtWidgets.QApplication.clipboard()
         assert clipboard, "Must have running QApplication instance"

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Files not found</title>
+<description>
+## Source files not found
+
+Process contains duplicated shot names:
+'{files_not_found}'
+
+### How to repair?
+
+Add missing files or run Publish again to collect new publishable files.
+</description>
+</error>
+</root>

@@ -132,6 +132,19 @@
                     ]
                 },
                 {
+                    "key": "baking",
+                    "type": "dict",
+                    "label": "Extract-review baking profile",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "viewerProcess",
+                            "label": "Viewer Process"
+                        }
+                    ]
+                },
+                {
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
@@ -181,6 +194,9 @@
                                         },
                                         {
                                             "aces_1.1": "aces_1.1"
+                                        },
+                                        {
+                                            "aces_1.2": "aces_1.2"
                                         },
                                         {
                                             "custom": "custom"
@@ -351,6 +367,136 @@
                                         "type": "text",
                                         "key": "colorspace",
                                         "label": "Colorspace"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "key": "maya",
+            "type": "dict",
+            "label": "Maya",
+            "children": [
+                {
+                    "key": "colorManagementPreference_v2",
+                    "type": "dict",
+                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Use Color Management Preference v2"
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "displayName",
+                            "label": "Display"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewName",
+                            "label": "View"
+                        }
+                    ]
+                },
+                {
+                    "key": "colorManagementPreference",
+                    "type": "dict",
+                    "label": "Color Management Preference (legacy)",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewTransform",
+                            "label": "Viewer Transform"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "key": "flame",
+            "type": "dict",
+            "label": "Flame/Flair",
+            "children": [
+                {
+                    "key": "project",
+                    "type": "dict",
+                    "label": "Project",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "form",
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "colourPolicy",
+                                    "label": "Colour Policy (name or path)"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "frameDepth",
+                                    "label": "Image Depth"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "fieldDominance",
+                                    "label": "Field Dominance"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "profilesMapping",
+                    "type": "dict",
+                    "label": "Profile names mapping",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "inputs",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "flameName",
+                                        "label": "Flame name"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "ocioName",
+                                        "label": "OCIO name"
                                     }
                                 ]
                             }

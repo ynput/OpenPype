@@ -1,0 +1,18 @@
+from Qt import QtCore
+
+
+DEFAULT_PROJECT_LABEL = "< Default >"
+PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
+PROJECT_IS_ACTIVE_ROLE = QtCore.Qt.UserRole + 2
+PROJECT_IS_SELECTED_ROLE = QtCore.Qt.UserRole + 3
+PROJECT_VERSION_ROLE = QtCore.Qt.UserRole + 4
+
+
+__all__ = (
+    "DEFAULT_PROJECT_LABEL",
+
+    "PROJECT_NAME_ROLE",
+    "PROJECT_IS_ACTIVE_ROLE",
+    "PROJECT_IS_SELECTED_ROLE",
+    "PROJECT_VERSION_ROLE",
+)

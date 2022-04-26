@@ -1,10 +1,16 @@
-import pyblish.api
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import lib as pnlib
-import nuke
 import os
+
+import nuke
+
+import pyblish.api
+
 import openpype
-reload(pnlib)
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    reset_selection,
+    select_nodes
+)
+
 
 class ExtractBackdropNode(openpype.api.Extractor):
     """Extracting content of backdrop nodes
@@ -28,7 +34,7 @@ class ExtractBackdropNode(openpype.api.Extractor):
         path = os.path.join(stagingdir, filename)
 
         # maintain selection
-        with anlib.maintained_selection():
+        with maintained_selection():
             # all connections outside of backdrop
             connections_in = instance.data["nodeConnectionsIn"]
             connections_out = instance.data["nodeConnectionsOut"]
@@ -45,7 +51,7 @@ class ExtractBackdropNode(openpype.api.Extractor):
                     nodes.append(inpn)
                     tmp_nodes.append(inpn)
 
-            anlib.reset_selection()
+            reset_selection()
 
             # connect output node
             for n, output in connections_out.items():
@@ -59,11 +65,11 @@ class ExtractBackdropNode(openpype.api.Extractor):
                 opn.autoplace()
                 nodes.append(opn)
                 tmp_nodes.append(opn)
-                anlib.reset_selection()
+                reset_selection()
 
             # select nodes to copy
-            anlib.reset_selection()
-            anlib.select_nodes(nodes)
+            reset_selection()
+            select_nodes(nodes)
             # create tmp nk file
             # save file to the path
             nuke.nodeCopy(path)

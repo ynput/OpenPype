@@ -106,7 +106,7 @@ $port = 2707
 # path to database
 $dbpath = (Get-Item $openpype_root).parent.FullName + "\mongo_db_data"
 
-$preferred_version = "4.0"
+$preferred_version = "5.0"
 
 $mongoPath = Find-Mongo $preferred_version
 Write-Color -Text ">>> ", "Using DB path: ", "[ ", "$($dbpath)", " ]" -Color Green, Gray, Cyan, White, Cyan

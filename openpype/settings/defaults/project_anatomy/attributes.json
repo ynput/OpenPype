@@ -22,5 +22,6 @@
         "aftereffects/2021",
         "unreal/4-26"
     ],
-    "tools_env": []
+    "tools_env": [],
+    "active": true
 }

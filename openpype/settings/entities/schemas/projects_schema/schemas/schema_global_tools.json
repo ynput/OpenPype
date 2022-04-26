@@ -41,6 +41,11 @@
                                 "multiselection": true
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Task names",
                                 "type": "list",
@@ -127,8 +132,13 @@
                                   ]
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
-                                "label": "Tasks",
+                                "label": "Task names",
                                 "type": "list",
                                 "object_type": "text"
                             },
@@ -162,8 +172,14 @@
                                 ]
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "list",
+                                "object_type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
-                                "label": "Tasks",
+                                "label": "Task names",
                                 "type": "list",
                                 "object_type": "text"
                             },
@@ -179,14 +195,92 @@
                     }
                 },
                 {
-                    "type": "dict-modifiable",
+                    "type": "list",
+                    "key": "extra_folders",
+                    "label": "Extra work folders",
                     "collapsible": true,
-                    "key": "sw_folders",
-                    "label": "Extra task folders",
+                    "use_label_wrap": true,
                     "is_group": true,
                     "object_type": {
-                        "type": "list",
-                        "object_type": "text"
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "type": "task-types-enum",
+                                "key": "task_types",
+                                "label": "Task types"
+                            },
+                            {
+                                "label": "Task names",
+                                "key": "task_names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "label",
+                                "label": "Folders will be created in directory next to workfile. Items may contain nested directories (e.g. <b>resources/images</b>)."
+                            },
+                            {
+                                "key": "folders",
+                                "label": "Folders",
+                                "type": "list",
+                                "highlight_content": true,
+                                "collapsible": false,
+                                "object_type": "text"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "loader",
+            "label": "Loader",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "family_filter_profiles",
+                    "label": "Family filtering",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "type": "task-types-enum",
+                                "key": "task_types",
+                                "label": "Task types"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "is_include",
+                                "label": "Exclude / Include"
+                            },
+                            {
+                                "type": "template",
+                                "name": "template_publish_families",
+                                "template_data": {
+                                    "key": "filter_families",
+                                    "label": "Filter families",
+                                    "multiselection": true
+                                }
+                            }
+                        ]
                     }
                 }
             ]

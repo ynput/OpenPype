@@ -1,12 +1,16 @@
 import re
 import uuid
-from avalon import api
-import openpype.api as pype
-from openpype.hosts import resolve
-from avalon.vendor import qargparse
-from . import lib
 
+import qargparse
 from Qt import QtWidgets, QtCore
+
+import openpype.api as pype
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
+from openpype.hosts import resolve
+from . import lib
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -133,7 +137,7 @@ class CreatorWidget(QtWidgets.QDialog):
         # convert label text to normal capitalized text with spaces
         label_text = self.camel_case_split(text)
 
-        # assign the new text to lable widget
+        # assign the new text to label widget
         label = QtWidgets.QLabel(label_text)
         label.setObjectName("LineLabel")
 
@@ -289,7 +293,7 @@ class ClipLoader:
         """ Initialize object
 
         Arguments:
-            cls (avalon.api.Loader): plugin object
+            cls (openpype.pipeline.load.LoaderPlugin): plugin object
             context (dict): loader plugin context
             options (dict)[optional]: possible keys:
                 projectBinPath: "path/to/binItem"
@@ -367,7 +371,7 @@ class ClipLoader:
     def _get_asset_data(self):
         """ Get all available asset data
 
-        joint `data` key with asset.data dict into the representaion
+        joint `data` key with asset.data dict into the representation
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
@@ -445,7 +449,7 @@ class ClipLoader:
         return timeline_item
 
 
-class TimelineItemLoader(api.Loader):
+class TimelineItemLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that
@@ -493,7 +497,7 @@ class TimelineItemLoader(api.Loader):
         pass
 
 
-class Creator(pype.PypeCreatorMixin, api.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     marker_color = "Purple"
@@ -540,8 +544,8 @@ class PublishClip:
         "track": "sequence",
     }
 
-    # parents search patern
-    parents_search_patern = r"\{([a-z]*?)\}"
+    # parents search pattern
+    parents_search_pattern = r"\{([a-z]*?)\}"
 
     # default templates for non-ui use
     rename_default = False
@@ -630,7 +634,7 @@ class PublishClip:
         return self.timeline_item
 
     def _populate_timeline_item_default_data(self):
-        """ Populate default formating data from track item. """
+        """ Populate default formatting data from track item. """
 
         self.timeline_item_default_data = {
             "_folder_": "shots",
@@ -722,7 +726,7 @@ class PublishClip:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
-                    # if review layer is defined and not the same as defalut
+                    # if review layer is defined and not the same as default
                     self.review_layer = self.review_track
                 # shot num calculate
                 if self.rename_index == 0:
@@ -771,7 +775,7 @@ class PublishClip:
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
                         hero_data["subset"] = self.subset
-                    # assing data to return hierarchy data to tag
+                    # assign data to return hierarchy data to tag
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
@@ -823,8 +827,8 @@ class PublishClip:
         """ Create parents and return it in list. """
         self.parents = []
 
-        patern = re.compile(self.parents_search_patern)
-        par_split = [patern.findall(t).pop()
+        pattern = re.compile(self.parents_search_pattern)
+        par_split = [pattern.findall(t).pop()
                      for t in self.hierarchy.split("/")]
 
         for key in par_split:

@@ -14,13 +14,13 @@ import openpype
 from openpype.lib import editorial
 
 
-class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
+class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     """Get Resources for a subset version"""
 
     label = "Collect OTIO Subset Resources"
-    order = pyblish.api.CollectorOrder - 0.57
+    order = pyblish.api.CollectorOrder - 0.077
     families = ["clip"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
 
@@ -64,7 +64,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         a_frame_start_h = media_in - handle_start
         a_frame_end_h = media_out + handle_end
 
-        # create trimmed ocio time range
+        # create trimmed otio time range
         trimmed_media_range_h = editorial.range_from_frames(
             a_frame_start_h, (a_frame_end_h - a_frame_start_h + 1),
             media_fps
@@ -171,8 +171,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             instance.data["representations"].append(repre)
             self.log.debug(">>>>>>>> {}".format(repre))
 
-        import pprint
-        self.log.debug(pprint.pformat(instance.data))
+        self.log.debug(instance.data)
 
     def _create_representation(self, start, end, **kwargs):
         """

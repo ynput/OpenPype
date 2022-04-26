@@ -1,5 +1,6 @@
 import pyblish.api
-from avalon.tvpaint import lib
+from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.tvpaint.api import lib
 
 
 class RepairStartFrame(pyblish.api.Action):
@@ -24,4 +25,13 @@ class ValidateStartFrame(pyblish.api.ContextPlugin):
 
     def process(self, context):
         start_frame = lib.execute_george("tv_startframe")
-        assert int(start_frame) == 0, "Start frame has to be frame 0."
+        if start_frame == 0:
+            return
+
+        raise PublishXmlValidationError(
+            self,
+            "Start frame has to be frame 0.",
+            formatting_data={
+                "current_start_frame": start_frame
+            }
+        )

@@ -2,7 +2,6 @@ import os
 
 import bpy
 
-# import avalon.blender.workio
 import openpype.api
 
 
@@ -28,6 +27,17 @@ class ExtractBlend(openpype.api.Extractor):
 
         for obj in instance:
             data_blocks.add(obj)
+            # Pack used images in the blend files.
+            if obj.type == 'MESH':
+                for material_slot in obj.material_slots:
+                    mat = material_slot.material
+                    if mat and mat.use_nodes:
+                        tree = mat.node_tree
+                        if tree.type == 'SHADER':
+                            for node in tree.nodes:
+                                if node.bl_idname == 'ShaderNodeTexImage':
+                                    if node.image:
+                                        node.image.pack()
 
         bpy.data.libraries.write(filepath, data_blocks)
 

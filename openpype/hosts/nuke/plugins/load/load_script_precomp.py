@@ -1,9 +1,19 @@
-from avalon import api, style, io
-from avalon.nuke import get_avalon_knob_data
 import nuke
 
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
+from openpype.hosts.nuke.api.lib import get_avalon_knob_data
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
-class LinkAsGroup(api.Loader):
+
+class LinkAsGroup(load.LoaderPlugin):
     """Copy the published file to be pasted at the desired location"""
 
     representations = ["nk"]
@@ -12,11 +22,9 @@ class LinkAsGroup(api.Loader):
     label = "Load Precomp"
     order = 0
     icon = "file"
-    color = style.colors.alert
+    color = "#cc0000"
 
     def load(self, context, name, namespace, data):
-
-        from avalon.nuke import containerise
         # for k, v in context.items():
         #     log.info("key: `{}`, value: {}\n".format(k, v))
         version = context['version']
@@ -67,7 +75,7 @@ class LinkAsGroup(api.Loader):
         P["useOutput"].setValue(True)
 
         with P:
-            # iterate trough all nodes in group node and find pype writes
+            # iterate through all nodes in group node and find pype writes
             writes = [n.name() for n in nuke.allNodes()
                       if n.Class() == "Group"
                       if get_avalon_knob_data(n)]
@@ -103,23 +111,18 @@ class LinkAsGroup(api.Loader):
         inputs:
 
         """
-
-        from avalon.nuke import (
-            update_container
-        )
-
         node = nuke.toNode(container['objectName'])
 
-        root = api.get_representation_path(representation).replace("\\", "/")
+        root = get_representation_path(representation).replace("\\", "/")
 
         # Get start frame from version data
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -135,8 +138,7 @@ class LinkAsGroup(api.Loader):
             "source": version["data"].get("source"),
             "handles": version["data"].get("handles"),
             "fps": version["data"].get("fps"),
-            "author": version["data"].get("author"),
-            "outputDir": version["data"].get("outputDir"),
+            "author": version["data"].get("author")
         })
 
         # Update the imprinted representation
@@ -153,10 +155,9 @@ class LinkAsGroup(api.Loader):
         else:
             node["tile_color"].setValue(int("0xff0ff0ff", 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

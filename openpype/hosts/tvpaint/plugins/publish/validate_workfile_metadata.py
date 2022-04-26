@@ -1,5 +1,6 @@
 import pyblish.api
-from avalon.tvpaint import save_file
+from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.tvpaint.api import save_file
 
 
 class ValidateWorkfileMetadataRepair(pyblish.api.Action):
@@ -42,8 +43,12 @@ class ValidateWorkfileMetadata(pyblish.api.ContextPlugin):
                 missing_keys.append(key)
 
         if missing_keys:
-            raise AssertionError(
+            raise PublishXmlValidationError(
+                self,
                 "Current workfile is missing metadata about {}.".format(
                     ", ".join(missing_keys)
-                )
+                ),
+                formatting_data={
+                    "missing_metadata": ", ".join(missing_keys)
+                }
             )

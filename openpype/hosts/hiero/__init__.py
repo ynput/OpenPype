@@ -6,11 +6,11 @@ def add_implementation_envs(env, _app):
     # Add requirements to HIERO_PLUGIN_PATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
     new_hiero_paths = [
-        os.path.join(pype_root, "openpype", "hosts", "hiero", "startup")
+        os.path.join(pype_root, "openpype", "hosts", "hiero", "api", "startup")
     ]
     old_hiero_path = env.get("HIERO_PLUGIN_PATH") or ""
     for path in old_hiero_path.split(os.pathsep):
-        if not path or not os.path.exists(path):
+        if not path:
             continue
 
         norm_path = os.path.normpath(path)
@@ -18,6 +18,7 @@ def add_implementation_envs(env, _app):
             new_hiero_paths.append(norm_path)
 
     env["HIERO_PLUGIN_PATH"] = os.pathsep.join(new_hiero_paths)
+    env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
 
     # Try to add QuickTime to PATH
     quick_time_path = "C:/Program Files (x86)/QuickTime/QTSystem"

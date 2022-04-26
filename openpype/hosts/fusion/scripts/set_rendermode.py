@@ -1,6 +1,6 @@
-from avalon.vendor.Qt import QtWidgets
-from avalon.vendor import qtawesome
-import avalon.fusion as avalon
+from Qt import QtWidgets
+import qtawesome
+from openpype.hosts.fusion.api import get_current_comp
 
 
 _help = {"local": "Render the comp on your own machine and publish "
@@ -14,7 +14,7 @@ class SetRenderMode(QtWidgets.QWidget):
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
 
-        self._comp = avalon.get_current_comp()
+        self._comp = get_current_comp()
         self._comp_name = self._get_comp_name()
 
         self.setWindowTitle("Set Render Mode")
@@ -79,7 +79,7 @@ class SetRenderMode(QtWidgets.QWidget):
     def update(self):
         """Update all information in the UI"""
 
-        self._comp = avalon.get_current_comp()
+        self._comp = get_current_comp()
         self._comp_name = self._get_comp_name()
         self.comp_information.setText(self._comp_name)
 

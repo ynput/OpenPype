@@ -12,7 +12,7 @@ from .widgets import (
 from .widgets.constants import HOST_NAME
 from openpype import style
 from openpype.api import resources
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 from openpype.modules import ModulesManager
 
 
@@ -99,7 +99,7 @@ class Window(QtWidgets.QDialog):
         return self._db
 
     def on_start(self):
-        ''' Things must be done when initilized.
+        ''' Things must be done when initialized.
         '''
         # Refresh asset input in Family widget
         self.on_asset_changed()
@@ -231,7 +231,7 @@ def main():
     qt_app = QtWidgets.QApplication([])
     # app.setQuitOnLastWindowClosed(False)
     qt_app.setStyleSheet(style.load_stylesheet())
-    icon = QtGui.QIcon(resources.pype_icon_filepath())
+    icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
     qt_app.setWindowIcon(icon)
 
     def signal_handler(sig, frame):

@@ -1,7 +1,14 @@
 import os
 import openpype.api
-import openpype.lib
 import pyblish
+from openpype.lib import (
+    path_to_subprocess_arg,
+    get_ffmpeg_tool_path,
+    get_ffprobe_data,
+    get_ffprobe_streams,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
+)
 
 
 class ExtractReviewSlate(openpype.api.Extractor):
@@ -14,7 +21,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
     families = ["slate", "review"]
     match = pyblish.api.Subset
 
-    hosts = ["nuke", "maya", "shell"]
+    hosts = ["nuke", "shell"]
     optional = True
 
     def process(self, instance):
@@ -24,9 +31,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         suffix = "_slate"
         slate_path = inst_data.get("slateFrame")
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
-        slate_streams = openpype.lib.ffprobe_streams(slate_path, self.log)
+        slate_streams = get_ffprobe_streams(slate_path, self.log)
         # Try to find first stream with defined 'width' and 'height'
         # - this is to avoid order of streams where audio can be as first
         # - there may be a better way (checking `codec_type`?)+
@@ -59,13 +66,44 @@ class ExtractReviewSlate(openpype.api.Extractor):
             if "slate-frame" not in p_tags:
                 continue
 
+            # get repre file
+            stagingdir = repre["stagingDir"]
+            input_file = "{0}".format(repre["files"])
+            input_path = os.path.join(
+                os.path.normpath(stagingdir), repre["files"])
+            self.log.debug("__ input_path: {}".format(input_path))
+
+            video_streams = get_ffprobe_streams(
+                input_path, self.log
+            )
+
+            # Try to find first stream with defined 'width' and 'height'
+            # - this is to avoid order of streams where audio can be as first
+            # - there may be a better way (checking `codec_type`?)
+            input_width = None
+            input_height = None
+            for stream in video_streams:
+                if "width" in stream and "height" in stream:
+                    input_width = int(stream["width"])
+                    input_height = int(stream["height"])
+                    break
+
+            # Raise exception of any stream didn't define input resolution
+            if input_width is None:
+                raise AssertionError((
+                    "FFprobe couldn't read resolution from input file: \"{}\""
+                ).format(input_path))
+
             # values are set in ExtractReview
             if use_legacy_code:
                 to_width = inst_data["reviewToWidth"]
                 to_height = inst_data["reviewToHeight"]
             else:
-                to_width = repre["resolutionWidth"]
-                to_height = repre["resolutionHeight"]
+                to_width = input_width
+                to_height = input_height
+
+            self.log.debug("to_width: `{}`".format(to_width))
+            self.log.debug("to_height: `{}`".format(to_height))
 
             # defining image ratios
             resolution_ratio = (
@@ -94,15 +132,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             _remove_at_end = []
 
-            stagingdir = repre["stagingDir"]
-            input_file = "{0}".format(repre["files"])
-
             ext = os.path.splitext(input_file)[1]
             output_file = input_file.replace(ext, "") + suffix + ext
 
-            input_path = os.path.join(
-                os.path.normpath(stagingdir), repre["files"])
-            self.log.debug("__ input_path: {}".format(input_path))
             _remove_at_end.append(input_path)
 
             output_path = os.path.join(
@@ -117,20 +149,24 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 input_args.extend(repre["_profile"].get('input', []))
             else:
                 input_args.extend(repre["outputDef"].get('input', []))
-            input_args.append("-loop 1 -i {}".format(slate_path))
+            input_args.append("-loop 1 -i {}".format(
+                path_to_subprocess_arg(slate_path)
+            ))
             input_args.extend([
                 "-r {}".format(fps),
-                "-t 0.04"]
-            )
+                "-t 0.04"
+            ])
 
             if use_legacy_code:
+                format_args = []
                 codec_args = repre["_profile"].get('codec', [])
                 output_args.extend(codec_args)
                 # preset's output data
                 output_args.extend(repre["_profile"].get('output', []))
             else:
                 # Codecs are copied from source for whole input
-                codec_args = self.codec_args(repre)
+                format_args, codec_args = self._get_format_codec_args(repre)
+                output_args.extend(format_args)
                 output_args.extend(codec_args)
 
             # make sure colors are correct
@@ -188,20 +224,24 @@ class ExtractReviewSlate(openpype.api.Extractor):
             output_args.append("-y")
 
             slate_v_path = slate_path.replace(".png", ext)
-            output_args.append(slate_v_path)
+            output_args.append(
+                path_to_subprocess_arg(slate_v_path)
+            )
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                "\"{}\"".format(ffmpeg_path),
+                path_to_subprocess_arg(ffmpeg_path),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
-            slate_subprcs_cmd = " ".join(slate_args)
+            slate_subprocess_cmd = " ".join(slate_args)
 
             # run slate generation subprocess
-            self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
+            self.log.debug(
+                "Slate Executing: {}".format(slate_subprocess_cmd)
+            )
             openpype.api.run_subprocess(
-                slate_subprcs_cmd, shell=True, logger=self.log
+                slate_subprocess_cmd, shell=True, logger=self.log
             )
 
             # create ffmpeg concat text file path
@@ -221,23 +261,28 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 ])
 
             # concat slate and videos together
-            conc_input_args = ["-y", "-f concat", "-safe 0"]
-            conc_input_args.append("-i {}".format(conc_text_path))
-
-            conc_output_args = ["-c copy"]
-            conc_output_args.append(output_path)
-
             concat_args = [
                 ffmpeg_path,
-                " ".join(conc_input_args),
-                " ".join(conc_output_args)
+                "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", conc_text_path,
+                "-c", "copy",
             ]
-            concat_subprcs_cmd = " ".join(concat_args)
+            # NOTE: Added because of OP Atom demuxers
+            # Add format arguments if there are any
+            # - keep format of output
+            if format_args:
+                concat_args.extend(format_args)
+            # Add final output path
+            concat_args.append(output_path)
 
             # ffmpeg concat subprocess
-            self.log.debug("Executing concat: {}".format(concat_subprcs_cmd))
+            self.log.debug(
+                "Executing concat: {}".format(" ".join(concat_args))
+            )
             openpype.api.run_subprocess(
-                concat_subprcs_cmd, shell=True, logger=self.log
+                concat_args, logger=self.log
             )
 
             self.log.debug("__ repre[tags]: {}".format(repre["tags"]))
@@ -301,7 +346,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return vf_back
 
-    def codec_args(self, repre):
+    def _get_format_codec_args(self, repre):
         """Detect possible codec arguments from representation."""
         codec_args = []
 
@@ -315,7 +360,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         try:
             # Get information about input file via ffprobe tool
-            streams = openpype.lib.ffprobe_streams(full_input_path, self.log)
+            ffprobe_data = get_ffprobe_data(full_input_path, self.log)
         except Exception:
             self.log.warning(
                 "Could not get codec data from input.",
@@ -323,29 +368,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
             )
             return codec_args
 
-        # Try to find first stream that is not an audio
-        no_audio_stream = None
-        for stream in streams:
-            if stream.get("codec_type") != "audio":
-                no_audio_stream = stream
-                break
+        source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
+        format_args = get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd)
+        codec_args = get_ffmpeg_codec_args(
+            ffprobe_data, source_ffmpeg_cmd, logger=self.log
+        )
 
-        if no_audio_stream is None:
-            self.log.warning((
-                "Couldn't find stream that is not an audio from file \"{}\""
-            ).format(full_input_path))
-            return codec_args
-
-        codec_name = no_audio_stream.get("codec_name")
-        if codec_name:
-            codec_args.append("-codec:v {}".format(codec_name))
-
-        profile_name = no_audio_stream.get("profile")
-        if profile_name:
-            profile_name = profile_name.replace(" ", "_").lower()
-            codec_args.append("-profile:v {}".format(profile_name))
-
-        pix_fmt = no_audio_stream.get("pix_fmt")
-        if pix_fmt:
-            codec_args.append("-pix_fmt {}".format(pix_fmt))
-        return codec_args
+        return format_args, codec_args

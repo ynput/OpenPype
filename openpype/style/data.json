@@ -18,7 +18,6 @@
         "green-light": "hsl(155, 80%, 80%)"
     },
     "color": {
-
         "font": "#D3D8DE",
         "font-hover": "#F0F2F5",
         "font-disabled": "#99A3B2",
@@ -28,9 +27,12 @@
         "bg": "#2C313A",
         "bg-inputs": "#21252B",
         "bg-buttons": "#434a56",
-        "bg-button-hover": "hsla(220, 14%, 70%, .3)",
+        "bg-button-hover": "rgba(168, 175, 189, 0.3)",
         "bg-inputs-disabled": "#2C313A",
         "bg-buttons-disabled": "#434a56",
+
+        "bg-splitter": "#434a56",
+        "bg-splitter-hover": "rgba(168, 175, 189, 0.3)",
 
         "bg-menu-separator": "rgba(75, 83, 98, 127)",
 
@@ -38,15 +40,94 @@
 
         "bg-view": "#21252B",
         "bg-view-header": "#373D48",
-        "bg-view-hover": "hsla(220, 14%, 70%, .3)",
+        "bg-view-hover": "rgba(168, 175, 189, .3)",
         "bg-view-alternate": "rgb(36, 42, 50)",
-        "bg-view-disabled": "#434a56",
+        "bg-view-disabled": "#2C313A",
         "bg-view-alternate-disabled": "#2C313A",
-        "bg-view-selection": "hsla(200, 60%, 60%, .4)",
-        "bg-view-selection-hover": "hsla(200, 60%, 60%, .8)",
+        "bg-view-selection": "rgba(92, 173, 214, .4)",
+        "bg-view-selection-hover": "rgba(92, 173, 214, .8)",
 
         "border": "#373D48",
-        "border-hover": "hsla(220, 14%, 70%, .3)",
-        "border-focus": "hsl(200, 60%, 60%)"
+        "border-hover": "rgba(168, 175, 189, .3)",
+        "border-focus": "rgb(92, 173, 214)",
+
+        "restart-btn-bg": "#458056",
+
+        "delete-btn-bg": "rgb(201, 54, 54)",
+        "delete-btn-bg-disabled": "rgba(201, 54, 54, 64)",
+
+        "icon-tools": "#ffffff",
+        "icon-alert-tools": "#AA5050",
+        "icon-entity-default": "#bfccd6",
+        "icon-entity-disabled": "#808080",
+        "font-entity-deprecated": "#666666",
+
+        "tab-widget": {
+            "bg": "#21252B",
+            "bg-selected": "#434a56",
+            "bg-hover": "#373D48",
+            "color": "#99A3B2",
+            "color-selected": "#F0F2F5",
+            "color-hover": "#F0F2F5"
+        },
+        "nice-checkbox": {
+            "bg-checked": "#56a06f",
+            "bg-unchecked": "#21252B",
+            "bg-checker": "#D3D8DE",
+            "bg-checker-hover": "#F0F2F5"
+        },
+        "loader": {
+            "asset-view": {
+                "selected": "rgba(168, 175, 189, 0.6)",
+                "hover": "rgba(168, 175, 189, 0.3)",
+                "selected-hover": "rgba(168, 175, 189, 0.7)"
+            }
+        },
+        "publisher": {
+            "error": "#AA5050",
+            "success": "#458056",
+            "warning": "#ffc671",
+            "list-view-group": {
+                "bg": "#434a56",
+                "bg-hover": "rgba(168, 175, 189, 0.3)",
+                "bg-selected-hover": "rgba(92, 173, 214, 0.4)",
+                "bg-expander": "#2C313A",
+                "bg-expander-hover": "#2d6c9f",
+                "bg-expander-selected-hover": "#3784c5"
+            }
+        },
+        "settings": {
+            "invalid-light": "#C93636",
+            "invalid-dark": "#AD2E2E",
+
+            "modified-light": "#46b1f3",
+            "modified-mid": "#189AEA",
+            "modified-dark": "#106AA2",
+
+            "studio-light": "#73C990",
+            "studio-dark": "#56a06f",
+            "studio-label-hover": "#FFFFFF",
+
+            "project-light": "#FFA64D",
+            "project-mid": "#FF8C1A",
+            "project-dark": "#E67300",
+
+            "label-fg": "#969b9e",
+            "label-fg-hover": "#b8c1c5",
+
+            "breadcrumbs-btn-bg": "rgba(127, 127, 127, 60)",
+            "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
+
+            "content-highlighted": "rgba(19, 26, 32, 15)",
+            "focus-border": "#839caf",
+            "image-btn": "#bfccd6",
+            "image-btn-hover": "#189aea",
+            "image-btn-disabled": "#bfccd6",
+            "version-exists": "#458056",
+            "version-not-found": "#ffc671",
+
+            "source-version": "#D3D8DE",
+            "source-version-outdated": "#ffc671"
+        }
     }
 }

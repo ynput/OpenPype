@@ -1,13 +1,12 @@
 import os
 import sys
-import re
 import copy
 import json
+import tempfile
 import platform
 import collections
 import inspect
 import subprocess
-import distutils.spawn
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -15,7 +14,7 @@ import six
 from openpype.settings import (
     get_system_settings,
     get_project_settings,
-    get_environments
+    get_local_settings
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
@@ -25,20 +24,119 @@ from . import (
     PypeLogger,
     Anatomy
 )
+from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data,
-    get_workfile_template_key_from_context
+    get_workfile_template_key,
+    get_last_workfile
 )
 
 from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
-
+from .execute import (
+    find_executable,
+    get_linux_launcher_args
+)
 
 _logger = None
+
+PLATFORM_NAMES = {"windows", "linux", "darwin"}
+DEFAULT_ENV_SUBGROUP = "standard"
+CUSTOM_LAUNCH_APP_GROUPS = {
+    "djvview"
+}
+
+
+def parse_environments(env_data, env_group=None, platform_name=None):
+    """Parse environment values from settings byt group and platform.
+
+    Data may contain up to 2 hierarchical levels of dictionaries. At the end
+    of the last level must be string or list. List is joined using platform
+    specific joiner (';' for windows and ':' for linux and mac).
+
+    Hierarchical levels can contain keys for subgroups and platform name.
+    Platform specific values must be always last level of dictionary. Platform
+    names are "windows" (MS Windows), "linux" (any linux distribution) and
+    "darwin" (any MacOS distribution).
+
+    Subgroups are helpers added mainly for standard and on farm usage. Farm
+    may require different environments for e.g. licence related values or
+    plugins. Default subgroup is "standard".
+
+    Examples:
+    ```
+    {
+        # Unchanged value
+        "ENV_KEY1": "value",
+        # Empty values are kept (unset environment variable)
+        "ENV_KEY2": "",
+
+        # Join list values with ':' or ';'
+        "ENV_KEY3": ["value1", "value2"],
+
+        # Environment groups
+        "ENV_KEY4": {
+            "standard": "DEMO_SERVER_URL",
+            "farm": "LICENCE_SERVER_URL"
+        },
+
+        # Platform specific (and only for windows and mac)
+        "ENV_KEY5": {
+            "windows": "windows value",
+            "darwin": ["value 1", "value 2"]
+        },
+
+        # Environment groups and platform combination
+        "ENV_KEY6": {
+            "farm": "FARM_VALUE",
+            "standard": {
+                "windows": ["value1", "value2"],
+                "linux": "value1",
+                "darwin": ""
+            }
+        }
+    }
+    ```
+    """
+    output = {}
+    if not env_data:
+        return output
+
+    if not env_group:
+        env_group = DEFAULT_ENV_SUBGROUP
+
+    if not platform_name:
+        platform_name = platform.system().lower()
+
+    for key, value in env_data.items():
+        if isinstance(value, dict):
+            # Look if any key is platform key
+            #   - expect that represents environment group if does not contain
+            #   platform keys
+            if not PLATFORM_NAMES.intersection(set(value.keys())):
+                # Skip the key if group is not available
+                if env_group not in value:
+                    continue
+                value = value[env_group]
+
+        # Check again if value is dictionary
+        #   - this time there should be only platform keys
+        if isinstance(value, dict):
+            value = value.get(platform_name)
+
+        # Check if value is list and join it's values
+        # QUESTION Should empty values be skipped?
+        if isinstance(value, (list, tuple)):
+            value = os.pathsep.join(value)
+
+        # Set key to output if value is string
+        if isinstance(value, six.string_types):
+            output[key] = value
+    return output
 
 
 def get_logger():
@@ -114,6 +212,7 @@ class ApplicationGroup:
         data (dict): Group defying data loaded from settings.
         manager (ApplicationManager): Manager that created the group.
     """
+
     def __init__(self, name, data, manager):
         self.name = name
         self.manager = manager
@@ -168,7 +267,7 @@ class Application:
         data (dict): Data for the version containing information about
             executables, variant label or if is enabled.
             Only required key is `executables`.
-        group (ApplicationGroup): App group object that created the applicaiton
+        group (ApplicationGroup): App group object that created the application
             and under which application belongs.
     """
 
@@ -277,6 +376,7 @@ class ApplicationManager:
             will always use these values. Gives ability to create manager
             using different settings.
     """
+
     def __init__(self, system_settings=None):
         self.log = PypeLogger.get_logger(self.__class__.__name__)
 
@@ -312,8 +412,44 @@ class ApplicationManager:
                 clear_metadata=False, exclude_locals=False
             )
 
+        all_app_defs = {}
+        # Prepare known applications
         app_defs = settings["applications"]
+        additional_apps = {}
         for group_name, variant_defs in app_defs.items():
+            if group_name in METADATA_KEYS:
+                continue
+
+            if group_name == "additional_apps":
+                additional_apps = variant_defs
+            else:
+                all_app_defs[group_name] = variant_defs
+
+        # Prepare additional applications
+        # - First find dynamic keys that can be used as labels of group
+        dynamic_keys = {}
+        for group_name, variant_defs in additional_apps.items():
+            if group_name == M_DYNAMIC_KEY_LABEL:
+                dynamic_keys = variant_defs
+                break
+
+        # Add additional apps to known applications
+        for group_name, variant_defs in additional_apps.items():
+            if group_name in METADATA_KEYS:
+                continue
+
+            # Determine group label
+            label = variant_defs.get("label")
+            if not label:
+                # Look for label set in dynamic labels
+                label = dynamic_keys.get(group_name)
+                if not label:
+                    label = group_name
+                variant_defs["label"] = label
+
+            all_app_defs[group_name] = variant_defs
+
+        for group_name, variant_defs in all_app_defs.items():
             if group_name in METADATA_KEYS:
                 continue
 
@@ -397,13 +533,13 @@ class EnvironmentToolGroup:
         variants = data.get("variants") or {}
         label_by_key = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         variants_by_name = {}
-        for variant_name, variant_env in variants.items():
+        for variant_name, variant_data in variants.items():
             if variant_name in METADATA_KEYS:
                 continue
 
             variant_label = label_by_key.get(variant_name) or variant_name
             tool = EnvironmentTool(
-                variant_name, variant_label, variant_env, self
+                variant_name, variant_label, variant_data, self
             )
             variants_by_name[variant_name] = tool
         self.variants = variants_by_name
@@ -427,15 +563,30 @@ class EnvironmentTool:
 
     Args:
         name (str): Name of the tool.
-        environment (dict): Variant environments.
+        variant_data (dict): Variant data with environments and
+            host and app variant filters.
         group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, name, label, environment, group):
+    def __init__(self, name, label, variant_data, group):
+        # Backwards compatibility 3.9.1 - 3.9.2
+        # - 'variant_data' contained only environments but contain also host
+        #   and application variant filters
+        host_names = variant_data.get("host_names", [])
+        app_variants = variant_data.get("app_variants", [])
+
+        if "environment" in variant_data:
+            environment = variant_data["environment"]
+        else:
+            environment = variant_data
+
+        self.host_names = host_names
+        self.app_variants = app_variants
         self.name = name
         self.variant_label = label
         self.label = " ".join((group.label, label))
         self.group = group
+
         self._environment = environment
         self.full_name = "/".join((group.name, name))
 
@@ -445,6 +596,19 @@ class EnvironmentTool:
     @property
     def environment(self):
         return copy.deepcopy(self._environment)
+
+    def is_valid_for_app(self, app):
+        """Is tool valid for application.
+
+        Args:
+            app (Application): Application for which are prepared environments.
+        """
+        if self.app_variants and app.full_name not in self.app_variants:
+            return False
+
+        if self.host_names and app.host_name not in self.host_names:
+            return False
+        return True
 
 
 class ApplicationExecutable:
@@ -460,13 +624,8 @@ class ApplicationExecutable:
         # On MacOS check if exists path to executable when ends with `.app`
         # - it is common that path will lead to "/Applications/Blender" but
         #   real path is "/Applications/Blender.app"
-        if (
-            platform.system().lower() == "darwin"
-            and not os.path.exists(executable)
-        ):
-            _executable = executable + ".app"
-            if os.path.exists(_executable):
-                executable = _executable
+        if platform.system().lower() == "darwin":
+            executable = self.macos_executable_prep(executable)
 
         self.executable_path = executable
 
@@ -476,13 +635,52 @@ class ApplicationExecutable:
     def __repr__(self):
         return "<{}> {}".format(self.__class__.__name__, self.executable_path)
 
+    @staticmethod
+    def macos_executable_prep(executable):
+        """Try to find full path to executable file.
+
+        Real executable is stored in '*.app/Contents/MacOS/<executable>'.
+
+        Having path to '*.app' gives ability to read it's plist info and
+        use "CFBundleExecutable" key from plist to know what is "executable."
+
+        Plist is stored in '*.app/Contents/Info.plist'.
+
+        This is because some '*.app' directories don't have same permissions
+        as real executable.
+        """
+        # Try to find if there is `.app` file
+        if not os.path.exists(executable):
+            _executable = executable + ".app"
+            if os.path.exists(_executable):
+                executable = _executable
+
+        # Try to find real executable if executable has `Contents` subfolder
+        contents_dir = os.path.join(executable, "Contents")
+        if os.path.exists(contents_dir):
+            executable_filename = None
+            # Load plist file and check for bundle executable
+            plist_filepath = os.path.join(contents_dir, "Info.plist")
+            if os.path.exists(plist_filepath):
+                import plistlib
+
+                parsed_plist = plistlib.readPlist(plist_filepath)
+                executable_filename = parsed_plist.get("CFBundleExecutable")
+
+            if executable_filename:
+                executable = os.path.join(
+                    contents_dir, "MacOS", executable_filename
+                )
+
+        return executable
+
     def as_args(self):
         return [self.executable_path]
 
     def _realpath(self):
         """Check if path is valid executable path."""
         # Check for executable in PATH
-        result = distutils.spawn.find_executable(self.executable_path)
+        result = find_executable(self.executable_path)
         if result is not None:
             return result
 
@@ -605,6 +803,10 @@ class LaunchHook:
     def app_name(self):
         return getattr(self.application, "full_name", None)
 
+    @property
+    def modules_manager(self):
+        return getattr(self.launch_context, "modules_manager", None)
+
     def validate(self):
         """Optional validation of launch hook on initialization.
 
@@ -644,7 +846,7 @@ class PostLaunchHook(LaunchHook):
 class ApplicationLaunchContext:
     """Context of launching application.
 
-    Main purpose of context is to prepare launch arguments and keword arguments
+    Main purpose of context is to prepare launch arguments and keyword arguments
     for new process. Most important part of keyword arguments preparations
     are environment variables.
 
@@ -666,9 +868,13 @@ class ApplicationLaunchContext:
             preparation to store objects usable in multiple places.
     """
 
-    def __init__(self, application, executable, **data):
+    def __init__(self, application, executable, env_group=None, **data):
+        from openpype.modules import ModulesManager
+
         # Application object
         self.application = application
+
+        self.modules_manager = ModulesManager()
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
@@ -676,11 +882,18 @@ class ApplicationLaunchContext:
 
         self.executable = executable
 
+        if env_group is None:
+            env_group = DEFAULT_ENV_SUBGROUP
+
+        self.env_group = env_group
+
         self.data = dict(data)
 
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = executable.as_args()
         self.launch_args.extend(application.arguments)
+        if self.data.get("app_args"):
+            self.launch_args.extend(self.data.pop("app_args"))
 
         # Handle launch environemtns
         env = self.data.pop("env", None)
@@ -750,7 +963,9 @@ class ApplicationLaunchContext:
         # --- START: Backwards compatibility ---
         hooks_dir = os.path.join(pype_dir, "hooks")
 
-        subfolder_names = ["global", self.host_name]
+        subfolder_names = ["global"]
+        if self.host_name:
+            subfolder_names.append(self.host_name)
         for subfolder_name in subfolder_names:
             path = os.path.join(hooks_dir, subfolder_name)
             if (
@@ -761,10 +976,12 @@ class ApplicationLaunchContext:
                 paths.append(path)
         # --- END: Backwards compatibility ---
 
-        subfolders_list = (
-            ["hooks"],
-            ("hosts", self.host_name, "hooks")
-        )
+        subfolders_list = [
+            ["hooks"]
+        ]
+        if self.host_name:
+            subfolders_list.append(["hosts", self.host_name, "hooks"])
+
         for subfolders in subfolders_list:
             path = os.path.join(pype_dir, *subfolders)
             if (
@@ -775,10 +992,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        paths.extend(manager.collect_launch_hook_paths())
+        paths.extend(self.modules_manager.collect_launch_hook_paths())
 
         return paths
 
@@ -830,7 +1044,7 @@ class ApplicationLaunchContext:
                     hook = klass(self)
                     if not hook.is_valid:
                         self.log.debug(
-                            "Hook is not valid for curent launch context."
+                            "Hook is not valid for current launch context."
                         )
                         continue
 
@@ -884,6 +1098,57 @@ class ApplicationLaunchContext:
     def manager(self):
         return self.application.manager
 
+    def _run_process(self):
+        # Windows and MacOS have easier process start
+        low_platform = platform.system().lower()
+        if low_platform in ("windows", "darwin"):
+            return subprocess.Popen(self.launch_args, **self.kwargs)
+
+        # Linux uses mid process
+        # - it is possible that the mid process executable is not
+        #   available for this version of OpenPype in that case use standard
+        #   launch
+        launch_args = get_linux_launcher_args()
+        if launch_args is None:
+            return subprocess.Popen(self.launch_args, **self.kwargs)
+
+        # Prepare data that will be passed to midprocess
+        # - store arguments to a json and pass path to json as last argument
+        # - pass environments to set
+        app_env = self.kwargs.pop("env", {})
+        json_data = {
+            "args": self.launch_args,
+            "env": app_env
+        }
+        if app_env:
+            # Filter environments of subprocess
+            self.kwargs["env"] = {
+                key: value
+                for key, value in os.environ.items()
+                if key in app_env
+            }
+
+        # Create temp file
+        json_temp = tempfile.NamedTemporaryFile(
+            mode="w", prefix="op_app_args", suffix=".json", delete=False
+        )
+        json_temp.close()
+        json_temp_filpath = json_temp.name
+        with open(json_temp_filpath, "w") as stream:
+            json.dump(json_data, stream)
+
+        launch_args.append(json_temp_filpath)
+
+        # Create mid-process which will launch application
+        process = subprocess.Popen(launch_args, **self.kwargs)
+        # Wait until the process finishes
+        #   - This is important! The process would stay in "open" state.
+        process.wait()
+        # Remove the temp file
+        os.remove(json_temp_filpath)
+        # Return process which is already terminated
+        return process
+
     def launch(self):
         """Collect data for new process and then create it.
 
@@ -920,8 +1185,10 @@ class ApplicationLaunchContext:
                 self.app_name, args_len_str, args
             )
         )
+        self.launch_args = args
+
         # Run process
-        self.process = subprocess.Popen(args, **self.kwargs)
+        self.process = self._run_process()
 
         # Process post launch hooks
         for postlaunch_hook in self.postlaunch_hooks:
@@ -930,7 +1197,7 @@ class ApplicationLaunchContext:
             ))
 
             # TODO how to handle errors?
-            # - store to variable to let them accesible?
+            # - store to variable to let them accessible?
             try:
                 postlaunch_hook.execute()
 
@@ -1006,11 +1273,14 @@ class EnvironmentPrepData(dict):
         if data.get("env") is None:
             data["env"] = os.environ.copy()
 
+        if "system_settings" not in data:
+            data["system_settings"] = get_system_settings()
+
         super(EnvironmentPrepData, self).__init__(data)
 
 
 def get_app_environments_for_context(
-    project_name, asset_name, task_name, app_name, env=None
+    project_name, asset_name, task_name, app_name, env_group=None, env=None
 ):
     """Prepare environment variables by context.
     Args:
@@ -1025,7 +1295,7 @@ def get_app_environments_for_context(
     Returns:
         dict: Environments for passed context and application.
     """
-    from avalon.api import AvalonMongoDB
+    from openpype.pipeline import AvalonMongoDB
 
     # Avalon database connection
     dbcon = AvalonMongoDB()
@@ -1062,8 +1332,8 @@ def get_app_environments_for_context(
         "env": env
     })
 
-    prepare_host_environments(data)
-    prepare_context_environments(data)
+    prepare_app_environments(data, env_group)
+    prepare_context_environments(data, env_group)
 
     # Discard avalon connection
     dbcon.uninstall()
@@ -1083,7 +1353,42 @@ def _merge_env(env, current_env):
     return result
 
 
-def prepare_host_environments(data, implementation_envs=True):
+def _add_python_version_paths(app, env, logger):
+    """Add vendor packages specific for a Python version."""
+
+    # Skip adding if host name is not set
+    if not app.host_name:
+        return
+
+    # Add Python 2/3 modules
+    openpype_root = os.getenv("OPENPYPE_REPOS_ROOT")
+    python_vendor_dir = os.path.join(
+        openpype_root,
+        "openpype",
+        "vendor",
+        "python"
+    )
+    if app.use_python_2:
+        pythonpath = os.path.join(python_vendor_dir, "python_2")
+    else:
+        pythonpath = os.path.join(python_vendor_dir, "python_3")
+
+    if not os.path.exists(pythonpath):
+        return
+
+    logger.debug("Adding Python version specific paths to PYTHONPATH")
+    python_paths = [pythonpath]
+
+    # Load PYTHONPATH from current launch context
+    python_path = env.get("PYTHONPATH")
+    if python_path:
+        python_paths.append(python_path)
+
+    # Set new PYTHONPATH to launch context environments
+    env["PYTHONPATH"] = os.pathsep.join(python_paths)
+
+
+def prepare_app_environments(data, env_group=None, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
     Args:
@@ -1094,6 +1399,27 @@ def prepare_host_environments(data, implementation_envs=True):
 
     app = data["app"]
     log = data["log"]
+    source_env = data["env"].copy()
+
+    _add_python_version_paths(app, source_env, log)
+
+    # Use environments from local settings
+    filtered_local_envs = {}
+    system_settings = data["system_settings"]
+    whitelist_envs = system_settings["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        filtered_local_envs = {
+            key: value
+            for key, value in local_envs.items()
+            if key in whitelist_envs
+        }
+
+    # Apply local environment variables for already existing values
+    for key, value in filtered_local_envs.items():
+        if key in source_env:
+            source_env[key] = value
 
     # `added_env_keys` has debug purpose
     added_env_keys = {app.group.name, app.name}
@@ -1111,7 +1437,7 @@ def prepare_host_environments(data, implementation_envs=True):
         # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
             tool = app.manager.tools.get(key)
-            if not tool:
+            if not tool or not tool.is_valid_for_app(app):
                 continue
             groups_by_name[tool.group.name] = tool.group
             tool_by_group_name[tool.group.name][tool.name] = tool
@@ -1137,11 +1463,20 @@ def prepare_host_environments(data, implementation_envs=True):
             continue
 
         # Choose right platform
-        tool_env = acre.parse(_env_values)
+        tool_env = parse_environments(_env_values, env_group)
+
+        # Apply local environment variables
+        # - must happen between all values because they may be used during
+        #   merge
+        for key, value in filtered_local_envs.items():
+            if key in tool_env:
+                tool_env[key] = value
+
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
-    merged_env = _merge_env(env_values, data["env"])
+    merged_env = _merge_env(env_values, source_env)
+
     loaded_env = acre.compute(merged_env, cleanup=False)
 
     final_env = None
@@ -1161,18 +1496,24 @@ def prepare_host_environments(data, implementation_envs=True):
     if final_env is None:
         final_env = loaded_env
 
+    keys_to_remove = set(source_env.keys()) - set(final_env.keys())
+
     # Update env
     data["env"].update(final_env)
+    for key in keys_to_remove:
+        data["env"].pop(key, None)
 
 
-def apply_project_environments_value(project_name, env, project_settings=None):
+def apply_project_environments_value(
+    project_name, env, project_settings=None, env_group=None
+):
     """Apply project specific environments on passed environments.
 
-    The enviornments are applied on passed `env` argument value so it is not
+    The environments are applied on passed `env` argument value so it is not
     required to apply changes back.
 
     Args:
-        project_name (str): Name of project for which environemnts should be
+        project_name (str): Name of project for which environments should be
             received.
         env (dict): Environment values on which project specific environments
             will be applied.
@@ -1193,15 +1534,16 @@ def apply_project_environments_value(project_name, env, project_settings=None):
 
     env_value = project_settings["global"]["project_environments"]
     if env_value:
+        parsed_value = parse_environments(env_value, env_group)
         env.update(acre.compute(
-            _merge_env(acre.parse(env_value), env),
+            _merge_env(parsed_value, env),
             cleanup=False
         ))
     return env
 
 
-def prepare_context_environments(data):
-    """Modify launch environemnts with context data for launched host.
+def prepare_context_environments(data, env_group=None):
+    """Modify launch environments with context data for launched host.
 
     Args:
         data (EnvironmentPrepData): Dictionary where result and intermediate
@@ -1226,10 +1568,30 @@ def prepare_context_environments(data):
 
     # Load project specific environments
     project_name = project_doc["name"]
+    project_settings = get_project_settings(project_name)
+    data["project_settings"] = project_settings
     # Apply project specific environments on current env value
-    apply_project_environments_value(project_name, data["env"])
+    apply_project_environments_value(
+        project_name, data["env"], project_settings, env_group
+    )
 
     app = data["app"]
+    context_env = {
+        "AVALON_PROJECT": project_doc["name"],
+        "AVALON_ASSET": asset_doc["name"],
+        "AVALON_TASK": task_name,
+        "AVALON_APP_NAME": app.full_name
+    }
+
+    log.debug(
+        "Context environments set:\n{}".format(
+            json.dumps(context_env, indent=4)
+        )
+    )
+    data["env"].update(context_env)
+    if not app.is_host:
+        return
+
     workdir_data = get_workdir_data(
         project_doc, asset_doc, task_name, app.host_name
     )
@@ -1237,18 +1599,12 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
-    template_key = get_workfile_template_key_from_context(
-        asset_doc["name"],
-        task_name,
-        app.host_name,
-        project_name=project_name,
-        dbcon=data["dbcon"]
-    )
+    task_type = workdir_data["task"]["type"]
+    # Temp solution how to pass task type to `_prepare_last_workfile`
+    data["task_type"] = task_type
 
     try:
-        workdir = get_workdir_with_workdir_data(
-            workdir_data, anatomy, template_key=template_key
-        )
+        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
@@ -1266,20 +1622,8 @@ def prepare_context_environments(data):
                 "Couldn't create workdir because: {}".format(str(exc))
             )
 
-    context_env = {
-        "AVALON_PROJECT": project_doc["name"],
-        "AVALON_ASSET": asset_doc["name"],
-        "AVALON_TASK": task_name,
-        "AVALON_APP": app.host_name,
-        "AVALON_APP_NAME": app.full_name,
-        "AVALON_WORKDIR": workdir
-    }
-    log.debug(
-        "Context environemnts set:\n{}".format(
-            json.dumps(context_env, indent=4)
-        )
-    )
-    data["env"].update(context_env)
+    data["env"]["AVALON_APP"] = app.host_name
+    data["env"]["AVALON_WORKDIR"] = workdir
 
     _prepare_last_workfile(data, workdir)
 
@@ -1299,9 +1643,10 @@ def _prepare_last_workfile(data, workdir):
             result will be stored.
         workdir (str): Path to folder where workfiles should be stored.
     """
-    import avalon.api
+    from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
     log = data["log"]
+
     _workdir_data = data.get("workdir_data")
     if not _workdir_data:
         log.info(
@@ -1314,13 +1659,20 @@ def _prepare_last_workfile(data, workdir):
     workdir_data = copy.deepcopy(_workdir_data)
     project_name = data["project_name"]
     task_name = data["task_name"]
-    start_last_workfile = should_start_last_workfile(
-        project_name, app.host_name, task_name
-    )
+    task_type = data["task_type"]
+
+    start_last_workfile = data.get("start_last_workfile")
+    if start_last_workfile is None:
+        start_last_workfile = should_start_last_workfile(
+            project_name, app.host_name, task_name, task_type
+        )
+    else:
+        log.info("Opening of last workfile was disabled by user")
+
     data["start_last_workfile"] = start_last_workfile
 
     workfile_startup = should_workfile_tool_start(
-        project_name, app.host_name, task_name
+        project_name, app.host_name, task_name, task_type
     )
     data["workfile_startup"] = workfile_startup
 
@@ -1338,23 +1690,28 @@ def _prepare_last_workfile(data, workdir):
     )
 
     # Last workfile path
-    last_workfile_path = ""
-    extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
-        app.host_name
-    )
-    if extensions:
-        anatomy = data["anatomy"]
-        # Find last workfile
-        file_template = anatomy.templates["work"]["file"]
-        workdir_data.update({
-            "version": 1,
-            "user": get_openpype_username(),
-            "ext": extensions[0]
-        })
+    last_workfile_path = data.get("last_workfile_path") or ""
+    if not last_workfile_path:
+        extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+        if extensions:
+            anatomy = data["anatomy"]
+            project_settings = data["project_settings"]
+            task_type = workdir_data["task"]["type"]
+            template_key = get_workfile_template_key(
+                task_type, app.host_name, project_settings=project_settings
+            )
+            # Find last workfile
+            file_template = str(anatomy.templates[template_key]["file"])
 
-        last_workfile_path = avalon.api.last_workfile(
-            workdir, file_template, workdir_data, extensions, True
-        )
+            workdir_data.update({
+                "version": 1,
+                "user": get_openpype_username(),
+                "ext": extensions[0]
+            })
+
+            last_workfile_path = get_last_workfile(
+                workdir, file_template, workdir_data, extensions, True
+            )
 
     if os.path.exists(last_workfile_path):
         log.debug((
@@ -1369,58 +1726,12 @@ def _prepare_last_workfile(data, workdir):
     data["last_workfile_path"] = last_workfile_path
 
 
-def get_option_from_settings(
-    startup_presets, host_name, task_name, default_output
-):
-    host_name_lowered = host_name.lower()
-    task_name_lowered = task_name.lower()
-
-    max_points = 2
-    matching_points = -1
-    matching_item = None
-    for item in startup_presets:
-        hosts = item.get("hosts") or tuple()
-        tasks = item.get("tasks") or tuple()
-
-        hosts_lowered = tuple(_host_name.lower() for _host_name in hosts)
-        # Skip item if has set hosts and current host is not in
-        if hosts_lowered and host_name_lowered not in hosts_lowered:
-            continue
-
-        tasks_lowered = tuple(_task_name.lower() for _task_name in tasks)
-        # Skip item if has set tasks and current task is not in
-        if tasks_lowered:
-            task_match = False
-            for task_regex in compile_list_of_regexes(tasks_lowered):
-                if re.match(task_regex, task_name_lowered):
-                    task_match = True
-                    break
-
-            if not task_match:
-                continue
-
-        points = int(bool(hosts_lowered)) + int(bool(tasks_lowered))
-        if points > matching_points:
-            matching_item = item
-            matching_points = points
-
-        if matching_points == max_points:
-            break
-
-    if matching_item is not None:
-        output = matching_item.get("enabled")
-        if output is None:
-            output = default_output
-        return output
-    return default_output
-
-
 def should_start_last_workfile(
-    project_name, host_name, task_name, default_output=False
+    project_name, host_name, task_name, task_type, default_output=False
 ):
     """Define if host should start last version workfile if possible.
 
-    Default output is `False`. Can be overriden with environment variable
+    Default output is `False`. Can be overridden with environment variable
     `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
     `"0", "1", "true", "false", "yes", "no"`.
 
@@ -1438,7 +1749,7 @@ def should_start_last_workfile(
     """
 
     project_settings = get_project_settings(project_name)
-    startup_presets = (
+    profiles = (
         project_settings
         ["global"]
         ["tools"]
@@ -1446,19 +1757,31 @@ def should_start_last_workfile(
         ["last_workfile_on_startup"]
     )
 
-    if not startup_presets:
+    if not profiles:
         return default_output
 
-    return get_option_from_settings(
-        startup_presets, host_name, task_name, default_output)
+    filter_data = {
+        "tasks": task_name,
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    matching_item = filter_profiles(profiles, filter_data)
+
+    output = None
+    if matching_item:
+        output = matching_item.get("enabled")
+
+    if output is None:
+        return default_output
+    return output
 
 
 def should_workfile_tool_start(
-    project_name, host_name, task_name, default_output=False
+    project_name, host_name, task_name, task_type, default_output=False
 ):
     """Define if host should start workfile tool at host launch.
 
-    Default output is `False`. Can be overriden with environment variable
+    Default output is `False`. Can be overridden with environment variable
     `OPENPYPE_WORKFILE_TOOL_ON_START`, valid values without case sensitivity are
     `"0", "1", "true", "false", "yes", "no"`.
 
@@ -1476,7 +1799,7 @@ def should_workfile_tool_start(
     """
 
     project_settings = get_project_settings(project_name)
-    startup_presets = (
+    profiles = (
         project_settings
         ["global"]
         ["tools"]
@@ -1484,27 +1807,55 @@ def should_workfile_tool_start(
         ["open_workfile_tool_on_startup"]
     )
 
-    if not startup_presets:
+    if not profiles:
         return default_output
 
-    return get_option_from_settings(
-        startup_presets, host_name, task_name, default_output)
+    filter_data = {
+        "tasks": task_name,
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    matching_item = filter_profiles(profiles, filter_data)
+
+    output = None
+    if matching_item:
+        output = matching_item.get("enabled")
+
+    if output is None:
+        return default_output
+    return output
 
 
-def compile_list_of_regexes(in_list):
-    """Convert strings in entered list to compiled regex objects."""
-    regexes = list()
-    if not in_list:
-        return regexes
+def get_non_python_host_kwargs(kwargs, allow_console=True):
+    """Explicit setting of kwargs for Popen for AE/PS/Harmony.
 
-    for item in in_list:
-        if not item:
-            continue
-        try:
-            regexes.append(re.compile(item))
-        except TypeError:
-            print((
-                "Invalid type \"{}\" value \"{}\"."
-                " Expected string based object. Skipping."
-            ).format(str(type(item)), str(item)))
-    return regexes
+    Expected behavior
+    - openpype_console opens window with logs
+    - openpype_gui has stdout/stderr available for capturing
+
+    Args:
+        kwargs (dict) or None
+        allow_console (bool): use False for inner Popen opening app itself or
+           it will open additional console (at least for Harmony)
+    """
+    if kwargs is None:
+        kwargs = {}
+
+    if platform.system().lower() != "windows":
+        return kwargs
+
+    executable_path = os.environ.get("OPENPYPE_EXECUTABLE")
+    executable_filename = ""
+    if executable_path:
+        executable_filename = os.path.basename(executable_path)
+    if "openpype_gui" in executable_filename:
+        kwargs.update({
+            "creationflags": subprocess.CREATE_NO_WINDOW,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL
+        })
+    elif allow_console:
+        kwargs.update({
+            "creationflags": subprocess.CREATE_NEW_CONSOLE
+        })
+    return kwargs

@@ -1,32 +1,36 @@
 # -*- coding: utf-8 -*-
-from maya import cmds
+from maya import cmds  # noqa
 import pyblish.api
+from pprint import pformat
 
 
 class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
-    """Collect unreal static mesh
-
-    Ensures always only a single frame is extracted (current frame). This
-    also sets correct FBX options for later extraction.
-
-    Note:
-        This is a workaround so that the `pype.model` family can use the
-        same pointcache extractor implementation as animation and pointcaches.
-        This always enforces the "current" frame to be published.
-
-    """
+    """Collect Unreal Static Mesh."""
 
     order = pyblish.api.CollectorOrder + 0.2
-    label = "Collect Model Data"
-    families = ["unrealStaticMesh"]
+    label = "Collect Unreal Static Meshes"
+    families = ["staticMesh"]
 
     def process(self, instance):
-        # add fbx family to trigger fbx extractor
-        instance.data["families"].append("fbx")
-        # set fbx overrides on instance
-        instance.data["smoothingGroups"] = True
-        instance.data["smoothMesh"] = True
-        instance.data["triangulate"] = True
+        geometry_set = [
+            i for i in instance
+            if i.startswith("geometry_SET")
+        ]
+        instance.data["geometryMembers"] = cmds.sets(
+            geometry_set, query=True)
+
+        self.log.info("geometry: {}".format(
+            pformat(instance.data.get("geometryMembers"))))
+
+        collision_set = [
+            i for i in instance
+            if i.startswith("collisions_SET")
+        ]
+        instance.data["collisionMembers"] = cmds.sets(
+            collision_set, query=True)
+
+        self.log.info("collisions: {}".format(
+            pformat(instance.data.get("collisionMembers"))))
 
         frame = cmds.currentTime(query=True)
         instance.data["frameStart"] = frame

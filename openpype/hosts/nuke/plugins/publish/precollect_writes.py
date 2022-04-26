@@ -3,15 +3,19 @@ import re
 from pprint import pformat
 import nuke
 import pyblish.api
+
 import openpype.api as pype
-from avalon import io, api
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 
 
 @pyblish.api.log
 class CollectNukeWrites(pyblish.api.InstancePlugin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder - 0.58
+    order = pyblish.api.CollectorOrder - 0.48
     label = "Pre-collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["write"]
@@ -64,7 +68,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if [fm for fm in _families_test
-                if fm in ["render", "prerender"]]:
+                if fm in ["render", "prerender", "still"]]:
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
@@ -100,7 +104,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                             frame_start_str, frame_slate_str)
                         collected_frames.insert(0, slate_frame)
 
-                representation['files'] = collected_frames
+                if collected_frames_len == 1:
+                    representation['files'] = collected_frames.pop()
+                    if "still" in _families_test:
+                        instance.data['family'] = 'image'
+                        instance.data["families"].remove('still')
+                else:
+                    representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
             except Exception:
                 instance.data["representations"].append(representation)
@@ -121,13 +131,17 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         }
 
         group_node = [x for x in instance if x.Class() == "Group"][0]
-        deadlineChunkSize = 1
+        dl_chunk_size = 1
         if "deadlineChunkSize" in group_node.knobs():
-            deadlineChunkSize = group_node["deadlineChunkSize"].value()
+            dl_chunk_size = group_node["deadlineChunkSize"].value()
 
-        deadlinePriority = 50
+        dl_priority = 50
         if "deadlinePriority" in group_node.knobs():
-            deadlinePriority = group_node["deadlinePriority"].value()
+            dl_priority = group_node["deadlinePriority"].value()
+
+        dl_concurrent_tasks = 0
+        if "deadlineConcurrentTasks" in group_node.knobs():
+            dl_concurrent_tasks = group_node["deadlineConcurrentTasks"].value()
 
         instance.data.update({
             "versionData": version_data,
@@ -137,8 +151,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "label": label,
             "outputType": output_type,
             "colorspace": colorspace,
-            "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority
+            "deadlineChunkSize": dl_chunk_size,
+            "deadlinePriority": dl_priority,
+            "deadlineConcurrentTasks": dl_concurrent_tasks
         })
 
         if self.is_prerender(_families_test):
@@ -168,7 +183,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         repre_doc = None
         if version_doc:
             # Try to find it's representation (Expected there is only one)
-            repre_doc = io.find_one(
+            repre_doc = legacy_io.find_one(
                 {"type": "representation", "parent": version_doc["_id"]}
             )
 
@@ -176,7 +191,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if repre_doc:
             instance.data["audio"] = [{
                 "offset": 0,
-                "filename": api.get_representation_path(repre_doc)
+                "filename": get_representation_path(repre_doc)
             }]
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))

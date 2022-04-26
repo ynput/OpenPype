@@ -12,21 +12,13 @@ from Qt.QtCore import QTimer  # noqa
 from .install_thread import InstallThread
 from .tools import (
     validate_mongo_connection,
-    get_openpype_path_from_db
+    get_openpype_icon_path
 )
+
+from .nice_progress_bar import NiceProgressBar
 from .user_settings import OpenPypeSecureRegistry
+from .tools import load_stylesheet
 from .version import __version__
-
-
-def load_stylesheet():
-    stylesheet_path = os.path.join(
-        os.path.dirname(__file__),
-        "stylesheet.css"
-    )
-    with open(stylesheet_path, "r") as file_stream:
-        stylesheet = file_stream.read()
-
-    return stylesheet
 
 
 class ButtonWithOptions(QtWidgets.QFrame):
@@ -89,25 +81,6 @@ class ButtonWithOptions(QtWidgets.QFrame):
 
     def _on_main_button(self):
         self.option_clicked.emit(self._default_value)
-
-
-class NiceProgressBar(QtWidgets.QProgressBar):
-    def __init__(self, parent=None):
-        super(NiceProgressBar, self).__init__(parent)
-        self._real_value = 0
-
-    def setValue(self, value):
-        self._real_value = value
-        if value != 0 and value < 11:
-            value = 11
-
-        super(NiceProgressBar, self).setValue(value)
-
-    def value(self):
-        return self._real_value
-
-    def text(self):
-        return "{} %".format(self._real_value)
 
 
 class ConsoleWidget(QtWidgets.QWidget):
@@ -214,7 +187,6 @@ class InstallDialog(QtWidgets.QDialog):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         roboto_font_path = os.path.join(current_dir, "RobotoMono-Regular.ttf")
         poppins_font_path = os.path.join(current_dir, "Poppins")
-        icon_path = os.path.join(current_dir, "openpype_icon.png")
 
         # Install roboto font
         QtGui.QFontDatabase.addApplicationFont(roboto_font_path)
@@ -223,6 +195,7 @@ class InstallDialog(QtWidgets.QDialog):
                 QtGui.QFontDatabase.addApplicationFont(filename)
 
         # Load logo
+        icon_path = get_openpype_icon_path()
         pixmap_openpype_logo = QtGui.QPixmap(icon_path)
         # Set logo as icon of window
         self.setWindowIcon(QtGui.QIcon(pixmap_openpype_logo))

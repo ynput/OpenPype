@@ -8,7 +8,7 @@ from .lib import (
 
 
 class BaseEnumEntity(InputEntity):
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = True
         self.value_on_not_set = None
         self.enum_items = None
@@ -70,7 +70,7 @@ class BaseEnumEntity(InputEntity):
 class EnumEntity(BaseEnumEntity):
     schema_types = ["enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", False)
         self.enum_items = self.schema_data.get("enum_items")
         # Default is optional and non breaking attribute
@@ -121,6 +121,20 @@ class EnumEntity(BaseEnumEntity):
             )
         super(EnumEntity, self).schema_validations()
 
+    def set_override_state(self, *args, **kwargs):
+        super(EnumEntity, self).set_override_state(*args, **kwargs)
+
+        # Make sure current value is valid
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
+            self._current_value = new_value
+
+        elif self._current_value not in self.valid_keys:
+            self._current_value = self.value_on_not_set
+
 
 class HostsEnumEntity(BaseEnumEntity):
     """Enumeration of host names.
@@ -143,6 +157,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "aftereffects",
         "blender",
         "celaction",
+        "flame",
         "fusion",
         "harmony",
         "hiero",
@@ -153,10 +168,11 @@ class HostsEnumEntity(BaseEnumEntity):
         "resolve",
         "tvpaint",
         "unreal",
-        "standalonepublisher"
+        "standalonepublisher",
+        "webpublisher"
     ]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
         use_empty_value = False
         if not self.multiselection:
@@ -247,9 +263,10 @@ class HostsEnumEntity(BaseEnumEntity):
 
 
 class AppsEnumEntity(BaseEnumEntity):
+    """Enum of applications for project anatomy attributes."""
     schema_types = ["apps-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = True
         self.value_on_not_set = []
         self.enum_items = []
@@ -263,16 +280,30 @@ class AppsEnumEntity(BaseEnumEntity):
         valid_keys = set()
         enum_items_list = []
         applications_entity = system_settings_entity["applications"]
+        app_entities = {}
+        additional_app_names = set()
+        additional_apps_entity = None
         for group_name, app_group in applications_entity.items():
+            if group_name != "additional_apps":
+                app_entities[group_name] = app_group
+                continue
+
+            additional_apps_entity = app_group
+            for _group_name, _group in app_group.items():
+                additional_app_names.add(_group_name)
+                app_entities[_group_name] = _group
+
+        for group_name, app_group in app_entities.items():
             enabled_entity = app_group.get("enabled")
             if enabled_entity and not enabled_entity.value:
                 continue
 
-            host_name_entity = app_group.get("host_name")
-            if not host_name_entity or not host_name_entity.value:
-                continue
-
-            group_label = app_group["label"].value
+            if group_name in additional_app_names:
+                group_label = additional_apps_entity.get_key_label(group_name)
+                if not group_label:
+                    group_label = group_name
+            else:
+                group_label = app_group["label"].value
             variants_entity = app_group["variants"]
             for variant_name, variant_entity in variants_entity.items():
                 enabled_entity = variant_entity.get("enabled")
@@ -316,7 +347,7 @@ class AppsEnumEntity(BaseEnumEntity):
 class ToolsEnumEntity(BaseEnumEntity):
     schema_types = ["tools-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = True
         self.value_on_not_set = []
         self.enum_items = []
@@ -375,12 +406,17 @@ class ToolsEnumEntity(BaseEnumEntity):
 class TaskTypeEnumEntity(BaseEnumEntity):
     schema_types = ["task-types-enum"]
 
-    def _item_initalization(self):
-        self.multiselection = True
-        self.value_on_not_set = []
+    def _item_initialization(self):
+        self.multiselection = self.schema_data.get("multiselection", True)
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            self.valid_value_types = (STRING_TYPE, )
+            self.value_on_not_set = ""
+
         self.enum_items = []
         self.valid_keys = set()
-        self.valid_value_types = (list, )
         self.placeholder = None
 
     def _get_enum_values(self):
@@ -396,59 +432,57 @@ class TaskTypeEnumEntity(BaseEnumEntity):
 
         return enum_items, valid_keys
 
+    def _convert_value_for_current_state(self, source_value):
+        if self.multiselection:
+            output = []
+            for key in source_value:
+                if key in self.valid_keys:
+                    output.append(key)
+            return output
+
+        if source_value not in self.valid_keys:
+            # Take first item from enum items
+            for item in self.enum_items:
+                for key in item.keys():
+                    source_value = key
+                break
+        return source_value
+
     def set_override_state(self, *args, **kwargs):
         super(TaskTypeEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
-        new_value = []
-        for key in self._current_value:
-            if key in self.valid_keys:
-                new_value.append(key)
-        self._current_value = new_value
 
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
 
-class ProvidersEnum(BaseEnumEntity):
-    schema_types = ["providers-enum"]
+            if self._current_value != new_value:
+                self.set(new_value)
+        else:
+            if not self.enum_items:
+                self.valid_keys.add("")
+                self.enum_items.append({"": "< Empty >"})
 
-    def _item_initalization(self):
-        self.multiselection = False
-        self.value_on_not_set = ""
-        self.enum_items = []
-        self.valid_keys = set()
-        self.valid_value_types = (str, )
-        self.placeholder = None
+            for item in self.enum_items:
+                for key in item.keys():
+                    value_on_not_set = key
+                break
 
-    def _get_enum_values(self):
-        from openpype_modules.sync_server.providers import lib as lib_providers
-
-        providers = lib_providers.factory.providers
-
-        valid_keys = set()
-        valid_keys.add('')
-        enum_items = [{'': 'Choose Provider'}]
-        for provider_code, provider_info in providers.items():
-            provider, _ = provider_info
-            enum_items.append({provider_code: provider.LABEL})
-            valid_keys.add(provider_code)
-
-        return enum_items, valid_keys
-
-    def set_override_state(self, *args, **kwargs):
-        super(ProvidersEnum, self).set_override_state(*args, **kwargs)
-
-        self.enum_items, self.valid_keys = self._get_enum_values()
-
-        value_on_not_set = list(self.valid_keys)[0]
-        if self._current_value is NOT_SET:
-            self._current_value = value_on_not_set
-
-        self.value_on_not_set = value_on_not_set
+            self.value_on_not_set = value_on_not_set
+            if (
+                self._current_value is NOT_SET
+                or self._current_value not in self.valid_keys
+            ):
+                self.set(value_on_not_set)
 
 
 class DeadlineUrlEnumEntity(BaseEnumEntity):
     schema_types = ["deadline_url-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
 
         self.enum_items = []
@@ -499,7 +533,7 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):
     schema_types = ["anatomy-templates-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = False
 
         self.enum_items = []

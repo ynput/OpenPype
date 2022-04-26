@@ -20,7 +20,7 @@
         },
         {
             "type": "label",
-            "label": "This is <b>NOT a securely stored password!</b>. It only acts as a simple barrier to stop users from accessing studio wide settings."
+            "label": "This is <b>NOT a securely stored password!</b> It only acts as a simple barrier to stop users from accessing studio wide settings."
         },
         {
             "type": "text",
@@ -41,12 +41,135 @@
             "type": "splitter"
         },
         {
-            "type": "path",
-            "key": "openpype_path",
-            "label": "Versions Repository",
-            "multiplatform": true,
-            "multipath": true,
-            "require_restart": true
+            "type": "boolean",
+            "key": "log_to_server",
+            "label": "Log to mongo"
+        },
+        {
+            "type": "dict",
+            "key": "disk_mapping",
+            "label": "Disk mapping",
+            "is_group": true,
+            "use_label_wrap": false,
+            "collapsible": false,
+            "children": [
+                {
+                    "key": "windows",
+                    "label": "Windows",
+                    "type": "list",
+                    "object_type": {
+                        "type": "list-strict",
+                        "key": "item",
+                         "object_types": [
+                            {
+                                "label": "Source",
+                                "type": "path"
+                            },
+                            {
+                                "label": "Destination",
+                                "type": "path"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "key": "linux",
+                    "label": "Linux",
+                    "type": "list",
+                    "object_type": {
+                        "type": "list-strict",
+                        "key": "item",
+                         "object_types": [
+                            {
+                                "label": "Source",
+                                "type": "path"
+                            },
+                            {
+                                "label": "Destination",
+                                "type": "path"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "key": "darwin",
+                    "label": "MacOS",
+                    "type": "list",
+                    "object_type": {
+                        "type": "list-strict",
+                        "key": "item",
+                         "object_types": [
+                            {
+                                "label": "Source",
+                                "type": "path"
+                            },
+                            {
+                                "label": "Destination",
+                                "type": "path"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "list",
+            "key": "local_env_white_list",
+            "label": "Local overrides of environment variable keys",
+            "tooltip": "Environment variable keys that can be changed per machine using Local settings UI.\nKey changes are applied only on applications and tools environments.",
+            "use_label_wrap": true,
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "collapsible-wrap",
+            "label": "OpenPype deployment control",
+            "collapsible": false,
+            "children": [
+                {
+                    "type": "path",
+                    "key": "openpype_path",
+                    "label": "Versions Repository",
+                    "multiplatform": true,
+                    "multipath": true,
+                    "require_restart": true
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "label",
+                    "label": "Define explicit OpenPype version that should be used. Keep empty to use latest available version."
+                },
+                {
+                    "type": "production-versions-text",
+                    "key": "production_version",
+                    "label": "Production version"
+                },
+                {
+                    "type": "staging-versions-text",
+                    "key": "staging_version",
+                    "label": "Staging version"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "label",
+                    "label": "Trigger validation if running OpenPype is using studio defined version each 'n' <b>minutes</b>. Validation happens in OpenPype tray application."
+                },
+                {
+                    "type": "number",
+                    "key": "version_check_interval",
+                    "label": "Version check interval",
+                    "minimum": 0
+                }
+            ]
         }
     ]
 }

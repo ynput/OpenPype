@@ -1,3 +1,7 @@
+import re
+
+import six
+
 from .lib import (
     NOT_SET,
     STRING_TYPE,
@@ -48,7 +52,10 @@ class PathEntity(ItemEntity):
             raise AttributeError(self.attribute_error_msg.format("items"))
         return self.child_obj.items()
 
-    def _item_initalization(self):
+    def has_child_with_key(self, key):
+        return self.child_obj.has_child_with_key(key)
+
+    def _item_initialization(self):
         if self.group_item is None and not self.is_group:
             self.is_group = True
 
@@ -115,6 +122,9 @@ class PathEntity(ItemEntity):
     def set(self, value):
         self.child_obj.set(value)
 
+    def collect_dynamic_schema_entities(self, *args, **kwargs):
+        self.child_obj.collect_dynamic_schema_entities(*args, **kwargs)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
@@ -163,14 +173,17 @@ class PathEntity(ItemEntity):
         self._ignore_missing_defaults = ignore_missing_defaults
         self.child_obj.set_override_state(state, ignore_missing_defaults)
 
-    def update_default_value(self, value):
-        self.child_obj.update_default_value(value)
+    def update_default_value(self, value, log_invalid_types=True):
+        self._default_log_invalid_types = log_invalid_types
+        self.child_obj.update_default_value(value, log_invalid_types)
 
-    def update_project_value(self, value):
-        self.child_obj.update_project_value(value)
+    def update_project_value(self, value, log_invalid_types=True):
+        self._studio_log_invalid_types = log_invalid_types
+        self.child_obj.update_project_value(value, log_invalid_types)
 
-    def update_studio_value(self, value):
-        self.child_obj.update_studio_value(value)
+    def update_studio_value(self, value, log_invalid_types=True):
+        self._project_log_invalid_types = log_invalid_types
+        self.child_obj.update_studio_value(value, log_invalid_types)
 
     def _discard_changes(self, *args, **kwargs):
         self.child_obj.discard_changes(*args, **kwargs)
@@ -194,6 +207,7 @@ class PathEntity(ItemEntity):
 
 class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
+    _key_regex = re.compile(r"[0-9]+")
 
     def __getitem__(self, idx):
         if not isinstance(idx, int):
@@ -213,7 +227,20 @@ class ListStrictEntity(ItemEntity):
             return self.children[idx]
         return default
 
-    def _item_initalization(self):
+    def has_child_with_key(self, key):
+        if (
+            key
+            and isinstance(key, six.string_types)
+            and self._key_regex.match(key)
+        ):
+            key = int(key)
+
+        if not isinstance(key, int):
+            return False
+
+        return 0 <= key < len(self.children)
+
+    def _item_initialization(self):
         self.valid_value_types = (list, )
         self.require_key = True
 
@@ -236,7 +263,12 @@ class ListStrictEntity(ItemEntity):
 
     def schema_validations(self):
         # List entity must have file parent.
-        if not self.file_item and not self.is_file:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and not self.is_file
+            and self.file_item is None
+        ):
             raise EntitySchemaError(
                 self, "Missing file entity in hierarchy."
             )
@@ -278,6 +310,10 @@ class ListStrictEntity(ItemEntity):
         new_value = self.convert_to_valid_type(value)
         for idx, item in enumerate(new_value):
             self.children[idx].set(item)
+
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
 
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
@@ -439,9 +475,9 @@ class ListStrictEntity(ItemEntity):
 
         self._has_project_override = False
 
-    def _check_update_value(self, value, value_type):
+    def _check_update_value(self, value, value_type, log_invalid_types=True):
         value = super(ListStrictEntity, self)._check_update_value(
-            value, value_type
+            value, value_type, log_invalid_types
         )
         if value is NOT_SET:
             return value
@@ -451,15 +487,16 @@ class ListStrictEntity(ItemEntity):
         if value_len == child_len:
             return value
 
-        self.log.warning(
-            (
-                "{} Amount of strict list items in {} values is"
-                " not same as expected. Expected {} items. Got {} items. {}"
-            ).format(
-                self.path, value_type,
-                child_len, value_len, str(value)
+        if log_invalid_types:
+            self.log.warning(
+                (
+                    "{} Amount of strict list items in {} values is not same"
+                    " as expected. Expected {} items. Got {} items. {}"
+                ).format(
+                    self.path, value_type,
+                    child_len, value_len, str(value)
+                )
             )
-        )
 
         if value_len < child_len:
             # Fill missing values with NOT_SET
@@ -471,36 +508,51 @@ class ListStrictEntity(ItemEntity):
                 value.pop(child_len)
         return value
 
-    def update_default_value(self, value):
-        value = self._check_update_value(value, "default")
+    def update_default_value(self, value, log_invalid_types=True):
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         self.has_default_value = value is not NOT_SET
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_default_value(value)
+                child_obj.update_default_value(value, log_invalid_types)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_default_value(item_value)
+                self.children[idx].update_default_value(
+                    item_value, log_invalid_types
+                )
 
-    def update_studio_value(self, value):
-        value = self._check_update_value(value, "studio override")
+    def update_studio_value(self, value, log_invalid_types=True):
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_studio_value(value)
+                child_obj.update_studio_value(value, log_invalid_types)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_studio_value(item_value)
+                self.children[idx].update_studio_value(
+                    item_value, log_invalid_types
+                )
 
-    def update_project_value(self, value):
-        value = self._check_update_value(value, "project override")
+    def update_project_value(self, value, log_invalid_types=True):
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_project_value(value)
+                child_obj.update_project_value(value, log_invalid_types)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_project_value(item_value)
+                self.children[idx].update_project_value(
+                    item_value, log_invalid_types
+                )
 
     def reset_callbacks(self):
         super(ListStrictEntity, self).reset_callbacks()

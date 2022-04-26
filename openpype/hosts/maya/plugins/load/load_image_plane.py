@@ -1,7 +1,12 @@
-from avalon import api, io
-from avalon.maya.pipeline import containerise
-from avalon.maya import lib
 from Qt import QtWidgets, QtCore
+
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path
+)
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
 
 from maya import cmds
 
@@ -13,10 +18,14 @@ class CameraWindow(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.camera = None
+        self.static_image_plane = False
+        self.show_in_all_views = False
 
         self.widgets = {
             "label": QtWidgets.QLabel("Select camera for image plane."),
             "list": QtWidgets.QListWidget(),
+            "staticImagePlane": QtWidgets.QCheckBox(),
+            "showInAllViews": QtWidgets.QCheckBox(),
             "warning": QtWidgets.QLabel("No cameras selected!"),
             "buttons": QtWidgets.QWidget(),
             "okButton": QtWidgets.QPushButton("Ok"),
@@ -31,6 +40,9 @@ class CameraWindow(QtWidgets.QDialog):
         for camera in cameras:
             self.widgets["list"].addItem(camera)
 
+        self.widgets["staticImagePlane"].setText("Make Image Plane Static")
+        self.widgets["showInAllViews"].setText("Show Image Plane in All Views")
+
         # Build buttons.
         layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
         layout.addWidget(self.widgets["okButton"])
@@ -40,6 +52,8 @@ class CameraWindow(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.widgets["label"])
         layout.addWidget(self.widgets["list"])
+        layout.addWidget(self.widgets["staticImagePlane"])
+        layout.addWidget(self.widgets["showInAllViews"])
         layout.addWidget(self.widgets["buttons"])
         layout.addWidget(self.widgets["warning"])
 
@@ -54,6 +68,8 @@ class CameraWindow(QtWidgets.QDialog):
         if self.camera is None:
             self.widgets["warning"].setVisible(True)
             return
+        self.show_in_all_views = self.widgets["showInAllViews"].isChecked()
+        self.static_image_plane = self.widgets["staticImagePlane"].isChecked()
 
         self.close()
 
@@ -62,22 +78,22 @@ class CameraWindow(QtWidgets.QDialog):
         self.close()
 
 
-class ImagePlaneLoader(api.Loader):
+class ImagePlaneLoader(load.LoaderPlugin):
     """Specific loader of plate for image planes on selected camera."""
 
-    families = ["plate", "render"]
-    label = "Load imagePlane."
+    families = ["image", "plate", "render"]
+    label = "Load imagePlane"
     representations = ["mov", "exr", "preview", "png"]
     icon = "image"
     color = "orange"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, data, options=None):
         import pymel.core as pm
-        
+
         new_nodes = []
         image_plane_depth = 1000
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
@@ -85,23 +101,29 @@ class ImagePlaneLoader(api.Loader):
 
         # Get camera from user selection.
         camera = None
-        default_cameras = [
-            "frontShape", "perspShape", "sideShape", "topShape"
-        ]
-        cameras = [
-            x for x in pm.ls(type="camera") if x.name() not in default_cameras
-        ]
-        camera_names = {x.getParent().name(): x for x in cameras}
-        camera_names["Create new camera."] = "create_camera"
-        window = CameraWindow(camera_names.keys())
-        window.exec_()
-        camera = camera_names[window.camera]
+        is_static_image_plane = None
+        is_in_all_views = None
+        if data:
+            camera = pm.PyNode(data.get("camera"))
+            is_static_image_plane = data.get("static_image_plane")
+            is_in_all_views = data.get("in_all_views")
+
+        if not camera:
+            cameras = pm.ls(type="camera")
+            camera_names = {x.getParent().name(): x for x in cameras}
+            camera_names["Create new camera."] = "create_camera"
+            window = CameraWindow(camera_names.keys())
+            window.exec_()
+            camera = camera_names[window.camera]
+
+            is_static_image_plane = window.static_image_plane
+            is_in_all_views = window.show_in_all_views
 
         if camera == "create_camera":
             camera = pm.createNode("camera")
 
         if camera is None:
-                return
+            return
 
         try:
             camera.displayResolution.set(1)
@@ -111,13 +133,14 @@ class ImagePlaneLoader(api.Loader):
 
         # Create image plane
         image_plane_transform, image_plane_shape = pm.imagePlane(
-            camera=camera, showInAllViews=False
+            fileName=context["representation"]["data"]["path"],
+            camera=camera, showInAllViews=is_in_all_views
         )
         image_plane_shape.depth.set(image_plane_depth)
 
-        image_plane_shape.imageName.set(
-            context["representation"]["data"]["path"]
-        )
+        if is_static_image_plane:
+            image_plane_shape.detach()
+            image_plane_transform.setRotation(camera.getRotation())
 
         start_frame = pm.playbackOptions(q=True, min=True)
         end_frame = pm.playbackOptions(q=True, max=True)
@@ -184,7 +207,7 @@ class ImagePlaneLoader(api.Loader):
 
         assert image_plane_shape is not None, "Image plane not found."
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         image_plane_shape.imageName.set(path)
         cmds.setAttr(
             container["objectName"] + ".representation",
@@ -193,9 +216,9 @@ class ImagePlaneLoader(api.Loader):
         )
 
         # Set frame range.
-        version = io.find_one({"_id": representation["parent"]})
-        subset = io.find_one({"_id": version["parent"]})
-        asset = io.find_one({"_id": subset["parent"]})
+        version = legacy_io.find_one({"_id": representation["parent"]})
+        subset = legacy_io.find_one({"_id": version["parent"]})
+        asset = legacy_io.find_one({"_id": subset["parent"]})
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
         image_plane_shape.frameOffset.set(1 - start_frame)

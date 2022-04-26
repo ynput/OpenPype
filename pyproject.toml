@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.0.0"
+version = "3.10.0-nightly.2" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -36,26 +36,27 @@ opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
 appdirs = "^1.4.3"
 blessed = "^1.17" # openpype terminal formatting
 coolname = "*"
-clique = "1.5.*"
+clique = "1.6.*"
 Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
-jsonschema = "^3.2.0"
+jsonschema = "^2.6.0"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
-Pillow = "^8.1" # only used for slates prototype
+Pillow = "^9.0" # used in TVPaint and for slates
 pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
-pyqt5 = "^5.12.2" # ideally should be replaced with PySide2
 "Qt.py" = "^1.3.3"
+qtpy = "^1.11.3"
+qtawesome = "0.7.3"
 speedcopy = "^2.1"
 six = "^1.15"
 semver = "^2.13.0" # for version resolution
 wsrpc_aiohttp = "^3.1.1" # websocket server
-pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
+pywin32 = { version = "301", markers = "sys_platform == 'win32'" }
 jinxed = [
     { version = "^1.0.1", markers = "sys_platform == 'darwin'" },
     { version = "^1.0.1", markers = "sys_platform == 'linux'" }
@@ -63,12 +64,16 @@ jinxed = [
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
 slack-sdk = "^3.6.0"
+requests = "2.25.1"
+pysftp = "^0.2.9"
+dropbox = "^11.20.0"
+
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
 autopep8 = "^1.4"
 coverage = "*"
-cx_freeze = "^6.6"
+cx_freeze = "~6.9"
 GitPython = "^3.1.17"
 jedi = "^0.13"
 Jinja2 = "^2.11"
@@ -87,7 +92,6 @@ wheel = "*"
 enlighten = "*"  # cool terminal progress bars
 toml = "^0.10.2" # for parsing pyproject.toml
 
-
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
 "Discussions" = "https://github.com/pypeclub/openpype/discussions"
@@ -95,12 +99,19 @@ toml = "^0.10.2" # for parsing pyproject.toml
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
+secondary = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [openpype]
+
+[openpype.pyside2]
+# note: in here we can use pip version specifiers as this is installed with pip until
+# Poetry will support custom location (-t flag for pip)
+# https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers
+version = "==5.15.2"
 
 [openpype.thirdparty.ffmpeg.windows]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
@@ -125,3 +136,19 @@ hash = "de63a8bf7f6c45ff59ecafeba13123f710c2cbc1783ec9e0b938e980d4f5c37f"
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
 hash = "sha256:..."
+
+[tool.pyright]
+include = [
+    "igniter",
+    "openpype",
+    "repos",
+    "vendor"
+]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__"
+]
+ignore = ["website", "docs", ".git"]
+
+reportMissingImports = true
+reportMissingTypeStubs = false

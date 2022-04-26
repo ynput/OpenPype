@@ -6,7 +6,7 @@ from .lib import (
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
-    M_OVERRIDEN_KEY,
+    M_OVERRIDDEN_KEY,
     KEY_REGEX
 )
 from . import (
@@ -107,7 +107,10 @@ class DictConditionalEntity(ItemEntity):
         for _key, _value in new_value.items():
             self.non_gui_children[self.current_enum][_key].set(_value)
 
-    def _item_initalization(self):
+    def has_child_with_key(self, key):
+        return key in self.keys()
+
+    def _item_initialization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
         self._project_override_metadata = NOT_SET
@@ -116,7 +119,7 @@ class DictConditionalEntity(ItemEntity):
 
         # `current_metadata` are still when schema is loaded
         # - only metadata stored with dict item are gorup overrides in
-        #   M_OVERRIDEN_KEY
+        #   M_OVERRIDDEN_KEY
         self._current_metadata = {}
         self._metadata_are_modified = False
 
@@ -374,9 +377,9 @@ class DictConditionalEntity(ItemEntity):
             ):
                 continue
 
-            if M_OVERRIDEN_KEY not in current_metadata:
-                current_metadata[M_OVERRIDEN_KEY] = []
-            current_metadata[M_OVERRIDEN_KEY].append(key)
+            if M_OVERRIDDEN_KEY not in current_metadata:
+                current_metadata[M_OVERRIDDEN_KEY] = []
+            current_metadata[M_OVERRIDDEN_KEY].append(key)
 
         # Define if current metadata are avaialble for current override state
         metadata = NOT_SET
@@ -469,6 +472,10 @@ class DictConditionalEntity(ItemEntity):
                     return True
         return False
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
@@ -482,13 +489,7 @@ class DictConditionalEntity(ItemEntity):
 
             output = {}
             for key, child_obj in children_items:
-                child_value = child_obj.settings_value()
-                if not child_obj.is_file and not child_obj.file_item:
-                    for _key, _value in child_value.items():
-                        new_key = "/".join([key, _key])
-                        output[new_key] = _value
-                else:
-                    output[key] = child_value
+                output[key] = child_obj.settings_value()
             return output
 
         if self.is_group:
@@ -517,12 +518,18 @@ class DictConditionalEntity(ItemEntity):
         output.update(self._current_metadata)
         return output
 
-    def _prepare_value(self, value):
+    def _prepare_value(self, value, log_invalid_types):
         if value is NOT_SET or self.enum_key not in value:
             return NOT_SET, NOT_SET
 
         enum_value = value.get(self.enum_key)
         if enum_value not in self.non_gui_children:
+            if log_invalid_types:
+                self.log.warning(
+                    "{} Unknown enum key in default values: {}".format(
+                        self.path, enum_value
+                    )
+                )
             return NOT_SET, NOT_SET
 
         # Create copy of value before poping values
@@ -534,7 +541,7 @@ class DictConditionalEntity(ItemEntity):
 
         enum_value = value.get(self.enum_key)
 
-        old_metadata = metadata.get(M_OVERRIDEN_KEY)
+        old_metadata = metadata.get(M_OVERRIDDEN_KEY)
         if old_metadata:
             old_metadata_set = set(old_metadata)
             new_metadata = []
@@ -546,26 +553,29 @@ class DictConditionalEntity(ItemEntity):
 
             for key in old_metadata_set:
                 new_metadata.append(key)
-            metadata[M_OVERRIDEN_KEY] = new_metadata
+            metadata[M_OVERRIDDEN_KEY] = new_metadata
 
         return value, metadata
 
-    def update_default_value(self, value):
+    def update_default_value(self, value, log_invalid_types=True):
         """Update default values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "default")
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         self.has_default_value = value is not NOT_SET
         # TODO add value validation
-        value, metadata = self._prepare_value(value)
+        value, metadata = self._prepare_value(value, log_invalid_types)
         self._default_metadata = metadata
 
         if value is NOT_SET:
-            self.enum_entity.update_default_value(value)
+            self.enum_entity.update_default_value(value, log_invalid_types)
             for children_by_key in self.non_gui_children.values():
                 for child_obj in children_by_key.values():
-                    child_obj.update_default_value(value)
+                    child_obj.update_default_value(value, log_invalid_types)
             return
 
         value_keys = set(value.keys())
@@ -573,7 +583,7 @@ class DictConditionalEntity(ItemEntity):
         expected_keys = set(self.non_gui_children[enum_value].keys())
         expected_keys.add(self.enum_key)
         unknown_keys = value_keys - expected_keys
-        if unknown_keys:
+        if unknown_keys and log_invalid_types:
             self.log.warning(
                 "{} Unknown keys in default values: {}".format(
                     self.path,
@@ -581,27 +591,37 @@ class DictConditionalEntity(ItemEntity):
                 )
             )
 
-        self.enum_entity.update_default_value(enum_value)
-        for children_by_key in self.non_gui_children.values():
-            for key, child_obj in children_by_key.items():
-                child_value = value.get(key, NOT_SET)
-                child_obj.update_default_value(child_value)
+        self.enum_entity.update_default_value(enum_value, log_invalid_types)
 
-    def update_studio_value(self, value):
+        for enum_key, children_by_key in self.non_gui_children.items():
+            _log_invalid_types = log_invalid_types
+            if _log_invalid_types:
+                _log_invalid_types = enum_key == enum_value
+
+            value_copy = copy.deepcopy(value)
+            for key, child_obj in children_by_key.items():
+                child_value = value_copy.get(key, NOT_SET)
+                child_obj.update_default_value(child_value, _log_invalid_types)
+
+    def update_studio_value(self, value, log_invalid_types=True):
         """Update studio override values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "studio override")
-        value, metadata = self._prepare_value(value)
+
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
+        value, metadata = self._prepare_value(value, log_invalid_types)
         self._studio_override_metadata = metadata
         self.had_studio_override = metadata is not NOT_SET
 
         if value is NOT_SET:
-            self.enum_entity.update_studio_value(value)
+            self.enum_entity.update_studio_value(value, log_invalid_types)
             for children_by_key in self.non_gui_children.values():
                 for child_obj in children_by_key.values():
-                    child_obj.update_studio_value(value)
+                    child_obj.update_studio_value(value, log_invalid_types)
             return
 
         value_keys = set(value.keys())
@@ -609,7 +629,7 @@ class DictConditionalEntity(ItemEntity):
         expected_keys = set(self.non_gui_children[enum_value])
         expected_keys.add(self.enum_key)
         unknown_keys = value_keys - expected_keys
-        if unknown_keys:
+        if unknown_keys and log_invalid_types:
             self.log.warning(
                 "{} Unknown keys in studio overrides: {}".format(
                     self.path,
@@ -617,27 +637,36 @@ class DictConditionalEntity(ItemEntity):
                 )
             )
 
-        self.enum_entity.update_studio_value(enum_value)
-        for children_by_key in self.non_gui_children.values():
-            for key, child_obj in children_by_key.items():
-                child_value = value.get(key, NOT_SET)
-                child_obj.update_studio_value(child_value)
+        self.enum_entity.update_studio_value(enum_value, log_invalid_types)
+        for enum_key, children_by_key in self.non_gui_children.items():
+            _log_invalid_types = log_invalid_types
+            if _log_invalid_types:
+                _log_invalid_types = enum_key == enum_value
 
-    def update_project_value(self, value):
+            value_copy = copy.deepcopy(value)
+            for key, child_obj in children_by_key.items():
+                child_value = value_copy.get(key, NOT_SET)
+                child_obj.update_studio_value(child_value, _log_invalid_types)
+
+    def update_project_value(self, value, log_invalid_types=True):
         """Update project override values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "project override")
-        value, metadata = self._prepare_value(value)
+
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
+        value, metadata = self._prepare_value(value, log_invalid_types)
         self._project_override_metadata = metadata
         self.had_project_override = metadata is not NOT_SET
 
         if value is NOT_SET:
-            self.enum_entity.update_project_value(value)
+            self.enum_entity.update_project_value(value, log_invalid_types)
             for children_by_key in self.non_gui_children.values():
                 for child_obj in children_by_key.values():
-                    child_obj.update_project_value(value)
+                    child_obj.update_project_value(value, log_invalid_types)
             return
 
         value_keys = set(value.keys())
@@ -645,7 +674,7 @@ class DictConditionalEntity(ItemEntity):
         expected_keys = set(self.non_gui_children[enum_value])
         expected_keys.add(self.enum_key)
         unknown_keys = value_keys - expected_keys
-        if unknown_keys:
+        if unknown_keys and log_invalid_types:
             self.log.warning(
                 "{} Unknown keys in project overrides: {}".format(
                     self.path,
@@ -653,11 +682,16 @@ class DictConditionalEntity(ItemEntity):
                 )
             )
 
-        self.enum_entity.update_project_value(enum_value)
-        for children_by_key in self.non_gui_children.values():
+        self.enum_entity.update_project_value(enum_value, log_invalid_types)
+        for enum_key, children_by_key in self.non_gui_children.items():
+            _log_invalid_types = log_invalid_types
+            if _log_invalid_types:
+                _log_invalid_types = enum_key == enum_value
+
+            value_copy = copy.deepcopy(value)
             for key, child_obj in children_by_key.items():
-                child_value = value.get(key, NOT_SET)
-                child_obj.update_project_value(child_value)
+                child_value = value_copy.get(key, NOT_SET)
+                child_obj.update_project_value(child_value, _log_invalid_types)
 
     def _discard_changes(self, on_change_trigger):
         self._ignore_child_changes = True
@@ -726,3 +760,60 @@ class DictConditionalEntity(ItemEntity):
         for children in self.children.values():
             for child_entity in children:
                 child_entity.reset_callbacks()
+
+
+class SyncServerProviders(DictConditionalEntity):
+    schema_types = ["sync-server-providers"]
+
+    def _add_children(self):
+        self.enum_key = "provider"
+        self.enum_label = "Provider"
+
+        enum_children = self._get_enum_children()
+        if not enum_children:
+            enum_children.append({
+                "key": None,
+                "label": "< Nothing >"
+            })
+        self.enum_children = enum_children
+
+        super(SyncServerProviders, self)._add_children()
+
+    def _get_enum_children(self):
+        from openpype_modules import sync_server
+
+        from openpype_modules.sync_server.providers import lib as lib_providers
+
+        provider_code_to_label = {}
+        providers = lib_providers.factory.providers
+        for provider_code, provider_info in providers.items():
+            provider, _ = provider_info
+            provider_code_to_label[provider_code] = provider.LABEL
+
+        system_settings_schema = (
+            sync_server
+            .SyncServerModule
+            .get_system_settings_schema()
+        )
+
+        enum_children = []
+        for provider_code, configurables in system_settings_schema.items():
+            # any site could be exposed or vendorized by different site
+            # eg studio site content could be mapped on sftp site, single file
+            # accessible via 2 different protocols (sites)
+            configurables.append(
+                {
+                    "type": "list",
+                    "key": "alternative_sites",
+                    "label": "Alternative sites",
+                    "object_type": "text"
+                }
+            )
+            label = provider_code_to_label.get(provider_code) or provider_code
+
+            enum_children.append({
+                "key": provider_code,
+                "label": label,
+                "children": configurables
+            })
+        return enum_children

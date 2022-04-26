@@ -1,15 +1,19 @@
 import os
+import sys
 import glob
 import logging
 
-import avalon.io as io
-import avalon.api as api
-import avalon.pipeline as pipeline
-import avalon.fusion
-import avalon.style as style
-from avalon.vendor.Qt import QtWidgets, QtCore
-from avalon.vendor import qtawesome as qta
+from Qt import QtWidgets, QtCore
 
+import qtawesome as qta
+
+from openpype import style
+from openpype.pipeline import (
+    install_host,
+    legacy_io,
+)
+from openpype.hosts.fusion import api
+from openpype.lib.avalon_context import get_workdir_from_session
 
 log = logging.getLogger("Fusion Switch Shot")
 
@@ -123,7 +127,7 @@ class App(QtWidgets.QWidget):
 
     def _on_open_from_dir(self):
 
-        start_dir = self._get_context_directory()
+        start_dir = get_workdir_from_session()
         comp_file, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Choose comp", start_dir)
 
@@ -149,7 +153,7 @@ class App(QtWidgets.QWidget):
         if not self._use_current.isChecked():
             file_name = self._comps.itemData(self._comps.currentIndex())
         else:
-            comp = avalon.fusion.get_current_comp()
+            comp = api.get_current_comp()
             file_name = comp.GetAttrs("COMPS_FileName")
 
         asset = self._assets.currentText()
@@ -157,23 +161,12 @@ class App(QtWidgets.QWidget):
         import colorbleed.scripts.fusion_switch_shot as switch_shot
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
 
-    def _get_context_directory(self):
-
-        project = io.find_one({"type": "project",
-                               "name": api.Session["AVALON_PROJECT"]},
-                              projection={"config": True})
-
-        template = project["config"]["template"]["work"]
-        dir = pipeline._format_work_template(template, api.Session)
-
-        return dir
-
     def collect_slap_comps(self, directory):
         items = glob.glob("{}/*.comp".format(directory))
         return items
 
     def collect_assets(self):
-        return list(io.find({"type": "asset", "silo": "film"}))
+        return list(legacy_io.find({"type": "asset"}, {"name": True}))
 
     def populate_comp_box(self, files):
         """Ensure we display the filename only but the path is stored as well
@@ -191,8 +184,7 @@ class App(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
-    api.install(avalon.fusion)
+    install_host(api)
 
     app = QtWidgets.QApplication(sys.argv)
     window = App()

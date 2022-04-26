@@ -3,7 +3,7 @@ import pyblish.api
 
 
 class RemoveOutputNode(pyblish.api.ContextPlugin):
-    """Removing output node for each ouput write node
+    """Removing output node for each output write node
 
     """
     label = 'Output Node Remove'

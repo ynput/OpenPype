@@ -6,15 +6,20 @@ import logging
 import json
 
 import six
+from bson.objectid import ObjectId
 
 import alembic.Abc
 from maya import cmds
 
-import avalon.io as io
-import avalon.maya
-import avalon.api as api
-
-import openpype.hosts.maya.api.lib as lib
+from openpype.pipeline import (
+    legacy_io,
+    load_container,
+    loaders_from_representation,
+    discover_loader_plugins,
+    get_representation_path,
+    registered_host,
+)
+from openpype.hosts.maya.api import lib
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +46,12 @@ def get_alembic_paths_by_property(filename, attr, verbose=False):
     filename = filename.replace("\\", "/")
     filename = str(filename)  # path must be string
 
-    archive = alembic.Abc.IArchive(filename)
+    try:
+        archive = alembic.Abc.IArchive(filename)
+    except RuntimeError:
+        # invalid alembic file - probably vrmesh
+        log.warning("{} is not an alembic file".format(filename))
+        return {}
     root = archive.getTop()
 
     iterator = list(root.children)
@@ -147,12 +157,14 @@ def get_look_relationships(version_id):
         dict: Dictionary of relations.
 
     """
-    json_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "json"})
+    json_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "json"
+    })
 
     # Load relationships
-    shader_relation = api.get_representation_path(json_representation)
+    shader_relation = get_representation_path(json_representation)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 
@@ -173,12 +185,14 @@ def load_look(version_id):
 
     """
     # Get representations of shader file and relationships
-    look_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "ma"})
+    look_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "ma"
+    })
 
     # See if representation is already loaded, if so reuse it.
-    host = api.registered_host()
+    host = registered_host()
     representation_id = str(look_representation['_id'])
     for container in host.ls():
         if (container['loader'] == "LookLoader" and
@@ -190,19 +204,19 @@ def load_look(version_id):
         log.info("Using look for the first time ...")
 
         # Load file
-        loaders = api.loaders_from_representation(api.discover(api.Loader),
-                                                  representation_id)
+        all_loaders = discover_loader_plugins()
+        loaders = loaders_from_representation(all_loaders, representation_id)
         loader = next(
             (i for i in loaders if i.__name__ == "LookLoader"), None)
         if loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
-        with avalon.maya.maintained_selection():
-            container_node = api.load(loader, look_representation)
+        with lib.maintained_selection():
+            container_node = load_container(loader, look_representation)
 
     # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
+    shader_nodes = lib.get_container_members(container_node)
     return shader_nodes
 
 
@@ -221,15 +235,21 @@ def get_latest_version(asset_id, subset):
         RuntimeError: When subset or version doesn't exist.
 
     """
-    subset = io.find_one({"name": subset,
-                          "parent": io.ObjectId(asset_id),
-                          "type": "subset"})
+    subset = legacy_io.find_one({
+        "name": subset,
+        "parent": ObjectId(asset_id),
+        "type": "subset"
+    })
     if not subset:
         raise RuntimeError("Subset does not exist: %s" % subset)
 
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"]},
-                          sort=[("name", -1)])
+    version = legacy_io.find_one(
+        {
+            "type": "version",
+            "parent": subset["_id"]
+        },
+        sort=[("name", -1)]
+    )
     if not version:
         raise RuntimeError("Version does not exist.")
 

@@ -8,16 +8,10 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
-        "enabled": true,
+        "enabled": false,
         "paths": {
-            "source-path": [
-                "foo1",
-                "foo2"
-            ],
-            "destination-path": [
-                "bar1",
-                "bar2"
-            ]
+            "source-path": [],
+            "destination-path": []
         }
     },
     "scriptsmenu": {
@@ -48,7 +42,28 @@
             "enabled": true,
             "defaults": [
                 "Main"
+            ],
+            "aov_separator": "underscore",
+            "default_render_image_folder": "renders"
+        },
+        "CreateUnrealStaticMesh": {
+            "enabled": true,
+            "defaults": [
+                "",
+                "_Main"
+            ],
+            "static_mesh_prefix": "S",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
             ]
+        },
+        "CreateUnrealSkeletalMesh": {
+            "enabled": true,
+            "defaults": [],
+            "joint_hints": "jnt_org"
         },
         "CreateAnimation": {
             "enabled": true,
@@ -127,12 +142,6 @@
                 "Anim"
             ]
         },
-        "CreateUnrealStaticMesh": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateVrayProxy": {
             "enabled": true,
             "defaults": [
@@ -156,7 +165,17 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateFrameRange": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -165,9 +184,40 @@
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
+        "ValidateShadingEngine": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateAttributes": {
             "enabled": false,
             "attributes": {}
+        },
+        "ValidateLoadedPlugin": {
+            "enabled": false,
+            "whitelist_native_plugins": false,
+            "authorized_plugins": []
+        },
+        "ValidateMayaUnits": {
+            "enabled": true,
+            "optional": false,
+            "validate_linear_units": true,
+            "linear_units": "cm",
+            "validate_angular_units": true,
+            "angular_units": "deg",
+            "validate_fps": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": true,
+            "validate_mesh": false,
+            "validate_collision": true
+        },
+        "ValidateCycleError": {
+            "enabled": true,
+            "optional": false,
+            "families": [
+                "rig"
+            ]
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
@@ -185,6 +235,11 @@
             },
             "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
             "top_level_regex": ".*_GRP"
+        },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
         },
         "ValidateTransformNamingSuffix": {
             "enabled": true,
@@ -245,6 +300,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateMeshNgons": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateMeshNonManifold": {
             "enabled": false,
             "optional": true,
@@ -300,10 +360,39 @@
             "optional": true,
             "active": true
         },
+        "ValidateShapeZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateTransformZero": {
             "enabled": false,
             "optional": true,
             "active": true
+        },
+        "ValidateUniqueNames": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigContents": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigJointsHidden": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigControllers": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigOutSetNodeIds": {
+            "enabled": true,
+            "allow_history_only": false
         },
         "ValidateCameraAttributes": {
             "enabled": false,
@@ -422,6 +511,12 @@
                 }
             }
         },
+        "ExtractMayaSceneRaw": {
+            "enabled": true,
+            "add_for_families": [
+                "layout"
+            ]
+        },
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,
@@ -479,6 +574,12 @@
                 255,
                 255
             ],
+            "mayaScene": [
+                67,
+                174,
+                255,
+                255
+            ],
             "setdress": [
                 255,
                 250,
@@ -503,6 +604,12 @@
                 12,
                 255
             ],
+            "vrayscene_layer": [
+                255,
+                150,
+                12,
+                255
+            ],
             "yeticache": [
                 99,
                 206,
@@ -520,6 +627,7 @@
     "workfile_build": {
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [
                     "Lighting"
                 ],

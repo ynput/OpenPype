@@ -11,13 +11,13 @@
         },
         {
             "type": "dict-conditional",
-            "key": "overriden_value",
-            "label": "Overriden value",
-            "enum_key": "overriden",
+            "key": "overridden_value",
+            "label": "Overridden value",
+            "enum_key": "overridden",
             "enum_is_horizontal": true,
             "enum_children": [
                 {
-                    "key": "overriden",
+                    "key": "overridden",
                     "label": "Override value",
                     "children": [
                         {
@@ -95,11 +95,11 @@
         },
         {
             "type": "dict",
-            "key": "schema_template_exaples",
+            "key": "template_exaples",
             "label": "Schema template examples",
             "children": [
                 {
-                    "type": "schema_template",
+                    "type": "template",
                     "name": "example_template",
                     "template_data": {
                         "host_label": "Application 1",
@@ -108,7 +108,7 @@
                     }
                 },
                 {
-                    "type": "schema_template",
+                    "type": "template",
                     "name": "example_template",
                     "template_data": {
                         "host_label": "Application 2",
@@ -182,6 +182,15 @@
                     "decimal": 2,
                     "minimum": -10,
                     "maximum": -5
+                },
+                {
+                    "type": "number",
+                    "key": "number_with_slider",
+                    "label": "Number with slider",
+                    "decimal": 2,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "show_slider": true
                 },
                 {
                     "type": "text",

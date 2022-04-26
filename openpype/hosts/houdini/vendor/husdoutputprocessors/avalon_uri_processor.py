@@ -1,17 +1,21 @@
+import os
 import hou
 import husdoutputprocessors.base as base
-import os
-import re
-import logging
 
 import colorbleed.usdlib as usdlib
+
+from openpype.pipeline import (
+    legacy_io,
+    registered_root,
+)
 
 
 def _get_project_publish_template():
     """Return publish template from database for current project"""
-    from avalon import io
-    project = io.find_one({"type": "project"},
-                          projection={"config.template.publish": True})
+    project = legacy_io.find_one(
+        {"type": "project"},
+        projection={"config.template.publish": True}
+    )
     return project["config"]["template"]["publish"]
 
 
@@ -133,19 +137,18 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
 
         """
 
-        from avalon import api, io
-
-        PROJECT = api.Session["AVALON_PROJECT"]
-        asset_doc = io.find_one({"name": asset,
-                                 "type": "asset"})
+        PROJECT = legacy_io.Session["AVALON_PROJECT"]
+        asset_doc = legacy_io.find_one({
+            "name": asset,
+            "type": "asset"
+        })
         if not asset_doc:
             raise RuntimeError("Invalid asset name: '%s'" % asset)
 
-        root = api.registered_root()
+        root = registered_root()
         path = self._template.format(**{
             "root": root,
             "project": PROJECT,
-            "silo": asset_doc["silo"],
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": ext,
@@ -165,4 +168,3 @@ output_processor = AvalonURIOutputProcessor()
 
 def usdOutputProcessor():
     return output_processor
-

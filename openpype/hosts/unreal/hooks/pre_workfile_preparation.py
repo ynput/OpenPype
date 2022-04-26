@@ -6,9 +6,11 @@ from pathlib import Path
 from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
-    ApplicationNotFound
+    ApplicationNotFound,
+    get_workdir_data,
+    get_workfile_template_key
 )
-from openpype.hosts.unreal.api import lib as unreal_lib
+import openpype.hosts.unreal.lib as unreal_lib
 
 
 class UnrealPrelaunchHook(PreLaunchHook):
@@ -25,13 +27,46 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         self.signature = "( {} )".format(self.__class__.__name__)
 
+    def _get_work_filename(self):
+        # Use last workfile if was found
+        if self.data.get("last_workfile_path"):
+            last_workfile = Path(self.data.get("last_workfile_path"))
+            if last_workfile and last_workfile.exists():
+                return last_workfile.name
+
+        # Prepare data for fill data and for getting workfile template key
+        task_name = self.data["task_name"]
+        anatomy = self.data["anatomy"]
+        asset_doc = self.data["asset_doc"]
+        project_doc = self.data["project_doc"]
+
+        asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+        task_info = asset_tasks.get(task_name) or {}
+        task_type = task_info.get("type")
+
+        workdir_data = get_workdir_data(
+            project_doc, asset_doc, task_name, self.host_name
+        )
+        # QUESTION raise exception if version is part of filename template?
+        workdir_data["version"] = 1
+        workdir_data["ext"] = "uproject"
+
+        # Get workfile template key for current context
+        workfile_template_key = get_workfile_template_key(
+            task_type,
+            self.host_name,
+            project_name=project_doc["name"]
+        )
+        # Fill templates
+        filled_anatomy = anatomy.format(workdir_data)
+
+        # Return filename
+        return filled_anatomy[workfile_template_key]["file"]
+
     def execute(self):
         """Hook entry method."""
-        asset_name = self.data["asset_name"]
-        task_name = self.data["task_name"]
         workdir = self.launch_context.env["AVALON_WORKDIR"]
         engine_version = self.app_name.split("/")[-1].replace("-", ".")
-        unreal_project_name = f"{asset_name}_{task_name}"
         try:
             if int(engine_version.split(".")[0]) < 4 and \
                     int(engine_version.split(".")[1]) < 26:
@@ -45,6 +80,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
             # so lets keep it quite.
             ...
 
+        unreal_project_filename = self._get_work_filename()
+        unreal_project_name = os.path.splitext(unreal_project_filename)[0]
         # Unreal is sensitive about project names longer then 20 chars
         if len(unreal_project_name) > 20:
             self.log.warning((
@@ -89,19 +126,19 @@ class UnrealPrelaunchHook(PreLaunchHook):
         ue4_path = unreal_lib.get_editor_executable_path(
             Path(detected[engine_version]))
 
-        self.launch_context.launch_args.append(ue4_path.as_posix())
+        self.launch_context.launch_args = [ue4_path.as_posix()]
         project_path.mkdir(parents=True, exist_ok=True)
 
-        project_file = project_path / f"{unreal_project_name}.uproject"
+        project_file = project_path / unreal_project_filename
         if not project_file.is_file():
             engine_path = detected[engine_version]
             self.log.info((
                 f"{self.signature} creating unreal "
                 f"project [ {unreal_project_name} ]"
             ))
-            # Set "AVALON_UNREAL_PLUGIN" to current process environment for
+            # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
             # execution of `create_unreal_project`
-            env_key = "AVALON_UNREAL_PLUGIN"
+            env_key = "OPENPYPE_UNREAL_PLUGIN"
             if self.launch_context.env.get(env_key):
                 os.environ[env_key] = self.launch_context.env[env_key]
 

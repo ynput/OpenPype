@@ -1,12 +1,12 @@
 import os
 import hiero.core.events
-import avalon.api as avalon
 from openpype.api import Logger
+from openpype.lib import register_event_callback
 from .lib import (
     sync_avalon_data_to_workfile,
     launch_workfiles_app,
     selection_changed_timeline,
-    before_project_save
+    before_project_save,
 )
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label
@@ -31,7 +31,7 @@ def beforeNewProjectCreated(event):
 
 def afterNewProjectCreated(event):
     log.info("after new project created event...")
-    # sync avalon data to project properities
+    # sync avalon data to project properties
     sync_avalon_data_to_workfile()
 
     # add tags from preset
@@ -51,7 +51,7 @@ def beforeProjectLoad(event):
 
 def afterProjectLoad(event):
     log.info("after project load event...")
-    # sync avalon data to project properities
+    # sync avalon data to project properties
     sync_avalon_data_to_workfile()
 
     # add tags from preset
@@ -126,5 +126,5 @@ def register_events():
     """
 
     # if task changed then change notext of hiero
-    avalon.on("taskChanged", update_menu_task_label)
+    register_event_callback("taskChanged", update_menu_task_label)
     log.info("Installed event callback for 'taskChanged'..")

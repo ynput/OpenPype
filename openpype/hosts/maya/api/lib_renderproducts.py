@@ -114,6 +114,8 @@ class RenderProduct(object):
     aov = attr.ib(default=None)                 # source aov
     driver = attr.ib(default=None)              # source driver
     multipart = attr.ib(default=False)          # multichannel file
+    camera = attr.ib(default=None)              # used only when rendering
+    #                                             from multiple cameras
 
 
 def get(layer, render_instance=None):
@@ -178,10 +180,21 @@ class ARenderProducts:
         self.layer = layer
         self.render_instance = render_instance
         self.multipart = False
+        self.aov_separator = render_instance.data.get("aovSeparator", "_")
 
         # Initialize
         self.layer_data = self._get_layer_data()
         self.layer_data.products = self.get_render_products()
+
+    def has_camera_token(self):
+        # type: () -> bool
+        """Check if camera token is in image prefix.
+
+        Returns:
+            bool: True/False if camera token is present.
+
+        """
+        return "<camera>" in self.layer_data.filePrefix.lower()
 
     @abstractmethod
     def get_render_products(self):
@@ -307,7 +320,7 @@ class ARenderProducts:
         #       Deadline allows submitting renders with a custom frame list
         #       to support those cases we might want to allow 'custom frames'
         #       to be overridden to `ExpectFiles` class?
-        layer_data = LayerMetadata(
+        return LayerMetadata(
             frameStart=int(self.get_render_attribute("startFrame")),
             frameEnd=int(self.get_render_attribute("endFrame")),
             frameStep=int(self.get_render_attribute("byFrameStep")),
@@ -321,7 +334,6 @@ class ARenderProducts:
             defaultExt=self._get_attr("defaultRenderGlobals.imfPluginKey"),
             filePrefix=file_prefix
         )
-        return layer_data
 
     def _generate_file_sequence(
             self, layer_data,
@@ -330,7 +342,7 @@ class ARenderProducts:
             force_cameras=None):
         # type: (LayerMetadata, str, str, list) -> list
         expected_files = []
-        cameras = force_cameras if force_cameras else layer_data.cameras
+        cameras = force_cameras or layer_data.cameras
         ext = force_ext or layer_data.defaultExt
         for cam in cameras:
             file_prefix = layer_data.filePrefix
@@ -361,8 +373,8 @@ class ARenderProducts:
                 )
         return expected_files
 
-    def get_files(self, product, camera):
-        # type: (RenderProduct, str) -> list
+    def get_files(self, product):
+        # type: (RenderProduct) -> list
         """Return list of expected files.
 
         It will translate render token strings  ('<RenderPass>', etc.) to
@@ -373,7 +385,6 @@ class ARenderProducts:
         Args:
             product (RenderProduct): Render product to be used for file
                 generation.
-            camera (str): Camera name.
 
         Returns:
             List of files
@@ -383,7 +394,7 @@ class ARenderProducts:
             self.layer_data,
             force_aov_name=product.productName,
             force_ext=product.ext,
-            force_cameras=[camera]
+            force_cameras=[product.camera]
         )
 
     def get_renderable_cameras(self):
@@ -460,15 +471,21 @@ class RenderProductsArnold(ARenderProducts):
 
         return prefix
 
-    def _get_aov_render_products(self, aov):
+    def _get_aov_render_products(self, aov, cameras=None):
         """Return all render products for the AOV"""
 
-        products = list()
+        products = []
         aov_name = self._get_attr(aov, "name")
         ai_drivers = cmds.listConnections("{}.outputs".format(aov),
                                           source=True,
                                           destination=False,
                                           type="aiAOVDriver") or []
+        if not cameras:
+            cameras = [
+                self.sanitize_camera_name(
+                    self.get_renderable_cameras()[0]
+                )
+            ]
 
         for ai_driver in ai_drivers:
             # todo: check aiAOVDriver.prefix as it could have
@@ -497,30 +514,37 @@ class RenderProductsArnold(ARenderProducts):
                 name = "beauty"
 
             # Support Arnold light groups for AOVs
-            # Global AOV: When disabled the main layer is not written: `{pass}`
+            # Global AOV: When disabled the main layer is
+            #             not written: `{pass}`
             # All Light Groups: When enabled, a `{pass}_lgroups` file is
-            #                   written and is always merged into a single file
-            # Light Groups List: When set, a product per light group is written
+            #                   written and is always merged into a
+            #                   single file
+            # Light Groups List: When set, a product per light
+            #                    group is written
             #                    e.g. {pass}_front, {pass}_rim
             global_aov = self._get_attr(aov, "globalAov")
             if global_aov:
-                product = RenderProduct(productName=name,
-                                        ext=ext,
-                                        aov=aov_name,
-                                        driver=ai_driver)
-                products.append(product)
+                for camera in cameras:
+                    product = RenderProduct(productName=name,
+                                            ext=ext,
+                                            aov=aov_name,
+                                            driver=ai_driver,
+                                            camera=camera)
+                    products.append(product)
 
             all_light_groups = self._get_attr(aov, "lightGroups")
             if all_light_groups:
                 # All light groups is enabled. A single multipart
                 # Render Product
-                product = RenderProduct(productName=name + "_lgroups",
-                                        ext=ext,
-                                        aov=aov_name,
-                                        driver=ai_driver,
-                                        # Always multichannel output
-                                        multipart=True)
-                products.append(product)
+                for camera in cameras:
+                    product = RenderProduct(productName=name + "_lgroups",
+                                            ext=ext,
+                                            aov=aov_name,
+                                            driver=ai_driver,
+                                            # Always multichannel output
+                                            multipart=True,
+                                            camera=camera)
+                    products.append(product)
             else:
                 value = self._get_attr(aov, "lightGroupsList")
                 if not value:
@@ -529,11 +553,15 @@ class RenderProductsArnold(ARenderProducts):
                 for light_group in selected_light_groups:
                     # Render Product per selected light group
                     aov_light_group_name = "{}_{}".format(name, light_group)
-                    product = RenderProduct(productName=aov_light_group_name,
-                                            aov=aov_name,
-                                            driver=ai_driver,
-                                            ext=ext)
-                    products.append(product)
+                    for camera in cameras:
+                        product = RenderProduct(
+                            productName=aov_light_group_name,
+                            aov=aov_name,
+                            driver=ai_driver,
+                            ext=ext,
+                            camera=camera
+                        )
+                        products.append(product)
 
         return products
 
@@ -556,17 +584,26 @@ class RenderProductsArnold(ARenderProducts):
             # anyway.
             return []
 
-        default_ext = self._get_attr("defaultRenderGlobals.imfPluginKey")
-        beauty_product = RenderProduct(productName="beauty",
-                                       ext=default_ext,
-                                       driver="defaultArnoldDriver")
+        # check if camera token is in prefix. If so, and we have list of
+        # renderable cameras, generate render product for each and every
+        # of them.
+        cameras = [
+            self.sanitize_camera_name(c)
+            for c in self.get_renderable_cameras()
+        ]
 
+        default_ext = self._get_attr("defaultRenderGlobals.imfPluginKey")
+        beauty_products = [RenderProduct(
+            productName="beauty",
+            ext=default_ext,
+            driver="defaultArnoldDriver",
+            camera=camera) for camera in cameras]
         # AOVs > Legacy > Maya Render View > Mode
         aovs_enabled = bool(
             self._get_attr("defaultArnoldRenderOptions.aovMode")
         )
         if not aovs_enabled:
-            return [beauty_product]
+            return beauty_products
 
         # Common > File Output > Merge AOVs or <RenderPass>
         # We don't need to check for Merge AOVs due to overridden
@@ -575,8 +612,9 @@ class RenderProductsArnold(ARenderProducts):
             "<renderpass>" in self.layer_data.filePrefix.lower()
         )
         if not has_renderpass_token:
-            beauty_product.multipart = True
-            return [beauty_product]
+            for product in beauty_products:
+                product.multipart = True
+            return beauty_products
 
         # AOVs are set to be rendered separately. We should expect
         # <RenderPass> token in path.
@@ -598,14 +636,14 @@ class RenderProductsArnold(ARenderProducts):
                 continue
 
             # For now stick to the legacy output format.
-            aov_products = self._get_aov_render_products(aov)
+            aov_products = self._get_aov_render_products(aov, cameras)
             products.extend(aov_products)
 
-        if not any(product.aov == "RGBA" for product in products):
+        if all(product.aov != "RGBA" for product in products):
             # Append default 'beauty' as this is arnolds default.
             # However, it is excluded whenever a RGBA pass is enabled.
             # For legibility add the beauty layer as first entry
-            products.insert(0, beauty_product)
+            products += beauty_products
 
         # TODO: Output Denoising AOVs?
 
@@ -639,7 +677,7 @@ class RenderProductsVray(ARenderProducts):
 
         """
         prefix = super(RenderProductsVray, self).get_renderer_prefix()
-        prefix = "{}.<aov>".format(prefix)
+        prefix = "{}{}<aov>".format(prefix, self.aov_separator)
         return prefix
 
     def _get_layer_data(self):
@@ -670,6 +708,11 @@ class RenderProductsVray(ARenderProducts):
             # anyway.
             return []
 
+        cameras = [
+            self.sanitize_camera_name(c)
+            for c in self.get_renderable_cameras()
+        ]
+
         image_format_str = self._get_attr("vraySettings.imageFormatStr")
         default_ext = image_format_str
         if default_ext in {"exr (multichannel)", "exr (deep)"}:
@@ -680,13 +723,21 @@ class RenderProductsVray(ARenderProducts):
         # add beauty as default when not disabled
         dont_save_rgb = self._get_attr("vraySettings.dontSaveRgbChannel")
         if not dont_save_rgb:
-            products.append(RenderProduct(productName="", ext=default_ext))
+            for camera in cameras:
+                products.append(
+                    RenderProduct(productName="",
+                                  ext=default_ext,
+                                  camera=camera))
 
         # separate alpha file
         separate_alpha = self._get_attr("vraySettings.separateAlpha")
         if separate_alpha:
-            products.append(RenderProduct(productName="Alpha",
-                                          ext=default_ext))
+            for camera in cameras:
+                products.append(
+                    RenderProduct(productName="Alpha",
+                                  ext=default_ext,
+                                  camera=camera)
+                )
 
         if image_format_str == "exr (multichannel)":
             # AOVs are merged in m-channel file, only main layer is rendered
@@ -716,19 +767,23 @@ class RenderProductsVray(ARenderProducts):
                 # instead seems to output multiple Render Products,
                 # specifically "Self_Illumination" and "Environment"
                 product_names = ["Self_Illumination", "Environment"]
-                for name in product_names:
-                    product = RenderProduct(productName=name,
-                                            ext=default_ext,
-                                            aov=aov)
-                    products.append(product)
+                for camera in cameras:
+                    for name in product_names:
+                        product = RenderProduct(productName=name,
+                                                ext=default_ext,
+                                                aov=aov,
+                                                camera=camera)
+                        products.append(product)
                 # Continue as we've processed this special case AOV
                 continue
 
             aov_name = self._get_vray_aov_name(aov)
-            product = RenderProduct(productName=aov_name,
-                                    ext=default_ext,
-                                    aov=aov)
-            products.append(product)
+            for camera in cameras:
+                product = RenderProduct(productName=aov_name,
+                                        ext=default_ext,
+                                        aov=aov,
+                                        camera=camera)
+                products.append(product)
 
         return products
 
@@ -856,7 +911,7 @@ class RenderProductsRedshift(ARenderProducts):
 
         """
         prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
-        prefix = "{}.<aov>".format(prefix)
+        prefix = "{}{}<aov>".format(prefix, self.aov_separator)
         return prefix
 
     def get_render_products(self):
@@ -874,6 +929,11 @@ class RenderProductsRedshift(ARenderProducts):
             # This state will most probably fail later on some Validator
             # anyway.
             return []
+
+        cameras = [
+            self.sanitize_camera_name(c)
+            for c in self.get_renderable_cameras()
+        ]
 
         # For Redshift we don't directly return upon forcing multilayer
         # due to some AOVs still being written into separate files,
@@ -933,11 +993,14 @@ class RenderProductsRedshift(ARenderProducts):
                 for light_group in light_groups:
                     aov_light_group_name = "{}_{}".format(aov_name,
                                                           light_group)
-                    product = RenderProduct(productName=aov_light_group_name,
-                                            aov=aov_name,
-                                            ext=ext,
-                                            multipart=aov_multipart)
-                    products.append(product)
+                    for camera in cameras:
+                        product = RenderProduct(
+                            productName=aov_light_group_name,
+                            aov=aov_name,
+                            ext=ext,
+                            multipart=aov_multipart,
+                            camera=camera)
+                        products.append(product)
 
             if light_groups:
                 light_groups_enabled = True
@@ -945,11 +1008,13 @@ class RenderProductsRedshift(ARenderProducts):
             # Redshift AOV Light Select always renders the global AOV
             # even when light groups are present so we don't need to
             # exclude it when light groups are active
-            product = RenderProduct(productName=aov_name,
-                                    aov=aov_name,
-                                    ext=ext,
-                                    multipart=aov_multipart)
-            products.append(product)
+            for camera in cameras:
+                product = RenderProduct(productName=aov_name,
+                                        aov=aov_name,
+                                        ext=ext,
+                                        multipart=aov_multipart,
+                                        camera=camera)
+                products.append(product)
 
         # When a Beauty AOV is added manually, it will be rendered as
         # 'Beauty_other' in file name and "standard" beauty will have
@@ -959,10 +1024,12 @@ class RenderProductsRedshift(ARenderProducts):
             return products
 
         beauty_name = "Beauty_other" if has_beauty_aov else ""
-        products.insert(0,
-                        RenderProduct(productName=beauty_name,
-                                      ext=ext,
-                                      multipart=multipart))
+        for camera in cameras:
+            products.insert(0,
+                            RenderProduct(productName=beauty_name,
+                                          ext=ext,
+                                          multipart=multipart,
+                                          camera=camera))
 
         return products
 
@@ -987,6 +1054,16 @@ class RenderProductsRenderman(ARenderProducts):
             :func:`ARenderProducts.get_render_products()`
 
         """
+        cameras = [
+            self.sanitize_camera_name(c)
+            for c in self.get_renderable_cameras()
+        ]
+
+        if not cameras:
+            cameras = [
+                self.sanitize_camera_name(
+                    self.get_renderable_cameras()[0])
+            ]
         products = []
 
         default_ext = "exr"
@@ -1000,9 +1077,11 @@ class RenderProductsRenderman(ARenderProducts):
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
 
-            product = RenderProduct(productName=aov_name,
-                                    ext=default_ext)
-            products.append(product)
+            for camera in cameras:
+                product = RenderProduct(productName=aov_name,
+                                        ext=default_ext,
+                                        camera=camera)
+                products.append(product)
 
         return products
 

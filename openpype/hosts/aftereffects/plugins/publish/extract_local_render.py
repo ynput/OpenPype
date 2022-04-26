@@ -1,9 +1,9 @@
 import os
-import six
 import sys
+import six
 
 import openpype.api
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class ExtractLocalRender(openpype.api.Extractor):
@@ -12,17 +12,16 @@ class ExtractLocalRender(openpype.api.Extractor):
     order = openpype.api.Extractor.order - 0.47
     label = "Extract Local Render"
     hosts = ["aftereffects"]
-    families = ["render"]
+    families = ["renderLocal", "render.local"]
 
     def process(self, instance):
-        stub = aftereffects.stub()
+        stub = get_stub()
         staging_dir = instance.data["stagingDir"]
         self.log.info("staging_dir::{}".format(staging_dir))
 
-        stub.render(staging_dir)
-
         # pull file name from Render Queue Output module
         render_q = stub.get_render_info()
+        stub.render(staging_dir)
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
         _, ext = os.path.splitext(os.path.basename(render_q.file_name))
@@ -56,8 +55,7 @@ class ExtractLocalRender(openpype.api.Extractor):
 
         ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
         # Generate thumbnail.
-        thumbnail_path = os.path.join(staging_dir,
-                                      "thumbnail.jpg")
+        thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
 
         args = [
             ffmpeg_path, "-y",

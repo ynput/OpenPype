@@ -8,7 +8,7 @@ from .exceptions import (
     SaveWarningExc
 )
 from .constants import (
-    M_OVERRIDEN_KEY,
+    M_OVERRIDDEN_KEY,
     M_ENVIRONMENT_KEY,
 
     METADATA_KEYS,
@@ -265,29 +265,186 @@ def save_project_anatomy(project_name, anatomy_data):
         raise SaveWarningExc(warnings)
 
 
-@require_handler
-def get_studio_system_settings_overrides():
-    return _SETTINGS_HANDLER.get_studio_system_settings_overrides()
+def _system_settings_backwards_compatible_conversion(studio_overrides):
+    # Backwards compatibility of tools 3.9.1 - 3.9.2 to keep
+    #   "tools" environments
+    if (
+        "tools" in studio_overrides
+        and "tool_groups" in studio_overrides["tools"]
+    ):
+        tool_groups = studio_overrides["tools"]["tool_groups"]
+        for tool_group, group_value in tool_groups.items():
+            if tool_group in METADATA_KEYS:
+                continue
+
+            variants = group_value.get("variants")
+            if not variants:
+                continue
+
+            for key in set(variants.keys()):
+                if key in METADATA_KEYS:
+                    continue
+
+                variant_value = variants[key]
+                if "environment" not in variant_value:
+                    variants[key] = {
+                        "environment": variant_value
+                    }
 
 
 @require_handler
-def get_studio_project_settings_overrides():
-    return _SETTINGS_HANDLER.get_studio_project_settings_overrides()
+def get_studio_system_settings_overrides(return_version=False):
+    output = _SETTINGS_HANDLER.get_studio_system_settings_overrides(
+        return_version
+    )
+    value = output
+    if return_version:
+        value, version = output
+    _system_settings_backwards_compatible_conversion(value)
+    return output
 
 
 @require_handler
-def get_studio_project_anatomy_overrides():
-    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+def get_studio_project_settings_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_project_settings_overrides(
+        return_version
+    )
 
 
 @require_handler
-def get_project_settings_overrides(project_name):
-    return _SETTINGS_HANDLER.get_project_settings_overrides(project_name)
+def get_studio_project_anatomy_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides(
+        return_version
+    )
+
+
+@require_handler
+def get_project_settings_overrides(project_name, return_version=False):
+    return _SETTINGS_HANDLER.get_project_settings_overrides(
+        project_name, return_version
+    )
 
 
 @require_handler
 def get_project_anatomy_overrides(project_name):
     return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+
+
+@require_handler
+def get_studio_system_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_system_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_studio_project_anatomy_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_project_anatomy_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_studio_project_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_project_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_project_settings_overrides_for_version(
+    project_name, version
+):
+    return (
+        _SETTINGS_HANDLER
+        .get_project_settings_overrides_for_version(project_name, version)
+    )
+
+
+@require_handler
+def get_available_studio_system_settings_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_system_settings_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_studio_project_anatomy_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_project_anatomy_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_studio_project_settings_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_project_settings_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_project_settings_overrides_versions(
+    project_name, sorted=None
+):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_project_settings_overrides_versions(
+            project_name, sorted=sorted
+        )
+    )
+
+
+@require_handler
+def find_closest_version_for_projects(project_names):
+    return (
+        _SETTINGS_HANDLER
+        .find_closest_version_for_projects(project_names)
+    )
+
+
+@require_handler
+def clear_studio_system_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_system_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_studio_project_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_project_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_studio_project_anatomy_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_project_anatomy_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_project_settings_overrides_for_version(
+    version, project_name
+):
+    return _SETTINGS_HANDLER.clear_project_settings_overrides_for_version(
+        version, project_name
+    )
 
 
 @require_local_handler
@@ -329,6 +486,45 @@ def reset_default_settings():
     _DEFAULT_SETTINGS = None
 
 
+def _get_default_settings():
+    from openpype.modules import get_module_settings_defs
+
+    defaults = load_openpype_default_settings()
+
+    module_settings_defs = get_module_settings_defs()
+    for module_settings_def_cls in module_settings_defs:
+        module_settings_def = module_settings_def_cls()
+        system_defaults = module_settings_def.get_defaults(
+            SYSTEM_SETTINGS_KEY
+        ) or {}
+        for path, value in system_defaults.items():
+            if not path:
+                continue
+
+            subdict = defaults["system_settings"]
+            path_items = list(path.split("/"))
+            last_key = path_items.pop(-1)
+            for key in path_items:
+                subdict = subdict[key]
+            subdict[last_key] = value
+
+        project_defaults = module_settings_def.get_defaults(
+            PROJECT_SETTINGS_KEY
+        ) or {}
+        for path, value in project_defaults.items():
+            if not path:
+                continue
+
+            subdict = defaults
+            path_items = list(path.split("/"))
+            last_key = path_items.pop(-1)
+            for key in path_items:
+                subdict = subdict[key]
+            subdict[last_key] = value
+
+    return defaults
+
+
 def get_default_settings():
     """Get default settings.
 
@@ -338,12 +534,10 @@ def get_default_settings():
     Returns:
         dict: Loaded default settings.
     """
-    # TODO add cacher
-    return load_openpype_default_settings()
-    # global _DEFAULT_SETTINGS
-    # if _DEFAULT_SETTINGS is None:
-    #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
-    # return copy.deepcopy(_DEFAULT_SETTINGS)
+    global _DEFAULT_SETTINGS
+    if _DEFAULT_SETTINGS is None:
+        _DEFAULT_SETTINGS = _get_default_settings()
+    return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
 def load_json_file(fpath):
@@ -380,8 +574,8 @@ def load_jsons_from_dir(path, *args, **kwargs):
             "data1": "CONTENT OF FILE"
         },
         "folder2": {
-            "data1": {
-                "subfolder1": "CONTENT OF FILE"
+            "subfolder1": {
+                "data2": "CONTENT OF FILE"
             }
         }
     }
@@ -509,13 +703,13 @@ def subkey_merge(_dict, value, keys):
 def merge_overrides(source_dict, override_dict):
     """Merge data from override_dict to source_dict."""
 
-    if M_OVERRIDEN_KEY in override_dict:
-        overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
+    if M_OVERRIDDEN_KEY in override_dict:
+        overridden_keys = set(override_dict.pop(M_OVERRIDDEN_KEY))
     else:
-        overriden_keys = set()
+        overridden_keys = set()
 
     for key, value in override_dict.items():
-        if (key in overriden_keys or key not in source_dict):
+        if (key in overridden_keys or key not in source_dict):
             source_dict[key] = value
 
         elif isinstance(value, dict) and isinstance(source_dict[key], dict):
@@ -537,17 +731,32 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
     """Apply local settings on studio system settings.
 
     ATM local settings can modify only application executables. Executable
-    values are not overriden but prepended.
+    values are not overridden but prepended.
     """
     if not local_settings or "applications" not in local_settings:
         return
 
     current_platform = platform.system().lower()
+    apps_settings = system_settings["applications"]
+    additional_apps = apps_settings["additional_apps"]
     for app_group_name, value in local_settings["applications"].items():
-        if not value or app_group_name not in system_settings["applications"]:
+        if not value:
             continue
 
-        variants = system_settings["applications"][app_group_name]["variants"]
+        if (
+            app_group_name not in apps_settings
+            and app_group_name not in additional_apps
+        ):
+            continue
+
+        if app_group_name in apps_settings:
+            variants = apps_settings[app_group_name]["variants"]
+
+        else:
+            variants = (
+                apps_settings["additional_apps"][app_group_name]["variants"]
+            )
+
         for app_name, app_value in value.items():
             if (
                 not app_value
@@ -819,6 +1028,7 @@ def get_anatomy_settings(
         apply_local_settings_on_anatomy_settings(
             result, local_settings, project_name, site_name
         )
+
     return result
 
 
@@ -876,7 +1086,7 @@ def get_environments():
     """Calculated environment based on defaults and system settings.
 
     Any default environment also found in the system settings will be fully
-    overriden by the one from the system settings.
+    overridden by the one from the system settings.
 
     Returns:
         dict: Output should be ready for `acre` module.
@@ -895,11 +1105,21 @@ def get_general_environments():
     # - prevent to use `get_system_settings` where `get_default_settings`
     #   is used
     default_values = load_openpype_default_settings()
+    system_settings = default_values["system_settings"]
     studio_overrides = get_studio_system_settings_overrides()
-    result = apply_overrides(default_values, studio_overrides)
+
+    result = apply_overrides(system_settings, studio_overrides)
     environments = result["general"]["environment"]
 
     clear_metadata_from_settings(environments)
+
+    whitelist_envs = result["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        for key, value in local_envs.items():
+            if key in whitelist_envs and key in environments:
+                environments[key] = value
 
     return environments
 

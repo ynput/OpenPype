@@ -1,4 +1,9 @@
 {
+    "addon_paths": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+    },
     "avalon": {
         "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {
@@ -8,10 +13,18 @@
         }
     },
     "ftrack": {
-        "enabled": true,
+        "enabled": false,
         "ftrack_server": "",
-        "ftrack_actions_path": [],
-        "ftrack_events_path": [],
+        "ftrack_actions_path": {
+            "windows": [],
+            "darwin": [],
+            "linux": []
+        },
+        "ftrack_events_path": {
+            "windows": [],
+            "darwin": [],
+            "linux": []
+        },
         "intent": {
             "items": {
                 "-": "-",
@@ -162,6 +175,16 @@
             "ffmpeg": 48
         }
     },
+    "royalrender": {
+        "enabled": false,
+        "rr_paths": {
+            "default": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        }
+    },
     "log_viewer": {
         "enabled": true
     },
@@ -173,5 +196,13 @@
     },
     "slack": {
         "enabled": false
+    },
+    "job_queue": {
+        "server_url": "",
+        "jobs_root": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        }
     }
 }

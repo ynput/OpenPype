@@ -1,10 +1,15 @@
-from avalon import io, api
-from openpype.hosts import resolve
 from copy import deepcopy
 from importlib import reload
+
+from openpype.hosts import resolve
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
 from openpype.hosts.resolve.api import lib, plugin
 reload(plugin)
 reload(lib)
+
 
 class LoadClip(resolve.TimelineItemLoader):
     """Load a subset to timeline as clip
@@ -91,7 +96,7 @@ class LoadClip(resolve.TimelineItemLoader):
         namespace = container['namespace']
         timeline_item_data = resolve.get_pype_timeline_item_by_name(namespace)
         timeline_item = timeline_item_data["clip"]["item"]
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -99,7 +104,7 @@ class LoadClip(resolve.TimelineItemLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        self.fname = api.get_representation_path(representation)
+        self.fname = get_representation_path(representation)
         context["version"] = {"data": version_data}
 
         loader = resolve.ClipLoader(self, context)
@@ -137,7 +142,7 @@ class LoadClip(resolve.TimelineItemLoader):
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')

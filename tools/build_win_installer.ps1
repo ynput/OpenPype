@@ -105,6 +105,45 @@ $env:BUILD_VERSION = $openpype_version
 
 iscc 
 
+Write-Color ">>> ", "Detecting host Python ... " -Color Green, White -NoNewline
+$python = "python"
+if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+    $pyenv_python = & pyenv which python
+    if (Test-Path -PathType Leaf -Path "$($pyenv_python)") {
+        $python = $pyenv_python
+    }
+}
+if (-not (Get-Command $python -ErrorAction SilentlyContinue)) {
+    Write-Color "!!! ", "Python not detected" -Color Red, Yellow
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
+}
+$version_command = @'
+import sys
+print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
+'@
+
+$p = & $python -c $version_command
+$env:PYTHON_VERSION = $p
+$m = $p -match '(\d+)\.(\d+)'
+if(-not $m) {
+    Write-Color "!!! ", "Cannot determine version" -Color Red, Yellow
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
+}
+# We are supporting python 3.7 only
+if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
+    Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
+} elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
+    Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
+    Write-Host "*** " -NoNewline -ForegroundColor yellow
+    Write-Host "OpenPype supports only Python 3.7" -ForegroundColor white
+} else {
+    Write-Host "OK [ $p ]" -ForegroundColor green
+}
+
 Write-Color -Text ">>> ", "Creating OpenPype installer ... " -Color Green, White
 
 $build_dir_command = @"
@@ -113,7 +152,7 @@ from distutils.util import get_platform
 print('exe.{}-{}'.format(get_platform(), sys.version[0:3]))
 "@
 
-$build_dir = & python -c $build_dir_command
+$build_dir = & $python -c $build_dir_command
 Write-Color -Text "--- ", "Build directory ", "${build_dir}" -Color Green, Gray, White
 $env:BUILD_DIR = $build_dir
 

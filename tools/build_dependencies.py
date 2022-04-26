@@ -21,8 +21,9 @@ speed.
 import os
 import sys
 import site
-from distutils.util import get_platform
+from sysconfig import get_platform
 import platform
+import subprocess
 from pathlib import Path
 import shutil
 import blessed
@@ -93,18 +94,18 @@ _print("Getting venv site-packages ...")
 assert site_pkg, "No venv site-packages are found."
 _print(f"Working with: {site_pkg}", 2)
 
-
-build_dir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
+openpype_root = Path(os.path.dirname(__file__)).parent
 
 # create full path
 if platform.system().lower() == "darwin":
-    build_dir = Path(os.path.dirname(__file__)).parent.joinpath(
+    build_dir = openpype_root.joinpath(
         "build",
         "OpenPype.app",
         "Contents",
         "MacOS")
 else:
-    build_dir = Path(os.path.dirname(__file__)).parent / "build" / build_dir
+    build_subdir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
+    build_dir = openpype_root / "build" / build_subdir
 
 _print(f"Using build at {build_dir}", 2)
 if not build_dir.exists():
@@ -112,7 +113,28 @@ if not build_dir.exists():
     _print("Probably freezing of code failed. Check ./build/build.log", 3)
     sys.exit(1)
 
+
+def _progress(_base, _names):
+    progress_bar.update()
+    return []
+
+
 deps_dir = build_dir / "dependencies"
+vendor_dir = build_dir / "vendor"
+vendor_src = openpype_root / "vendor"
+
+# copy vendor files
+_print("Copying vendor files ...")
+
+total_files = count_folders(vendor_src)
+progress_bar = enlighten.Counter(
+    total=total_files, desc="Copying vendor files ...",
+    units="%", color=(64, 128, 222))
+
+shutil.copytree(vendor_src.as_posix(),
+                vendor_dir.as_posix(),
+                ignore=_progress)
+progress_bar.close()
 
 # copy all files
 _print("Copying dependencies ...")
@@ -122,12 +144,6 @@ progress_bar = enlighten.Counter(
     total=total_files, desc="Processing Dependencies",
     units="%", color=(53, 178, 202))
 
-
-def _progress(_base, _names):
-    progress_bar.update()
-    return []
-
-
 shutil.copytree(site_pkg.as_posix(),
                 deps_dir.as_posix(),
                 ignore=_progress)
@@ -135,15 +151,29 @@ progress_bar.close()
 # iterate over frozen libs and create list to delete
 libs_dir = build_dir / "lib"
 
-# On Windows "python3.dll" is needed for PyQt5 from the build.
-if platform.system().lower() == "windows":
-    src = Path(libs_dir / "PyQt5" / "python3.dll")
-    dst = Path(deps_dir / "PyQt5" / "python3.dll")
-    if src.exists():
-        shutil.copyfile(src, dst)
-    else:
-        _print("Could not find {}".format(src), 1)
-        sys.exit(1)
+
+# On Linux use rpath from source libraries in destination libraries
+if platform.system().lower() == "linux":
+    src_pyside_dir = openpype_root / "vendor" / "python" / "PySide2"
+    dst_pyside_dir = build_dir / "vendor" / "python" / "PySide2"
+    src_rpath_per_so_file = {}
+    for filepath in src_pyside_dir.glob("*.so"):
+        filename = filepath.name
+        rpath = (
+            subprocess.check_output(["patchelf", "--print-rpath", filepath])
+            .decode("utf-8")
+            .strip()
+        )
+        src_rpath_per_so_file[filename] = rpath
+
+    for filepath in dst_pyside_dir.glob("*.so"):
+        filename = filepath.name
+        if filename not in src_rpath_per_so_file:
+            continue
+        src_rpath = src_rpath_per_so_file[filename]
+        subprocess.check_call(
+            ["patchelf", "--set-rpath", src_rpath, filepath]
+        )
 
 to_delete = []
 # _print("Finding duplicates ...")

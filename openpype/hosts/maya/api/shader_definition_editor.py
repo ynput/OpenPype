@@ -31,7 +31,7 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
 
         self.setObjectName("shaderDefinitionEditor")
         self.setWindowTitle("OpenPype shader name definition editor")
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
         self.setWindowFlags(QtCore.Qt.Window)
         self.setParent(parent)
@@ -92,7 +92,7 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
     def _write_definition_file(self, content, force=False):
         """Write content as definition to file in database.
 
-        Before file is writen, check is made if its content has not
+        Before file is written, check is made if its content has not
         changed. If is changed, warning is issued to user if he wants
         it to overwrite. Note: GridFs doesn't allow changing file content.
         You need to delete existing file and create new one.

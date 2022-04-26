@@ -58,7 +58,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             # use first frame as thumbnail if is sequence of jpegs
             full_thumbnail_path = os.path.join(
                 thumbnail_repre["stagingDir"], file
-                )
+            )
             self.log.info(
                 "For thumbnail is used file: {}".format(full_thumbnail_path)
             )
@@ -116,7 +116,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         # create new thumbnail representation
         representation = {
-            'name': 'jpg',
+            'name': 'thumbnail',
             'ext': 'jpg',
             'files': filename,
             "stagingDir": staging_dir,

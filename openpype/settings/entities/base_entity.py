@@ -9,7 +9,7 @@ from .lib import (
 )
 
 from .exceptions import (
-    BaseInvalidValueType,
+    BaseInvalidValue,
     InvalidValueType,
     SchemeGroupHierarchyBug,
     EntitySchemaError
@@ -28,6 +28,10 @@ class BaseEntity:
 
     def __init__(self, schema_data, *args, **kwargs):
         self.schema_data = schema_data
+        tooltip = None
+        if schema_data:
+            tooltip = schema_data.get("tooltip")
+        self.tooltip = tooltip
 
         # Entity id
         self._id = uuid4()
@@ -104,6 +108,12 @@ class BaseItemEntity(BaseEntity):
         self.is_group = False
         # Entity's value will be stored into file with name of it's key
         self.is_file = False
+        # Default values are not stored to an openpype file
+        # - these must not be set through schemas directly
+        self.dynamic_schema_id = None
+        self.is_dynamic_schema_node = False
+        self.is_in_dynamic_schema_node = False
+
         # Reference to parent entity which has `is_group` == True
         #   - stays as None if none of parents is group
         self.group_item = None
@@ -162,6 +172,10 @@ class BaseItemEntity(BaseEntity):
         self._has_project_override = False
         # Entity has set `_project_override_value` (is not NOT_SET)
         self.had_project_override = False
+
+        self._default_log_invalid_types = True
+        self._studio_log_invalid_types = True
+        self._project_log_invalid_types = True
 
         # Callbacks that are called on change.
         # - main current purspose is to register GUI callbacks
@@ -229,6 +243,11 @@ class BaseItemEntity(BaseEntity):
         """Return system settings entity."""
         pass
 
+    @abstractmethod
+    def has_child_with_key(self, key):
+        """Entity contains key as children."""
+        pass
+
     def schema_validations(self):
         """Validate schema of entity and it's hierachy.
 
@@ -255,13 +274,22 @@ class BaseItemEntity(BaseEntity):
             )
 
         # Group item can be only once in on hierarchy branch.
-        if self.is_group and self.group_item:
+        if self.is_group and self.group_item is not None:
             raise SchemeGroupHierarchyBug(self)
+
+        # Group item can be only once in on hierarchy branch.
+        if self.group_item is not None and self.is_dynamic_schema_node:
+            reason = (
+                "Dynamic schema is inside grouped item {}."
+                " Change group hierarchy or remove dynamic"
+                " schema to be able work properly."
+            ).format(self.group_item.path)
+            raise EntitySchemaError(self, reason)
 
         # Validate that env group entities will be stored into file.
         #   - env group entities must store metadata which is not possible if
         #       metadata would be outside of file
-        if not self.file_item and self.is_env_group:
+        if self.file_item is None and self.is_env_group:
             reason = (
                 "Environment item is not inside file"
                 " item so can't store metadata for defaults."
@@ -395,7 +423,7 @@ class BaseItemEntity(BaseEntity):
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
     # TODO convert to private method
-    def _check_update_value(self, value, value_source):
+    def _check_update_value(self, value, value_source, log_invalid_types=True):
         """Validation of value on update methods.
 
         Update methods update data from currently saved settings so it is
@@ -417,22 +445,23 @@ class BaseItemEntity(BaseEntity):
 
         try:
             new_value = self.convert_to_valid_type(value)
-        except BaseInvalidValueType:
+        except BaseInvalidValue:
             new_value = NOT_SET
 
         if new_value is not NOT_SET:
             return new_value
 
-        # Warning log about invalid value type.
-        self.log.warning(
-            (
-                "{} Got invalid value type for {} values."
-                " Expected types: {} | Got Type: {} | Value: \"{}\""
-            ).format(
-                self.path, value_source,
-                self.valid_value_types, type(value), str(value)
+        if log_invalid_types:
+            # Warning log about invalid value type.
+            self.log.warning(
+                (
+                    "{} Got invalid value type for {} values."
+                    " Expected types: {} | Got Type: {} | Value: \"{}\""
+                ).format(
+                    self.path, value_source,
+                    self.valid_value_types, type(value), str(value)
+                )
             )
-        )
         return NOT_SET
 
     def available_for_role(self, role_name=None):
@@ -478,7 +507,15 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def settings_value(self):
-        """Value of an item without key."""
+        """Value of an item without key without dynamic items."""
+        pass
+
+    @abstractmethod
+    def collect_dynamic_schema_entities(self):
+        """Collect entities that are on top of dynamically added schemas.
+
+        This method make sence only when defaults are saved.
+        """
         pass
 
     @abstractmethod
@@ -487,7 +524,7 @@ class BaseItemEntity(BaseEntity):
         pass
 
     @abstractmethod
-    def _item_initalization(self):
+    def _item_initialization(self):
         """Entity specific initialization process."""
         pass
 
@@ -724,7 +761,7 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def _add_to_project_override(self, on_change_trigger):
-        """Item's implementation to set values as overriden for project.
+        """Item's implementation to set values as overridden for project.
 
         Mark item and all it's children to be stored as project overrides.
         """
@@ -766,7 +803,7 @@ class BaseItemEntity(BaseEntity):
         """Item's implementation to remove project overrides.
 
         Mark item as does not have project overrides. Must not change
-        `was_overriden` attribute value.
+        `was_overridden` attribute value.
 
         Args:
             on_change_trigger (list): Callbacks of `on_change` should be stored
@@ -808,6 +845,12 @@ class ItemEntity(BaseItemEntity):
         self.is_dynamic_item = is_dynamic_item
 
         self.is_file = self.schema_data.get("is_file", False)
+        # These keys have underscore as they must not be set in schemas
+        self.dynamic_schema_id = self.schema_data.get(
+            "_dynamic_schema_id", None
+        )
+        self.is_dynamic_schema_node = self.dynamic_schema_id is not None
+
         self.is_group = self.schema_data.get("is_group", False)
         self.is_in_dynamic_item = bool(
             not self.is_dynamic_item
@@ -837,10 +880,20 @@ class ItemEntity(BaseItemEntity):
         self._require_restart_on_change = require_restart_on_change
 
         # File item reference
-        if self.parent.is_file:
-            self.file_item = self.parent
-        elif self.parent.file_item:
-            self.file_item = self.parent.file_item
+        if not self.is_dynamic_schema_node:
+            self.is_in_dynamic_schema_node = (
+                self.parent.is_dynamic_schema_node
+                or self.parent.is_in_dynamic_schema_node
+            )
+
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+        ):
+            if self.parent.is_file:
+                self.file_item = self.parent
+            elif self.parent.file_item:
+                self.file_item = self.parent.file_item
 
         # Group item reference
         if self.parent.is_group:
@@ -881,7 +934,7 @@ class ItemEntity(BaseItemEntity):
             _default_label_wrap["collapsed"]
         )
 
-        self._item_initalization()
+        self._item_initialization()
 
     def save(self):
         """Call save on root item."""
@@ -891,6 +944,18 @@ class ItemEntity(BaseItemEntity):
     def root_key(self):
         return self.root_item.root_key
 
+    @abstractmethod
+    def collect_dynamic_schema_entities(self, collector):
+        """Collect entities that are on top of dynamically added schemas.
+
+        This method make sence only when defaults are saved.
+
+        Args:
+            collector(DynamicSchemaValueCollector): Object where dynamic
+                entities are stored.
+        """
+        pass
+
     def schema_validations(self):
         if not self.label and self.use_label_wrap:
             reason = (
@@ -899,7 +964,12 @@ class ItemEntity(BaseItemEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        if self.is_file and self.file_item is not None:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and self.is_file
+            and self.file_item is not None
+        ):
             reason = (
                 "Entity has set `is_file` to true but"
                 " it's parent is already marked as file item."
@@ -920,7 +990,7 @@ class ItemEntity(BaseItemEntity):
         return self.root_item.get_entity_from_path(path)
 
     @abstractmethod
-    def update_default_value(self, parent_values):
+    def update_default_value(self, parent_values, log_invalid_types=True):
         """Fill default values on startup or on refresh.
 
         Default values stored in `openpype` repository should update all items
@@ -930,11 +1000,13 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass
 
     @abstractmethod
-    def update_studio_value(self, parent_values):
+    def update_studio_value(self, parent_values, log_invalid_types=True):
         """Fill studio override values on startup or on refresh.
 
         Set studio value if is not set to NOT_SET, in that case studio
@@ -943,11 +1015,13 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass
 
     @abstractmethod
-    def update_project_value(self, parent_values):
+    def update_project_value(self, parent_values, log_invalid_types=True):
         """Fill project override values on startup, refresh or project change.
 
         Set project value if is not set to NOT_SET, in that case project
@@ -956,5 +1030,7 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass

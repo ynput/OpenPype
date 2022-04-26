@@ -16,9 +16,33 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "boolean",
-                    "key": "sync_workfile_version",
-                    "label": "Sync Version from workfile"
+                    "type": "enum",
+                    "key": "sync_workfile_version_on_families",
+                    "label": "Sync workfile version for families",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "nukenodes": "nukenodes"
+                        },
+                        {
+                            "model": "model"
+                        },
+                        {
+                            "camera": "camera"
+                        },
+                        {
+                            "gizmo": "gizmo"
+                        },
+                        {
+                            "source": "source"
+                        },
+                        {
+                            "prerender": "prerender"
+                        },
+                        {
+                            "render": "render"
+                        }
+                    ]
                 }
             ]
         },
@@ -28,6 +52,16 @@
         {
             "type": "label",
             "label": "Validators"
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateInstanceInContext",
+                    "label": "Validate Instance In Context"
+                }
+            ]
         },
         {
             "type": "schema_template",
@@ -108,6 +142,21 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "ExtractReviewData",
+            "label": "ExtractReviewData",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "ExtractReviewDataLut",
             "label": "ExtractReviewDataLut",
             "is_group": true,
@@ -136,7 +185,197 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
+                },
+                {
+                    "key": "outputs",
+                    "label": "Output Definitions",
+                    "type": "dict-modifiable",
+                    "highlight_content": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "dict",
+                                "collapsible": false,
+                                "key": "filter",
+                                "label": "Filtering",
+                                "children": [
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "sebsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "read_raw",
+                                "label": "Read colorspace RAW",
+                                "default": false
+                            },
+                            {
+                                "type": "text",
+                                "key": "viewer_process_override",
+                                "label": "Viewer Process colorspace profile override"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "bake_viewer_process",
+                                "label": "Bake Viewer Process"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "bake_viewer_input_process",
+                                "label": "Bake Viewer Input Process (LUTs)"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "reformat_node_add",
+                                "label": "Add Reformat Node",
+                                "default": false
+                            },
+                            {
+                                "type": "collapsible-wrap",
+                                "label": "Reformat Node Knobs",
+                                "collapsible": true,
+                                "collapsed": true,
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "key": "reformat_node_config",
+                                        "object_type": {
+                                            "type": "dict-conditional",
+                                            "enum_key": "type",
+                                            "enum_label": "Type",
+                                            "enum_children": [
+                                                {
+                                                    "key": "string",
+                                                    "label": "String",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "key": "value",
+                                                            "label": "Value"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "key": "bool",
+                                                    "label": "Boolean",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "boolean",
+                                                            "key": "value",
+                                                            "label": "Value"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "key": "number",
+                                                    "label": "Number",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "list-strict",
+                                                            "key": "value",
+                                                            "label": "Value",
+                                                            "object_types": [
+                                                                {
+                                                                    "type": "number",
+                                                                    "key": "number",
+                                                                    "default": 1,
+                                                                    "decimal": 4
+                                                                }
+                                                            ]
+                                                        }
+
+                                                    ]
+                                                },
+                                                {
+                                                    "key": "list_numbers",
+                                                    "label": "2 Numbers",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "list-strict",
+                                                            "key": "value",
+                                                            "label": "Value",
+                                                            "object_types": [
+                                                                {
+                                                                    "type": "number",
+                                                                    "key": "x",
+                                                                    "default": 1,
+                                                                    "decimal": 4
+                                                                },
+                                                                {
+                                                                    "type": "number",
+                                                                    "key": "y",
+                                                                    "default": 1,
+                                                                    "decimal": 4
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "extension",
+                                "label": "Write node file type"
+                            },
+                            {
+                                "key": "add_tags",
+                                "label": "Add additional tags to representations",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
                 }
+
             ]
         },
         {
@@ -150,6 +389,91 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill specific slate node values with templates. Uncheck the checkbox to not change the value.",
+                    "word_wrap": true
+                },
+                {
+                    "type": "dict",
+                    "key": "key_value_mapping",
+                    "children": [
+                        {
+                            "type": "list-strict",
+                            "key": "f_submission_note",
+                            "label": "Submission Note:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "f_submitting_for",
+                            "label": "Submission For:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "f_vfx_scope_of_work",
+                            "label": "VFX Scope Of Work:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Integrators"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "IncrementScriptVersion",
+            "label": "IncrementScriptVersion",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
                 }
             ]
         }

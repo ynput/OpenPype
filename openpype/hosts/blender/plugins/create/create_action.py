@@ -2,9 +2,9 @@
 
 import bpy
 
-from avalon import api
+from openpype.pipeline import legacy_io
 import openpype.hosts.blender.api.plugin
-from avalon.blender import lib
+from openpype.hosts.blender.api import lib
 
 
 class CreateAction(openpype.hosts.blender.api.plugin.Creator):
@@ -22,7 +22,7 @@ class CreateAction(openpype.hosts.blender.api.plugin.Creator):
         name = openpype.hosts.blender.api.plugin.asset_name(asset, subset)
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
-        self.data['task'] = api.Session.get('AVALON_TASK')
+        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
         lib.imprint(collection, self.data)
 
         if (self.options or {}).get("useSelection"):

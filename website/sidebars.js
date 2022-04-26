@@ -18,7 +18,7 @@ module.exports = {
             label: "Integrations",
             items: [
                 "artist_hosts_hiero",
-                "artist_hosts_nuke",
+                "artist_hosts_nuke_tut",
                 "artist_hosts_maya",
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
@@ -46,11 +46,9 @@ module.exports = {
             type: "category",
             label: "Getting Started",
             items: [
-                "dev_requirements",
-                "dev_build",
+                "admin_builds",
                 "admin_distribute",
                 "admin_use",
-                "dev_contribute",
                 "admin_openpype_commands",
             ],
         },
@@ -133,4 +131,18 @@ module.exports = {
             ],
         },
     ],
+     Dev: [
+        "dev_introduction",
+        "dev_requirements",
+        "dev_build",
+        "dev_testing",
+        "dev_contribute",
+        {
+            type: "category",
+            label: "Hosts integrations",
+            items: [
+                "dev_publishing"
+            ]
+        }
+     ]
 };

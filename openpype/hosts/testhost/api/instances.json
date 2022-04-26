@@ -1,0 +1,108 @@
+[
+    {
+        "id": "pyblish.avalon.instance",
+        "active": true,
+        "family": "test",
+        "subset": "testMyVariant",
+        "version": 1,
+        "asset": "sq01_sh0010",
+        "task": "Compositing",
+        "variant": "myVariant",
+        "instance_id": "a485f148-9121-46a5-8157-aa64df0fb449",
+        "creator_attributes": {
+            "number_key": 10,
+            "ha": 10
+        },
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": false
+            }
+        },
+        "creator_identifier": "test_one"
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "active": true,
+        "family": "test",
+        "subset": "testMyVariant2",
+        "version": 1,
+        "asset": "sq01_sh0010",
+        "task": "Compositing",
+        "variant": "myVariant2",
+        "creator_attributes": {},
+        "instance_id": "a485f148-9121-46a5-8157-aa64df0fb444",
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        },
+        "creator_identifier": "test_one"
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "active": true,
+        "family": "test",
+        "subset": "testMain",
+        "version": 1,
+        "asset": "sq01_sh0010",
+        "task": "Compositing",
+        "variant": "Main",
+        "creator_attributes": {},
+        "instance_id": "3607bc95-75f6-4648-a58d-e699f413d09f",
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        },
+        "creator_identifier": "test_two"
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "active": true,
+        "family": "test",
+        "subset": "testMain2",
+        "version": 1,
+        "asset": "sq01_sh0020",
+        "task": "Compositing",
+        "variant": "Main2",
+        "instance_id": "4ccf56f6-9982-4837-967c-a49695dbe8eb",
+        "creator_attributes": {},
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        },
+        "creator_identifier": "test_two"
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "test_three",
+        "subset": "test_threeMain2",
+        "active": true,
+        "version": 1,
+        "asset": "sq01_sh0020",
+        "task": "Compositing",
+        "variant": "Main2",
+        "instance_id": "4ccf56f6-9982-4837-967c-a49695dbe8ec",
+        "creator_attributes": {},
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        }
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "workfile",
+        "subset": "workfileMain",
+        "active": true,
+        "creator_identifier": "workfile",
+        "version": 1,
+        "asset": "Alpaca_01",
+        "task": "modeling",
+        "variant": "Main",
+        "instance_id": "7c9ddfc7-9f9c-4c1c-b233-38c966735fb6",
+        "creator_attributes": {},
+        "publish_attributes": {}
+    }
+]

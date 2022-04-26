@@ -3,6 +3,7 @@ import sys
 import time
 import logging
 import pymongo
+import certifi
 
 if sys.version_info[0] == 2:
     from urlparse import urlparse, parse_qs
@@ -14,7 +15,19 @@ class MongoEnvNotSet(Exception):
     pass
 
 
-def decompose_url(url):
+def _decompose_url(url):
+    """Decompose mongo url to basic components.
+
+    Used for creation of MongoHandler which expect mongo url components as
+    separated kwargs. Components are at the end not used as we're setting
+    connection directly this is just a dumb components for MongoHandler
+    validation pass.
+    """
+    # Use first url from passed url
+    #   - this is because it is possible to pass multiple urls for multiple
+    #       replica sets which would crash on urlparse otherwise
+    #   - please don't use comma in username of password
+    url = url.split(",")[0]
     components = {
         "scheme": None,
         "host": None,
@@ -47,50 +60,42 @@ def decompose_url(url):
     return components
 
 
-def compose_url(scheme=None,
-                host=None,
-                username=None,
-                password=None,
-                port=None,
-                auth_db=None):
-
-    url = "{scheme}://"
-
-    if username and password:
-        url += "{username}:{password}@"
-
-    url += "{host}"
-    if port:
-        url += ":{port}"
-
-    if auth_db:
-        url += "?authSource={auth_db}"
-
-    return url.format(**{
-        "scheme": scheme,
-        "host": host,
-        "username": username,
-        "password": password,
-        "port": port,
-        "auth_db": auth_db
-    })
-
-
 def get_default_components():
     mongo_url = os.environ.get("OPENPYPE_MONGO")
     if mongo_url is None:
         raise MongoEnvNotSet(
             "URL for Mongo logging connection is not set."
         )
-    return decompose_url(mongo_url)
+    return _decompose_url(mongo_url)
 
 
-def extract_port_from_url(url):
-    parsed_url = urlparse(url)
-    if parsed_url.scheme is None:
-        _url = "mongodb://{}".format(url)
-        parsed_url = urlparse(_url)
-    return parsed_url.port
+def should_add_certificate_path_to_mongo_url(mongo_url):
+    """Check if should add ca certificate to mongo url.
+
+    Since 30.9.2021 cloud mongo requires newer certificates that are not
+    available on most of workstation. This adds path to certifi certificate
+    which is valid for it. To add the certificate path url must have scheme
+    'mongodb+srv' or has 'ssl=true' or 'tls=true' in url query.
+    """
+    parsed = urlparse(mongo_url)
+    query = parse_qs(parsed.query)
+    lowered_query_keys = set(key.lower() for key in query.keys())
+    add_certificate = False
+    # Check if url 'ssl' or 'tls' are set to 'true'
+    for key in ("ssl", "tls"):
+        if key in query and "true" in query["ssl"]:
+            add_certificate = True
+            break
+
+    # Check if url contains 'mongodb+srv'
+    if not add_certificate and parsed.scheme == "mongodb+srv":
+        add_certificate = True
+
+    # Check if url does already contain certificate path
+    if add_certificate and "tlscafile" in lowered_query_keys:
+        add_certificate = False
+
+    return add_certificate
 
 
 def validate_mongo_connection(mongo_uri):
@@ -106,26 +111,9 @@ def validate_mongo_connection(mongo_uri):
             passed so probably couldn't connect to mongo server.
 
     """
-    parsed = urlparse(mongo_uri)
-    # Force validation of scheme
-    if parsed.scheme not in ["mongodb", "mongodb+srv"]:
-        raise pymongo.errors.InvalidURI((
-            "Invalid URI scheme:"
-            " URI must begin with 'mongodb://' or 'mongodb+srv://'"
-        ))
-    # we have mongo connection string. Let's try if we can connect.
-    components = decompose_url(mongo_uri)
-    mongo_args = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 1000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_args["port"] = int(port)
-
-    # Create connection
-    client = pymongo.MongoClient(**mongo_args)
-    client.server_info()
+    client = OpenPypeMongoConnection.create_connection(
+        mongo_uri, retry_attempts=1
+    )
     client.close()
 
 
@@ -151,6 +139,8 @@ class OpenPypeMongoConnection:
             # Naive validation of existing connection
             try:
                 connection.server_info()
+                with connection.start_session():
+                    pass
             except Exception:
                 connection = None
 
@@ -162,38 +152,53 @@ class OpenPypeMongoConnection:
         return connection
 
     @classmethod
-    def create_connection(cls, mongo_url, timeout=None):
+    def create_connection(cls, mongo_url, timeout=None, retry_attempts=None):
+        parsed = urlparse(mongo_url)
+        # Force validation of scheme
+        if parsed.scheme not in ["mongodb", "mongodb+srv"]:
+            raise pymongo.errors.InvalidURI((
+                "Invalid URI scheme:"
+                " URI must begin with 'mongodb://' or 'mongodb+srv://'"
+            ))
+
         if timeout is None:
             timeout = int(os.environ.get("AVALON_TIMEOUT") or 1000)
 
         kwargs = {
-            "host": mongo_url,
             "serverSelectionTimeoutMS": timeout
         }
+        if should_add_certificate_path_to_mongo_url(mongo_url):
+            kwargs["ssl_ca_certs"] = certifi.where()
 
-        port = extract_port_from_url(mongo_url)
-        if port is not None:
-            kwargs["port"] = int(port)
+        mongo_client = pymongo.MongoClient(mongo_url, **kwargs)
 
-        mongo_client = pymongo.MongoClient(**kwargs)
+        if retry_attempts is None:
+            retry_attempts = 3
 
-        for _retry in range(3):
+        elif not retry_attempts:
+            retry_attempts = 1
+
+        last_exc = None
+        valid = False
+        t1 = time.time()
+        for attempt in range(1, retry_attempts + 1):
             try:
-                t1 = time.time()
                 mongo_client.server_info()
-
-            except Exception:
-                cls.log.warning("Retrying...")
-                time.sleep(1)
-                timeout *= 1.5
-
-            else:
+                with mongo_client.start_session():
+                    pass
+                valid = True
                 break
 
-        else:
-            raise IOError((
-                "ERROR: Couldn't connect to {} in less than {:.3f}ms"
-            ).format(mongo_url, timeout))
+            except Exception as exc:
+                last_exc = exc
+                if attempt < retry_attempts:
+                    cls.log.warning(
+                        "Attempt {} failed. Retrying... ".format(attempt)
+                    )
+                    time.sleep(1)
+
+        if not valid:
+            raise last_exc
 
         cls.log.info("Connected to {}, delay {:.3f}s".format(
             mongo_url, time.time() - t1

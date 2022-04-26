@@ -45,8 +45,11 @@ class ExtractPlayblast(openpype.api.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
+        override_viewport_options = (
+            self.capture_preset['Viewport Options']
+                               ['override_viewport_options']
+        )
         preset = lib.load_capture_preset(data=self.capture_preset)
-
 
         preset['camera'] = camera
         preset['start_frame'] = start
@@ -70,6 +73,11 @@ class ExtractPlayblast(openpype.api.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
+        # Override transparency if requested.
+        transparency = instance.data.get("transparency", 0)
+        if transparency != 0:
+            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
         # Isolate view is requested by having objects in the set besides a
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
@@ -91,6 +99,12 @@ class ExtractPlayblast(openpype.api.Extractor):
             preset['viewer'] = False
 
             self.log.info('using viewport preset: {}'.format(preset))
+
+            # Update preset with current panel setting
+            # if override_viewport_options is turned off
+            if not override_viewport_options:
+                panel_preset = capture.parse_active_view()
+                preset.update(panel_preset)
 
             path = capture.capture(**preset)
 

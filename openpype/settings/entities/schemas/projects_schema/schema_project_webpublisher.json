@@ -24,10 +24,10 @@
                             "label": "Task type to family mapping",
                             "collapsible_key": true,
                             "object_type": {
-                                "type": "dict-modifiable",
-                                "collapsible": false,
+                                "type": "list",
+                                "collapsible": true,
                                 "key": "task_type",
-                                "collapsible_key": false,
+                                "collapsible_key": true,
                                 "object_type": {
                                     "type": "dict",
                                     "children": [
@@ -53,13 +53,33 @@
                                             "name": "schema_representation_tags"
                                         },
                                         {
+                                            "type": "separator"
+                                        },
+                                        {
                                             "type": "text",
-                                            "key": "subset_template_name",
-                                            "label": "Subset template name"
+                                            "key": "result_family",
+                                            "label": "Resulting family"
                                         }
                                     ]
                                 }
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectTVPaintInstances",
+                    "label": "Collect TVPaint Instances",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Regex helps to extract render layer and pass names from TVPaint layer name.<br>The regex must contain named groups <b>'layer'</b> and <b>'pass'</b> which are used for creation of RenderPass instances.<hr><br>Example layer name: <b>\"L001_Person_Hand\"</b><br>Example regex: <b>\"(?P&lt;layer&gt;L[0-9]{3}_\\w+)_(?P&lt;pass&gt;.+)\"</b><br>Extracted layer: <b>\"L001_Person\"</b><br>Extracted pass: <b>\"Hand\"</b>"
+                        },
+                        {
+                            "type": "text",
+                            "key": "layer_name_regex",
+                            "label": "Layer name regex"
                         }
                     ]
                 }

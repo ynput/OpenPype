@@ -1,0 +1,48 @@
+[
+    {
+        "__default_values__": {
+            "multiselection": true
+        }
+    },
+    {
+        "key": "{key}",
+        "label": "{label}",
+        "multiselection": "{multiselection}",
+        "type": "enum",
+        "enum_items": [
+             {"action": "action"},
+             {"animation": "animation"},
+             {"assembly": "assembly"},
+             {"audio": "audio"},
+             {"backgroundComp": "backgroundComp"},
+             {"backgroundLayout": "backgroundLayout"},
+             {"camera": "camera"},
+             {"editorial": "editorial"},
+             {"gizmo": "gizmo"},
+             {"image": "image"},
+             {"layout": "layout"},
+             {"look": "look"},
+             {"matchmove": "matchmove"},
+             {"mayaScene": "mayaScene"},
+             {"model": "model"},
+             {"nukenodes": "nukenodes"},
+             {"plate": "plate"},
+             {"pointcache": "pointcache"},
+             {"prerender": "prerender"},
+             {"redshiftproxy": "redshiftproxy"},
+             {"reference": "reference"},
+             {"render": "render"},
+             {"review": "review"},
+             {"rig": "rig"},
+             {"setdress": "setdress"},
+             {"take": "take"},
+             {"usdShade": "usdShade"},
+             {"vdbcache": "vdbcache"},
+             {"vrayproxy": "vrayproxy"},
+             {"workfile": "workfile"},
+             {"xgen": "xgen"},
+             {"yetiRig": "yetiRig"},
+             {"yeticache": "yeticache"}
+        ]
+    }
+]

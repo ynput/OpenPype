@@ -1,0 +1,425 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "flame",
+    "label": "Flame",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "create",
+            "label": "Create plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateShotClip",
+                    "label": "Create Shot Clip",
+                    "is_group": true,
+                    "children": [
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Shot Hierarchy And Rename Settings",
+                          "collapsible": false,
+                          "children": [
+                            {
+                                "type": "text",
+                                "key": "hierarchy",
+                                "label": "Shot parent hierarchy"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "useShotName",
+                                "label": "Use Shot Name"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "clipRename",
+                                "label": "Rename clips"
+                            },
+                            {
+                                "type": "text",
+                                "key": "clipName",
+                                "label": "Clip name template"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "segmentIndex",
+                                "label": "Accept segment order"
+                            },
+                            {
+                                "type": "number",
+                                "key": "countFrom",
+                                "label": "Count sequence from"
+                            },
+                            {
+                                "type": "number",
+                                "key": "countSteps",
+                                "label": "Stepping number"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Shot Template Keywords",
+                          "collapsible": false,
+                          "children": [
+                            {
+                                "type": "text",
+                                "key": "folder",
+                                "label": "{folder}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "episode",
+                                "label": "{episode}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "sequence",
+                                "label": "{sequence}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "track",
+                                "label": "{track}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "shot",
+                                "label": "{shot}"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Vertical Synchronization Of Attributes",
+                          "collapsible": false,
+                          "children": [
+                            {
+                                "type": "boolean",
+                                "key": "vSyncOn",
+                                "label": "Enable Vertical Sync"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Shot Attributes",
+                          "collapsible": false,
+                          "children": [
+                            {
+                                "type": "number",
+                                "key": "workfileFrameStart",
+                                "label": "Workfiles Start Frame"
+                            },
+                            {
+                                "type": "number",
+                                "key": "handleStart",
+                                "label": "Handle start (head)"
+                            },
+                            {
+                                "type": "number",
+                                "key": "handleEnd",
+                                "label": "Handle end (tail)"
+                            }
+                          ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectTimelineInstances",
+                    "label": "Collect Timeline Instances",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "collapsible-wrap",
+                            "label": "XML presets attributes parsable from segment comments",
+                            "collapsible": true,
+                            "collapsed": true,
+                            "children": [
+                                {
+                                    "type": "list",
+                                    "key": "xml_preset_attrs_from_comments",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "text",
+                                                "key": "name",
+                                                "label": "Attribute name"
+                                            },
+                                            {
+                                                "key": "type",
+                                                "label": "Attribute type",
+                                                "type": "enum",
+                                                "default": "number",
+                                                "enum_items": [
+                                                    {
+                                                        "number": "number"
+                                                    },
+                                                    {
+                                                        "float": "float"
+                                                    },
+                                                    {
+                                                        "string": "string"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "collapsible-wrap",
+                            "label": "Add tasks",
+                            "collapsible": true,
+                            "collapsed": true,
+                            "children": [
+                                {
+                                    "type": "list",
+                                    "key": "add_tasks",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "text",
+                                                "key": "name",
+                                                "label": "Task name"
+                                            },
+                                            {
+                                                "key": "type",
+                                                "label": "Task type",
+                                                "multiselection": false,
+                                                "type": "task-types-enum"
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "create_batch_group",
+                                                "label": "Create batch group"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractSubsetResources",
+                    "label": "Extract Subset Resources",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "keep_original_representation",
+                            "label": "Publish clip's original media"
+                        },
+                        {
+                            "key": "export_presets_mapping",
+                            "label": "Export presets mapping",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "ext",
+                                        "label": "Output extension",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "xml_preset_file",
+                                        "label": "XML preset file (with ext)",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "xml_preset_dir",
+                                        "label": "XML preset folder (optional)",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "export_type",
+                                        "label": "Eport clip type",
+                                        "type": "enum",
+                                        "default": "File Sequence",
+                                        "enum_items": [
+                                            {
+                                                "Movie": "Movie"
+                                            },
+                                            {
+                                                "File Sequence": "File Sequence"
+                                            },
+                                            {
+                                                "Sequence Publish": "Sequence Publish"
+                                            }
+                                        ]
+
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "ignore_comment_attrs",
+                                        "label": "Ignore attributes parsed from a segment comments"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "colorspace_out",
+                                        "label": "Output color (imageio)",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "representation_add_range",
+                                        "label": "Add frame range to representation"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "representation_tags",
+                                        "label": "Add representation tags",
+                                        "object_type": {
+                                            "type": "text",
+                                            "multiline": false
+                                        }
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "load_to_batch_group",
+                                        "label": "Load to batch group reel",
+                                        "default": false
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "batch_group_loader_name",
+                                        "label": "Use loader name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "load",
+            "label": "Loader plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "LoadClip",
+                    "label": "Load Clip",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "families",
+                            "label": "Families",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "representations",
+                            "label": "Representations",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "reel_group_name",
+                            "label": "Reel group name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "reel_name",
+                            "label": "Reel name"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "clip_name_template",
+                            "label": "Clip name template"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "LoadClipBatch",
+                    "label": "Load as clip to current batch",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "families",
+                            "label": "Families",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "representations",
+                            "label": "Representations",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "reel_name",
+                            "label": "Reel name"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "clip_name_template",
+                            "label": "Clip name template"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

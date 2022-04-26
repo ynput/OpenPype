@@ -5,64 +5,54 @@
     "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
-    {
-        "type": "boolean",
-        "key": "enabled",
-        "label": "Enabled"
-    },
-    {
-        "type": "dict",
-        "key": "config",
-        "label": "Config",
-        "collapsible": true,
-        "children": [
-            {
-                "type": "text",
-                "key": "retry_cnt",
-                "label": "Retry Count"
-            },
-            {
-                "type": "text",
-                "key": "loop_delay",
-                "label": "Loop Delay"
-            },
-            {
-                "type": "text",
-                "key": "active_site",
-                "label": "Active Site"
-            },
-            {
-                "type": "text",
-                "key": "remote_site",
-                "label": "Remote Site"
-            }
-        ]
-    }, {
-        "type": "dict-modifiable",
-        "collapsible": true,
-        "key": "sites",
-        "label": "Sites",
-        "collapsible_key": false,
-        "object_type":
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
         {
             "type": "dict",
+            "key": "config",
+            "label": "Config",
+            "collapsible": true,
             "children": [
-            {
-                "type": "path",
-                "key": "credentials_url",
-                "label": "Credentials url",
-                "multiplatform": true
-            },
-            {
-                "type": "dict-modifiable",
-                "key": "root",
-                "label": "Roots",
-                "collapsable": false,
-                "collapsable_key": false,
-                "object_type": "text"
-            }
+                {
+                    "type": "text",
+                    "key": "retry_cnt",
+                    "label": "Retry Count"
+                },
+                {
+                    "type": "text",
+                    "key": "loop_delay",
+                    "label": "Loop Delay"
+                },
+                {
+                    "type": "list",
+                    "key": "always_accessible_on",
+                    "label": "Always accessible on sites",
+                    "object_type": "text"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "text",
+                    "key": "active_site",
+                    "label": "User Default Active Site"
+                },
+                {
+                    "type": "text",
+                    "key": "remote_site",
+                    "label": "User Default Remote Site"
+                }
             ]
+        },
+        {
+            "type": "sync-server-sites",
+            "collapsible": true,
+            "key": "sites",
+            "label": "Sites",
+            "collapsible_key": false
         }
-    }
     ]
 }

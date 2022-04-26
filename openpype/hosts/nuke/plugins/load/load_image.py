@@ -1,24 +1,43 @@
-import re
 import nuke
 
-from avalon.vendor import qargparse
-from avalon import api, io
+import qargparse
 
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
-class LoadImage(api.Loader):
+class LoadImage(load.LoaderPlugin):
     """Load still image into Nuke"""
 
-    families = ["render", "source", "plate", "review", "image"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "psd"]
+    families = [
+        "render2d",
+        "source",
+        "plate",
+        "render",
+        "prerender",
+        "review",
+        "image"
+    ]
+    representations = ["exr", "dpx", "jpg", "jpeg", "png", "psd", "tiff"]
 
     label = "Load Image"
     order = -10
     icon = "image"
     color = "white"
+
+    # Loaded from settings
+    _representations = []
 
     node_name_template = "{class_name}_{ext}"
 
@@ -33,11 +52,11 @@ class LoadImage(api.Loader):
         )
     ]
 
+    @classmethod
+    def get_representations(cls):
+        return cls.representations + cls._representations
+
     def load(self, context, name, namespace, options):
-        from avalon.nuke import (
-            containerise,
-            viewer_update_and_undo_stop
-        )
         self.log.info("__ options: `{}`".format(options))
         frame_number = options.get("frame_number", 1)
 
@@ -142,11 +161,6 @@ class LoadImage(api.Loader):
         inputs:
 
         """
-
-        from avalon.nuke import (
-            update_container
-        )
-
         node = nuke.toNode(container["objectName"])
         frame_number = node["first"].value()
 
@@ -154,7 +168,7 @@ class LoadImage(api.Loader):
 
         repr_cont = representation["context"]
 
-        file = api.get_representation_path(representation)
+        file = get_representation_path(representation)
 
         if not file:
             repr_id = representation["_id"]
@@ -172,13 +186,13 @@ class LoadImage(api.Loader):
                 format(frame_number, "0{}".format(padding)))
 
         # Get start frame from version data
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -205,8 +219,7 @@ class LoadImage(api.Loader):
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "fps": str(version_data.get("fps")),
-            "author": version_data.get("author"),
-            "outputDir": version_data.get("outputDir"),
+            "author": version_data.get("author")
         })
 
         # change color of node
@@ -220,12 +233,9 @@ class LoadImage(api.Loader):
             node,
             updated_dict
         )
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def remove(self, container):
-
-        from avalon.nuke import viewer_update_and_undo_stop
-
         node = nuke.toNode(container['objectName'])
         assert node.Class() == "Read", "Must be Read"
 

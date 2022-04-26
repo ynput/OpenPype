@@ -2,20 +2,28 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from . import (
     ProjectModel,
+    ProjectProxyFilter,
 
     HierarchyModel,
     HierarchySelectionModel,
     HierarchyView,
 
-    CreateProjectDialog
+    CreateProjectDialog,
+    PROJECT_NAME_ROLE
 )
-from openpype.style import load_stylesheet
+from .widgets import ConfirmProjectDeletion
 from .style import ResourceCache
+from openpype.style import load_stylesheet
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
+from openpype.pipeline import AvalonMongoDB
 
 from openpype import resources
-from avalon.api import AvalonMongoDB
+from openpype.api import (
+    get_project_basic_paths,
+    create_project_folders,
+    Logger
+)
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
@@ -24,12 +32,14 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ProjectManagerWindow, self).__init__(parent)
 
+        self.log = Logger.get_logger(self.__class__.__name__)
+
         self._initial_reset = False
         self._password_dialog = None
         self._user_passed = False
 
         self.setWindowTitle("OpenPype Project Manager")
-        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
+        self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
         # Top part of window
         top_part_widget = QtWidgets.QWidget(self)
@@ -40,11 +50,15 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         dbcon = AvalonMongoDB()
 
         project_model = ProjectModel(dbcon)
+        project_proxy = ProjectProxyFilter()
+        project_proxy.setSourceModel(project_model)
+        project_proxy.setDynamicSortFilter(True)
+
         project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setSizeAdjustPolicy(
             QtWidgets.QComboBox.AdjustToContents
         )
-        project_combobox.setModel(project_model)
+        project_combobox.setModel(project_proxy)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
         style_delegate = QtWidgets.QStyledItemDelegate()
         project_combobox.setItemDelegate(style_delegate)
@@ -57,13 +71,27 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         create_project_btn = QtWidgets.QPushButton(
             "Create project...", project_widget
         )
+        create_folders_btn = QtWidgets.QPushButton(
+            ResourceCache.get_icon("asset", "default"),
+            "Create Starting Folders",
+            project_widget
+        )
+        create_folders_btn.setEnabled(False)
+
+        remove_projects_btn = QtWidgets.QPushButton(
+            "Delete project", project_widget
+        )
+        remove_projects_btn.setIcon(ResourceCache.get_icon("remove"))
+        remove_projects_btn.setObjectName("IconBtn")
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)
         project_layout.addWidget(project_combobox, 0)
         project_layout.addWidget(refresh_projects_btn, 0)
         project_layout.addWidget(create_project_btn, 0)
+        project_layout.addWidget(create_folders_btn)
         project_layout.addStretch(1)
+        project_layout.addWidget(remove_projects_btn)
 
         # Helper buttons
         helper_btns_widget = QtWidgets.QWidget(top_part_widget)
@@ -80,7 +108,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             helper_btns_widget
         )
         add_asset_btn.setObjectName("IconBtn")
+        add_asset_btn.setEnabled(False)
         add_task_btn.setObjectName("IconBtn")
+        add_task_btn.setEnabled(False)
 
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
@@ -110,6 +140,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         message_label = QtWidgets.QLabel(buttons_widget)
         save_btn = QtWidgets.QPushButton("Save", buttons_widget)
+        save_btn.setEnabled(False)
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -124,12 +155,16 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
         create_project_btn.clicked.connect(self._on_project_create)
+        create_folders_btn.clicked.connect(self._on_create_folders)
+        remove_projects_btn.clicked.connect(self._on_remove_project)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
         save_btn.clicked.connect(self._on_save_click)
         add_asset_btn.clicked.connect(self._on_add_asset)
         add_task_btn.clicked.connect(self._on_add_task)
 
+        self._dbcon = dbcon
         self._project_model = project_model
+        self._project_proxy_model = project_proxy
 
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
@@ -139,6 +174,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._refresh_projects_btn = refresh_projects_btn
         self._project_combobox = project_combobox
         self._create_project_btn = create_project_btn
+        self._create_folders_btn = create_folders_btn
+        self._remove_projects_btn = remove_projects_btn
+        self._save_btn = save_btn
 
         self._add_asset_btn = add_asset_btn
         self._add_task_btn = add_task_btn
@@ -147,7 +185,20 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.setStyleSheet(load_stylesheet())
 
     def _set_project(self, project_name=None):
+        self._create_folders_btn.setEnabled(project_name is not None)
+        self._remove_projects_btn.setEnabled(project_name is not None)
+        self._add_asset_btn.setEnabled(project_name is not None)
+        self._add_task_btn.setEnabled(project_name is not None)
+        self._save_btn.setEnabled(project_name is not None)
+        self._project_proxy_model.set_filter_default(project_name is not None)
         self.hierarchy_view.set_project(project_name)
+
+    def _current_project(self):
+        row = self._project_combobox.currentIndex()
+        if row < 0:
+            return None
+        index = self._project_proxy_model.index(row, 0)
+        return index.data(PROJECT_NAME_ROLE)
 
     def showEvent(self, event):
         super(ProjectManagerWindow, self).showEvent(event)
@@ -167,6 +218,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 project_name = self._project_combobox.currentText()
 
         self._project_model.refresh()
+        self._project_proxy_model.sort(0, QtCore.Qt.AscendingOrder)
 
         if self._project_combobox.count() == 0:
             return self._set_project()
@@ -176,10 +228,12 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             if row >= 0:
                 self._project_combobox.setCurrentIndex(row)
 
-        self._set_project(self._project_combobox.currentText())
+        selected_project = self._current_project()
+        self._set_project(selected_project)
 
     def _on_project_change(self):
-        self._set_project(self._project_combobox.currentText())
+        selected_project = self._current_project()
+        self._set_project(selected_project)
 
     def _on_project_refresh(self):
         self.refresh_projects()
@@ -192,6 +246,43 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
     def _on_add_task(self):
         self.hierarchy_view.add_task()
+
+    def _on_create_folders(self):
+        project_name = self._current_project()
+        if not project_name:
+            return
+
+        qm = QtWidgets.QMessageBox
+        ans = qm.question(self,
+                          "OpenPype Project Manager",
+                          "Confirm to create starting project folders?",
+                          qm.Yes | qm.No)
+        if ans == qm.Yes:
+            try:
+                # Get paths based on presets
+                basic_paths = get_project_basic_paths(project_name)
+                if not basic_paths:
+                    pass
+                # Invoking OpenPype API to create the project folders
+                create_project_folders(basic_paths, project_name)
+            except Exception as exc:
+                self.log.warning(
+                    "Cannot create starting folders: {}".format(exc),
+                    exc_info=True
+                )
+
+    def _on_remove_project(self):
+        project_name = self._current_project()
+        dialog = ConfirmProjectDeletion(project_name, self)
+        result = dialog.exec_()
+        if result != 1:
+            return
+
+        database = self._dbcon.database
+        if project_name in database.collection_names():
+            collection = database[project_name]
+            collection.drop()
+        self.refresh_projects()
 
     def show_message(self, message):
         # TODO add nicer message pop

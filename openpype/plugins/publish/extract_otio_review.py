@@ -41,7 +41,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
     order = api.ExtractorOrder - 0.45
     label = "Extract OTIO review"
     families = ["review"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     # plugin default attributes
     temp_file_head = "tempFile."
@@ -84,6 +84,28 @@ class ExtractOTIOReview(openpype.api.Extractor):
         # loop available clips in otio track
         for index, r_otio_cl in enumerate(otio_review_clips):
             # QUESTION: what if transition on clip?
+
+            # check if resolution is the same
+            width = self.to_width
+            height = self.to_height
+            otio_media = r_otio_cl.media_reference
+            media_metadata = otio_media.metadata
+
+            # get from media reference metadata source
+            if media_metadata.get("openpype.source.width"):
+                width = int(media_metadata.get("openpype.source.width"))
+            if media_metadata.get("openpype.source.height"):
+                height = int(media_metadata.get("openpype.source.height"))
+
+            # compare and reset
+            if width != self.to_width:
+                self.to_width = width
+            if height != self.to_height:
+                self.to_height = height
+
+            self.log.debug("> self.to_width x self.to_height: {} x {}".format(
+                self.to_width, self.to_height
+            ))
 
             # get frame range values
             src_range = r_otio_cl.source_range
@@ -251,6 +273,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
         src_start = int(avl_start + start)
         avl_durtation = int(avl_range.duration.value)
 
+        self.need_offset = bool(avl_start != 0 and src_start != 0)
+
         # if media start is les then clip requires
         if src_start < avl_start:
             # calculate gap
@@ -312,7 +336,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             out_frame_start += end_offset
 
         # start command list
-        command = ['"{}"'.format(ffmpeg_path)]
+        command = [ffmpeg_path]
 
         if sequence:
             input_dir, collection = sequence
@@ -324,8 +348,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
             # form command for rendering gap files
             command.extend([
-                "-start_number {}".format(in_frame_start),
-                "-i \"{}\"".format(input_path)
+                "-start_number", str(in_frame_start),
+                "-i", input_path
             ])
 
         elif video:
@@ -334,13 +358,15 @@ class ExtractOTIOReview(openpype.api.Extractor):
             input_fps = otio_range.start_time.rate
             frame_duration = otio_range.duration.value
             sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
-            sec_duration = openpype.lib.frames_to_secons(frame_duration, input_fps)
+            sec_duration = openpype.lib.frames_to_secons(
+                frame_duration, input_fps
+            )
 
             # form command for rendering gap files
             command.extend([
-                "-ss {}".format(sec_start),
-                "-t {}".format(sec_duration),
-                "-i \"{}\"".format(video_path)
+                "-ss", str(sec_start),
+                "-t", str(sec_duration),
+                "-i", video_path
             ])
 
         elif gap:
@@ -349,22 +375,24 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
             # form command for rendering gap files
             command.extend([
-                "-t {} -r {}".format(sec_duration, self.actual_fps),
-                "-f lavfi",
-                "-i color=c=black:s={}x{}".format(self.to_width,
-                                                  self.to_height),
-                "-tune stillimage"
+                "-t", str(sec_duration),
+                "-r", str(self.actual_fps),
+                "-f", "lavfi",
+                "-i", "color=c=black:s={}x{}".format(
+                    self.to_width, self.to_height
+                ),
+                "-tune", "stillimage"
             ])
 
         # add output attributes
         command.extend([
-            "-start_number {}".format(out_frame_start),
-            "\"{}\"".format(output_path)
+            "-start_number", str(out_frame_start),
+            output_path
         ])
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
         output = openpype.api.run_subprocess(
-            " ".join(command), logger=self.log
+            command, logger=self.log
         )
         self.log.debug("Output: {}".format(output))
 
@@ -382,11 +410,17 @@ class ExtractOTIOReview(openpype.api.Extractor):
         """
 
         padding = "{{:0{}d}}".format(self.padding)
+
+        # create frame offset
+        offset = 0
+        if self.need_offset:
+            offset = 1
+
         if end_offset:
             new_frames = list()
             start_frame = self.used_frames[-1]
-            for index in range((end_offset + 1),
-                               (int(end_offset + duration) + 1)):
+            for index in range((end_offset + offset),
+                               (int(end_offset + duration) + offset)):
                 seq_number = padding.format(start_frame + index)
                 self.log.debug(
                     "index: `{}` | seq_number: `{}`".format(index, seq_number))

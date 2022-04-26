@@ -15,7 +15,7 @@ CURRENT_FILE = os.path.abspath(__file__)
 def show_error_messagebox(title, message, detail_message=None):
     """Function will show message and process ends after closing it."""
     from Qt import QtWidgets, QtCore
-    from avalon import style
+    from openpype import style
 
     app = QtWidgets.QApplication([])
     app.setStyleSheet(style.load_stylesheet())
@@ -81,11 +81,11 @@ def main(argv):
 
     host_name = os.environ["AVALON_APP"].lower()
     if host_name == "photoshop":
-        from avalon.photoshop.lib import main
+        from openpype.hosts.photoshop.api.lib import main
     elif host_name == "aftereffects":
-        from avalon.aftereffects.lib import main
+        from openpype.hosts.aftereffects.api.lib import main
     elif host_name == "harmony":
-        from avalon.harmony.lib import main
+        from openpype.hosts.harmony.api.lib import main
     else:
         title = "Unknown host name"
         message = (

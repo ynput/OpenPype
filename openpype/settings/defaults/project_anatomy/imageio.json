@@ -28,6 +28,9 @@
         "viewer": {
             "viewerProcess": "sRGB"
         },
+        "baking": {
+            "viewerProcess": "rec709"
+        },
         "workfile": {
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
@@ -124,6 +127,42 @@
                             "value": "True"
                         }
                     ]
+                },
+                {
+                    "plugins": [
+                        "CreateWriteStill"
+                    ],
+                    "nukeNodeClass": "Write",
+                    "knobs": [
+                        {
+                            "name": "file_type",
+                            "value": "tiff"
+                        },
+                        {
+                            "name": "datatype",
+                            "value": "16 bit"
+                        },
+                        {
+                            "name": "compression",
+                            "value": "Deflate"
+                        },
+                        {
+                            "name": "tile_color",
+                            "value": "0x23ff00ff"
+                        },
+                        {
+                            "name": "channels",
+                            "value": "rgb"
+                        },
+                        {
+                            "name": "colorspace",
+                            "value": "sRGB"
+                        },
+                        {
+                            "name": "create_directories",
+                            "value": "True"
+                        }
+                    ]
                 }
             ],
             "customNodes": []
@@ -133,6 +172,47 @@
                 {
                     "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
                     "colorspace": "linear"
+                }
+            ]
+        }
+    },
+    "maya": {
+        "colorManagementPreference_v2": {
+            "enabled": true,
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
+        },
+        "colorManagementPreference": {
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
+        }
+    },
+    "flame": {
+        "project": {
+            "colourPolicy": "ACES 1.1",
+            "frameDepth": "16-bit fp",
+            "fieldDominance": "PROGRESSIVE"
+        },
+        "profilesMapping": {
+            "inputs": [
+                {
+                    "flameName": "ACEScg",
+                    "ocioName": "ACES - ACEScg"
+                },
+                {
+                    "flameName": "Rec.709 video",
+                    "ocioName": "Output - Rec.709"
                 }
             ]
         }

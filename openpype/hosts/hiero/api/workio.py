@@ -1,14 +1,14 @@
 import os
 import hiero
-from avalon import api
+
 from openpype.api import Logger
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
-
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def file_extensions():
-    return api.HOST_WORKFILE_EXTENSIONS["hiero"]
+    return HOST_WORKFILE_EXTENSIONS["hiero"]
 
 
 def has_unsaved_changes():
@@ -65,13 +65,9 @@ def open_file(filepath):
 
 def current_file():
     current_file = hiero.core.projects()[-1].path()
-    normalised = os.path.normpath(current_file)
-
-    # Unsaved current file
-    if normalised == "":
+    if not current_file:
         return None
-
-    return normalised
+    return os.path.normpath(current_file)
 
 
 def work_root(session):

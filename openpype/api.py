@@ -17,6 +17,7 @@ from .lib import (
     version_up,
     get_asset,
     get_hierarchy,
+    get_workdir_data,
     get_version_from_path,
     get_last_version_from_path,
     get_app_environments_for_context,
@@ -24,12 +25,12 @@ from .lib import (
     get_latest_version,
     get_global_environments,
     get_local_site_id,
-    change_openpype_mongo_url
+    change_openpype_mongo_url,
+    create_project_folders,
+    get_project_basic_paths
 )
 
 from .lib.mongo import (
-    decompose_url,
-    compose_url,
     get_default_components
 )
 
@@ -44,9 +45,6 @@ from .lib.avalon_context import (
 from . import resources
 
 from .plugin import (
-    PypeCreatorMixin,
-    Creator,
-
     Extractor,
 
     ValidatePipelineOrder,
@@ -72,6 +70,7 @@ __all__ = [
     "get_current_project_settings",
     "get_anatomy_settings",
     "get_environments",
+    "get_project_basic_paths",
 
     "SystemSettings",
 
@@ -80,8 +79,6 @@ __all__ = [
     "Anatomy",
     "config",
     "execute",
-    "decompose_url",
-    "compose_url",
     "get_default_components",
     "ApplicationManager",
     "BuildWorkfile",
@@ -89,9 +86,6 @@ __all__ = [
     # Resources
     "resources",
 
-    # Pype creator mixin
-    "PypeCreatorMixin",
-    "Creator",
     # plugin classes
     "Extractor",
     # ordering
@@ -120,5 +114,9 @@ __all__ = [
     "get_global_environments",
 
     "get_local_site_id",
-    "change_openpype_mongo_url"
+    "change_openpype_mongo_url",
+
+    "get_project_basic_paths",
+    "create_project_folders"
+
 ]

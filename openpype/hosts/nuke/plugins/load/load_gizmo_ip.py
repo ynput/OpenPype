@@ -1,11 +1,25 @@
-from avalon import api, style, io
 import nuke
-from openpype.hosts.nuke.api import lib as pnlib
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
+import six
+
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    create_backdrop,
+    get_avalon_knob_data,
+    set_avalon_knob_data
+)
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
-class LoadGizmoInputProcess(api.Loader):
+class LoadGizmoInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["gizmo"]
@@ -14,7 +28,7 @@ class LoadGizmoInputProcess(api.Loader):
     label = "Load Gizmo - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     node_color = "0x7533c1ff"
 
     def load(self, context, name, namespace, data):
@@ -62,7 +76,7 @@ class LoadGizmoInputProcess(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             # add group from nk
             nuke.nodePaste(file)
 
@@ -94,14 +108,14 @@ class LoadGizmoInputProcess(api.Loader):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)
@@ -128,21 +142,21 @@ class LoadGizmoInputProcess(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             xpos = GN.xpos()
             ypos = GN.ypos()
-            avalon_data = anlib.get_avalon_knob_data(GN)
+            avalon_data = get_avalon_knob_data(GN)
             nuke.delete(GN)
             # add group from nk
             nuke.nodePaste(file)
 
             GN = nuke.selectedNode()
-            anlib.set_avalon_knob_data(GN, avalon_data)
+            set_avalon_knob_data(GN, avalon_data)
             GN.setXYpos(xpos, ypos)
             GN["name"].setValue(object_name)
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -155,7 +169,7 @@ class LoadGizmoInputProcess(api.Loader):
         else:
             GN["tile_color"].setValue(int(self.node_color, 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(GN, data_imprint)
 
@@ -197,8 +211,12 @@ class LoadGizmoInputProcess(api.Loader):
         viewer["input_process_node"].setValue(group_node_name)
 
         # put backdrop under
-        pnlib.create_backdrop(label="Input Process", layer=2,
-                              nodes=[viewer, group_node], color="0x7c7faaff")
+        create_backdrop(
+            label="Input Process",
+            layer=2,
+            nodes=[viewer, group_node],
+            color="0x7c7faaff"
+        )
 
         return True
 
@@ -210,7 +228,7 @@ class LoadGizmoInputProcess(api.Loader):
     def byteify(self, input):
         """
         Converts unicode strings to strings
-        It goes trought all dictionary
+        It goes through all dictionary
 
         Arguments:
             input (dict/str): input
@@ -222,11 +240,11 @@ class LoadGizmoInputProcess(api.Loader):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 
@@ -234,7 +252,6 @@ class LoadGizmoInputProcess(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

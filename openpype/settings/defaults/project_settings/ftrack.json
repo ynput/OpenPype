@@ -193,6 +193,11 @@
                 "Administrator"
             ]
         },
+        "fill_workfile_attribute": {
+            "enabled": false,
+            "custom_attribute_key": "",
+            "role_list": []
+        },
         "seed_project": {
             "enabled": true,
             "role_list": [
@@ -209,6 +214,7 @@
                         "standalonepublisher"
                     ],
                     "families": [],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
@@ -221,6 +227,7 @@
                         "matchmove",
                         "shot"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": []
@@ -232,6 +239,7 @@
                     "families": [
                         "plate"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": [
@@ -256,6 +264,7 @@
                         "rig",
                         "camera"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
@@ -267,6 +276,7 @@
                     "families": [
                         "renderPass"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": []
@@ -276,6 +286,7 @@
                         "tvpaint"
                     ],
                     "families": [],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
@@ -286,8 +297,10 @@
                     ],
                     "families": [
                         "write",
-                        "render"
+                        "render",
+                        "prerender"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": [
@@ -307,20 +320,105 @@
                         "render",
                         "workfile"
                     ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "flame"
+                    ],
+                    "families": [
+                        "plate",
+                        "take"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "houdini"
+                    ],
+                    "families": [
+                        "usd"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "photoshop"
+                    ],
+                    "families": [
+                        "review"
+                    ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
                 }
             ]
         },
+        "CollectFtrackCustomAttributeData": {
+            "enabled": false,
+            "custom_attribute_keys": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
-            "note_with_intent_template": "{intent}: {comment}",
+            "note_template": "{intent}: {comment}",
             "note_labels": []
+        },
+        "IntegrateFtrackDescription": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "description_template": "{comment}"
         },
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackInstance": {
+            "family_mapping": {
+                "camera": "cam",
+                "look": "look",
+                "mayaascii": "scene",
+                "model": "geo",
+                "rig": "rig",
+                "setdress": "setdress",
+                "pointcache": "cache",
+                "render": "render",
+                "prerender": "render",
+                "render2d": "render",
+                "nukescript": "comp",
+                "write": "render",
+                "review": "mov",
+                "plate": "img",
+                "audio": "audio",
+                "workfile": "scene",
+                "animation": "cache",
+                "image": "img",
+                "reference": "reference",
+                "ass": "cache",
+                "mayaScene": "scene",
+                "camerarig": "rig",
+                "yeticache": "cache",
+                "yetiRig": "rig",
+                "xgen": "xgen",
+                "rendersetup": "rendersetup",
+                "assembly": "assembly",
+                "layout": "layout",
+                "unrealStaticMesh": "geo",
+                "vrayproxy": "cache",
+                "redshiftproxy": "cache",
+                "usd": "usd"
+            },
+            "keep_first_subset_name_for_review": true
         }
     }
 }

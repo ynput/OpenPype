@@ -2,7 +2,7 @@ import sys
 import os
 import subprocess
 
-from avalon import api
+from openpype.pipeline import load
 
 
 def open(filepath):
@@ -15,7 +15,7 @@ def open(filepath):
         subprocess.call(('xdg-open', filepath))
 
 
-class Openfile(api.Loader):
+class Openfile(load.LoaderPlugin):
     """Open Image Sequence with system default"""
 
     families = ["render2d"]
@@ -27,7 +27,7 @@ class Openfile(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        from avalon.vendor import clique
+        import clique
 
         directory = os.path.dirname(self.fname)
         pattern = clique.PATTERNS["frames"]

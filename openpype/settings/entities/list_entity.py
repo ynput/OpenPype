@@ -1,4 +1,6 @@
 import copy
+import six
+import re
 from . import (
     BaseEntity,
     EndpointEntity
@@ -21,6 +23,7 @@ class ListEntity(EndpointEntity):
         "collapsible": True,
         "collapsed": False
     }
+    _key_regex = re.compile(r"[0-9]+")
 
     def __iter__(self):
         for item in self.children:
@@ -144,12 +147,25 @@ class ListEntity(EndpointEntity):
         )
         self.on_change()
 
+    def has_child_with_key(self, key):
+        if (
+            key
+            and isinstance(key, six.string_types)
+            and self._key_regex.match(key)
+        ):
+            key = int(key)
+
+        if not isinstance(key, int):
+            return False
+
+        return 0 <= key < len(self.children)
+
     def _convert_to_valid_type(self, value):
         if isinstance(value, (set, tuple)):
             return list(value)
         return NOT_SET
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (list, )
         self.children = []
         self.value_on_not_set = []
@@ -309,16 +325,24 @@ class ListEntity(EndpointEntity):
 
         for item in value:
             child_obj = self._add_new_item()
-            child_obj.update_default_value(item)
+            child_obj.update_default_value(
+                item, self._default_log_invalid_types
+            )
             if self._override_state is OverrideState.PROJECT:
                 if self.had_project_override:
-                    child_obj.update_project_value(item)
+                    child_obj.update_project_value(
+                        item, self._project_log_invalid_types
+                    )
                 elif self.had_studio_override:
-                    child_obj.update_studio_value(item)
+                    child_obj.update_studio_value(
+                        item, self._studio_log_invalid_types
+                    )
 
             elif self._override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
-                    child_obj.update_studio_value(item)
+                    child_obj.update_studio_value(
+                        item, self._studio_log_invalid_types
+                    )
 
         for child_obj in self.children:
             child_obj.set_override_state(
@@ -450,16 +474,24 @@ class ListEntity(EndpointEntity):
 
         for item in value:
             child_obj = self._add_new_item()
-            child_obj.update_default_value(item)
+            child_obj.update_default_value(
+                item, self._default_log_invalid_types
+            )
             if self._override_state is OverrideState.PROJECT:
                 if self.had_project_override:
-                    child_obj.update_project_value(item)
+                    child_obj.update_project_value(
+                        item, self._project_log_invalid_types
+                    )
                 elif self.had_studio_override:
-                    child_obj.update_studio_value(item)
+                    child_obj.update_studio_value(
+                        item, self._studio_log_invalid_types
+                    )
 
             elif self._override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
-                    child_obj.update_studio_value(item)
+                    child_obj.update_studio_value(
+                        item, self._studio_log_invalid_types
+                    )
 
             child_obj.set_override_state(
                 self._override_state, self._ignore_missing_defaults

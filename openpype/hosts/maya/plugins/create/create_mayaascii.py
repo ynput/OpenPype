@@ -1,11 +1,10 @@
 from openpype.hosts.maya.api import plugin
 
 
-class CreateMayaAscii(plugin.Creator):
-    """Raw Maya Ascii file export"""
+class CreateMayaScene(plugin.Creator):
+    """Raw Maya Scene file export"""
 
-    name = "mayaAscii"
-    label = "Maya Ascii"
-    family = "mayaAscii"
+    name = "mayaScene"
+    label = "Maya Scene"
+    family = "mayaScene"
     icon = "file-archive-o"
-    defaults = ['Main']

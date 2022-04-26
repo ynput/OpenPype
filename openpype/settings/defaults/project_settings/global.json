@@ -1,26 +1,37 @@
 {
     "publish": {
+        "CollectAnatomyInstanceData": {
+            "follow_workfile_version": false
+        },
+        "CollectSceneVersion": {
+            "hosts": [
+                "aftereffects",
+                "blender",
+                "celaction",
+                "fusion",
+                "harmony",
+                "hiero",
+                "houdini",
+                "maya",
+                "nuke",
+                "photoshop",
+                "resolve",
+                "tvpaint"
+            ],
+            "skip_hosts_headless_publish": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
         },
         "ValidateVersion": {
             "enabled": true,
-            "optional": false
+            "optional": false,
+            "active": true
         },
-        "IntegrateHeroVersion": {
-            "enabled": true,
-            "optional": true,
-            "families": [
-                "model",
-                "rig",
-                "look",
-                "pointcache",
-                "animation",
-                "setdress",
-                "layout",
-                "mayaAscii"
-            ]
+        "ValidateIntent": {
+            "enabled": false,
+            "profiles": []
         },
         "ExtractJpegEXR": {
             "enabled": true,
@@ -44,6 +55,7 @@
                                 "burnin",
                                 "ftrackreview"
                             ],
+                            "burnins": [],
                             "ffmpeg_args": {
                                 "video_filters": [],
                                 "audio_filters": [],
@@ -61,7 +73,8 @@
                                     "render",
                                     "review",
                                     "ftrack"
-                                ]
+                                ],
+                                "subsets": []
                             },
                             "overscan_crop": "",
                             "overscan_color": [
@@ -81,7 +94,6 @@
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,
-                                "state": "letterbox",
                                 "fill_color": [
                                     0,
                                     0,
@@ -152,6 +164,7 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template_name": "publish"
                 },
@@ -162,22 +175,79 @@
                         "prerender"
                     ],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template_name": "render"
+                },
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "simpleUnrealTexture"
+                },
+                {
+                    "families": [
+                        "staticMesh",
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "maya2unreal"
                 }
             ],
             "subset_grouping_profiles": [
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template": ""
+                }
+            ]
+        },
+        "IntegrateHeroVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaScene",
+                "simpleUnrealTexture"
+            ],
+            "template_name_profiles": [
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTextureHero"
                 }
             ]
         },
         "CleanUp": {
             "paterns": [],
             "remove_temp_renders": false
+        },
+        "CleanUpFarm": {
+            "enabled": false
         }
     },
     "tools": {
@@ -205,14 +275,25 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Variant}"
+                    "template": "{family}{variant}"
+                },
+                {
+                    "families": [
+                        "workfile"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "{family}{Task}"
                 },
                 {
                     "families": [
                         "render"
                     ],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Task}{Variant}"
                 },
@@ -224,6 +305,7 @@
                     "hosts": [
                         "tvpaint"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Task}_{Render_layer}_{Render_pass}"
                 },
@@ -233,8 +315,10 @@
                         "workfile"
                     ],
                     "hosts": [
+                        "aftereffects",
                         "tvpaint"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Task}"
                 },
@@ -245,8 +329,31 @@
                     "hosts": [
                         "aftereffects"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "template": "render{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "staticMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "S_{asset}{variant}"
+                },
+                {
+                    "families": [
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "SK_{asset}{variant}"
                 }
             ]
         },
@@ -256,11 +363,19 @@
                     "task_types": [],
                     "hosts": [],
                     "workfile_template": "work"
+                },
+                {
+                    "task_types": [],
+                    "hosts": [
+                        "unreal"
+                    ],
+                    "workfile_template": "unreal"
                 }
             ],
             "last_workfile_on_startup": [
                 {
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "enabled": true
                 }
@@ -268,33 +383,31 @@
             "open_workfile_tool_on_startup": [
                 {
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "enabled": false
                 }
             ],
-            "sw_folders": {
-                "compositing": [
-                    "nuke",
-                    "ae"
-                ],
-                "modeling": [
-                    "maya",
-                    "blender",
-                    "zbrush"
-                ],
-                "lookdev": [
-                    "substance",
-                    "textures"
-                ]
-            }
+            "extra_folders": []
+        },
+        "loader": {
+            "family_filter_profiles": [
+                {
+                    "hosts": [],
+                    "task_types": [],
+                    "is_include": true,
+                    "filter_families": []
+                }
+            ]
         }
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
     "sync_server": {
-        "enabled": true,
+        "enabled": false,
         "config": {
             "retry_cnt": "3",
             "loop_delay": "60",
+            "always_accessible_on": [],
             "active_site": "studio",
             "remote_site": "studio"
         },

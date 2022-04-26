@@ -5,11 +5,25 @@ import os
 import contextlib
 import copy
 
+import six
+from bson.objectid import ObjectId
+
 from maya import cmds
 
-from avalon import api, io
-from avalon.maya.lib import unique_namespace
-from openpype.hosts.maya.api.lib import matrix_equals
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+    discover_loader_plugins,
+    loaders_from_representation,
+    load_container,
+    update_container,
+    remove_container,
+    get_representation_path,
+)
+from openpype.hosts.maya.api.lib import (
+    matrix_equals,
+    unique_namespace
+)
 
 log = logging.getLogger("PackageLoader")
 
@@ -69,7 +83,8 @@ def unlocked(nodes):
         yield
     finally:
         # Reapply original states
-        for uuid, state in states.iteritems():
+        _iteritems = getattr(states, "iteritems", states.items)
+        for uuid, state in _iteritems():
             nodes_from_id = cmds.ls(uuid, long=True)
             if nodes_from_id:
                 node = nodes_from_id[0]
@@ -94,7 +109,7 @@ def load_package(filepath, name, namespace=None):
         # Define a unique namespace for the package
         namespace = os.path.basename(filepath).split(".")[0]
         unique_namespace(namespace)
-    assert isinstance(namespace, basestring)
+    assert isinstance(namespace, six.string_types)
 
     # Load the setdress package data
     with open(filepath, "r") as fp:
@@ -116,12 +131,13 @@ def load_package(filepath, name, namespace=None):
     root = "{}:{}".format(namespace, name)
 
     containers = []
-    all_loaders = api.discover(api.Loader)
+    all_loaders = discover_loader_plugins()
     for representation_id, instances in data.items():
 
         # Find the compatible loaders
-        loaders = api.loaders_from_representation(all_loaders,
-                                                  representation_id)
+        loaders = loaders_from_representation(
+            all_loaders, representation_id
+        )
 
         for instance in instances:
             container = _add(instance=instance,
@@ -176,9 +192,11 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
                         instance['loader'], instance)
             raise RuntimeError("Loader is missing.")
 
-        container = api.load(Loader,
-                             representation_id,
-                             namespace=instance['namespace'])
+        container = load_container(
+            Loader,
+            representation_id,
+            namespace=instance['namespace']
+        )
 
         # Get the root from the loaded container
         loaded_root = get_container_transforms({"objectName": container},
@@ -236,8 +254,7 @@ def get_contained_containers(container):
 
     """
 
-    import avalon.schema
-    from avalon.maya.pipeline import parse_container
+    from .pipeline import parse_container
 
     # Get avalon containers in this package setdress container
     containers = []
@@ -246,7 +263,7 @@ def get_contained_containers(container):
         try:
             member_container = parse_container(node)
             containers.append(member_container)
-        except avalon.schema.ValidationError:
+        except schema.ValidationError:
             pass
 
     return containers
@@ -266,21 +283,23 @@ def update_package_version(container, version):
     """
 
     # Versioning (from `core.maya.pipeline`)
-    current_representation = io.find_one({
-        "_id": io.ObjectId(container["representation"])
+    current_representation = legacy_io.find_one({
+        "_id": ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
 
-    version_, subset, asset, project = io.parenthood(current_representation)
+    version_, subset, asset, project = legacy_io.parenthood(
+        current_representation
+    )
 
     if version == -1:
-        new_version = io.find_one({
+        new_version = legacy_io.find_one({
             "type": "version",
             "parent": subset["_id"]
         }, sort=[("name", -1)])
     else:
-        new_version = io.find_one({
+        new_version = legacy_io.find_one({
             "type": "version",
             "parent": subset["_id"],
             "name": version,
@@ -289,7 +308,7 @@ def update_package_version(container, version):
     assert new_version is not None, "This is a bug"
 
     # Get the new representation (new file)
-    new_representation = io.find_one({
+    new_representation = legacy_io.find_one({
         "type": "representation",
         "parent": new_version["_id"],
         "name": current_representation["name"]
@@ -311,18 +330,18 @@ def update_package(set_container, representation):
     """
 
     # Load the original package data
-    current_representation = io.find_one({
-        "_id": io.ObjectId(set_container['representation']),
+    current_representation = legacy_io.find_one({
+        "_id": ObjectId(set_container['representation']),
         "type": "representation"
     })
 
-    current_file = api.get_representation_path(current_representation)
+    current_file = get_representation_path(current_representation)
     assert current_file.endswith(".json")
     with open(current_file, "r") as fp:
         current_data = json.load(fp)
 
     # Load the new package data
-    new_file = api.get_representation_path(representation)
+    new_file = get_representation_path(representation)
     assert new_file.endswith(".json")
     with open(new_file, "r") as fp:
         new_data = json.load(fp)
@@ -339,7 +358,7 @@ def update_package(set_container, representation):
 def update_scene(set_container, containers, current_data, new_data, new_file):
     """Updates the hierarchy, assets and their matrix
 
-    Updates the following withing the scene:
+    Updates the following within the scene:
         * Setdress hierarchy alembic
         * Matrix
         * Parenting
@@ -456,17 +475,17 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                     # considered as new element and added afterwards.
                     processed_containers.pop()
                     processed_namespaces.remove(container_ns)
-                    api.remove(container)
+                    remove_container(container)
                     continue
 
                 # Check whether the conversion can be done by the Loader.
                 # They *must* use the same asset, subset and Loader for
-                # `api.update` to make sense.
-                old = io.find_one({
-                    "_id": io.ObjectId(representation_current)
+                # `update_container` to make sense.
+                old = legacy_io.find_one({
+                    "_id": ObjectId(representation_current)
                 })
-                new = io.find_one({
-                    "_id": io.ObjectId(representation_new)
+                new = legacy_io.find_one({
+                    "_id": ObjectId(representation_new)
                 })
                 is_valid = compare_representations(old=old, new=new)
                 if not is_valid:
@@ -475,20 +494,21 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                     continue
 
                 new_version = new["context"]["version"]
-                api.update(container, version=new_version)
+                update_container(container, version=new_version)
 
         else:
             # Remove this container because it's not in the new data
             log.warning("Removing content: %s", container_ns)
-            api.remove(container)
+            remove_container(container)
 
     # Add new assets
-    all_loaders = api.discover(api.Loader)
+    all_loaders = discover_loader_plugins()
     for representation_id, instances in new_data.items():
 
         # Find the compatible loaders
-        loaders = api.loaders_from_representation(all_loaders,
-                                                  representation_id)
+        loaders = loaders_from_representation(
+            all_loaders, representation_id
+        )
         for instance in instances:
 
             # Already processed in update functionality
@@ -513,7 +533,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 def compare_representations(old, new):
     """Check if the old representation given can be updated
 
-    Due to limitations of the `api.update` function we cannot allow
+    Due to limitations of the `update_container` function we cannot allow
     differences in the following data:
 
     * Representation name (extension)

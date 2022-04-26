@@ -5,11 +5,8 @@ def add_implementation_envs(env, _app):
     """Modify environments to contain all required for implementation."""
     # Prepare path to implementation script
     implementation_user_script_path = os.path.join(
-        os.environ["OPENPYPE_REPOS_ROOT"],
-        "repos",
-        "avalon-core",
-        "setup",
-        "blender"
+        os.path.dirname(os.path.abspath(__file__)),
+        "blender_addon"
     )
 
     # Add blender implementation script path to PYTHONPATH
@@ -32,12 +29,12 @@ def add_implementation_envs(env, _app):
         env.get("OPENPYPE_BLENDER_USER_SCRIPTS") or ""
     )
     for path in openpype_blender_user_scripts.split(os.pathsep):
-        if path and os.path.exists(path):
+        if path:
             previous_user_scripts.add(os.path.normpath(path))
 
     blender_user_scripts = env.get("BLENDER_USER_SCRIPTS") or ""
     for path in blender_user_scripts.split(os.pathsep):
-        if path and os.path.exists(path):
+        if path:
             previous_user_scripts.add(os.path.normpath(path))
 
     # Remove implementation path from user script paths as is set to

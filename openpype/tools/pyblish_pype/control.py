@@ -7,9 +7,9 @@ an active window manager; such as via Travis-CI.
 """
 import os
 import sys
-import traceback
 import inspect
 import logging
+import collections
 
 from Qt import QtCore
 
@@ -29,6 +29,84 @@ class IterationBreak(Exception):
     pass
 
 
+class MainThreadItem:
+    """Callback with args and kwargs."""
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+    def process(self):
+        self.callback(*self.args, **self.kwargs)
+
+
+class MainThreadProcess(QtCore.QObject):
+    """Qt based main thread process executor.
+
+    Has timer which controls each 50ms if there is new item to process.
+
+    This approach gives ability to update UI meanwhile plugin is in progress.
+    """
+    # How many times let pass QtApplication to process events
+    # - use 2 as resize event can trigger repaint event but not process in
+    #   same loop
+    count_timeout = 2
+
+    def __init__(self):
+        super(MainThreadProcess, self).__init__()
+        self._items_to_process = collections.deque()
+
+        timer = QtCore.QTimer()
+        timer.setInterval(0)
+
+        timer.timeout.connect(self._execute)
+
+        self._timer = timer
+        self._switch_counter = self.count_timeout
+
+    def process(self, func, *args, **kwargs):
+        item = MainThreadItem(func, *args, **kwargs)
+        self.add_item(item)
+
+    def add_item(self, item):
+        self._items_to_process.append(item)
+
+    def _execute(self):
+        if not self._items_to_process:
+            return
+
+        if self._switch_counter > 0:
+            self._switch_counter -= 1
+            return
+
+        self._switch_counter = self.count_timeout
+
+        item = self._items_to_process.popleft()
+        item.process()
+
+    def start(self):
+        if not self._timer.isActive():
+            self._timer.start()
+
+    def stop(self):
+        if self._timer.isActive():
+            self._timer.stop()
+
+    def clear(self):
+        if self._timer.isActive():
+            self._timer.stop()
+        self._items_to_process = collections.deque()
+
+    def stop_if_empty(self):
+        if self._timer.isActive():
+            item = MainThreadItem(self._stop_if_empty)
+            self.add_item(item)
+
+    def _stop_if_empty(self):
+        if not self._items_to_process:
+            self.stop()
+
+
 class Controller(QtCore.QObject):
     log = logging.getLogger("PyblishController")
     # Emitted when the GUI is about to start processing;
@@ -38,14 +116,14 @@ class Controller(QtCore.QObject):
     # ??? Emitted for each process
     was_processed = QtCore.Signal(dict)
 
-    # Emmited when reset
+    # Emitted when reset
     # - all data are reset (plugins, processing, pari yielder, etc.)
     was_reset = QtCore.Signal()
 
-    # Emmited when previous group changed
+    # Emitted when previous group changed
     passed_group = QtCore.Signal(object)
 
-    # Emmited when want to change state of instances
+    # Emitted when want to change state of instances
     switch_toggleability = QtCore.Signal(bool)
 
     # On action finished
@@ -72,6 +150,9 @@ class Controller(QtCore.QObject):
         self.plugins = {}
         self.optional_default = {}
         self.instance_toggled.connect(self._on_instance_toggled)
+        self._main_thread_processor = MainThreadProcess()
+
+        self._current_state = ""
 
     def reset_variables(self):
         self.log.debug("Resetting pyblish context variables")
@@ -80,6 +161,7 @@ class Controller(QtCore.QObject):
         self.is_running = False
         self.stopped = False
         self.errored = False
+        self._current_state = ""
 
         # Active producer of pairs
         self.pair_generator = None
@@ -88,7 +170,6 @@ class Controller(QtCore.QObject):
 
         # Orders which changes GUI
         # - passing collectors order disables plugin/instance toggle
-        self.collectors_order = None
         self.collect_state = 0
 
         # - passing validators order disables validate button and gives ability
@@ -97,11 +178,8 @@ class Controller(QtCore.QObject):
         self.validated = False
 
         # Get collectors and validators order
-        self.order_groups.reset()
-        plugin_groups = self.order_groups.groups()
-        plugin_groups_keys = list(plugin_groups.keys())
-        self.collectors_order = plugin_groups_keys[0]
-        self.validators_order = self.order_groups.validation_order()
+        plugin_groups_keys = list(self.order_groups.groups.keys())
+        self.validators_order = self.order_groups.validation_order
         next_group_order = None
         if len(plugin_groups_keys) > 1:
             next_group_order = plugin_groups_keys[1]
@@ -112,12 +190,17 @@ class Controller(QtCore.QObject):
             "stop_on_validation": False,
             # Used?
             "last_plugin_order": None,
-            "current_group_order": self.collectors_order,
+            "current_group_order": plugin_groups_keys[0],
             "next_group_order": next_group_order,
             "nextOrder": None,
             "ordersWithError": set()
         }
+        self._set_state_by_order()
         self.log.debug("Reset of pyblish context variables done")
+
+    @property
+    def current_state(self):
+        return self._current_state
 
     def presets_by_hosts(self):
         # Get global filters as base
@@ -145,6 +228,16 @@ class Controller(QtCore.QObject):
     def reset_context(self):
         self.log.debug("Resetting pyblish context object")
 
+        comment = None
+        if (
+            self.context is not None and
+            self.context.data.get("comment") and
+            # We only preserve the user typed comment if we are *not*
+            # resetting from a successful publish without errors
+            self._current_state != "Published"
+        ):
+            comment = self.context.data["comment"]
+
         self.context = pyblish.api.Context()
 
         self.context._publish_states = InstanceStates.ContextType
@@ -166,11 +259,19 @@ class Controller(QtCore.QObject):
 
         self.context.families = ("__context__",)
 
+        if comment:
+            # Preserve comment on reset if user previously had a comment
+            self.context.data["comment"] = comment
+
         self.log.debug("Reset of pyblish context object done")
 
     def reset(self):
         """Discover plug-ins and run collection."""
+        self._main_thread_processor.clear()
+        self._main_thread_processor.process(self._reset)
+        self._main_thread_processor.start()
 
+    def _reset(self):
         self.reset_context()
         self.reset_variables()
 
@@ -191,7 +292,9 @@ class Controller(QtCore.QObject):
 
         plugins = pyblish.api.discover()
 
-        targets = pyblish.logic.registered_targets() or ["default"]
+        targets = set(pyblish.logic.registered_targets())
+        targets.add("default")
+        targets = list(targets)
         plugins_by_targets = pyblish.logic.plugins_by_targets(plugins, targets)
 
         _plugins = []
@@ -208,22 +311,29 @@ class Controller(QtCore.QObject):
     def on_published(self):
         if self.is_running:
             self.is_running = False
+        self._current_state = (
+            "Published" if not self.errored else "Published, with errors"
+        )
         self.was_finished.emit()
+        self._main_thread_processor.stop()
 
     def stop(self):
         self.log.debug("Stopping")
         self.stopped = True
 
     def act(self, plugin, action):
-        def on_next():
-            result = pyblish.plugin.process(
-                plugin, self.context, None, action.id
-            )
-            self.is_running = False
-            self.was_acted.emit(result)
-
         self.is_running = True
-        util.defer(100, on_next)
+        item = MainThreadItem(self._process_action, plugin, action)
+        self._main_thread_processor.add_item(item)
+        self._main_thread_processor.start()
+        self._main_thread_processor.stop_if_empty()
+
+    def _process_action(self, plugin, action):
+        result = pyblish.plugin.process(
+            plugin, self.context, None, action.id
+        )
+        self.is_running = False
+        self.was_acted.emit(result)
 
     def emit_(self, signal, kwargs):
         pyblish.api.emit(signal, **kwargs)
@@ -243,7 +353,7 @@ class Controller(QtCore.QObject):
         try:
             result = pyblish.plugin.process(plugin, self.context, instance)
             # Make note of the order at which the
-            # potential error error occured.
+            # potential error error occurred.
             if result["error"] is not None:
                 self.processing["ordersWithError"].add(plugin.order)
 
@@ -266,7 +376,7 @@ class Controller(QtCore.QObject):
                 new_current_group_order = self.processing["next_group_order"]
                 if new_current_group_order is not None:
                     current_next_order_found = False
-                    for order in self.order_groups.groups().keys():
+                    for order in self.order_groups.groups.keys():
                         if current_next_order_found:
                             new_next_group_order = order
                             break
@@ -279,8 +389,15 @@ class Controller(QtCore.QObject):
                     new_current_group_order
                 )
 
+                # Force update to the current state
+                self._set_state_by_order()
+
                 if self.collect_state == 0:
                     self.collect_state = 1
+                    self._current_state = (
+                        "Ready" if not self.errored else
+                        "Collected, with errors"
+                    )
                     self.switch_toggleability.emit(True)
                     self.passed_group.emit(current_group_order)
                     yield IterationBreak("Collected")
@@ -288,6 +405,11 @@ class Controller(QtCore.QObject):
                 else:
                     self.passed_group.emit(current_group_order)
                     if self.errored:
+                        self._current_state = (
+                            "Stopped, due to errors" if not
+                            self.processing["stop_on_validation"] else
+                            "Validated, with errors"
+                        )
                         yield IterationBreak("Last group errored")
 
             if self.collect_state == 1:
@@ -297,17 +419,23 @@ class Controller(QtCore.QObject):
             if not self.validated and plugin.order > self.validators_order:
                 self.validated = True
                 if self.processing["stop_on_validation"]:
+                    self._current_state = (
+                        "Validated" if not self.errored else
+                        "Validated, with errors"
+                    )
                     yield IterationBreak("Validated")
 
             # Stop if was stopped
             if self.stopped:
                 self.stopped = False
+                self._current_state = "Paused"
                 yield IterationBreak("Stopped")
 
             # check test if will stop
             self.processing["nextOrder"] = plugin.order
             message = self.test(**self.processing)
             if message:
+                self._current_state = "Paused"
                 yield IterationBreak("Stopped due to \"{}\"".format(message))
 
             self.processing["last_plugin_order"] = plugin.order
@@ -337,6 +465,7 @@ class Controller(QtCore.QObject):
                     # Stop if was stopped
                     if self.stopped:
                         self.stopped = False
+                        self._current_state = "Paused"
                         yield IterationBreak("Stopped")
 
                     yield (plugin, instance)
@@ -354,11 +483,13 @@ class Controller(QtCore.QObject):
 
         self.passed_group.emit(self.processing["next_group_order"])
 
-    def iterate_and_process(self, on_finished=lambda: None):
+    def iterate_and_process(self, on_finished=None):
         """ Iterating inserted plugins with current context.
         Collectors do not contain instances, they are None when collecting!
         This process don't stop on one
         """
+        self._main_thread_processor.start()
+
         def on_next():
             self.log.debug("Looking for next pair to process")
             try:
@@ -370,13 +501,19 @@ class Controller(QtCore.QObject):
                 self.log.debug("Iteration break was raised")
                 self.is_running = False
                 self.was_stopped.emit()
+                self._main_thread_processor.stop()
                 return
 
             except StopIteration:
                 self.log.debug("Iteration stop was raised")
                 self.is_running = False
                 # All pairs were processed successfully!
-                return util.defer(500, on_finished)
+                if on_finished is not None:
+                    self._main_thread_processor.add_item(
+                        MainThreadItem(on_finished)
+                    )
+                self._main_thread_processor.stop_if_empty()
+                return
 
             except Exception as exc:
                 self.log.warning(
@@ -384,12 +521,15 @@ class Controller(QtCore.QObject):
                     exc_info=True
                 )
                 exc_msg = str(exc)
-                return util.defer(
-                    500, lambda: on_unexpected_error(error=exc_msg)
+                self._main_thread_processor.add_item(
+                    MainThreadItem(on_unexpected_error, error=exc_msg)
                 )
+                return
 
             self.about_to_process.emit(*self.current_pair)
-            util.defer(100, on_process)
+            self._main_thread_processor.add_item(
+                MainThreadItem(on_process)
+            )
 
         def on_process():
             try:
@@ -410,11 +550,14 @@ class Controller(QtCore.QObject):
                     exc_info=True
                 )
                 exc_msg = str(exc)
-                return util.defer(
-                    500, lambda: on_unexpected_error(error=exc_msg)
+                self._main_thread_processor.add_item(
+                    MainThreadItem(on_unexpected_error, error=exc_msg)
                 )
+                return
 
-            util.defer(10, on_next)
+            self._main_thread_processor.add_item(
+                MainThreadItem(on_next)
+            )
 
         def on_unexpected_error(error):
             # TODO this should be handled much differently
@@ -422,24 +565,49 @@ class Controller(QtCore.QObject):
             self.is_running = False
             self.was_stopped.emit()
             util.u_print(u"An unexpected error occurred:\n %s" % error)
-            return util.defer(500, on_finished)
+            if on_finished is not None:
+                self._main_thread_processor.add_item(
+                    MainThreadItem(on_finished)
+                )
+            self._main_thread_processor.stop_if_empty()
 
         self.is_running = True
-        util.defer(10, on_next)
+        self._main_thread_processor.add_item(
+            MainThreadItem(on_next)
+        )
+
+    def _set_state_by_order(self):
+        order = self.processing["current_group_order"]
+        self._current_state = self.order_groups.groups[order]["state"]
 
     def collect(self):
         """ Iterate and process Collect plugins
         - load_plugins method is launched again when finished
         """
-        self.iterate_and_process()
+        self._set_state_by_order()
+        self._main_thread_processor.process(self._start_collect)
+        self._main_thread_processor.start()
 
     def validate(self):
         """ Process plugins to validations_order value."""
-        self.processing["stop_on_validation"] = True
-        self.iterate_and_process()
+        self._set_state_by_order()
+        self._main_thread_processor.process(self._start_validate)
+        self._main_thread_processor.start()
 
     def publish(self):
         """ Iterate and process all remaining plugins."""
+        self._set_state_by_order()
+        self._main_thread_processor.process(self._start_publish)
+        self._main_thread_processor.start()
+
+    def _start_collect(self):
+        self.iterate_and_process()
+
+    def _start_validate(self):
+        self.processing["stop_on_validation"] = True
+        self.iterate_and_process()
+
+    def _start_publish(self):
         self.processing["stop_on_validation"] = False
         self.iterate_and_process(self.on_published)
 
@@ -453,7 +621,7 @@ class Controller(QtCore.QObject):
         case must be taken to ensure there are no memory leaks.
         Explicitly deleting objects shines a light on where objects
         may still be referenced in the form of an error. No errors
-        means this was uneccesary, but that's ok.
+        means this was unnecessary, but that's ok.
         """
 
         for instance in self.context:

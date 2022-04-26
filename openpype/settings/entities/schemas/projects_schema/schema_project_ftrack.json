@@ -591,6 +591,34 @@
                 },
                 {
                     "type": "dict",
+                    "key": "fill_workfile_attribute",
+                    "label": "Fill workfile Custom attribute",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Custom attribute must be <b>Text</b> type added to <b>Task</b> entity type"
+                        },
+                        {
+                            "type": "text",
+                            "key": "custom_attribute_key",
+                            "label": "Custom attribute key"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "seed_project",
                     "label": "Seed Debug Project",
                     "checkbox_key": "enabled",
@@ -651,6 +679,11 @@
                                         "object_type": "text"
                                     },
                                     {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
                                         "key": "tasks",
                                         "label": "Task names",
                                         "type": "list",
@@ -696,6 +729,31 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "CollectFtrackCustomAttributeData",
+                    "label": "Collect Custom Attribute Data",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Collect custom attributes from ftrack for ftrack entities that can be used in some templates during publishing."
+                        },
+                        {
+                            "type": "list",
+                            "key": "custom_attribute_keys",
+                            "label": "Custom attribute keys",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
                     "is_group": true,
@@ -706,9 +764,14 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b>, <b>comment</b>, <b>host_name</b>, <b>app_name</b>, <b>app_label</b> and <b>published_paths</b>."
+                        },
+                        {
                             "type": "text",
-                            "key": "note_with_intent_template",
-                            "label": "Note with intent template"
+                            "key": "note_template",
+                            "label": "Note template",
+                            "multiline": true
                         },
                         {
                             "type": "list",
@@ -718,7 +781,44 @@
                         }
                     ]
                 },
-
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackDescription",
+                    "label": "Integrate Ftrack Description",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Add description to integrated AssetVersion."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b> and <b>comment</b>."
+                        },
+                        {
+                            "type": "text",
+                            "key": "description_template",
+                            "label": "Description template"
+                        }
+                    ]
+                },
                 {
                     "type": "dict",
                     "collapsible": true,
@@ -736,6 +836,28 @@
                             "type": "raw-json",
                             "key": "ftrack_custom_attributes",
                             "label": "Custom attributes to validate"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "IntegrateFtrackInstance",
+                    "label": "IntegrateFtrackInstance",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "dict-modifiable",
+                            "key": "family_mapping",
+                            "label": "Family Mapping",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "keep_first_subset_name_for_review",
+                            "label": "Make subset name as first asset name",
+                            "default": true
                         }
                     ]
                 }

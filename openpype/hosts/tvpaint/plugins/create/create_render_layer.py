@@ -1,11 +1,11 @@
-from avalon.api import CreatorError
-from avalon.tvpaint import (
+from openpype.pipeline import CreatorError
+from openpype.lib import prepare_template_data
+from openpype.hosts.tvpaint.api import (
+    plugin,
     pipeline,
     lib,
     CommunicationWrapper
 )
-from openpype.hosts.tvpaint.api import plugin
-from openpype.lib import prepare_template_data
 
 
 class CreateRenderlayer(plugin.Creator):
@@ -56,7 +56,7 @@ class CreateRenderlayer(plugin.Creator):
         # Validate that communication is initialized
         if CommunicationWrapper.communicator:
             # Get currently selected layers
-            layers_data = lib.layers_data()
+            layers_data = lib.get_layers_data()
 
             selected_layers = [
                 layer
@@ -75,7 +75,7 @@ class CreateRenderlayer(plugin.Creator):
     def process(self):
         self.log.debug("Query data from workfile.")
         instances = pipeline.list_instances()
-        layers_data = lib.layers_data()
+        layers_data = lib.get_layers_data()
 
         self.log.debug("Checking for selection groups.")
         # Collect group ids from selection
@@ -102,7 +102,7 @@ class CreateRenderlayer(plugin.Creator):
         self.log.debug(f"Selected group id is \"{group_id}\".")
         self.data["group_id"] = group_id
 
-        group_data = lib.groups_data()
+        group_data = lib.get_groups_data()
         group_name = None
         for group in group_data:
             if group["group_id"] == group_id:
@@ -169,7 +169,7 @@ class CreateRenderlayer(plugin.Creator):
             return
 
         self.log.debug("Querying groups data from workfile.")
-        groups_data = lib.groups_data()
+        groups_data = lib.get_groups_data()
 
         self.log.debug("Changing name of the group.")
         selected_group = None
@@ -196,6 +196,7 @@ class CreateRenderlayer(plugin.Creator):
         )
 
     def _ask_user_subset_override(self, instance):
+        from Qt import QtCore
         from Qt.QtWidgets import QMessageBox
 
         title = "Subset \"{}\" already exist".format(instance["subset"])
@@ -205,6 +206,10 @@ class CreateRenderlayer(plugin.Creator):
         ).format(instance["subset"])
 
         dialog = QMessageBox()
+        dialog.setWindowFlags(
+            dialog.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
         dialog.setWindowTitle(title)
         dialog.setText(text)
         dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)

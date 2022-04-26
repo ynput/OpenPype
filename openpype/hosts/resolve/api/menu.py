@@ -8,13 +8,7 @@ from .pipeline import (
     launch_workfiles_app
 )
 
-from avalon.tools import (
-    creator,
-    loader,
-    sceneinventory,
-    libraryloader,
-    subsetmanager
-)
+from openpype.tools.utils import host_tools
 
 
 def load_stylesheet():
@@ -30,7 +24,7 @@ def load_stylesheet():
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(Spacer, self).__init__(*args, **kwargs)
 
         self.setFixedHeight(height)
 
@@ -47,7 +41,7 @@ class Spacer(QtWidgets.QWidget):
 
 class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
         self.setObjectName("OpenPypeMenu")
 
@@ -60,13 +54,16 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
 
         self.setWindowTitle("OpenPype")
-        workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
-        create_btn = QtWidgets.QPushButton("Create ...", self)
-        publish_btn = QtWidgets.QPushButton("Publish ...", self)
-        load_btn = QtWidgets.QPushButton("Load ...", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
-        subsetm_btn = QtWidgets.QPushButton("Subset Manager ...", self)
-        libload_btn = QtWidgets.QPushButton("Library ...", self)
+        workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
+        create_btn = QtWidgets.QPushButton("Create...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
+        load_btn = QtWidgets.QPushButton("Load...", self)
+        inventory_btn = QtWidgets.QPushButton("Inventory...", self)
+        subsetm_btn = QtWidgets.QPushButton("Subset Manager...", self)
+        libload_btn = QtWidgets.QPushButton("Library...", self)
+        experimental_btn = QtWidgets.QPushButton(
+            "Experimental tools...", self
+        )
         # rename_btn = QtWidgets.QPushButton("Rename", self)
         # set_colorspace_btn = QtWidgets.QPushButton(
         #     "Set colorspace from presets", self
@@ -97,6 +94,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         # layout.addWidget(set_colorspace_btn)
         # layout.addWidget(reset_resolution_btn)
+        layout.addWidget(Spacer(15, self))
+        layout.addWidget(experimental_btn)
 
         self.setLayout(layout)
 
@@ -110,6 +109,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         # rename_btn.clicked.connect(self.on_rename_clicked)
         # set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
         # reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        experimental_btn.clicked.connect(self.on_experimental_clicked)
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
@@ -117,7 +117,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_create_clicked(self):
         print("Clicked Create")
-        creator.show()
+        host_tools.show_creator()
 
     def on_publish_clicked(self):
         print("Clicked Publish")
@@ -125,19 +125,19 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_load_clicked(self):
         print("Clicked Load")
-        loader.show(use_context=True)
+        host_tools.show_loader(use_context=True)
 
     def on_inventory_clicked(self):
         print("Clicked Inventory")
-        sceneinventory.show()
+        host_tools.show_scene_inventory()
 
     def on_subsetm_clicked(self):
         print("Clicked Subset Manager")
-        subsetmanager.show()
+        host_tools.show_subset_manager()
 
     def on_libload_clicked(self):
         print("Clicked Library")
-        libraryloader.show()
+        host_tools.show_library_loader()
 
     def on_rename_clicked(self):
         print("Clicked Rename")
@@ -147,6 +147,9 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_reset_resolution_clicked(self):
         print("Clicked Reset Resolution")
+
+    def on_experimental_clicked(self):
+        host_tools.show_experimental_tools_dialog()
 
 
 def launch_pype_menu():

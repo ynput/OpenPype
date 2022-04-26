@@ -1,5 +1,6 @@
 import pyblish.api
-from avalon.tvpaint import pipeline
+from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.tvpaint.api import pipeline
 
 
 class FixAssetNames(pyblish.api.Action):
@@ -27,7 +28,7 @@ class FixAssetNames(pyblish.api.Action):
         pipeline._write_instances(new_instance_items)
 
 
-class ValidateMissingLayers(pyblish.api.ContextPlugin):
+class ValidateAssetNames(pyblish.api.ContextPlugin):
     """Validate assset name present on instance.
 
     Asset name on instance should be the same as context's.
@@ -48,8 +49,18 @@ class ValidateMissingLayers(pyblish.api.ContextPlugin):
             instance_label = (
                 instance.data.get("label") or instance.data["name"]
             )
-            raise AssertionError((
-                "Different asset name on instance then context's."
-                " Instance \"{}\" has asset name: \"{}\""
-                " Context asset name is: \"{}\""
-            ).format(instance_label, asset_name, context_asset_name))
+
+            raise PublishXmlValidationError(
+                self,
+                (
+                    "Different asset name on instance then context's."
+                    " Instance \"{}\" has asset name: \"{}\""
+                    " Context asset name is: \"{}\""
+                ).format(
+                    instance_label, asset_name, context_asset_name
+                ),
+                formatting_data={
+                    "expected_asset": context_asset_name,
+                    "found_asset": asset_name
+                }
+            )

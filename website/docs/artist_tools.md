@@ -32,7 +32,7 @@ Notice that the window doesn't close after hitting `Accept` and confirming the c
 
 Despite the name, Creator isn't for making new content in your scene, but rather taking what's already in it and creating all the metadata your content needs to be published.
 
-In Maya this means creating a set with everything you want to publish and assigning custom attributes to it so it get's picked up during publishing stage.
+In Maya this means creating a set with everything you want to publish and assigning custom attributes to it so it gets picked up during publishing stage.
 
 In Nuke it's either converting an existing write node to a publishable one, or simply creating a write node with all the correct settings and outputs already set.
 
@@ -114,7 +114,7 @@ To filter assets/subsets by name just type name or part of name to filter text i
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-To filter [subsets](artist_concepts#subset) by their [families](artist_publish#families) you can use families list where you can check families you want to see or uncheck families you are not interested in.
+To filter [subsets](artist_concepts.md#subset) by their [families](artist_publish.md#families) you can use families list where you can check families you want to see or uncheck families you are not interested in.
 
 </div>
 <div class="col col--6 markdown">
@@ -233,7 +233,7 @@ Integrator takes the extracted files, categorizes and moves them to a correct lo
 With Scene Inventory, you can browse, update and change subsets loaded with [Loader](#loader) into your scene or script.
 
 :::note
-You should first understand [Key concepts](artist_concepts#) to understand how you can use this tool.
+You should first understand [Key concepts](artist_concepts) to understand how you can use this tool.
 :::
 
 ### Details
@@ -424,7 +424,7 @@ One or more items (instances) could be published any time Publish process is sta
 item must be created by Creator tool previously. Subset Manager provides easy way how to check which items, 
 and how many, will be published. 
 
-It also provides clean and preferrable way how to remove unwanted item from publishing.
+It also provides clean and preferable way how to remove unwanted item from publishing.
 
 ### Usage
 
@@ -474,5 +474,13 @@ Actions accessible by context menu on single (or multiple representations):
 Double click on any of the representation open Detail dialog with information about all files for particular representation.
 In this dialog error details could be accessed in the context menu.
 
+#### Context menu on project name
 Artists can also Pause whole server or specific project for synchronization. In that state no download/upload is being run.
 This might be helpful if the artist is not interested in a particular project for a while or wants to save bandwidth data limit for a bit.
+
+Another option is `Validate files on active site`. This option triggers process where all representation of the selected project are looped through, file paths are resolved for active site and
+if paths point to local system, paths are physically checked if files are existing. If file exists and representation is not marked to be present on 'active_site' in DB, DB is updated 
+to follow that. 
+
+This might be useful if artist has representation files that Site Sync doesn't know about (newly attached external drive with representations from studio).
+This project might take a while!

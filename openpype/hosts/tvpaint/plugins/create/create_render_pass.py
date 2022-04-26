@@ -1,11 +1,11 @@
-from avalon.api import CreatorError
-from avalon.tvpaint import (
+from openpype.pipeline import CreatorError
+from openpype.lib import prepare_template_data
+from openpype.hosts.tvpaint.api import (
+    plugin,
     pipeline,
     lib,
     CommunicationWrapper
 )
-from openpype.hosts.tvpaint.api import plugin
-from openpype.lib import prepare_template_data
 
 
 class CreateRenderPass(plugin.Creator):

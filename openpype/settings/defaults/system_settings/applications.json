@@ -93,7 +93,73 @@
                 }
             },
             "__dynamic_keys_labels__": {
-                "2022": "2022 (Testing Only)"
+                "2022": "2022"
+            }
+        }
+    },
+    "flame": {
+        "enabled": true,
+        "label": "Flame",
+        "icon": "{}/app_icons/flame.png",
+        "host_name": "flame",
+        "environment": {
+            "FLAME_SCRIPT_DIRS": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "FLAME_WIRETAP_HOSTNAME": "",
+            "FLAME_WIRETAP_VOLUME": "stonefs",
+            "FLAME_WIRETAP_GROUP": "staff"
+        },
+        "variants": {
+            "2021": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [],
+                    "darwin": [
+                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
+                    ],
+                    "linux": [
+                        "/opt/Autodesk/flame_2021/bin/startApplication"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "OPENPYPE_FLAME_PYTHON_EXEC": "/opt/Autodesk/python/2021/bin/python2.7",
+                    "OPENPYPE_FLAME_PYTHONPATH": "/opt/Autodesk/flame_2021/python",
+                    "OPENPYPE_WIRETAP_TOOLS": "/opt/Autodesk/wiretap/tools/2021"
+                }
+            },
+            "2021_1": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [],
+                    "darwin": [
+                        "/opt/Autodesk/flame_2021.1/bin/flame.app/Contents/MacOS/startApp"
+                    ],
+                    "linux": [
+                        "/opt/Autodesk/flame_2021.1/bin/startApplication"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "OPENPYPE_FLAME_PYTHON_EXEC": "/opt/Autodesk/python/2021.1/bin/python2.7",
+                    "OPENPYPE_FLAME_PYTHONPATH": "/opt/Autodesk/flame_2021.1/python",
+                    "OPENPYPE_WIRETAP_TOOLS": "/opt/Autodesk/wiretap/tools/2021.1"
+                }
+            },
+            "__dynamic_keys_labels__": {
+                "2021": "2021",
+                "2021_1": "2021.1"
             }
         }
     },
@@ -103,7 +169,10 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            "NUKE_PATH": [
+                "{NUKE_PATH}",
+                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            ]
         },
         "variants": {
             "13-0": {
@@ -195,7 +264,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "13-0": "13.0 (Testing only)",
+                "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
@@ -209,7 +278,10 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            "NUKE_PATH": [
+                "{NUKE_PATH}",
+                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            ]
         },
         "variants": {
             "13-0": {
@@ -331,7 +403,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "13-0": "13.0 (Testing only)",
+                "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
@@ -466,7 +538,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "13-0": "13.0 (Testing only)",
+                "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
@@ -603,7 +675,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "13-0": "13.0 (Testing only)",
+                "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
@@ -620,12 +692,12 @@
             "FUSION_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "FUSION_UTILITY_SCRIPTS_DIR": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/Fusion/Scripts/Comp",
-                "darvin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
+                "darwin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
                 "linux": "/opt/Fusion/Scripts/Comp"
             },
             "PYTHON36": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
-                "darvin": "~/Library/Python/3.6/bin",
+                "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
             },
             "PYTHONPATH": [
@@ -641,12 +713,26 @@
             "OPENPYPE_LOG_NO_COLORS": "Yes"
         },
         "variants": {
-            "16": {
-                "enabled": true,
-                "variant_label": "16",
-                "use_python_2": false,
+            "17": {
                 "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 17\\Fusion.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
                     "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "16": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 16\\Fusion.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -658,9 +744,6 @@
                 "environment": {}
             },
             "9": {
-                "enabled": true,
-                "variant_label": "9",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe"
@@ -686,22 +769,22 @@
             "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "RESOLVE_SCRIPT_API": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
-                "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
+                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
                 "linux": "/opt/resolve/Developer/Scripting"
             },
             "RESOLVE_SCRIPT_LIB": {
                 "windows": "C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll",
-                "darvin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
+                "darwin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
                 "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
             },
             "RESOLVE_UTILITY_SCRIPTS_DIR": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
-                "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
+                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
                 "linux": "/opt/resolve/Fusion/Scripts/Comp"
             },
             "PYTHON36_RESOLVE": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
-                "darvin": "~/Library/Python/3.6/bin",
+                "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
             },
             "PYTHONPATH": [
@@ -885,12 +968,35 @@
             "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1"
         },
         "variants": {
+            "21": {
+                "enabled": true,
+                "variant_label": "21",
+                "executables": {
+                    "windows": [
+                        "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 21 Premium\\win64\\bin\\HarmonyPremium.exe"
+                    ],
+                    "darwin": [
+                        "/Applications/Toon Boom Harmony 21 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                    ],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "20": {
                 "enabled": true,
                 "variant_label": "20",
                 "executables": {
-                    "windows": [],
-                    "darwin": [],
+                    "windows": [
+                        "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 20 Premium\\win64\\bin\\HarmonyPremium.exe"
+                    ],
+                    "darwin": [
+                        "/Applications/Toon Boom Harmony 20 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                    ],
                     "linux": []
                 },
                 "arguments": {
@@ -904,7 +1010,9 @@
                 "enabled": true,
                 "variant_label": "17",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 17 Premium\\win64\\bin\\HarmonyPremium.exe"
+                    ],
                     "darwin": [
                         "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
                     ],
@@ -973,8 +1081,6 @@
         },
         "variants": {
             "2020": {
-                "enabled": true,
-                "variant_label": "2020",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
@@ -990,11 +1096,24 @@
                 "environment": {}
             },
             "2021": {
-                "enabled": true,
-                "variant_label": "2021",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "2022": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1051,6 +1170,25 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "2022": {
+                "enabled": true,
+                "variant_label": "2022",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\AfterFX.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MULTIPROCESS": "No"
+                }
             }
         }
     },
@@ -1094,58 +1232,6 @@
             }
         }
     },
-    "shell": {
-        "enabled": true,
-        "environment": {},
-        "variants": {
-            "python_3-7": {
-                "use_python_2": true,
-                "executables": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {}
-            },
-            "python_2-7": {
-                "use_python_2": true,
-                "executables": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {}
-            },
-            "terminal": {
-                "use_python_2": true,
-                "executables": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {}
-            },
-            "__dynamic_keys_labels__": {
-                "python_3-7": "Python 3.7",
-                "python_2-7": "Python 2.7"
-            }
-        }
-    },
     "djvview": {
         "enabled": true,
         "label": "DJV View",
@@ -1171,5 +1257,6 @@
                 "1-1": "1.1"
             }
         }
-    }
+    },
+    "additional_apps": {}
 }

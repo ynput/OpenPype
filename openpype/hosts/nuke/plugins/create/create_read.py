@@ -1,13 +1,14 @@
 from collections import OrderedDict
-import avalon.api
-import avalon.nuke
-from openpype import api as pype
-from openpype.hosts.nuke.api import plugin
 
 import nuke
 
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import (
+    set_avalon_knob_data
+)
 
-class CrateRead(plugin.PypeCreator):
+
+class CrateRead(plugin.OpenPypeCreator):
     # change this to template preset
     name = "ReadCopy"
     label = "Create Read Copy"
@@ -45,7 +46,7 @@ class CrateRead(plugin.PypeCreator):
                     continue
                 avalon_data = self.data
                 avalon_data['subset'] = "{}".format(self.name)
-                avalon.nuke.lib.set_avalon_knob_data(node, avalon_data)
+                set_avalon_knob_data(node, avalon_data)
                 node['tile_color'].setValue(16744935)
                 count_reads += 1
 

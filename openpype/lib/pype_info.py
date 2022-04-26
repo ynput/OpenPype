@@ -5,27 +5,27 @@ import platform
 import getpass
 import socket
 
-import openpype.version
 from openpype.settings.lib import get_local_settings
-from .execute import get_pype_execute_args
+from .execute import get_openpype_execute_args
 from .local_settings import get_local_site_id
+from .openpype_version import (
+    is_running_from_build,
+    get_openpype_version,
+    get_build_version
+)
 
 
-def get_pype_version():
-    """Version of pype that is currently used."""
-    return openpype.version.__version__
-
-
-def get_pype_info():
+def get_openpype_info():
     """Information about currently used Pype process."""
-    executable_args = get_pype_execute_args()
-    if len(executable_args) == 1:
+    executable_args = get_openpype_execute_args()
+    if is_running_from_build():
         version_type = "build"
     else:
         version_type = "code"
 
     return {
-        "version": get_pype_version(),
+        "build_verison": get_build_version(),
+        "version": get_openpype_version(),
         "version_type": version_type,
         "executable": executable_args[-1],
         "pype_root": os.environ["OPENPYPE_REPOS_ROOT"],
@@ -53,7 +53,7 @@ def get_workstation_info():
 def get_all_current_info():
     """All information about current process in one dictionary."""
     return {
-        "pype": get_pype_info(),
+        "pype": get_openpype_info(),
         "workstation": get_workstation_info(),
         "env": os.environ.copy(),
         "local_settings": get_local_settings()
@@ -73,7 +73,7 @@ def extract_pype_info_to_file(dirpath):
         filepath (str): Full path to file where data were extracted.
     """
     filename = "{}_{}_{}.json".format(
-        get_pype_version(),
+        get_openpype_version(),
         get_local_site_id(),
         datetime.datetime.now().strftime("%y%m%d%H%M%S")
     )

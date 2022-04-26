@@ -1,10 +1,10 @@
 import os
 
+import bpy
+
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from avalon.blender.pipeline import AVALON_PROPERTY
-
-import bpy
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractABC(api.Extractor):
@@ -28,7 +28,7 @@ class ExtractABC(api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         selected = []
         asset_group = None
@@ -50,7 +50,7 @@ class ExtractABC(api.Extractor):
             flatten=False
         )
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

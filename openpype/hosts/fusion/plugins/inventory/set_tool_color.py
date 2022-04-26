@@ -1,10 +1,14 @@
-from avalon import api, style
-from avalon.vendor.Qt import QtGui, QtWidgets
+from Qt import QtGui, QtWidgets
 
-import avalon.fusion
+from openpype.pipeline import InventoryAction
+from openpype import style
+from openpype.hosts.fusion.api import (
+    get_current_comp,
+    comp_lock_and_undo_chunk
+)
 
 
-class FusionSetToolColor(api.InventoryAction):
+class FusionSetToolColor(InventoryAction):
     """Update the color of the selected tools"""
 
     label = "Set Tool Color"
@@ -16,7 +20,7 @@ class FusionSetToolColor(api.InventoryAction):
         """Color all selected tools the selected colors"""
 
         result = []
-        comp = avalon.fusion.get_current_comp()
+        comp = get_current_comp()
 
         # Get tool color
         first = containers[0]
@@ -33,7 +37,7 @@ class FusionSetToolColor(api.InventoryAction):
         if not picked_color:
             return
 
-        with avalon.fusion.comp_lock_and_undo_chunk(comp):
+        with comp_lock_and_undo_chunk(comp):
             for container in containers:
                 # Convert color to RGB 0-1 floats
                 rgb_f = picked_color.getRgbF()

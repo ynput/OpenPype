@@ -1,7 +1,11 @@
 import os
 import json
 
-from avalon import api, harmony
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+import openpype.hosts.harmony.api as harmony
 import openpype.lib
 
 
@@ -13,11 +17,11 @@ copy_files = """function copyFile(srcFilename, dstFilename)
 }
 """
 
-import_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
-var TGATransparencyMode = 0; //Premultiplied wih Black
-var SGITransparencyMode = 0; //Premultiplied wih Black
+import_files = """var PNGTransparencyMode = 1; //Premultiplied with Black
+var TGATransparencyMode = 0; //Premultiplied with Black
+var SGITransparencyMode = 0; //Premultiplied with Black
 var LayeredPSDTransparencyMode = 1; //Straight
-var FlatPSDTransparencyMode = 2; //Premultiplied wih White
+var FlatPSDTransparencyMode = 2; //Premultiplied with White
 
 function getUniqueColumnName( column_prefix )
 {
@@ -140,11 +144,11 @@ function import_files(args)
 import_files
 """
 
-replace_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
-var TGATransparencyMode = 0; //Premultiplied wih Black
-var SGITransparencyMode = 0; //Premultiplied wih Black
+replace_files = """var PNGTransparencyMode = 1; //Premultiplied with Black
+var TGATransparencyMode = 0; //Premultiplied with Black
+var SGITransparencyMode = 0; //Premultiplied with Black
 var LayeredPSDTransparencyMode = 1; //Straight
-var FlatPSDTransparencyMode = 2; //Premultiplied wih White
+var FlatPSDTransparencyMode = 2; //Premultiplied with White
 
 function replace_files(args)
 {
@@ -225,7 +229,7 @@ replace_files
 """
 
 
-class BackgroundLoader(api.Loader):
+class BackgroundLoader(load.LoaderPlugin):
     """Load images
     Stores the imported asset in a container named after the asset.
     """
@@ -277,7 +281,7 @@ class BackgroundLoader(api.Loader):
 
     def update(self, container, representation):
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         with open(path) as json_file:
             data = json.load(json_file)
@@ -296,7 +300,7 @@ class BackgroundLoader(api.Loader):
 
         bg_folder = os.path.dirname(path)
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         print(container)
 

@@ -1,9 +1,11 @@
 __all__ = (
     "IDENTIFIER_ROLE",
+    "PROJECT_NAME_ROLE",
 
     "HierarchyView",
 
     "ProjectModel",
+    "ProjectProxyFilter",
     "CreateProjectDialog",
 
     "HierarchyModel",
@@ -20,12 +22,14 @@ __all__ = (
 
 
 from .constants import (
-    IDENTIFIER_ROLE
+    IDENTIFIER_ROLE,
+    PROJECT_NAME_ROLE
 )
 from .widgets import CreateProjectDialog
 from .view import HierarchyView
 from .model import (
     ProjectModel,
+    ProjectProxyFilter,
 
     HierarchyModel,
     HierarchySelectionModel,

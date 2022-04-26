@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: 3.7
     - name: Install Python requirements
-      run: pip install gitpython semver
+      run: pip install gitpython semver PyGithub
 
     - name: 💉 Inject new version into files
       id: version
@@ -39,11 +39,7 @@ jobs:
       uses: heinrichreimer/github-changelog-generator-action@v2.2
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
-        breakingLabel: '**💥 Breaking**'
-        enhancementLabel: '**🚀 Enhancements**'
-        bugsLabel: '**🐛 Bug fixes**'
-        deprecatedLabel: '**⚠️ Deprecations**'
-        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
         issues: false
         issuesWoLabels: false
         sinceTag: "3.0.0"
@@ -72,7 +68,7 @@ jobs:
 
     - name: 🔏 Push to protected main branch
       if: steps.version.outputs.release_tag != 'skip'
-      uses: CasperWA/push-protected@v2
+      uses: CasperWA/push-protected@v2.10.0
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
         branch: main
@@ -85,11 +81,7 @@ jobs:
       uses: heinrichreimer/github-changelog-generator-action@v2.2
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
-        breakingLabel: '**💥 Breaking**'
-        enhancementLabel: '**🚀 Enhancements**'
-        bugsLabel: '**🐛 Bug fixes**'
-        deprecatedLabel: '**⚠️ Deprecations**'
-        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
         issues: false
         issuesWoLabels: false
         sinceTag: ${{ steps.version.outputs.last_release }}

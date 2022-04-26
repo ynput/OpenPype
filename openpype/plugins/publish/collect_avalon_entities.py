@@ -8,8 +8,9 @@ Provides:
     context -> assetEntity - asset entity from database
 """
 
-from avalon import io, api
 import pyblish.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
@@ -19,11 +20,12 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
     label = "Collect Avalon Entities"
 
     def process(self, context):
-        io.install()
-        project_name = api.Session["AVALON_PROJECT"]
-        asset_name = api.Session["AVALON_ASSET"]
+        legacy_io.install()
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_entity = io.find_one({
+        project_entity = legacy_io.find_one({
             "type": "project",
             "name": project_name
         })
@@ -32,7 +34,12 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         ).format(project_name)
         self.log.debug("Collected Project \"{}\"".format(project_entity))
 
-        asset_entity = io.find_one({
+        context.data["projectEntity"] = project_entity
+
+        if not asset_name:
+            self.log.info("Context is not set. Can't collect global data.")
+            return
+        asset_entity = legacy_io.find_one({
             "type": "asset",
             "name": asset_name,
             "parent": project_entity["_id"]
@@ -43,10 +50,15 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
 
         self.log.debug("Collected Asset \"{}\"".format(asset_entity))
 
-        context.data["projectEntity"] = project_entity
         context.data["assetEntity"] = asset_entity
 
         data = asset_entity['data']
+
+        # Task type
+        asset_tasks = data.get("tasks") or {}
+        task_info = asset_tasks.get(task_name) or {}
+        task_type = task_info.get("type")
+        context.data["taskType"] = task_type
 
         frame_start = data.get("frameStart")
         if frame_start is None:

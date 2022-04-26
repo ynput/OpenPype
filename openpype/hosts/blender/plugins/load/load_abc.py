@@ -6,12 +6,16 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
-from avalon.blender import lib
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
-from openpype.hosts.blender.api import plugin
+from openpype.pipeline import (
+    get_representation_path,
+    AVALON_CONTAINER_ID,
+)
+
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+)
+from openpype.hosts.blender.api import plugin, lib
 
 
 class CacheModelLoader(plugin.AssetLoader):
@@ -47,7 +51,7 @@ class CacheModelLoader(plugin.AssetLoader):
             bpy.data.objects.remove(empty)
 
     def _process(self, libpath, asset_group, group_name):
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         collection = bpy.context.view_layer.active_layer_collection.collection
 
@@ -109,7 +113,7 @@ class CacheModelLoader(plugin.AssetLoader):
             avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 
@@ -177,7 +181,7 @@ class CacheModelLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

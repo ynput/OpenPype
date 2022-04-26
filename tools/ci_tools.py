@@ -3,7 +3,44 @@ import sys
 from semver import VersionInfo
 from git import Repo
 from optparse import OptionParser
+from github import Github
+import os
 
+def get_release_type_github(Log, github_token):
+    # print(Log)
+    minor_labels = ["Bump Minor"]
+    # patch_labels = [
+    #     "type: enhancement",
+    #     "type: bug",
+    #     "type: deprecated",
+    #     "type: Feature"]
+
+    g = Github(github_token)
+    repo = g.get_repo("pypeclub/OpenPype")
+
+    labels = set()
+    for line in Log.splitlines():
+        match = re.search("pull request #(\d+)", line)
+        if match:
+            pr_number = match.group(1)
+            try:
+                pr = repo.get_pull(int(pr_number))
+            except:
+                continue
+            for label in pr.labels:
+                labels.add(label.name)
+
+    if any(label in labels for label in minor_labels):
+        return "minor"
+    else:
+        return "patch"
+
+    # TODO: if all is working fine, this part can be cleaned up eventually 
+    # if any(label in labels for label in patch_labels):
+    #     return "patch"
+            
+    return None
+    
 
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
@@ -36,7 +73,7 @@ def get_log_since_tag(version):
 
 def release_type(log):
     regex_minor = ["feature/", "(feat)"]
-    regex_patch = ["bugfix/", "fix/", "(fix)", "enhancement/"]
+    regex_patch = ["bugfix/", "fix/", "(fix)", "enhancement/", "update"]
     for reg in regex_minor:
         if re.search(reg, log):
             return "minor"
@@ -69,7 +106,7 @@ def bump_file_versions(version):
     file_regex_replace(filename, regex, pyproject_version)
 
 
-def calculate_next_nightly(token="nightly"):
+def calculate_next_nightly(type="nightly", github_token=None):
     last_prerelease, last_pre_tag = get_last_version("CI")
     last_pre_v = VersionInfo.parse(last_prerelease)
     last_pre_v_finalized = last_pre_v.finalize_version()
@@ -78,7 +115,10 @@ def calculate_next_nightly(token="nightly"):
     last_release, last_release_tag = get_last_version("release")
 
     last_release_v = VersionInfo.parse(last_release)
-    bump_type = release_type(get_log_since_tag(last_release))
+    bump_type = get_release_type_github(
+        get_log_since_tag(last_release_tag),
+        github_token
+        )
     if not bump_type:
         return None
 
@@ -86,10 +126,10 @@ def calculate_next_nightly(token="nightly"):
     # print(next_release_v)
 
     if next_release_v > last_pre_v_finalized:
-        next_tag = next_release_v.bump_prerelease(token=token).__str__()
+        next_tag = next_release_v.bump_prerelease(token=type).__str__()
         return next_tag
     elif next_release_v == last_pre_v_finalized:
-        next_tag = last_pre_v.bump_prerelease(token=token).__str__()
+        next_tag = last_pre_v.bump_prerelease(token=type).__str__()
         return next_tag
 
 def finalize_latest_nightly():
@@ -125,30 +165,36 @@ def main():
                       help="finalize latest prerelease to a release")
     parser.add_option("-p", "--prerelease",
                       dest="prerelease", action="store",
-                      help="define prerelease token")
+                      help="define prerelease type")
     parser.add_option("-f", "--finalize",
                       dest="finalize", action="store",
-                      help="define prerelease token")
+                      help="define prerelease type")
     parser.add_option("-v", "--version",
                       dest="version", action="store",
                       help="work with explicit version")
     parser.add_option("-l", "--lastversion",
                       dest="lastversion", action="store",
                       help="work with explicit version")
+    parser.add_option("-g", "--github_token",
+                      dest="github_token", action="store",
+                      help="github token")
 
 
     (options, args) = parser.parse_args()
 
     if options.bump:
-        last_CI, last_CI_tag = get_last_version("CI")
         last_release, last_release_tag = get_last_version("release")
-        bump_type_CI = release_type(get_log_since_tag(last_CI_tag))
-        bump_type_release = release_type(get_log_since_tag(last_release_tag))
-        if bump_type_CI is None or bump_type_release is None:
+        bump_type_release = get_release_type_github(
+            get_log_since_tag(last_release_tag),
+            options.github_token
+            )
+        if bump_type_release is None:
             print("skip")
+        else:
+            print(bump_type_release)
 
     if options.nightly:
-        next_tag_v = calculate_next_nightly()
+        next_tag_v = calculate_next_nightly(github_token=options.github_token)
         print(next_tag_v)
         bump_file_versions(next_tag_v)
 

@@ -12,7 +12,6 @@ class CreateYetiRig(plugin.Creator):
     label = "Yeti Rig"
     family = "yetiRig"
     icon = "usb"
-    defaults = ["Main"]
 
     def process(self):
 

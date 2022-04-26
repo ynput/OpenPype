@@ -1,10 +1,21 @@
-from avalon import api, io
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
 import nuke
 
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection
+)
 
-class AlembicCameraLoader(api.Loader):
+
+class AlembicCameraLoader(load.LoaderPlugin):
     """
     This will load alembic camera into script.
     """
@@ -43,7 +54,7 @@ class AlembicCameraLoader(api.Loader):
         # getting file path
         file = self.fname.replace("\\", "/")
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             camera_node = nuke.createNode(
                 "Camera2",
                 "name {} file {} read_from_file True".format(
@@ -91,7 +102,7 @@ class AlembicCameraLoader(api.Loader):
             None
         """
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -120,9 +131,9 @@ class AlembicCameraLoader(api.Loader):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             camera_node = nuke.toNode(object_name)
             camera_node['selected'].setValue(True)
 
@@ -156,7 +167,7 @@ class AlembicCameraLoader(api.Loader):
         # color node by correct color by actual version
         self.node_version_color(version, camera_node)
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(camera_node, data_imprint)
 
@@ -164,7 +175,7 @@ class AlembicCameraLoader(api.Loader):
         """ Coloring a node by correct color by actual version
         """
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -181,7 +192,6 @@ class AlembicCameraLoader(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

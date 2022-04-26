@@ -223,8 +223,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
-
-        with lib.renderlayer(instance.data["renderlayer"]):
+        renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with lib.renderlayer(renderlayer):
             self.collect(instance)
 
     def collect(self, instance):
@@ -320,7 +320,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Collect file nodes used by shading engines (if we have any)
         files = []
-        look_sets = sets.keys()
+        look_sets = list(sets.keys())
         shader_attrs = [
             "surfaceShader",
             "volumeShader",
@@ -357,6 +357,23 @@ class CollectLook(pyblish.api.InstancePlugin):
             for vray_node in vray_plugin_nodes:
                 history.extend(cmds.listHistory(vray_node))
 
+            # handling render attribute sets
+            render_set_types = [
+                "VRayDisplacement",
+                "VRayLightMesh",
+                "VRayObjectProperties",
+                "RedshiftObjectId",
+                "RedshiftMeshParameters",
+            ]
+            render_sets = cmds.ls(look_sets, type=render_set_types)
+            if render_sets:
+                history.extend(
+                    cmds.listHistory(render_sets,
+                                     future=False,
+                                     pruneDagObjects=True)
+                    or []
+                )
+
             files = cmds.ls(history, type="file", long=True)
             files.extend(cmds.ls(history, type="aiImage", long=True))
             files.extend(cmds.ls(history, type="RedshiftNormalMap", long=True))
@@ -369,10 +386,13 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.info("Collected resources: {}".format(instance.data["resources"]))
 
-        # Log a warning when no relevant sets were retrieved for the look.
-        if not instance.data["lookData"]["relationships"]:
-            self.log.warning("No sets found for the nodes in the instance: "
-                             "%s" % instance[:])
+        # Log warning when no relevant sets were retrieved for the look.
+        if (
+            not instance.data["lookData"]["relationships"]
+            and "model" not in self.families
+        ):
+            self.log.warning("No sets found for the nodes in the "
+                             "instance: %s" % instance[:])
 
         # Ensure unique shader sets
         # Add shader sets to the instance for unify ID validation
@@ -472,6 +492,8 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if not cmds.attributeQuery(attr, node=node, exists=True):
                     continue
                 attribute = "{}.{}".format(node, attr)
+                if cmds.getAttr(attribute, type=True) == "message":
+                    continue
                 node_attributes[attr] = cmds.getAttr(attribute)
 
             attributes.append({"name": node,
@@ -515,7 +537,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             color_space = cmds.getAttr(color_space_attr)
         except ValueError:
             # node doesn't have colorspace attribute
-            color_space = "raw"
+            color_space = "Raw"
         # Compare with the computed file path, e.g. the one with the <UDIM>
         # pattern in it, to generate some logging information about this
         # difference
@@ -550,3 +572,45 @@ class CollectLook(pyblish.api.InstancePlugin):
                 "source": source,  # required for resources
                 "files": files,
                 "color_space": color_space}  # required for resources
+
+
+class CollectModelRenderSets(CollectLook):
+    """Collect render attribute sets for model instance.
+
+    Collects additional render attribute sets so they can be
+    published with model.
+
+    """
+
+    order = pyblish.api.CollectorOrder + 0.21
+    families = ["model"]
+    label = "Collect Model Render Sets"
+    hosts = ["maya"]
+    maketx = True
+
+    def collect_sets(self, instance):
+        """Collect all related objectSets except shadingEngines
+
+        Args:
+            instance (list): all nodes to be published
+
+        Returns:
+            dict
+        """
+
+        sets = {}
+        for node in instance:
+            related_sets = lib.get_related_sets(node)
+            if not related_sets:
+                continue
+
+            for objset in related_sets:
+                if objset in sets:
+                    continue
+
+                if "shadingEngine" in cmds.nodeType(objset, inherited=True):
+                    continue
+
+                sets[objset] = {"uuid": lib.get_id(objset), "members": list()}
+
+        return sets

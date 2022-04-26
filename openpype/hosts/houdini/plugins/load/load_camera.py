@@ -1,5 +1,8 @@
-from avalon import api
-from avalon.houdini import pipeline, lib
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.hosts.houdini.api import pipeline
 
 
 ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'
@@ -74,7 +77,7 @@ def transfer_non_default_values(src, dest, ignore=None):
         dest_parm.setFromParm(parm)
 
 
-class CameraLoader(api.Loader):
+class CameraLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["camera"]
@@ -97,18 +100,9 @@ class CameraLoader(api.Loader):
         # Get the root node
         obj = hou.node("/obj")
 
-        # Create a unique name
-        counter = 1
-        asset_name = context["asset"]["name"]
-
-        namespace = namespace or asset_name
-        formatted = "{}_{}".format(namespace, name) if namespace else name
-        node_name = "{0}_{1:03d}".format(formatted, counter)
-
-        children = lib.children_as_string(hou.node("/obj"))
-        while node_name in children:
-            counter += 1
-            node_name = "{0}_{1:03d}".format(formatted, counter)
+        # Define node name
+        namespace = namespace if namespace else context["asset"]["name"]
+        node_name = "{}_{}".format(namespace, name) if namespace else name
 
         # Create a archive node
         container = self.create_and_connect(obj, "alembicarchive", node_name)
@@ -138,7 +132,7 @@ class CameraLoader(api.Loader):
         node = container["node"]
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         # Update attributes

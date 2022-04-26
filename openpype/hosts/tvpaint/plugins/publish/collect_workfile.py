@@ -1,9 +1,9 @@
 import os
 import json
 import pyblish.api
-from avalon import io
 
-from openpype.lib import get_subset_name
+from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline import legacy_io
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -28,29 +28,23 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         #   get_subset_name?
         family = "workfile"
         asset_name = context.data["workfile_context"]["asset"]
-        asset_doc = io.find_one(
-            {
-                "type": "asset",
-                "name": asset_name
-            },
-            {"_id": 1}
-        )
-        asset_id = None
-        if asset_doc:
-            asset_id = asset_doc["_id"]
+        asset_doc = legacy_io.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
 
         # Project name from workfile context
         project_name = context.data["workfile_context"]["project"]
-        # Host name from environemnt variable
+        # Host name from environment variable
         host_name = os.environ["AVALON_APP"]
         # Use empty variant value
         variant = ""
-        task_name = io.Session["AVALON_TASK"]
-        subset_name = get_subset_name(
+        task_name = legacy_io.Session["AVALON_TASK"]
+        subset_name = get_subset_name_with_asset_doc(
             family,
             variant,
             task_name,
-            asset_id,
+            asset_doc,
             project_name,
             host_name
         )

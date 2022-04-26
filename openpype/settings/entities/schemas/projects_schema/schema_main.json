@@ -68,6 +68,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_royalrender"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_slack"
                 },
                 {
@@ -112,6 +116,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_flame"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_resolve"
                 },
                 {
@@ -125,6 +133,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_unreal"
+                },
+                {
+                    "type": "dynamic_schema",
+                    "name": "project_settings/global"
                 }
             ]
         }

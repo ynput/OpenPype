@@ -1,16 +1,73 @@
 """Houdini-specific USD Library functions."""
 
 import contextlib
-
 import logging
-from Qt import QtCore, QtGui
-from avalon.tools.widgets import AssetWidget
-from avalon import style
+
+from Qt import QtWidgets, QtCore, QtGui
+
+from openpype import style
+from openpype.pipeline import legacy_io
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 
 from pxr import Sdf
 
 
 log = logging.getLogger(__name__)
+
+
+class SelectAssetDialog(QtWidgets.QWidget):
+    """Frameless assets dialog to select asset with double click.
+
+    Args:
+        parm: Parameter where selected asset name is set.
+    """
+
+    def __init__(self, parm):
+        self.setWindowTitle("Pick Asset")
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.Popup)
+
+        assets_widget = SingleSelectAssetsWidget(legacy_io, parent=self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.addWidget(assets_widget)
+
+        assets_widget.double_clicked.connect(self._set_parameter)
+        self._assets_widget = assets_widget
+        self._parm = parm
+
+    def _set_parameter(self):
+        name = self._assets_widget.get_selected_asset_name()
+        self._parm.set(name)
+        self.close()
+
+    def _on_show(self):
+        pos = QtGui.QCursor.pos()
+        # Select the current asset if there is any
+        select_id = None
+        name = self._parm.eval()
+        if name:
+            db_asset = legacy_io.find_one(
+                {"name": name, "type": "asset"},
+                {"_id": True}
+            )
+            if db_asset:
+                select_id = db_asset["_id"]
+
+        # Set stylesheet
+        self.setStyleSheet(style.load_stylesheet())
+        # Refresh assets (is threaded)
+        self._assets_widget.refresh()
+        # Select asset - must be done after refresh
+        if select_id is not None:
+            self._assets_widget.select_asset(select_id)
+
+        # Show cursor (top right of window) near cursor
+        self.resize(250, 400)
+        self.move(self.mapFromGlobal(pos) - QtCore.QPoint(self.width(), 0))
+
+    def showEvent(self, event):
+        super(SelectAssetDialog, self).showEvent(event)
+        self._on_show()
 
 
 def pick_asset(node):
@@ -21,45 +78,15 @@ def pick_asset(node):
 
     """
 
-    pos = QtGui.QCursor.pos()
-
     parm = node.parm("asset_name")
     if not parm:
         log.error("Node has no 'asset' parameter: %s", node)
         return
 
-    # Construct the AssetWidget as a frameless popup so it automatically
+    # Construct a frameless popup so it automatically
     # closes when clicked outside of it.
     global tool
-    tool = AssetWidget(silo_creatable=False)
-    tool.setContentsMargins(5, 5, 5, 5)
-    tool.setWindowTitle("Pick Asset")
-    tool.setStyleSheet(style.load_stylesheet())
-    tool.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.Popup)
-    tool.refresh()
-
-    # Select the current asset if there is any
-    name = parm.eval()
-    if name:
-        from avalon import io
-
-        db_asset = io.find_one({"name": name, "type": "asset"})
-        if db_asset:
-            silo = db_asset.get("silo")
-            if silo:
-                tool.set_silo(silo)
-            tool.select_assets([name], expand=True)
-
-    # Show cursor (top right of window) near cursor
-    tool.resize(250, 400)
-    tool.move(tool.mapFromGlobal(pos) - QtCore.QPoint(tool.width(), 0))
-
-    def set_parameter_callback(index):
-        name = index.data(tool.model.DocumentRole)["name"]
-        parm.set(name)
-        tool.close()
-
-    tool.view.doubleClicked.connect(set_parameter_callback)
+    tool = SelectAssetDialog(parm)
     tool.show()
 
 

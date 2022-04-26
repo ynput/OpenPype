@@ -8,6 +8,13 @@
             "build_workfile": "ctrl+alt+b"
         }
     },
+    "nuke-dirmap": {
+        "enabled": false,
+        "paths": {
+            "source-path": [],
+            "destination-path": []
+        }
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
@@ -25,12 +32,24 @@
                 "Fg01",
                 "Branch01",
                 "Part01"
-            ]
+            ],
+            "reviewable": false
         }
     },
     "publish": {
         "PreCollectNukeInstances": {
-            "sync_workfile_version": true
+            "sync_workfile_version_on_families": [
+                "nukenodes",
+                "camera",
+                "gizmo",
+                "source",
+                "render"
+            ]
+        },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateContainers": {
             "enabled": true,
@@ -87,73 +106,99 @@
                 ]
             }
         },
+        "ExtractReviewData": {
+            "enabled": false
+        },
         "ExtractReviewDataLut": {
             "enabled": false
         },
         "ExtractReviewDataMov": {
             "enabled": true,
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "outputs": {
+                "baking": {
+                    "filter": {
+                        "task_types": [],
+                        "families": [],
+                        "sebsets": []
+                    },
+                    "read_raw": false,
+                    "viewer_process_override": "",
+                    "bake_viewer_process": true,
+                    "bake_viewer_input_process": true,
+                    "reformat_node_add": false,
+                    "reformat_node_config": [
+                        {
+                            "type": "string",
+                            "name": "type",
+                            "value": "to format"
+                        },
+                        {
+                            "type": "string",
+                            "name": "format",
+                            "value": "HD_1080"
+                        },
+                        {
+                            "type": "string",
+                            "name": "filter",
+                            "value": "Lanczos6"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        },
+                        {
+                            "type": "bool",
+                            "name": "pbb",
+                            "value": false
+                        }
+                    ],
+                    "extension": "mov",
+                    "add_tags": []
+                }
+            }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "key_value_mapping": {
+                "f_submission_note": [
+                    true,
+                    "{comment}"
+                ],
+                "f_submitting_for": [
+                    true,
+                    "{intent[value]}"
+                ],
+                "f_vfx_scope_of_work": [
+                    false,
+                    ""
+                ]
+            }
+        },
+        "IncrementScriptVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     },
     "load": {
         "LoadImage": {
             "enabled": true,
-            "families": [
-                "render2d",
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review",
-                "image"
-            ],
-            "representations": [
+            "_representations": [
                 "exr",
                 "dpx",
                 "jpg",
                 "jpeg",
                 "png",
-                "psd"
+                "psd",
+                "tiff"
             ],
             "node_name_template": "{class_name}_{ext}"
         },
-        "LoadMov": {
+        "LoadClip": {
             "enabled": true,
-            "families": [
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review"
-            ],
-            "representations": [
-                "mov",
-                "review",
-                "mp4",
-                "h264"
-            ],
-            "node_name_template": "{class_name}_{ext}"
-        },
-        "LoadSequence": {
-            "enabled": true,
-            "families": [
-                "render2d",
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review"
-            ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png"
-            ],
+            "_representations": [],
             "node_name_template": "{class_name}_{ext}"
         }
     },
@@ -163,6 +208,7 @@
         "builder_on_start": false,
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [],
                 "current_context": [
                     {

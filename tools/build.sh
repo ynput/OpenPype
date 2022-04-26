@@ -58,7 +58,7 @@ BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
 args=$@
-disable_submodule_update = 0
+disable_submodule_update=0
 while :; do
   case $1 in
     --no-submodule-update)
@@ -90,6 +90,7 @@ done
 ###############################################################################
 detect_python () {
   echo -e "${BIGreen}>>>${RST} Using python \c"
+  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}- NOT FOUND${RST} ${BIYellow}You need Python 3.7 installed to continue.${RST}"; return 1; }
   local version_command
   version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version
@@ -122,7 +123,7 @@ clean_pyc () {
   local path
   path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -path ./build -prune -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  find "$path" -path ./build -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
 
   echo -e "${BIGreen}DONE${RST}"
 }
@@ -173,20 +174,20 @@ main () {
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
     echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
-    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return 1; }
   fi
 
 if [ "$disable_submodule_update" == 1 ]; then
-  echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
-  git submodule update --init --recursive
+    echo -e "${BIYellow}***${RST} Not updating submodules ..."
   else
-     echo -e "${BIYellow}***${RST} Not updating submodules ..."
+    echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
+    git submodule update --init --recursive
   fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" build &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   fi
   "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py"
 
@@ -210,4 +211,6 @@ if [ "$disable_submodule_update" == 1 ]; then
   echo -e "${BIWhite}$openpype_root/build${RST} directory."
 }
 
-main
+return_code=0
+main || return_code=$?
+exit $return_code

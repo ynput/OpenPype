@@ -47,6 +47,39 @@
             ]
         },
         {
+           "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "nuke-dirmap",
+            "label": "Nuke Directory Mapping",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict",
+                    "key": "paths",
+                    "children": [
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "source-path",
+                            "label": "Source Path"
+                        },
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "destination-path",
+                            "label": "Destination Path"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -98,6 +131,11 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "reviewable",
+                            "label": "Add reviewable toggle"
                         }
                     ]
                 }

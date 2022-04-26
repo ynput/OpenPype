@@ -1,13 +1,7 @@
-import os
-import shutil
-
-from openpype.hosts import tvpaint
 from openpype.lib import (
     PreLaunchHook,
-    get_pype_execute_args
+    get_openpype_execute_args
 )
-
-import avalon
 
 
 class TvpaintPrelaunchHook(PreLaunchHook):
@@ -30,7 +24,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
         while self.launch_context.launch_args:
             remainders.append(self.launch_context.launch_args.pop(0))
 
-        new_launch_args = get_pype_execute_args(
+        new_launch_args = get_openpype_execute_args(
             "run", self.launch_script_path(), executable_path
         )
 
@@ -44,10 +38,6 @@ class TvpaintPrelaunchHook(PreLaunchHook):
             self.launch_context.launch_args.extend(remainders)
 
     def launch_script_path(self):
-        avalon_dir = os.path.dirname(os.path.abspath(avalon.__file__))
-        script_path = os.path.join(
-            avalon_dir,
-            "tvpaint",
-            "launch_script.py"
-        )
-        return script_path
+        from openpype.hosts.tvpaint import get_launch_script_path
+
+        return get_launch_script_path()

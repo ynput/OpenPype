@@ -2,9 +2,11 @@
 """Base class for Pype Modules."""
 import os
 import sys
+import json
 import time
 import inspect
 import logging
+import platform
 import threading
 import collections
 from uuid import uuid4
@@ -12,8 +14,32 @@ from abc import ABCMeta, abstractmethod
 import six
 
 import openpype
-from openpype.settings import get_system_settings
+from openpype.settings import (
+    get_system_settings,
+    SYSTEM_SETTINGS_KEY,
+    PROJECT_SETTINGS_KEY,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS
+)
+
+from openpype.settings.lib import (
+    get_studio_system_settings_overrides,
+    load_json_file
+)
 from openpype.lib import PypeLogger
+
+# Files that will be always ignored on modules import
+IGNORED_FILENAMES = (
+    "__pycache__",
+)
+# Files ignored on modules import from "./openpype/modules"
+IGNORED_DEFAULT_FILENAMES = (
+    "__init__.py",
+    "base.py",
+    "interfaces.py",
+    "example_addons",
+    "default_modules",
+)
 
 
 # Inherit from `object` for Python 2 hosts
@@ -26,6 +52,7 @@ class _ModuleClass(object):
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
+        super(_ModuleClass, self).__setattr__("__name__", name)
 
         # Where modules and interfaces are stored
         super(_ModuleClass, self).__setattr__("__attributes__", dict())
@@ -35,9 +62,9 @@ class _ModuleClass(object):
 
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
-            if attr_name in ("__path__"):
+            if attr_name in ("__path__", "__file__"):
                 return None
-            raise ImportError("No module named {}.{}".format(
+            raise AttributeError("'{}' has not attribute '{}'".format(
                 self.name, attr_name
             ))
         return self.__attributes__[attr_name]
@@ -91,12 +118,12 @@ class _InterfacesClass(_ModuleClass):
     """
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
-            # Fake Interface if is not missing
-            self.__attributes__[attr_name] = type(
-                attr_name,
-                (MissingInteface, ),
-                {}
-            )
+            if attr_name in ("__path__", "__file__"):
+                return None
+
+            raise ImportError((
+                "cannot import name '{}' from 'openpype_interfaces'"
+            ).format(attr_name))
 
         return self.__attributes__[attr_name]
 
@@ -110,16 +137,63 @@ class _LoadCache:
 
 def get_default_modules_dir():
     """Path to default OpenPype modules."""
+
     current_dir = os.path.abspath(os.path.dirname(__file__))
 
-    return os.path.join(current_dir, "default_modules")
+    output = []
+    for folder_name in ("default_modules", ):
+        path = os.path.join(current_dir, folder_name)
+        if os.path.exists(path) and os.path.isdir(path):
+            output.append(path)
+
+    return output
+
+
+def get_dynamic_modules_dirs():
+    """Possible paths to OpenPype Addons of Modules.
+
+    Paths are loaded from studio settings under:
+        `modules -> addon_paths -> {platform name}`
+
+    Path may contain environment variable as a formatting string.
+
+    They are not validated or checked their existence.
+
+    Returns:
+        list: Paths loaded from studio overrides.
+    """
+    output = []
+    value = get_studio_system_settings_overrides()
+    for key in ("modules", "addon_paths", platform.system().lower()):
+        if key not in value:
+            return output
+        value = value[key]
+
+    for path in value:
+        if not path:
+            continue
+
+        try:
+            path = path.format(**os.environ)
+        except Exception:
+            pass
+        output.append(path)
+    return output
 
 
 def get_module_dirs():
     """List of paths where OpenPype modules can be found."""
-    dirpaths = [
-        get_default_modules_dir()
-    ]
+    _dirpaths = []
+    _dirpaths.extend(get_default_modules_dir())
+    _dirpaths.extend(get_dynamic_modules_dirs())
+
+    dirpaths = []
+    for path in _dirpaths:
+        if not path:
+            continue
+        normalized = os.path.normpath(path)
+        if normalized not in dirpaths:
+            dirpaths.append(normalized)
     return dirpaths
 
 
@@ -148,59 +222,23 @@ def load_interfaces(force=False):
 
 def _load_interfaces():
     # Key under which will be modules imported in `sys.modules`
-    from openpype.lib import import_filepath
-
     modules_key = "openpype_interfaces"
 
     sys.modules[modules_key] = openpype_interfaces = (
         _InterfacesClass(modules_key)
     )
 
-    log = PypeLogger.get_logger("InterfacesLoader")
+    from . import interfaces
 
-    dirpaths = get_module_dirs()
-
-    interface_paths = []
-    interface_paths.append(
-        os.path.join(get_default_modules_dir(), "interfaces.py")
-    )
-    for dirpath in dirpaths:
-        for filename in os.listdir(dirpath):
-            if filename in ("__pycache__", ):
-                continue
-
-            full_path = os.path.join(dirpath, filename)
-            if not os.path.isdir(full_path):
-                continue
-
-            interfaces_path = os.path.join(full_path, "interfaces.py")
-            if os.path.exists(interfaces_path):
-                interface_paths.append(interfaces_path)
-
-    for full_path in interface_paths:
-        if not os.path.exists(full_path):
+    for attr_name in dir(interfaces):
+        attr = getattr(interfaces, attr_name)
+        if (
+            not inspect.isclass(attr)
+            or attr is OpenPypeInterface
+            or not issubclass(attr, OpenPypeInterface)
+        ):
             continue
-
-        try:
-            # Prepare module object where content of file will be parsed
-            module = import_filepath(full_path)
-
-        except Exception:
-            log.warning(
-                "Failed to load path: \"{0}\"".format(full_path),
-                exc_info=True
-            )
-            continue
-
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if (
-                not inspect.isclass(attr)
-                or attr is OpenPypeInterface
-                or not issubclass(attr, OpenPypeInterface)
-            ):
-                continue
-            setattr(openpype_interfaces, attr_name, attr)
+        setattr(openpype_interfaces, attr_name, attr)
 
 
 def load_modules(force=False):
@@ -252,10 +290,54 @@ def _load_modules():
 
     log = PypeLogger.get_logger("ModulesLoader")
 
-    # Look for OpenPype modules in paths defined with `get_module_dirs`
-    dirpaths = get_module_dirs()
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    processed_paths = set()
+    processed_paths.add(current_dir)
+    # Import default modules imported from 'openpype.modules'
+    for filename in os.listdir(current_dir):
+        # Ignore filenames
+        if (
+            filename in IGNORED_FILENAMES
+            or filename in IGNORED_DEFAULT_FILENAMES
+        ):
+            continue
 
-    for dirpath in dirpaths:
+        fullpath = os.path.join(current_dir, filename)
+        basename, ext = os.path.splitext(filename)
+
+        if os.path.isdir(fullpath):
+            # Check existence of init fil
+            init_path = os.path.join(fullpath, "__init__.py")
+            if not os.path.exists(init_path):
+                log.debug((
+                    "Module directory does not contan __init__.py file {}"
+                ).format(fullpath))
+                continue
+
+        elif ext not in (".py", ):
+            continue
+
+        try:
+            import_str = "openpype.modules.{}".format(basename)
+            new_import_str = "{}.{}".format(modules_key, basename)
+            default_module = __import__(import_str, fromlist=("", ))
+            sys.modules[new_import_str] = default_module
+            setattr(openpype_modules, basename, default_module)
+
+        except Exception:
+            msg = (
+                "Failed to import default module '{}'."
+            ).format(basename)
+            log.error(msg, exc_info=True)
+
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    #   - dynamically imported OpenPype modules and addons
+    for dirpath in get_module_dirs():
+        # Skip already processed paths
+        if dirpath in processed_paths:
+            continue
+        processed_paths.add(dirpath)
+
         if not os.path.exists(dirpath):
             log.warning((
                 "Could not find path when loading OpenPype modules \"{}\""
@@ -264,20 +346,48 @@ def _load_modules():
 
         for filename in os.listdir(dirpath):
             # Ignore filenames
-            if filename in ("__pycache__", ):
+            if filename in IGNORED_FILENAMES:
                 continue
 
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
 
+            if os.path.isdir(fullpath):
+                # Check existence of init fil
+                init_path = os.path.join(fullpath, "__init__.py")
+                if not os.path.exists(init_path):
+                    log.debug((
+                        "Module directory does not contan __init__.py file {}"
+                    ).format(fullpath))
+                    continue
+
+            elif ext not in (".py", ):
+                continue
+
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest
-            if os.path.isdir(fullpath):
-                import_module_from_dirpath(dirpath, filename, modules_key)
+            try:
+                if os.path.isdir(fullpath):
+                    # Module without init file can't be used as OpenPype module
+                    #   because the module class could not be imported
+                    init_file = os.path.join(fullpath, "__init__.py")
+                    if not os.path.exists(init_file):
+                        log.info((
+                            "Skipping module directory because of"
+                            " missing \"__init__.py\" file. \"{}\""
+                        ).format(fullpath))
+                        continue
+                    import_module_from_dirpath(dirpath, filename, modules_key)
 
-            elif ext in (".py", ):
-                module = import_filepath(fullpath)
-                setattr(openpype_modules, basename, module)
+                elif ext in (".py", ):
+                    module = import_filepath(fullpath)
+                    setattr(openpype_modules, basename, module)
+
+            except Exception:
+                log.error(
+                    "Failed to import '{}'.".format(fullpath),
+                    exc_info=True
+                )
 
 
 class _OpenPypeInterfaceMeta(ABCMeta):
@@ -299,14 +409,6 @@ class OpenPypeInterface:
     Child classes of OpenPypeInterface may be used as mixin in different
     OpenPype modules which means they have to have implemented methods defined
     in the interface. By default interface does not have any abstract parts.
-    """
-    pass
-
-
-class MissingInteface(OpenPypeInterface):
-    """Class representing missing interface class.
-
-    Used when interface is not available from currently registered paths.
     """
     pass
 
@@ -354,7 +456,6 @@ class OpenPypeModule:
         """
         pass
 
-    @abstractmethod
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
         pass
@@ -366,9 +467,36 @@ class OpenPypeModule:
         """
         return {}
 
+    def cli(self, module_click_group):
+        """Add commands to click group.
+
+        The best practise is to create click group for whole module which is
+        used to separate commands.
+
+        class MyPlugin(OpenPypeModule):
+            ...
+            def cli(self, module_click_group):
+                module_click_group.add_command(cli_main)
+
+
+        @click.group(<module name>, help="<Any help shown in cmd>")
+        def cli_main():
+            pass
+
+        @cli_main.command()
+        def mycommand():
+            print("my_command")
+        """
+        pass
+
 
 class OpenPypeAddOn(OpenPypeModule):
-    pass
+    # Enable Addon by default
+    enabled = True
+
+    def initialize(self, module_settings):
+        """Initialization is not be required for most of addons."""
+        pass
 
 
 class ModulesManager:
@@ -423,6 +551,7 @@ class ModulesManager:
                 if (
                     not inspect.isclass(modules_item)
                     or modules_item is OpenPypeModule
+                    or modules_item is OpenPypeAddOn
                     or not issubclass(modules_item, OpenPypeModule)
                 ):
                     continue
@@ -758,6 +887,7 @@ class TrayModulesManager(ModulesManager):
         "avalon",
         "clockify",
         "standalonepublish_tool",
+        "traypublish_tool",
         "log_viewer",
         "local_settings",
         "settings"
@@ -920,3 +1050,424 @@ class TrayModulesManager(ModulesManager):
                         ),
                         exc_info=True
                     )
+
+
+def get_module_settings_defs():
+    """Check loaded addons/modules for existence of thei settings definition.
+
+    Check if OpenPype addon/module as python module has class that inherit
+    from `ModuleSettingsDef` in python module variables (imported
+    in `__init__py`).
+
+    Returns:
+        list: All valid and not abstract settings definitions from imported
+            openpype addons and modules.
+    """
+    # Make sure modules are loaded
+    load_modules()
+
+    import openpype_modules
+
+    settings_defs = []
+
+    log = PypeLogger.get_logger("ModuleSettingsLoad")
+
+    for raw_module in openpype_modules:
+        for attr_name in dir(raw_module):
+            attr = getattr(raw_module, attr_name)
+            if (
+                not inspect.isclass(attr)
+                or attr is ModuleSettingsDef
+                or not issubclass(attr, ModuleSettingsDef)
+            ):
+                continue
+
+            if inspect.isabstract(attr):
+                # Find missing implementations by convetion on `abc` module
+                not_implemented = []
+                for attr_name in dir(attr):
+                    attr = getattr(attr, attr_name, None)
+                    abs_method = getattr(
+                        attr, "__isabstractmethod__", None
+                    )
+                    if attr and abs_method:
+                        not_implemented.append(attr_name)
+
+                # Log missing implementations
+                log.warning((
+                    "Skipping abstract Class: {} in module {}."
+                    " Missing implementations: {}"
+                ).format(
+                    attr_name, raw_module.__name__, ", ".join(not_implemented)
+                ))
+                continue
+
+            settings_defs.append(attr)
+
+    return settings_defs
+
+
+@six.add_metaclass(ABCMeta)
+class BaseModuleSettingsDef:
+    """Definition of settings for OpenPype module or AddOn."""
+    _id = None
+
+    @property
+    def id(self):
+        """ID created on initialization.
+
+        ID should be per created object. Helps to store objects.
+        """
+        if self._id is None:
+            self._id = uuid4()
+        return self._id
+
+    @abstractmethod
+    def get_settings_schemas(self, schema_type):
+        """Setting schemas for passed schema type.
+
+        These are main schemas by dynamic schema keys. If they're using
+        sub schemas or templates they should be loaded with
+        `get_dynamic_schemas`.
+
+        Returns:
+            dict: Schema by `dynamic_schema` keys.
+        """
+        pass
+
+    @abstractmethod
+    def get_dynamic_schemas(self, schema_type):
+        """Settings schemas and templates that can be used anywhere.
+
+        It is recommended to add prefix specific for addon/module to keys
+        (e.g. "my_addon/real_schema_name").
+
+        Returns:
+            dict: Schemas and templates by their keys.
+        """
+        pass
+
+    @abstractmethod
+    def get_defaults(self, top_key):
+        """Default values for passed top key.
+
+        Top keys are (currently) "system_settings" or "project_settings".
+
+        Should return exactly what was passed with `save_defaults`.
+
+        Returns:
+            dict: Default values by path to first key in OpenPype defaults.
+        """
+        pass
+
+    @abstractmethod
+    def save_defaults(self, top_key, data):
+        """Save default values for passed top key.
+
+        Top keys are (currently) "system_settings" or "project_settings".
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+
+class ModuleSettingsDef(BaseModuleSettingsDef):
+    """Settings definiton with separated system and procect settings parts.
+
+    Reduce conditions that must be checked and adds predefined methods for
+    each case.
+    """
+    def get_defaults(self, top_key):
+        """Split method into 2 methods by top key."""
+        if top_key == SYSTEM_SETTINGS_KEY:
+            return self.get_default_system_settings() or {}
+        elif top_key == PROJECT_SETTINGS_KEY:
+            return self.get_default_project_settings() or {}
+        return {}
+
+    def save_defaults(self, top_key, data):
+        """Split method into 2 methods by top key."""
+        if top_key == SYSTEM_SETTINGS_KEY:
+            self.save_system_defaults(data)
+        elif top_key == PROJECT_SETTINGS_KEY:
+            self.save_project_defaults(data)
+
+    def get_settings_schemas(self, schema_type):
+        """Split method into 2 methods by schema type."""
+        if schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+            return self.get_system_settings_schemas() or {}
+        elif schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+            return self.get_project_settings_schemas() or {}
+        return {}
+
+    def get_dynamic_schemas(self, schema_type):
+        """Split method into 2 methods by schema type."""
+        if schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+            return self.get_system_dynamic_schemas() or {}
+        elif schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+            return self.get_project_dynamic_schemas() or {}
+        return {}
+
+    @abstractmethod
+    def get_system_settings_schemas(self):
+        """Schemas and templates usable in system settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_settings_schemas(self):
+        """Schemas and templates usable in project settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        pass
+
+    @abstractmethod
+    def get_system_dynamic_schemas(self):
+        """System schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_dynamic_schemas(self):
+        """Project schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        pass
+
+    @abstractmethod
+    def get_default_system_settings(self):
+        """Default system settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        pass
+
+    @abstractmethod
+    def get_default_project_settings(self):
+        """Default project settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        pass
+
+    @abstractmethod
+    def save_system_defaults(self, data):
+        """Save default system settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+    @abstractmethod
+    def save_project_defaults(self, data):
+        """Save default project settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+
+class JsonFilesSettingsDef(ModuleSettingsDef):
+    """Preimplemented settings definition using json files and file structure.
+
+    Expected file structure:
+    ┕ root
+      │
+      │ # Default values
+      ┝ defaults
+      │ ┝ system_settings.json
+      │ ┕ project_settings.json
+      │
+      │ # Schemas for `dynamic_template` type
+      ┝ dynamic_schemas
+      │ ┝ system_dynamic_schemas.json
+      │ ┕ project_dynamic_schemas.json
+      │
+      │ # Schemas that can be used anywhere (enhancement for `dynamic_schemas`)
+      ┕ schemas
+        ┝ system_schemas
+        │ ┝ <system schema.json> # Any schema or template files
+        │ ┕ ...
+        ┕ project_schemas
+          ┝ <system schema.json> # Any schema or template files
+          ┕ ...
+
+    Schemas can be loaded with prefix to avoid duplicated schema/template names
+    across all OpenPype addons/modules. Prefix can be defined with class
+    attribute `schema_prefix`.
+
+    Only think which must be implemented in `get_settings_root_path` which
+    should return directory path to `root` (in structure graph above).
+    """
+    # Possible way how to define `schemas` prefix
+    schema_prefix = ""
+
+    @abstractmethod
+    def get_settings_root_path(self):
+        """Directory path where settings and it's schemas are located."""
+        pass
+
+    def __init__(self):
+        settings_root_dir = self.get_settings_root_path()
+        defaults_dir = os.path.join(
+            settings_root_dir, "defaults"
+        )
+        dynamic_schemas_dir = os.path.join(
+            settings_root_dir, "dynamic_schemas"
+        )
+        schemas_dir = os.path.join(
+            settings_root_dir, "schemas"
+        )
+
+        self.system_defaults_filepath = os.path.join(
+            defaults_dir, "system_settings.json"
+        )
+        self.project_defaults_filepath = os.path.join(
+            defaults_dir, "project_settings.json"
+        )
+
+        self.system_dynamic_schemas_filepath = os.path.join(
+            dynamic_schemas_dir, "system_dynamic_schemas.json"
+        )
+        self.project_dynamic_schemas_filepath = os.path.join(
+            dynamic_schemas_dir, "project_dynamic_schemas.json"
+        )
+
+        self.system_schemas_dir = os.path.join(
+            schemas_dir, "system_schemas"
+        )
+        self.project_schemas_dir = os.path.join(
+            schemas_dir, "project_schemas"
+        )
+
+    def _load_json_file_data(self, path):
+        if os.path.exists(path):
+            return load_json_file(path)
+        return {}
+
+    def get_default_system_settings(self):
+        """Default system settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        return self._load_json_file_data(self.system_defaults_filepath)
+
+    def get_default_project_settings(self):
+        """Default project settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        return self._load_json_file_data(self.project_defaults_filepath)
+
+    def _save_data_to_filepath(self, path, data):
+        dirpath = os.path.dirname(path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        with open(path, "w") as file_stream:
+            json.dump(data, file_stream, indent=4)
+
+    def save_system_defaults(self, data):
+        """Save default system settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        self._save_data_to_filepath(self.system_defaults_filepath, data)
+
+    def save_project_defaults(self, data):
+        """Save default project settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        self._save_data_to_filepath(self.project_defaults_filepath, data)
+
+    def get_system_dynamic_schemas(self):
+        """System schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        return self._load_json_file_data(self.system_dynamic_schemas_filepath)
+
+    def get_project_dynamic_schemas(self):
+        """Project schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        return self._load_json_file_data(self.project_dynamic_schemas_filepath)
+
+    def _load_files_from_path(self, path):
+        output = {}
+        if not path or not os.path.exists(path):
+            return output
+
+        if os.path.isfile(path):
+            filename = os.path.basename(path)
+            basename, ext = os.path.splitext(filename)
+            if ext == ".json":
+                if self.schema_prefix:
+                    key = "{}/{}".format(self.schema_prefix, basename)
+                else:
+                    key = basename
+                output[key] = self._load_json_file_data(path)
+            return output
+
+        path = os.path.normpath(path)
+        for root, _, files in os.walk(path, topdown=False):
+            for filename in files:
+                basename, ext = os.path.splitext(filename)
+                if ext != ".json":
+                    continue
+
+                json_path = os.path.join(root, filename)
+                store_key = os.path.join(
+                    root.replace(path, ""), basename
+                ).replace("\\", "/")
+                if self.schema_prefix:
+                    store_key = "{}/{}".format(self.schema_prefix, store_key)
+                output[store_key] = self._load_json_file_data(json_path)
+
+        return output
+
+    def get_system_settings_schemas(self):
+        """Schemas and templates usable in system settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        return self._load_files_from_path(self.system_schemas_dir)
+
+    def get_project_settings_schemas(self):
+        """Schemas and templates usable in project settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        return self._load_files_from_path(self.project_schemas_dir)

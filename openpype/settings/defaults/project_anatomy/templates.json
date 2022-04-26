@@ -6,8 +6,8 @@
         "frame": "{frame:0>{@frame_padding}}"
     },
     "work": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
-        "file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
+        "file": "{project[code]}_{asset}_{task[name]}_{@version}<_{comment}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "render": {
@@ -27,5 +27,31 @@
         "path": "{@folder}/{@file}"
     },
     "delivery": {},
-    "others": {}
+    "unreal": {
+        "folder": "{root[work]}/{project[name]}/unreal/{task[name]}",
+        "file": "{project[code]}_{asset}",
+        "path": "{@folder}/{@file}"
+    },
+    "others": {
+        "maya2unreal": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}",
+            "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "simpleUnrealTextureHero": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/hero",
+            "file": "{originalBasename}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "simpleUnrealTexture": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{@version}",
+            "file": "{originalBasename}_{@version}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "__dynamic_keys_labels__": {
+            "maya2unreal": "Maya to Unreal",
+            "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
+            "simpleUnrealTexture": "Simple Unreal Texture"
+        }
+    }
 }

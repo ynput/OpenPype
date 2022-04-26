@@ -56,6 +56,35 @@ openpype_console --list-versions
 You can add `--use-staging` to list staging versions.
 :::
 
+If you want to validate integrity of some available version, you can use:
+
+```shell
+openpype_console --validate-version=3.3.0
+```
+
+This will go through the version and validate file content against sha 256 hashes
+stored in `checksums` file.
+
+:::tip Headless mode
+Add `--headless` to run OpenPype without graphical UI (useful on server or on automated tasks, etc.)
+:::
+
+`--verbose` `<level>` - change log verbose level of OpenPype loggers.
+
+Level value can be integer in range `0-50` or one of enum strings `"notset" (0)`, `"debug" (10)`, `"info" (20)`, `"warning" (30)`, `"error" (40)`, `"ciritcal" (50)`. Value is stored to `OPENPYPE_LOG_LEVEL` environment variable for next processes.
+
+```shell
+openpype_console --verbose debug
+```
+
+`--debug` - set debug flag affects logging
+
+Enable debug flag for OpenPype process. Change value of environment variable `OPENPYPE_DEBUG` to `"1"`. At this moment affects only OpenPype loggers. Argument `--verbose` or environment variable `OPENPYPE_LOG_LEVEL` are used in preference to affect log level.
+
+```shell
+openpype_console --debug
+```
+
 ### Details
 When you run OpenPype from executable, few check are made: 
 

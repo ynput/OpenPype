@@ -9,13 +9,13 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder + 0.9
     label = "Increment Script Version"
     optional = True
-    families = ["workfile", "render", "render.local", "render.farm"]
+    families = ["workfile"]
     hosts = ['nuke']
 
     def process(self, context):
 
         assert all(result["success"] for result in context.data["results"]), (
-            "Publishing not succesfull so version is not increased.")
+            "Publishing not successful so version is not increased.")
 
         from openpype.lib import version_up
         path = context.data["currentFile"]
