@@ -235,6 +235,10 @@ class ItemWidget(QtWidgets.QWidget):
         self._label_widget = label_widget
 
 
+class InViewButton(IconButton):
+    pass
+
+
 class FilesView(QtWidgets.QListView):
     """View showing instances and their groups."""
 
@@ -248,16 +252,33 @@ class FilesView(QtWidgets.QListView):
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
 
-        remove_btn = IconButton(self)
-        pix = paint_image_with_color(
+        remove_btn = InViewButton(self)
+        pix_enabled = paint_image_with_color(
             get_image(filename="delete.png"), QtCore.Qt.white
         )
-        icon = QtGui.QIcon(pix)
+        pix_disabled = paint_image_with_color(
+            get_image(filename="delete.png"), QtCore.Qt.gray
+        )
+        icon = QtGui.QIcon(pix_enabled)
+        icon.addPixmap(pix_disabled, icon.Disabled, icon.Off)
         remove_btn.setIcon(icon)
+        remove_btn.setEnabled(False)
 
         remove_btn.clicked.connect(self._on_remove_clicked)
 
         self._remove_btn = remove_btn
+
+    def setSelectionModel(self, *args, **kwargs):
+        super(FilesView, self).setSelectionModel(*args, **kwargs)
+        selection_model = self.selectionModel()
+        selection_model.selectionChanged.connect(self._on_selection_change)
+
+    def has_selected_item_ids(self):
+        for index in self.selectionModel().selectedIndexes():
+            instance_id = index.data(ITEM_ID_ROLE)
+            if instance_id is not None:
+                return True
+        return False
 
     def get_selected_item_ids(self):
         """Ids of selected instances."""
@@ -285,6 +306,9 @@ class FilesView(QtWidgets.QListView):
             return True
 
         return super(FilesView, self).event(event)
+
+    def _on_selection_change(self):
+        self._remove_btn.setEnabled(self.has_selected_item_ids())
 
     def _on_remove_clicked(self):
         self.remove_requested.emit()

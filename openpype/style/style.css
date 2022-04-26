@@ -1340,3 +1340,11 @@ VariantInputsWidget QToolButton {
 #LikeDisabledInput:focus {
     border-color: {color:border};
 }
+
+/* Attribute Definition widgets */
+InViewButton, InViewButton:disabled {
+    background: transparent;
+}
+InViewButton:hover {
+    background: rgba(255, 255, 255, 37);
+}
