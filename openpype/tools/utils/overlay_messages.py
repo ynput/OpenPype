@@ -174,7 +174,7 @@ class MessageOverlayObject(QtCore.QObject):
         widget (QWidget):
     """
 
-    def __init__(self, widget):
+    def __init__(self, widget, default_timeout=None):
         super(MessageOverlayObject, self).__init__()
 
         widget.installEventFilter(self)
@@ -194,6 +194,7 @@ class MessageOverlayObject(QtCore.QObject):
         self._spacing = 5
         self._move_size = 4
         self._move_size_remove = 8
+        self._default_timeout = default_timeout
 
     def add_message(self, message, message_type=None, timeout=None):
         """Add single message into overlay.
@@ -207,6 +208,9 @@ class MessageOverlayObject(QtCore.QObject):
         # Skip empty messages
         if not message:
             return
+
+        if timeout is None:
+            timeout = self._default_timeout
 
         # Create unique id of message
         label_id = str(uuid.uuid4())
