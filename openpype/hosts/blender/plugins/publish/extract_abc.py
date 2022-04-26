@@ -4,7 +4,6 @@ import bpy
 
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractABC(api.Extractor):
@@ -21,26 +20,19 @@ class ExtractABC(api.Extractor):
         filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
-        context = bpy.context
-        scene = context.scene
-        view_layer = context.view_layer
-
         # Perform extraction
         self.log.info("Performing extraction..")
 
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
 
         for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
+            if not isinstance(obj, bpy.types.Collection):
+                obj.select_set(True)
+                selected.append(obj)
 
-        context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+        context = plugin.create_blender_context(selected=selected)
 
         # We export the abc
         bpy.ops.wm.alembic_export(

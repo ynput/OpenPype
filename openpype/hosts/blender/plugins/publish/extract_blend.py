@@ -3,6 +3,7 @@ import os
 import bpy
 
 import openpype.api
+from openpype.hosts.blender.api import plugin
 
 
 class ExtractBlend(openpype.api.Extractor):
@@ -23,12 +24,17 @@ class ExtractBlend(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
+        plugin.deselect_all()
+
         data_blocks = set()
 
         for obj in instance:
             data_blocks.add(obj)
+            if isinstance(obj, bpy.types.Collection):
+                continue
             # Pack used images in the blend files.
             if obj.type == 'MESH':
+                obj.select_set(True)
                 for material_slot in obj.material_slots:
                     mat = material_slot.material
                     if mat and mat.use_nodes:
@@ -40,6 +46,8 @@ class ExtractBlend(openpype.api.Extractor):
                                         node.image.pack()
 
         bpy.data.libraries.write(filepath, data_blocks)
+
+        plugin.deselect_all()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

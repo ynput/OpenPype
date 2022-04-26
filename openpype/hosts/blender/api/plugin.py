@@ -9,7 +9,7 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
 )
-from .pipeline import AVALON_CONTAINERS
+from .pipeline import AVALON_PROPERTY
 from .ops import (
     MainThreadItem,
     execute_in_main_thread
@@ -18,6 +18,7 @@ from .lib import (
     imprint,
     get_selection
 )
+from .container import *
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
@@ -37,14 +38,16 @@ def get_unique_number(
     asset: str, subset: str
 ) -> str:
     """Return a unique number based on the asset name."""
-    avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-    if not avalon_container:
+    data_collections = bpy.data.collections
+    container_names = [
+        c.name for c in data_collections if c.get(AVALON_PROPERTY)
+    ]
+    if container_names:
         return "01"
-    asset_groups = avalon_container.all_objects
-
-    container_names = [c.name for c in asset_groups if c.type == 'EMPTY']
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
+    # increment the name as long as it's in container_names.
+    # If it's not inside it's the right increment
     while name in container_names:
         count += 1
         name = f"{asset}_{count:0>2}_{subset}"
@@ -52,13 +55,24 @@ def get_unique_number(
 
 
 def prepare_data(data, container_name=None):
+    # name = data.name
+    # local_data = data.make_local()
+    # if container_name:
+    #     local_data.name = f"{container_name}:{name}"
+    # else:
+    #     local_data.name = f"{name}"
+    # return local_data
+
     name = data.name
-    local_data = data.make_local()
-    if container_name:
-        local_data.name = f"{container_name}:{name}"
+    name_split = name.split(":")
+    if len(name_split) > 1:
+        name = name_split[1]
+    if container_name is not None:
+        data.name = f"{container_name}:{name}"
     else:
-        local_data.name = f"{name}"
-    return local_data
+        data.name = f"{name}"
+
+    return data.name
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
@@ -86,25 +100,6 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
                         override_context['selected_objects'] = selected
                         return override_context
     raise Exception("Could not create a custom Blender context.")
-
-
-def get_parent_collection(collection):
-    """Get the parent of the input collection"""
-    check_list = [bpy.context.scene.collection]
-
-    for c in check_list:
-        if collection.name in c.children.keys():
-            return c
-        check_list.extend(c.children)
-
-    return None
-
-
-def get_local_collection_with_name(name):
-    for collection in bpy.data.collections:
-        if collection.name == name and collection.library is None:
-            return collection
-    return None
 
 
 def deselect_all():
@@ -229,7 +224,7 @@ class AssetLoader(LoaderPlugin):
               name: Optional[str] = None,
               namespace: Optional[str] = None,
               options: Optional[Dict] = None
-    ) -> Optional[bpy.types.Collection]:
+              ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:

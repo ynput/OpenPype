@@ -4,7 +4,6 @@ import bpy
 
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractFBX(api.Extractor):
@@ -27,23 +26,18 @@ class ExtractFBX(api.Extractor):
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
 
         for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
+            if not isinstance(obj, bpy.types.Collection):
+                obj.select_set(True)
+                selected.append(obj)
 
-        context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+        context = plugin.create_blender_context(selected=selected)
 
         new_materials = []
         new_materials_objs = []
-        objects = list(asset_group.children)
 
-        for obj in objects:
-            objects.extend(obj.children)
+        for obj in selected:
             if obj.type == 'MESH' and len(obj.data.materials) == 0:
                 mat = bpy.data.materials.new(obj.name)
                 obj.data.materials.append(mat)
