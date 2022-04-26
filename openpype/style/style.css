@@ -1289,6 +1289,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: #21252B;
 }
 
+/* Workfiles */
+#WorkfilesPublishedContextSelect {
+    background: rgba(0, 0, 0, 127);
+}
+#WorkfilesPublishedContextSelect QLabel {
+    font-size: 17pt;
+}
+
 /* Tray */
 #TrayRestartButton {
     background: {color:restart-btn-bg};

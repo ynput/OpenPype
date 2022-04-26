@@ -11,13 +11,13 @@ from bson.objectid import ObjectId
 import alembic.Abc
 from maya import cmds
 
-from avalon import io, api
-
 from openpype.pipeline import (
+    legacy_io,
     load_container,
     loaders_from_representation,
     discover_loader_plugins,
     get_representation_path,
+    registered_host,
 )
 from openpype.hosts.maya.api import lib
 
@@ -157,9 +157,11 @@ def get_look_relationships(version_id):
         dict: Dictionary of relations.
 
     """
-    json_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "json"})
+    json_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "json"
+    })
 
     # Load relationships
     shader_relation = get_representation_path(json_representation)
@@ -183,12 +185,14 @@ def load_look(version_id):
 
     """
     # Get representations of shader file and relationships
-    look_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "ma"})
+    look_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "ma"
+    })
 
     # See if representation is already loaded, if so reuse it.
-    host = api.registered_host()
+    host = registered_host()
     representation_id = str(look_representation['_id'])
     for container in host.ls():
         if (container['loader'] == "LookLoader" and
@@ -231,15 +235,21 @@ def get_latest_version(asset_id, subset):
         RuntimeError: When subset or version doesn't exist.
 
     """
-    subset = io.find_one({"name": subset,
-                          "parent": ObjectId(asset_id),
-                          "type": "subset"})
+    subset = legacy_io.find_one({
+        "name": subset,
+        "parent": ObjectId(asset_id),
+        "type": "subset"
+    })
     if not subset:
         raise RuntimeError("Subset does not exist: %s" % subset)
 
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"]},
-                          sort=[("name", -1)])
+    version = legacy_io.find_one(
+        {
+            "type": "version",
+            "parent": subset["_id"]
+        },
+        sort=[("name", -1)]
+    )
     if not version:
         raise RuntimeError("Version does not exist.")
 

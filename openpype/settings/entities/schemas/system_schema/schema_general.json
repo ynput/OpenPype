@@ -41,6 +41,11 @@
             "type": "splitter"
         },
         {
+            "type": "boolean",
+            "key": "log_to_server",
+            "label": "Log to mongo"
+        },
+        {
             "type": "dict",
             "key": "disk_mapping",
             "label": "Disk mapping",
@@ -106,6 +111,17 @@
                     }
                 }
             ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "list",
+            "key": "local_env_white_list",
+            "label": "Local overrides of environment variable keys",
+            "tooltip": "Environment variable keys that can be changed per machine using Local settings UI.\nKey changes are applied only on applications and tools environments.",
+            "use_label_wrap": true,
+            "object_type": "text"
         },
         {
             "type": "splitter"

@@ -1,11 +1,14 @@
 import os
 
-from avalon import api, io
 from openpype.lib import (
     StringTemplate,
     get_workfile_template_key_from_context,
     get_workdir_data,
     get_last_workfile_with_version,
+)
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
 )
 from openpype.api import Anatomy
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
@@ -22,7 +25,7 @@ class LoadWorkfile(plugin.Loader):
     def load(self, context, name, namespace, options):
         # Load context of current workfile as first thing
         #   - which context and extension has
-        host = api.registered_host()
+        host = registered_host()
         current_file = host.current_file()
 
         context = pipeline.get_current_workfile_context()
@@ -45,13 +48,13 @@ class LoadWorkfile(plugin.Loader):
         task_name = context.get("task")
         # Far cases when there is workfile without context
         if not asset_name:
-            asset_name = io.Session["AVALON_ASSET"]
-            task_name = io.Session["AVALON_TASK"]
+            asset_name = legacy_io.Session["AVALON_ASSET"]
+            task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_doc = io.find_one({
+        project_doc = legacy_io.find_one({
             "type": "project"
         })
-        asset_doc = io.find_one({
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": asset_name
         })
@@ -62,7 +65,7 @@ class LoadWorkfile(plugin.Loader):
             task_name,
             host_name,
             project_name=project_name,
-            dbcon=io
+            dbcon=legacy_io
         )
         anatomy = Anatomy(project_name)
 

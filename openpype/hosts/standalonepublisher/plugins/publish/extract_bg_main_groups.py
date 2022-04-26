@@ -1,9 +1,11 @@
 import os
 import copy
 import json
-import openpype.api
+
 import pyblish.api
-from avalon import io
+
+import openpype.api
+from openpype.pipeline import legacy_io
 
 PSDImage = None
 
@@ -225,7 +227,7 @@ class ExtractBGMainGroups(openpype.api.Extractor):
         self.log.debug("resourcesDir: \"{}\"".format(resources_folder))
 
     def find_last_version(self, subset_name, asset_doc):
-        subset_doc = io.find_one({
+        subset_doc = legacy_io.find_one({
             "type": "subset",
             "name": subset_name,
             "parent": asset_doc["_id"]
@@ -234,7 +236,7 @@ class ExtractBGMainGroups(openpype.api.Extractor):
         if subset_doc is None:
             self.log.debug("Subset entity does not exist yet.")
         else:
-            version_doc = io.find_one(
+            version_doc = legacy_io.find_one(
                 {
                     "type": "version",
                     "parent": subset_doc["_id"]

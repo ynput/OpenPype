@@ -22,13 +22,11 @@ openpype_dir = multi_dirname(current_file, 4)
 
 os.environ["OPENPYPE_MONGO"] = mongo_url
 os.environ["OPENPYPE_ROOT"] = openpype_dir
-os.environ["AVALON_MONGO"] = mongo_url
 os.environ["AVALON_PROJECT"] = project_name
 os.environ["AVALON_ASSET"] = asset_name
 os.environ["AVALON_TASK"] = task_name
 os.environ["AVALON_APP"] = host_name
 os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
-os.environ["AVALON_CONFIG"] = "openpype"
 os.environ["AVALON_TIMEOUT"] = "1000"
 os.environ["AVALON_DB"] = "avalon"
 os.environ["FTRACK_SERVER"] = ftrack_url
@@ -48,8 +46,8 @@ from openpype.tools.publisher.window import PublisherWindow
 
 def main():
     """Main function for testing purposes."""
-    import avalon.api
     import pyblish.api
+    from openpype.pipeline import install_host
     from openpype.modules import ModulesManager
     from openpype.hosts.testhost import api as testhost
 
@@ -57,7 +55,7 @@ def main():
     for plugin_path in manager.collect_plugin_paths()["publish"]:
         pyblish.api.register_plugin_path(plugin_path)
 
-    avalon.api.install(testhost)
+    install_host(testhost)
 
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication([])

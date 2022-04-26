@@ -7,11 +7,13 @@
             "global": []
         }
     },
+    "log_to_server": true,
     "disk_mapping": {
         "windows": [],
         "linux": [],
         "darwin": []
     },
+    "local_env_white_list": [],
     "openpype_path": {
         "windows": [],
         "darwin": [],

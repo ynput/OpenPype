@@ -25,10 +25,18 @@
             },
             "variants": {
                 "3-2": {
-                    "MTOA_VERSION": "3.2"
+                    "host_names": [],
+                    "app_variants": [],
+                    "environment": {
+                        "MTOA_VERSION": "3.2"
+                    }
                 },
                 "3-1": {
-                    "MTOA_VERSION": "3.1"
+                    "host_names": [],
+                    "app_variants": [],
+                    "environment": {
+                        "MTOA_VERSION": "3.1"
+                    }
                 },
                 "__dynamic_keys_labels__": {
                     "3-2": "3.2",

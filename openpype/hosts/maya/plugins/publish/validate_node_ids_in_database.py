@@ -1,8 +1,7 @@
 import pyblish.api
 
-from avalon import io
-
 import openpype.api
+from openpype.pipeline import legacy_io
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -43,7 +42,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
                                                       nodes=instance[:])
 
         # check ids against database ids
-        db_asset_ids = io.find({"type": "asset"}).distinct("_id")
+        db_asset_ids = legacy_io.find({"type": "asset"}).distinct("_id")
         db_asset_ids = set(str(i) for i in db_asset_ids)
 
         # Get all asset IDs

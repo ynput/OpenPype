@@ -42,7 +42,7 @@
                     "children": [
                         {
                             "type": "label",
-                            "label": "Set color for publishable layers, set its resulting family and template for subset name. Can create flatten image from published instances"
+                            "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
                         },
                         {
                             "type": "boolean",
@@ -105,6 +105,23 @@
                                     }
                                 ]
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectInstances",
+                    "label": "Collect Instances",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Name for flatten image created if no image instance present"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
                         }
                     ]
                 },

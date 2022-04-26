@@ -59,7 +59,7 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `asset` | Name of asset or shot |
 | `task[name]` | Name of task |
 | `task[type]` | Type of task |
-| `task[short]` | Shortname of task |
+| `task[short]` | Short name of task type (eg. 'Modeling' > 'mdl') |
 | `parent` | Name of hierarchical parent |
 | `version` | Version number |
 | `subset` | Subset name |
@@ -105,5 +105,8 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 
 ## Task Types
 
+Current state of default Task descriptors.
+
+![tasks](assets/settings/anatomy_tasks.png)
 
 ## Colour Management and Formats

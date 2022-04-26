@@ -49,8 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import api
 from openpype.lib import get_formatted_current_time
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -93,7 +93,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
-        asset = api.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
         deadline_settings = (
@@ -194,11 +194,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             assert render_products, "no render products generated"
             exp_files = []
             multipart = False
+            render_cameras = []
             for product in render_products:
                 if product.multipart:
                     multipart = True
                 product_name = product.productName
                 if product.camera and layer_render_products.has_camera_token():
+                    render_cameras.append(product.camera)
                     product_name = "{}{}".format(
                         product.camera,
                         "_" + product_name if product_name else "")
@@ -207,6 +209,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         product_name: layer_render_products.get_files(
                             product)
                     })
+
+            assert render_cameras, "No render cameras found."
 
             self.log.info("multipart: {}".format(
                 multipart))
@@ -385,6 +389,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # Get global overrides and translate to Deadline values
             overrides = self.parse_options(str(render_globals))
             data.update(**overrides)
+
+            # get string values for pools
+            primary_pool = overrides["renderGlobals"]["Pool"]
+            secondary_pool = overrides["renderGlobals"].get("SecondaryPool")
+            data["primaryPool"] = primary_pool
+            data["secondaryPool"] = secondary_pool
 
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
