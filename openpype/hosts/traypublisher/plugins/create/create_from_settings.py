@@ -1,5 +1,4 @@
 import os
-import copy
 
 from openpype.api import get_project_settings
 

@@ -35,7 +35,9 @@ class ValidateWorkfilePath(pyblish.api.InstancePlugin):
                 (
                     "Filepath of '{}' instance \"{}\" does not exist:\n{}"
                 ).format(
-                    instance.data["family"], instance.data["name"], joined_paths
+                    instance.data["family"],
+                    instance.data["name"],
+                    joined_paths
                 ),
                 "File not found",
                 (
