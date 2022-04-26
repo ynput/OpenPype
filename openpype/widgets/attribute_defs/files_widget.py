@@ -290,20 +290,13 @@ class FilesView(QtWidgets.QListView):
         return selected_item_ids
 
     def event(self, event):
-        if not event.type() == QtCore.QEvent.KeyPress:
-            pass
-
-        elif event.key() == QtCore.Qt.Key_Space:
-            self.toggle_requested.emit(-1)
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Backspace:
-            self.toggle_requested.emit(0)
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Return:
-            self.toggle_requested.emit(1)
-            return True
+        if event.type() == QtCore.QEvent.KeyPress:
+            if (
+                event.key() == QtCore.Qt.Key_Delete
+                and self.has_selected_item_ids()
+            ):
+                self.remove_requested.emit()
+                return True
 
         return super(FilesView, self).event(event)
 
