@@ -3294,10 +3294,6 @@ def get_visible_in_frame_range(nodes, start, end):
         traversed_parents = list()
         for parent in iter_parents(node):
 
-            if not parent:
-                # Workaround bug in iter_parents
-                continue
-
             if parent in always_invisible or get_state(parent) == INVISIBLE:
                 # When parent is always invisible then consider this parent,
                 # this node we started from and any of the parents we
