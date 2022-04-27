@@ -13,8 +13,10 @@ from openpype.pipeline.create import (
     CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS
 )
-
-from openpype.tools.utils import ErrorMessageBox
+from openpype.tools.utils import (
+    ErrorMessageBox,
+    MessageOverlayObject
+)
 
 from .widgets import IconValuePixmapLabel
 from .assets_widget import CreateDialogAssetsWidget
@@ -239,6 +241,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
 
+        overlay_object = MessageOverlayObject(self)
+
         context_widget = QtWidgets.QWidget(self)
 
         assets_widget = CreateDialogAssetsWidget(controller, context_widget)
@@ -368,6 +372,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
+        self._overlay_object = overlay_object
+
         self._splitter_widget = splitter_widget
 
         self._context_widget = context_widget
@@ -392,6 +398,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._prereq_timer = prereq_timer
         self._first_show = True
+
+    def _emit_message(self, message):
+        self._overlay_object.add_message(message)
 
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
@@ -865,6 +874,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         if error_msg is None:
             self._set_creator(self._selected_creator)
+            self._emit_message("Creation finished...")
         else:
             box = CreateErrorMessageBox(
                 creator_label,
