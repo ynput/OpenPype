@@ -66,7 +66,19 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             default_asset_name = parent_entity["name"]
 
         # Change status on task
-        self._set_task_status(instance, task_entity, session)
+        asset_version_status_ids_by_name = {}
+        project_entity = instance.context.data.get("ftrackProject")
+        if project_entity:
+            project_schema = project_entity["project_schema"]
+            asset_version_statuses = (
+                project_schema.get_statuses("AssetVersion")
+            )
+            asset_version_status_ids_by_name = {
+                status["name"].lower(): status["id"]
+                for status in asset_version_statuses
+            }
+
+        self._set_task_status(instance, project_entity, task_entity, session)
 
         # Prepare AssetTypes
         asset_types_by_short = self._ensure_asset_types_exists(
@@ -97,7 +109,11 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Asset Version
             asset_version_data = data.get("assetversion_data") or {}
             asset_version_entity = self._ensure_asset_version_exists(
-                session, asset_version_data, asset_entity["id"], task_entity
+                session,
+                asset_version_data,
+                asset_entity["id"],
+                task_entity,
+                asset_version_status_ids_by_name
             )
 
             # Component
@@ -132,8 +148,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             if asset_version not in instance.data[asset_versions_key]:
                 instance.data[asset_versions_key].append(asset_version)
 
-    def _set_task_status(self, instance, task_entity, session):
-        project_entity = instance.context.data.get("ftrackProject")
+    def _set_task_status(self, instance, project_entity, task_entity, session):
         if not project_entity:
             self.log.info("Task status won't be set, project is not known.")
             return
@@ -277,11 +292,18 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         ).first()
 
     def _ensure_asset_version_exists(
-        self, session, asset_version_data, asset_id, task_entity
+        self,
+        session,
+        asset_version_data,
+        asset_id,
+        task_entity,
+        status_ids_by_name
     ):
         task_id = None
         if task_entity:
             task_id = task_entity["id"]
+
+        status_name = asset_version_data.pop("status_name", None)
 
         # Try query asset version by criteria (asset id and version)
         version = asset_version_data.get("version") or 0
@@ -323,6 +345,18 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             asset_version_entity = self._query_asset_version(
                 session, version, asset_id
             )
+
+        if status_name:
+            status_id = status_ids_by_name.get(status_name.lower())
+            if not status_id:
+                self.log.info((
+                    "Ftrack status with name \"{}\""
+                    " for AssetVersion was not found."
+                ).format(status_name))
+
+            elif asset_version_entity["status_id"] != status_id:
+                asset_version_entity["status_id"] = status_id
+                session.commit()
 
         # Set custom attributes if there were any set
         custom_attrs = asset_version_data.get("custom_attributes") or {}
