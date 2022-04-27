@@ -16,11 +16,12 @@ shouldn't be pushed into general publish plugins.
 import os
 
 import pyblish.api
-from avalon import io
+
 from openpype.lib.plugin_tools import (
     parse_json,
     get_batch_asset_task_info
 )
+from openpype.pipeline import legacy_io
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):
@@ -62,9 +63,9 @@ class CollectBatchData(pyblish.api.ContextPlugin):
         )
 
         os.environ["AVALON_ASSET"] = asset_name
-        io.Session["AVALON_ASSET"] = asset_name
         os.environ["AVALON_TASK"] = task_name
-        io.Session["AVALON_TASK"] = task_name
+        legacy_io.Session["AVALON_ASSET"] = asset_name
+        legacy_io.Session["AVALON_TASK"] = task_name
 
         context.data["asset"] = asset_name
         context.data["task"] = task_name

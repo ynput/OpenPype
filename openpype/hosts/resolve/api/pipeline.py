@@ -7,10 +7,9 @@ from collections import OrderedDict
 
 from pyblish import api as pyblish
 
-from avalon import schema
-
 from openpype.api import Logger
 from openpype.pipeline import (
+    schema,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,

@@ -1,12 +1,11 @@
-from avalon import api as avalon_api
-
 from openpype import resources
 from openpype.lib import BoolDef, UISeparatorDef
 from openpype.hosts.aftereffects import api
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    CreatorError
+    CreatorError,
+    legacy_io,
 )
 
 
@@ -116,7 +115,7 @@ class RenderCreator(Creator):
             instance_data.pop("uuid")
 
         if not instance_data.get("task"):
-            instance_data["task"] = avalon_api.Session.get("AVALON_TASK")
+            instance_data["task"] = legacy_io.Session.get("AVALON_TASK")
 
         if not instance_data.get("creator_attributes"):
             is_old_farm = instance_data["family"] != "renderLocal"

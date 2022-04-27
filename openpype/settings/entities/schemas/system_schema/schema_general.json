@@ -41,6 +41,11 @@
             "type": "splitter"
         },
         {
+            "type": "boolean",
+            "key": "log_to_server",
+            "label": "Log to mongo"
+        },
+        {
             "type": "dict",
             "key": "disk_mapping",
             "label": "Disk mapping",

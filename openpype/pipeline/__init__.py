@@ -3,6 +3,10 @@ from .constants import (
     HOST_WORKFILE_EXTENSIONS,
 )
 
+from .mongodb import (
+    AvalonMongoDB,
+)
+
 from .create import (
     BaseCreator,
     Creator,
@@ -89,7 +93,8 @@ __all__ = (
     "AVALON_CONTAINER_ID",
     "HOST_WORKFILE_EXTENSIONS",
 
-    "attribute_definitions",
+    # --- MongoDB ---
+    "AvalonMongoDB",
 
     # --- Create ---
     "BaseCreator",

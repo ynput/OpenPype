@@ -3,13 +3,11 @@ from Qt import QtWidgets
 from bson.objectid import ObjectId
 
 import pyblish.api
-from avalon import io
 
 from openpype.api import Logger
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    BaseCreator,
-    LegacyCreator,
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
@@ -35,22 +33,11 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
     # Warn about outdated containers.
-    print("Starting new QApplication..")
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
@@ -262,9 +249,8 @@ def update_context_data(data, changes):
 
 def get_context_title():
     """Returns title for Creator window"""
-    import avalon.api
 
-    project_name = avalon.api.Session["AVALON_PROJECT"]
-    asset_name = avalon.api.Session["AVALON_ASSET"]
-    task_name = avalon.api.Session["AVALON_TASK"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
     return "{}/{}/{}".format(project_name, asset_name, task_name)

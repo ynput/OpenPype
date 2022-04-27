@@ -22,6 +22,10 @@ from .lib import (
 from .models import (
     RecursiveSortFilterProxyModel,
 )
+from .overlay_messages import (
+    MessageOverlayObject,
+)
+
 
 __all__ = (
     "PlaceholderLineEdit",
@@ -45,4 +49,6 @@ __all__ = (
     "get_asset_icon",
 
     "RecursiveSortFilterProxyModel",
+
+    "MessageOverlayObject",
 )

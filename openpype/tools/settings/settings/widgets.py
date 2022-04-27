@@ -1,13 +1,9 @@
-import os
 import copy
 import uuid
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
-from avalon.mongodb import (
-    AvalonMongoConnection,
-    AvalonMongoDB
-)
 
+from openpype.pipeline import AvalonMongoDB
 from openpype.style import get_objected_colors
 from openpype.tools.utils.widgets import ImageButton
 from openpype.tools.utils.lib import paint_image_with_color
@@ -1208,15 +1204,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         for index in self.project_list.selectedIndexes():
             selected_project = index.data(PROJECT_NAME_ROLE)
             break
-
-        mongo_url = os.environ["OPENPYPE_MONGO"]
-
-        # Force uninstall of whole avalon connection if url does not match
-        # to current environment and set it as environment
-        if mongo_url != os.environ["AVALON_MONGO"]:
-            AvalonMongoConnection.uninstall(self.dbcon, force=True)
-            os.environ["AVALON_MONGO"] = mongo_url
-            self.dbcon = None
 
         if not self.dbcon:
             try:

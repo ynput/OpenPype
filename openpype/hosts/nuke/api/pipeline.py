@@ -38,7 +38,6 @@ from .lib import (
 
 log = Logger.get_logger(__name__)
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -79,11 +78,11 @@ def reload_config():
     """
 
     for module in (
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.actions".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.menu".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.plugin".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.lib".format(AVALON_CONFIG),
+        "openpype.api",
+        "openpype.hosts.nuke.api.actions",
+        "openpype.hosts.nuke.api.menu",
+        "openpype.hosts.nuke.api.plugin",
+        "openpype.hosts.nuke.api.lib",
     ):
         log.info("Reloading module: {}...".format(module))
 
