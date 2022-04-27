@@ -230,7 +230,8 @@ class BlendModelLoader(plugin.AssetLoader):
 
         mat = asset_group.matrix_basis.copy()
 
-        self._remove(asset_group)
+        if isinstance(asset_group, bpy.types.Collection):
+            self._remove(asset_group)
 
         # If it is the last object to use that library, remove it
         if count == 1:
@@ -269,9 +270,10 @@ class BlendModelLoader(plugin.AssetLoader):
             if obj.get(AVALON_PROPERTY, {}).get('libpath') == libpath:
                 count += 1
 
-        # self._remove(asset_group)
-
-        bpy.data.objects.remove(asset_group)
+        if isinstance(asset_group, bpy.types.Collection):
+            self._remove(asset_group)
+        else:
+            bpy.data.objects.remove(asset_group)
 
         # If it is the last object to use that library, remove it
         if count == 1:
