@@ -79,12 +79,20 @@ class FilesModel(QtGui.QStandardItemModel):
         super(FilesModel, self).__init__()
 
         self._single_item = single_item
+        self._multivalue = False
         self._allow_sequences = allow_sequences
 
         self._items_by_id = {}
         self._file_items_by_id = {}
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
+
+    def set_multivalue(self, multivalue):
+        """Disable filtering."""
+
+        if self._multivalue == multivalue:
+            return
+        self._multivalue = multivalue
 
     def add_filepaths(self, items):
         if not items:
@@ -94,7 +102,7 @@ class FilesModel(QtGui.QStandardItemModel):
         if not file_items:
             return
 
-        if self._single_item:
+        if not self._multivalue and self._single_item:
             file_items = [file_items[0]]
             current_ids = list(self._file_items_by_id.keys())
             if current_ids:
@@ -159,6 +167,15 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
         super(FilesProxyModel, self).__init__(*args, **kwargs)
         self._allow_folders = False
         self._allowed_extensions = None
+        self._multivalue = False
+
+    def set_multivalue(self, multivalue):
+        """Disable filtering."""
+
+        if self._multivalue == multivalue:
+            return
+        self._multivalue = multivalue
+        self.invalidateFilter()
 
     def set_allow_folders(self, allow=None):
         if allow is None:
@@ -189,6 +206,10 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
         return False
 
     def filterAcceptsRow(self, row, parent_index):
+        # Skip filtering if multivalue is set
+        if self._multivalue:
+            return True
+
         model = self.sourceModel()
         index = model.index(row, self.filterKeyColumn(), parent_index)
         # First check if item is folder and if folders are enabled
@@ -220,7 +241,9 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 class ItemWidget(QtWidgets.QWidget):
     split_requested = QtCore.Signal(str)
 
-    def __init__(self, item_id, label, pixmap_icon, is_sequence, parent=None):
+    def __init__(
+        self, item_id, label, pixmap_icon, is_sequence, multivalue, parent=None
+    ):
         self._item_id = item_id
 
         super(ItemWidget, self).__init__(parent)
@@ -239,7 +262,10 @@ class ItemWidget(QtWidgets.QWidget):
         split_btn = ClickableLabel(self)
         split_btn.setFixedSize(height, height)
         split_btn.setPixmap(actions_menu_pix)
-        split_btn.setVisible(is_sequence)
+        if multivalue:
+            split_btn.setVisible(False)
+        else:
+            split_btn.setVisible(is_sequence)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -327,11 +353,22 @@ class FilesView(QtWidgets.QListView):
         self._remove_btn = remove_btn
 
     def setSelectionModel(self, *args, **kwargs):
+        """Catch selection model set to register signal callback.
+
+        Selection model is not available during initialization.
+        """
+
         super(FilesView, self).setSelectionModel(*args, **kwargs)
         selection_model = self.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
 
+    def set_multivalue(self, multivalue):
+        """Disable remove button on multivalue."""
+
+        self._remove_btn.setVisible(not multivalue)
+
     def has_selected_item_ids(self):
+        """Is any index selected."""
         for index in self.selectionModel().selectedIndexes():
             instance_id = index.data(ITEM_ID_ROLE)
             if instance_id is not None:
@@ -340,6 +377,7 @@ class FilesView(QtWidgets.QListView):
 
     def get_selected_item_ids(self):
         """Ids of selected instances."""
+
         selected_item_ids = set()
         for index in self.selectionModel().selectedIndexes():
             instance_id = index.data(ITEM_ID_ROLE)
@@ -365,6 +403,8 @@ class FilesView(QtWidgets.QListView):
         self.remove_requested.emit()
 
     def _update_remove_btn(self):
+        """Position remove button to bottom right."""
+
         viewport = self.viewport()
         height = viewport.height()
         pos_x = viewport.width() - self._remove_btn.width() - 5
@@ -406,6 +446,7 @@ class FilesWidget(QtWidgets.QFrame):
         files_view.remove_requested.connect(self._on_remove_requested)
         self._in_set_value = False
         self._single_item = single_item
+        self._multivalue = False
 
         self._empty_widget = empty_widget
         self._files_model = files_model
@@ -414,30 +455,24 @@ class FilesWidget(QtWidgets.QFrame):
 
         self._widgets_by_id = {}
 
+    def _set_multivalue(self, multivalue):
+        if self._multivalue == multivalue:
+            return
+        self._multivalue = multivalue
+        self._files_view.set_multivalue(multivalue)
+        self._files_model.set_multivalue(multivalue)
+        self._files_proxy_model.set_multivalue(multivalue)
+
     def set_value(self, value, multivalue):
         self._in_set_value = True
+
         widget_ids = set(self._widgets_by_id.keys())
         self._remove_item_by_ids(widget_ids)
 
-        # TODO how to display multivalue?
-        all_same = True
-        if multivalue:
-            new_value = set()
-            item_row = None
-            for _value in value:
-                _value_set = set(_value)
-                new_value |= _value_set
-                if item_row is None:
-                    item_row = _value_set
-                elif item_row != _value_set:
-                    all_same = False
-            value = new_value
+        self._set_multivalue(multivalue)
 
-        if not isinstance(value, (list, tuple, set)):
-            value = [value]
+        self._add_filepaths(value)
 
-        if value:
-            self._add_filepaths(value)
         self._in_set_value = False
 
     def current_value(self):
@@ -473,7 +508,13 @@ class FilesWidget(QtWidgets.QFrame):
             pixmap_icon = index.data(ITEM_ICON_ROLE)
             is_sequence = index.data(IS_SEQUENCE_ROLE)
 
-            widget = ItemWidget(item_id, label, pixmap_icon, is_sequence)
+            widget = ItemWidget(
+                item_id,
+                label,
+                pixmap_icon,
+                is_sequence,
+                self._multivalue
+            )
             widget.split_requested.connect(self._on_split_request)
             self._files_view.setIndexWidget(index, widget)
             self._files_proxy_model.setData(
@@ -507,6 +548,9 @@ class FilesWidget(QtWidgets.QFrame):
             self.value_changed.emit()
 
     def _on_split_request(self, item_id):
+        if self._multivalue:
+            return
+
         file_item = self._files_model.get_file_item_by_id(item_id)
         if not file_item:
             return
@@ -516,6 +560,9 @@ class FilesWidget(QtWidgets.QFrame):
         self._add_filepaths(new_items)
 
     def _on_remove_requested(self):
+        if self._multivalue:
+            return
+
         items_to_delete = self._files_view.get_selected_item_ids()
         if items_to_delete:
             self._remove_item_by_ids(items_to_delete)
@@ -544,6 +591,9 @@ class FilesWidget(QtWidgets.QFrame):
         return result
 
     def dragEnterEvent(self, event):
+        if self._multivalue:
+            return
+
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             filepaths = []
@@ -561,7 +611,7 @@ class FilesWidget(QtWidgets.QFrame):
 
     def dropEvent(self, event):
         mime_data = event.mimeData()
-        if mime_data.hasUrls():
+        if not self._multivalue and mime_data.hasUrls():
             filepaths = []
             for url in mime_data.urls():
                 filepath = url.toLocalFile()

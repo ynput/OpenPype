@@ -422,8 +422,14 @@ class FileDefItem(object):
 
     @classmethod
     def from_value(cls, value, allow_sequences):
-        multi = isinstance(value, (list, tuple, set))
-        if not multi:
+        """Convert passed value to FileDefItem objects.
+
+        Returns:
+            list: Created FileDefItem objects.
+        """
+
+        # Convert single item to iterable
+        if not isinstance(value, (list, tuple, set)):
             value = [value]
 
         output = []
@@ -450,9 +456,7 @@ class FileDefItem(object):
         if str_filepaths:
             output.extend(cls.from_paths(str_filepaths, allow_sequences))
 
-        if multi:
-            return output
-        return output[0]
+        return output
 
     @classmethod
     def from_dict(cls, data):
