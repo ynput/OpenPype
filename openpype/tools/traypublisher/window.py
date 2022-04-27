@@ -143,6 +143,12 @@ class TrayPublishWindow(PublisherWindow):
         self._back_to_overlay_btn = back_to_overlay_btn
         self._overlay_widget = overlay_widget
 
+    def _set_publish_frame_visible(self, publish_frame_visible):
+        super(TrayPublishWindow, self)._set_publish_frame_visible(
+            publish_frame_visible
+        )
+        self._back_to_overlay_btn.setVisible(not publish_frame_visible)
+
     def _on_back_to_overlay(self):
         self._overlay_widget.setVisible(True)
         self._resize_overlay()
