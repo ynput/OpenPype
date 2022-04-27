@@ -24,48 +24,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     label = "Integrate Ftrack Api"
     families = ["ftrack"]
 
-    def query(self, entitytype, data):
-        """ Generate a query expression from data supplied.
-
-        If a value is not a string, we'll add the id of the entity to the
-        query.
-
-        Args:
-            entitytype (str): The type of entity to query.
-            data (dict): The data to identify the entity.
-            exclusions (list): All keys to exclude from the query.
-
-        Returns:
-            str: String query to use with "session.query"
-        """
-        queries = []
-        if sys.version_info[0] < 3:
-            for key, value in data.iteritems():
-                if not isinstance(value, (basestring, int)):
-                    self.log.info("value: {}".format(value))
-                    if "id" in value.keys():
-                        queries.append(
-                            "{0}.id is \"{1}\"".format(key, value["id"])
-                        )
-                else:
-                    queries.append("{0} is \"{1}\"".format(key, value))
-        else:
-            for key, value in data.items():
-                if not isinstance(value, (str, int)):
-                    self.log.info("value: {}".format(value))
-                    if "id" in value.keys():
-                        queries.append(
-                            "{0}.id is \"{1}\"".format(key, value["id"])
-                        )
-                else:
-                    queries.append("{0} is \"{1}\"".format(key, value))
-
-        query = (
-            "select id from " + entitytype + " where " + " and ".join(queries)
-        )
-        self.log.debug(query)
-        return query
-
     def process(self, instance):
         session = instance.context.data["ftrackSession"]
         context = instance.context
