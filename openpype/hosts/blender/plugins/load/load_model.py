@@ -11,10 +11,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_CONTAINERS,
-    AVALON_PROPERTY,
-)
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -32,16 +29,20 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
 
     def _remove(self, asset_group):
-        objects = list(asset_group.children)
-
+        # remove all objects in asset_group
+        objects = list(asset_group.all_objects)
         for obj in objects:
             if obj.type == 'MESH':
                 for material_slot in list(obj.material_slots):
                     bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
-            elif obj.type == 'EMPTY':
-                objects.extend(obj.children)
-                bpy.data.objects.remove(obj)
+            objects.extend(obj.children)
+            bpy.data.objects.remove(obj)
+        # remove all collections in asset_group
+        childrens = list(asset_group.children)
+        for child in childrens:
+            childrens.extend(child.children)
+            bpy.data.collections.remove(child)
 
     def _process(self, libpath, asset_group, group_name):
         with bpy.data.libraries.load(
@@ -223,8 +224,8 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Check how many assets use the same library
         count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
+        for obj in bpy.data.objects:
+            if obj.get(AVALON_PROPERTY, {}).get('libpath') == group_libpath:
                 count += 1
 
         mat = asset_group.matrix_basis.copy()
@@ -257,18 +258,18 @@ class BlendModelLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
-
-        # Check how many assets use the same library
-        count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == libpath:
-                count += 1
 
         if not asset_group:
             return False
 
-        self._remove(asset_group)
+        # Check how many assets use the same library
+        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
+        count = 0
+        for obj in bpy.data.objects:
+            if obj.get(AVALON_PROPERTY, {}).get('libpath') == libpath:
+                count += 1
+
+        # self._remove(asset_group)
 
         bpy.data.objects.remove(asset_group)
 
