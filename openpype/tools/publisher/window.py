@@ -340,9 +340,23 @@ class PublisherWindow(QtWidgets.QDialog):
     def _set_publish_visibility(self, visible):
         if visible:
             widget = self.publish_frame
+            publish_frame_visible = True
         else:
             widget = self.subset_frame
+            publish_frame_visible = False
         self.content_stacked_layout.setCurrentWidget(widget)
+        self._set_publish_frame_visible(publish_frame_visible)
+
+    def _set_publish_frame_visible(self, publish_frame_visible):
+        """Publish frame visibility has changed.
+
+        Also used in TrayPublisher to be able handle start/end of publish
+        widget overlay.
+        """
+
+        # Hide creator dialog if visible
+        if publish_frame_visible and self.creator_window.isVisible():
+            self.creator_window.close()
 
     def _on_reset_clicked(self):
         self.controller.reset()
