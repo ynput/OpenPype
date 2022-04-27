@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 import bpy
 
 from openpype.pipeline import (
+    legacy_io,
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
@@ -62,14 +63,7 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_group.instance_collection = container
         asset_group.instance_type = 'COLLECTION'
 
-        objects = []
-        nodes = list(container.children)
-
-        for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
-
-        objects.reverse()
+        objects = list(container.all_objects)
 
         for obj in objects:
             local_obj = plugin.prepare_data(obj, group_name)
@@ -85,8 +79,6 @@ class BlendModelLoader(plugin.AssetLoader):
 
             avalon_info = local_obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
-
-        objects.reverse()
 
         bpy.data.orphans_purge(do_local_ids=False)
 
@@ -114,9 +106,16 @@ class BlendModelLoader(plugin.AssetLoader):
         group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
+        # Get the first collection if only child or the scene root collection
+        # to use it as asset group parent collection.
+        parent_collection = bpy.context.scene.collection
+        if len(parent_collection.children) == 1:
+            parent_collection = parent_collection.children[0]
+
+        # Create instance.
         asset_group = bpy.data.objects.new(group_name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
-        bpy.context.scene.collection.objects.link(asset_group)
+        parent_collection.objects.link(asset_group)
 
         plugin.deselect_all()
 
@@ -154,6 +153,29 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects = self._process(libpath, asset_group, group_name)
 
+        # Create override library if current task needed it.
+        if legacy_io.Session["AVALON_TASK"] in (
+            "Rigging", "Modeling", "Texture", "Lookdev"
+        ):
+            # fetch instance collection
+            instance_collection = asset_group.instance_collection
+            # create override libraries
+            container = instance_collection.override_create(
+                remap_local_usages=True
+            )
+            for obj in objects:
+                obj.override_create(remap_local_usages=True)
+            parent_collection.children.link(container)
+            # remove instance collection and this empty object
+            bpy.data.objects.remove(asset_group)
+            bpy.data.collections.remove(instance_collection)
+            bpy.data.orphans_purge(do_local_ids=False)
+            # rename and link overridden container
+            container.name = group_name
+            # reassign asset_group to update container with avalon metadata
+            asset_group = container
+
+        # update avalon metadata
         asset_group[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
