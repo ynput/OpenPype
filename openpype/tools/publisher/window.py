@@ -83,8 +83,10 @@ class PublisherWindow(QtWidgets.QDialog):
         line_widget.setMinimumHeight(2)
 
         # Content
+        content_stacked_widget = QtWidgets.QWidget(self)
+
         # Subset widget
-        subset_frame = QtWidgets.QFrame(self)
+        subset_frame = QtWidgets.QFrame(content_stacked_widget)
 
         subset_views_widget = BorderedLabelWidget(
             "Subsets to publish", subset_frame
@@ -171,9 +173,12 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_layout.addLayout(footer_layout, 0)
 
         # Create publish frame
-        publish_frame = PublishFrame(controller, self)
+        publish_frame = PublishFrame(controller, content_stacked_widget)
 
-        content_stacked_layout = QtWidgets.QStackedLayout()
+        content_stacked_layout = QtWidgets.QStackedLayout(
+            content_stacked_widget
+        )
+        content_stacked_layout.setContentsMargins(0, 0, 0, 0)
         content_stacked_layout.setStackingMode(
             QtWidgets.QStackedLayout.StackAll
         )
@@ -186,7 +191,7 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.setSpacing(0)
         main_layout.addWidget(header_widget, 0)
         main_layout.addWidget(line_widget, 0)
-        main_layout.addLayout(content_stacked_layout, 1)
+        main_layout.addWidget(content_stacked_widget, 1)
 
         creator_window = CreateDialog(controller, parent=self)
 
@@ -228,6 +233,7 @@ class PublisherWindow(QtWidgets.QDialog):
         # Store header for TrayPublisher
         self._header_layout = header_layout
 
+        self._content_stacked_widget = content_stacked_widget
         self.content_stacked_layout = content_stacked_layout
         self.publish_frame = publish_frame
         self.subset_frame = subset_frame
