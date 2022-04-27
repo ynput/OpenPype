@@ -5,9 +5,8 @@ import os
 from bson.objectid import ObjectId
 import maya.cmds as cmds
 
-from avalon import io
-
 from openpype.pipeline import (
+    legacy_io,
     remove_container,
     registered_host,
 )
@@ -161,8 +160,10 @@ def create_items_from_nodes(nodes):
         return asset_view_items
 
     for _id, id_nodes in id_hashes.items():
-        asset = io.find_one({"_id": ObjectId(_id)},
-                            projection={"name": True})
+        asset = legacy_io.find_one(
+            {"_id": ObjectId(_id)},
+            projection={"name": True}
+        )
 
         # Skip if asset id is not found
         if not asset:

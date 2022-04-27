@@ -4,9 +4,14 @@ It is possible to create `HostToolsHelper` in host implementation or
 use singleton approach with global functions (using helper anyway).
 """
 import os
-import avalon.api
+
 import pyblish.api
-from openpype.pipeline import registered_host
+
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
+
 from .lib import qt_app_context
 
 
@@ -73,8 +78,8 @@ class HostToolsHelper:
 
                 if use_context:
                     context = {
-                        "asset": avalon.api.Session["AVALON_ASSET"],
-                        "task": avalon.api.Session["AVALON_TASK"]
+                        "asset": legacy_io.Session["AVALON_ASSET"],
+                        "task": legacy_io.Session["AVALON_TASK"]
                     }
                     workfiles_tool.set_context(context)
 
@@ -105,7 +110,7 @@ class HostToolsHelper:
                 use_context = False
 
             if use_context:
-                context = {"asset": avalon.api.Session["AVALON_ASSET"]}
+                context = {"asset": legacy_io.Session["AVALON_ASSET"]}
                 loader_tool.set_context(context, refresh=True)
             else:
                 loader_tool.refresh()

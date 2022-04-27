@@ -1,8 +1,8 @@
 import os
 import logging
 import pyblish.api
-import avalon.api
-from openpype.pipeline import BaseCreator
+
+from openpype.pipeline import register_creator_plugin_path
 
 from .pipeline import (
     ls,
@@ -27,7 +27,7 @@ def install():
     log.info("OpenPype - Installing TestHost integration")
     pyblish.api.register_host("testhost")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
 
 __all__ = (

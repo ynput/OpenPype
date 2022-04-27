@@ -1,9 +1,10 @@
 import sys
 import logging
 
-from avalon import api
-
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 from openpype.tools.utils import qt_app_context
 from .window import Window
 
@@ -52,8 +53,8 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
     validate_host_requirements(host)
 
     if debug:
-        api.Session["AVALON_ASSET"] = "Mock"
-        api.Session["AVALON_TASK"] = "Testing"
+        legacy_io.Session["AVALON_ASSET"] = "Mock"
+        legacy_io.Session["AVALON_TASK"] = "Testing"
 
     with qt_app_context():
         window = Window(parent=parent)
@@ -61,8 +62,8 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
 
         if use_context:
             context = {
-                "asset": api.Session["AVALON_ASSET"],
-                "task": api.Session["AVALON_TASK"]
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"]
             }
             window.set_context(context)
 

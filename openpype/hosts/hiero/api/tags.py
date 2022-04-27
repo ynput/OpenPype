@@ -3,9 +3,9 @@ import os
 import hiero
 
 from openpype.api import Logger
-from avalon import io
+from openpype.pipeline import legacy_io
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def tag_data():
@@ -141,7 +141,7 @@ def add_tags_to_workfile():
     nks_pres_tags = tag_data()
 
     # Get project task types.
-    tasks = io.find_one({"type": "project"})["config"]["tasks"]
+    tasks = legacy_io.find_one({"type": "project"})["config"]["tasks"]
     nks_pres_tags["[Tasks]"] = {}
     log.debug("__ tasks: {}".format(tasks))
     for task_type in tasks.keys():
@@ -159,7 +159,7 @@ def add_tags_to_workfile():
     # asset builds and shots.
     if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) == 1:
         nks_pres_tags["[AssetBuilds]"] = {}
-        for asset in io.find({"type": "asset"}):
+        for asset in legacy_io.find({"type": "asset"}):
             if asset["data"]["entityType"] == "AssetBuild":
                 nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
                     "editable": "1",

@@ -1,10 +1,9 @@
-import os
 import json
 import copy
 import pyblish.api
-from avalon import io
 
 from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline import legacy_io
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -82,7 +81,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # - not sure if it's good idea to require asset id in
                 #   get_subset_name?
                 asset_name = context.data["workfile_context"]["asset"]
-                asset_doc = io.find_one({
+                asset_doc = legacy_io.find_one({
                     "type": "asset",
                     "name": asset_name
                 })
@@ -93,7 +92,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 host_name = context.data["hostName"]
                 # Use empty variant value
                 variant = ""
-                task_name = io.Session["AVALON_TASK"]
+                task_name = legacy_io.Session["AVALON_TASK"]
                 new_subset_name = get_subset_name_with_asset_doc(
                     family,
                     variant,
@@ -157,7 +156,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Change subset name
             # Final family of an instance will be `render`
             new_family = "render"
-            task_name = io.Session["AVALON_TASK"]
+            task_name = legacy_io.Session["AVALON_TASK"]
             new_subset_name = "{}{}_{}_Beauty".format(
                 new_family, task_name.capitalize(), name
             )
@@ -202,7 +201,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Final family of an instance will be `render`
             new_family = "render"
             old_subset_name = instance_data["subset"]
-            task_name = io.Session["AVALON_TASK"]
+            task_name = legacy_io.Session["AVALON_TASK"]
             new_subset_name = "{}{}_{}_{}".format(
                 new_family, task_name.capitalize(), render_layer, pass_name
             )

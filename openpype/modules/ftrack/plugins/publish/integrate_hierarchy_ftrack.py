@@ -2,7 +2,8 @@ import sys
 import collections
 import six
 import pyblish.api
-from avalon import io
+
+from openpype.pipeline import legacy_io
 
 # Copy of constant `openpype_modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
 CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
@@ -80,8 +81,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         auto_sync_state = project[
             "custom_attributes"][CUST_ATTR_AUTO_SYNC]
 
-        if not io.Session:
-            io.install()
+        if not legacy_io.Session:
+            legacy_io.install()
 
         self.ft_project = None
 
@@ -271,7 +272,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         # Create new links.
         for input in entity_data.get("inputs", []):
-            input_id = io.find_one({"_id": input})["data"]["ftrackId"]
+            input_id = legacy_io.find_one({"_id": input})["data"]["ftrackId"]
             assetbuild = self.session.get("AssetBuild", input_id)
             self.log.debug(
                 "Creating link from {0} to {1}".format(
