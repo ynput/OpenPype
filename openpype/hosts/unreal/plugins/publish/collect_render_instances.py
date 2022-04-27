@@ -1,8 +1,11 @@
+import os
 from pathlib import Path
+
 import unreal
 
-import pyblish.api
+from openpype.api import Anatomy
 from openpype.hosts.unreal.api import pipeline
+import pyblish.api
 
 
 class CollectRenderInstances(pyblish.api.InstancePlugin):
@@ -77,9 +80,14 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
 
                     self.log.debug(f"new instance data: {new_data}")
 
-                    project_dir = unreal.Paths.project_dir()
-                    render_dir = (f"{project_dir}/Saved/MovieRenders/"
-                                  f"{s.get('output')}")
+                    try:
+                        project = os.environ.get("AVALON_PROJECT")
+                        anatomy = Anatomy(project)
+                        root = anatomy.roots['renders']
+                    except:
+                        raise("Could not find render root in anatomy settings.")
+
+                    render_dir = f"{root}/{project}/{s.get('output')}"
                     render_path = Path(render_dir)
 
                     frames = []
