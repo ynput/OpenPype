@@ -553,7 +553,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         identifier = index.data(CREATOR_IDENTIFIER_ROLE)
 
-        self._set_creator(identifier)
+        self._set_creator_by_identifier(identifier)
 
     def _on_plugins_refresh(self):
         # Trigger refresh only if is visible
@@ -581,7 +581,7 @@ class CreateDialog(QtWidgets.QDialog):
         identifier = None
         if new_index.isValid():
             identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
-        self._set_creator(identifier)
+        self._set_creator_by_identifier(identifier)
 
     def _update_help_btn(self):
         pos_x = self.width() - self._help_btn.width()
@@ -633,9 +633,11 @@ class CreateDialog(QtWidgets.QDialog):
         else:
             self._detail_description_widget.setMarkdown(detailed_description)
 
-    def _set_creator(self, identifier):
+    def _set_creator_by_identifier(self, identifier):
         creator = self.controller.manual_creators.get(identifier)
+        self._set_creator(creator)
 
+    def _set_creator(self, creator):
         self._creator_short_desc_widget.set_plugin(creator)
         self._set_creator_detailed_text(creator)
         self._pre_create_widget.set_plugin(creator)
@@ -861,7 +863,9 @@ class CreateDialog(QtWidgets.QDialog):
             ))
             error_msg = str(exc_value)
 
-        if error_msg is not None:
+        if error_msg is None:
+            self._set_creator(self._selected_creator)
+        else:
             box = CreateErrorMessageBox(
                 creator_label,
                 subset_name,
