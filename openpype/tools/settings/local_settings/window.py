@@ -8,6 +8,7 @@ from openpype.settings.lib import (
     save_local_settings
 )
 from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.utils import MessageOverlayObject
 from openpype.api import (
     Logger,
     SystemSettings,
@@ -221,6 +222,8 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         self.setWindowTitle("OpenPype Local settings")
 
+        overlay_object = MessageOverlayObject(self)
+
         stylesheet = style.load_stylesheet()
         self.setStyleSheet(stylesheet)
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
@@ -247,6 +250,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
 
+        self._overlay_object = overlay_object
         # Do not create local settings widget in init phase as it's using
         #   settings objects that must be OK to be able create this widget
         #   - we want to show dialog if anything goes wrong
@@ -312,8 +316,10 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
     def _on_reset_clicked(self):
         self.reset()
+        self._overlay_object.add_message("Refreshed...")
 
     def _on_save_clicked(self):
         value = self._settings_widget.settings_value()
         save_local_settings(value)
+        self._overlay_object.add_message("Saved...", message_type="success")
         self.reset()

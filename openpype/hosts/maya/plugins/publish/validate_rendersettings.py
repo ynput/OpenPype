@@ -69,14 +69,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>{aov_separator}<RenderPass>"  # noqa: E501
 
-    # WARNING: There is bug? in renderman, translating <scene> token
-    # to something left behind mayas default image prefix. So instead
-    # `SceneName_v01` it translates to:
-    # `SceneName_v01/<RenderLayer>/<RenderLayers_<RenderPass>` that means
-    # for example:
-    # `SceneName_v01/Main/Main_<RenderPass>`. Possible solution is to define
-    # custom token like <scene_name> to point to determined scene name.
-    RendermanDirPrefix = "<ws>/renders/maya/<scene>/<layer>"
+    renderman_dir_prefix = "maya/<scene>/<layer>"
 
     R_AOV_TOKEN = re.compile(
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
@@ -116,15 +109,22 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         prefix = prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
+
+        required_prefix = "maya/<scene>"
+
         if not anim_override:
             invalid = True
             cls.log.error("Animation needs to be enabled. Use the same "
                           "frame for start and end to render single frame")
 
-        if not prefix.lower().startswith("maya/<scene>"):
+        if renderer != "renderman" and not prefix.lower().startswith(
+                required_prefix):
             invalid = True
-            cls.log.error("Wrong image prefix [ {} ] - "
-                          "doesn't start with: 'maya/<scene>'".format(prefix))
+            cls.log.error(
+                ("Wrong image prefix [ {} ] "
+                 " - doesn't start with: '{}'").format(
+                    prefix, required_prefix)
+            )
 
         if not re.search(cls.R_LAYER_TOKEN, prefix):
             invalid = True
@@ -198,7 +198,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ]".format(file_prefix))
 
-            if dir_prefix.lower() != cls.RendermanDirPrefix.lower():
+            if dir_prefix.lower() != cls.renderman_dir_prefix.lower():
                 invalid = True
                 cls.log.error("Wrong directory prefix [ {} ]".format(
                     dir_prefix))
@@ -304,7 +304,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                              default_prefix,
                              type="string")
                 cmds.setAttr("rmanGlobals.imageOutputDir",
-                             cls.RendermanDirPrefix,
+                             cls.renderman_dir_prefix,
                              type="string")
 
             if renderer == "vray":
