@@ -25,17 +25,13 @@ class CollectFrameTagInstances(pyblish.api.ContextPlugin):
 
         # collect all sequence tags
         subset_data = self._create_frame_subset_data_sequence(context)
+
         self.log.debug("__ subset_data: {}".format(
             pformat(subset_data)
         ))
 
-        # if sequence tags and frame type then create instances
+        # create instances
         self._create_instances(subset_data)
-
-        # collect all instance tags
-        ## if instance tags and frame type then create instances
-
-        pass
 
     def _get_tag_data(self, tag):
         data = {}
@@ -61,7 +57,7 @@ class CollectFrameTagInstances(pyblish.api.ContextPlugin):
                     value = v
                 else:
                     value = ast.literal_eval(v)
-            except (ValueError, SyntaxError) as msg:
+            except (ValueError, SyntaxError):
                 value = v
 
             data[key] = value
@@ -85,7 +81,7 @@ class CollectFrameTagInstances(pyblish.api.ContextPlugin):
             tag_data = self._get_tag_data(tag)
             self.log.debug("__ tag_data: {}".format(
                 pformat(tag_data)
-        ))
+            ))
             if not tag_data:
                 continue
 
