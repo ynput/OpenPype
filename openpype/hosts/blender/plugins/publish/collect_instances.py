@@ -46,13 +46,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 asset=asset,
                 task=task,
             )
-            # collect all members recursively
-            collection_childs = list(collection.children)
-            members = set(collection.objects)
-            for child in collection_childs:
-                collection_childs.extend(list(child.children))
-                members.update(list(child.objects))
-            objects = list(members)
+            # collect all objects recursively
+            members = set()
+            objects = collection.all_objects
             for obj in objects:
                 objects.extend(list(obj.children))
                 members.add(obj)
