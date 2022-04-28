@@ -270,7 +270,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Version": self.plugin_pype_version,
                 "Arguments": " ".join(args),
                 "SingleFrameOnly": "True",
-                "RenderSetupIncludeLights": None  # noqa
             },
             # Mandatory for Deadline, may be empty
             "AuxFiles": [],
