@@ -1295,7 +1295,7 @@ def get_app_environments_for_context(
     Returns:
         dict: Environments for passed context and application.
     """
-    from avalon.api import AvalonMongoDB
+    from openpype.pipeline import AvalonMongoDB
 
     # Avalon database connection
     dbcon = AvalonMongoDB()

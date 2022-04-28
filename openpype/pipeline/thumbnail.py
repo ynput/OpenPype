@@ -2,6 +2,7 @@ import os
 import copy
 import logging
 
+from . import legacy_io
 from .plugin_discover import (
     discover,
     register_plugin,
@@ -17,8 +18,7 @@ def get_thumbnail_binary(thumbnail_entity, thumbnail_type, dbcon=None):
     resolvers = discover_thumbnail_resolvers()
     resolvers = sorted(resolvers, key=lambda cls: cls.priority)
     if dbcon is None:
-        from avalon import io
-        dbcon = io
+        dbcon = legacy_io
 
     for Resolver in resolvers:
         available_types = Resolver.thumbnail_types

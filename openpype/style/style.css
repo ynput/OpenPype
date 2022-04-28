@@ -687,6 +687,26 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
+/* Messages overlay */
+#OverlayMessageWidget {
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+
+#OverlayMessageWidget:hover {
+    background: {color:bg-button-hover};
+}
+#OverlayMessageWidget {
+    background: {color:overlay-messages:bg-success};
+}
+#OverlayMessageWidget:hover {
+    background: {color:overlay-messages:bg-success-hover};
+}
+
+#OverlayMessageWidget QWidget {
+    background: transparent;
+}
+
 /* Password dialog*/
 #PasswordBtn {
     border: none;
