@@ -35,12 +35,7 @@ class BlendModelLoader(plugin.AssetLoader):
         objects = list(asset_group.all_objects)
         for obj in objects:
             objects.extend(obj.children)
-            if obj.type == 'MESH':
-                for material_slot in list(obj.material_slots):
-                    bpy.data.materials.remove(material_slot.material)
-                bpy.data.meshes.remove(obj.data)
-            else:
-                bpy.data.objects.remove(obj)
+            bpy.data.objects.remove(obj)
         # remove all collections in asset_group
         childrens = list(asset_group.children)
         for child in childrens:
@@ -71,36 +66,27 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects = list(container.all_objects)
 
-        for obj in objects:
-            local_obj = plugin.prepare_data(obj, group_name)
-            if local_obj.type != 'EMPTY':
-                plugin.prepare_data(local_obj.data, group_name)
-
-                for material_slot in local_obj.material_slots:
-                    if material_slot.material:
-                        plugin.prepare_data(material_slot.material, group_name)
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
+        for obj in container.all_objects:
+            obj.name = f"{group_name}:{obj.name}"
 
         if isinstance(asset_group, bpy.types.Collection):
-            # Create override libraries for container and elements.
-            overridden = container.override_create(remap_local_usages=True)
-            for child in container.children_recursive:
-                child.override_create(remap_local_usages=True)
-            for obj in container.all_objects:
-                obj.override_create(remap_local_usages=True)
-            # Link and rename overridden container using asset_group.
+            # temp rename asset_group
+            asset_group.name = f'{asset_group.name}.temp'
+            # Create override library for container and elements.
+            override = container.override_hierarchy_create(
+                bpy.context.scene,
+                bpy.context.view_layer,
+            )
+            # Relink and rename the override container using asset_group.
+            bpy.context.scene.collection.children.unlink(override)
             parent_collection = plugin.get_parent_collection(asset_group)
-            parent_collection.children.link(overridden)
-            asset_group.name = f'{asset_group.name}.removed'
-            overridden.name = group_name
-            # clear and reassign asset_group
+            parent_collection.children.link(override)
+            override.name = group_name
+            # clear and reassign asset_group and objects variables
             bpy.data.collections.remove(asset_group)
-            asset_group = overridden
+            bpy.data.collections.remove(container)
+            asset_group = override
+            objects = list(override.all_objects)
 
         # If asset_group is an Empty, set instance collection with container.
         elif isinstance(asset_group, bpy.types.Object):
