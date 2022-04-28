@@ -32,7 +32,7 @@ class BlendModelLoader(plugin.AssetLoader):
     @staticmethod
     def _remove(asset_group):
         # remove all objects in asset_group
-        objects = list(asset_group.all_objects)
+        objects = list(asset_group.objects)
         for obj in objects:
             objects.extend(obj.children)
             bpy.data.objects.remove(obj)
@@ -66,8 +66,8 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects = list(container.all_objects)
 
-        for obj in container.all_objects:
-            obj.name = f"{group_name}:{obj.name}"
+        # for obj in container.all_objects:
+        #     obj.name = f"{group_name}:{obj.name}"
 
         if isinstance(asset_group, bpy.types.Collection):
             # temp rename asset_group

@@ -25,6 +25,8 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance) -> List:
         invalid = []
         for obj in [obj for obj in instance]:
+            if obj.override_library:
+                continue
             if ':' in obj.name:
                 invalid.append(obj)
             if isinstance(obj, bpy.types.Object) and obj.type == 'ARMATURE':
