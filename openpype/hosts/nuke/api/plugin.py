@@ -671,7 +671,8 @@ class AbstractWriteRender(OpenPypeCreator):
         write_data = {
             "nodeclass": self.n_class,
             "families": [self.family],
-            "avalon": self.data
+            "avalon": self.data,
+            "subset": self.data["subset"]
         }
 
         # add creator data
