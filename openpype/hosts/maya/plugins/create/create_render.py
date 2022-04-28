@@ -111,7 +111,7 @@ class CreateRender(plugin.Creator):
         self._project_settings = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"])
 
-        self.data["RenderSetupIncludeLights"] = self.disable_all_lights
+
 
         # project_settings/maya/create/CreateRender/aov_separator
         try:
@@ -262,6 +262,7 @@ class CreateRender(plugin.Creator):
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
         self.data["useReferencedAovs"] = False
+        self.data["RenderSetupIncludeLights"] = self.disable_all_lights
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
