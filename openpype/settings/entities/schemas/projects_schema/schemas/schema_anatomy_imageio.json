@@ -334,7 +334,7 @@
                                     },
                                     {
                                         "type": "collapsible-wrap",
-                                        "label": "Knobs",
+                                        "label": "Knobs overrides",
                                         "collapsible": true,
                                         "collapsed": true,
                                         "children": [
