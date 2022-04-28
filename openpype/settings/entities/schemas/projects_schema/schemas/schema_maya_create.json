@@ -66,8 +66,8 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "disable_all_lights",
-                    "label": "Disable Rendering of All Lights"
+                    "key": "enable_all_lights",
+                    "label": "Include all lights in Render Setup Layers by default"
                 }
             ]
         },

@@ -45,7 +45,7 @@
             ],
             "aov_separator": "underscore",
             "default_render_image_folder": "renders",
-            "disable_all_lights": true
+            "enable_all_lights": true
         },
         "CreateUnrealStaticMesh": {
             "enabled": true,
