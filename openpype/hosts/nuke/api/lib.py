@@ -399,7 +399,7 @@ def add_write_node(name, **kwarg):
     return w
 
 
-def read(node):
+def read_avalon_data(node):
     """Return user-defined knobs from given `node`
 
     Args:
@@ -414,8 +414,6 @@ def read(node):
             return knob_name[len("avalon:"):]
         elif knob_name.startswith("ak:"):
             return knob_name[len("ak:"):]
-        else:
-            return knob_name
 
     data = dict()
 
@@ -444,7 +442,8 @@ def read(node):
                 (knob_type == 26 and value)
             ):
                 key = compat_prefixed(knob_name)
-                data[key] = value
+                if key is not None:
+                    data[key] = value
 
             if knob_name == first_user_knob:
                 break
@@ -566,7 +565,7 @@ def check_inventory_versions():
 
         if container:
             node = nuke.toNode(container["objectName"])
-            avalon_knob_data = read(node)
+            avalon_knob_data = read_avalon_data(node)
 
             # get representation from io
             representation = io.find_one({
@@ -622,7 +621,7 @@ def writes_version_sync():
         if _NODE_TAB_NAME not in each.knobs():
             continue
 
-        avalon_knob_data = read(each)
+        avalon_knob_data = read_avalon_data(each)
 
         try:
             if avalon_knob_data['families'] not in ["render"]:
@@ -664,14 +663,14 @@ def check_subsetname_exists(nodes, subset_name):
         bool: True of False
     """
     return next((True for n in nodes
-                 if subset_name in read(n).get("subset", "")),
+                 if subset_name in read_avalon_data(n).get("subset", "")),
                 False)
 
 
 def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
-    data = {'avalon': read(node)}
+    data = {'avalon': read_avalon_data(node)}
     data_preset = {
         "nodeclass": data['avalon']['family'],
         "families": [data['avalon']['families']],
@@ -1289,7 +1288,7 @@ class WorkfileSettings(object):
         for node in nuke.allNodes(filter="Group"):
 
             # get data from avalon knob
-            avalon_knob_data = read(node)
+            avalon_knob_data = read_avalon_data(node)
 
             if not avalon_knob_data:
                 continue
@@ -1337,7 +1336,6 @@ class WorkfileSettings(object):
                     value = int(value, 16)
 
                 write_node[knob["name"]].setValue(value)
-
 
     def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
@@ -1626,8 +1624,8 @@ def get_write_node_template_attr(node):
 
     '''
     # get avalon data from node
-    data = dict()
-    data['avalon'] = read(node)
+    data = {"avalon": read_avalon_data(node)}
+
     data_preset = {
         "nodeclass": data['avalon']['family'],
         "families": [data['avalon']['families']],
