@@ -8,9 +8,8 @@ import ftrack_api
 import qargparse
 from Qt import QtWidgets, QtCore
 
-from avalon.api import AvalonMongoDB
 from openpype import style
-from openpype.pipeline import load
+from openpype.pipeline import load, AvalonMongoDB
 from openpype.lib import StringTemplate
 from openpype.api import Anatomy
 
@@ -126,7 +125,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                         os.remove(file_path)
                         self.log.debug("Removed file: {}".format(file_path))
 
-                    remainders.remove(file_path_base)
+                    if file_path_base in remainders:
+                        remainders.remove(file_path_base)
                     continue
 
                 seq_path_base = os.path.split(seq_path)[1]
@@ -333,6 +333,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
     def main(self, data, remove_publish_folder):
         # Size of files.
         size = 0
+        if not data:
+            return size
 
         if remove_publish_folder:
             size = self.delete_whole_dir_paths(data["dir_paths"].values())
@@ -418,6 +420,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                     )
 
                 data = self.get_data(context, versions_to_keep)
+                if not data:
+                    continue
 
                 size += self.main(data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))

@@ -1,8 +1,10 @@
-import pyblish.api
-import re
 import os
-from avalon import io
+import re
 from copy import deepcopy
+import pyblish.api
+
+from openpype.pipeline import legacy_io
+
 
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
@@ -63,7 +65,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         hierarchy = list()
         visual_hierarchy = [instance.context.data["assetEntity"]]
         while True:
-            visual_parent = io.find_one(
+            visual_parent = legacy_io.find_one(
                 {"_id": visual_hierarchy[-1]["data"]["visualParent"]}
             )
             if visual_parent:
@@ -129,7 +131,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
         if self.shot_add_tasks:
             tasks_to_add = dict()
-            project_tasks = io.find_one({"type": "project"})["config"]["tasks"]
+            project_doc = legacy_io.find_one({"type": "project"})
+            project_tasks = project_doc["config"]["tasks"]
             for task_name, task_data in self.shot_add_tasks.items():
                 _task_data = deepcopy(task_data)
 

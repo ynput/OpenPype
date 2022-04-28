@@ -12,13 +12,13 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
-from avalon import io
-from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
     get_representation_path,
+    AVALON_CONTAINER_ID,
+    legacy_io,
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -88,7 +88,7 @@ class LayoutLoader(plugin.Loader):
         return None
 
     def _get_data(self, asset_name):
-        asset_doc = io.find_one({
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": asset_name
         })
@@ -552,7 +552,7 @@ class LayoutLoader(plugin.Loader):
                     factory=unreal.LevelSequenceFactoryNew()
                 )
 
-                asset_data = io.find_one({
+                asset_data = legacy_io.find_one({
                     "type": "asset",
                     "name": h.split('/')[-1]
                 })
@@ -563,12 +563,12 @@ class LayoutLoader(plugin.Loader):
                 end_frames = []
 
                 elements = list(
-                    io.find({"type": "asset", "data.visualParent": id}))
+                    legacy_io.find({"type": "asset", "data.visualParent": id}))
                 for e in elements:
                     start_frames.append(e.get('data').get('clipIn'))
                     end_frames.append(e.get('data').get('clipOut'))
 
-                    elements.extend(io.find({
+                    elements.extend(legacy_io.find({
                         "type": "asset",
                         "data.visualParent": e.get('_id')
                     }))

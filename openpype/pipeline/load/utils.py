@@ -7,11 +7,13 @@ import inspect
 import numbers
 
 import six
-
-from avalon import io, schema
-from avalon.api import Session, registered_root
+from bson.objectid import ObjectId
 
 from openpype.lib import Anatomy
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+)
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +60,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
 
     """
     if not dbcon:
-        dbcon = io
+        dbcon = legacy_io
 
     contexts = {}
     if not representation_ids:
@@ -67,7 +69,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
     _representation_ids = []
     for repre_id in representation_ids:
         if isinstance(repre_id, six.string_types):
-            repre_id = io.ObjectId(repre_id)
+            repre_id = ObjectId(repre_id)
         _representation_ids.append(repre_id)
 
     repre_docs = dbcon.find({
@@ -165,7 +167,7 @@ def get_subset_contexts(subset_ids, dbcon=None):
         dict: The full representation context by representation id.
     """
     if not dbcon:
-        dbcon = io
+        dbcon = legacy_io
 
     contexts = {}
     if not subset_ids:
@@ -174,7 +176,7 @@ def get_subset_contexts(subset_ids, dbcon=None):
     _subset_ids = set()
     for subset_id in subset_ids:
         if isinstance(subset_id, six.string_types):
-            subset_id = io.ObjectId(subset_id)
+            subset_id = ObjectId(subset_id)
         _subset_ids.add(subset_id)
 
     subset_docs = dbcon.find({
@@ -217,7 +219,7 @@ def get_representation_context(representation):
     """Return parenthood context for representation.
 
     Args:
-        representation (str or io.ObjectId or dict): The representation id
+        representation (str or ObjectId or dict): The representation id
             or full representation as returned by the database.
 
     Returns:
@@ -227,11 +229,11 @@ def get_representation_context(representation):
 
     assert representation is not None, "This is a bug"
 
-    if isinstance(representation, (six.string_types, io.ObjectId)):
-        representation = io.find_one(
-            {"_id": io.ObjectId(str(representation))})
+    if isinstance(representation, (six.string_types, ObjectId)):
+        representation = legacy_io.find_one(
+            {"_id": ObjectId(str(representation))})
 
-    version, subset, asset, project = io.parenthood(representation)
+    version, subset, asset, project = legacy_io.parenthood(representation)
 
     assert all([representation, version, subset, asset, project]), (
         "This is a bug"
@@ -340,7 +342,7 @@ def load_container(
 
     Args:
         Loader (Loader): The loader class to trigger.
-        representation (str or io.ObjectId or dict): The representation id
+        representation (str or ObjectId or dict): The representation id
             or full representation as returned by the database.
         namespace (str, Optional): The namespace to assign. Defaults to None.
         name (str, Optional): The name to assign. Defaults to subset name.
@@ -403,17 +405,17 @@ def update_container(container, version=-1):
     """Update a container"""
 
     # Compute the different version from 'representation'
-    current_representation = io.find_one({
-        "_id": io.ObjectId(container["representation"])
+    current_representation = legacy_io.find_one({
+        "_id": ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
 
-    current_version, subset, asset, project = io.parenthood(
+    current_version, subset, asset, project = legacy_io.parenthood(
         current_representation)
 
     if version == -1:
-        new_version = io.find_one({
+        new_version = legacy_io.find_one({
             "type": "version",
             "parent": subset["_id"]
         }, sort=[("name", -1)])
@@ -429,11 +431,11 @@ def update_container(container, version=-1):
                 "type": "version",
                 "name": version
             }
-        new_version = io.find_one(version_query)
+        new_version = legacy_io.find_one(version_query)
 
     assert new_version is not None, "This is a bug"
 
-    new_representation = io.find_one({
+    new_representation = legacy_io.find_one({
         "type": "representation",
         "parent": new_version["_id"],
         "name": current_representation["name"]
@@ -480,7 +482,7 @@ def switch_container(container, representation, loader_plugin=None):
         ))
 
     # Get the new representation to switch to
-    new_representation = io.find_one({
+    new_representation = legacy_io.find_one({
         "type": "representation",
         "_id": representation["_id"],
     })
@@ -499,7 +501,7 @@ def get_representation_path_from_context(context):
     representation = context['representation']
     project_doc = context.get("project")
     root = None
-    session_project = Session.get("AVALON_PROJECT")
+    session_project = legacy_io.Session.get("AVALON_PROJECT")
     if project_doc and project_doc["name"] != session_project:
         anatomy = Anatomy(project_doc["name"])
         root = anatomy.roots
@@ -528,9 +530,11 @@ def get_representation_path(representation, root=None, dbcon=None):
     from openpype.lib import StringTemplate, TemplateUnsolved
 
     if dbcon is None:
-        dbcon = io
+        dbcon = legacy_io
 
     if root is None:
+        from openpype.pipeline import registered_root
+
         root = registered_root()
 
     def path_from_represenation():
@@ -593,7 +597,6 @@ def get_representation_path(representation, root=None, dbcon=None):
                 "code": project.get("data", {}).get("code")
             },
             "asset": asset["name"],
-            "silo": asset.get("silo"),
             "hierarchy": hierarchy,
             "subset": subset["name"],
             "version": version_["name"],

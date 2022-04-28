@@ -8,8 +8,10 @@ from unreal import EditorAssetLibrary
 from unreal import MovieSceneSkeletalAnimationTrack
 from unreal import MovieSceneSkeletalAnimationSection
 
-from avalon import pipeline
-from openpype.pipeline import get_representation_path
+from openpype.pipeline import (
+    get_representation_path,
+    AVALON_CONTAINER_ID
+)
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -203,7 +205,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         data = {
             "schema": "openpype:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,

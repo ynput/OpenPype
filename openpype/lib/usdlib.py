@@ -8,7 +8,10 @@ except ImportError:
     # Allow to fall back on Multiverse 6.3.0+ pxr usd library
     from mvpxr import Usd, UsdGeom, Sdf, Kind
 
-from avalon import io, api
+from openpype.pipeline import (
+    registered_root,
+    legacy_io,
+)
 
 log = logging.getLogger(__name__)
 
@@ -125,7 +128,7 @@ def create_model(filename, asset, variant_subsets):
 
     """
 
-    asset_doc = io.find_one({"name": asset, "type": "asset"})
+    asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
     assert asset_doc, "Asset not found: %s" % asset
 
     variants = []
@@ -175,7 +178,7 @@ def create_shade(filename, asset, variant_subsets):
 
     """
 
-    asset_doc = io.find_one({"name": asset, "type": "asset"})
+    asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
     assert asset_doc, "Asset not found: %s" % asset
 
     variants = []
@@ -210,7 +213,7 @@ def create_shade_variation(filename, asset, model_variant, shade_variants):
 
     """
 
-    asset_doc = io.find_one({"name": asset, "type": "asset"})
+    asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
     assert asset_doc, "Asset not found: %s" % asset
 
     variants = []
@@ -310,22 +313,21 @@ def get_usd_master_path(asset, subset, representation):
 
     """
 
-    project = io.find_one(
+    project = legacy_io.find_one(
         {"type": "project"}, projection={"config.template.publish": True}
     )
     template = project["config"]["template"]["publish"]
 
-    if isinstance(asset, dict) and "silo" in asset and "name" in asset:
+    if isinstance(asset, dict) and "name" in asset:
         # Allow explicitly passing asset document
         asset_doc = asset
     else:
-        asset_doc = io.find_one({"name": asset, "type": "asset"})
+        asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
 
     path = template.format(
         **{
-            "root": api.registered_root(),
-            "project": api.Session["AVALON_PROJECT"],
-            "silo": asset_doc["silo"],
+            "root": registered_root(),
+            "project": legacy_io.Session["AVALON_PROJECT"],
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": representation,

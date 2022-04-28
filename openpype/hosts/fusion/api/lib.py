@@ -3,10 +3,13 @@ import sys
 import re
 import contextlib
 
+from bson.objectid import ObjectId
 from Qt import QtGui
 
-from avalon import io
-from openpype.pipeline import switch_container
+from openpype.pipeline import (
+    switch_container,
+    legacy_io,
+)
 from .pipeline import get_current_comp, comp_lock_and_undo_chunk
 
 self = sys.modules[__name__]
@@ -92,9 +95,11 @@ def switch_item(container,
     # Collect any of current asset, subset and representation if not provided
     # so we can use the original name from those.
     if any(not x for x in [asset_name, subset_name, representation_name]):
-        _id = io.ObjectId(container["representation"])
-        representation = io.find_one({"type": "representation", "_id": _id})
-        version, subset, asset, project = io.parenthood(representation)
+        _id = ObjectId(container["representation"])
+        representation = legacy_io.find_one({
+            "type": "representation", "_id": _id
+        })
+        version, subset, asset, project = legacy_io.parenthood(representation)
 
         if asset_name is None:
             asset_name = asset["name"]
@@ -106,14 +111,14 @@ def switch_item(container,
             representation_name = representation["name"]
 
     # Find the new one
-    asset = io.find_one({
+    asset = legacy_io.find_one({
         "name": asset_name,
         "type": "asset"
     })
     assert asset, ("Could not find asset in the database with the name "
                    "'%s'" % asset_name)
 
-    subset = io.find_one({
+    subset = legacy_io.find_one({
         "name": subset_name,
         "type": "subset",
         "parent": asset["_id"]
@@ -121,7 +126,7 @@ def switch_item(container,
     assert subset, ("Could not find subset in the database with the name "
                     "'%s'" % subset_name)
 
-    version = io.find_one(
+    version = legacy_io.find_one(
         {
             "type": "version",
             "parent": subset["_id"]
@@ -133,7 +138,7 @@ def switch_item(container,
         asset_name, subset_name
     )
 
-    representation = io.find_one({
+    representation = legacy_io.find_one({
         "name": representation_name,
         "type": "representation",
         "parent": version["_id"]}

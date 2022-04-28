@@ -4,10 +4,10 @@ import json
 import getpass
 
 import requests
-
-from avalon import api
 import pyblish.api
+
 import nuke
+from openpype.pipeline import legacy_io
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -27,8 +27,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     # presets
     priority = 50
     chunk_size = 1
-    primary_pool = ""
-    secondary_pool = ""
+    concurrent_tasks = 1
     group = ""
     department = ""
     limit_groups = {}
@@ -149,11 +148,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             pass
 
         # define chunk and priority
-        chunk_size = instance.data.get("deadlineChunkSize")
+        chunk_size = instance.data["deadlineChunkSize"]
         if chunk_size == 0 and self.chunk_size:
             chunk_size = self.chunk_size
 
-        priority = instance.data.get("deadlinePriority")
+        # define chunk and priority
+        concurrent_tasks = instance.data["deadlineConcurrentTasks"]
+        if concurrent_tasks == 0 and self.concurrent_tasks:
+            concurrent_tasks = self.concurrent_tasks
+
+        priority = instance.data["deadlinePriority"]
         if not priority:
             priority = self.priority
 
@@ -177,10 +181,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Priority": priority,
                 "ChunkSize": chunk_size,
+                "ConcurrentTasks": concurrent_tasks,
+
                 "Department": self.department,
 
-                "Pool": self.primary_pool,
-                "SecondaryPool": self.secondary_pool,
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
 
                 "Plugin": "Nuke",
@@ -236,7 +242,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         keys = [
             "PYTHONPATH",
             "PATH",
-            "AVALON_SCHEMA",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
@@ -258,7 +263,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             keys += self.env_allowed_keys
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
 
         for _path in os.environ:
             if _path.lower().startswith('openpype_'):

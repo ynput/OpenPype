@@ -16,7 +16,10 @@ from .pipeline import (
     uninstall,
     list_instances,
     remove_instance,
-    containerise
+    containerise,
+    get_context_data,
+    update_context_data,
+    get_context_title
 )
 
 from .workio import (
@@ -51,6 +54,9 @@ __all__ = [
     "list_instances",
     "remove_instance",
     "containerise",
+    "get_context_data",
+    "update_context_data",
+    "get_context_title",
 
     "file_extensions",
     "has_unsaved_changes",

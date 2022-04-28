@@ -12,7 +12,8 @@ import os
 import copy
 
 import pyblish.api
-from avalon import api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectResourcesPath(pyblish.api.InstancePlugin):
@@ -53,7 +54,10 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "textures",
                 "action",
                 "background",
-                "effect"
+                "effect",
+                "staticMesh",
+                "skeletalMesh"
+
                 ]
 
     def process(self, instance):
@@ -81,7 +85,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
+            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."

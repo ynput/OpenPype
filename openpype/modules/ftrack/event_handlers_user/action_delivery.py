@@ -15,7 +15,7 @@ from openpype.lib.delivery import (
     process_single_file,
     process_sequence
 )
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 
 class Delivery(BaseAction):

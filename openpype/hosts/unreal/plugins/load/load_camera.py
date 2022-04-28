@@ -6,7 +6,10 @@ import unreal
 from unreal import EditorAssetLibrary
 from unreal import EditorLevelLibrary
 
-from avalon import io, pipeline
+from openpype.pipeline import (
+    AVALON_CONTAINER_ID,
+    legacy_io,
+)
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -21,7 +24,7 @@ class CameraLoader(plugin.Loader):
     color = "orange"
 
     def _get_data(self, asset_name):
-        asset_doc = io.find_one({
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": asset_name
         })
@@ -157,7 +160,7 @@ class CameraLoader(plugin.Loader):
                     factory=unreal.LevelSequenceFactoryNew()
                 )
 
-                asset_data = io.find_one({
+                asset_data = legacy_io.find_one({
                     "type": "asset",
                     "name": h.split('/')[-1]
                 })
@@ -168,12 +171,12 @@ class CameraLoader(plugin.Loader):
                 end_frames = []
 
                 elements = list(
-                    io.find({"type": "asset", "data.visualParent": id}))
+                    legacy_io.find({"type": "asset", "data.visualParent": id}))
                 for e in elements:
                     start_frames.append(e.get('data').get('clipIn'))
                     end_frames.append(e.get('data').get('clipOut'))
 
-                    elements.extend(io.find({
+                    elements.extend(legacy_io.find({
                         "type": "asset",
                         "data.visualParent": e.get('_id')
                     }))
@@ -239,7 +242,7 @@ class CameraLoader(plugin.Loader):
 
         data = {
             "schema": "openpype:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -297,8 +300,8 @@ class CameraLoader(plugin.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        io_asset = io.Session["AVALON_ASSET"]
-        asset_doc = io.find_one({
+        io_asset = legacy_io.Session["AVALON_ASSET"]
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": io_asset
         })

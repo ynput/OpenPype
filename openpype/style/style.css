@@ -687,6 +687,26 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
+/* Messages overlay */
+#OverlayMessageWidget {
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+
+#OverlayMessageWidget:hover {
+    background: {color:bg-button-hover};
+}
+#OverlayMessageWidget {
+    background: {color:overlay-messages:bg-success};
+}
+#OverlayMessageWidget:hover {
+    background: {color:overlay-messages:bg-success-hover};
+}
+
+#OverlayMessageWidget QWidget {
+    background: transparent;
+}
+
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -1267,6 +1287,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid #4e5254;
     border-radius: 5px;
     background: #21252B;
+}
+
+/* Workfiles */
+#WorkfilesPublishedContextSelect {
+    background: rgba(0, 0, 0, 127);
+}
+#WorkfilesPublishedContextSelect QLabel {
+    font-size: 17pt;
 }
 
 /* Tray */

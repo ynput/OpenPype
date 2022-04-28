@@ -2,21 +2,19 @@ import sys
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.api import AvalonMongoDB
 from openpype import style
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
     ThumbnailWidget,
     VersionWidget,
     FamilyListView,
-    RepresentationWidget
+    RepresentationWidget,
+    SubsetWidget
 )
 from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from openpype.modules import ModulesManager
-
-from . import lib
-from .widgets import LibrarySubsetWidget
 
 module = sys.modules[__name__]
 module.window = None
@@ -92,7 +90,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         # --- Middle part ---
         # Subsets widget
-        subsets_widget = LibrarySubsetWidget(
+        subsets_widget = SubsetWidget(
             dbcon,
             self.groups_config,
             self.family_config_cache,
@@ -259,14 +257,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         project_name = index.data(QtCore.Qt.UserRole + 1)
 
         self.dbcon.Session["AVALON_PROJECT"] = project_name
-
-        _config = lib.find_config()
-        if hasattr(_config, "install"):
-            _config.install()
-        else:
-            print(
-                "Config `%s` has no function `install`" % _config.__name__
-            )
 
         self._subsets_widget.on_project_change(project_name)
         if self._repres_widget:
@@ -448,10 +438,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
     def _set_context(self, context, refresh=True):
         """Set the selection in the interface using a context.
         The context must contain `asset` data by name.
-        Note: Prior to setting context ensure `refresh` is triggered so that
-              the "silos" are listed correctly, aside from that setting the
-              context will force a refresh further down because it changes
-              the active silo and asset.
+
         Args:
             context (dict): The context to apply.
         Returns:
@@ -463,12 +450,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             return
 
         if refresh:
-            # Workaround:
-            # Force a direct (non-scheduled) refresh prior to setting the
-            # asset widget's silo and asset selection to ensure it's correctly
-            # displaying the silo tabs. Calling `window.refresh()` and directly
-            # `window.set_context()` the `set_context()` seems to override the
-            # scheduled refresh and the silo tabs are not shown.
             self._refresh_assets()
 
         self._assets_widget.select_asset_by_name(asset_name)
