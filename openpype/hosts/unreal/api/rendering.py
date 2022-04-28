@@ -54,7 +54,7 @@ def start_rendering():
         anatomy = Anatomy(project)
         root = anatomy.roots['renders']
     except:
-        raise("Could not find render root in anatomy settings.")
+        raise Exception("Could not find render root in anatomy settings.")
 
     render_dir = f"{root}/{project}"
 

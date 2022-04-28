@@ -425,7 +425,7 @@ class CameraLoader(plugin.Loader):
         sequences = ar.get_assets(filter)
 
         if not sequences:
-            raise("Could not find sequence.")
+            raise Exception("Could not find sequence.")
 
         world = ar.get_asset_by_object_path(
             EditorLevelLibrary.get_editor_world().get_path_name())
@@ -438,7 +438,7 @@ class CameraLoader(plugin.Loader):
 
         # There should be only one map in the list
         if not maps:
-            raise("Could not find map.")
+            raise Exception("Could not find map.")
 
         map = maps[0]
 
