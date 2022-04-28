@@ -29,9 +29,6 @@ from collections import OrderedDict
 
 import clique
 
-from openpype.api import (
-    get_current_project_settings
-)
 from maya import cmds
 
 import pyblish.api
