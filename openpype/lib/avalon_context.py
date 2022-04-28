@@ -1532,13 +1532,13 @@ class BuildWorkfile:
 
         subsets = list(legacy_io.find({
             "type": "subset",
-            "parent": {"$in": asset_entity_by_ids.keys()}
+            "parent": {"$in": list(asset_entity_by_ids.keys())}
         }))
         subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
 
         sorted_versions = list(legacy_io.find({
             "type": "version",
-            "parent": {"$in": subset_entity_by_ids.keys()}
+            "parent": {"$in": list(subset_entity_by_ids.keys())}
         }).sort("name", -1))
 
         subset_id_with_latest_version = []
@@ -1552,7 +1552,7 @@ class BuildWorkfile:
 
         repres = legacy_io.find({
             "type": "representation",
-            "parent": {"$in": last_versions_by_id.keys()}
+            "parent": {"$in": list(last_versions_by_id.keys())}
         })
 
         output = {}

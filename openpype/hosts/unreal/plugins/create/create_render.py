@@ -1,5 +1,6 @@
 import unreal
 
+from openpype.pipeline import legacy_io
 from openpype.hosts.unreal.api import pipeline
 from openpype.hosts.unreal.api.plugin import Creator
 
