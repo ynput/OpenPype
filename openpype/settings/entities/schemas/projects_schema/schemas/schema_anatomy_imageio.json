@@ -253,7 +253,7 @@
                         {
                             "key": "requiredNodes",
                             "type": "list",
-                            "label": "Required Nodes",
+                            "label": "Plugin required",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -272,35 +272,43 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "splitter"
-                                    },
-                                    {
-                                        "key": "knobs",
+                                        "type": "collapsible-wrap",
                                         "label": "Knobs",
-                                        "type": "list",
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "type": "text",
-                                                    "key": "name",
-                                                    "label": "Name"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "value",
-                                                    "label": "Value"
+                                        "collapsible": true,
+                                        "collapsed": true,
+                                        "children": [
+                                            {
+                                                "key": "knobs",
+                                                "type": "list",
+                                                "object_type": {
+                                                    "type": "dict",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "key": "value",
+                                                            "label": "Value"
+                                                        }
+                                                    ]
                                                 }
-                                            ]
-                                        }
+                                            }
+                                        ]
                                     }
+
                                 ]
                             }
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "list",
-                            "key": "customNodes",
-                            "label": "Custom Nodes",
+                            "key": "overrideNodes",
+                            "label": "Plugin's node overrides",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -319,27 +327,37 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "splitter"
+                                        "key": "sebsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
                                     },
                                     {
-                                        "key": "knobs",
+                                        "type": "collapsible-wrap",
                                         "label": "Knobs",
-                                        "type": "list",
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "type": "text",
-                                                    "key": "name",
-                                                    "label": "Name"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "value",
-                                                    "label": "Value"
+                                        "collapsible": true,
+                                        "collapsed": true,
+                                        "children": [
+                                            {
+                                                "key": "knobs",
+                                                "type": "list",
+                                                "object_type": {
+                                                    "type": "dict",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "key": "value",
+                                                            "label": "Value"
+                                                        }
+                                                    ]
                                                 }
-                                            ]
-                                        }
+                                            }
+                                        ]
                                     }
                                 ]
                             }
