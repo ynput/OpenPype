@@ -360,7 +360,7 @@ class LayoutLoader(plugin.Loader):
                     continue
 
                 options = {
-                    "asset_dir": asset_dir
+                    # "asset_dir": asset_dir
                 }
 
                 assets = load_container(
