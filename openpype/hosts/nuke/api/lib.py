@@ -541,7 +541,7 @@ def get_imageio_input_colorspace(filename):
 def on_script_load():
     ''' Callback for ffmpeg support
     '''
-    if nuke.env['LINUX']:
+    if nuke.env["LINUX"]:
         nuke.tcl('load ffmpegReader')
         nuke.tcl('load ffmpegWriter')
     else:
@@ -592,7 +592,7 @@ def check_inventory_versions():
             versions = legacy_io.find({
                 "type": "version",
                 "parent": version["parent"]
-            }).distinct('name')
+            }).distinct("name")
 
             max_version = max(versions)
 
@@ -625,17 +625,17 @@ def writes_version_sync():
         avalon_knob_data = read_avalon_data(each)
 
         try:
-            if avalon_knob_data['families'] not in ["render"]:
-                log.debug(avalon_knob_data['families'])
+            if avalon_knob_data["families"] not in ["render"]:
+                log.debug(avalon_knob_data["families"])
                 continue
 
-            node_file = each['file'].value()
+            node_file = each["file"].value()
 
             node_version = "v" + get_version_from_path(node_file)
             log.debug("node_version: {}".format(node_version))
 
             node_new_file = node_file.replace(node_version, new_version)
-            each['file'].setValue(node_new_file)
+            each["file"].setValue(node_new_file)
             if not os.path.isdir(os.path.dirname(node_new_file)):
                 log.warning("Path does not exist! I am creating it.")
                 os.makedirs(os.path.dirname(node_new_file))
@@ -673,9 +673,9 @@ def get_render_path(node):
     '''
     data = {'avalon': read_avalon_data(node)}
     data_preset = {
-        "nodeclass": data['avalon']['family'],
-        "families": [data['avalon']['families']],
-        "creator": data['avalon']['creator']
+        "nodeclass": data["avalon"]["family"],
+        "families": [data["avalon"]["families"]],
+        "creator": data["avalon"]["creator"],
     }
 
     nuke_imageio_writes = get_created_node_imageio_setting(**data_preset)
@@ -748,7 +748,7 @@ def format_anatomy(data):
 def script_name():
     ''' Returns nuke script path
     '''
-    return nuke.root().knob('name').value()
+    return nuke.root().knob("name").value()
 
 
 def add_button_write_to_read(node):
@@ -843,7 +843,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     # adding dataflow template
     log.debug("imageio_writes: `{}`".format(imageio_writes))
     for knob in imageio_writes["knobs"]:
-        _data.update({knob["name"]: knob["value"]})
+        _data[knob["name"]] = knob["value"]
 
     _data = fix_data_for_node_create(_data)
 
@@ -1192,15 +1192,19 @@ class WorkfileSettings(object):
 
         erased_viewers = []
         for v in nuke.allNodes(filter="Viewer"):
-            v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
+            # set viewProcess to preset from settings
+            v["viewerProcess"].setValue(
+                str(viewer_dict["viewerProcess"])
+            )
+
             if str(viewer_dict["viewerProcess"]) \
-                    not in v['viewerProcess'].value():
+                    not in v["viewerProcess"].value():
                 copy_inputs = v.dependencies()
                 copy_knobs = {k: v[k].value() for k in v.knobs()
                               if k not in filter_knobs}
 
                 # delete viewer with wrong settings
-                erased_viewers.append(v['name'].value())
+                erased_viewers.append(v["name"].value())
                 nuke.delete(v)
 
                 # create new viewer
@@ -1216,7 +1220,7 @@ class WorkfileSettings(object):
                     nv[k].setValue(v)
 
                 # set viewerProcess
-                nv['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
+                nv["viewerProcess"].setValue(str(viewer_dict["viewerProcess"]))
 
         if erased_viewers:
             log.warning(
@@ -1308,7 +1312,7 @@ class WorkfileSettings(object):
             data_preset = {
                 "nodeclass": avalon_knob_data["family"],
                 "families": families,
-                "creator": avalon_knob_data['creator']
+                "creator": avalon_knob_data["creator"],
             }
 
             nuke_imageio_writes = get_created_node_imageio_setting(
@@ -1366,17 +1370,16 @@ class WorkfileSettings(object):
                 current = n["colorspace"].value()
                 future = str(preset_clrsp)
                 if current != future:
-                    changes.update({
-                        n.name(): {
-                            "from": current,
-                            "to": future
-                        }
-                    })
+                    changes[n.name()] = {
+                        "from": current,
+                        "to": future
+                    }
+
         log.debug(changes)
         if changes:
             msg = "Read nodes are not set to correct colospace:\n\n"
             for nname, knobs in changes.items():
-                msg += str(
+                msg += (
                     " - node: '{0}' is now '{1}' but should be '{2}'\n"
                 ).format(nname, knobs["from"], knobs["to"])
 
@@ -1608,17 +1611,17 @@ def get_hierarchical_attr(entity, attr, default=None):
         if not value:
             break
 
-    if value or entity['type'].lower() == 'project':
+    if value or entity["type"].lower() == "project":
         return value
 
-    parent_id = entity['parent']
+    parent_id = entity["parent"]
     if (
-        entity['type'].lower() == 'asset'
-        and entity.get('data', {}).get('visualParent')
+        entity["type"].lower() == "asset"
+        and entity.get("data", {}).get("visualParent")
     ):
-        parent_id = entity['data']['visualParent']
+        parent_id = entity["data"]["visualParent"]
 
-    parent = legacy_io.find_one({'_id': parent_id})
+    parent = legacy_io.find_one({"_id": parent_id})
 
     return get_hierarchical_attr(parent, attr)
 
@@ -1631,9 +1634,9 @@ def get_write_node_template_attr(node):
     data = {"avalon": read_avalon_data(node)}
 
     data_preset = {
-        "nodeclass": data['avalon']['family'],
-        "families": [data['avalon']['families']],
-        "creator": data['avalon']['creator']
+        "nodeclass": data["avalon"]["family"],
+        "families": [data["avalon"]["families"]],
+        "creator": data["avalon"]["creator"],
     }
 
     # get template data
@@ -1644,10 +1647,11 @@ def get_write_node_template_attr(node):
         "file": get_render_path(node)
     })
 
-    # adding imageio template
-    {correct_data.update({k: v})
-     for k, v in nuke_imageio_writes.items()
-     if k not in ["_id", "_previous"]}
+    # adding imageio knob presets
+    for k, v in nuke_imageio_writes.items():
+        if k in ["_id", "_previous"]:
+            continue
+        correct_data[k] = v
 
     # fix badly encoded data
     return fix_data_for_node_create(correct_data)
@@ -1763,8 +1767,8 @@ def maintained_selection():
 
     Example:
         >>> with maintained_selection():
-        ...     node['selected'].setValue(True)
-        >>> print(node['selected'].value())
+        ...     node["selected"].setValue(True)
+        >>> print(node["selected"].value())
         False
     """
     previous_selection = nuke.selectedNodes()
@@ -1772,11 +1776,11 @@ def maintained_selection():
         yield
     finally:
         # unselect all selection in case there is some
-        current_seletion = nuke.selectedNodes()
-        [n['selected'].setValue(False) for n in current_seletion]
+        reset_selection()
+
         # and select all previously selected nodes
         if previous_selection:
-            [n['selected'].setValue(True) for n in previous_selection]
+            select_nodes(previous_selection)
 
 
 def reset_selection():

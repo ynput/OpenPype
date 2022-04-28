@@ -260,8 +260,6 @@ class ExporterReview(object):
             return nuke_imageio["viewer"]["viewerProcess"]
 
 
-
-
 class ExporterReviewLut(ExporterReview):
     """
     Generator object for review lut from Nuke
