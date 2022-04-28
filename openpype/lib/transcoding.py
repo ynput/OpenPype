@@ -727,9 +727,9 @@ def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):
 def _ffmpeg_mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
     input_format = ffprobe_data["format"]
     format_tags = input_format.get("tags") or {}
-    product_name = format_tags.get("product_name") or ""
+    operational_pattern_ul = format_tags.get("operational_pattern_ul") or ""
     output = []
-    if "opatom" in product_name.lower():
+    if operational_pattern_ul == "060e2b34.04010102.0d010201.10030000":
         output.extend(["-f", "mxf_opatom"])
     return output
 
