@@ -560,7 +560,13 @@ def get_created_node_imageio_setting(**kwarg):
                         "_ overriding knob: `{}` > `{}`".format(
                             knob, oknob
                         ))
-                    knob["value"] = oknob["value"]
+                    if not oknob["value"]:
+                        # remove original knob if no value found in oknob
+                        imageio_node["knobs"].remove(knob)
+                    else:
+                        # override knob value with oknob's
+                        knob["value"] = oknob["value"]
+
                 # add missing knobs into imageio_node
                 if oknob["name"] not in knob_names:
                     log.debug(
