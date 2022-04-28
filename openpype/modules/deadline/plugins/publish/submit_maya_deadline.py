@@ -29,7 +29,8 @@ from collections import OrderedDict
 
 import clique
 import requests
-
+from openpype.api import (
+    get_current_project_settings)
 from maya import cmds
 
 import pyblish.api
@@ -501,7 +502,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         self.payload_skeleton["JobInfo"]["Comment"] = comment
         self.payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
-
+        self.payload_skeleton["PluginInfo"]["RenderSetupIncludeLights"] = get_current_project_settings()["maya"]["create"]["CreateRender"]["disable_all_lights"] # noqa
         # Adding file dependencies.
         dependencies = instance.context.data["fileDependencies"]
         dependencies.append(filepath)
