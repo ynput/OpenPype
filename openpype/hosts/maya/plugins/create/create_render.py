@@ -73,7 +73,7 @@ class CreateRender(plugin.Creator):
     _rs = None
 
     # Disable "render all lights" flag for the scene.
-    disable_all_lights = True
+    enable_all_lights = True
 
     _image_prefix_nodes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
@@ -110,8 +110,6 @@ class CreateRender(plugin.Creator):
             return
         self._project_settings = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"])
-
-
 
         # project_settings/maya/create/CreateRender/aov_separator
         try:
@@ -262,7 +260,7 @@ class CreateRender(plugin.Creator):
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
         self.data["useReferencedAovs"] = False
-        self.data["RenderSetupIncludeLights"] = self.disable_all_lights
+        self.data["RenderSetupIncludeLights"] = self.enable_all_lights
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
