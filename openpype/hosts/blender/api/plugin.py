@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Dict, List, Optional
+from collections.abc import Iterable
 
 import bpy
 
@@ -17,7 +18,6 @@ from .lib import (
     imprint,
     get_selection
 )
-from .pipeline import AVALON_PROPERTY
 from .container import *
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -54,11 +54,6 @@ def get_unique_number(
 
 def prepare_data(data, container_name=None):
     name = data.name
-
-    name_split = name.split(":")
-    if len(name_split) > 1:
-        name = name.split(":")[-1]
-
     local_data = data.make_local()
     if container_name:
         local_data.name = f"{container_name}:{name}"
@@ -111,6 +106,27 @@ def get_local_collection_with_name(name):
         if collection.name == name and collection.library is None:
             return collection
     return None
+
+
+def link_to_collection(entity, collection):
+    """link a entity to a collection. recursively if entity is iterable"""
+    # Entity is Iterable, execute function recursively.
+    if isinstance(entity, Iterable):
+        for i in entity:
+            link_to_collection(i, collection)
+    # Entity is a Collection.
+    elif (
+        isinstance(entity, bpy.types.Collection) and
+        entity not in collection.children.values() and
+        collection not in entity.children.values()
+    ):
+        collection.children.link(entity)
+    # Entity is an Object.
+    elif (
+        isinstance(entity, bpy.types.Object) and
+        entity not in collection.objects.values()
+    ):
+        collection.objects.link(entity)
 
 
 def deselect_all():

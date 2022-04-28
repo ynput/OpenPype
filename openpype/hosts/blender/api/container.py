@@ -2,14 +2,12 @@
 import bpy
 
 from typing import Optional
-from collections.abc import Iterable
 
 from .pipeline import AVALON_PROPERTY
 
 __all__ = [
     "create_container",
     "remove_container",
-    "link_to_collection",
     "remove_orphan_datablocks",
     "set_fake_user_on_orphans",
     "remove_fake_user_on_orphans",
@@ -87,24 +85,6 @@ def remove_container(container):
     bpy.data.collections.remove(container)
     remove_orphan_datablocks()
     remove_fake_user_on_orphans(items_with_fake_user_list)
-
-
-def link_to_collection(entity, collection):
-    """link a entity to a collection"""
-    if isinstance(entity, Iterable):
-        for i in entity:
-            link_to_collection(i, collection)
-    elif (
-        isinstance(entity, bpy.types.Collection) and
-        entity not in collection.children.values() and
-        collection not in entity.children.values()
-    ):
-        collection.children.link(entity)
-    elif (
-        isinstance(entity, bpy.types.Object) and
-        entity not in collection.objects.values()
-    ):
-        collection.objects.link(entity)
 
 
 def remove_orphan_datablocks():

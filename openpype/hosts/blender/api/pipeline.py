@@ -375,7 +375,9 @@ def ls() -> Iterator:
 
     collections = lib.lsattr("id", AVALON_CONTAINER_ID)
     for container in collections:
+        yield parse_container(container)
 
+        """
         # skip collection library
         if container.library:
             continue
@@ -392,6 +394,7 @@ def ls() -> Iterator:
         # yield collection if not linked
         elif container.override_library is None:
             yield parse_container(container)
+        """
 
 
 def update_hierarchy(containers):
