@@ -7,6 +7,7 @@ from collections.abc import Iterable
 import bpy
 
 from openpype.pipeline import (
+    legacy_io,
     LegacyCreator,
     LoaderPlugin,
 )
@@ -18,7 +19,6 @@ from .lib import (
     imprint,
     get_selection
 )
-from .container import *
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
@@ -89,6 +89,20 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
     raise Exception("Could not create a custom Blender context.")
 
 
+def create_container(name):
+    """
+    Create the container with the given name
+    """
+    # search in the container already exists
+    container = bpy.data.collections.get(name)
+    # if container doesn't exist create them
+    if container is None:
+        container = bpy.data.collections.new(name)
+        container.color_tag = "COLOR_05"
+        bpy.context.scene.collection.children.link(container)
+        return container
+
+
 def get_parent_collection(collection):
     """Get the parent of the input collection"""
     check_list = [bpy.context.scene.collection]
@@ -157,16 +171,46 @@ class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
 
-    def process(self):
-        collection = bpy.data.collections.new(name=self.data["subset"])
-        bpy.context.scene.collection.children.link(collection)
-        imprint(collection, self.data)
+    def _process(self):
+        # Get info from data and create name value.
+        asset = self.data["asset"]
+        subset = self.data["subset"]
+        name = asset_name(asset, subset)
 
+        # Fectch only child collection from scene root collection.
+        only_child_collection = None
+        if len(bpy.context.scene.collection.children) == 1:
+            only_child_collection = bpy.context.scene.collection.children[0]
+
+        # Create the container
+        container = create_container(name)
+        if container is None:
+            raise RuntimeError(f"This instance already exists: {name}")
+
+        # Add custom property on the instance container with the data
+        self.data["task"] = legacy_io.Session.get("AVALON_TASK")
+        imprint(container, self.data)
+
+        # Add selected objects to container if useSelection is True
         if (self.options or {}).get("useSelection"):
-            for obj in get_selection():
-                collection.objects.link(obj)
+            selected = get_selection()
+            link_to_collection(selected, container)
 
-        return collection
+        # If only child collection, add this content and remove it.
+        elif only_child_collection:
+            link_to_collection(
+                list(only_child_collection.objects) +
+                list(only_child_collection.children),
+                container,
+            )
+            bpy.data.collections.remove(only_child_collection)
+
+        return container
+
+    def process(self):
+        """ Run the creator on Blender main thread"""
+        mti = MainThreadItem(self._process)
+        execute_in_main_thread(mti)
 
 
 class Loader(LoaderPlugin):

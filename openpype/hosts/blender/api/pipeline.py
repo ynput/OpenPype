@@ -377,25 +377,6 @@ def ls() -> Iterator:
     for container in collections:
         yield parse_container(container)
 
-        """
-        # skip collection library
-        if container.library:
-            continue
-
-        # if collection has override library
-        if container.override_library:
-            # append ref library
-            ref = container.override_library.reference
-            collections.append(ref)
-            # yield collection if ref if not a library
-            if ref.library is None or ref.override_library is None:
-                yield parse_container(container)
-
-        # yield collection if not linked
-        elif container.override_library is None:
-            yield parse_container(container)
-        """
-
 
 def update_hierarchy(containers):
     """Hierarchical container support
