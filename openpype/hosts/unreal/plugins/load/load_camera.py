@@ -268,61 +268,150 @@ class CameraLoader(plugin.Loader):
         return asset_content
 
     def update(self, container, representation):
-        path = container["namespace"]
-
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
 
-        asset_content = EditorAssetLibrary.list_assets(
-            path, recursive=False, include_folder=False
+        root = "/Game/OpenPype"
+
+        asset_dir = container.get('namespace')
+
+        context = representation.get("context")
+
+        hierarchy = context.get('hierarchy').split("/")
+        h_dir = f"{root}/{hierarchy[0]}"
+        h_asset = hierarchy[0]
+        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+
+        EditorLevelLibrary.save_current_level()
+
+        filter = unreal.ARFilter(
+            class_names=["LevelSequence"],
+            package_paths=[asset_dir],
+            recursive_paths=False)
+        sequences = ar.get_assets(filter)
+        filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=[str(Path(asset_dir).parent.as_posix())],
+            recursive_paths=True)
+        maps = ar.get_assets(filter)
+
+        # There should be only one map in the list
+        EditorLevelLibrary.load_level(maps[0].get_full_name())
+
+        level_sequence = sequences[0].get_asset()
+
+        display_rate = level_sequence.get_display_rate()
+        playback_start = level_sequence.get_playback_start()
+        playback_end = level_sequence.get_playback_end()
+
+        sequence_name = f"{container.get('asset')}_camera"
+
+        # Get the actors in the level sequence.
+        objs = unreal.SequencerTools.get_bound_objects(
+            unreal.EditorLevelLibrary.get_editor_world(),
+            level_sequence,
+            level_sequence.get_bindings(),
+            unreal.SequencerScriptingRange(
+                has_start_value=True,
+                has_end_value=True,
+                inclusive_start=level_sequence.get_playback_start(),
+                exclusive_end=level_sequence.get_playback_end()
+            )
         )
-        asset_name = ""
-        for a in asset_content:
-            asset = ar.get_asset_by_object_path(a)
-            if a.endswith("_CON"):
-                loaded_asset = EditorAssetLibrary.load_asset(a)
-                EditorAssetLibrary.set_metadata_tag(
-                    loaded_asset, "representation", str(representation["_id"])
-                )
-                EditorAssetLibrary.set_metadata_tag(
-                    loaded_asset, "parent", str(representation["parent"])
-                )
-                asset_name = EditorAssetLibrary.get_metadata_tag(
-                    loaded_asset, "asset_name"
-                )
-            elif asset.asset_class == "LevelSequence":
-                EditorAssetLibrary.delete_asset(a)
 
-        sequence = tools.create_asset(
-            asset_name=asset_name,
-            package_path=path,
-            asset_class=unreal.LevelSequence,
-            factory=unreal.LevelSequenceFactoryNew()
-        )
+        # Delete actors from the map
+        for o in objs:
+            if o.bound_objects[0].get_class().get_name() == "CineCameraActor":
+                actor_path = o.bound_objects[0].get_path_name().split(":")[-1]
+                actor = EditorLevelLibrary.get_actor_reference(actor_path)
+                EditorLevelLibrary.destroy_actor(actor)
 
-        io_asset = legacy_io.Session["AVALON_ASSET"]
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": io_asset
-        })
+        # Remove the Level Sequence from the parent.
+        # We need to traverse the hierarchy from the master sequence to find
+        # the level sequence.
+        root = "/Game/OpenPype"
+        namespace = container.get('namespace').replace(f"{root}/", "")
+        ms_asset = namespace.split('/')[0]
+        filter = unreal.ARFilter(
+            class_names=["LevelSequence"],
+            package_paths=[f"{root}/{ms_asset}"],
+            recursive_paths=False)
+        sequences = ar.get_assets(filter)
+        master_sequence = sequences[0].get_asset()
 
-        data = asset_doc.get("data")
+        sequences = [master_sequence]
 
-        if data:
-            sequence.set_display_rate(unreal.FrameRate(data.get("fps"), 1.0))
-            sequence.set_playback_start(data.get("frameStart"))
-            sequence.set_playback_end(data.get("frameEnd"))
+        parent = None
+        sub_scene = None
+        for s in sequences:
+            tracks = s.get_master_tracks()
+            subscene_track = None
+            for t in tracks:
+                if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+                    subscene_track = t
+                    break
+            if subscene_track:
+                sections = subscene_track.get_sections()
+                for ss in sections:
+                    if ss.get_sequence().get_name() == sequence_name:
+                        parent = s
+                        sub_scene = ss
+                        # subscene_track.remove_section(ss)
+                        break
+                    sequences.append(ss.get_sequence())
+                # Update subscenes indexes.
+                i = 0
+                for ss in sections:
+                    ss.set_row_index(i)
+                    i += 1
+
+            if parent:
+                break
+
+        assert parent, "Could not find the parent sequence"
+
+        EditorAssetLibrary.delete_asset(level_sequence.get_path_name())
 
         settings = unreal.MovieSceneUserImportFBXSettings()
         settings.set_editor_property('reduce_keys', False)
 
+        tools = unreal.AssetToolsHelpers().get_asset_tools()
+        new_sequence = tools.create_asset(
+            asset_name=sequence_name,
+            package_path=asset_dir,
+            asset_class=unreal.LevelSequence,
+            factory=unreal.LevelSequenceFactoryNew()
+        )
+
+        new_sequence.set_display_rate(display_rate)
+        new_sequence.set_playback_start(playback_start)
+        new_sequence.set_playback_end(playback_end)
+
+        sub_scene.set_sequence(new_sequence)
+
         unreal.SequencerTools.import_fbx(
             EditorLevelLibrary.get_editor_world(),
-            sequence,
-            sequence.get_bindings(),
+            new_sequence,
+            new_sequence.get_bindings(),
             settings,
             str(representation["data"]["path"])
         )
+
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"])
+        }
+        unreal_pipeline.imprint(
+            "{}/{}".format(asset_dir, container.get('container_name')), data)
+
+        EditorLevelLibrary.save_current_level()
+
+        asset_content = EditorAssetLibrary.list_assets(
+            asset_dir, recursive=True, include_folder=False)
+
+        for a in asset_content:
+            EditorAssetLibrary.save_asset(a)
+
+        EditorLevelLibrary.load_level(master_level)
 
     def remove(self, container):
         path = Path(container.get("namespace"))
