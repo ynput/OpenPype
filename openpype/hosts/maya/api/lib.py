@@ -3227,10 +3227,9 @@ def get_visible_in_frame_range(nodes, start, end):
         return []
 
     with maintained_time():
-        # Go to first frame of the range if we current time is outside of
-        # the queried range. This is to do a single query on which are at
-        # least visible at a time inside the range, (e.g those that are
-        # always visible)
+        # Go to first frame of the range if the current time is outside
+        # the queried range so can directly query all visible nodes on
+        # that frame.
         current_time = cmds.currentTime(query=True)
         if not (start <= current_time <= end):
             cmds.currentTime(start)
@@ -3272,8 +3271,8 @@ def get_visible_in_frame_range(nodes, start, end):
     visible = set(visible)
     invisible = [node for node in nodes if node not in visible]
     always_invisible = set()
-    # Iterate over the nodes by short to long names, so we iterate the highest
-    # in hierarcy nodes first. So the collected data can be used from the
+    # Iterate over the nodes by short to long names to iterate the highest
+    # in hierarchy nodes first. So the collected data can be used from the
     # cache for parent queries in next iterations.
     node_dependencies = dict()
     for node in sorted(invisible, key=len):
