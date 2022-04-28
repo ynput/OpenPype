@@ -29,23 +29,26 @@ class BlendModelLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, asset_group):
+    @staticmethod
+    def _remove(asset_group):
         # remove all objects in asset_group
         objects = list(asset_group.all_objects)
         for obj in objects:
+            objects.extend(obj.children)
             if obj.type == 'MESH':
                 for material_slot in list(obj.material_slots):
                     bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
-            objects.extend(obj.children)
-            bpy.data.objects.remove(obj)
+            else:
+                bpy.data.objects.remove(obj)
         # remove all collections in asset_group
         childrens = list(asset_group.children)
         for child in childrens:
             childrens.extend(child.children)
             bpy.data.collections.remove(child)
 
-    def _process(self, libpath, asset_group, group_name):
+    @staticmethod
+    def _process(libpath, asset_group, group_name):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
@@ -53,15 +56,18 @@ class BlendModelLoader(plugin.AssetLoader):
 
         container = None
 
+        # get valid container from loaded collections
         for collection in data_to.collections:
-            if collection.get(AVALON_PROPERTY):
+            collection_metadata = collection.get(AVALON_PROPERTY)
+            if (
+                collection_metadata and
+                collection_metadata.get("family") == "model" and
+                collection_metadata.get("asset") == group_name.split("_")[0]
+            ):
                 container = collection
                 break
 
         assert container, "No asset container found"
-
-        asset_group.instance_collection = container
-        asset_group.instance_type = 'COLLECTION'
 
         objects = list(container.all_objects)
 
@@ -80,11 +86,32 @@ class BlendModelLoader(plugin.AssetLoader):
             avalon_info = local_obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
+        if isinstance(asset_group, bpy.types.Collection):
+            # Create override libraries for container and elements.
+            overridden = container.override_create(remap_local_usages=True)
+            for child in container.children_recursive:
+                child.override_create(remap_local_usages=True)
+            for obj in container.all_objects:
+                obj.override_create(remap_local_usages=True)
+            # Link and rename overridden container using asset_group.
+            parent_collection = plugin.get_parent_collection(asset_group)
+            parent_collection.children.link(overridden)
+            asset_group.name = f'{asset_group.name}.removed'
+            overridden.name = group_name
+            # clear and reassign asset_group
+            bpy.data.collections.remove(asset_group)
+            asset_group = overridden
+
+        # If asset_group is an Empty, set instance collection with container.
+        elif isinstance(asset_group, bpy.types.Object):
+            asset_group.instance_collection = container
+            asset_group.instance_type = 'COLLECTION'
+
         bpy.data.orphans_purge(do_local_ids=False)
 
         plugin.deselect_all()
 
-        return objects
+        return asset_group, objects
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -112,68 +139,52 @@ class BlendModelLoader(plugin.AssetLoader):
         if len(parent_collection.children) == 1:
             parent_collection = parent_collection.children[0]
 
-        # Create instance.
-        asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        parent_collection.objects.link(asset_group)
-
-        plugin.deselect_all()
-
-        if options is not None:
-            parent = options.get('parent')
-            transform = options.get('transform')
-
-            if parent and transform:
-                location = transform.get('translation')
-                rotation = transform.get('rotation')
-                scale = transform.get('scale')
-
-                asset_group.location = (
-                    location.get('x'),
-                    location.get('y'),
-                    location.get('z')
-                )
-                asset_group.rotation_euler = (
-                    rotation.get('x'),
-                    rotation.get('y'),
-                    rotation.get('z')
-                )
-                asset_group.scale = (
-                    scale.get('x'),
-                    scale.get('y'),
-                    scale.get('z')
-                )
-
-                bpy.context.view_layer.objects.active = parent
-                asset_group.select_set(True)
-
-                bpy.ops.object.parent_set(keep_transform=True)
-
-                plugin.deselect_all()
-
-        objects = self._process(libpath, asset_group, group_name)
-
         # Create override library if current task needed it.
         if legacy_io.Session["AVALON_TASK"] in (
             "Rigging", "Modeling", "Texture", "Lookdev"
         ):
-            # fetch instance collection
-            instance_collection = asset_group.instance_collection
-            # create override libraries
-            container = instance_collection.override_create(
-                remap_local_usages=True
-            )
-            for obj in objects:
-                obj.override_create(remap_local_usages=True)
-            parent_collection.children.link(container)
-            # remove instance collection and this empty object
-            bpy.data.objects.remove(asset_group)
-            bpy.data.collections.remove(instance_collection)
-            bpy.data.orphans_purge(do_local_ids=False)
-            # rename and link overridden container
-            container.name = group_name
-            # reassign asset_group to update container with avalon metadata
-            asset_group = container
+            asset_group = bpy.data.collections.new(group_name)
+            parent_collection.children.link(asset_group)
+        else:
+            asset_group = bpy.data.objects.new(group_name, object_data=None)
+            asset_group.empty_display_type = 'SINGLE_ARROW'
+            parent_collection.objects.link(asset_group)
+
+            plugin.deselect_all()
+
+            if options is not None:
+                parent = options.get('parent')
+                transform = options.get('transform')
+
+                if parent and transform:
+                    location = transform.get('translation')
+                    rotation = transform.get('rotation')
+                    scale = transform.get('scale')
+
+                    asset_group.location = (
+                        location.get('x'),
+                        location.get('y'),
+                        location.get('z')
+                    )
+                    asset_group.rotation_euler = (
+                        rotation.get('x'),
+                        rotation.get('y'),
+                        rotation.get('z')
+                    )
+                    asset_group.scale = (
+                        scale.get('x'),
+                        scale.get('y'),
+                        scale.get('z')
+                    )
+
+                    bpy.context.view_layer.objects.active = parent
+                    asset_group.select_set(True)
+
+                    bpy.ops.object.parent_set(keep_transform=True)
+
+                    plugin.deselect_all()
+
+        asset_group, objects = self._process(libpath, asset_group, group_name)
 
         # update avalon metadata
         asset_group[AVALON_PROPERTY] = {
@@ -206,6 +217,9 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.get(object_name)
         libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
+
+        if not asset_group:
+            asset_group = bpy.data.collections.get(object_name)
 
         self.log.info(
             "Container: %s\nRepresentation: %s",
@@ -246,14 +260,19 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Check how many assets use the same library
         count = 0
-        for obj in bpy.data.objects:
-            if obj.get(AVALON_PROPERTY, {}).get('libpath') == group_libpath:
+        assets = [o for o in bpy.data.objects if o.get(AVALON_PROPERTY)]
+        assets += [c for c in bpy.data.collections if c.get(AVALON_PROPERTY)]
+        for asset in assets:
+            if asset.get(AVALON_PROPERTY).get('libpath') == libpath:
                 count += 1
 
-        mat = asset_group.matrix_basis.copy()
+        matrix_basis = None
 
         if isinstance(asset_group, bpy.types.Collection):
             self._remove(asset_group)
+
+        elif isinstance(asset_group, bpy.types.Object):
+            matrix_basis = asset_group.matrix_basis.copy()
 
         # If it is the last object to use that library, remove it
         if count == 1:
@@ -261,10 +280,12 @@ class BlendModelLoader(plugin.AssetLoader):
             if library:
                 bpy.data.libraries.remove(library)
 
-        self._process(str(libpath), asset_group, object_name)
+        asset_group, _ = self._process(str(libpath), asset_group, object_name)
 
-        asset_group.matrix_basis = mat
+        if matrix_basis and isinstance(asset_group, bpy.types.Object):
+            asset_group.matrix_basis = matrix_basis
 
+        metadata = asset_group.get(AVALON_PROPERTY)
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
         metadata["parent"] = str(representation["parent"])
@@ -283,17 +304,23 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.get(object_name)
 
         if not asset_group:
+            asset_group = bpy.data.collections.get(object_name)
+
+        if not asset_group:
             return False
 
         # Check how many assets use the same library
         libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
         count = 0
-        for obj in bpy.data.objects:
-            if obj.get(AVALON_PROPERTY, {}).get('libpath') == libpath:
+        assets = [o for o in bpy.data.objects if o.get(AVALON_PROPERTY)]
+        assets += [c for c in bpy.data.collections if c.get(AVALON_PROPERTY)]
+        for asset in assets:
+            if asset.get(AVALON_PROPERTY).get('libpath') == libpath:
                 count += 1
 
         if isinstance(asset_group, bpy.types.Collection):
             self._remove(asset_group)
+            bpy.data.collections.remove(asset_group)
         else:
             bpy.data.objects.remove(asset_group)
 
