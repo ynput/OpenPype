@@ -506,19 +506,67 @@ def get_created_node_imageio_setting(**kwarg):
     log.debug(kwarg)
     nodeclass = kwarg.get("nodeclass", None)
     creator = kwarg.get("creator", None)
+    subset = kwarg.get("subset", None)
 
     assert any([creator, nodeclass]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
-    imageio_nodes = get_nuke_imageio_settings()["nodes"]["requiredNodes"]
+    imageio_nodes = get_nuke_imageio_settings()["nodes"]
+    required_nodes = imageio_nodes["requiredNodes"]
+    override_nodes = imageio_nodes["overrideNodes"]
 
     imageio_node = None
-    for node in imageio_nodes:
+    for node in required_nodes:
         log.info(node)
-        if (nodeclass in node["nukeNodeClass"]) and (
-                creator in node["plugins"]):
+        if (
+                nodeclass in node["nukeNodeClass"]
+                and creator in node["plugins"]
+        ):
             imageio_node = node
             break
+
+    log.debug("__ imageio_node: {}".format(imageio_node))
+
+    # find matching override node
+    override_imageio_node = None
+    for onode in override_nodes:
+        log.info(onode)
+        if nodeclass not in node["nukeNodeClass"]:
+            continue
+
+        if creator not in node["plugins"]:
+            continue
+
+        if (
+            onode["subsets"]
+            and not any(re.search(s, subset) for s in onode["subsets"])
+        ):
+            continue
+
+        override_imageio_node = onode
+        break
+
+    log.debug("__ override_imageio_node: {}".format(override_imageio_node))
+    # add overrides to imageio_node
+    if override_imageio_node:
+        # get all knob names in imageio_node
+        knob_names = [k["name"] for k in imageio_node["knobs"]]
+
+        for oknob in override_imageio_node["knobs"]:
+            for knob in imageio_node["knobs"]:
+                # override matching knob name
+                if oknob["name"] == knob["name"]:
+                    log.debug(
+                        "_ overriding knob: `{}` > `{}`".format(
+                            knob, oknob
+                        ))
+                    knob["value"] = oknob["value"]
+                # add missing knobs into imageio_node
+                if oknob["name"] not in knob_names:
+                    log.debug(
+                        "_ adding knob: `{}`".format(oknob))
+                    imageio_node["knobs"].append(oknob)
+                    knob_names.append(oknob["name"])
 
     log.info("ImageIO node: {}".format(imageio_node))
     return imageio_node
@@ -676,6 +724,7 @@ def get_render_path(node):
         "nodeclass": data["avalon"]["family"],
         "families": [data["avalon"]["families"]],
         "creator": data["avalon"]["creator"],
+        "subset": data["avalon"]["subset"]
     }
 
     nuke_imageio_writes = get_created_node_imageio_setting(**data_preset)
@@ -1298,10 +1347,10 @@ class WorkfileSettings(object):
             # get data from avalon knob
             avalon_knob_data = read_avalon_data(node)
 
-            if not avalon_knob_data:
+            if avalon_knob_data.get("id") != "pyblish.avalon.instance":
                 continue
 
-            if avalon_knob_data["id"] != "pyblish.avalon.instance":
+            if "creator" not in avalon_knob_data:
                 continue
 
             # establish families
@@ -1313,6 +1362,7 @@ class WorkfileSettings(object):
                 "nodeclass": avalon_knob_data["family"],
                 "families": families,
                 "creator": avalon_knob_data["creator"],
+                "subset": avalon_knob_data["subset"]
             }
 
             nuke_imageio_writes = get_created_node_imageio_setting(
@@ -1637,6 +1687,7 @@ def get_write_node_template_attr(node):
         "nodeclass": data["avalon"]["family"],
         "families": [data["avalon"]["families"]],
         "creator": data["avalon"]["creator"],
+        "subset": data["avalon"]["subset"]
     }
 
     # get template data
