@@ -105,6 +105,7 @@ from .transcoding import (
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
@@ -221,6 +222,12 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
+
+from .connections import (
+    requests_get,
+    requests_post
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -270,6 +277,7 @@ __all__ = [
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
+    "convert_input_paths_for_ffmpeg",
     "get_ffprobe_data",
     "get_ffprobe_streams",
     "get_ffmpeg_codec_args",
@@ -390,4 +398,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "requests_get",
+    "requests_post"
 ]

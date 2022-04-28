@@ -96,9 +96,9 @@ class FileLoader(AfterEffectsLoader):
         # with aftereffects.maintained_selection():  # TODO
         stub.replace_item(layer.id, path, stub.LOADED_ICON + layer_name)
         stub.imprint(
-            layer, {"representation": str(representation["_id"]),
-                    "name": context["subset"],
-                    "namespace": layer_name}
+            layer.id, {"representation": str(representation["_id"]),
+                       "name": context["subset"],
+                       "namespace": layer_name}
         )
 
     def remove(self, container):
@@ -109,7 +109,7 @@ class FileLoader(AfterEffectsLoader):
         """
         stub = self.get_stub()
         layer = container.pop("layer")
-        stub.imprint(layer, {})
+        stub.imprint(layer.id, {})
         stub.delete_item(layer.id)
 
     def switch(self, container, representation):

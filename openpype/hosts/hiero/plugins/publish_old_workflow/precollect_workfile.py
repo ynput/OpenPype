@@ -1,7 +1,7 @@
 import os
 import pyblish.api
 from openpype.hosts.hiero import api as phiero
-from avalon import api as avalon
+from openpype.pipeline import legacy_io
 
 
 class PreCollectWorkfile(pyblish.api.ContextPlugin):
@@ -11,7 +11,7 @@ class PreCollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.51
 
     def process(self, context):
-        asset = avalon.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         subset = "workfile"
 
         project = phiero.get_current_project()

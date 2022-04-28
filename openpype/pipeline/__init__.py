@@ -3,12 +3,15 @@ from .constants import (
     HOST_WORKFILE_EXTENSIONS,
 )
 
+from .mongodb import (
+    AvalonMongoDB,
+)
+
 from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
     CreatedInstance,
-
     CreatorError,
 
     LegacyCreator,
@@ -41,6 +44,7 @@ from .load import (
 
     loaders_from_representation,
     get_representation_path,
+    get_representation_context,
     get_repres_contexts,
 )
 
@@ -68,18 +72,36 @@ from .actions import (
     deregister_inventory_action_path,
 )
 
+from .context_tools import (
+    install_openpype_plugins,
+    install_host,
+    uninstall_host,
+    is_installed,
+
+    register_root,
+    registered_root,
+
+    register_host,
+    registered_host,
+    deregister_host,
+)
+install = install_host
+uninstall = uninstall_host
+
 
 __all__ = (
     "AVALON_CONTAINER_ID",
     "HOST_WORKFILE_EXTENSIONS",
 
-    "attribute_definitions",
+    # --- MongoDB ---
+    "AvalonMongoDB",
 
     # --- Create ---
     "BaseCreator",
     "Creator",
     "AutoCreator",
     "CreatedInstance",
+    "CreatorError",
 
     "CreatorError",
 
@@ -113,6 +135,7 @@ __all__ = (
 
     "loaders_from_representation",
     "get_representation_path",
+    "get_representation_context",
     "get_repres_contexts",
 
     # --- Publish ---
@@ -135,4 +158,21 @@ __all__ = (
     "register_inventory_action_path",
     "deregister_inventory_action",
     "deregister_inventory_action_path",
+
+    # --- Process context ---
+    "install_openpype_plugins",
+    "install_host",
+    "uninstall_host",
+    "is_installed",
+
+    "register_root",
+    "registered_root",
+
+    "register_host",
+    "registered_host",
+    "deregister_host",
+
+    # Backwards compatible function names
+    "install",
+    "uninstall",
 )

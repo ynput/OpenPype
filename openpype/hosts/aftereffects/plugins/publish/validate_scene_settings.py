@@ -5,11 +5,15 @@ import re
 
 import pyblish.api
 
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 from openpype.hosts.aftereffects.api import get_asset_settings
 
 
-class ValidateSceneSettings(pyblish.api.InstancePlugin):
+class ValidateSceneSettings(OptionalPyblishPluginMixin,
+                            pyblish.api.InstancePlugin):
     """
         Ensures that Composition Settings (right mouse on comp) are same as
         in FTrack on task.
@@ -59,15 +63,20 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        # Skip the instance if is not active by data on the instance
+        if not self.is_active(instance.data):
+            return
+
         expected_settings = get_asset_settings()
         self.log.info("config from DB::{}".format(expected_settings))
 
-        if any(re.search(pattern, os.getenv('AVALON_TASK'))
+        task_name = instance.data["anatomyData"]["task"]["name"]
+        if any(re.search(pattern, task_name)
                 for pattern in self.skip_resolution_check):
             expected_settings.pop("resolutionWidth")
             expected_settings.pop("resolutionHeight")
 
-        if any(re.search(pattern, os.getenv('AVALON_TASK'))
+        if any(re.search(pattern, task_name)
                 for pattern in self.skip_timelines_check):
             expected_settings.pop('fps', None)
             expected_settings.pop('frameStart', None)
@@ -87,10 +96,14 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         duration = instance.data.get("frameEndHandle") - \
             instance.data.get("frameStartHandle") + 1
 
-        self.log.debug("filtered config::{}".format(expected_settings))
+        self.log.debug("validated items::{}".format(expected_settings))
 
         current_settings = {
             "fps": fps,
+            "frameStart": instance.data.get("frameStart"),
+            "frameEnd": instance.data.get("frameEnd"),
+            "handleStart": instance.data.get("handleStart"),
+            "handleEnd": instance.data.get("handleEnd"),
             "frameStartHandle": instance.data.get("frameStartHandle"),
             "frameEndHandle": instance.data.get("frameEndHandle"),
             "resolutionWidth": instance.data.get("resolutionWidth"),
@@ -103,24 +116,22 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         invalid_keys = set()
         for key, value in expected_settings.items():
             if value != current_settings[key]:
-                invalid_settings.append(
-                    "{} expected: {}  found: {}".format(key, value,
-                                                        current_settings[key])
-                )
+                msg = "'{}' expected: '{}'  found: '{}'".format(
+                    key, value, current_settings[key])
+
+                if key == "duration" and expected_settings.get("handleStart"):
+                    msg += "Handles included in calculation. Remove " \
+                           "handles in DB or extend frame range in " \
+                           "Composition Setting."
+
+                invalid_settings.append(msg)
                 invalid_keys.add(key)
 
-        if ((expected_settings.get("handleStart")
-            or expected_settings.get("handleEnd"))
-           and invalid_settings):
-            msg = "Handles included in calculation. Remove handles in DB " +\
-                  "or extend frame range in Composition Setting."
-            invalid_settings[-1]["reason"] = msg
-
-        msg = "Found invalid settings:\n{}".format(
-            "\n".join(invalid_settings)
-        )
-
         if invalid_settings:
+            msg = "Found invalid settings:\n{}".format(
+                "\n".join(invalid_settings)
+            )
+
             invalid_keys_str = ",".join(invalid_keys)
             break_str = "<br/>"
             invalid_setting_str = "<b>Found invalid settings:</b><br/>{}".\

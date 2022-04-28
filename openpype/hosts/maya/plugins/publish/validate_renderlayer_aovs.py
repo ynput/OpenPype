@@ -1,7 +1,7 @@
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from avalon import io
+from openpype.pipeline import legacy_io
 import openpype.api
 
 
@@ -48,8 +48,8 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     def validate_subset_registered(self, asset_name, subset_name):
         """Check if subset is registered in the database under the asset"""
 
-        asset = io.find_one({"type": "asset", "name": asset_name})
-        is_valid = io.find_one({
+        asset = legacy_io.find_one({"type": "asset", "name": asset_name})
+        is_valid = legacy_io.find_one({
             "type": "subset",
             "name": subset_name,
             "parent": asset["_id"]

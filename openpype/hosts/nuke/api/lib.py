@@ -10,8 +10,6 @@ from bson.objectid import ObjectId
 
 import nuke
 
-from avalon import api, io
-
 from openpype.api import (
     Logger,
     Anatomy,
@@ -26,7 +24,10 @@ from openpype.tools.utils import host_tools
 from openpype.lib.path_tools import HostDirmap
 from openpype.settings import get_project_settings
 from openpype.modules import ModulesManager
-from openpype.pipeline import discover_legacy_creator_plugins
+from openpype.pipeline import (
+    discover_legacy_creator_plugins,
+    legacy_io,
+)
 
 from .workio import (
     save_file,
@@ -569,7 +570,7 @@ def check_inventory_versions():
             avalon_knob_data = read(node)
 
             # get representation from io
-            representation = io.find_one({
+            representation = legacy_io.find_one({
                 "type": "representation",
                 "_id": ObjectId(avalon_knob_data["representation"])
             })
@@ -583,13 +584,13 @@ def check_inventory_versions():
                 continue
 
             # Get start frame from version data
-            version = io.find_one({
+            version = legacy_io.find_one({
                 "type": "version",
                 "_id": representation["parent"]
             })
 
             # get all versions in list
-            versions = io.find({
+            versions = legacy_io.find({
                 "type": "version",
                 "parent": version["parent"]
             }).distinct('name')
@@ -726,8 +727,8 @@ def format_anatomy(data):
         file = script_name()
         data["version"] = get_version_from_path(file)
 
-    project_doc = io.find_one({"type": "project"})
-    asset_doc = io.find_one({
+    project_doc = legacy_io.find_one({"type": "project"})
+    asset_doc = legacy_io.find_one({
         "type": "asset",
         "name": data["avalon"]["asset"]
     })
@@ -1062,6 +1063,14 @@ def add_deadline_tab(node):
     knob.setValue(0)
     node.addKnob(knob)
 
+    knob = nuke.Text_Knob("divd", '')
+    knob.setValue('')
+    node.addKnob(knob)
+
+    knob = nuke.Boolean_Knob("suspend_publish", "Suspend publish")
+    knob.setValue(False)
+    node.addKnob(knob)
+
 
 def get_deadline_knob_names():
     return [
@@ -1138,8 +1147,11 @@ class WorkfileSettings(object):
                  nodes=None,
                  **kwargs):
         Context._project_doc = kwargs.get(
-            "project") or io.find_one({"type": "project"})
-        self._asset = kwargs.get("asset_name") or api.Session["AVALON_ASSET"]
+            "project") or legacy_io.find_one({"type": "project"})
+        self._asset = (
+            kwargs.get("asset_name")
+            or legacy_io.Session["AVALON_ASSET"]
+        )
         self._asset_entity = get_asset(self._asset)
         self._root_node = root_node or nuke.root()
         self._nodes = self.get_nodes(nodes=nodes)
@@ -1486,9 +1498,9 @@ class WorkfileSettings(object):
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
-        project = io.find_one({"type": "project"})
-        asset = api.Session["AVALON_ASSET"]
-        asset = io.find_one({"name": asset, "type": "asset"})
+        project = legacy_io.find_one({"type": "project"})
+        asset = legacy_io.Session["AVALON_ASSET"]
+        asset = legacy_io.find_one({"name": asset, "type": "asset"})
         asset_data = asset.get('data', {})
 
         data = {
@@ -1608,7 +1620,7 @@ def get_hierarchical_attr(entity, attr, default=None):
     ):
         parent_id = entity['data']['visualParent']
 
-    parent = io.find_one({'_id': parent_id})
+    parent = legacy_io.find_one({'_id': parent_id})
 
     return get_hierarchical_attr(parent, attr)
 

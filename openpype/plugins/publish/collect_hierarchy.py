@@ -1,5 +1,6 @@
 import pyblish.api
-import avalon.api as avalon
+
+from openpype.pipeline import legacy_io
 
 
 class CollectHierarchy(pyblish.api.ContextPlugin):
@@ -19,7 +20,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
     def process(self, context):
         temp_context = {}
-        project_name = avalon.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
         final_context = {}
         final_context[project_name] = {}
         final_context[project_name]['entity_type'] = 'Project'

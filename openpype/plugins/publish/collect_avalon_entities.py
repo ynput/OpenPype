@@ -8,8 +8,9 @@ Provides:
     context -> assetEntity - asset entity from database
 """
 
-from avalon import io, api
 import pyblish.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
@@ -19,12 +20,12 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
     label = "Collect Avalon Entities"
 
     def process(self, context):
-        io.install()
-        project_name = api.Session["AVALON_PROJECT"]
-        asset_name = api.Session["AVALON_ASSET"]
-        task_name = api.Session["AVALON_TASK"]
+        legacy_io.install()
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_entity = io.find_one({
+        project_entity = legacy_io.find_one({
             "type": "project",
             "name": project_name
         })
@@ -38,7 +39,7 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         if not asset_name:
             self.log.info("Context is not set. Can't collect global data.")
             return
-        asset_entity = io.find_one({
+        asset_entity = legacy_io.find_one({
             "type": "asset",
             "name": asset_name,
             "parent": project_entity["_id"]

@@ -627,8 +627,6 @@ class BootstrapRepos:
 
     Attributes:
         data_dir (Path): local OpenPype installation directory.
-        live_repo_dir (Path): path to repos directory if running live,
-            otherwise `None`.
         registry (OpenPypeSettingsRegistry): OpenPype registry object.
         zip_filter (list): List of files to exclude from zip
         openpype_filter (list): list of top level directories to
@@ -654,7 +652,7 @@ class BootstrapRepos:
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "openpype", "repos", "schema", "LICENSE"
+            "openpype", "schema", "LICENSE"
         ]
         self._message = message
 
@@ -666,11 +664,6 @@ class BootstrapRepos:
         if not progress_callback:
             progress_callback = empty_progress
         self._progress_callback = progress_callback
-
-        if getattr(sys, "frozen", False):
-            self.live_repo_dir = Path(sys.executable).parent / "repos"
-        else:
-            self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
 
     @staticmethod
     def get_version_path_from_list(
@@ -736,11 +729,12 @@ class BootstrapRepos:
         # if repo dir is not set, we detect local "live" OpenPype repository
         # version and use it as a source. Otherwise repo_dir is user
         # entered location.
-        if not repo_dir:
-            version = OpenPypeVersion.get_installed_version_str()
-            repo_dir = self.live_repo_dir
-        else:
+        if repo_dir:
             version = self.get_version(repo_dir)
+        else:
+            installed_version = OpenPypeVersion.get_installed_version()
+            version = str(installed_version)
+            repo_dir = installed_version.path
 
         if not version:
             self._print("OpenPype not found.", LOG_ERROR)
@@ -756,7 +750,7 @@ class BootstrapRepos:
                 Path(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
-            self._create_openpype_zip(temp_zip, repo_dir.parent)
+            self._create_openpype_zip(temp_zip, repo_dir)
             if not os.path.exists(temp_zip):
                 self._print("make archive failed.", LOG_ERROR)
                 return None
@@ -1057,27 +1051,11 @@ class BootstrapRepos:
         if not archive.is_file() and not archive.exists():
             raise ValueError("Archive is not file.")
 
-        with ZipFile(archive, "r") as zip_file:
-            name_list = zip_file.namelist()
-
-        roots = []
-        paths = []
-        for item in name_list:
-            if not item.startswith("repos/"):
-                continue
-
-            root = item.split("/")[1]
-
-            if root not in roots:
-                roots.append(root)
-                paths.append(
-                    f"{archive}{os.path.sep}repos{os.path.sep}{root}")
-                sys.path.insert(0, paths[-1])
-
-        sys.path.insert(0, f"{archive}")
+        archive_path = str(archive)
+        sys.path.insert(0, archive_path)
         pythonpath = os.getenv("PYTHONPATH", "")
         python_paths = pythonpath.split(os.pathsep)
-        python_paths += paths
+        python_paths.insert(0, archive_path)
 
         os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
@@ -1094,24 +1072,8 @@ class BootstrapRepos:
             directory (Path): path to directory.
 
         """
+
         sys.path.insert(0, directory.as_posix())
-        directory /= "repos"
-        if not directory.exists() and not directory.is_dir():
-            raise ValueError("directory is invalid")
-
-        roots = []
-        for item in directory.iterdir():
-            if item.is_dir():
-                root = item.as_posix()
-                if root not in roots:
-                    roots.append(root)
-                    sys.path.insert(0, root)
-
-        pythonpath = os.getenv("PYTHONPATH", "")
-        paths = pythonpath.split(os.pathsep)
-        paths += roots
-
-        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
     @staticmethod
     def find_openpype_version(version, staging):
@@ -1437,6 +1399,7 @@ class BootstrapRepos:
             # create destination parent directories even if they don't exist.
             destination.mkdir(parents=True)
 
+        remove_source_file = False
         # version is directory
         if openpype_version.path.is_dir():
             # create zip inside temporary directory.
@@ -1470,6 +1433,8 @@ class BootstrapRepos:
                 self._progress_callback(35)
                 openpype_version.path = self._copy_zip(
                     openpype_version.path, destination)
+                # Mark zip to be deleted when done
+                remove_source_file = True
 
         # extract zip there
         self._print("extracting zip to destination ...")
@@ -1477,6 +1442,10 @@ class BootstrapRepos:
             self._progress_callback(75)
             zip_ref.extractall(destination)
             self._progress_callback(100)
+
+        # Remove zip file copied to local app data
+        if remove_source_file:
+            os.remove(openpype_version.path)
 
         return destination
 

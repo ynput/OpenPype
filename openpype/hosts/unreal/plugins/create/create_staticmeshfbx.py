@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Create Static Meshes as FBX geometry."""
 import unreal  # noqa
-from openpype.hosts.unreal.api.plugin import Creator
+from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api.pipeline import (
     instantiate,
 )
 
 
-class CreateStaticMeshFBX(Creator):
+class CreateStaticMeshFBX(plugin.Creator):
     """Static FBX geometry."""
 
     name = "unrealStaticMeshMain"
