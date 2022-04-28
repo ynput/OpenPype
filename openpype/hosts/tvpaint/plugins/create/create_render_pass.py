@@ -36,7 +36,7 @@ class CreateRenderPass(plugin.Creator):
 
         # TODO remove - Backwards compatibility for old subset name templates
         # - added 2022/04/28
-        dynamic_data["renderpass"] = dynamic_data["render_pass"]
+        dynamic_data["render_pass"] = dynamic_data["renderpass"]
 
         return dynamic_data
 
