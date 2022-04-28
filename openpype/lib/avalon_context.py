@@ -9,6 +9,8 @@ import collections
 import functools
 import getpass
 
+from bson.objectid import ObjectId
+
 from openpype.settings import (
     get_project_settings,
     get_system_settings
@@ -16,10 +18,9 @@ from openpype.settings import (
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .events import emit_event
+from .path_templates import StringTemplate
 
-# avalon module is not imported at the top
-# - may not be in path at the time of pype.lib initialization
-avalon = None
+legacy_io = None
 
 log = logging.getLogger("AvalonContext")
 
@@ -61,8 +62,8 @@ def create_project(
     """
 
     from openpype.settings import ProjectSettings, SaveWarningExc
-    from avalon.api import AvalonMongoDB
-    from avalon.schema import validate
+    from openpype.pipeline import AvalonMongoDB
+    from openpype.pipeline.schema import validate
 
     if dbcon is None:
         dbcon = AvalonMongoDB()
@@ -117,17 +118,17 @@ def create_project(
     return project_doc
 
 
-def with_avalon(func):
+def with_pipeline_io(func):
     @functools.wraps(func)
-    def wrap_avalon(*args, **kwargs):
-        global avalon
-        if avalon is None:
-            import avalon
+    def wrapped(*args, **kwargs):
+        global legacy_io
+        if legacy_io is None:
+            from openpype.pipeline import legacy_io
         return func(*args, **kwargs)
-    return wrap_avalon
+    return wrapped
 
 
-@with_avalon
+@with_pipeline_io
 def is_latest(representation):
     """Return whether the representation is from latest version
 
@@ -139,12 +140,12 @@ def is_latest(representation):
 
     """
 
-    version = avalon.io.find_one({"_id": representation['parent']})
+    version = legacy_io.find_one({"_id": representation['parent']})
     if version["type"] == "hero_version":
         return True
 
     # Get highest version under the parent
-    highest_version = avalon.io.find_one({
+    highest_version = legacy_io.find_one({
         "type": "version",
         "parent": version["parent"]
     }, sort=[("name", -1)], projection={"name": True})
@@ -155,20 +156,21 @@ def is_latest(representation):
         return False
 
 
-@with_avalon
+@with_pipeline_io
 def any_outdated():
     """Return whether the current scene has any outdated content"""
+    from openpype.pipeline import registered_host
 
     checked = set()
-    host = avalon.api.registered_host()
+    host = registered_host()
     for container in host.ls():
         representation = container['representation']
         if representation in checked:
             continue
 
-        representation_doc = avalon.io.find_one(
+        representation_doc = legacy_io.find_one(
             {
-                "_id": avalon.io.ObjectId(representation),
+                "_id": ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -185,7 +187,7 @@ def any_outdated():
     return False
 
 
-@with_avalon
+@with_pipeline_io
 def get_asset(asset_name=None):
     """ Returning asset document from database by its name.
 
@@ -198,9 +200,9 @@ def get_asset(asset_name=None):
             (MongoDB document)
     """
     if not asset_name:
-        asset_name = avalon.api.Session["AVALON_ASSET"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
 
-    asset_document = avalon.io.find_one({
+    asset_document = legacy_io.find_one({
         "name": asset_name,
         "type": "asset"
     })
@@ -211,7 +213,7 @@ def get_asset(asset_name=None):
     return asset_document
 
 
-@with_avalon
+@with_pipeline_io
 def get_hierarchy(asset_name=None):
     """
     Obtain asset hierarchy path string from mongo db
@@ -224,12 +226,12 @@ def get_hierarchy(asset_name=None):
 
     """
     if not asset_name:
-        asset_name = avalon.io.Session.get(
+        asset_name = legacy_io.Session.get(
             "AVALON_ASSET",
             os.environ["AVALON_ASSET"]
         )
 
-    asset_entity = avalon.io.find_one({
+    asset_entity = legacy_io.find_one({
         "type": 'asset',
         "name": asset_name
     })
@@ -248,13 +250,13 @@ def get_hierarchy(asset_name=None):
         parent_id = entity.get("data", {}).get("visualParent")
         if not parent_id:
             break
-        entity = avalon.io.find_one({"_id": parent_id})
+        entity = legacy_io.find_one({"_id": parent_id})
         hierarchy_items.append(entity["name"])
 
     # Add parents to entity data for next query
     entity_data = asset_entity.get("data", {})
     entity_data["parents"] = hierarchy_items
-    avalon.io.update_many(
+    legacy_io.update_many(
         {"_id": asset_entity["_id"]},
         {"$set": {"data": entity_data}}
     )
@@ -301,7 +303,7 @@ def get_linked_asset_ids(asset_doc):
     return output
 
 
-@with_avalon
+@with_pipeline_io
 def get_linked_assets(asset_doc):
     """Return linked assets for `asset_doc` from DB
 
@@ -315,10 +317,10 @@ def get_linked_assets(asset_doc):
     if not link_ids:
         return []
 
-    return list(avalon.io.find({"_id": {"$in": link_ids}}))
+    return list(legacy_io.find({"_id": {"$in": link_ids}}))
 
 
-@with_avalon
+@with_pipeline_io
 def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
@@ -329,8 +331,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
-        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
-            with Session.
+        dbcon (AvalonMongoDB, optional): Avalon Mongo connection with Session.
         project_name (str, optional): Find latest version in specific project.
 
     Returns:
@@ -339,13 +340,13 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """
 
     if not dbcon:
-        log.debug("Using `avalon.io` for query.")
-        dbcon = avalon.io
+        log.debug("Using `legacy_io` for query.")
+        dbcon = legacy_io
         # Make sure is installed
         dbcon.install()
 
     if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
-        # `avalon.io` has only `_database` attribute
+        # `legacy_io` has only `_database` attribute
         # but `AvalonMongoDB` has `database`
         database = getattr(dbcon, "database", dbcon._database)
         collection = database[project_name]
@@ -425,7 +426,7 @@ def get_workfile_template_key_from_context(
                 "`get_workfile_template_key_from_context` requires to pass"
                 " one of 'dbcon' or 'project_name' arguments."
             ))
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
@@ -645,6 +646,7 @@ def get_workdir(
     )
 
 
+@with_pipeline_io
 def template_data_from_session(session=None):
     """ Return dictionary with template from session keys.
 
@@ -654,15 +656,15 @@ def template_data_from_session(session=None):
     Returns:
         dict: All available data from session.
     """
-    from avalon import io
-    import avalon.api
 
     if session is None:
-        session = avalon.api.Session
+        session = legacy_io.Session
 
     project_name = session["AVALON_PROJECT"]
-    project_doc = io._database[project_name].find_one({"type": "project"})
-    asset_doc = io._database[project_name].find_one({
+    project_doc = legacy_io.database[project_name].find_one({
+        "type": "project"
+    })
+    asset_doc = legacy_io.database[project_name].find_one({
         "type": "asset",
         "name": session["AVALON_ASSET"]
     })
@@ -671,6 +673,7 @@ def template_data_from_session(session=None):
     return get_workdir_data(project_doc, asset_doc, task_name, host_name)
 
 
+@with_pipeline_io
 def compute_session_changes(
     session, task=None, asset=None, app=None, template_key=None
 ):
@@ -709,10 +712,8 @@ def compute_session_changes(
         asset = asset["name"]
 
     if not asset_document or not asset_tasks:
-        from avalon import io
-
         # Assume asset name
-        asset_document = io.find_one(
+        asset_document = legacy_io.find_one(
             {
                 "name": asset,
                 "type": "asset"
@@ -744,11 +745,10 @@ def compute_session_changes(
     return changes
 
 
+@with_pipeline_io
 def get_workdir_from_session(session=None, template_key=None):
-    import avalon.api
-
     if session is None:
-        session = avalon.api.Session
+        session = legacy_io.Session
     project_name = session["AVALON_PROJECT"]
     host_name = session["AVALON_APP"]
     anatomy = Anatomy(project_name)
@@ -765,6 +765,7 @@ def get_workdir_from_session(session=None, template_key=None):
     return anatomy_filled[template_key]["folder"]
 
 
+@with_pipeline_io
 def update_current_task(task=None, asset=None, app=None, template_key=None):
     """Update active Session to a new task work area.
 
@@ -779,10 +780,8 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
         dict: The changed key, values in the current Session.
 
     """
-    import avalon.api
-
     changes = compute_session_changes(
-        avalon.api.Session,
+        legacy_io.Session,
         task=task,
         asset=asset,
         app=app,
@@ -792,7 +791,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
     # Update the Session and environments. Pop from environments all keys with
     # value set to None.
     for key, value in changes.items():
-        avalon.api.Session[key] = value
+        legacy_io.Session[key] = value
         if value is None:
             os.environ.pop(key, None)
         else:
@@ -804,7 +803,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
     return changes
 
 
-@with_avalon
+@with_pipeline_io
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
 
@@ -816,14 +815,14 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
         task_name (str): Name of task under which the workfile belongs.
         filename (str): Name of a workfile.
         dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
-            `avalon.io` is used if not entered.
+            `legacy_io` is used if not entered.
 
     Returns:
         dict: Workfile document or None.
     """
-    # Use avalon.io if dbcon is not entered
+    # Use legacy_io if dbcon is not entered
     if not dbcon:
-        dbcon = avalon.io
+        dbcon = legacy_io
 
     return dbcon.find_one({
         "type": "workfile",
@@ -833,7 +832,7 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     })
 
 
-@with_avalon
+@with_pipeline_io
 def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     """Creates or replace workfile document in mongo.
 
@@ -846,11 +845,11 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
         filename (str): Filename of workfile.
         workdir (str): Path to directory where `filename` is located.
         dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
-            `avalon.io` is used if not entered.
+            `legacy_io` is used if not entered.
     """
-    # Use avalon.io if dbcon is not entered
+    # Use legacy_io if dbcon is not entered
     if not dbcon:
-        dbcon = avalon.io
+        dbcon = legacy_io
 
     # Filter of workfile document
     doc_filter = {
@@ -895,7 +894,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     )
 
 
-@with_avalon
+@with_pipeline_io
 def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     if not workfile_doc:
         # TODO add log message
@@ -904,9 +903,9 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     if not data:
         return
 
-    # Use avalon.io if dbcon is not entered
+    # Use legacy_io if dbcon is not entered
     if not dbcon:
-        dbcon = avalon.io
+        dbcon = legacy_io
 
     # Convert data to mongo modification keys/values
     # - this is naive implementation which does not expect nested
@@ -956,7 +955,7 @@ class BuildWorkfile:
 
         return containers
 
-    @with_avalon
+    @with_pipeline_io
     def build_workfile(self):
         """Prepares and load containers into workfile.
 
@@ -983,8 +982,8 @@ class BuildWorkfile:
         from openpype.pipeline import discover_loader_plugins
 
         # Get current asset name and entity
-        current_asset_name = avalon.io.Session["AVALON_ASSET"]
-        current_asset_entity = avalon.io.find_one({
+        current_asset_name = legacy_io.Session["AVALON_ASSET"]
+        current_asset_entity = legacy_io.find_one({
             "type": "asset",
             "name": current_asset_name
         })
@@ -1012,7 +1011,7 @@ class BuildWorkfile:
             return
 
         # Get current task name
-        current_task_name = avalon.io.Session["AVALON_TASK"]
+        current_task_name = legacy_io.Session["AVALON_TASK"]
 
         # Load workfile presets for task
         self.build_presets = self.get_build_presets(
@@ -1100,7 +1099,7 @@ class BuildWorkfile:
         # Return list of loaded containers
         return loaded_containers
 
-    @with_avalon
+    @with_pipeline_io
     def get_build_presets(self, task_name, asset_doc):
         """ Returns presets to build workfile for task name.
 
@@ -1116,7 +1115,7 @@ class BuildWorkfile:
         """
         host_name = os.environ["AVALON_APP"]
         project_settings = get_project_settings(
-            avalon.io.Session["AVALON_PROJECT"]
+            legacy_io.Session["AVALON_PROJECT"]
         )
 
         host_settings = project_settings.get(host_name) or {}
@@ -1366,7 +1365,7 @@ class BuildWorkfile:
             "containers": containers
         }
 
-    @with_avalon
+    @with_pipeline_io
     def _load_containers(
         self, repres_by_subset_id, subsets_by_id,
         profiles_per_subset_id, loaders_by_name
@@ -1492,7 +1491,7 @@ class BuildWorkfile:
 
         return loaded_containers
 
-    @with_avalon
+    @with_pipeline_io
     def _collect_last_version_repres(self, asset_entities):
         """Collect subsets, versions and representations for asset_entities.
 
@@ -1531,13 +1530,13 @@ class BuildWorkfile:
 
         asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
 
-        subsets = list(avalon.io.find({
+        subsets = list(legacy_io.find({
             "type": "subset",
             "parent": {"$in": asset_entity_by_ids.keys()}
         }))
         subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
 
-        sorted_versions = list(avalon.io.find({
+        sorted_versions = list(legacy_io.find({
             "type": "version",
             "parent": {"$in": subset_entity_by_ids.keys()}
         }).sort("name", -1))
@@ -1551,7 +1550,7 @@ class BuildWorkfile:
             subset_id_with_latest_version.append(subset_id)
             last_versions_by_id[version["_id"]] = version
 
-        repres = avalon.io.find({
+        repres = legacy_io.find({
             "type": "representation",
             "parent": {"$in": last_versions_by_id.keys()}
         })
@@ -1589,7 +1588,7 @@ class BuildWorkfile:
         return output
 
 
-@with_avalon
+@with_pipeline_io
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
@@ -1601,13 +1600,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     Returns:
         Creator: Return first matching plugin or `None`.
     """
-    from openpype.pipeline import LegacyCreator
+    from openpype.pipeline import discover_legacy_creator_plugins
 
     # Lower input creator name if is not case sensitive
     if not case_sensitive:
         creator_name = creator_name.lower()
 
-    for creator_plugin in avalon.api.discover(LegacyCreator):
+    for creator_plugin in discover_legacy_creator_plugins():
         _creator_name = creator_plugin.__name__
 
         # Lower creator plugin name if is not case sensitive
@@ -1619,7 +1618,7 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     return None
 
 
-@with_avalon
+@with_pipeline_io
 def change_timer_to_current_context():
     """Called after context change to change timers.
 
@@ -1638,9 +1637,9 @@ def change_timer_to_current_context():
         log.warning("Couldn't start timer")
         return
     data = {
-        "project_name": avalon.io.Session["AVALON_PROJECT"],
-        "asset_name": avalon.io.Session["AVALON_ASSET"],
-        "task_name": avalon.io.Session["AVALON_TASK"]
+        "project_name": legacy_io.Session["AVALON_PROJECT"],
+        "asset_name": legacy_io.Session["AVALON_ASSET"],
+        "task_name": legacy_io.Session["AVALON_TASK"]
     }
 
     requests.post(rest_api_url, json=data)
@@ -1702,7 +1701,7 @@ def _get_task_context_data_for_anatomy(
         "task": {
             "name": task_name,
             "type": task_type,
-            "short_name": project_task_type_data["short_name"]
+            "short": project_task_type_data["short_name"]
         }
     }
 
@@ -1735,8 +1734,6 @@ def get_custom_workfile_template_by_context(
             context. (Existence of formatted path is not validated.)
     """
 
-    from openpype.lib import filter_profiles
-
     if anatomy is None:
         anatomy = Anatomy(project_doc["name"])
 
@@ -1759,7 +1756,9 @@ def get_custom_workfile_template_by_context(
     # there are some anatomy template strings
     if matching_item:
         template = matching_item["path"][platform.system().lower()]
-        return template.format(**anatomy_context_data)
+        return StringTemplate.format_strict_template(
+            template, anatomy_context_data
+        )
 
     return None
 
@@ -1790,7 +1789,7 @@ def get_custom_workfile_template_by_string_context(
     """
 
     if dbcon is None:
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
 
@@ -1824,10 +1823,11 @@ def get_custom_workfile_template_by_string_context(
     )
 
 
+@with_pipeline_io
 def get_custom_workfile_template(template_profiles):
     """Filter and fill workfile template profiles by current context.
 
-    Current context is defined by `avalon.api.Session`. That's why this
+    Current context is defined by `legacy_io.Session`. That's why this
     function should be used only inside host where context is set and stable.
 
     Args:
@@ -1837,13 +1837,249 @@ def get_custom_workfile_template(template_profiles):
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
     """
-    # Use `avalon.io` as Mongo connection
-    from avalon import io
 
     return get_custom_workfile_template_by_string_context(
         template_profiles,
-        io.Session["AVALON_PROJECT"],
-        io.Session["AVALON_ASSET"],
-        io.Session["AVALON_TASK"],
-        io
+        legacy_io.Session["AVALON_PROJECT"],
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"],
+        legacy_io
     )
+
+
+def get_last_workfile_with_version(
+    workdir, file_template, fill_data, extensions
+):
+    """Return last workfile version.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+
+    Returns:
+        tuple: Last workfile<str> with version<int> if there is any otherwise
+            returns (None, None).
+    """
+    if not os.path.exists(workdir):
+        return None, None
+
+    # Fast match on extension
+    filenames = [
+        filename
+        for filename in os.listdir(workdir)
+        if os.path.splitext(filename)[1] in extensions
+    ]
+
+    # Build template without optionals, version to digits only regex
+    # and comment to any definable value.
+    _ext = []
+    for ext in extensions:
+        if not ext.startswith("."):
+            ext = "." + ext
+        # Escape dot for regex
+        ext = "\\" + ext
+        _ext.append(ext)
+    ext_expression = "(?:" + "|".join(_ext) + ")"
+
+    # Replace `.{ext}` with `{ext}` so we are sure there is not dot at the end
+    file_template = re.sub(r"\.?{ext}", ext_expression, file_template)
+    # Replace optional keys with optional content regex
+    file_template = re.sub(r"<.*?>", r".*?", file_template)
+    # Replace `{version}` with group regex
+    file_template = re.sub(r"{version.*?}", r"([0-9]+)", file_template)
+    file_template = re.sub(r"{comment.*?}", r".+?", file_template)
+    file_template = StringTemplate.format_strict_template(
+        file_template, fill_data
+    )
+
+    # Match with ignore case on Windows due to the Windows
+    # OS not being case-sensitive. This avoids later running
+    # into the error that the file did exist if it existed
+    # with a different upper/lower-case.
+    kwargs = {}
+    if platform.system().lower() == "windows":
+        kwargs["flags"] = re.IGNORECASE
+
+    # Get highest version among existing matching files
+    version = None
+    output_filenames = []
+    for filename in sorted(filenames):
+        match = re.match(file_template, filename, **kwargs)
+        if not match:
+            continue
+
+        file_version = int(match.group(1))
+        if version is None or file_version > version:
+            output_filenames[:] = []
+            version = file_version
+
+        if file_version == version:
+            output_filenames.append(filename)
+
+    output_filename = None
+    if output_filenames:
+        if len(output_filenames) == 1:
+            output_filename = output_filenames[0]
+        else:
+            last_time = None
+            for _output_filename in output_filenames:
+                full_path = os.path.join(workdir, _output_filename)
+                mod_time = os.path.getmtime(full_path)
+                if last_time is None or last_time < mod_time:
+                    output_filename = _output_filename
+                    last_time = mod_time
+
+    return output_filename, version
+
+
+def get_last_workfile(
+    workdir, file_template, fill_data, extensions, full_path=False
+):
+    """Return last workfile filename.
+
+    Returns file with version 1 if there is not workfile yet.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+        full_path(bool): Full path to file is returned if set to True.
+
+    Returns:
+        str: Last or first workfile as filename of full path to filename.
+    """
+    filename, version = get_last_workfile_with_version(
+        workdir, file_template, fill_data, extensions
+    )
+    if filename is None:
+        data = copy.deepcopy(fill_data)
+        data["version"] = 1
+        data.pop("comment", None)
+        if not data.get("ext"):
+            data["ext"] = extensions[0]
+        data["ext"] = data["ext"].replace('.', '')
+        filename = StringTemplate.format_strict_template(file_template, data)
+
+    if full_path:
+        return os.path.normpath(os.path.join(workdir, filename))
+
+    return filename
+
+
+@with_pipeline_io
+def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
+                                       link_type=None, max_depth=0):
+    """Returns list of linked ids of particular type (if provided).
+
+    Goes from representations to version, back to representations
+    Args:
+        project_name (str)
+        repre_ids (list) or (ObjectId)
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        link_type (str): ['reference', '..]
+        max_depth (int): limit how many levels of recursion
+    Returns:
+        (list) of ObjectId - linked representations
+    """
+    # Create new dbcon if not passed and use passed project name
+    if not dbcon:
+        from openpype.pipeline import AvalonMongoDB
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+    # Validate that passed dbcon has same project
+    elif dbcon.Session["AVALON_PROJECT"] != project_name:
+        raise ValueError("Passed connection does not have right project")
+
+    if not isinstance(repre_ids, list):
+        repre_ids = [repre_ids]
+
+    version_ids = dbcon.distinct("parent", {
+        "_id": {"$in": repre_ids},
+        "type": "representation"
+    })
+
+    match = {
+        "_id": {"$in": version_ids},
+        "type": "version"
+    }
+
+    graph_lookup = {
+        "from": project_name,
+        "startWith": "$data.inputLinks.id",
+        "connectFromField": "data.inputLinks.id",
+        "connectToField": "_id",
+        "as": "outputs_recursive",
+        "depthField": "depth"
+    }
+    if max_depth != 0:
+        # We offset by -1 since 0 basically means no recursion
+        # but the recursion only happens after the initial lookup
+        # for outputs.
+        graph_lookup["maxDepth"] = max_depth - 1
+
+    pipeline_ = [
+        # Match
+        {"$match": match},
+        # Recursive graph lookup for inputs
+        {"$graphLookup": graph_lookup}
+    ]
+
+    result = dbcon.aggregate(pipeline_)
+    referenced_version_ids = _process_referenced_pipeline_result(result,
+                                                                 link_type)
+
+    ref_ids = dbcon.distinct(
+        "_id",
+        filter={
+            "parent": {"$in": list(referenced_version_ids)},
+            "type": "representation"
+        }
+    )
+
+    return list(ref_ids)
+
+
+def _process_referenced_pipeline_result(result, link_type):
+    """Filters result from pipeline for particular link_type.
+
+    Pipeline cannot use link_type directly in a query.
+    Returns:
+        (list)
+    """
+    referenced_version_ids = set()
+    correctly_linked_ids = set()
+    for item in result:
+        input_links = item["data"].get("inputLinks", [])
+        correctly_linked_ids = _filter_input_links(input_links,
+                                                   link_type,
+                                                   correctly_linked_ids)
+
+        # outputs_recursive in random order, sort by depth
+        outputs_recursive = sorted(item.get("outputs_recursive", []),
+                                   key=lambda d: d["depth"])
+
+        for output in outputs_recursive:
+            if output["_id"] not in correctly_linked_ids:  # leaf
+                continue
+
+            correctly_linked_ids = _filter_input_links(
+                output["data"].get("inputLinks", []),
+                link_type,
+                correctly_linked_ids)
+
+            referenced_version_ids.add(output["_id"])
+
+    return referenced_version_ids
+
+
+def _filter_input_links(input_links, link_type, correctly_linked_ids):
+    for input_link in input_links:
+        if not link_type or input_link["type"] == link_type:
+            correctly_linked_ids.add(input_link.get("id") or
+                                     input_link.get("_id"))  # legacy
+
+    return correctly_linked_ids

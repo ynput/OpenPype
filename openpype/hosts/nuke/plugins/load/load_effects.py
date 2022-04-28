@@ -1,10 +1,10 @@
 import json
 from collections import OrderedDict
 import nuke
-
-from avalon import io
+import six
 
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path,
 )
@@ -72,7 +72,7 @@ class LoadEffects(load.LoaderPlugin):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
-                      for key, value in json.load(f).iteritems()}
+                      for key, value in json.load(f).items()}
 
         # get correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
@@ -148,7 +148,7 @@ class LoadEffects(load.LoaderPlugin):
         """
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -188,7 +188,7 @@ class LoadEffects(load.LoaderPlugin):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
-                      for key, value in json.load(f).iteritems()}
+                      for key, value in json.load(f).items()}
 
         # get correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
@@ -244,7 +244,7 @@ class LoadEffects(load.LoaderPlugin):
         self.connect_read_node(GN, namespace, json_f["assignTo"])
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -330,11 +330,11 @@ class LoadEffects(load.LoaderPlugin):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 

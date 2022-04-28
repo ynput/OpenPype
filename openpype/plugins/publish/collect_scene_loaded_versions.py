@@ -1,6 +1,11 @@
+from bson.objectid import ObjectId
 
 import pyblish.api
-from avalon import api, io
+
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 
 
 class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
@@ -23,7 +28,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        host = api.registered_host()
+        host = registered_host()
         if host is None:
             self.log.warn("No registered host.")
             return
@@ -35,19 +40,34 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
 
         loaded_versions = []
         _containers = list(host.ls())
-        _repr_ids = [io.ObjectId(c["representation"]) for c in _containers]
+        _repr_ids = [ObjectId(c["representation"]) for c in _containers]
+        repre_docs = legacy_io.find(
+            {"_id": {"$in": _repr_ids}},
+            projection={"_id": 1, "parent": 1}
+        )
         version_by_repr = {
-            str(doc["_id"]): doc["parent"] for doc in
-            io.find({"_id": {"$in": _repr_ids}}, projection={"parent": 1})
+            str(doc["_id"]): doc["parent"]
+            for doc in repre_docs
         }
 
+        # QUESTION should we add same representation id when loaded multiple
+        #   times?
         for con in _containers:
+            repre_id = con["representation"]
+            version_id = version_by_repr.get(repre_id)
+            if version_id is None:
+                self.log.warning((
+                    "Skipping container,"
+                    " did not find representation document. {}"
+                ).format(str(con)))
+                continue
+
             # NOTE:
             # may have more then one representation that are same version
             version = {
                 "subsetName": con["name"],
-                "representation": io.ObjectId(con["representation"]),
-                "version": version_by_repr[con["representation"]],  # _id
+                "representation": ObjectId(repre_id),
+                "version": version_id,
             }
             loaded_versions.append(version)
 

@@ -7,18 +7,20 @@ import collections
 from aiohttp.web_response import Response
 import subprocess
 
-from avalon.api import AvalonMongoDB
-
-from openpype.lib import OpenPypeMongoConnection
-from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
-from openpype.settings import get_project_settings
-
-from openpype.lib import PypeLogger
+from openpype.lib import (
+    OpenPypeMongoConnection,
+    PypeLogger,
+)
 from openpype.lib.remote_publish import (
     get_task_data,
     ERROR_STATUS,
     REPROCESS_STATUS
 )
+from openpype.pipeline import AvalonMongoDB
+from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
+from openpype.settings import get_project_settings
+
+
 
 log = PypeLogger.get_logger("WebServer")
 

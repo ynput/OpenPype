@@ -12,8 +12,7 @@ from pymongo import UpdateOne
 import arrow
 import ftrack_api
 
-from avalon import schema
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB, schema
 
 from openpype_modules.ftrack.lib import (
     get_openpype_attr,
@@ -199,8 +198,10 @@ class SyncToAvalonEvent(BaseEvent):
             if proj:
                 ftrack_id = proj["data"].get("ftrackId")
                 if ftrack_id is None:
-                    ftrack_id = self._update_project_ftrack_id()
-                    proj["data"]["ftrackId"] = ftrack_id
+                    self.handle_missing_ftrack_id(proj)
+                    ftrack_id = proj["data"]["ftrackId"]
+                self._avalon_ents_by_ftrack_id[ftrack_id] = proj
+
                 self._avalon_ents_by_ftrack_id[ftrack_id] = proj
                 for ent in ents:
                     ftrack_id = ent["data"].get("ftrackId")
@@ -209,15 +210,78 @@ class SyncToAvalonEvent(BaseEvent):
                     self._avalon_ents_by_ftrack_id[ftrack_id] = ent
         return self._avalon_ents_by_ftrack_id
 
-    def _update_project_ftrack_id(self):
-        ftrack_id = self.cur_project["id"]
+    def handle_missing_ftrack_id(self, doc):
+        # TODO handling of missing ftrack id is primarily issue of editorial
+        #   publishing it would be better to find out what causes that
+        #   ftrack id is removed during the publishing
+        ftrack_id = doc["data"].get("ftrackId")
+        if ftrack_id is not None:
+            return
 
+        if doc["type"] == "project":
+            ftrack_id = self.cur_project["id"]
+
+            self.dbcon.update_one(
+                {"type": "project"},
+                {"$set": {
+                    "data.ftrackId": ftrack_id,
+                    "data.entityType": self.cur_project.entity_type
+                }}
+            )
+
+            doc["data"]["ftrackId"] = ftrack_id
+            doc["data"]["entityType"] = self.cur_project.entity_type
+            self.log.info("Updated ftrack id of project \"{}\"".format(
+                self.cur_project["full_name"]
+            ))
+            return
+
+        if doc["type"] != "asset":
+            return
+
+        doc_parents = doc.get("data", {}).get("parents")
+        if doc_parents is None:
+            return
+
+        entities = self.process_session.query((
+            "select id, link from TypedContext"
+            " where project_id is \"{}\" and name is \"{}\""
+        ).format(self.cur_project["id"], doc["name"])).all()
+        self.log.info("Entities: {}".format(str(entities)))
+        matching_entity = None
+        for entity in entities:
+            parents = []
+            for item in entity["link"]:
+                if item["id"] == entity["id"]:
+                    break
+                low_type = item["type"].lower()
+                if low_type == "typedcontext":
+                    parents.append(item["name"])
+            if doc_parents == parents:
+                matching_entity = entity
+                break
+
+        if matching_entity is None:
+            return
+
+        ftrack_id = matching_entity["id"]
         self.dbcon.update_one(
-            {"type": "project"},
-            {"$set": {"data.ftrackId": ftrack_id}}
+            {"_id": doc["_id"]},
+            {"$set": {
+                "data.ftrackId": ftrack_id,
+                "data.entityType": matching_entity.entity_type
+            }}
         )
+        doc["data"]["ftrackId"] = ftrack_id
+        doc["data"]["entityType"] = matching_entity.entity_type
 
-        return ftrack_id
+        entity_path_items = []
+        for item in entity["link"]:
+            entity_path_items.append(item["name"])
+        self.log.info("Updated ftrack id of entity \"{}\"".format(
+            "/".join(entity_path_items)
+        ))
+        self._avalon_ents_by_ftrack_id[ftrack_id] = doc
 
     @property
     def avalon_subsets_by_parents(self):
@@ -857,7 +921,14 @@ class SyncToAvalonEvent(BaseEvent):
                 if vis_par is None:
                     vis_par = proj["_id"]
                 parent_ent = self.avalon_ents_by_id[vis_par]
-                parent_ftrack_id = parent_ent["data"]["ftrackId"]
+
+                parent_ftrack_id = parent_ent["data"].get("ftrackId")
+                if parent_ftrack_id is None:
+                    self.handle_missing_ftrack_id(parent_ent)
+                    parent_ftrack_id = parent_ent["data"].get("ftrackId")
+                    if parent_ftrack_id is None:
+                        continue
+
                 parent_ftrack_ent = self.ftrack_ents_by_id.get(
                     parent_ftrack_id
                 )
@@ -2128,7 +2199,13 @@ class SyncToAvalonEvent(BaseEvent):
                 vis_par = avalon_ent["parent"]
 
             parent_ent = self.avalon_ents_by_id[vis_par]
-            parent_ftrack_id = parent_ent["data"]["ftrackId"]
+            parent_ftrack_id = parent_ent["data"].get("ftrackId")
+            if parent_ftrack_id is None:
+                self.handle_missing_ftrack_id(parent_ent)
+                parent_ftrack_id = parent_ent["data"].get("ftrackId")
+                if parent_ftrack_id is None:
+                    continue
+
             if parent_ftrack_id not in entities_dict:
                 entities_dict[parent_ftrack_id] = {
                     "children": [],

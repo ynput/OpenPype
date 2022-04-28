@@ -3,10 +3,9 @@ import attr
 import getpass
 import pyblish.api
 
-from avalon import api
-
 from openpype.lib import env_value_to_bool
 from openpype.lib.delivery import collect_frames
+from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -37,8 +36,6 @@ class AfterEffectsSubmitDeadline(
 
     priority = 50
     chunk_size = 1000000
-    primary_pool = None
-    secondary_pool = None
     group = None
     department = None
     multiprocess = True
@@ -62,8 +59,8 @@ class AfterEffectsSubmitDeadline(
             dln_job_info.Frames = frame_range
 
         dln_job_info.Priority = self.priority
-        dln_job_info.Pool = self.primary_pool
-        dln_job_info.SecondaryPool = self.secondary_pool
+        dln_job_info.Pool = self._instance.data.get("primaryPool")
+        dln_job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
@@ -89,7 +86,7 @@ class AfterEffectsSubmitDeadline(
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         for key in keys:
             val = environment.get(key)
             if val:

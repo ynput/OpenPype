@@ -7,11 +7,13 @@ loader will use them instead of native vray vrmesh format.
 """
 import os
 
+from bson.objectid import ObjectId
+
 import maya.cmds as cmds
 
-from avalon import io
 from openpype.api import get_project_settings
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path
 )
@@ -183,12 +185,11 @@ class VRayProxyLoader(load.LoaderPlugin):
         """
         self.log.debug(
             "Looking for abc in published representations of this version.")
-        abc_rep = io.find_one(
-            {
-                "type": "representation",
-                "parent": io.ObjectId(version_id),
-                "name": "abc"
-            })
+        abc_rep = legacy_io.find_one({
+            "type": "representation",
+            "parent": ObjectId(version_id),
+            "name": "abc"
+        })
 
         if abc_rep:
             self.log.debug("Found, we'll link alembic to vray proxy.")

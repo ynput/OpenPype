@@ -18,7 +18,7 @@ from openpype.lib import (
     path_to_subprocess_arg,
 
     should_convert_for_ffmpeg,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory
 )
 import speedcopy
@@ -189,23 +189,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
-        fill_data = copy.deepcopy(instance.data["anatomyData"])
-        for repre, outputs in outputs_per_repres:
+        for repre, outpu_defs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
             src_repre_staging_dir = repre["stagingDir"]
             # Receive filepath to first file in representation
             first_input_path = None
+            input_filepaths = []
             if not self.input_is_sequence(repre):
                 first_input_path = os.path.join(
                     src_repre_staging_dir, repre["files"]
                 )
+                input_filepaths.append(first_input_path)
             else:
                 for filename in repre["files"]:
-                    first_input_path = os.path.join(
+                    filepath = os.path.join(
                         src_repre_staging_dir, filename
                     )
-                    break
+                    input_filepaths.append(filepath)
+                    if first_input_path is None:
+                        first_input_path = filepath
 
             # Skip if file is not set
             if first_input_path is None:
@@ -232,136 +235,149 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
-                frame_start = instance.data["frameStart"]
-                frame_end = instance.data["frameEnd"]
-                convert_for_ffmpeg(
-                    first_input_path,
+                convert_input_paths_for_ffmpeg(
+                    input_filepaths,
                     new_staging_dir,
-                    frame_start,
-                    frame_end,
                     self.log
                 )
 
-            for _output_def in outputs:
-                output_def = copy.deepcopy(_output_def)
-                # Make sure output definition has "tags" key
-                if "tags" not in output_def:
-                    output_def["tags"] = []
-
-                if "burnins" not in output_def:
-                    output_def["burnins"] = []
-
-                # Create copy of representation
-                new_repre = copy.deepcopy(repre)
-                # Make sure new representation has origin staging dir
-                #   - this is because source representation may change
-                #       it's staging dir because of ffmpeg conversion
-                new_repre["stagingDir"] = src_repre_staging_dir
-
-                # Remove "delete" tag from new repre if there is
-                if "delete" in new_repre["tags"]:
-                    new_repre["tags"].remove("delete")
-
-                # Add additional tags from output definition to representation
-                for tag in output_def["tags"]:
-                    if tag not in new_repre["tags"]:
-                        new_repre["tags"].append(tag)
-
-                # Add burnin link from output definition to representation
-                for burnin in output_def["burnins"]:
-                    if burnin not in new_repre.get("burnins", []):
-                        if not new_repre.get("burnins"):
-                            new_repre["burnins"] = []
-                        new_repre["burnins"].append(str(burnin))
-
-                self.log.debug(
-                    "Linked burnins: `{}`".format(new_repre.get("burnins"))
+            try:
+                self._render_output_definitions(
+                    instance, repre, src_repre_staging_dir, outpu_defs
                 )
 
-                self.log.debug(
-                    "New representation tags: `{}`".format(
-                        new_repre.get("tags"))
+            finally:
+                # Make sure temporary staging is cleaned up and representation
+                #   has set origin stagingDir
+                if do_convert:
+                    # Set staging dir of source representation back to previous
+                    #   value
+                    repre["stagingDir"] = src_repre_staging_dir
+                    if os.path.exists(new_staging_dir):
+                        shutil.rmtree(new_staging_dir)
+
+    def _render_output_definitions(
+        self, instance, repre, src_repre_staging_dir, outpu_defs
+    ):
+        fill_data = copy.deepcopy(instance.data["anatomyData"])
+        for _output_def in outpu_defs:
+            output_def = copy.deepcopy(_output_def)
+            # Make sure output definition has "tags" key
+            if "tags" not in output_def:
+                output_def["tags"] = []
+
+            if "burnins" not in output_def:
+                output_def["burnins"] = []
+
+            # Create copy of representation
+            new_repre = copy.deepcopy(repre)
+            # Make sure new representation has origin staging dir
+            #   - this is because source representation may change
+            #       it's staging dir because of ffmpeg conversion
+            new_repre["stagingDir"] = src_repre_staging_dir
+
+            # Remove "delete" tag from new repre if there is
+            if "delete" in new_repre["tags"]:
+                new_repre["tags"].remove("delete")
+
+            # Add additional tags from output definition to representation
+            for tag in output_def["tags"]:
+                if tag not in new_repre["tags"]:
+                    new_repre["tags"].append(tag)
+
+            # Add burnin link from output definition to representation
+            for burnin in output_def["burnins"]:
+                if burnin not in new_repre.get("burnins", []):
+                    if not new_repre.get("burnins"):
+                        new_repre["burnins"] = []
+                    new_repre["burnins"].append(str(burnin))
+
+            self.log.debug(
+                "Linked burnins: `{}`".format(new_repre.get("burnins"))
+            )
+
+            self.log.debug(
+                "New representation tags: `{}`".format(
+                    new_repre.get("tags"))
+            )
+
+            temp_data = self.prepare_temp_data(instance, repre, output_def)
+            files_to_clean = []
+            if temp_data["input_is_sequence"]:
+                self.log.info("Filling gaps in sequence.")
+                files_to_clean = self.fill_sequence_gaps(
+                    temp_data["origin_repre"]["files"],
+                    new_repre["stagingDir"],
+                    temp_data["frame_start"],
+                    temp_data["frame_end"])
+
+            # create or update outputName
+            output_name = new_repre.get("outputName", "")
+            output_ext = new_repre["ext"]
+            if output_name:
+                output_name += "_"
+            output_name += output_def["filename_suffix"]
+            if temp_data["without_handles"]:
+                output_name += "_noHandles"
+
+            # add outputName to anatomy format fill_data
+            fill_data.update({
+                "output": output_name,
+                "ext": output_ext
+            })
+
+            try:  # temporary until oiiotool is supported cross platform
+                ffmpeg_args = self._ffmpeg_arguments(
+                    output_def, instance, new_repre, temp_data, fill_data
                 )
-
-                temp_data = self.prepare_temp_data(
-                    instance, repre, output_def)
-                files_to_clean = []
-                if temp_data["input_is_sequence"]:
-                    self.log.info("Filling gaps in sequence.")
-                    files_to_clean = self.fill_sequence_gaps(
-                        temp_data["origin_repre"]["files"],
-                        new_repre["stagingDir"],
-                        temp_data["frame_start"],
-                        temp_data["frame_end"])
-
-                # create or update outputName
-                output_name = new_repre.get("outputName", "")
-                output_ext = new_repre["ext"]
-                if output_name:
-                    output_name += "_"
-                output_name += output_def["filename_suffix"]
-                if temp_data["without_handles"]:
-                    output_name += "_noHandles"
-
-                # add outputName to anatomy format fill_data
-                fill_data.update({
-                    "output": output_name,
-                    "ext": output_ext
-                })
-
-                try:  # temporary until oiiotool is supported cross platform
-                    ffmpeg_args = self._ffmpeg_arguments(
-                        output_def, instance, new_repre, temp_data, fill_data
+            except ZeroDivisionError:
+                # TODO recalculate width and height using OIIO before
+                #   conversion
+                if 'exr' in temp_data["origin_repre"]["ext"]:
+                    self.log.warning(
+                        (
+                            "Unsupported compression on input files."
+                            " Skipping!!!"
+                        ),
+                        exc_info=True
                     )
-                except ZeroDivisionError:
-                    if 'exr' in temp_data["origin_repre"]["ext"]:
-                        self.log.debug("Unsupported compression on input " +
-                                       "files. Skipping!!!")
-                        return
-                    raise NotImplementedError
+                    return
+                raise NotImplementedError
 
-                subprcs_cmd = " ".join(ffmpeg_args)
+            subprcs_cmd = " ".join(ffmpeg_args)
 
-                # run subprocess
-                self.log.debug("Executing: {}".format(subprcs_cmd))
+            # run subprocess
+            self.log.debug("Executing: {}".format(subprcs_cmd))
 
-                openpype.api.run_subprocess(
-                    subprcs_cmd, shell=True, logger=self.log
-                )
+            openpype.api.run_subprocess(
+                subprcs_cmd, shell=True, logger=self.log
+            )
 
-                # delete files added to fill gaps
-                if files_to_clean:
-                    for f in files_to_clean:
-                        os.unlink(f)
+            # delete files added to fill gaps
+            if files_to_clean:
+                for f in files_to_clean:
+                    os.unlink(f)
 
-                new_repre.update({
-                    "name": "{}_{}".format(output_name, output_ext),
-                    "outputName": output_name,
-                    "outputDef": output_def,
-                    "frameStartFtrack": temp_data["output_frame_start"],
-                    "frameEndFtrack": temp_data["output_frame_end"],
-                    "ffmpeg_cmd": subprcs_cmd
-                })
+            new_repre.update({
+                "name": "{}_{}".format(output_name, output_ext),
+                "outputName": output_name,
+                "outputDef": output_def,
+                "frameStartFtrack": temp_data["output_frame_start"],
+                "frameEndFtrack": temp_data["output_frame_end"],
+                "ffmpeg_cmd": subprcs_cmd
+            })
 
-                # Force to pop these key if are in new repre
-                new_repre.pop("preview", None)
-                new_repre.pop("thumbnail", None)
-                if "clean_name" in new_repre.get("tags", []):
-                    new_repre.pop("outputName")
+            # Force to pop these key if are in new repre
+            new_repre.pop("preview", None)
+            new_repre.pop("thumbnail", None)
+            if "clean_name" in new_repre.get("tags", []):
+                new_repre.pop("outputName")
 
-                # adding representation
-                self.log.debug(
-                    "Adding new representation: {}".format(new_repre)
-                )
-                instance.data["representations"].append(new_repre)
-
-            # Cleanup temp staging dir after procesisng of output definitions
-            if do_convert:
-                temp_dir = repre["stagingDir"]
-                shutil.rmtree(temp_dir)
-                # Set staging dir of source representation back to previous
-                #   value
-                repre["stagingDir"] = src_repre_staging_dir
+            # adding representation
+            self.log.debug(
+                "Adding new representation: {}".format(new_repre)
+            )
+            instance.data["representations"].append(new_repre)
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""

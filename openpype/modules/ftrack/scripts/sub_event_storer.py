@@ -67,7 +67,7 @@ def launch(event):
 
     except pymongo.errors.AutoReconnect:
         log.error("Mongo server \"{}\" is not responding, exiting.".format(
-            os.environ["AVALON_MONGO"]
+            os.environ["OPENPYPE_MONGO"]
         ))
         sys.exit(0)
 

@@ -4,9 +4,8 @@ import sys
 from Qt import QtWidgets, QtCore
 import qtawesome
 
-from avalon import api
-
 from openpype import style
+from openpype.pipeline import registered_host
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.lib import (
     iter_model_rows,
@@ -106,7 +105,7 @@ class SubsetManagerWindow(QtWidgets.QDialog):
         self._details_widget.set_details(container, item_id)
 
     def _on_save(self):
-        host = api.registered_host()
+        host = registered_host()
         if not hasattr(host, "save_instances"):
             print("BUG: Host does not have \"save_instances\" method")
             return
@@ -141,7 +140,7 @@ class SubsetManagerWindow(QtWidgets.QDialog):
         # Prepare menu
         menu = QtWidgets.QMenu(self)
         actions = []
-        host = api.registered_host()
+        host = registered_host()
         if hasattr(host, "remove_instance"):
             action = QtWidgets.QAction("Remove instance", menu)
             action.setData(host.remove_instance)
@@ -176,7 +175,7 @@ class SubsetManagerWindow(QtWidgets.QDialog):
         self._details_widget.set_details(None, None)
         self._model.refresh()
 
-        host = api.registered_host()
+        host = registered_host()
         dev_mode = os.environ.get("AVALON_DEVELOP_MODE") or ""
         editable = False
         if dev_mode.lower() in ("1", "yes", "true", "on"):

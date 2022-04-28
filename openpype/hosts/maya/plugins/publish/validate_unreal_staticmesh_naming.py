@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Validator for correct naming of Static Meshes."""
+import re
 
-from maya import cmds  # noqa
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from avalon.api import Session
+from openpype.pipeline import legacy_io
 from openpype.api import get_project_settings
-import re
 
 
 class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
@@ -52,8 +52,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     optional = True
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["unrealStaticMesh"]
-    label = "Unreal StaticMesh Name"
+    families = ["staticMesh"]
+    label = "Unreal Static Mesh Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     regex_mesh = r"(?P<renderName>.*))"
     regex_collision = r"(?P<renderName>.*)"
@@ -63,7 +63,9 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
 
         invalid = []
 
-        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        project_settings = get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"]
+        )
         collision_prefixes = (
             project_settings
             ["maya"]
@@ -72,15 +74,13 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
             ["collision_prefixes"]
         )
 
-        combined_geometry_name = instance.data.get(
-            "staticMeshCombinedName", None)
         if cls.validate_mesh:
             # compile regex for testing names
             regex_mesh = "{}{}".format(
                 ("_" + cls.static_mesh_prefix) or "", cls.regex_mesh
             )
             sm_r = re.compile(regex_mesh)
-            if not sm_r.match(combined_geometry_name):
+            if not sm_r.match(instance.data.get("subset")):
                 cls.log.error("Mesh doesn't comply with name validation.")
                 return True
 
@@ -91,13 +91,16 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 cls.log.warning("No collision objects to validate.")
                 return False
 
-            regex_collision = "{}{}".format(
+            regex_collision = "{}{}_(\\d+)".format(
                 "(?P<prefix>({}))_".format(
                     "|".join("{0}".format(p) for p in collision_prefixes)
                 ) or "", cls.regex_collision
             )
 
             cl_r = re.compile(regex_collision)
+
+            mesh_name = "{}{}".format(instance.data["asset"],
+                                      instance.data.get("variant", []))
 
             for obj in collision_set:
                 cl_m = cl_r.match(obj)
@@ -107,7 +110,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 else:
                     expected_collision = "{}_{}".format(
                         cl_m.group("prefix"),
-                        combined_geometry_name
+                        mesh_name
                     )
 
                     if not obj.startswith(expected_collision):
@@ -116,11 +119,11 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                             "Collision object name doesn't match "
                             "static mesh name"
                         )
-                        cls.log.error("{}_{} != {}_{}".format(
+                        cls.log.error("{}_{} != {}_{}*".format(
                             cl_m.group("prefix"),
                             cl_m.group("renderName"),
                             cl_m.group("prefix"),
-                            combined_geometry_name,
+                            mesh_name,
                         ))
                         invalid.append(obj)
 

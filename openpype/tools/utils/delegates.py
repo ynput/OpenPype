@@ -287,9 +287,5 @@ class PrettyTimeDelegate(QtWidgets.QStyledItemDelegate):
     """
 
     def displayText(self, value, locale):
-
-        if value is None:
-            # Ignore None value
-            return
-
-        return pretty_timestamp(value)
+        if value is not None:
+            return pretty_timestamp(value)

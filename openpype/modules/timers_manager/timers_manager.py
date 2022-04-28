@@ -1,13 +1,14 @@
 import os
 import platform
 
-from avalon.api import AvalonMongoDB
 
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
     ILaunchHookPaths
 )
+from openpype.pipeline import AvalonMongoDB
+
 from .exceptions import InvalidContextError
 
 

@@ -1,10 +1,9 @@
-import os
 import re
 import subprocess
 
 from openpype_modules.ftrack.lib import BaseEvent
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 from bson.objectid import ObjectId
 
@@ -87,8 +86,8 @@ class UserAssigmentEvent(BaseEvent):
         if not user_id:
             return None, None
 
-        task = session.query('Task where id is "{}"'.format(task_id)).one()
-        user = session.query('User where id is "{}"'.format(user_id)).one()
+        task = session.query('Task where id is "{}"'.format(task_id)).first()
+        user = session.query('User where id is "{}"'.format(user_id)).first()
 
         return task, user
 

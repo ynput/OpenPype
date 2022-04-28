@@ -29,6 +29,21 @@ from .vendor_bin_utils import (
     is_oiio_supported
 )
 
+from .attribute_definitions import (
+    AbtractAttrDef,
+
+    UIDef,
+    UISeparatorDef,
+    UILabelDef,
+
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef,
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -90,6 +105,7 @@ from .transcoding import (
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
@@ -114,6 +130,8 @@ from .avalon_context import (
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
+    get_last_workfile_with_version,
+    get_last_workfile,
 
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -204,6 +222,12 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
+
+from .connections import (
+    requests_get,
+    requests_post
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -231,6 +255,19 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "is_oiio_supported",
 
+    "AbtractAttrDef",
+
+    "UIDef",
+    "UISeparatorDef",
+    "UILabelDef",
+
+    "UnknownDef",
+    "NumberDef",
+    "TextDef",
+    "EnumDef",
+    "BoolDef",
+    "FileDef",
+
     "import_filepath",
     "modules_from_path",
     "recursive_bases_from_class",
@@ -240,6 +277,7 @@ __all__ = [
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
+    "convert_input_paths_for_ffmpeg",
     "get_ffprobe_data",
     "get_ffprobe_streams",
     "get_ffmpeg_codec_args",
@@ -263,6 +301,8 @@ __all__ = [
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
+    "get_last_workfile_with_version",
+    "get_last_workfile",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",
@@ -358,4 +398,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "requests_get",
+    "requests_post"
 ]

@@ -2,12 +2,14 @@ import collections
 import logging
 from Qt import QtWidgets, QtCore
 import qtawesome
+from bson.objectid import ObjectId
 
-from avalon import io, pipeline
-from openpype.pipeline import (
+from openpype.pipeline import legacy_io
+from openpype.pipeline.load import (
     discover_loader_plugins,
     switch_container,
     get_repres_contexts,
+    loaders_from_repre_context,
 )
 
 from .widgets import (
@@ -146,10 +148,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         repre_ids = set()
         content_loaders = set()
         for item in self._items:
-            repre_ids.add(io.ObjectId(item["representation"]))
+            repre_ids.add(ObjectId(item["representation"]))
             content_loaders.add(item["loader"])
 
-        repres = list(io.find({
+        repres = list(legacy_io.find({
             "type": {"$in": ["representation", "archived_representation"]},
             "_id": {"$in": list(repre_ids)}
         }))
@@ -177,7 +179,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 content_repres[repre_id] = repres_by_id[repre_id]
                 version_ids.append(repre["parent"])
 
-        versions = io.find({
+        versions = legacy_io.find({
             "type": {"$in": ["version", "hero_version"]},
             "_id": {"$in": list(set(version_ids))}
         })
@@ -196,7 +198,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             else:
                 subset_ids.append(content_versions[version_id]["parent"])
 
-        subsets = io.find({
+        subsets = legacy_io.find({
             "type": {"$in": ["subset", "archived_subset"]},
             "_id": {"$in": subset_ids}
         })
@@ -218,7 +220,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 asset_ids.append(subset["parent"])
                 content_subsets[subset_id] = subset
 
-        assets = io.find({
+        assets = legacy_io.find({
             "type": {"$in": ["asset", "archived_asset"]},
             "_id": {"$in": list(asset_ids)}
         })
@@ -369,7 +371,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         loaders = None
         for repre_context in repre_contexts.values():
-            _loaders = set(pipeline.loaders_from_repre_context(
+            _loaders = set(loaders_from_repre_context(
                 available_loaders, repre_context
             ))
             if loaders is None:
@@ -470,7 +472,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # Prepare asset document if asset is selected
         asset_doc = None
         if selected_asset:
-            asset_doc = io.find_one(
+            asset_doc = legacy_io.find_one(
                 {"type": "asset", "name": selected_asset},
                 {"_id": True}
             )
@@ -521,7 +523,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_current_output_repre_ids_xxx(
         self, asset_doc, selected_subset, selected_repre
     ):
-        subset_doc = io.find_one(
+        subset_doc = legacy_io.find_one(
             {
                 "type": "subset",
                 "name": selected_subset,
@@ -535,7 +537,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         if not version_doc:
             return []
 
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "type": "representation",
                 "parent": version_doc["_id"],
@@ -546,7 +548,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_xxo(self, asset_doc, selected_subset):
-        subset_doc = io.find_one(
+        subset_doc = legacy_io.find_one(
             {
                 "type": "subset",
                 "parent": asset_doc["_id"],
@@ -561,7 +563,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         for repre_doc in self.content_repres.values():
             repre_names.add(repre_doc["name"])
 
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "type": "representation",
                 "parent": subset_doc["_id"],
@@ -576,7 +578,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         for subset_doc in self.content_subsets.values():
             susbet_names.add(subset_doc["name"])
 
-        subset_docs = io.find(
+        subset_docs = legacy_io.find(
             {
                 "type": "subset",
                 "name": {"$in": list(susbet_names)},
@@ -585,7 +587,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             {"_id": True}
         )
         subset_ids = [subset_doc["_id"] for subset_doc in subset_docs]
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "type": "representation",
                 "parent": {"$in": subset_ids},
@@ -604,7 +606,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             subset_name = subset_doc["name"]
             repres_by_subset_name[subset_name].add(repre_name)
 
-        subset_docs = list(io.find(
+        subset_docs = list(legacy_io.find(
             {
                 "type": "subset",
                 "parent": asset_doc["_id"],
@@ -635,7 +637,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 "parent": version_id,
                 "name": {"$in": list(repre_names)}
             })
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {"$or": repre_or_query},
             {"_id": True}
         )
@@ -644,7 +646,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_current_output_repre_ids_oxx(
         self, selected_subset, selected_repre
     ):
-        subset_docs = list(io.find({
+        subset_docs = list(legacy_io.find({
             "type": "subset",
             "parent": {"$in": list(self.content_assets.keys())},
             "name": selected_subset
@@ -655,7 +657,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             last_version["_id"]
             for last_version in last_versions_by_subset_id.values()
         ]
-        repre_docs = io.find({
+        repre_docs = legacy_io.find({
             "type": "representation",
             "parent": {"$in": last_version_ids},
             "name": selected_repre
@@ -664,7 +666,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_oxo(self, selected_subset):
-        subset_docs = list(io.find(
+        subset_docs = list(legacy_io.find(
             {
                 "type": "subset",
                 "parent": {"$in": list(self.content_assets.keys())},
@@ -711,7 +713,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 "parent": last_version_id,
                 "name": {"$in": list(repre_names)}
             })
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "type": "representation",
                 "$or": repre_or_query
@@ -722,7 +724,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_oox(self, selected_repre):
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "name": selected_repre,
                 "parent": {"$in": list(self.content_versions.keys())}
@@ -732,7 +734,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_asset_box_values(self):
-        asset_docs = io.find(
+        asset_docs = legacy_io.find(
             {"type": "asset"},
             {"_id": 1, "name": 1}
         )
@@ -740,7 +742,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             asset_doc["_id"]: asset_doc["name"]
             for asset_doc in asset_docs
         }
-        subsets = io.find(
+        subsets = legacy_io.find(
             {
                 "type": "subset",
                 "parent": {"$in": list(asset_names_by_id.keys())}
@@ -760,12 +762,15 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_subset_box_values(self):
         selected_asset = self._assets_box.get_valid_value()
         if selected_asset:
-            asset_doc = io.find_one({"type": "asset", "name": selected_asset})
+            asset_doc = legacy_io.find_one({
+                "type": "asset",
+                "name": selected_asset
+            })
             asset_ids = [asset_doc["_id"]]
         else:
             asset_ids = list(self.content_assets.keys())
 
-        subsets = io.find(
+        subsets = legacy_io.find(
             {
                 "type": "subset",
                 "parent": {"$in": asset_ids}
@@ -802,7 +807,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # [ ] [ ] [?]
         if not selected_asset and not selected_subset:
             # Find all representations of selection's subsets
-            possible_repres = list(io.find(
+            possible_repres = list(legacy_io.find(
                 {
                     "type": "representation",
                     "parent": {"$in": list(self.content_versions.keys())}
@@ -831,11 +836,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [x] [?]
         if selected_asset and selected_subset:
-            asset_doc = io.find_one(
+            asset_doc = legacy_io.find_one(
                 {"type": "asset", "name": selected_asset},
                 {"_id": 1}
             )
-            subset_doc = io.find_one(
+            subset_doc = legacy_io.find_one(
                 {
                     "type": "subset",
                     "name": selected_subset,
@@ -846,7 +851,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             subset_id = subset_doc["_id"]
             last_versions_by_subset_id = self.find_last_versions([subset_id])
             version_doc = last_versions_by_subset_id.get(subset_id)
-            repre_docs = io.find(
+            repre_docs = legacy_io.find(
                 {
                     "type": "representation",
                     "parent": version_doc["_id"]
@@ -863,7 +868,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # [x] [ ] [?]
         # If asset only is selected
         if selected_asset:
-            asset_doc = io.find_one(
+            asset_doc = legacy_io.find_one(
                 {"type": "asset", "name": selected_asset},
                 {"_id": 1}
             )
@@ -874,7 +879,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             subset_names = set()
             for subset_doc in self.content_subsets.values():
                 subset_names.add(subset_doc["name"])
-            subset_docs = io.find(
+            subset_docs = legacy_io.find(
                 {
                     "type": "subset",
                     "parent": asset_doc["_id"],
@@ -898,7 +903,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             if not subset_id_by_version_id:
                 return list()
 
-            repre_docs = list(io.find(
+            repre_docs = list(legacy_io.find(
                 {
                     "type": "representation",
                     "parent": {"$in": list(subset_id_by_version_id.keys())}
@@ -928,7 +933,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return list(available_repres)
 
         # [ ] [x] [?]
-        subset_docs = list(io.find(
+        subset_docs = list(legacy_io.find(
             {
                 "type": "subset",
                 "parent": {"$in": list(self.content_assets.keys())},
@@ -955,7 +960,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         if not subset_id_by_version_id:
             return list()
 
-        repre_docs = list(io.find(
+        repre_docs = list(legacy_io.find(
             {
                 "type": "representation",
                 "parent": {"$in": list(subset_id_by_version_id.keys())}
@@ -1011,11 +1016,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return
 
         # [x] [ ] [?]
-        asset_doc = io.find_one(
+        asset_doc = legacy_io.find_one(
             {"type": "asset", "name": selected_asset},
             {"_id": 1}
         )
-        subset_docs = io.find(
+        subset_docs = legacy_io.find(
             {"type": "subset", "parent": asset_doc["_id"]},
             {"name": 1}
         )
@@ -1046,7 +1051,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             }}
         ]
         last_versions_by_subset_id = dict()
-        for doc in io.aggregate(_pipeline):
+        for doc in legacy_io.aggregate(_pipeline):
             doc["parent"] = doc["_id"]
             doc["_id"] = doc.pop("_version_id")
             last_versions_by_subset_id[doc["parent"]] = doc
@@ -1074,11 +1079,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [x] [ ]
         if selected_asset is not None and selected_subset is not None:
-            asset_doc = io.find_one(
+            asset_doc = legacy_io.find_one(
                 {"type": "asset", "name": selected_asset},
                 {"_id": 1}
             )
-            subset_doc = io.find_one(
+            subset_doc = legacy_io.find_one(
                 {
                     "type": "subset",
                     "parent": asset_doc["_id"],
@@ -1094,7 +1099,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 validation_state.repre_ok = False
                 return
 
-            repre_docs = io.find(
+            repre_docs = legacy_io.find(
                 {
                     "type": "representation",
                     "parent": last_version["_id"]
@@ -1114,11 +1119,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [ ] [ ]
         if selected_asset is not None:
-            asset_doc = io.find_one(
+            asset_doc = legacy_io.find_one(
                 {"type": "asset", "name": selected_asset},
                 {"_id": 1}
             )
-            subset_docs = list(io.find(
+            subset_docs = list(legacy_io.find(
                 {
                     "type": "subset",
                     "parent": asset_doc["_id"]
@@ -1140,7 +1145,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 version_id = last_version["_id"]
                 subset_id_by_version_id[version_id] = subset_id
 
-            repre_docs = io.find(
+            repre_docs = legacy_io.find(
                 {
                     "type": "representation",
                     "parent": {"$in": list(subset_id_by_version_id.keys())}
@@ -1171,7 +1176,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [ ] [x] [ ]
         # Subset documents
-        subset_docs = io.find(
+        subset_docs = legacy_io.find(
             {
                 "type": "subset",
                 "parent": {"$in": list(self.content_assets.keys())},
@@ -1192,7 +1197,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             version_id = last_version["_id"]
             subset_id_by_version_id[version_id] = subset_id
 
-        repre_docs = io.find(
+        repre_docs = legacy_io.find(
             {
                 "type": "representation",
                 "parent": {"$in": list(subset_id_by_version_id.keys())}
@@ -1223,7 +1228,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
     def _on_current_asset(self):
         # Set initial asset as current.
-        asset_name = io.Session["AVALON_ASSET"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
         index = self._assets_box.findText(
             asset_name, QtCore.Qt.MatchFixedString
         )
@@ -1241,7 +1246,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         selected_representation = self._representations_box.get_valid_value()
 
         if selected_asset:
-            asset_doc = io.find_one({"type": "asset", "name": selected_asset})
+            asset_doc = legacy_io.find_one({
+                "type": "asset",
+                "name": selected_asset
+            })
             asset_docs_by_id = {asset_doc["_id"]: asset_doc}
         else:
             asset_docs_by_id = self.content_assets
@@ -1260,7 +1268,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         if selected_subset:
             subset_query["name"] = selected_subset
 
-        subset_docs = list(io.find(subset_query))
+        subset_docs = list(legacy_io.find(subset_query))
         subset_ids = []
         subset_docs_by_parent_and_name = collections.defaultdict(dict)
         for subset in subset_docs:
@@ -1270,12 +1278,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             subset_docs_by_parent_and_name[parent_id][name] = subset
 
         # versions
-        version_docs = list(io.find({
+        version_docs = list(legacy_io.find({
             "type": "version",
             "parent": {"$in": subset_ids}
         }, sort=[("name", -1)]))
 
-        hero_version_docs = list(io.find({
+        hero_version_docs = list(legacy_io.find({
             "type": "hero_version",
             "parent": {"$in": subset_ids}
         }))
@@ -1295,7 +1303,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             parent_id = hero_version_doc["parent"]
             hero_version_docs_by_parent_id[parent_id] = hero_version_doc
 
-        repre_docs = io.find({
+        repre_docs = legacy_io.find({
             "type": "representation",
             "parent": {"$in": version_ids}
         })
@@ -1306,7 +1314,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             repre_docs_by_parent_id_by_name[parent_id][name] = repre_doc
 
         for container in self._items:
-            container_repre_id = io.ObjectId(container["representation"])
+            container_repre_id = ObjectId(container["representation"])
             container_repre = self.content_repres[container_repre_id]
             container_repre_name = container_repre["name"]
 

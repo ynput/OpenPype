@@ -1,8 +1,9 @@
 from openpype.pipeline import (
     load,
     get_representation_path,
+    AVALON_CONTAINER_ID,
 )
-from openpype.hosts.houdini.api import lib, pipeline
+from openpype.hosts.houdini.api import lib
 
 
 class USDReferenceLoader(load.LoaderPlugin):
@@ -43,7 +44,7 @@ class USDReferenceLoader(load.LoaderPlugin):
         # Imprint it manually
         data = {
             "schema": "avalon-core:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "name": node_name,
             "namespace": namespace,
             "loader": str(self.__class__.__name__),

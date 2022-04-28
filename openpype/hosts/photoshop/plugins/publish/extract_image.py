@@ -16,7 +16,6 @@ class ExtractImage(openpype.api.Extractor):
     formats = ["png", "jpg"]
 
     def process(self, instance):
-
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
 
@@ -26,8 +25,10 @@ class ExtractImage(openpype.api.Extractor):
         with photoshop.maintained_selection():
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
+                ids = set()
                 layer = instance.data.get("layer")
-                ids = set([layer.id])
+                if layer:
+                    ids.add(layer.id)
                 add_ids = instance.data.pop("ids", None)
                 if add_ids:
                     ids.update(set(add_ids))

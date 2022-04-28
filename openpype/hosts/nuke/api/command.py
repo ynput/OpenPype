@@ -1,9 +1,9 @@
 import logging
 import contextlib
 import nuke
+from bson.objectid import ObjectId
 
-from avalon import api, io
-
+from openpype.pipeline import legacy_io
 
 log = logging.getLogger(__name__)
 
@@ -14,11 +14,11 @@ def reset_frame_range():
         displayed handles
     """
 
-    fps = float(api.Session.get("AVALON_FPS", 25))
+    fps = float(legacy_io.Session.get("AVALON_FPS", 25))
 
     nuke.root()["fps"].setValue(fps)
-    name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": name, "type": "asset"})
+    name = legacy_io.Session["AVALON_ASSET"]
+    asset = legacy_io.find_one({"name": name, "type": "asset"})
     asset_data = asset["data"]
 
     handles = get_handles(asset)
@@ -70,10 +70,10 @@ def get_handles(asset):
     if "visualParent" in data:
         vp = data["visualParent"]
         if vp is not None:
-            parent_asset = io.find_one({"_id": io.ObjectId(vp)})
+            parent_asset = legacy_io.find_one({"_id": ObjectId(vp)})
 
     if parent_asset is None:
-        parent_asset = io.find_one({"_id": io.ObjectId(asset["parent"])})
+        parent_asset = legacy_io.find_one({"_id": ObjectId(asset["parent"])})
 
     if parent_asset is not None:
         return get_handles(parent_asset)
@@ -83,7 +83,7 @@ def get_handles(asset):
 
 def reset_resolution():
     """Set resolution to project resolution."""
-    project = io.find_one({"type": "project"})
+    project = legacy_io.find_one({"type": "project"})
     p_data = project["data"]
 
     width = p_data.get("resolution_width",
