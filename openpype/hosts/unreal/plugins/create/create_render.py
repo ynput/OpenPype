@@ -1,6 +1,6 @@
 import unreal
 
-from avalon import io
+from openpype.pipeline import legacy_io
 from openpype.hosts.unreal.api import pipeline
 from openpype.hosts.unreal.api.plugin import Creator
 
@@ -70,14 +70,14 @@ class CreateRender(Creator):
 
             # Get frame range. We need to go through the hierarchy and check
             # the frame range for the children.
-            asset_data = io.find_one({
+            asset_data = legacy_io.find_one({
                 "type": "asset",
                 "name": asset_name
             })
             id = asset_data.get('_id')
 
             elements = list(
-                io.find({"type": "asset", "data.visualParent": id}))
+                legacy_io.find({"type": "asset", "data.visualParent": id}))
 
             if elements:
                 start_frames = []
@@ -86,7 +86,7 @@ class CreateRender(Creator):
                     start_frames.append(e.get('data').get('clipIn'))
                     end_frames.append(e.get('data').get('clipOut'))
 
-                    elements.extend(io.find({
+                    elements.extend(legacy_io.find({
                         "type": "asset",
                         "data.visualParent": e.get('_id')
                     }))
