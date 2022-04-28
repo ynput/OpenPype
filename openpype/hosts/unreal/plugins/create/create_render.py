@@ -14,14 +14,11 @@ class CreateRender(Creator):
     icon = "cube"
     asset_types = ["LevelSequence"]
 
-    root = "/Game/AvalonInstances"
+    root = "/Game/OpenPype/PublishInstances"
     suffix = "_INS"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateRender, self).__init__(*args, **kwargs)
-
     def process(self):
-        name = self.data["subset"]
+        subset = self.data["subset"]
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -32,13 +29,13 @@ class CreateRender(Creator):
             package_paths=[f"/Game/OpenPype/{self.data['asset']}"],
             recursive_paths=False)
         sequences = ar.get_assets(filter)
-        ms = sequences[0].object_path
+        ms = sequences[0].get_editor_property('object_path')
         filter = unreal.ARFilter(
             class_names=["World"],
             package_paths=[f"/Game/OpenPype/{self.data['asset']}"],
             recursive_paths=False)
         levels = ar.get_assets(filter)
-        ml = levels[0].object_path
+        ml = levels[0].get_editor_property('object_path')
 
         selection = []
         if (self.options or {}).get("useSelection"):
@@ -46,61 +43,69 @@ class CreateRender(Creator):
             selection = [
                 a.get_path_name() for a in sel_objects
                 if a.get_class().get_name() in self.asset_types]
+        else:
+            selection.append(self.data['sequence'])
 
-        unreal.log("selection: {}".format(selection))
-        # instantiate(self.root, name, self.data, selection, self.suffix)
-        # container_name = "{}{}".format(name, self.suffix)
+        unreal.log(f"selection: {selection}")
 
-        # if we specify assets, create new folder and move them there. If not,
-        # just create empty folder
-        # new_name = pipeline.create_folder(self.root, name)
-        path = "{}/{}".format(self.root, name)
+        path = f"{self.root}"
         unreal.EditorAssetLibrary.make_directory(path)
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         for a in selection:
+            ms_obj = ar.get_asset_by_object_path(ms).get_asset()
+
+            seq_data = None
+
+            if a == ms:
+                seq_data = {
+                    "sequence": ms_obj,
+                    "output": f"{ms_obj.get_name()}",
+                    "frame_range": (
+                        ms_obj.get_playback_start(), ms_obj.get_playback_end())
+                }
+            else:
+                seq_data_list = [{
+                    "sequence": ms_obj,
+                    "output": f"{ms_obj.get_name()}",
+                    "frame_range": (
+                        ms_obj.get_playback_start(), ms_obj.get_playback_end())
+                }]
+
+                for s in seq_data_list:
+                    subscenes = pipeline.get_subsequences(s.get('sequence'))
+
+                    for ss in subscenes:
+                        curr_data = {
+                            "sequence": ss.get_sequence(),
+                            "output": (f"{s.get('output')}/"
+                                       f"{ss.get_sequence().get_name()}"),
+                            "frame_range": (
+                                ss.get_start_frame(), ss.get_end_frame() - 1)
+                        }
+
+                        if ss.get_sequence().get_path_name() == a:
+                            seq_data = curr_data
+                            break
+                        seq_data_list.append(curr_data)
+
+                    if seq_data is not None:
+                        break
+
+            if not seq_data:
+                continue
+
             d = self.data.copy()
             d["members"] = [a]
             d["sequence"] = a
             d["master_sequence"] = ms
             d["master_level"] = ml
-            asset = ar.get_asset_by_object_path(a).get_asset()
-            asset_name = asset.get_name()
+            d["output"] = seq_data.get('output')
+            d["frameStart"] = seq_data.get('frame_range')[0]
+            d["frameEnd"] = seq_data.get('frame_range')[1]
 
-            # Get frame range. We need to go through the hierarchy and check
-            # the frame range for the children.
-            asset_data = legacy_io.find_one({
-                "type": "asset",
-                "name": asset_name
-            })
-            id = asset_data.get('_id')
-
-            elements = list(
-                legacy_io.find({"type": "asset", "data.visualParent": id}))
-
-            if elements:
-                start_frames = []
-                end_frames = []
-                for e in elements:
-                    start_frames.append(e.get('data').get('clipIn'))
-                    end_frames.append(e.get('data').get('clipOut'))
-
-                    elements.extend(legacy_io.find({
-                        "type": "asset",
-                        "data.visualParent": e.get('_id')
-                    }))
-
-                min_frame = min(start_frames)
-                max_frame = max(end_frames)
-            else:
-                min_frame = asset_data.get('data').get('clipIn')
-                max_frame = asset_data.get('data').get('clipOut')
-
-            d["startFrame"] = min_frame
-            d["endFrame"] = max_frame
-
-            container_name = f"{asset_name}{self.suffix}"
+            container_name = f"{subset}{self.suffix}"
             pipeline.create_publish_instance(
                 instance=container_name, path=path)
-            pipeline.imprint("{}/{}".format(path, container_name), d)
+            pipeline.imprint(f"{path}/{container_name}", d)

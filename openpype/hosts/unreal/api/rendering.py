@@ -59,10 +59,10 @@ def start_rendering():
 
         sequences = [{
             "sequence": sequence,
-            "output": f"{i['subset']}/{sequence.get_name()}",
+            "output": f"{i['output']}",
             "frame_range": (
-                int(float(i["startFrame"])),
-                int(float(i["endFrame"])) + 1)
+                int(float(i["frameStart"])),
+                int(float(i["frameEnd"])) + 1)
         }]
         render_list = []
 
@@ -70,14 +70,9 @@ def start_rendering():
         # add them and their frame ranges to the render list. We also
         # use the names for the output paths.
         for s in sequences:
-            tracks = s.get('sequence').get_master_tracks()
-            subscene_track = None
-            for t in tracks:
-                if t.get_class() == unreal.MovieSceneSubTrack.static_class():
-                    subscene_track = t
-            if subscene_track is not None and subscene_track.get_sections():
-                subscenes = subscene_track.get_sections()
+            subscenes = pipeline.get_subsequences(s.get('sequence'))
 
+            if subscenes:
                 for ss in subscenes:
                     sequences.append({
                         "sequence": ss.get_sequence(),
