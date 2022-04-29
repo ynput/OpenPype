@@ -365,6 +365,7 @@ class TemplateResult(str):
             when value of key in data is dictionary but template expect string
             of number.
     """
+
     used_values = None
     solved = None
     template = None
@@ -383,6 +384,12 @@ class TemplateResult(str):
         new_obj.invalid_types = invalid_types
         return new_obj
 
+    def __copy__(self, *args, **kwargs):
+        return self.copy()
+
+    def __deepcopy__(self, *args, **kwargs):
+        return self.copy()
+
     def validate(self):
         if not self.solved:
             raise TemplateUnsolved(
@@ -390,6 +397,17 @@ class TemplateResult(str):
                 self.missing_keys,
                 self.invalid_types
             )
+
+    def copy(self):
+        cls = self.__class__
+        return cls(
+            str(self),
+            self.template,
+            self.solved,
+            self.used_values,
+            self.missing_keys,
+            self.invalid_types
+        )
 
 
 class TemplatesResultDict(dict):
