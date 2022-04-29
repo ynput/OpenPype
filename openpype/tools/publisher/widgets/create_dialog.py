@@ -255,6 +255,14 @@ class CreateDialog(QtWidgets.QDialog):
         context_layout.addWidget(tasks_widget, 1)
 
         # --- Creators view ---
+        creators_header_widget = QtWidgets.QWidget(self)
+        header_label_widget = QtWidgets.QLabel(
+            "Choose family:", creators_header_widget
+        )
+        creators_header_layout = QtWidgets.QHBoxLayout(creators_header_widget)
+        creators_header_layout.setContentsMargins(0, 0, 0, 0)
+        creators_header_layout.addWidget(header_label_widget, 1)
+
         creators_view = QtWidgets.QListView(self)
         creators_model = QtGui.QStandardItemModel()
         creators_view.setModel(creators_model)
@@ -289,7 +297,7 @@ class CreateDialog(QtWidgets.QDialog):
         mid_widget = QtWidgets.QWidget(self)
         mid_layout = QtWidgets.QVBoxLayout(mid_widget)
         mid_layout.setContentsMargins(0, 0, 0, 0)
-        mid_layout.addWidget(QtWidgets.QLabel("Choose family:", self))
+        mid_layout.addWidget(creators_header_widget, 0)
         mid_layout.addWidget(creators_view, 1)
         mid_layout.addLayout(form_layout, 0)
         # ------------
@@ -362,6 +370,10 @@ class CreateDialog(QtWidgets.QDialog):
         help_btn.clicked.connect(self._on_help_btn)
         help_btn.resized.connect(self._on_help_btn_resize)
 
+        assets_widget.header_height_changed.connect(
+            self._on_asset_filter_height_change
+        )
+
         create_btn.clicked.connect(self._on_create)
         variant_widget.resized.connect(self._on_variant_widget_resize)
         variant_input.returnPressed.connect(self._on_create)
@@ -394,6 +406,7 @@ class CreateDialog(QtWidgets.QDialog):
         self.variant_hints_menu = variant_hints_menu
         self.variant_hints_group = variant_hints_group
 
+        self._creators_header_widget = creators_header_widget
         self.creators_model = creators_model
         self.creators_view = creators_view
         self.create_btn = create_btn
@@ -471,6 +484,10 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _invalidate_prereq(self):
         self._prereq_timer.start()
+
+    def _on_asset_filter_height_change(self, height):
+        self._creators_header_widget.setMinimumHeight(height)
+        self._creators_header_widget.setMaximumHeight(height)
 
     def _on_prereq_timer(self):
         prereq_available = True
