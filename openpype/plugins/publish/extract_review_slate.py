@@ -353,7 +353,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         concat_args.append(args[indx + 1])
             # add output
             concat_args.append(output_path)
-                    
+
             if not input_audio:
                 # ffmpeg concat subprocess
                 self.log.debug(
