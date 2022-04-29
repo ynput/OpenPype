@@ -114,6 +114,8 @@ class CreateErrorMessageBox(ErrorMessageBox):
 
 # TODO add creator identifier/label to details
 class CreatorShortDescWidget(QtWidgets.QWidget):
+    height_changed = QtCore.Signal(int)
+
     def __init__(self, parent=None):
         super(CreatorShortDescWidget, self).__init__(parent=parent)
 
@@ -151,6 +153,22 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._icon_widget = icon_widget
         self._family_label = family_label
         self._description_label = description_label
+
+        self._last_height = None
+
+    def _check_height_change(self):
+        height = self.height()
+        if height != self._last_height:
+            self._last_height = height
+            self.height_changed.emit(height)
+
+    def showEvent(self, event):
+        super(CreatorShortDescWidget, self).showEvent(event)
+        self._check_height_change()
+
+    def resizeEvent(self, event):
+        super(CreatorShortDescWidget, self).resizeEvent(event)
+        self._check_height_change()
 
     def set_plugin(self, plugin=None):
         if not plugin:
@@ -309,10 +327,10 @@ class CreateDialog(QtWidgets.QDialog):
             creator_attrs_widget
         )
 
-        separator_widget = QtWidgets.QWidget(self)
-        separator_widget.setObjectName("Separator")
-        separator_widget.setMinimumHeight(2)
-        separator_widget.setMaximumHeight(2)
+        attr_separator_widget = QtWidgets.QWidget(self)
+        attr_separator_widget.setObjectName("Separator")
+        attr_separator_widget.setMinimumHeight(2)
+        attr_separator_widget.setMaximumHeight(2)
 
         # Precreate attributes widget
         pre_create_widget = PreCreateWidget(creator_attrs_widget)
@@ -330,21 +348,41 @@ class CreateDialog(QtWidgets.QDialog):
         creator_attrs_layout = QtWidgets.QVBoxLayout(creator_attrs_widget)
         creator_attrs_layout.setContentsMargins(0, 0, 0, 0)
         creator_attrs_layout.addWidget(creator_short_desc_widget, 0)
-        creator_attrs_layout.addWidget(separator_widget, 0)
+        creator_attrs_layout.addWidget(attr_separator_widget, 0)
         creator_attrs_layout.addWidget(pre_create_widget, 1)
         creator_attrs_layout.addWidget(create_btn_wrapper, 0)
         # -------------------------------------
 
         # --- Detailed information about creator ---
         # Detailed description of creator
-        detail_description_widget = QtWidgets.QTextEdit(self)
-        detail_description_widget.setObjectName("InfoText")
-        detail_description_widget.setTextInteractionFlags(
+        detail_description_widget = QtWidgets.QWidget(self)
+
+        detail_placoholder_widget = QtWidgets.QWidget(
+            detail_description_widget
+        )
+        detail_placoholder_widget.setAttribute(
+            QtCore.Qt.WA_TranslucentBackground
+        )
+
+        detail_description_input = QtWidgets.QTextEdit(
+            detail_description_widget
+        )
+        detail_description_input.setObjectName("InfoText")
+        detail_description_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
-        detail_description_widget.setVisible(False)
-        # -------------------------------------------
 
+        detail_description_layout = QtWidgets.QVBoxLayout(
+            detail_description_widget
+        )
+        detail_description_layout.setContentsMargins(0, 0, 0, 0)
+        detail_description_layout.setSpacing(0)
+        detail_description_layout.addWidget(detail_placoholder_widget, 0)
+        detail_description_layout.addWidget(detail_description_input, 1)
+
+        detail_description_widget.setVisible(False)
+
+        # -------------------------------------------
         splitter_widget = QtWidgets.QSplitter(self)
         splitter_widget.addWidget(context_widget)
         splitter_widget.addWidget(mid_widget)
@@ -359,6 +397,7 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(splitter_widget, 1)
 
         # Floating help button
+        # - Create this button as last to be fully visible
         help_btn = HelpButton(self)
 
         prereq_timer = QtCore.QTimer()
@@ -388,6 +427,9 @@ class CreateDialog(QtWidgets.QDialog):
             self._on_current_session_context_request
         )
         tasks_widget.task_changed.connect(self._on_task_change)
+        creator_short_desc_widget.height_changed.connect(
+            self._on_description_height_change
+        )
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
@@ -413,7 +455,11 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._creator_short_desc_widget = creator_short_desc_widget
         self._pre_create_widget = pre_create_widget
+        self._attr_separator_widget = attr_separator_widget
+
+        self._detail_placoholder_widget = detail_placoholder_widget
         self._detail_description_widget = detail_description_widget
+        self._detail_description_input = detail_description_input
         self._help_btn = help_btn
 
         self._prereq_timer = prereq_timer
@@ -619,6 +665,12 @@ class CreateDialog(QtWidgets.QDialog):
         if self._task_name:
             self._tasks_widget.select_task_name(self._task_name)
 
+    def _on_description_height_change(self):
+        # Use separator's 'y' position as height
+        height = self._attr_separator_widget.y()
+        self._detail_placoholder_widget.setMinimumHeight(height)
+        self._detail_placoholder_widget.setMaximumHeight(height)
+
     def _on_creator_item_change(self, new_index, _old_index):
         identifier = None
         if new_index.isValid():
@@ -666,14 +718,14 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _set_creator_detailed_text(self, creator):
         if not creator:
-            self._detail_description_widget.setPlainText("")
+            self._detail_description_input.setPlainText("")
             return
         detailed_description = creator.get_detail_description() or ""
         if commonmark:
             html = commonmark.commonmark(detailed_description)
-            self._detail_description_widget.setHtml(html)
+            self._detail_description_input.setHtml(html)
         else:
-            self._detail_description_widget.setMarkdown(detailed_description)
+            self._detail_description_input.setMarkdown(detailed_description)
 
     def _set_creator_by_identifier(self, identifier):
         creator = self.controller.manual_creators.get(identifier)
