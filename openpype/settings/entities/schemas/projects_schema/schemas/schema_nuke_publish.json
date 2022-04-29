@@ -212,7 +212,7 @@
                                         "object_type": "text"
                                     },
                                     {
-                                        "key": "sebsets",
+                                        "key": "subsets",
                                         "label": "Subsets",
                                         "type": "list",
                                         "object_type": "text"
