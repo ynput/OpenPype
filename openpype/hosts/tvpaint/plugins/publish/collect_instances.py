@@ -47,19 +47,18 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Conversion from older instances
             # - change 'render_layer' to 'renderlayer'
-            #       and 'render_pass' to 'renderpass'
+            render_layer = instance_data.get("instance_data")
+            if not render_layer:
+                # Render Layer has only variant
+                if instance_data["family"] == "renderLayer":
+                    render_layer = instance_data.get("variant")
 
-            if (
-                "renderlayer" not in instance_data
-                and "render_layer" in instance_data
-            ):
-                instance_data["renderlayer"] = instance_data["render_layer"]
+                # Backwards compatibility for renderPasses
+                elif "render_layer" in instance_data:
+                    render_layer = instance_data["render_layer"]
 
-            if (
-                "renderpass" not in instance_data
-                and "render_pass" in instance_data
-            ):
-                instance_data["renderpass"] = instance_data["render_pass"]
+                if render_layer:
+                    instance_data["renderlayer"] = render_layer
 
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
