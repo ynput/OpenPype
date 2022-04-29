@@ -560,11 +560,7 @@ class FileDef(AbtractAttrDef):
         # Change horizontal label
         is_label_horizontal = kwargs.get("is_label_horizontal")
         if is_label_horizontal is None:
-            if single_item:
-                is_label_horizontal = True
-            else:
-                is_label_horizontal = False
-            kwargs["is_label_horizontal"] = is_label_horizontal
+            kwargs["is_label_horizontal"] = False
 
         self.single_item = single_item
         self.folders = folders
