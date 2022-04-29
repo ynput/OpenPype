@@ -104,10 +104,10 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
             "representations": [],
             "layers": copy.deepcopy(context.data["layersData"]),
             "asset": asset_name,
-            "task": task_name
+            "task": task_name,
+            # Add render layer to instance data
+            "renderlayer": self.render_layer
         }
-        # Add 'renderlayer' and 'renderpass' to data
-        instance_data.update(dynamic_data)
 
         instance = context.create_instance(**instance_data)
 
