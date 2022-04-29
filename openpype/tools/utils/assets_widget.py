@@ -617,6 +617,16 @@ class AssetsWidget(QtWidgets.QWidget):
         header_layout.addWidget(current_asset_btn)
         header_layout.addWidget(refresh_btn)
 
+        # Make header widgets expand vertically if there is a place
+        for widget in (
+            current_asset_btn,
+            refresh_btn,
+            filter_input,
+        ):
+            size_policy = widget.sizePolicy()
+            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            widget.setSizePolicy(size_policy)
+
         # Layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -648,32 +658,6 @@ class AssetsWidget(QtWidgets.QWidget):
     @property
     def header_widget(self):
         return self._header_widget
-
-    def _check_btns_height(self):
-        """Make buttons to have same height as filter input field.
-
-        There is not handled case when buttons are bigger then filter input.
-        """
-        if self._filter_input.height() == self._last_btns_height:
-            return
-
-        height = self._filter_input.height()
-        self._last_btns_height = height
-
-        for widget in (
-            self._refresh_btn,
-            self._current_asset_btn
-        ):
-            widget.setMinimumHeight(height)
-            widget.setMaximumHeight(height)
-
-    def resizeEvent(self, event):
-        super(AssetsWidget, self).resizeEvent(event)
-        self._check_btns_height()
-
-    def showEvent(self, event):
-        super(AssetsWidget, self).showEvent(event)
-        self._check_btns_height()
 
     def _create_source_model(self):
         model = AssetModel(dbcon=self.dbcon, parent=self)
