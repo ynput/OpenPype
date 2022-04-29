@@ -77,7 +77,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             streams = get_ffprobe_streams(
                 input_path, self.log
             )
-            # get video metadata
+            # Get video metadata
             for stream in streams:
                 input_timecode = None
                 input_width = None
@@ -337,8 +337,23 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-i", conc_text_path,
                 "-c", "copy",
                 "-timecode", offset_timecode,
-                output_path
             ]
+            # Use arguments from ffmpeg preset
+            source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
+            if source_ffmpeg_cmd:
+                copy_args = (
+                    "-metadata",
+                    "-metadata:s:v:0",
+                )
+                args = source_ffmpeg_cmd.split(" ")
+                for indx, arg in enumerate(args):
+                    if arg in copy_args:
+                        concat_args.append(arg)
+                        # assumes arg has one parameter
+                        concat_args.append(args[indx + 1])
+            # add output
+            concat_args.append(output_path)
+                    
             if not input_audio:
                 # ffmpeg concat subprocess
                 self.log.debug(

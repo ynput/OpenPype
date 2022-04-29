@@ -568,6 +568,7 @@ def burnins_from_data(
         if source_ffmpeg_cmd:
             copy_args = (
                 "-metadata",
+                "-metadata:s:v:0",
             )
             args = source_ffmpeg_cmd.split(" ")
             for idx, arg in enumerate(args):
