@@ -20,7 +20,9 @@ class CreateRenderPass(plugin.Creator):
     icon = "cube"
     defaults = ["Main"]
 
-    dynamic_subset_keys = ["render_pass", "render_layer"]
+    dynamic_subset_keys = [
+        "renderpass", "renderlayer", "render_pass", "render_layer"
+    ]
 
     @classmethod
     def get_dynamic_data(
@@ -29,8 +31,12 @@ class CreateRenderPass(plugin.Creator):
         dynamic_data = super(CreateRenderPass, cls).get_dynamic_data(
             variant, task_name, asset_id, project_name, host_name
         )
-        dynamic_data["render_pass"] = variant
+        dynamic_data["renderpass"] = variant
         dynamic_data["family"] = "render"
+
+        # TODO remove - Backwards compatibility for old subset name templates
+        # - added 2022/04/28
+        dynamic_data["render_pass"] = dynamic_data["renderpass"]
 
         return dynamic_data
 
@@ -115,6 +121,7 @@ class CreateRenderPass(plugin.Creator):
         else:
             render_layer = beauty_instance["variant"]
 
+        subset_name_fill_data["renderlayer"] = render_layer
         subset_name_fill_data["render_layer"] = render_layer
 
         # Format dynamic keys in subset name
@@ -129,7 +136,7 @@ class CreateRenderPass(plugin.Creator):
 
         self.data["group_id"] = group_id
         self.data["pass"] = variant
-        self.data["render_layer"] = render_layer
+        self.data["renderlayer"] = render_layer
 
         # Collect selected layer ids to be stored into instance
         layer_names = [layer["name"] for layer in selected_layers]

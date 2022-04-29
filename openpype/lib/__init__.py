@@ -48,7 +48,6 @@ from .attribute_definitions import (
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
-    get_global_environments
 )
 
 from .terminal import Terminal
@@ -249,7 +248,6 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
-    "get_global_environments",
 
     "get_vendor_bin_path",
     "get_oiio_tools_path",
