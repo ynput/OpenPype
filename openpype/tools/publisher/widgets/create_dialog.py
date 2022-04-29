@@ -329,8 +329,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         attr_separator_widget = QtWidgets.QWidget(self)
         attr_separator_widget.setObjectName("Separator")
-        attr_separator_widget.setMinimumHeight(2)
-        attr_separator_widget.setMaximumHeight(2)
+        attr_separator_widget.setMinimumHeight(1)
+        attr_separator_widget.setMaximumHeight(1)
 
         # Precreate attributes widget
         pre_create_widget = PreCreateWidget(creator_attrs_widget)
