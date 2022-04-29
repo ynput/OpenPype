@@ -205,6 +205,18 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
                 return True
         return False
 
+    def filter_valid_files(self, filepaths):
+        filtered_paths = []
+        for filepath in filepaths:
+            if os.path.isfile(filepath):
+                _, ext = os.path.splitext(filepath)
+                if ext in self._allowed_extensions:
+                    filtered_paths.append(filepath)
+
+            elif self._allow_folders:
+                filtered_paths.append(filepath)
+        return filtered_paths
+
     def filterAcceptsRow(self, row, parent_index):
         # Skip filtering if multivalue is set
         if self._multivalue:
@@ -617,6 +629,9 @@ class FilesWidget(QtWidgets.QFrame):
                 filepath = url.toLocalFile()
                 if os.path.exists(filepath):
                     filepaths.append(filepath)
+
+            # Filter filepaths before passing it to model
+            filepaths = self._files_proxy_model.filter_valid_files(filepaths)
             if filepaths:
                 self._add_filepaths(filepaths)
         event.accept()
