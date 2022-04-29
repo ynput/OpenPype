@@ -404,7 +404,12 @@ class CreateDialog(QtWidgets.QDialog):
         prereq_timer.setInterval(50)
         prereq_timer.setSingleShot(True)
 
+        desc_width_anim_timer = QtCore.QTimer()
+        desc_width_anim_timer.setInterval(10)
+
         prereq_timer.timeout.connect(self._on_prereq_timer)
+
+        desc_width_anim_timer.timeout.connect(self._on_desc_animation)
 
         help_btn.clicked.connect(self._on_help_btn)
         help_btn.resized.connect(self._on_help_btn_resize)
@@ -464,6 +469,15 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._prereq_timer = prereq_timer
         self._first_show = True
+
+        # Description animation
+        self._description_size_policy = detail_description_widget.sizePolicy()
+        self._desc_width_anim_timer = desc_width_anim_timer
+        self._desc_widget_step = 0
+        self._last_description_width = None
+        self._last_full_width = 0
+        self._expected_description_width = 0
+        self._other_widgets_widths = []
 
     def _emit_message(self, message):
         self._overlay_object.add_message(message)
@@ -688,33 +702,138 @@ class CreateDialog(QtWidgets.QDialog):
         self._update_help_btn()
 
     def _on_help_btn(self):
+        if self._desc_width_anim_timer.isActive():
+            return
+
         final_size = self.size()
         cur_sizes = self._splitter_widget.sizes()
-        spacing = self._splitter_widget.handleWidth()
+
+        if self._desc_widget_step == 0:
+            now_visible = self._detail_description_widget.isVisible()
+        else:
+            now_visible = self._desc_widget_step > 0
 
         sizes = []
         for idx, value in enumerate(cur_sizes):
             if idx < 3:
                 sizes.append(value)
 
-        now_visible = self._detail_description_widget.isVisible()
+        self._last_full_width = final_size.width()
+        self._other_widgets_widths = list(sizes)
+
         if now_visible:
-            width = final_size.width() - (
-                spacing + self._detail_description_widget.width()
-            )
+            cur_desc_width = self._detail_description_widget.width()
+            if cur_desc_width < 1:
+                cur_desc_width = 2
+            step_size = int(cur_desc_width / 5)
+            if step_size < 1:
+                step_size = 1
+
+            step_size *= -1
+            expected_width = 0
+            desc_width = cur_desc_width - 1
+            width = final_size.width() - 1
+            min_max = desc_width
+            self._last_description_width = cur_desc_width
 
         else:
-            last_size = self._detail_description_widget.sizeHint().width()
-            width = final_size.width() + spacing + last_size
-            sizes.append(last_size)
+            self._detail_description_widget.setVisible(True)
+            handle = self._splitter_widget.handle(3)
+            desc_width = handle.sizeHint().width()
+            if self._last_description_width:
+                expected_width = self._last_description_width
+            else:
+                hint = self._detail_description_widget.sizeHint()
+                expected_width = hint.width()
+
+            width = final_size.width() + desc_width
+            step_size = int(expected_width / 5)
+            if step_size < 1:
+                step_size = 1
+            min_max = 0
+
+        self._detail_description_widget.setMinimumWidth(min_max)
+        self._detail_description_widget.setMaximumWidth(min_max)
+        self._expected_description_width = expected_width
+        self._desc_widget_step = step_size
+
+        self._desc_width_anim_timer.start()
+
+        sizes.append(desc_width)
 
         final_size.setWidth(width)
 
-        self._detail_description_widget.setVisible(not now_visible)
         self._splitter_widget.setSizes(sizes)
         self.resize(final_size)
 
         self._help_btn.set_expanded(not now_visible)
+
+    def _on_desc_animation(self):
+        current_width = self._detail_description_widget.width()
+
+        desc_width = None
+        last_step = False
+        growing = self._desc_widget_step > 0
+
+        # Growing
+        if growing:
+            if current_width < self._expected_description_width:
+                desc_width = current_width + self._desc_widget_step
+                if desc_width >= self._expected_description_width:
+                    desc_width = self._expected_description_width
+                    last_step = True
+
+        # Decreasing
+        elif self._desc_widget_step < 0:
+            if current_width > self._expected_description_width:
+                desc_width = current_width + self._desc_widget_step
+                if desc_width <= self._expected_description_width:
+                    desc_width = self._expected_description_width
+                    last_step = True
+
+        if desc_width is None:
+            self._desc_widget_step = 0
+            self._desc_width_anim_timer.stop()
+            return
+
+        if last_step and not growing:
+            self._detail_description_widget.setVisible(False)
+            QtWidgets.QApplication.processEvents()
+
+        width = self._last_full_width
+        handle_width = self._splitter_widget.handle(3).width()
+        if growing:
+            width += (handle_width + desc_width)
+        else:
+            width -= self._last_description_width
+            if last_step:
+                width -= handle_width
+            else:
+                width += desc_width
+
+        if not last_step or growing:
+            self._detail_description_widget.setMaximumWidth(desc_width)
+            self._detail_description_widget.setMinimumWidth(desc_width)
+
+        window_size = self.size()
+        window_size.setWidth(width)
+        self.resize(window_size)
+        if not last_step:
+            return
+
+        self._desc_widget_step = 0
+        self._desc_width_anim_timer.stop()
+
+        if not growing:
+            return
+
+        self._detail_description_widget.setSizePolicy(
+            self._description_size_policy
+        )
+
+        sizes = list(self._other_widgets_widths)
+        sizes.append(desc_width)
+        self._splitter_widget.setSizes(sizes)
 
     def _set_creator_detailed_text(self, creator):
         if not creator:
