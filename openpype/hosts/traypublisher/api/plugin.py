@@ -96,6 +96,7 @@ class SettingsCreator(TrayPublishCreator):
                 "label": item_data["label"].strip(),
                 "icon": item_data["icon"],
                 "description": item_data["description"],
+                "detailed_description": item_data["detailed_description"],
                 "enable_review": item_data["enable_review"],
                 "extensions": item_data["extensions"],
                 "allow_sequences": item_data["allow_sequences"],
