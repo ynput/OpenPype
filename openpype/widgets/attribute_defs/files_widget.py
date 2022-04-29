@@ -251,7 +251,7 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 
 
 class ItemWidget(QtWidgets.QWidget):
-    split_requested = QtCore.Signal(str)
+    context_menu_requested = QtCore.Signal(QtCore.QPoint)
 
     def __init__(
         self, item_id, label, pixmap_icon, is_sequence, multivalue, parent=None
@@ -316,19 +316,9 @@ class ItemWidget(QtWidgets.QWidget):
         self._update_btn_size()
 
     def _on_actions_clicked(self):
-        menu = QtWidgets.QMenu(self._split_btn)
-
-        action = QtWidgets.QAction("Split sequence", menu)
-        action.triggered.connect(self._on_split_sequence)
-
-        menu.addAction(action)
-
         pos = self._split_btn.rect().bottomLeft()
         point = self._split_btn.mapToGlobal(pos)
-        menu.popup(point)
-
-    def _on_split_sequence(self):
-        self.split_requested.emit(self._item_id)
+        self.context_menu_requested.emit(point)
 
 
 class InViewButton(IconButton):
@@ -339,6 +329,7 @@ class FilesView(QtWidgets.QListView):
     """View showing instances and their groups."""
 
     remove_requested = QtCore.Signal()
+    context_menu_requested = QtCore.Signal(QtCore.QPoint)
 
     def __init__(self, *args, **kwargs):
         super(FilesView, self).__init__(*args, **kwargs)
@@ -347,6 +338,7 @@ class FilesView(QtWidgets.QListView):
         self.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
         remove_btn = InViewButton(self)
         pix_enabled = paint_image_with_color(
@@ -361,6 +353,7 @@ class FilesView(QtWidgets.QListView):
         remove_btn.setEnabled(False)
 
         remove_btn.clicked.connect(self._on_remove_clicked)
+        self.customContextMenuRequested.connect(self._on_context_menu_request)
 
         self._remove_btn = remove_btn
 
@@ -397,6 +390,12 @@ class FilesView(QtWidgets.QListView):
                 selected_item_ids.add(instance_id)
         return selected_item_ids
 
+    def has_selected_sequence(self):
+        for index in self.selectionModel().selectedIndexes():
+            if index.data(IS_SEQUENCE_ROLE):
+                return True
+        return False
+
     def event(self, event):
         if event.type() == QtCore.QEvent.KeyPress:
             if (
@@ -407,6 +406,12 @@ class FilesView(QtWidgets.QListView):
                 return True
 
         return super(FilesView, self).event(event)
+
+    def _on_context_menu_request(self, pos):
+        index = self.indexAt(pos)
+        if index.isValid():
+            point = self.mapToGlobal(pos)
+            self.context_menu_requested.emit(point)
 
     def _on_selection_change(self):
         self._remove_btn.setEnabled(self.has_selected_item_ids())
@@ -456,6 +461,9 @@ class FilesWidget(QtWidgets.QFrame):
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
         files_view.remove_requested.connect(self._on_remove_requested)
+        files_view.context_menu_requested.connect(
+            self._on_context_menu_requested
+        )
         self._in_set_value = False
         self._single_item = single_item
         self._multivalue = False
@@ -527,7 +535,9 @@ class FilesWidget(QtWidgets.QFrame):
                 is_sequence,
                 self._multivalue
             )
-            widget.split_requested.connect(self._on_split_request)
+            widget.context_menu_requested.connect(
+                self._on_context_menu_requested
+            )
             self._files_view.setIndexWidget(index, widget)
             self._files_proxy_model.setData(
                 index, widget.sizeHint(), QtCore.Qt.SizeHintRole
@@ -559,17 +569,22 @@ class FilesWidget(QtWidgets.QFrame):
         if not self._in_set_value:
             self.value_changed.emit()
 
-    def _on_split_request(self, item_id):
+    def _on_split_request(self):
         if self._multivalue:
             return
 
-        file_item = self._files_model.get_file_item_by_id(item_id)
-        if not file_item:
+        item_ids = self._files_view.get_selected_item_ids()
+        if not item_ids:
             return
 
-        new_items = file_item.split_sequence()
-        self._remove_item_by_ids([item_id])
-        self._add_filepaths(new_items)
+        for item_id in item_ids:
+            file_item = self._files_model.get_file_item_by_id(item_id)
+            if not file_item:
+                return
+
+            new_items = file_item.split_sequence()
+            self._add_filepaths(new_items)
+        self._remove_item_by_ids(item_ids)
 
     def _on_remove_requested(self):
         if self._multivalue:
@@ -578,6 +593,22 @@ class FilesWidget(QtWidgets.QFrame):
         items_to_delete = self._files_view.get_selected_item_ids()
         if items_to_delete:
             self._remove_item_by_ids(items_to_delete)
+
+    def _on_context_menu_requested(self, pos):
+        if self._multivalue:
+            return
+
+        menu = QtWidgets.QMenu(self._files_view)
+
+        remove_action = QtWidgets.QAction("Remove", menu)
+        remove_action.triggered.connect(self._on_remove_requested)
+        menu.addAction(remove_action)
+
+        if self._files_view.has_selected_sequence():
+            remove_action = QtWidgets.QAction("Split sequence", menu)
+            remove_action.triggered.connect(self._on_split_request)
+
+        menu.popup(pos)
 
     def sizeHint(self):
         # Get size hints of widget and visible widgets
