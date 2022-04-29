@@ -367,7 +367,7 @@ class CreateDialog(QtWidgets.QDialog):
         detail_description_input = QtWidgets.QTextEdit(
             detail_description_widget
         )
-        detail_description_input.setObjectName("InfoText")
+        detail_description_input.setObjectName("CreatorDetailedDescription")
         detail_description_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )

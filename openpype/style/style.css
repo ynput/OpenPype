@@ -856,6 +856,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* New Create/Publish UI */
+#CreatorDetailedDescription {
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    background: transparent;
+    border: 1px solid {color:border};
+}
+
 #CreateDialogHelpButton {
     background: rgba(255, 255, 255, 31);
     border-top-right-radius: 0;
