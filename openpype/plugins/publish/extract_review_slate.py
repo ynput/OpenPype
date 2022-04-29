@@ -213,7 +213,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
             input_args.extend(["-r {}".format(input_frame_rate)])
             input_args.extend(["-frames:v 1"])
             # add timecode from source to the slate, substract one frame
+            offset_timecode = "00:00:00:00"
             if input_timecode:
+                offset_timecode = str(input_timecode)
                 offset_timecode = self._tc_offset(
                     str(input_timecode),
                     framerate=fps,
@@ -222,11 +224,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 self.log.debug("Slate Timecode: `{}`".format(
                     offset_timecode
                 ))
-                if offset_timecode:
-                    input_args.extend(["-timecode {}".format(offset_timecode)])
-                else:
-                    # fall back to input timecode if offset fails
-                    input_args.extend(["-timecode {}".format(input_timecode)])
+                input_args.extend(["-timecode {}".format(offset_timecode)])
             if use_legacy_code:
                 codec_args = repre["_profile"].get('codec', [])
                 output_args.extend(codec_args)
@@ -283,11 +281,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     width_scale, height_scale, to_width, to_height,
                     width_half_pad, height_half_pad
                 )
-            # add output frame rate as a filter, just in case
-            scaling_arg += ",fps={}".format(input_frame_rate)
-            vf_back = self.add_video_filter_args(output_args, scaling_arg)
-            # add it to output_args
-            output_args.insert(0, vf_back)
+                # add output frame rate as a filter, just in case
+                scaling_arg += ",fps={}".format(input_frame_rate)
+
+                vf_back = self.add_video_filter_args(output_args, scaling_arg)
+                # add it to output_args
+                output_args.insert(0, vf_back)
 
             # overrides output file
             output_args.append("-y")
@@ -336,7 +335,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-f", "concat",
                 "-safe", "0",
                 "-i", conc_text_path,
-                "-c:v", "copy",
+                "-c", "copy",
+                "-timecode",  offset_timecode,
                 output_path
             ]
             if not input_audio:
