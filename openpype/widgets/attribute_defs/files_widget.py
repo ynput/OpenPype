@@ -410,7 +410,7 @@ class FilesView(QtWidgets.QListView):
     def _on_context_menu_request(self, pos):
         index = self.indexAt(pos)
         if index.isValid():
-            point = self.mapToGlobal(pos)
+            point = self.viewport().mapToGlobal(pos)
             self.context_menu_requested.emit(point)
 
     def _on_selection_change(self):
@@ -600,13 +600,14 @@ class FilesWidget(QtWidgets.QFrame):
 
         menu = QtWidgets.QMenu(self._files_view)
 
+        if self._files_view.has_selected_sequence():
+            split_action = QtWidgets.QAction("Split sequence", menu)
+            split_action.triggered.connect(self._on_split_request)
+            menu.addAction(split_action)
+
         remove_action = QtWidgets.QAction("Remove", menu)
         remove_action.triggered.connect(self._on_remove_requested)
         menu.addAction(remove_action)
-
-        if self._files_view.has_selected_sequence():
-            remove_action = QtWidgets.QAction("Split sequence", menu)
-            remove_action.triggered.connect(self._on_split_request)
 
         menu.popup(pos)
 
