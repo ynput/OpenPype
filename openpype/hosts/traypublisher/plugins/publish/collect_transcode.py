@@ -18,6 +18,9 @@ class CollectTranscode(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.debug(f"instance: `{instance}`")
         # get representation with editorial file
+        audio_path = None
+        import pprint
+        self.log.info(pprint.pformat(instance.data, indent=4))
         for representation in instance.data["representations"]:
             self.log.debug(f"representation: `{representation}`")
             # make editorial sequence file path
@@ -47,7 +50,6 @@ class CollectTranscode(pyblish.api.InstancePlugin):
             )
 
             # Get audio file path.
-            audio_path = None
             basename = os.path.splitext(os.path.basename(file_path))[0]
             for f in os.listdir(staging_dir):
                 self.log.debug(f"search file: `{f}`")

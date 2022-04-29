@@ -10,16 +10,6 @@ log = Logger.get_logger(__name__)
 
 def tag_data():
     return {
-        # "Retiming": {
-        #     "editable": "1",
-        #     "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa
-        #     "icon": "retiming.png",
-        #     "metadata": {
-        #         "family": "retiming",
-        #         "marginIn": 1,
-        #         "marginOut": 1
-        #     }
-        # },
         "[Lenses]": {
             "Set lense here": {
                 "editable": "1",
@@ -47,6 +37,16 @@ def tag_data():
             "metadata": {
                 "family": "comment",
                 "subset": "main"
+            }
+        },
+        "FrameMain": {
+            "editable": "1",
+            "note": "Publishing a frame subset.",
+            "icon": "z_layer_main.png",
+            "metadata": {
+                "family": "frame",
+                "subset": "main",
+                "format": "png"
             }
         }
     }
