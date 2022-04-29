@@ -129,7 +129,7 @@ class CollectFrameTagInstances(pyblish.api.ContextPlugin):
                 "family": "image",
                 "families": ["frame"],
                 "asset": subset_data["asset"],
-                "subset": subset_name,
+                "subset": name,
                 "format": subset_data["format"],
                 "frames": subset_data["frames"]
             }
