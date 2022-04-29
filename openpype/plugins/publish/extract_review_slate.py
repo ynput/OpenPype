@@ -336,7 +336,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-safe", "0",
                 "-i", conc_text_path,
                 "-c", "copy",
-                "-timecode",  offset_timecode,
+                "-timecode", offset_timecode,
                 output_path
             ]
             if not input_audio:
