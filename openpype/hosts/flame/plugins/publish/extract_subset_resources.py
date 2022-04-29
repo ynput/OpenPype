@@ -236,8 +236,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
             # define kwargs based on preset type
             if "thumbnail" in unique_name:
-                export_kwargs["thumb_frame_number"] = in_mark + (
-                    source_duration_handles / 2)
+                export_kwargs["thumb_frame_number"] = int(in_mark + (
+                    source_duration_handles / 2))
             else:
                 export_kwargs.update({
                     "in_mark": in_mark,
