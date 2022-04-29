@@ -467,12 +467,15 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _on_prereq_timer(self):
         prereq_available = True
+        creator_btn_tooltips = []
         if self.creators_model.rowCount() < 1:
             prereq_available = False
+            creator_btn_tooltips.append("Creator is not selected")
 
         if self._asset_doc is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
+            creator_btn_tooltips.append("Context is not selected")
 
         if prereq_available != self._prereq_available:
             self._prereq_available = prereq_available
@@ -481,6 +484,12 @@ class CreateDialog(QtWidgets.QDialog):
             self.creators_view.setEnabled(prereq_available)
             self.variant_input.setEnabled(prereq_available)
             self.variant_hints_btn.setEnabled(prereq_available)
+
+        tooltip = ""
+        if creator_btn_tooltips:
+            tooltip = "\n".join(creator_btn_tooltips)
+        self.create_btn.setToolTip(tooltip)
+
         self._on_variant_change()
 
     def _refresh_asset(self):
