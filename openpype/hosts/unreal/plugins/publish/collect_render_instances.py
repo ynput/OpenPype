@@ -84,8 +84,9 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                         project = os.environ.get("AVALON_PROJECT")
                         anatomy = Anatomy(project)
                         root = anatomy.roots['renders']
-                    except:
-                        raise Exception("Could not find render root in anatomy settings.")
+                    except Exception:
+                        raise Exception(
+                            "Could not find render root in anatomy settings.")
 
                     render_dir = f"{root}/{project}/{s.get('output')}"
                     render_path = Path(render_dir)

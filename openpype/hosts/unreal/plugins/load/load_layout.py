@@ -853,7 +853,8 @@ class LayoutLoader(plugin.Loader):
             if visibility_track:
                 sections = visibility_track.get_sections()
                 for ss in sections:
-                    if unreal.Name(f"{container.get('asset')}_map") in ss.get_level_names():
+                    if (unreal.Name(f"{container.get('asset')}_map")
+                            in ss.get_level_names()):
                         visibility_track.remove_section(ss)
                 # Update visibility sections indexes.
                 i = -1

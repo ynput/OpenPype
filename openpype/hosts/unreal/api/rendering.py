@@ -53,7 +53,7 @@ def start_rendering():
         project = os.environ.get("AVALON_PROJECT")
         anatomy = Anatomy(project)
         root = anatomy.roots['renders']
-    except:
+    except Exception:
         raise Exception("Could not find render root in anatomy settings.")
 
     render_dir = f"{root}/{project}"
