@@ -589,10 +589,12 @@ class AssetsWidget(QtWidgets.QWidget):
         view = AssetsView(self)
         view.setModel(proxy)
 
+        header_widget = QtWidgets.QWidget(self)
+
         current_asset_icon = qtawesome.icon(
             "fa.arrow-down", color=get_default_tools_icon_color()
         )
-        current_asset_btn = QtWidgets.QPushButton(self)
+        current_asset_btn = QtWidgets.QPushButton(header_widget)
         current_asset_btn.setIcon(current_asset_icon)
         current_asset_btn.setToolTip("Go to Asset from current Session")
         # Hide by default
@@ -601,15 +603,16 @@ class AssetsWidget(QtWidgets.QWidget):
         refresh_icon = qtawesome.icon(
             "fa.refresh", color=get_default_tools_icon_color()
         )
-        refresh_btn = QtWidgets.QPushButton(self)
+        refresh_btn = QtWidgets.QPushButton(header_widget)
         refresh_btn.setIcon(refresh_icon)
         refresh_btn.setToolTip("Refresh items")
 
-        filter_input = PlaceholderLineEdit(self)
+        filter_input = PlaceholderLineEdit(header_widget)
         filter_input.setPlaceholderText("Filter assets..")
 
         # Header
-        header_layout = QtWidgets.QHBoxLayout()
+        header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(filter_input)
         header_layout.addWidget(current_asset_btn)
         header_layout.addWidget(refresh_btn)
@@ -617,9 +620,8 @@ class AssetsWidget(QtWidgets.QWidget):
         # Layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-        layout.addLayout(header_layout)
-        layout.addWidget(view)
+        layout.addWidget(header_widget, 0)
+        layout.addWidget(view, 1)
 
         # Signals/Slots
         filter_input.textChanged.connect(self._on_filter_text_change)
@@ -630,6 +632,8 @@ class AssetsWidget(QtWidgets.QWidget):
         current_asset_btn.clicked.connect(self._on_current_asset_click)
         view.doubleClicked.connect(self.double_clicked)
 
+        self._header_widget = header_widget
+        self._filter_input = filter_input
         self._refresh_btn = refresh_btn
         self._current_asset_btn = current_asset_btn
         self._model = model
@@ -637,7 +641,39 @@ class AssetsWidget(QtWidgets.QWidget):
         self._view = view
         self._last_project_name = None
 
+        self._last_btns_height = None
+
         self.model_selection = {}
+
+    @property
+    def header_widget(self):
+        return self._header_widget
+
+    def _check_btns_height(self):
+        """Make buttons to have same height as filter input field.
+
+        There is not handled case when buttons are bigger then filter input.
+        """
+        if self._filter_input.height() == self._last_btns_height:
+            return
+
+        height = self._filter_input.height()
+        self._last_btns_height = height
+
+        for widget in (
+            self._refresh_btn,
+            self._current_asset_btn
+        ):
+            widget.setMinimumHeight(height)
+            widget.setMaximumHeight(height)
+
+    def resizeEvent(self, event):
+        super(AssetsWidget, self).resizeEvent(event)
+        self._check_btns_height()
+
+    def showEvent(self, event):
+        super(AssetsWidget, self).showEvent(event)
+        self._check_btns_height()
 
     def _create_source_model(self):
         model = AssetModel(dbcon=self.dbcon, parent=self)
@@ -669,6 +705,7 @@ class AssetsWidget(QtWidgets.QWidget):
         This separation gives ability to override this method and use it
         in differnt way.
         """
+
         self.set_current_session_asset()
 
     def set_current_session_asset(self):
@@ -681,6 +718,7 @@ class AssetsWidget(QtWidgets.QWidget):
         Some tools may have their global refresh button or do not support
         refresh at all.
         """
+
         if visible is None:
             visible = not self._refresh_btn.isVisible()
         self._refresh_btn.setVisible(visible)
@@ -690,6 +728,7 @@ class AssetsWidget(QtWidgets.QWidget):
 
         Not all tools support using of current context asset.
         """
+
         if visible is None:
             visible = not self._current_asset_btn.isVisible()
         self._current_asset_btn.setVisible(visible)
@@ -723,6 +762,7 @@ class AssetsWidget(QtWidgets.QWidget):
         so if you're modifying model keep in mind that this method should be
         called when refresh is done.
         """
+
         self._proxy.sort(0)
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
@@ -767,6 +807,7 @@ class SingleSelectAssetsWidget(AssetsWidget):
 
     Contain single selection specific api methods.
     """
+
     def get_selected_asset_id(self):
         """Currently selected asset id."""
         selection_model = self._view.selectionModel()
