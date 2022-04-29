@@ -238,25 +238,19 @@
                                 "type": "dict",
                                 "children": [
                                     {
-                                        "key": "ext",
-                                        "label": "Output extension",
-                                        "type": "text"
+                                        "type": "boolean",
+                                        "key": "active",
+                                        "label": "Is active",
+                                        "default": true
                                     },
                                     {
-                                        "key": "xml_preset_file",
-                                        "label": "XML preset file (with ext)",
-                                        "type": "text"
-                                    },
-                                    {
-                                        "key": "xml_preset_dir",
-                                        "label": "XML preset folder (optional)",
-                                        "type": "text"
+                                        "type": "separator"
                                     },
                                     {
                                         "key": "export_type",
                                         "label": "Eport clip type",
                                         "type": "enum",
-                                        "default": "File Sequence",
+                                        "default": "Sequence Publish",
                                         "enum_items": [
                                             {
                                                 "Movie": "Movie"
@@ -268,57 +262,123 @@
                                                 "Sequence Publish": "Sequence Publish"
                                             }
                                         ]
-
                                     },
                                     {
-                                        "type": "separator"
+                                        "key": "ext",
+                                        "label": "Output extension",
+                                        "type": "text",
+                                        "default": "exr"
                                     },
                                     {
-                                        "type": "boolean",
-                                        "key": "ignore_comment_attrs",
-                                        "label": "Ignore attributes parsed from a segment comments"
-                                    },
-                                    {
-                                        "type": "separator"
+                                        "key": "xml_preset_file",
+                                        "label": "XML preset file (with ext)",
+                                        "type": "text"
                                     },
                                     {
                                         "key": "colorspace_out",
                                         "label": "Output color (imageio)",
-                                        "type": "text"
-                                    },
-                                    {
-                                        "type": "separator"
-                                    },
-                                    {
-                                        "type": "boolean",
-                                        "key": "representation_add_range",
-                                        "label": "Add frame range to representation"
-                                    },
-                                    {
-                                        "type": "list",
-                                        "key": "representation_tags",
-                                        "label": "Add representation tags",
-                                        "object_type": {
-                                            "type": "text",
-                                            "multiline": false
-                                        }
-                                    },
-                                    {
-                                        "type": "separator"
-                                    },
-                                    {
-                                        "type": "boolean",
-                                        "key": "load_to_batch_group",
-                                        "label": "Load to batch group reel",
-                                        "default": false
-                                    },
-                                    {
                                         "type": "text",
-                                        "key": "batch_group_loader_name",
-                                        "label": "Use loader name"
+                                        "default": "linear"
+                                    },
+                                    {
+                                        "type": "collapsible-wrap",
+                                        "label": "Other parameters",
+                                        "collapsible": true,
+                                        "collapsed": true,
+                                        "children": [
+                                            {
+                                                "key": "xml_preset_dir",
+                                                "label": "XML preset folder (optional)",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "type": "separator"
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "parsed_comment_attrs",
+                                                "label": "Include parsed attributes from comments",
+                                                "default": false
+
+                                            },
+                                            {
+                                                "type": "separator"
+                                            },
+                                            {
+                                                "type": "collapsible-wrap",
+                                                "label": "Representation",
+                                                "collapsible": true,
+                                                "collapsed": true,
+                                                "children": [
+                                                    {
+                                                        "type": "boolean",
+                                                        "key": "representation_add_range",
+                                                        "label": "Add frame range to representation"
+                                                    },
+                                                    {
+                                                        "type": "list",
+                                                        "key": "representation_tags",
+                                                        "label": "Add representation tags",
+                                                        "object_type": {
+                                                            "type": "text",
+                                                            "multiline": false
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "collapsible-wrap",
+                                                "label": "Loading during publish",
+                                                "collapsible": true,
+                                                "collapsed": true,
+                                                "children": [
+                                                    {
+                                                        "type": "boolean",
+                                                        "key": "load_to_batch_group",
+                                                        "label": "Load to batch group reel",
+                                                        "default": false
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "batch_group_loader_name",
+                                                        "label": "Use loader name"
+                                                    }
+                                                ]
+                                            }
+
+                                        ]
+                                    },
+                                    {
+                                        "type": "collapsible-wrap",
+                                        "label": "Filtering",
+                                        "collapsible": true,
+                                        "collapsed": true,
+                                        "children": [
+                                            {
+                                                "key": "filter_path_regex",
+                                                "label": "Regex in clip path",
+                                                "type": "text",
+                                                "default": ".*"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "IntegrateBatchGroup",
+                    "label": "IntegrateBatchGroup",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
                         }
                     ]
                 }
