@@ -68,6 +68,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "subset": "{}{}".format(asset, subset.capitalize()),
             "item": project,
             "family": "workfile",
+            "families": [],
             "representations": [workfile_representation, thumb_representation]
         }
 
@@ -77,6 +78,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         # update context with main project attributes
         context_data = {
             "activeProject": project,
+            "activeTimeline": active_timeline,
             "otioTimeline": otio_timeline,
             "currentFile": curent_file,
             "colorspace": self.get_colorspace(project),
