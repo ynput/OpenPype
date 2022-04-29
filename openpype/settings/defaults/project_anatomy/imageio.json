@@ -170,7 +170,7 @@
         "regexInputs": {
             "inputs": [
                 {
-                    "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
+                    "regex": "(beauty).*(?=.exr)",
                     "colorspace": "linear"
                 }
             ]
