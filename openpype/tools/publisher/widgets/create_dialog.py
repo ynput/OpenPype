@@ -282,9 +282,6 @@ class CreateDialog(QtWidgets.QDialog):
         subset_name_input = QtWidgets.QLineEdit(self)
         subset_name_input.setEnabled(False)
 
-        create_btn = QtWidgets.QPushButton("Create", self)
-        create_btn.setEnabled(False)
-
         form_layout = QtWidgets.QFormLayout()
         form_layout.addRow("Variant:", variant_widget)
         form_layout.addRow("Subset:", subset_name_input)
@@ -295,7 +292,6 @@ class CreateDialog(QtWidgets.QDialog):
         mid_layout.addWidget(QtWidgets.QLabel("Choose family:", self))
         mid_layout.addWidget(creators_view, 1)
         mid_layout.addLayout(form_layout, 0)
-        mid_layout.addWidget(create_btn, 0)
         # ------------
 
         # --- Creator short info and attr defs ---
@@ -313,11 +309,22 @@ class CreateDialog(QtWidgets.QDialog):
         # Precreate attributes widget
         pre_create_widget = PreCreateWidget(creator_attrs_widget)
 
+        # Create button
+        create_btn_wrapper = QtWidgets.QWidget(creator_attrs_widget)
+        create_btn = QtWidgets.QPushButton("Create", create_btn_wrapper)
+        create_btn.setEnabled(False)
+
+        create_btn_wrap_layout = QtWidgets.QHBoxLayout(create_btn_wrapper)
+        create_btn_wrap_layout.setContentsMargins(0, 0, 0, 0)
+        create_btn_wrap_layout.addStretch(1)
+        create_btn_wrap_layout.addWidget(create_btn, 0)
+
         creator_attrs_layout = QtWidgets.QVBoxLayout(creator_attrs_widget)
         creator_attrs_layout.setContentsMargins(0, 0, 0, 0)
         creator_attrs_layout.addWidget(creator_short_desc_widget, 0)
         creator_attrs_layout.addWidget(separator_widget, 0)
         creator_attrs_layout.addWidget(pre_create_widget, 1)
+        creator_attrs_layout.addWidget(create_btn_wrapper, 0)
         # -------------------------------------
 
         # --- Detailed information about creator ---
