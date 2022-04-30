@@ -1,0 +1,36 @@
+{
+    "simple_creators": [
+        {
+            "family": "workfile",
+            "identifier": "",
+            "label": "Workfile",
+            "icon": "fa.file",
+            "default_variants": [
+                "Main"
+            ],
+            "enable_review": false,
+            "description": "Publish workfile backup",
+            "detailed_description": "",
+            "allow_sequences": true,
+            "extensions": [
+                ".ma",
+                ".mb",
+                ".nk",
+                ".hrox",
+                ".hip",
+                ".hiplc",
+                ".hipnc",
+                ".blend",
+                ".scn",
+                ".tvpp",
+                ".comp",
+                ".zip",
+                ".prproj",
+                ".drp",
+                ".psd",
+                ".psb",
+                ".aep"
+            ]
+        }
+    ]
+}

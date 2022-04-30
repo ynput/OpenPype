@@ -41,6 +41,7 @@ class ExtractBurnin(openpype.api.Extractor):
         "shell",
         "hiero",
         "premiere",
+        "traypublisher",
         "standalonepublisher",
         "harmony",
         "fusion",
