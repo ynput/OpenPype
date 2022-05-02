@@ -28,6 +28,22 @@
                     ]
                 },
                 {
+                    "key": "hex",
+                    "label": "Hexadecimal (0x)",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "name",
+                            "label": "Name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "value",
+                            "label": "Value"
+                        }
+                    ]
+                },
+                {
                     "key": "bool",
                     "label": "Boolean",
                     "children": [
@@ -123,6 +139,48 @@
                             "key": "value",
                             "label": "Value",
                             "object_types": [
+                                {
+                                    "type": "number",
+                                    "key": "x",
+                                    "default": 1,
+                                    "decimal": 4
+                                },
+                                {
+                                    "type": "number",
+                                    "key": "y",
+                                    "default": 1,
+                                    "decimal": 4
+                                },
+                                {
+                                    "type": "number",
+                                    "key": "y",
+                                    "default": 1,
+                                    "decimal": 4
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "color",
+                    "label": "Color",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "name",
+                            "label": "Name"
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "value",
+                            "label": "Value",
+                            "object_types": [
+                                {
+                                    "type": "number",
+                                    "key": "x",
+                                    "default": 1,
+                                    "decimal": 4
+                                },
                                 {
                                     "type": "number",
                                     "key": "x",
