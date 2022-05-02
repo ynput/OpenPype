@@ -92,6 +92,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         invalid = False
+        multipart = False
 
         renderer = instance.data['renderer']
         layer = instance.data['setMembers']
@@ -111,6 +112,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
 
         required_prefix = "maya/<scene>"
+        default_prefix = cls.ImagePrefixTokens[renderer]
 
         if not anim_override:
             invalid = True
@@ -211,14 +213,20 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     cls.log.error("Wrong image prefix [ {} ] - "
                                   "You can't use '<renderpass>' token "
                                   "with merge AOVs turned on".format(prefix))
+                default_prefix = re.sub(
+                    cls.R_AOV_TOKEN, "", default_prefix)
+                # remove aov token from prefix to pass validation
+                # first resolve it and then remove if dangling
+                default_prefix = default_prefix.replace(
+                    "{aov_separator}", instance.data.get("aovSeparator", "_"))
+                default_prefix = default_prefix.rstrip(
+                    instance.data.get("aovSeparator", "_"))
             elif not re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
                               "doesn't have: '<renderpass>' or "
                               "token".format(prefix))
 
-        # prefix check
-        default_prefix = cls.ImagePrefixTokens[renderer]
         default_prefix = default_prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
         if prefix.lower() != default_prefix.lower():
