@@ -17,11 +17,10 @@ import bson
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
-from avalon import api, io
-
 from openpype import lib
 from openpype.api import get_anatomy_settings
 from openpype.pipeline import (
+    legacy_io,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
@@ -1388,9 +1387,13 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]},
-                                 projection={"_id": True})
+        asset_data = legacy_io.find_one(
+            {
+                "type": "asset",
+                "name": legacy_io.Session["AVALON_ASSET"]
+            },
+            projection={"_id": True}
+        )
         assert asset_data, "No current asset found in Session"
         asset_id = asset_data['_id']
 
@@ -1545,9 +1548,11 @@ def list_looks(asset_id):
 
     # # get all subsets with look leading in
     # the name associated with the asset
-    subset = io.find({"parent": bson.ObjectId(asset_id),
-                      "type": "subset",
-                      "name": {"$regex": "look*"}})
+    subset = legacy_io.find({
+        "parent": bson.ObjectId(asset_id),
+        "type": "subset",
+        "name": {"$regex": "look*"}
+    })
 
     return list(subset)
 
@@ -1566,13 +1571,17 @@ def assign_look_by_version(nodes, version_id):
     """
 
     # Get representations of shader file and relationships
-    look_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "ma"})
+    look_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "ma"
+    })
 
-    json_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "json"})
+    json_representation = legacy_io.find_one({
+        "type": "representation",
+        "parent": version_id,
+        "name": "json"
+    })
 
     # See if representation is already loaded, if so reuse it.
     host = registered_host()
@@ -1637,9 +1646,11 @@ def assign_look(nodes, subset="lookDefault"):
         except bson.errors.InvalidId:
             log.warning("Asset ID is not compatible with bson")
             continue
-        subset_data = io.find_one({"type": "subset",
-                                   "name": subset,
-                                   "parent": asset_id})
+        subset_data = legacy_io.find_one({
+            "type": "subset",
+            "name": subset,
+            "parent": asset_id
+        })
 
         if not subset_data:
             log.warning("No subset '{}' found for {}".format(subset, asset_id))
@@ -1647,13 +1658,18 @@ def assign_look(nodes, subset="lookDefault"):
 
         # get last version
         # with backwards compatibility
-        version = io.find_one({"parent": subset_data['_id'],
-                               "type": "version",
-                               "data.families":
-                                   {"$in": ["look"]}
-                               },
-                              sort=[("name", -1)],
-                              projection={"_id": True, "name": True})
+        version = legacy_io.find_one(
+            {
+                "parent": subset_data['_id'],
+                "type": "version",
+                "data.families": {"$in": ["look"]}
+            },
+            sort=[("name", -1)],
+            projection={
+                "_id": True,
+                "name": True
+            }
+        )
 
         log.debug("Assigning look '{}' <v{:03d}>".format(subset,
                                                          version["name"]))
@@ -2136,7 +2152,7 @@ def reset_scene_resolution():
         None
     """
 
-    project_doc = io.find_one({"type": "project"})
+    project_doc = legacy_io.find_one({"type": "project"})
     project_data = project_doc["data"]
     asset_data = lib.get_asset()["data"]
 
@@ -2169,13 +2185,13 @@ def set_context_settings():
     """
 
     # Todo (Wijnand): apply renderer and resolution of project
-    project_doc = io.find_one({"type": "project"})
+    project_doc = legacy_io.find_one({"type": "project"})
     project_data = project_doc["data"]
     asset_data = lib.get_asset()["data"]
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
-    api.Session["AVALON_FPS"] = str(fps)
+    legacy_io.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
     reset_scene_resolution()
@@ -2937,7 +2953,7 @@ def update_content_on_context_change():
     This will update scene content to match new asset on context change
     """
     scene_sets = cmds.listSets(allSets=True)
-    new_asset = api.Session["AVALON_ASSET"]
+    new_asset = legacy_io.Session["AVALON_ASSET"]
     new_data = lib.get_asset()["data"]
     for s in scene_sets:
         try:

@@ -16,6 +16,7 @@ from .style import ResourceCache
 from openpype.style import load_stylesheet
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
+from openpype.pipeline import AvalonMongoDB
 
 from openpype import resources
 from openpype.api import (
@@ -23,7 +24,6 @@ from openpype.api import (
     create_project_folders,
     Logger
 )
-from avalon.api import AvalonMongoDB
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):

@@ -81,7 +81,7 @@ class DebugShell(LauncherAction):
             return result.data()
 
     def get_applications(self, project_name):
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
         from openpype.lib import ApplicationManager
 
         # Get applications

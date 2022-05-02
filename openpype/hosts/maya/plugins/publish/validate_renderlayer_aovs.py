@@ -1,14 +1,14 @@
 import pyblish.api
 
-from avalon import io
+from openpype.pipeline import legacy_io
 
 
 def validate_subset_exists(asset_name, subset_name):
     """Check subset exists in the database under the asset"""
 
-    asset = io.find_one({"type": "asset", "name": asset_name},
+    asset = legacy_io.find_one({"type": "asset", "name": asset_name},
                         {"_id": True})
-    is_valid = io.find_one({
+    is_valid = legacy_io.find_one({
         "type": "subset",
         "name": subset_name,
         "parent": asset["_id"]

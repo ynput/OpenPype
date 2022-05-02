@@ -3,10 +3,9 @@ import logging
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.api import AvalonMongoDB
-
 from openpype import style
 from openpype.api import resources
+from openpype.pipeline import AvalonMongoDB
 
 import qtawesome
 from .models import (

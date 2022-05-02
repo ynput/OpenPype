@@ -1,4 +1,3 @@
-import os
 import json
 import datetime
 
@@ -6,7 +5,7 @@ from bson.objectid import ObjectId
 
 from aiohttp.web_response import Response
 
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 from openpype_modules.webserver.base_routes import RestApiEndpoint
 
 

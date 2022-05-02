@@ -19,7 +19,7 @@ class ExploreToCurrent(LauncherAction):
     def process(self, session, **kwargs):
 
         from Qt import QtCore, QtWidgets
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
         from openpype.api import Anatomy
 
         # Prerequirements

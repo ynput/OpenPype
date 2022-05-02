@@ -7,9 +7,9 @@ from pprint import pprint
 
 from maya import cmds
 
-from avalon import io
 from openpype.api import get_project_settings
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path
 )
@@ -111,11 +111,11 @@ class YetiCacheLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
 
-        io.install()
+        legacy_io.install()
         namespace = container["namespace"]
         container_node = container["objectName"]
 
-        fur_settings = io.find_one(
+        fur_settings = legacy_io.find_one(
             {"parent": representation["parent"], "name": "fursettings"}
         )
 

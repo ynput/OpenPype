@@ -8,7 +8,7 @@ import six
 import pyblish.api
 from bson.objectid import ObjectId
 
-from avalon import api, io
+from openpype.pipeline import legacy_io
 
 
 class IntegrateThumbnails(pyblish.api.InstancePlugin):
@@ -38,7 +38,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             )
             return
 
-        project_name = api.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
 
         anatomy = instance.context.data["anatomy"]
         if "publish" not in anatomy.templates:
@@ -66,11 +66,11 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             )
             return
 
-        io.install()
+        legacy_io.install()
 
         thumbnail_template = anatomy.templates["publish"]["thumbnail"]
 
-        version = io.find_one({"_id": thumb_repre["parent"]})
+        version = legacy_io.find_one({"_id": thumb_repre["parent"]})
         if not version:
             raise AssertionError(
                 "There does not exist version with id {}".format(
@@ -137,12 +137,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             }
         }
         # Create thumbnail entity
-        io.insert_one(thumbnail_entity)
+        legacy_io.insert_one(thumbnail_entity)
         self.log.debug(
             "Creating entity in database {}".format(str(thumbnail_entity))
         )
         # Set thumbnail id for version
-        io.update_many(
+        legacy_io.update_many(
             {"_id": version["_id"]},
             {"$set": {"data.thumbnail_id": thumbnail_id}}
         )
@@ -151,7 +151,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         ))
 
         asset_entity = instance.data["assetEntity"]
-        io.update_many(
+        legacy_io.update_many(
             {"_id": asset_entity["_id"]},
             {"$set": {"data.thumbnail_id": thumbnail_id}}
         )
