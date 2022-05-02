@@ -492,6 +492,7 @@ class CreateDialog(QtWidgets.QDialog):
         creator_short_desc_widget.height_changed.connect(
             self._on_description_height_change
         )
+        splitter_widget.splitterMoved.connect(self._on_splitter_move)
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
@@ -534,6 +535,7 @@ class CreateDialog(QtWidgets.QDialog):
         self._last_description_width = None
         self._last_full_width = 0
         self._expected_description_width = 0
+        self._last_desc_max_width = None
         self._other_widgets_widths = []
 
     def _emit_message(self, message):
@@ -750,13 +752,17 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _update_help_btn(self):
         short_desc_rect = self._creator_short_desc_widget.rect()
-        height = short_desc_rect.height()
 
-        point = short_desc_rect.topRight()
+        # point = short_desc_rect.topRight()
+        point = short_desc_rect.center()
         mapped_point = self._creator_short_desc_widget.mapTo(self, point)
-        pos_y = mapped_point.y()
-
+        # pos_y = mapped_point.y()
+        center_pos_y = mapped_point.y()
         icon_width = self._help_btn.get_icon_width()
+
+        _height = int(icon_width * 2.5)
+        height = min(_height, short_desc_rect.height())
+        pos_y = center_pos_y - int(height / 2)
 
         pos_x = self.width() - icon_width
         if self._detail_placoholder_widget.isVisible():
@@ -775,6 +781,9 @@ class CreateDialog(QtWidgets.QDialog):
     def _on_help_btn_resize(self, height):
         if self._creator_short_desc_widget.height() != height:
             self._update_help_btn()
+
+    def _on_splitter_move(self, *args):
+        self._update_help_btn()
 
     def _on_help_btn(self):
         if self._desc_width_anim_timer.isActive():
@@ -827,6 +836,10 @@ class CreateDialog(QtWidgets.QDialog):
                 step_size = 1
             min_max = 0
 
+        if self._last_desc_max_width is None:
+            self._last_desc_max_width = (
+                self._detail_description_widget.maximumWidth()
+            )
         self._detail_description_widget.setMinimumWidth(min_max)
         self._detail_description_widget.setMaximumWidth(min_max)
         self._expected_description_width = expected_width
@@ -902,6 +915,10 @@ class CreateDialog(QtWidgets.QDialog):
         if not growing:
             return
 
+        self._detail_description_widget.setMinimumWidth(0)
+        self._detail_description_widget.setMaximumWidth(
+            self._last_desc_max_width
+        )
         self._detail_description_widget.setSizePolicy(
             self._description_size_policy
         )
