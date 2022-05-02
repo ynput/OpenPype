@@ -13,6 +13,7 @@ class CreateWriteRender(plugin.AbstractWriteRender):
     family = "render"
     icon = "sign-out"
     defaults = ["Main", "Mask"]
+    knobs = []
 
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
@@ -38,13 +39,12 @@ class CreateWriteRender(plugin.AbstractWriteRender):
             }
         ]
 
-        write_node = create_write_node(
+        return create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,
-            prenodes=_prenodes)
-
-        return write_node
+            prenodes=_prenodes
+        )
 
     def _modify_write_node(self, write_node):
         return write_node

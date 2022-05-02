@@ -21,7 +21,8 @@
             "defaults": [
                 "Main",
                 "Mask"
-            ]
+            ],
+            "knobs": []
         },
         "CreateWritePrerender": {
             "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
@@ -33,7 +34,8 @@
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false
+            "reviewable": false,
+            "knobs": []
         }
     },
     "publish": {
