@@ -2,11 +2,9 @@
 """Create ``Render`` instance in Maya."""
 import json
 import os
-import sys
 
 import appdirs
 import requests
-import six
 
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
@@ -21,7 +19,6 @@ from openpype.hosts.maya.api import (
     lib_rendersettings,
     plugin
 )
-from openpype.modules import ModulesManager
 
 
 class CreateRender(plugin.Creator):

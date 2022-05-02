@@ -81,6 +81,7 @@ IMAGE_PREFIXES = {
 
 RENDERMAN_IMAGE_DIR = "maya/<scene>/<layer>"
 
+
 def has_tokens(string, tokens):
     """Return whether any of tokens is in input string (case-insensitive)"""
     pattern = "({})".format("|".join(re.escape(token) for token in tokens))
