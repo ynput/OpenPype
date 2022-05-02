@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 import re
 import six
 import platform
@@ -1086,6 +1087,11 @@ def set_node_knobs_from_settings(node, knob_settings):
         if not knob_value:
             continue
 
+        # first convert string types to string
+        # just to ditch unicode
+        if isinstance(knob_value, six.text_type):
+            knob_value = str(knob_value)
+
         # set correctly knob types
         if knob_type == "bool":
             knob_value = bool(knob_value)
@@ -1094,9 +1100,16 @@ def set_node_knobs_from_settings(node, knob_settings):
         elif knob_type == "number":
             knob_value = int(knob_value)
         elif knob_type == "string":
-            knob_value = str(knob_value)
-        if knob_type in ["2d_vector", "3d_vector"]:
-            knob_value = list(knob_value)
+            knob_value = knob_value
+        elif knob_type == "hex":
+            if not knob_value.startswith("0x"):
+                raise ValueError(
+                    "Check your settings! Input Hexa is wrong! \n{}".format(
+                        pformat(knob_settings)
+                    ))
+            knob_value = int(knob_value, 16)
+        if knob_type in ["2d_vector", "3d_vector", "color"]:
+            knob_value = [float(v) for v in knob_value]
 
         node[knob_name].setValue(knob_value)
 
