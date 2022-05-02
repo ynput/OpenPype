@@ -123,7 +123,6 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
-    "repos",
     "schema",
     "LICENSE",
     "README.md"

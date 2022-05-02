@@ -309,7 +309,7 @@
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Task}_{Render_layer}_{Render_pass}"
+                    "template": "{family}{Task}_{Renderlayer}_{Renderpass}"
                 },
                 {
                     "families": [
@@ -317,6 +317,7 @@
                         "workfile"
                     ],
                     "hosts": [
+                        "aftereffects",
                         "tvpaint"
                     ],
                     "task_types": [],

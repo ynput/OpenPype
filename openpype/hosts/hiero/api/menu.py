@@ -1,14 +1,16 @@
 import os
 import sys
+
 import hiero.core
-from openpype.api import Logger
-from openpype.tools.utils import host_tools
-from avalon.api import Session
 from hiero.ui import findMenuAction
+
+from openpype.api import Logger
+from openpype.pipeline import legacy_io
+from openpype.tools.utils import host_tools
 
 from . import tags
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self._change_context_menu = None
@@ -24,8 +26,10 @@ def update_menu_task_label():
         log.warning("Can't find menuItem: {}".format(object_name))
         return
 
-    label = "{}, {}".format(Session["AVALON_ASSET"],
-                            Session["AVALON_TASK"])
+    label = "{}, {}".format(
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
+    )
 
     menu = found_menu.menu()
     self._change_context_menu = label
@@ -51,7 +55,8 @@ def menu_install():
     menu_name = os.environ['AVALON_LABEL']
 
     context_label = "{0}, {1}".format(
-        Session["AVALON_ASSET"], Session["AVALON_TASK"]
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
 
     self._change_context_menu = context_label

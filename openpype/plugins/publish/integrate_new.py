@@ -8,11 +8,12 @@ import six
 from bson.objectid import ObjectId
 from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
-from avalon import io
+
 import openpype.api
 from openpype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
+from openpype.pipeline import legacy_io
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +81,8 @@ def get_first_frame_padded(collection):
 
 def bulk_write(writes):
     """Convenience function to bulk write into active project database"""
-    return io._database[io.Session["AVALON_PROJECT"]].bulk_write(writes)
+    project = legacy_io.Session["AVALON_PROJECT"]
+    return legacy_io._database[project].bulk_write(writes)
 
 
 class IntegrateAssetNew(pyblish.api.InstancePlugin):
@@ -158,7 +160,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip"]
+    exclude_families = ["clip", "render.farm"]
     default_template_name = "publish"
 
     # Representation context keys that should always be written to
@@ -227,7 +229,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Get existing representations (if any)
         existing_repres_by_name = {
-            repres["name"].lower(): repres for repres in io.find(
+            repres["name"].lower(): repres for repres in legacy_io.find(
                 {
                     "parent": version["_id"],
                     "type": "representation"
@@ -374,7 +376,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Subset: {}".format(subset_name))
 
         # Get existing subset if it exists
-        subset = io.find_one({
+        subset = legacy_io.find_one({
             "type": "subset",
             "parent": asset["_id"],
             "name": subset_name
@@ -430,7 +432,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "data": self.create_version_data(instance)
         }
 
-        existing_version = io.find_one({
+        existing_version = legacy_io.find_one({
             'type': 'version',
             'parent': subset["_id"],
             'name': version_number

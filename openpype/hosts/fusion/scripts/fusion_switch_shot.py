@@ -4,10 +4,8 @@ import sys
 import logging
 
 # Pipeline imports
-import avalon.api
-from avalon import io
-
 from openpype.pipeline import (
+    legacy_io,
     install_host,
     registered_host,
 )
@@ -167,7 +165,7 @@ def update_frame_range(comp, representations):
     """
 
     version_ids = [r["parent"] for r in representations]
-    versions = io.find({"type": "version", "_id": {"$in": version_ids}})
+    versions = legacy_io.find({"type": "version", "_id": {"$in": version_ids}})
     versions = list(versions)
 
     versions = [v for v in versions
@@ -205,12 +203,11 @@ def switch(asset_name, filepath=None, new=True):
 
     # Assert asset name exists
     # It is better to do this here then to wait till switch_shot does it
-    asset = io.find_one({"type": "asset", "name": asset_name})
+    asset = legacy_io.find_one({"type": "asset", "name": asset_name})
     assert asset, "Could not find '%s' in the database" % asset_name
 
     # Get current project
-    self._project = io.find_one({"type": "project",
-                                 "name": avalon.api.Session["AVALON_PROJECT"]})
+    self._project = legacy_io.find_one({"type": "project"})
 
     # Go to comp
     if not filepath:
@@ -241,7 +238,7 @@ def switch(asset_name, filepath=None, new=True):
     current_comp.Print(message)
 
     # Build the session to switch to
-    switch_to_session = avalon.api.Session.copy()
+    switch_to_session = legacy_io.Session.copy()
     switch_to_session["AVALON_ASSET"] = asset['name']
 
     if new:

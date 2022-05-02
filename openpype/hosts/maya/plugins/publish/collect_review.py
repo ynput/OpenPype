@@ -2,7 +2,8 @@ from maya import cmds, mel
 import pymel.core as pm
 
 import pyblish.api
-import avalon.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -19,7 +20,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug('instance: {}'.format(instance))
 
-        task = avalon.api.Session["AVALON_TASK"]
+        task = legacy_io.Session["AVALON_TASK"]
 
         # get cameras
         members = instance.data['setMembers']

@@ -3,6 +3,8 @@ import json
 import copy
 import pyblish.api
 
+from openpype.lib.profiles_filtering import filter_profiles
+
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     """Collect ftrack component data (not integrate yet).
@@ -36,6 +38,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "reference": "reference"
     }
     keep_first_subset_name_for_review = True
+    asset_versions_status_profiles = {}
 
     def process(self, instance):
         self.log.debug("instance {}".format(instance))
@@ -80,6 +83,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         if instance_fps is None:
             instance_fps = instance.context.data["fps"]
 
+        status_name = self._get_asset_version_status_name(instance)
+
         # Base of component item data
         # - create a copy of this object when want to use it
         base_component_item = {
@@ -91,7 +96,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             },
             "assetversion_data": {
                 "version": version_number,
-                "comment": instance.context.data.get("comment") or ""
+                "comment": instance.context.data.get("comment") or "",
+                "status_name": status_name
             },
             "component_overwrite": False,
             # This can be change optionally
@@ -317,3 +323,24 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
         ))
         instance.data["ftrackComponentsList"] = component_list
+
+    def _get_asset_version_status_name(self, instance):
+        if not self.asset_versions_status_profiles:
+            return None
+
+        # Prepare filtering data for new asset version status
+        anatomy_data = instance.data["anatomyData"]
+        task_type = anatomy_data.get("task", {}).get("type")
+        filtering_criteria = {
+            "families": instance.data["family"],
+            "hosts": instance.context.data["hostName"],
+            "task_types": task_type
+        }
+        matching_profile = filter_profiles(
+            self.asset_versions_status_profiles,
+            filtering_criteria
+        )
+        if not matching_profile:
+            return None
+
+        return matching_profile["status"] or None

@@ -55,18 +55,23 @@
             "keep_original_representation": false,
             "export_presets_mapping": {
                 "exr16fpdwaa": {
+                    "active": true,
+                    "export_type": "File Sequence",
                     "ext": "exr",
                     "xml_preset_file": "OpenEXR (16-bit fp DWAA).xml",
-                    "xml_preset_dir": "",
-                    "export_type": "File Sequence",
-                    "ignore_comment_attrs": false,
                     "colorspace_out": "ACES - ACEScg",
+                    "xml_preset_dir": "",
+                    "parsed_comment_attrs": true,
                     "representation_add_range": true,
                     "representation_tags": [],
                     "load_to_batch_group": true,
-                    "batch_group_loader_name": "LoadClip"
+                    "batch_group_loader_name": "LoadClipBatch",
+                    "filter_path_regex": ".*"
                 }
             }
+        },
+        "IntegrateBatchGroup": {
+            "enabled": false
         }
     },
     "load": {
@@ -87,7 +92,8 @@
                 "png",
                 "h264",
                 "mov",
-                "mp4"
+                "mp4",
+                "exr16fpdwaa"
             ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
@@ -110,7 +116,8 @@
                 "png",
                 "h264",
                 "mov",
-                "mp4"
+                "mp4",
+                "exr16fpdwaa"
             ],
             "reel_name": "OP_LoadedReel",
             "clip_name_template": "{asset}_{subset}_{output}"
