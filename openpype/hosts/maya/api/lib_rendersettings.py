@@ -5,7 +5,7 @@ from openpype.api import (
     get_project_settings,
     get_asset)
 
-from avalon.api import Session
+from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 
 
@@ -50,7 +50,7 @@ class RenderSettings(object):
                 renderer = 'renderman'
 
         if project_settings is None:
-            project_settings = get_project_settings(Session["AVALON_PROJECT"])
+            project_settings = get_project_settings(legacy_io.Session["AVALON_PROJECT"])
 
         render_settings = RenderSettings(project_settings)
         render_settings.set_default_renderer_settings(renderer)
@@ -97,6 +97,7 @@ class RenderSettings(object):
 
     def _set_Arnold_settings(self, settings, width, height):
         """Sets settings for Arnold."""
+
         createOptions()
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
