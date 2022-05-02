@@ -9,7 +9,6 @@ import requests
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
-from avalon.api import Session
 from openpype.api import (
     get_system_settings,
     get_project_settings,
