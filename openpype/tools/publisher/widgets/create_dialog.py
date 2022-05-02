@@ -3,6 +3,7 @@ import re
 import traceback
 import copy
 
+import qtawesome
 try:
     import commonmark
 except Exception:
@@ -15,7 +16,8 @@ from openpype.pipeline.create import (
 )
 from openpype.tools.utils import (
     ErrorMessageBox,
-    MessageOverlayObject
+    MessageOverlayObject,
+    ClickableFrame,
 )
 
 from .widgets import IconValuePixmapLabel
@@ -186,12 +188,42 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._description_label.setText(description)
 
 
-class HelpButton(QtWidgets.QPushButton):
-    resized = QtCore.Signal()
+class HelpButton(ClickableFrame):
+    resized = QtCore.Signal(int)
+    question_mark_icon_name = "fa.question"
+    help_icon_name = "fa.question-circle"
+    hide_icon_name = "fa.angle-left"
 
     def __init__(self, *args, **kwargs):
         super(HelpButton, self).__init__(*args, **kwargs)
         self.setObjectName("CreateDialogHelpButton")
+
+        question_mark_label = QtWidgets.QLabel(self)
+        help_widget = QtWidgets.QWidget(self)
+
+        help_question = QtWidgets.QLabel(help_widget)
+        help_label = QtWidgets.QLabel("Help", help_widget)
+        hide_icon = QtWidgets.QLabel(help_widget)
+
+        help_layout = QtWidgets.QHBoxLayout(help_widget)
+        help_layout.setContentsMargins(0, 0, 5, 0)
+        help_layout.addWidget(help_question, 0)
+        help_layout.addWidget(help_label, 0)
+        help_layout.addStretch(1)
+        help_layout.addWidget(hide_icon, 0)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(question_mark_label, 0)
+        layout.addWidget(help_widget, 1)
+
+        help_widget.setVisible(False)
+
+        self._question_mark_label = question_mark_label
+        self._help_widget = help_widget
+        self._help_question = help_question
+        self._hide_icon = hide_icon
 
         self._expanded = None
         self.set_expanded()
@@ -202,27 +234,52 @@ class HelpButton(QtWidgets.QPushButton):
                 return
             expanded = False
         self._expanded = expanded
-        if expanded:
-            text = "<"
+        self._help_widget.setVisible(expanded)
+        self._update_content()
+
+    def _update_content(self):
+        width = self.get_icon_width()
+        if self._expanded:
+            question_mark_pix = QtGui.QPixmap(width, width)
+            question_mark_pix.fill(QtCore.Qt.transparent)
+
         else:
-            text = "?"
-        self.setText(text)
+            question_mark_icon = qtawesome.icon(
+                self.question_mark_icon_name, color=QtCore.Qt.white
+            )
+            question_mark_pix = question_mark_icon.pixmap(width, width)
 
-        self._update_size()
+        hide_icon = qtawesome.icon(
+            self.hide_icon_name, color=QtCore.Qt.white
+        )
+        help_question_icon = qtawesome.icon(
+            self.help_icon_name, color=QtCore.Qt.white
+        )
+        self._question_mark_label.setPixmap(question_mark_pix)
+        self._question_mark_label.setMaximumWidth(width)
+        self._hide_icon.setPixmap(hide_icon.pixmap(width, width))
+        self._help_question.setPixmap(help_question_icon.pixmap(width, width))
 
-    def _update_size(self):
-        new_size = self.minimumSizeHint()
-        if self.size() != new_size:
-            self.resize(new_size)
-            self.resized.emit()
+    def get_icon_width(self):
+        metrics = self.fontMetrics()
+        return metrics.height()
+
+    def set_pos_and_size(self, pos_x, pos_y, width, height):
+        update_icon = self.height() != height
+        self.move(pos_x, pos_y)
+        self.resize(width, height)
+
+        if update_icon:
+            self._update_content()
+            self.updateGeometry()
 
     def showEvent(self, event):
         super(HelpButton, self).showEvent(event)
-        self._update_size()
+        self.resized.emit(self.height())
 
     def resizeEvent(self, event):
         super(HelpButton, self).resizeEvent(event)
-        self._update_size()
+        self.resized.emit(self.height())
 
 
 class CreateDialog(QtWidgets.QDialog):
@@ -692,14 +749,32 @@ class CreateDialog(QtWidgets.QDialog):
         self._set_creator_by_identifier(identifier)
 
     def _update_help_btn(self):
-        pos_x = self.width() - self._help_btn.width()
-        point = self._creator_short_desc_widget.rect().topRight()
+        short_desc_rect = self._creator_short_desc_widget.rect()
+        height = short_desc_rect.height()
+
+        point = short_desc_rect.topRight()
         mapped_point = self._creator_short_desc_widget.mapTo(self, point)
         pos_y = mapped_point.y()
-        self._help_btn.move(max(0, pos_x), max(0, pos_y))
 
-    def _on_help_btn_resize(self):
-        self._update_help_btn()
+        icon_width = self._help_btn.get_icon_width()
+
+        pos_x = self.width() - icon_width
+        if self._detail_placoholder_widget.isVisible():
+            pos_x -= (
+                self._detail_placoholder_widget.width()
+                + self._splitter_widget.handle(3).width()
+            )
+
+        width = self.width() - pos_x
+
+        self._help_btn.set_pos_and_size(
+            max(0, pos_x), max(0, pos_y),
+            width,  height
+        )
+
+    def _on_help_btn_resize(self, height):
+        if self._creator_short_desc_widget.height() != height:
+            self._update_help_btn()
 
     def _on_help_btn(self):
         if self._desc_width_anim_timer.isActive():

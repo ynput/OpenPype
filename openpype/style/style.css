@@ -866,15 +866,20 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #CreateDialogHelpButton {
     background: rgba(255, 255, 255, 31);
+    border-top-left-radius: 0.2em;
+    border-bottom-left-radius: 0.2em;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     font-size: 10pt;
     font-weight: bold;
-    padding: 3px 3px 3px 3px;
+    padding: 0px;
 }
 
 #CreateDialogHelpButton:hover {
     background: rgba(255, 255, 255, 63);
+}
+#CreateDialogHelpButton QWidget {
+    background: transparent;
 }
 
 #PublishLogConsole {
