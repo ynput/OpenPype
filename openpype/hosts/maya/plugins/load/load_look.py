@@ -5,8 +5,10 @@ from collections import defaultdict
 
 from Qt import QtWidgets
 
-from avalon import io
-from openpype.pipeline import get_representation_path
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 from openpype.widgets.message_window import ScrollMessageBox
@@ -71,7 +73,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         shader_nodes = cmds.ls(members, type='shadingEngine')
         nodes = set(self._get_nodes_with_shader(shader_nodes))
 
-        json_representation = io.find_one({
+        json_representation = legacy_io.find_one({
             "type": "representation",
             "parent": representation['parent'],
             "name": "json"

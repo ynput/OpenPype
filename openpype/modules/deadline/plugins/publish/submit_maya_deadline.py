@@ -32,10 +32,11 @@ import requests
 
 from maya import cmds
 
-from avalon import api
 import pyblish.api
 
+from openpype.lib import requests_post
 from openpype.hosts.maya.api import lib
+from openpype.pipeline import legacy_io
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
@@ -187,6 +188,10 @@ def get_renderer_variables(renderlayer, root):
     filename_0 = re.sub('_<RenderPass>', '_beauty',
                         filename_0, flags=re.IGNORECASE)
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
+
+    scene = cmds.file(query=True, sceneName=True)
+    scene, _ = os.path.splitext(os.path.basename(scene))
+
     if renderer == "vray":
         renderlayer = renderlayer.split("_")[-1]
         # Maya's renderSettings function does not return V-Ray file extension
@@ -206,8 +211,7 @@ def get_renderer_variables(renderlayer, root):
         filename_prefix = cmds.getAttr(prefix_attr)
         # we need to determine path for vray as maya `renderSettings` query
         # does not work for vray.
-        scene = cmds.file(query=True, sceneName=True)
-        scene, _ = os.path.splitext(os.path.basename(scene))
+
         filename_0 = re.sub('<Scene>', scene, filename_prefix, flags=re.IGNORECASE)  # noqa: E501
         filename_0 = re.sub('<Layer>', renderlayer, filename_0, flags=re.IGNORECASE)  # noqa: E501
         filename_0 = "{}.{}.{}".format(
@@ -215,6 +219,39 @@ def get_renderer_variables(renderlayer, root):
         filename_0 = os.path.normpath(os.path.join(root, filename_0))
     elif renderer == "renderman":
         prefix_attr = "rmanGlobals.imageFileFormat"
+        # NOTE: This is guessing extensions from renderman display types.
+        #       Some of them are just framebuffers, d_texture format can be
+        #       set in display setting. We set those now to None, but it
+        #       should be handled more gracefully.
+        display_types = {
+            "d_deepexr": "exr",
+            "d_it": None,
+            "d_null": None,
+            "d_openexr": "exr",
+            "d_png": "png",
+            "d_pointcloud": "ptc",
+            "d_targa": "tga",
+            "d_texture": None,
+            "d_tiff": "tif"
+        }
+
+        extension = display_types.get(
+            cmds.listConnections("rmanDefaultDisplay.displayType")[0],
+            "exr"
+        ) or "exr"
+
+        filename_prefix = "{}/{}".format(
+            cmds.getAttr("rmanGlobals.imageOutputDir"),
+            cmds.getAttr("rmanGlobals.imageFileFormat")
+        )
+
+        renderlayer = renderlayer.split("_")[-1]
+
+        filename_0 = re.sub('<scene>', scene, filename_prefix, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = re.sub('<layer>', renderlayer, filename_0, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = re.sub('<f[\\d+]>', "#" * int(padding), filename_0, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = re.sub('<ext>', extension, filename_0, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = os.path.normpath(os.path.join(root, filename_0))
     elif renderer == "redshift":
         # mapping redshift extension dropdown values to strings
         ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
@@ -403,6 +440,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         output_filename_0 = filename_0
 
+        dirname = os.path.dirname(output_filename_0)
+
         # Create render folder ----------------------------------------------
         try:
             # Ensure render folder exists
@@ -488,7 +527,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_MAYA_VERSION"] = cmds.about(v=True)
         # to recognize job from PYPE for turning Event On/Off
@@ -700,7 +739,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             tiles_count = instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
 
             for tile_job in frame_payloads:
-                response = self._requests_post(url, json=tile_job)
+                response = requests_post(url, json=tile_job)
                 if not response.ok:
                     raise Exception(response.text)
 
@@ -763,7 +802,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     job_idx, len(assembly_payloads)
                 ))
                 self.log.debug(json.dumps(ass_job, indent=4, sort_keys=True))
-                response = self._requests_post(url, json=ass_job)
+                response = requests_post(url, json=ass_job)
                 if not response.ok:
                     raise Exception(response.text)
 
@@ -781,7 +820,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             # E.g. http://192.168.0.1:8082/api/jobs
             url = "{}/api/jobs".format(self.deadline_url)
-            response = self._requests_post(url, json=payload)
+            response = requests_post(url, json=payload)
             if not response.ok:
                 raise Exception(response.text)
             instance.data["deadlineSubmissionJob"] = response.json()
@@ -798,6 +837,23 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "AssetDependency0": data["filepath"],
             }
 
+        renderer = self._instance.data["renderer"]
+
+        # This hack is here because of how Deadline handles Renderman version.
+        # it considers everything with `renderman` set as version older than
+        # Renderman 22, and so if we are using renderman > 21 we need to set
+        # renderer string on the job to `renderman22`. We will have to change
+        # this when Deadline releases new version handling this.
+        if self._instance.data["renderer"] == "renderman":
+            try:
+                from rfm2.config import cfg  # noqa
+            except ImportError:
+                raise Exception("Cannot determine renderman version")
+
+            rman_version = cfg().build_info.version()  # type: str
+            if int(rman_version.split(".")[0]) > 22:
+                renderer = "renderman22"
+
         plugin_info = {
             "SceneFile": data["filepath"],
             # Output directory and filename
@@ -811,7 +867,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "RenderLayer": data["renderlayer"],
 
             # Determine which renderer to use from the file itself
-            "Renderer": self._instance.data["renderer"],
+            "Renderer": renderer,
 
             # Resolve relative references
             "ProjectPath": data["workspace"],
@@ -989,7 +1045,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.info("Submitting ass export job.")
 
         url = "{}/api/jobs".format(self.deadline_url)
-        response = self._requests_post(url, json=payload)
+        response = requests_post(url, json=payload)
         if not response.ok:
             self.log.error("Submition failed!")
             self.log.error(response.status_code)
@@ -1012,44 +1068,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
-
-    def _requests_post(self, *args, **kwargs):
-        """Wrap request post method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """Wrap request get method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.get(*args, **kwargs)
 
     def format_vray_output_filename(self, filename, template, dir=False):
         """Format the expected output file of the Export job.

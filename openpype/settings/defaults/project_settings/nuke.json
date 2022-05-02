@@ -120,7 +120,7 @@
                     "filter": {
                         "task_types": [],
                         "families": [],
-                        "sebsets": []
+                        "subsets": []
                     },
                     "read_raw": false,
                     "viewer_process_override": "",
@@ -160,7 +160,21 @@
             }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "key_value_mapping": {
+                "f_submission_note": [
+                    true,
+                    "{comment}"
+                ],
+                "f_submitting_for": [
+                    true,
+                    "{intent[value]}"
+                ],
+                "f_vfx_scope_of_work": [
+                    false,
+                    ""
+                ]
+            }
         },
         "IncrementScriptVersion": {
             "enabled": true,

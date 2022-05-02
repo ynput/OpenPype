@@ -79,7 +79,7 @@ class CreateRender(plugin.Creator):
             self.deadline_servers = {}
             return
         self._project_settings = get_project_settings(
-            Session["AVALON_PROJECT"])
+            legacy_io.Session["AVALON_PROJECT"])
 
         try:
             default_servers = deadline_settings["deadline_urls"]
@@ -97,10 +97,8 @@ class CreateRender(plugin.Creator):
 
         except AttributeError:
             # Handle situation were we had only one url for deadline.
-            manager = ModulesManager()
-            deadline_module = manager.modules_by_name["deadline"]
             # get default deadline webservice url from deadline module
-            self.deadline_servers = deadline_module.deadline_urls
+            self.deadline_servers = self.deadline_module.deadline_urls
 
     def process(self):
         """Entry point."""
@@ -164,48 +162,31 @@ class CreateRender(plugin.Creator):
     def _deadline_webservice_changed(self):
         """Refresh Deadline server dependent options."""
         # get selected server
-        from maya import cmds
         webservice = self.deadline_servers[
             self.server_aliases[
                 cmds.getAttr("{}.deadlineServers".format(self.instance))
             ]
         ]
-        pools = self._get_deadline_pools(webservice)
+        pools = self.deadline_module.get_deadline_pools(webservice, self.log)
         cmds.deleteAttr("{}.primaryPool".format(self.instance))
         cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+
+        pool_setting = (self._project_settings["deadline"]
+                                              ["publish"]
+                                              ["CollectDeadlinePools"])
+
+        primary_pool = pool_setting["primary_pool"]
+        sorted_pools = self._set_default_pool(list(pools), primary_pool)
         cmds.addAttr(self.instance, longName="primaryPool",
                      attributeType="enum",
-                     enumName=":".join(pools))
-        cmds.addAttr(self.instance, longName="secondaryPool",
+                     enumName=":".join(sorted_pools))
+
+        pools = ["-"] + pools
+        secondary_pool = pool_setting["secondary_pool"]
+        sorted_pools = self._set_default_pool(list(pools), secondary_pool)
+        cmds.addAttr("{}.secondaryPool".format(self.instance),
                      attributeType="enum",
-                     enumName=":".join(["-"] + pools))
-
-    def _get_deadline_pools(self, webservice):
-        # type: (str) -> list
-        """Get pools from Deadline.
-        Args:
-            webservice (str): Server url.
-        Returns:
-            list: Pools.
-        Throws:
-            RuntimeError: If deadline webservice is unreachable.
-
-        """
-        argument = "{}/api/pools?NamesOnly=true".format(webservice)
-        try:
-            response = self._requests_get(argument)
-        except requests.exceptions.ConnectionError as exc:
-            msg = 'Cannot connect to deadline web service'
-            self.log.error(msg)
-            six.reraise(
-                RuntimeError,
-                RuntimeError('{} - {}'.format(msg, exc)),
-                sys.exc_info()[2])
-        if not response.ok:
-            self.log.warning("No pools retrieved")
-            return []
-
-        return response.json()
+                     enumName=":".join(sorted_pools))
 
     def _create_render_settings(self):
         """Create instance settings."""
@@ -286,11 +267,26 @@ class CreateRender(plugin.Creator):
                 self.log.info("  - pool: {}".format(pool["name"]))
                 pool_names.append(pool["name"])
 
-        self.data["primaryPool"] = pool_names
+        pool_setting = (self._project_settings["deadline"]
+                                              ["publish"]
+                                              ["CollectDeadlinePools"])
+        primary_pool = pool_setting["primary_pool"]
+        self.data["primaryPool"] = self._set_default_pool(pool_names,
+                                                          primary_pool)
         # We add a string "-" to allow the user to not
         # set any secondary pools
-        self.data["secondaryPool"] = ["-"] + pool_names
+        pool_names = ["-"] + pool_names
+        secondary_pool = pool_setting["secondary_pool"]
+        self.data["secondaryPool"] = self._set_default_pool(pool_names,
+                                                            secondary_pool)
         self.options = {"useSelection": False}  # Force no content
+
+    def _set_default_pool(self, pool_names, pool_value):
+        """Reorder pool names, default should come first"""
+        if pool_value and pool_value in pool_names:
+            pool_names.remove(pool_value)
+            pool_names = [pool_value] + pool_names
+        return pool_names
 
     def _load_credentials(self):
         """Load Muster credentials.
@@ -326,7 +322,7 @@ class CreateRender(plugin.Creator):
         """
         params = {"authToken": self._token}
         api_entry = "/api/pools/list"
-        response = self._requests_get(self.MUSTER_REST_URL + api_entry,
+        response = requests_get(self.MUSTER_REST_URL + api_entry,
                                       params=params)
         if response.status_code != 200:
             if response.status_code == 401:
@@ -352,7 +348,7 @@ class CreateRender(plugin.Creator):
         api_url = "{}/muster/show_login".format(
             os.environ["OPENPYPE_WEBSERVER_URL"])
         self.log.debug(api_url)
-        login_response = self._requests_get(api_url, timeout=1)
+        login_response = requests_get(api_url, timeout=1)
         if login_response.status_code != 200:
             self.log.error("Cannot show login form to Muster")
             raise Exception("Cannot show login form to Muster")

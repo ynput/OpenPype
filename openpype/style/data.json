@@ -61,7 +61,11 @@
         "icon-entity-default": "#bfccd6",
         "icon-entity-disabled": "#808080",
         "font-entity-deprecated": "#666666",
-
+        "overlay-messages": {
+            "close-btn": "#D3D8DE",
+            "bg-success": "#458056",
+            "bg-success-hover": "#55a066"
+        },
         "tab-widget": {
             "bg": "#21252B",
             "bg-selected": "#434a56",

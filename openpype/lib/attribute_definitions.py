@@ -1,8 +1,12 @@
+import os
 import re
 import collections
 import uuid
+import json
 from abc import ABCMeta, abstractmethod
+
 import six
+import clique
 
 
 class AbstractAttrDefMeta(ABCMeta):
@@ -302,12 +306,218 @@ class BoolDef(AbtractAttrDef):
         return self.default
 
 
+class FileDefItem(object):
+    def __init__(
+        self, directory, filenames, frames=None, template=None
+    ):
+        self.directory = directory
+
+        self.filenames = []
+        self.is_sequence = False
+        self.template = None
+        self.frames = []
+
+        self.set_filenames(filenames, frames, template)
+
+    def __str__(self):
+        return json.dumps(self.to_dict())
+
+    def __repr__(self):
+        if self.is_sequence:
+            filename = self.template
+        else:
+            filename = self.filenames[0]
+
+        return "<{}: \"{}\">".format(
+            self.__class__.__name__,
+            os.path.join(self.directory, filename)
+        )
+
+    @property
+    def label(self):
+        if not self.is_sequence:
+            return self.filenames[0]
+
+        frame_start = self.frames[0]
+        filename_template = os.path.basename(self.template)
+        if len(self.frames) == 1:
+            return "{} [{}]".format(filename_template, frame_start)
+
+        frame_end = self.frames[-1]
+        expected_len = (frame_end - frame_start) + 1
+        if expected_len == len(self.frames):
+            return "{} [{}-{}]".format(
+                filename_template, frame_start, frame_end
+            )
+
+        ranges = []
+        _frame_start = None
+        _frame_end = None
+        for frame in range(frame_start, frame_end + 1):
+            if frame not in self.frames:
+                add_to_ranges = _frame_start is not None
+            elif _frame_start is None:
+                _frame_start = _frame_end = frame
+                add_to_ranges = frame == frame_end
+            else:
+                _frame_end = frame
+                add_to_ranges = frame == frame_end
+
+            if add_to_ranges:
+                if _frame_start != _frame_end:
+                    _range = "{}-{}".format(_frame_start, _frame_end)
+                else:
+                    _range = str(_frame_start)
+                ranges.append(_range)
+                _frame_start = _frame_end = None
+        return "{} [{}]".format(
+            filename_template, ",".join(ranges)
+        )
+
+    def split_sequence(self):
+        if not self.is_sequence:
+            raise ValueError("Cannot split single file item")
+
+        paths = [
+            os.path.join(self.directory, filename)
+            for filename in self.filenames
+        ]
+        return self.from_paths(paths, False)
+
+    @property
+    def ext(self):
+        _, ext = os.path.splitext(self.filenames[0])
+        if ext:
+            return ext
+        return None
+
+    @property
+    def is_dir(self):
+        # QUESTION a better way how to define folder (in init argument?)
+        if self.ext:
+            return False
+        return True
+
+    def set_directory(self, directory):
+        self.directory = directory
+
+    def set_filenames(self, filenames, frames=None, template=None):
+        if frames is None:
+            frames = []
+        is_sequence = False
+        if frames:
+            is_sequence = True
+
+        if is_sequence and not template:
+            raise ValueError("Missing template for sequence")
+
+        self.filenames = filenames
+        self.template = template
+        self.frames = frames
+        self.is_sequence = is_sequence
+
+    @classmethod
+    def create_empty_item(cls):
+        return cls("", "")
+
+    @classmethod
+    def from_value(cls, value, allow_sequences):
+        """Convert passed value to FileDefItem objects.
+
+        Returns:
+            list: Created FileDefItem objects.
+        """
+
+        # Convert single item to iterable
+        if not isinstance(value, (list, tuple, set)):
+            value = [value]
+
+        output = []
+        str_filepaths = []
+        for item in value:
+            if isinstance(item, dict):
+                item = cls.from_dict(item)
+
+            if isinstance(item, FileDefItem):
+                if not allow_sequences and item.is_sequence:
+                    output.extend(item.split_sequence())
+                else:
+                    output.append(item)
+
+            elif isinstance(item, six.string_types):
+                str_filepaths.append(item)
+            else:
+                raise TypeError(
+                    "Unknown type \"{}\". Can't convert to {}".format(
+                        str(type(item)), cls.__name__
+                    )
+                )
+
+        if str_filepaths:
+            output.extend(cls.from_paths(str_filepaths, allow_sequences))
+
+        return output
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            data["directory"],
+            data["filenames"],
+            data.get("frames"),
+            data.get("template")
+        )
+
+    @classmethod
+    def from_paths(cls, paths, allow_sequences):
+        filenames_by_dir = collections.defaultdict(list)
+        for path in paths:
+            normalized = os.path.normpath(path)
+            directory, filename = os.path.split(normalized)
+            filenames_by_dir[directory].append(filename)
+
+        output = []
+        for directory, filenames in filenames_by_dir.items():
+            if allow_sequences:
+                cols, remainders = clique.assemble(filenames)
+            else:
+                cols = []
+                remainders = filenames
+
+            for remainder in remainders:
+                output.append(cls(directory, [remainder]))
+
+            for col in cols:
+                frames = list(col.indexes)
+                paths = [filename for filename in col]
+                template = col.format("{head}{padding}{tail}")
+
+                output.append(cls(
+                    directory, paths, frames, template
+                ))
+
+        return output
+
+    def to_dict(self):
+        output = {
+            "is_sequence": self.is_sequence,
+            "directory": self.directory,
+            "filenames": list(self.filenames),
+        }
+        if self.is_sequence:
+            output.update({
+                "template": self.template,
+                "frames": list(sorted(self.frames)),
+            })
+
+        return output
+
+
 class FileDef(AbtractAttrDef):
     """File definition.
     It is possible to define filters of allowed file extensions and if supports
     folders.
     Args:
-        multipath(bool): Allow multiple path.
+        single_item(bool): Allow only single path item.
         folders(bool): Allow folder paths.
         extensions(list<str>): Allow files with extensions. Empty list will
             allow all extensions and None will disable files completely.
@@ -315,44 +525,51 @@ class FileDef(AbtractAttrDef):
     """
 
     def __init__(
-        self, key, multipath=False, folders=None, extensions=None,
-        default=None, **kwargs
+        self, key, single_item=True, folders=None, extensions=None,
+        allow_sequences=True, default=None, **kwargs
     ):
         if folders is None and extensions is None:
             folders = True
             extensions = []
 
         if default is None:
-            if multipath:
-                default = []
+            if single_item:
+                default = FileDefItem.create_empty_item().to_dict()
             else:
-                default = ""
+                default = []
         else:
-            if multipath:
+            if single_item:
+                if isinstance(default, dict):
+                    FileDefItem.from_dict(default)
+
+                elif isinstance(default, six.string_types):
+                    default = FileDefItem.from_paths([default.strip()])[0]
+
+                else:
+                    raise TypeError((
+                        "'default' argument must be 'str' or 'dict' not '{}'"
+                    ).format(type(default)))
+
+            else:
                 if not isinstance(default, (tuple, list, set)):
                     raise TypeError((
                         "'default' argument must be 'list', 'tuple' or 'set'"
                         ", not '{}'"
                     ).format(type(default)))
 
-            else:
-                if not isinstance(default, six.string_types):
-                    raise TypeError((
-                        "'default' argument must be 'str' not '{}'"
-                    ).format(type(default)))
-                default = default.strip()
-
         # Change horizontal label
         is_label_horizontal = kwargs.get("is_label_horizontal")
         if is_label_horizontal is None:
-            is_label_horizontal = True
-            if multipath:
+            if single_item:
+                is_label_horizontal = True
+            else:
                 is_label_horizontal = False
             kwargs["is_label_horizontal"] = is_label_horizontal
 
-        self.multipath = multipath
+        self.single_item = single_item
         self.folders = folders
-        self.extensions = extensions
+        self.extensions = set(extensions)
+        self.allow_sequences = allow_sequences
         super(FileDef, self).__init__(key, default=default, **kwargs)
 
     def __eq__(self, other):
@@ -360,30 +577,43 @@ class FileDef(AbtractAttrDef):
             return False
 
         return (
-            self.multipath == other.multipath
+            self.single_item == other.single_item
             and self.folders == other.folders
             and self.extensions == other.extensions
+            and self.allow_sequences == other.allow_sequences
         )
 
     def convert_value(self, value):
-        if isinstance(value, six.string_types):
-            if self.multipath:
-                value = [value.strip()]
-            else:
-                value = value.strip()
-            return value
+        if isinstance(value, six.string_types) or isinstance(value, dict):
+            value = [value]
 
         if isinstance(value, (tuple, list, set)):
-            _value = []
+            string_paths = []
+            dict_items = []
             for item in value:
                 if isinstance(item, six.string_types):
-                    _value.append(item.strip())
+                    string_paths.append(item.strip())
+                elif isinstance(item, dict):
+                    try:
+                        FileDefItem.from_dict(item)
+                        dict_items.append(item)
+                    except (ValueError, KeyError):
+                        pass
 
-            if self.multipath:
-                return _value
+            if string_paths:
+                file_items = FileDefItem.from_paths(string_paths)
+                dict_items.extend([
+                    file_item.to_dict()
+                    for file_item in file_items
+                ])
 
-            if not _value:
+            if not self.single_item:
+                return dict_items
+
+            if not dict_items:
                 return self.default
-            return _value[0].strip()
+            return dict_items[0]
 
-        return str(value).strip()
+        if self.single_item:
+            return FileDefItem.create_empty_item().to_dict()
+        return []

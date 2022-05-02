@@ -9,10 +9,11 @@ import numbers
 import six
 from bson.objectid import ObjectId
 
-from avalon import io, schema
-from avalon.api import Session, registered_root
-
 from openpype.lib import Anatomy
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+)
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
 
     """
     if not dbcon:
-        dbcon = io
+        dbcon = legacy_io
 
     contexts = {}
     if not representation_ids:
@@ -166,7 +167,7 @@ def get_subset_contexts(subset_ids, dbcon=None):
         dict: The full representation context by representation id.
     """
     if not dbcon:
-        dbcon = io
+        dbcon = legacy_io
 
     contexts = {}
     if not subset_ids:
@@ -229,10 +230,10 @@ def get_representation_context(representation):
     assert representation is not None, "This is a bug"
 
     if isinstance(representation, (six.string_types, ObjectId)):
-        representation = io.find_one(
+        representation = legacy_io.find_one(
             {"_id": ObjectId(str(representation))})
 
-    version, subset, asset, project = io.parenthood(representation)
+    version, subset, asset, project = legacy_io.parenthood(representation)
 
     assert all([representation, version, subset, asset, project]), (
         "This is a bug"
@@ -404,17 +405,17 @@ def update_container(container, version=-1):
     """Update a container"""
 
     # Compute the different version from 'representation'
-    current_representation = io.find_one({
+    current_representation = legacy_io.find_one({
         "_id": ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
 
-    current_version, subset, asset, project = io.parenthood(
+    current_version, subset, asset, project = legacy_io.parenthood(
         current_representation)
 
     if version == -1:
-        new_version = io.find_one({
+        new_version = legacy_io.find_one({
             "type": "version",
             "parent": subset["_id"]
         }, sort=[("name", -1)])
@@ -430,11 +431,11 @@ def update_container(container, version=-1):
                 "type": "version",
                 "name": version
             }
-        new_version = io.find_one(version_query)
+        new_version = legacy_io.find_one(version_query)
 
     assert new_version is not None, "This is a bug"
 
-    new_representation = io.find_one({
+    new_representation = legacy_io.find_one({
         "type": "representation",
         "parent": new_version["_id"],
         "name": current_representation["name"]
@@ -481,7 +482,7 @@ def switch_container(container, representation, loader_plugin=None):
         ))
 
     # Get the new representation to switch to
-    new_representation = io.find_one({
+    new_representation = legacy_io.find_one({
         "type": "representation",
         "_id": representation["_id"],
     })
@@ -500,7 +501,7 @@ def get_representation_path_from_context(context):
     representation = context['representation']
     project_doc = context.get("project")
     root = None
-    session_project = Session.get("AVALON_PROJECT")
+    session_project = legacy_io.Session.get("AVALON_PROJECT")
     if project_doc and project_doc["name"] != session_project:
         anatomy = Anatomy(project_doc["name"])
         root = anatomy.roots
@@ -529,9 +530,11 @@ def get_representation_path(representation, root=None, dbcon=None):
     from openpype.lib import StringTemplate, TemplateUnsolved
 
     if dbcon is None:
-        dbcon = io
+        dbcon = legacy_io
 
     if root is None:
+        from openpype.pipeline import registered_root
+
         root = registered_root()
 
     def path_from_represenation():

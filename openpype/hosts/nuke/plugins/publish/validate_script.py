@@ -1,6 +1,7 @@
 import pyblish.api
-from avalon import io
+
 from openpype import lib
+from openpype.pipeline import legacy_io
 
 
 @pyblish.api.log
@@ -115,7 +116,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
     def check_parent_hierarchical(self, entityId, attr):
         if entityId is None:
             return None
-        entity = io.find_one({"_id": entityId})
+        entity = legacy_io.find_one({"_id": entityId})
         if attr in entity['data']:
             self.log.info(attr)
             return entity['data'][attr]

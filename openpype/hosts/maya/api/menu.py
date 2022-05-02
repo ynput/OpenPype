@@ -6,10 +6,9 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-import avalon.api
-
 from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
@@ -40,7 +39,7 @@ def install():
         parent_widget = get_main_window()
         cmds.menu(
             MENU_NAME,
-            label=avalon.api.Session["AVALON_LABEL"],
+            label=legacy_io.Session["AVALON_LABEL"],
             tearOff=True,
             parent="MayaWindow"
         )
@@ -48,8 +47,8 @@ def install():
         renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
-            avalon.api.Session["AVALON_ASSET"],
-            avalon.api.Session["AVALON_TASK"]
+            legacy_io.Session["AVALON_ASSET"],
+            legacy_io.Session["AVALON_TASK"]
         )
         cmds.menuItem(
             "currentContext",
@@ -219,7 +218,7 @@ def update_menu_task_label():
         return
 
     label = "{}, {}".format(
-        avalon.api.Session["AVALON_ASSET"],
-        avalon.api.Session["AVALON_TASK"]
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
     cmds.menuItem(object_name, edit=True, label=label)

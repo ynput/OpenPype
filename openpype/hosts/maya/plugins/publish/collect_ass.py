@@ -1,23 +1,16 @@
 from maya import cmds
-import pymel.core as pm
 
 import pyblish.api
-import avalon.api
+
 
 class CollectAssData(pyblish.api.InstancePlugin):
-    """Collect Ass data
-
-    """
+    """Collect Ass data."""
 
     order = pyblish.api.CollectorOrder + 0.2
     label = 'Collect Ass'
     families = ["ass"]
 
     def process(self, instance):
-
-
-        context = instance.context
-
         objsets = instance.data['setMembers']
 
         for objset in objsets:

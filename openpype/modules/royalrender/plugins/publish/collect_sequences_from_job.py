@@ -7,7 +7,8 @@ import json
 from pprint import pformat
 
 import pyblish.api
-from avalon import api
+
+from openpype.pipeline import legacy_io
 
 
 def collect(root,
@@ -127,7 +128,7 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
                     session = metadata.get("session")
                     if session:
                         self.log.info("setting session using metadata")
-                        api.Session.update(session)
+                        legacy_io.Session.update(session)
                         os.environ.update(session)
 
             else:
@@ -187,7 +188,9 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
                     "family": families[0],  # backwards compatibility / pyblish
                     "families": list(families),
                     "subset": subset,
-                    "asset": data.get("asset", api.Session["AVALON_ASSET"]),
+                    "asset": data.get(
+                        "asset", legacy_io.Session["AVALON_ASSET"]
+                    ),
                     "stagingDir": root,
                     "frameStart": start,
                     "frameEnd": end,

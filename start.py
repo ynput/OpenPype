@@ -191,6 +191,51 @@ else:
     if os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
         os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
+# Enabled logging debug mode when "--debug" is passed
+if "--verbose" in sys.argv:
+    expected_values = (
+        "Expected: notset, debug, info, warning, error, critical"
+        " or integer [0-50]."
+    )
+    idx = sys.argv.index("--verbose")
+    sys.argv.pop(idx)
+    if idx < len(sys.argv):
+        value = sys.argv.pop(idx)
+    else:
+        raise RuntimeError((
+            "Expect value after \"--verbose\" argument. {}"
+        ).format(expected_values))
+
+    log_level = None
+    low_value = value.lower()
+    if low_value.isdigit():
+        log_level = int(low_value)
+    elif low_value == "notset":
+        log_level = 0
+    elif low_value == "debug":
+        log_level = 10
+    elif low_value == "info":
+        log_level = 20
+    elif low_value == "warning":
+        log_level = 30
+    elif low_value == "error":
+        log_level = 40
+    elif low_value == "critical":
+        log_level = 50
+
+    if log_level is None:
+        raise RuntimeError((
+            "Unexpected value after \"--verbose\" argument \"{}\". {}"
+        ).format(value, expected_values))
+
+    os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
+
+# Enable debug mode, may affect log level if log level is not defined
+if "--debug" in sys.argv:
+    sys.argv.remove("--debug")
+    os.environ["OPENPYPE_DEBUG"] = "1"
+
+
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
@@ -221,18 +266,9 @@ def set_openpype_global_environments() -> None:
     """Set global OpenPype's environments."""
     import acre
 
-    try:
-        from openpype.settings import get_general_environments
+    from openpype.settings import get_general_environments
 
-        general_env = get_general_environments()
-
-    except Exception:
-        # Backwards compatibility for OpenPype versions where
-        #   `get_general_environments` does not exists yet
-        from openpype.settings import get_environments
-
-        all_env = get_environments()
-        general_env = all_env["global"]
+    general_env = get_general_environments()
 
     merged_env = acre.merge(
         acre.parse(general_env),
@@ -320,6 +356,7 @@ def run_disk_mapping_commands(settings):
                                                              destination))
             raise
 
+
 def set_avalon_environments():
     """Set avalon specific environments.
 
@@ -327,28 +364,12 @@ def set_avalon_environments():
     before avalon module is imported because avalon works with globals set with
     environment variables.
     """
-    from openpype import PACKAGE_DIR
 
-    # Path to OpenPype's schema
-    schema_path = os.path.join(
-        os.path.dirname(PACKAGE_DIR),
-        "schema"
-    )
-    # Avalon mongo URL
-    avalon_mongo_url = (
-        os.environ.get("AVALON_MONGO")
-        or os.environ["OPENPYPE_MONGO"]
-    )
     avalon_db = os.environ.get("AVALON_DB") or "avalon"  # for tests
     os.environ.update({
-        # Mongo url (use same as OpenPype has)
-        "AVALON_MONGO": avalon_mongo_url,
-
-        "AVALON_SCHEMA": schema_path,
         # Mongo DB name where avalon docs are stored
         "AVALON_DB": avalon_db,
         # Name of config
-        "AVALON_CONFIG": "openpype",
         "AVALON_LABEL": "OpenPype"
     })
 
@@ -838,17 +859,15 @@ def _bootstrap_from_code(use_version, use_staging):
         version_path = Path(_openpype_root)
         os.environ["OPENPYPE_REPOS_ROOT"] = _openpype_root
 
-    repos = os.listdir(os.path.join(_openpype_root, "repos"))
-    repos = [os.path.join(_openpype_root, "repos", repo) for repo in repos]
-    # add self to python paths
-    repos.insert(0, _openpype_root)
-    for repo in repos:
-        sys.path.insert(0, repo)
+    # add self to sys.path of current process
+    # NOTE: this seems to be duplicate of 'add_paths_from_directory'
+    sys.path.insert(0, _openpype_root)
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
     split_paths = python_path.split(os.pathsep)
-    # Add repos as first in list
-    split_paths = repos + split_paths
+    # add self to python paths
+    split_paths.insert(0, _openpype_root)
+
     # last one should be venv site-packages
     # this is slightly convoluted as we can get here from frozen code too
     # in case when we are running without any version installed.
@@ -926,6 +945,16 @@ def boot():
 
     _print(">>> run disk mapping command ...")
     run_disk_mapping_commands(global_settings)
+
+    # Logging to server enabled/disabled
+    log_to_server = global_settings.get("log_to_server", True)
+    if log_to_server:
+        os.environ["OPENPYPE_LOG_TO_SERVER"] = "1"
+        log_to_server_msg = "ON"
+    else:
+        os.environ.pop("OPENPYPE_LOG_TO_SERVER", None)
+        log_to_server_msg = "OFF"
+    _print(f">>> Logging to server is turned {log_to_server_msg}")
 
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
