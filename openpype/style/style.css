@@ -872,7 +872,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #PublishLogConsole {
     font-family: "Noto Sans Mono";
 }
-
+VariantInputsWidget QLineEdit {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+}
+VariantInputsWidget QToolButton {
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
 }
@@ -1350,4 +1359,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 #LikeDisabledInput:focus {
     border-color: {color:border};
+}
+
+/* Attribute Definition widgets */
+InViewButton, InViewButton:disabled {
+    background: transparent;
+}
+InViewButton:hover {
+    background: rgba(255, 255, 255, 37);
 }

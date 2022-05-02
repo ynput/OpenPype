@@ -47,6 +47,7 @@ def install():
     print("installing OpenPype for Unreal ...")
     print("-=" * 40)
     logger.info("installing OpenPype for Unreal")
+    pyblish.api.register_host("unreal")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
     register_creator_plugin_path(str(CREATE_PATH))
@@ -392,3 +393,24 @@ def cast_map_to_str_dict(umap) -> dict:
 
     """
     return {str(key): str(value) for (key, value) in umap.items()}
+
+
+def get_subsequences(sequence: unreal.LevelSequence):
+    """Get list of subsequences from sequence.
+
+    Args:
+        sequence (unreal.LevelSequence): Sequence
+
+    Returns:
+        list(unreal.LevelSequence): List of subsequences
+
+    """
+    tracks = sequence.get_master_tracks()
+    subscene_track = None
+    for t in tracks:
+        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+            subscene_track = t
+            break
+    if subscene_track is not None and subscene_track.get_sections():
+        return subscene_track.get_sections()
+    return []

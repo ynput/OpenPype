@@ -266,18 +266,9 @@ def set_openpype_global_environments() -> None:
     """Set global OpenPype's environments."""
     import acre
 
-    try:
-        from openpype.settings import get_general_environments
+    from openpype.settings import get_general_environments
 
-        general_env = get_general_environments()
-
-    except Exception:
-        # Backwards compatibility for OpenPype versions where
-        #   `get_general_environments` does not exists yet
-        from openpype.settings import get_environments
-
-        all_env = get_environments()
-        general_env = all_env["global"]
+    general_env = get_general_environments()
 
     merged_env = acre.merge(
         acre.parse(general_env),

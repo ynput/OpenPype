@@ -873,6 +873,5 @@ class OpenClipSolver(flib.MediaInfoFile):
         if feed_clr_obj is not None:
             feed_clr_obj = ET.Element(
                 "colourSpace", {"type": "string"})
+            feed_clr_obj.text = profile_name
             feed_storage_obj.append(feed_clr_obj)
-
-        feed_clr_obj.text = profile_name
