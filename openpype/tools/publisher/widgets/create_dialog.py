@@ -13,8 +13,10 @@ from openpype.pipeline.create import (
     CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS
 )
-
-from openpype.tools.utils import ErrorMessageBox
+from openpype.tools.utils import (
+    ErrorMessageBox,
+    MessageOverlayObject
+)
 
 from .widgets import IconValuePixmapLabel
 from .assets_widget import CreateDialogAssetsWidget
@@ -27,6 +29,14 @@ from ..constants import (
 )
 
 SEPARATORS = ("---separator---", "---")
+
+
+class VariantInputsWidget(QtWidgets.QWidget):
+    resized = QtCore.Signal()
+
+    def resizeEvent(self, event):
+        super(VariantInputsWidget, self).resizeEvent(event)
+        self.resized.emit()
 
 
 class CreateErrorMessageBox(ErrorMessageBox):
@@ -231,6 +241,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
 
+        overlay_object = MessageOverlayObject(self)
+
         context_widget = QtWidgets.QWidget(self)
 
         assets_widget = CreateDialogAssetsWidget(controller, context_widget)
@@ -247,22 +259,25 @@ class CreateDialog(QtWidgets.QDialog):
         creators_model = QtGui.QStandardItemModel()
         creators_view.setModel(creators_model)
 
-        variant_input = QtWidgets.QLineEdit(self)
+        variant_widget = VariantInputsWidget(self)
+
+        variant_input = QtWidgets.QLineEdit(variant_widget)
         variant_input.setObjectName("VariantInput")
         variant_input.setToolTip(VARIANT_TOOLTIP)
 
-        variant_hints_btn = QtWidgets.QPushButton(self)
-        variant_hints_btn.setFixedWidth(18)
+        variant_hints_btn = QtWidgets.QToolButton(variant_widget)
+        variant_hints_btn.setArrowType(QtCore.Qt.DownArrow)
+        variant_hints_btn.setIconSize(QtCore.QSize(12, 12))
 
-        variant_hints_menu = QtWidgets.QMenu(variant_hints_btn)
+        variant_hints_menu = QtWidgets.QMenu(variant_widget)
         variant_hints_group = QtWidgets.QActionGroup(variant_hints_menu)
-        variant_hints_btn.setMenu(variant_hints_menu)
+        # variant_hints_btn.setMenu(variant_hints_menu)
 
-        variant_layout = QtWidgets.QHBoxLayout()
+        variant_layout = QtWidgets.QHBoxLayout(variant_widget)
         variant_layout.setContentsMargins(0, 0, 0, 0)
         variant_layout.setSpacing(0)
         variant_layout.addWidget(variant_input, 1)
-        variant_layout.addWidget(variant_hints_btn, 0)
+        variant_layout.addWidget(variant_hints_btn, 0, QtCore.Qt.AlignVCenter)
 
         subset_name_input = QtWidgets.QLineEdit(self)
         subset_name_input.setEnabled(False)
@@ -271,7 +286,7 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.setEnabled(False)
 
         form_layout = QtWidgets.QFormLayout()
-        form_layout.addRow("Variant:", variant_layout)
+        form_layout.addRow("Variant:", variant_widget)
         form_layout.addRow("Subset:", subset_name_input)
 
         mid_widget = QtWidgets.QWidget(self)
@@ -341,11 +356,13 @@ class CreateDialog(QtWidgets.QDialog):
         help_btn.resized.connect(self._on_help_btn_resize)
 
         create_btn.clicked.connect(self._on_create)
+        variant_widget.resized.connect(self._on_variant_widget_resize)
         variant_input.returnPressed.connect(self._on_create)
         variant_input.textChanged.connect(self._on_variant_change)
         creators_view.selectionModel().currentChanged.connect(
             self._on_creator_item_change
         )
+        variant_hints_btn.clicked.connect(self._on_variant_btn_click)
         variant_hints_menu.triggered.connect(self._on_variant_action)
         assets_widget.selection_changed.connect(self._on_asset_change)
         assets_widget.current_context_required.connect(
@@ -354,6 +371,8 @@ class CreateDialog(QtWidgets.QDialog):
         tasks_widget.task_changed.connect(self._on_task_change)
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
+
+        self._overlay_object = overlay_object
 
         self._splitter_widget = splitter_widget
 
@@ -379,6 +398,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._prereq_timer = prereq_timer
         self._first_show = True
+
+    def _emit_message(self, message):
+        self._overlay_object.add_message(message)
 
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
@@ -445,12 +467,15 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _on_prereq_timer(self):
         prereq_available = True
+        creator_btn_tooltips = []
         if self.creators_model.rowCount() < 1:
             prereq_available = False
+            creator_btn_tooltips.append("Creator is not selected")
 
         if self._asset_doc is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
+            creator_btn_tooltips.append("Context is not selected")
 
         if prereq_available != self._prereq_available:
             self._prereq_available = prereq_available
@@ -459,6 +484,12 @@ class CreateDialog(QtWidgets.QDialog):
             self.creators_view.setEnabled(prereq_available)
             self.variant_input.setEnabled(prereq_available)
             self.variant_hints_btn.setEnabled(prereq_available)
+
+        tooltip = ""
+        if creator_btn_tooltips:
+            tooltip = "\n".join(creator_btn_tooltips)
+        self.create_btn.setToolTip(tooltip)
+
         self._on_variant_change()
 
     def _refresh_asset(self):
@@ -540,7 +571,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         identifier = index.data(CREATOR_IDENTIFIER_ROLE)
 
-        self._set_creator(identifier)
+        self._set_creator_by_identifier(identifier)
 
     def _on_plugins_refresh(self):
         # Trigger refresh only if is visible
@@ -568,7 +599,7 @@ class CreateDialog(QtWidgets.QDialog):
         identifier = None
         if new_index.isValid():
             identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
-        self._set_creator(identifier)
+        self._set_creator_by_identifier(identifier)
 
     def _update_help_btn(self):
         pos_x = self.width() - self._help_btn.width()
@@ -620,9 +651,11 @@ class CreateDialog(QtWidgets.QDialog):
         else:
             self._detail_description_widget.setMarkdown(detailed_description)
 
-    def _set_creator(self, identifier):
+    def _set_creator_by_identifier(self, identifier):
         creator = self.controller.manual_creators.get(identifier)
+        self._set_creator(creator)
 
+    def _set_creator(self, creator):
         self._creator_short_desc_widget.set_plugin(creator)
         self._set_creator_detailed_text(creator)
         self._pre_create_widget.set_plugin(creator)
@@ -659,6 +692,14 @@ class CreateDialog(QtWidgets.QDialog):
                 self.variant_hints_menu.addAction(variant)
 
         self.variant_input.setText(default_variant or "Main")
+
+    def _on_variant_widget_resize(self):
+        self.variant_hints_btn.setFixedHeight(self.variant_input.height())
+
+    def _on_variant_btn_click(self):
+        pos = self.variant_hints_btn.rect().bottomLeft()
+        point = self.variant_hints_btn.mapToGlobal(pos)
+        self.variant_hints_menu.popup(point)
 
     def _on_variant_action(self, action):
         value = action.text()
@@ -840,7 +881,10 @@ class CreateDialog(QtWidgets.QDialog):
             ))
             error_msg = str(exc_value)
 
-        if error_msg is not None:
+        if error_msg is None:
+            self._set_creator(self._selected_creator)
+            self._emit_message("Creation finished...")
+        else:
             box = CreateErrorMessageBox(
                 creator_label,
                 subset_name,

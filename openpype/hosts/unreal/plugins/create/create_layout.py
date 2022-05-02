@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from unreal import EditorLevelLibrary as ell
+from unreal import EditorLevelLibrary
+
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api.pipeline import instantiate
 
@@ -28,13 +29,13 @@ class CreateLayout(plugin.Creator):
         #     sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
         #     selection = [a.get_path_name() for a in sel_objects]
 
-        data["level"] = ell.get_editor_world().get_path_name()
+        data["level"] = EditorLevelLibrary.get_editor_world().get_path_name()
 
         data["members"] = []
 
         if (self.options or {}).get("useSelection"):
             # Set as members the selected actors
-            for actor in ell.get_selected_level_actors():
+            for actor in EditorLevelLibrary.get_selected_level_actors():
                 data["members"].append("{}.{}".format(
                     actor.get_outer().get_name(), actor.get_name()))
 
