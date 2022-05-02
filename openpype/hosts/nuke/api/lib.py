@@ -1062,31 +1062,43 @@ def create_write_node(name, data, input=None, prenodes=None,
     tile_color = _data.get("tile_color", "0xff0000ff")
     GN["tile_color"].setValue(tile_color)
 
-    # overrie knob values from settings
-    for knob in knob_overrides:
+    # finally add knob overrides
+    set_node_knobs_from_settings(GN, knob_overrides)
+
+    return GN
+
+
+def set_node_knobs_from_settings(node, knob_settings):
+    """ Overriding knob values from settings
+
+    Using `schema_nuke_knob_inputs` for knob type definitions.
+
+    Args:
+        node (nuke.Node): nuke node
+        knob_settings (list): list of dict. Keys are `type`, `name`, `value`
+    """
+    for knob in knob_settings:
         knob_type = knob["type"]
         knob_name = knob["name"]
         knob_value = knob["value"]
-        if knob_name not in GN.knobs():
+        if knob_name not in node.knobs():
             continue
         if not knob_value:
             continue
 
         # set correctly knob types
-        if knob_type == "string":
-            knob_value = str(knob_value)
-        if knob_type == "number":
-            knob_value = int(knob_value)
-        if knob_type == "decimal_number":
-            knob_value = float(knob_value)
         if knob_type == "bool":
             knob_value = bool(knob_value)
+        elif knob_type == "decimal_number":
+            knob_value = float(knob_value)
+        elif knob_type == "number":
+            knob_value = int(knob_value)
+        elif knob_type == "string":
+            knob_value = str(knob_value)
         if knob_type in ["2d_vector", "3d_vector"]:
             knob_value = list(knob_value)
 
-        GN[knob_name].setValue(knob_value)
-
-    return GN
+        node[knob_name].setValue(knob_value)
 
 
 def add_rendering_knobs(node, farm=True):
