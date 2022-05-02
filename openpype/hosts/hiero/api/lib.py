@@ -553,10 +553,10 @@ class PublishAction(QtWidgets.QAction):
 #
 #     '''
 #     import hiero.core
-#     from avalon.nuke import imprint
-#     from pype.hosts.nuke import (
-#         lib as nklib
-#         )
+#     from openpype.hosts.nuke.api.lib import (
+#         BuildWorkfile,
+#         imprint
+#     )
 #
 #     # check if the file exists if does then Raise "File exists!"
 #     if os.path.exists(filepath):
@@ -583,8 +583,7 @@ class PublishAction(QtWidgets.QAction):
 #
 #     nuke_script.addNode(root_node)
 #
-#     # here to call pype.hosts.nuke.lib.BuildWorkfile
-#     script_builder = nklib.BuildWorkfile(
+#     script_builder = BuildWorkfile(
 #         root_node=root_node,
 #         root_path=root_path,
 #         nodes=nuke_script.getNodes(),

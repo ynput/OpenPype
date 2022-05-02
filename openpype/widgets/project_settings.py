@@ -4,7 +4,7 @@ import platform
 
 from Qt import QtCore, QtGui, QtWidgets
 
-from avalon import style
+from openpype import style
 import ftrack_api
 
 
