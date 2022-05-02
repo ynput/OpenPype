@@ -353,7 +353,7 @@ def _load_modules():
             basename, ext = os.path.splitext(filename)
 
             if os.path.isdir(fullpath):
-                # Check existence of init fil
+                # Check existence of init file
                 init_path = os.path.join(fullpath, "__init__.py")
                 if not os.path.exists(init_path):
                     log.debug((
