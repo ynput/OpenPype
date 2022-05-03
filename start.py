@@ -931,11 +931,11 @@ def _boot_print_versions(use_staging, local_version, openpype_root):
     else:
         _print("--- This will list only staging versions detected.")
         _print("    To see other version, omit --use-staging argument.")
-    _openpype_root = OPENPYPE_ROOT
+
     openpype_versions = bootstrap.find_openpype(include_zips=True,
                                                 staging=use_staging)
     if getattr(sys, 'frozen', False):
-        local_version = bootstrap.get_version(Path(_openpype_root))
+        local_version = bootstrap.get_version(Path(openpype_root))
     else:
         local_version = OpenPypeVersion.get_installed_version_str()
 
