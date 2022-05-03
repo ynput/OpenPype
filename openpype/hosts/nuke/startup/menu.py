@@ -58,4 +58,5 @@ def add_scripts_menu():
     # apply configuration
     studio_menu.build_from_configuration(studio_menu, config)
 
+
 add_scripts_menu()
