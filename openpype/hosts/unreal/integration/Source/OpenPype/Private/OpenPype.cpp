@@ -1,7 +1,10 @@
 #include "OpenPype.h"
-#include "LevelEditor.h"
-#include "OpenPypePythonBridge.h"
 #include "OpenPypeStyle.h"
+#include "OpenPypeCommands.h"
+#include "OpenPypePythonBridge.h"
+#include "LevelEditor.h"
+#include "Misc/MessageDialog.h"
+#include "ToolMenus.h"
 
 
 static const FName OpenPypeTabName("OpenPype");
@@ -11,82 +14,61 @@ static const FName OpenPypeTabName("OpenPype");
 // This function is triggered when the plugin is staring up
 void FOpenPypeModule::StartupModule()
 {
-
 	FOpenPypeStyle::Initialize();
-	FOpenPypeStyle::SetIcon("Logo", "openpype40");
+	FOpenPypeStyle::ReloadTextures();
+	FOpenPypeCommands::Register();
 
-	// Create the Extender that will add content to the menu
-	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-	
-	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender());
+	PluginCommands = MakeShareable(new FUICommandList);
 
-	MenuExtender->AddMenuExtension(
-		"LevelEditor",
-		EExtensionHook::After,
-		NULL,
-		FMenuExtensionDelegate::CreateRaw(this, &FOpenPypeModule::AddMenuEntry)
-	);
-	ToolbarExtender->AddToolBarExtension(
-		"Settings",
-		EExtensionHook::After,
-		NULL,
-		FToolBarExtensionDelegate::CreateRaw(this, &FOpenPypeModule::AddToobarEntry));
+	PluginCommands->MapAction(
+		FOpenPypeCommands::Get().OpenPypeTools,
+		FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuPopup),
+		FCanExecuteAction());
+	PluginCommands->MapAction(
+		FOpenPypeCommands::Get().OpenPypeToolsDialog,
+		FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuDialog),
+		FCanExecuteAction());
 
-
-	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
-	LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
-
+	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FOpenPypeModule::RegisterMenus));
 }
 
 void FOpenPypeModule::ShutdownModule()
 {
+	UToolMenus::UnRegisterStartupCallback(this);
+
+	UToolMenus::UnregisterOwner(this);
+
 	FOpenPypeStyle::Shutdown();
+
+	FOpenPypeCommands::Unregister();
 }
 
-
-void FOpenPypeModule::AddMenuEntry(FMenuBuilder& MenuBuilder)
+void FOpenPypeModule::RegisterMenus()
 {
-	// Create Section
-	MenuBuilder.BeginSection("OpenPype", TAttribute<FText>(FText::FromString("OpenPype")));
+	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
+	FToolMenuOwnerScoped OwnerScoped(this);
+
 	{
-		// Create a Submenu inside of the Section
-		MenuBuilder.AddMenuEntry(
-			FText::FromString("Tools..."),
-			FText::FromString("Pipeline tools"),
-			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo"),
-			FUIAction(FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuPopup))
-		);
-
-		MenuBuilder.AddMenuEntry(
-			FText::FromString("Tools dialog..."),
-			FText::FromString("Pipeline tools dialog"),
-			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo"),
-			FUIAction(FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuDialog))
-		);
-
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Tools");
+		{
+			// FToolMenuSection& Section = Menu->FindOrAddSection("OpenPype");
+			FToolMenuSection& Section = Menu->AddSection(
+				"OpenPype",
+				TAttribute<FText>(FText::FromString("OpenPype")),
+				FToolMenuInsert("Programming", EToolMenuInsertType::Before)
+			);
+			Section.AddMenuEntryWithCommandList(FOpenPypeCommands::Get().OpenPypeTools, PluginCommands);
+			Section.AddMenuEntryWithCommandList(FOpenPypeCommands::Get().OpenPypeToolsDialog, PluginCommands);
+		}
+		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.PlayToolBar");
+		{
+			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("PluginTools");
+			{
+				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FOpenPypeCommands::Get().OpenPypeTools));
+				Entry.SetCommandList(PluginCommands);
+			}
+		}
 	}
-	MenuBuilder.EndSection();
-}
-
-void FOpenPypeModule::AddToobarEntry(FToolBarBuilder& ToolbarBuilder)
-{
-	ToolbarBuilder.BeginSection(TEXT("OpenPype"));
-	{
-		ToolbarBuilder.AddToolBarButton(
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuPopup),
-				NULL,
-				FIsActionChecked()
-
-			),
-			NAME_None,
-			LOCTEXT("OpenPype_label", "OpenPype"),
-			LOCTEXT("OpenPype_tooltip", "OpenPype Tools"),
-			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo")
-		);
-	}
-	ToolbarBuilder.EndSection();
 }
 
 

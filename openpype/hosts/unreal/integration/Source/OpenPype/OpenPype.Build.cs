@@ -36,7 +36,9 @@ public class OpenPype : ModuleRules
 			{
 				"Projects",
 				"InputCore",
+				"EditorFramework",
 				"UnrealEd",
+				"ToolMenus",
 				"LevelEditor",
 				"CoreUObject",
 				"Engine",

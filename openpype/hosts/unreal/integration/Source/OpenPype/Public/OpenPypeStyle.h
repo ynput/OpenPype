@@ -1,22 +1,18 @@
 #pragma once
 #include "CoreMinimal.h"
-
-class FSlateStyleSet;
-class ISlateStyle;
-
+#include "Styling/SlateStyle.h"
 
 class FOpenPypeStyle
 {
 public:
 	static void Initialize();
 	static void Shutdown();
+	static void ReloadTextures();
 	static const ISlateStyle& Get();
 	static FName GetStyleSetName();
-	static FName GetContextName();
 
-	static void SetIcon(const FString& StyleName, const FString& ResourcePath);
 
 private:
-	static TUniquePtr< FSlateStyleSet > Create();
-	static TUniquePtr< FSlateStyleSet > OpenPypeStyleInstance;
+	static TSharedRef< class FSlateStyleSet > Create();
+	static TSharedPtr< class FSlateStyleSet > OpenPypeStyleInstance;
 };

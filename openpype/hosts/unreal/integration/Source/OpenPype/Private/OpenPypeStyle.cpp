@@ -1,10 +1,14 @@
+#include "OpenPype.h"
 #include "OpenPypeStyle.h"
 #include "Framework/Application/SlateApplication.h"
-#include "Styling/SlateStyle.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Slate/SlateGameResources.h"
+#include "Interfaces/IPluginManager.h"
+#include "Styling/SlateStyleMacros.h"
 
+#define RootToContentDir Style->RootToContentDir
 
-TUniquePtr< FSlateStyleSet > FOpenPypeStyle::OpenPypeStyleInstance = nullptr;
+TSharedPtr<FSlateStyleSet> FOpenPypeStyle::OpenPypeStyleInstance = nullptr;
 
 void FOpenPypeStyle::Initialize()
 {
@@ -17,11 +21,9 @@ void FOpenPypeStyle::Initialize()
 
 void FOpenPypeStyle::Shutdown()
 {
-	if (OpenPypeStyleInstance.IsValid())
-	{
-		FSlateStyleRegistry::UnRegisterSlateStyle(*OpenPypeStyleInstance);
-		OpenPypeStyleInstance.Reset();
-	}
+	FSlateStyleRegistry::UnRegisterSlateStyle(*OpenPypeStyleInstance);
+	ensure(OpenPypeStyleInstance.IsUnique());
+	OpenPypeStyleInstance.Reset();
 }
 
 FName FOpenPypeStyle::GetStyleSetName()
@@ -30,41 +32,30 @@ FName FOpenPypeStyle::GetStyleSetName()
 	return StyleSetName;
 }
 
-FName FOpenPypeStyle::GetContextName()
-{
-	static FName ContextName(TEXT("OpenPype"));
-	return ContextName;
-}
-
-#define IMAGE_BRUSH(RelativePath, ...) FSlateImageBrush( Style->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
-
+const FVector2D Icon16x16(16.0f, 16.0f);
+const FVector2D Icon20x20(20.0f, 20.0f);
 const FVector2D Icon40x40(40.0f, 40.0f);
 
-TUniquePtr< FSlateStyleSet > FOpenPypeStyle::Create()
+TSharedRef< FSlateStyleSet > FOpenPypeStyle::Create()
 {
-	TUniquePtr< FSlateStyleSet > Style = MakeUnique<FSlateStyleSet>(GetStyleSetName());
-	Style->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("OpenPype/Resources"));
+	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("OpenPypeStyle"));
+	Style->SetContentRoot(IPluginManager::Get().FindPlugin("OpenPype")->GetBaseDir() / TEXT("Resources"));
+
+	Style->Set("OpenPype.OpenPypeTools", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
+	Style->Set("OpenPype.OpenPypeToolsDialog", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
 
 	return Style;
 }
 
-void FOpenPypeStyle::SetIcon(const FString& StyleName, const FString& ResourcePath)
+void FOpenPypeStyle::ReloadTextures()
 {
-	FSlateStyleSet* Style = OpenPypeStyleInstance.Get();
-
-	FString Name(GetContextName().ToString());
-	Name = Name + "." + StyleName;
-	Style->Set(*Name, new FSlateImageBrush(Style->RootToContentDir(ResourcePath, TEXT(".png")), Icon40x40));
-
-
-	FSlateApplication::Get().GetRenderer()->ReloadTextureResources();
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().GetRenderer()->ReloadTextureResources();
+	}
 }
-
-#undef IMAGE_BRUSH
 
 const ISlateStyle& FOpenPypeStyle::Get()
 {
-	check(OpenPypeStyleInstance);
-	return *OpenPypeStyleInstance;
 	return *OpenPypeStyleInstance;
 }

@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "Engine.h"
+#include "CoreMinimal.h"
+#include "Modules/ModuleManager.h"
 
 
 class FOpenPypeModule : public IModuleInterface
@@ -12,10 +13,11 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
+	void RegisterMenus();
 
-	void AddMenuEntry(FMenuBuilder& MenuBuilder);
-	void AddToobarEntry(FToolBarBuilder& ToolbarBuilder);
 	void MenuPopup();
 	void MenuDialog();
 
+private:
+	TSharedPtr<class FUICommandList> PluginCommands;
 };
