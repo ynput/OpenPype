@@ -862,6 +862,8 @@ class VariantInputWidget(PlaceholderLineEdit):
 
         self._ignore_value_change = True
 
+        self._has_value_changed = False
+
         self._origin_value = list(variants)
         self._current_value = list(variants)
 
