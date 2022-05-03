@@ -774,7 +774,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._help_btn.set_pos_and_size(
             max(0, pos_x), max(0, pos_y),
-            width,  height
+            width, height
         )
 
     def _on_help_btn_resize(self, height):
