@@ -22,10 +22,28 @@
                 "Main",
                 "Mask"
             ],
-            "knobs": []
+            "knobs": [],
+            "prenodes": {
+                "Reformat01": {
+                    "nodeclass": "Reformat",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "resize",
+                            "value": "none"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        }
+                    ]
+                }
+            }
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
             "use_range_limit": true,
             "defaults": [
                 "Key01",
@@ -35,7 +53,31 @@
                 "Part01"
             ],
             "reviewable": false,
-            "knobs": []
+            "knobs": [],
+            "prenodes": {}
+        },
+        "CreateWriteStill": {
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
+            "defaults": [
+                "ImageFrame{frame:0>4}",
+                "MPFrame{frame:0>4}",
+                "LayoutFrame{frame:0>4}"
+            ],
+            "knobs": [],
+            "prenodes": {
+                "FrameHold01": {
+                    "nodeclass": "FrameHold",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "formatable",
+                            "name": "FrameHold",
+                            "template": "{frame}",
+                            "to_type": "number"
+                        }
+                    ]
+                }
+            }
         }
     },
     "publish": {
