@@ -1272,7 +1272,11 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setColumnStretch(0, 0)
+        content_layout.setColumnStretch(1, 1)
+
+        row = 0
         for attr_def, attr_instances, values in result:
             widget = create_widget_for_attr_def(attr_def, content_widget)
             if attr_def.is_value_def:
@@ -1283,10 +1287,28 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
                 else:
                     widget.set_value(values, True)
 
-            label = attr_def.label or attr_def.key
-            content_layout.addRow(label, widget)
-            widget.value_changed.connect(self._input_value_changed)
+            expand_cols = 2
+            if attr_def.is_value_def and attr_def.is_label_horizontal:
+                expand_cols = 1
 
+            col_num = 2 - expand_cols
+
+            label = attr_def.label or attr_def.key
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+                content_layout.addWidget(
+                    label_widget, row, 0, 1, expand_cols
+                )
+                if not attr_def.is_label_horizontal:
+                    row += 1
+
+            content_layout.addWidget(
+                widget, row, col_num, 1, expand_cols
+            )
+
+            row += 1
+
+            widget.value_changed.connect(self._input_value_changed)
             self._attr_def_id_to_instances[attr_def.id] = attr_instances
             self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 
