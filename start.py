@@ -1029,6 +1029,9 @@ def boot():
             message = str(exc)
             _print(message)
             if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+                openpype_versions = bootstrap.find_openpype(
+                    include_zips=True, staging=use_staging
+                )
                 list_versions(openpype_versions, local_version)
             else:
                 igniter.show_message_dialog("Version not found", message)
@@ -1053,6 +1056,9 @@ def boot():
             message = str(exc)
             _print(message)
             if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+                openpype_versions = bootstrap.find_openpype(
+                    include_zips=True, staging=use_staging
+                )
                 list_versions(openpype_versions, local_version)
             else:
                 igniter.show_message_dialog("Version not found", message)
