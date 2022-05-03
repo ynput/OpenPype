@@ -283,7 +283,7 @@ class HelpButton(ClickableFrame):
 
 
 class CreateDialog(QtWidgets.QDialog):
-    default_size = (900, 500)
+    default_size = (1000, 560)
 
     def __init__(
         self, controller, asset_name=None, task_name=None, parent=None
@@ -354,7 +354,6 @@ class CreateDialog(QtWidgets.QDialog):
 
         variant_hints_menu = QtWidgets.QMenu(variant_widget)
         variant_hints_group = QtWidgets.QActionGroup(variant_hints_menu)
-        # variant_hints_btn.setMenu(variant_hints_menu)
 
         variant_layout = QtWidgets.QHBoxLayout(variant_widget)
         variant_layout.setContentsMargins(0, 0, 0, 0)
@@ -1093,6 +1092,21 @@ class CreateDialog(QtWidgets.QDialog):
             self.variant_input.setProperty("state", state)
             self.variant_input.style().polish(self.variant_input)
 
+    def _on_first_show(self):
+        center = self.rect().center()
+
+        width, height = self.default_size
+        self.resize(width, height)
+        part = int(width / 7)
+        self._splitter_widget.setSizes(
+            [part * 2, part * 2, width - (part * 4)]
+        )
+
+        new_pos = self.mapToGlobal(center)
+        new_pos.setX(new_pos.x() - int(self.width() / 2))
+        new_pos.setY(new_pos.y() - int(self.height() / 2))
+        self.move(new_pos)
+
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
         self._last_pos = self.pos()
@@ -1101,13 +1115,7 @@ class CreateDialog(QtWidgets.QDialog):
         super(CreateDialog, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            width, height = self.default_size
-            self.resize(width, height)
-
-            third_size = int(width / 3)
-            self._splitter_widget.setSizes(
-                [third_size, third_size, width - (2 * third_size)]
-            )
+            self._on_first_show()
 
         if self._last_pos is not None:
             self.move(self._last_pos)
