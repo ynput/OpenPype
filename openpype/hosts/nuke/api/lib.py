@@ -812,39 +812,54 @@ def add_button_clear_rendered(node, path):
     node.addKnob(knob)
 
 
-def create_write_node(name, data, input=None, prenodes=None,
-                      review=True, linked_knobs=None, farm=True):
+def create_write_node(
+    name,
+    data,
+    input=None,
+    prenodes=None,
+    review=True,
+    farm=True,
+    linked_knobs=None,
+    **kwargs
+):
     ''' Creating write node which is group node
 
     Arguments:
         name (str): name of node
-        data (dict): data to be imprinted
-        input (node): selected node to connect to
-        prenodes (list, optional): list of lists, definitions for nodes
-                                to be created before write
-        review (bool): adding review knob
+        data (dict): creator write instance data
+        input (node)[optional]: selected node to connect to
+        prenodes (dict)[optional]:
+            nodes to be created before write with dependency
+        review (bool)[optional]: adding review knob
+        farm (bool)[optional]: rendering workflow target
+        kwargs (dict)[optional]: additional key arguments for formating
 
     Example:
-        prenodes = [
-            {
-                "nodeName": {
-                    "class": ""  # string
-                    "knobs": [
-                        ("knobName": value),
-                        ...
-                    ],
-                    "dependent": [
-                        following_node_01,
-                        ...
-                    ]
-                }
+        prenodes = {
+            "nodeName": {
+                "nodeclass": "Reformat",
+                "dependent": [
+                    following_node_01,
+                    ...
+                ],
+                "knobs": [
+                    {
+                        "type": "text",
+                        "name": "knobname",
+                        "value": "knob value"
+                    },
+                    ...
+                ]
             },
             ...
-        ]
+        }
+
 
     Return:
         node (obj): group node with avalon data as Knobs
     '''
+    prenodes = prenodes or {}
+
     # group node knob overrides
     knob_overrides = data.get("knobs", [])
 
@@ -880,7 +895,9 @@ def create_write_node(name, data, input=None, prenodes=None,
     # build file path to workfiles
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
     fpath = data["fpath_template"].format(
-        work=fdir, version=data["version"], subset=data["subset"],
+        work=fdir,
+        version=data["version"],
+        subset=data["subset"],
         frame=data["frame"],
         ext=representation
     )
@@ -919,6 +936,7 @@ def create_write_node(name, data, input=None, prenodes=None,
             prev_node = nuke.createNode(
                 "Input", "name {}".format("rgba"))
         prev_node.hideControlPanel()
+
         # creating pre-write nodes `prenodes`
         if prenodes:
             for node in prenodes:
