@@ -220,9 +220,26 @@ class AssetsDialog(QtWidgets.QDialog):
         # - adds ability to call reset on multiple places without repeating
         self._soft_reset_enabled = True
 
+        self._first_show = True
+        self._default_height = 500
+
+    def _on_first_show(self):
+        center = self.rect().center()
+        size = self.size()
+        size.setHeight(self._default_height)
+
+        self.resize(size)
+        new_pos = self.mapToGlobal(center)
+        new_pos.setX(new_pos.x() - int(self.width() / 2))
+        new_pos.setY(new_pos.y() - int(self.height() / 2))
+        self.move(new_pos)
+
     def showEvent(self, event):
         """Refresh asset model on show."""
         super(AssetsDialog, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self._on_first_show()
         # Refresh on show
         self.reset(False)
 
