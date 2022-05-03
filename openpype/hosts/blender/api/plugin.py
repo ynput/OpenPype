@@ -1,5 +1,7 @@
 """Shared functionality for pipeline plugins for Blender."""
 
+import contextlib
+from inspect import getmembers
 from pathlib import Path
 from typing import Dict, List, Optional
 from collections.abc import Iterable
@@ -103,6 +105,48 @@ def create_container(name):
         return container
 
 
+def remove_container(container, content_only=False):
+    """
+    Remove the container with all this objects and child collections.
+
+    Note:
+        This rename all removed elements with .removed suffix to prevent
+        naming conflict with created object before calling orphans_purge.
+    """
+    if isinstance(container, bpy.types.Collection):
+        # remove all objects in container collection
+        for obj in set(container.all_objects):
+            obj.name = f"{obj.name}.removed"
+            bpy.data.objects.remove(obj)
+        # remove all child collections in container
+        for child in set(container.children_recursive):
+            child.name = f"{child.name}.removed"
+            bpy.data.collections.remove(child)
+        # remove the container collection
+        if not content_only:
+            container.name = f"{container.name}.removed"
+            bpy.data.collections.remove(container)
+    else:
+        # remove all child objects in container object
+        for child in set(container.children_recursive):
+            child.name = f"{child.name}.removed"
+            bpy.data.objects.remove(child)
+        # remove the container object
+        if not content_only:
+            container.name = f"{container.name}.removed"
+            bpy.data.objects.remove(container)
+
+
+def get_container_objects(container):
+    """Get the parent of the input collection"""
+    if isinstance(container, bpy.types.Collection):
+        objects = list(container.all_objects)
+    else:
+        objects = list(container.children_recursive)
+        objects.append(container)
+    return objects
+
+
 def get_parent_collection(collection):
     """Get the parent of the input collection"""
     check_list = [bpy.context.scene.collection]
@@ -122,6 +166,19 @@ def get_local_collection_with_name(name):
     return None
 
 
+def get_collections_by_objects(objects, collections=None):
+    """Get collection from a collections list by objects."""
+    if collections is None:
+        collections = list(bpy.context.scene.collection.children)
+    for collection in collections:
+        if not len(collection.all_objects):
+            continue
+        elif all([obj in objects for obj in collection.all_objects]):
+            yield collection
+        elif len(collection.children):
+            yield from get_collections_by_objects(objects, collection.children)
+
+
 def link_to_collection(entity, collection):
     """link a entity to a collection. recursively if entity is iterable"""
     # Entity is Iterable, execute function recursively.
@@ -132,7 +189,8 @@ def link_to_collection(entity, collection):
     elif (
         isinstance(entity, bpy.types.Collection) and
         entity not in collection.children.values() and
-        collection not in entity.children.values()
+        collection not in entity.children.values() and
+        entity is not collection
     ):
         collection.children.link(entity)
     # Entity is an Object.
@@ -167,6 +225,18 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
+def orphans_purge():
+    """Purge orphan datablocks and libraries."""
+    # clear unused datablock
+    while bpy.data.orphans_purge(do_local_ids=False, do_recursive=True):
+        pass
+
+    # clear unused libraries
+    for library in list(bpy.data.libraries):
+        if len(library.users_id) == 0:
+            bpy.data.libraries.remove(library)
+
+
 class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
@@ -177,33 +247,27 @@ class Creator(LegacyCreator):
         subset = self.data["subset"]
         name = asset_name(asset, subset)
 
-        # Fectch only child collection from scene root collection.
-        only_child_collection = None
-        if len(bpy.context.scene.collection.children) == 1:
-            only_child_collection = bpy.context.scene.collection.children[0]
-
-        # Create the container
+        # Create the container.
         container = create_container(name)
         if container is None:
             raise RuntimeError(f"This instance already exists: {name}")
 
-        # Add custom property on the instance container with the data
+        # Add custom property on the instance container with the data.
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
         imprint(container, self.data)
 
-        # Add selected objects to container if useSelection is True
+        # Add selected objects to container if useSelection is True.
         if (self.options or {}).get("useSelection"):
-            selected = get_selection()
-            link_to_collection(selected, container)
+            selected_objects = set(get_selection())
+            # Get collection from selected objects.
+            selected_collection = set()
+            for collection in get_collections_by_objects(selected_objects):
+                selected_collection.add(collection)
+                selected_objects -= set(collection.all_objects)
+                print(collection)
 
-        # If only child collection, add this content and remove it.
-        elif only_child_collection:
-            link_to_collection(
-                list(only_child_collection.objects) +
-                list(only_child_collection.children),
-                container,
-            )
-            bpy.data.collections.remove(only_child_collection)
+            link_to_collection(selected_objects, container)
+            link_to_collection(selected_collection, container)
 
         return container
 
@@ -364,3 +428,276 @@ class AssetLoader(LoaderPlugin):
         """ Run the remove on Blender main thread"""
         mti = MainThreadItem(self.exec_remove, container)
         execute_in_main_thread(mti)
+
+    @contextlib.contextmanager
+    def maintained_parent(self, container):
+        """Maintain parent during context."""
+        container_objects = set(get_container_objects(container))
+        scene_objects = set(bpy.data.objects) - container_objects
+        objects_parents = dict()
+        for obj in scene_objects:
+            if obj.parent in container_objects:
+                objects_parents[obj.name] = obj.parent.name
+        for obj in container_objects:
+            if obj.parent in scene_objects:
+                objects_parents[obj.name] = obj.parent.name
+        try:
+            yield
+        finally:
+            # Restor parent.
+            for obj_name, parent_name in objects_parents.items():
+                obj = bpy.data.objects.get(obj_name)
+                parent = bpy.data.objects.get(parent_name)
+                if obj and parent and obj.parent is not parent:
+                    obj.parent = parent
+
+    @contextlib.contextmanager
+    def maintained_transforms(self, container):
+        """Maintain transforms during context."""
+        objects = get_container_objects(container)
+        # Store transforms for all objects in container.
+        objects_transforms = {
+            obj.name: obj.matrix_local.copy()
+            for obj in objects
+        }
+        # Store transforms for all bones from armatures in container.
+        bones_transforms = {
+            obj.name: {
+                bone.name: bone.matrix_local.copy()
+                for bone in obj.pose.bones
+            }
+            for obj in objects
+            if obj.type == "ARMATURE"
+        }
+        try:
+            yield
+        finally:
+            # Restor transforms.
+            for obj in bpy.data.objects:
+                if obj.name in objects_transforms:
+                    obj.matrix_local = objects_transforms[obj.name]
+                # Restor transforms for bones from armature.
+                if obj.type == "ARMATURE" and obj.name in bones_transforms:
+                    for bone in obj.pose.bones:
+                        if bone.name in bones_transforms[obj.name]:
+                            bone.matrix_local = (
+                                bones_transforms[obj.name][bone.name]
+                            )
+
+    @contextlib.contextmanager
+    def maintained_modifiers(self, container):
+        """Maintain modifiers during context."""
+        objects = get_container_objects(container)
+        objects_modifiers = {}
+        for obj in objects:
+            objects_modifiers[obj.name] = [
+                ModifierDescriptor(modifier)
+                for modifier in obj.modifiers
+            ]
+        try:
+            yield
+        finally:
+            # Restor modifiers.
+            for obj_name, modifiers in objects_modifiers.items():
+                for modifier in modifiers:
+                    modifier.restor()
+
+    @contextlib.contextmanager
+    def maintained_constraints(self, container):
+        """Maintain constraints during context."""
+        objects = get_container_objects(container)
+        objects_constraints = {}
+        armature_constraints = {}
+        for obj in objects:
+            objects_constraints[obj.name] = [
+                ConstraintDescriptor(constraint)
+                for constraint in obj.constraints
+            ]
+            if obj.type == "ARMATURE":
+                armature_constraints[obj.name] = {
+                    bone.name: [
+                        ConstraintDescriptor(constraint)
+                        for constraint in bone.constraints
+                    ]
+                    for bone in obj.pose.bones
+                }
+        try:
+            yield
+        finally:
+            # Restor modifiers.
+            for obj_name, constraints in objects_constraints.items():
+                for constraint in constraints:
+                    constraint.restor()
+            for obj_name, bones_constraints in armature_constraints.items():
+                for bone_name, constraints in bones_constraints.items():
+                    for constraint in constraints:
+                        constraint.restor(bone_name=bone_name)
+
+    @contextlib.contextmanager
+    def maintained_targets(self, container):
+        """Maintain constraints during context."""
+        container_objects = set(get_container_objects(container))
+        scene_objects = set(bpy.data.objects) - container_objects
+        stored_targets = []
+        for obj in scene_objects:
+            stored_targets += [
+                (constraint, constraint.target.name)
+                for constraint in obj.constraints
+                if getattr(constraint, "target", None) in container_objects
+            ]
+            stored_targets += [
+                (modifier, modifier.target.name)
+                for modifier in obj.modifiers
+                if getattr(modifier, "target", None) in container_objects
+            ]
+            # store constraint targets from bones in armatures
+            if obj.type == "ARMATURE":
+                for bone in obj.pose.bones:
+                    stored_targets += [
+                        (constraint, constraint.target.name)
+                        for constraint in bone.constraints
+                        if getattr(constraint, "target", None) in (
+                            container_objects
+                        )
+                    ]
+            # store driver variable targets from animation data
+            if obj.animation_data:
+                for driver in obj.animation_data.drivers:
+                    for var in driver.driver.variables:
+                        for target in var.targets:
+                            if target.id in container_objects:
+                                stored_targets.append(target, target.id.name)
+        try:
+            yield
+        finally:
+            # Restor targets.
+            for entity, target_name in stored_targets:
+                target = bpy.data.objects.get(target_name)
+                if isinstance(entity, bpy.types.DriverTarget):
+                    entity.id = target
+                else:
+                    entity.target = target
+
+    @contextlib.contextmanager
+    def maintained_drivers(self, container):
+        """Maintain drivers during context."""
+        objects = get_container_objects(container)
+        objects_drivers = {}
+        objects_copies = []
+        for obj in objects:
+            if obj.animation_data and len(obj.animation_data.drivers):
+                obj_copy = obj.copy()
+                obj_copy.name = f"{obj_copy.name}.copy"
+                obj_copy.use_fake_user = True
+                objects_copies.append(obj_copy)
+                objects_drivers[obj.name] = [
+                    driver
+                    for driver in obj_copy.animation_data.drivers
+                ]
+        try:
+            yield
+        finally:
+            # Restor drivers.
+            for obj_name, drivers in objects_drivers.items():
+                obj = bpy.data.objects.get(obj_name)
+                if not obj:
+                    continue
+                if not obj.animation_data:
+                    obj.animation_data_create()
+                for driver in drivers:
+                    obj.animation_data.drivers.from_existing(src_driver=driver)
+            # Clear copies.
+            for obj_copy in objects_copies:
+                obj_copy.use_fake_user = False
+                bpy.data.objects.remove(obj_copy)
+
+
+class StructDescriptor:
+
+    _invalid_property_names = [
+        "__doc__",
+        "__module__",
+        "__slots__",
+        "bl_rna",
+        "rna_type",
+        "name",
+        "type",
+        "is_override_data",
+    ]
+
+    def store_property(self, prop_name, prop_value):
+        if isinstance(prop_value, bpy.types.Object):
+            prop_value = f"bpy.data.objects:{prop_value.name}"
+        self.properties[prop_name] = prop_value
+
+    def restore_property(self, entity, prop_name):
+        prop_value = self.properties.get(prop_name)
+        if (
+            isinstance(prop_value, str) and
+            prop_value.startswith("bpy.data.objects:")
+        ):
+            prop_value = bpy.data.objects.get(
+                prop_value.split("bpy.data.objects:")[-1]
+            )
+        setattr(entity, prop_name, prop_value)
+
+    def __init__(self, bpy_struct: bpy.types.bpy_struct):
+        self.name = bpy_struct.name
+        self.type = bpy_struct.type
+        self.object_name = bpy_struct.id_data.name
+        self.is_override_data = bpy_struct.is_override_data
+
+        self.properties = dict()
+        for prop_name, prop_value in getmembers(bpy_struct):
+            # filter the property
+            if (
+                prop_name in self._invalid_property_names or
+                bpy_struct.is_property_readonly(prop_name)
+            ):
+                continue
+            # store the property
+            if (
+                not bpy_struct.is_override_data or
+                bpy_struct.is_property_overridable_library(prop_name)
+            ):
+                self.store_property(prop_name, prop_value)
+
+
+class ModifierDescriptor(StructDescriptor):
+    """
+    Store the name, type, properties and object of a modifier.
+    """
+
+    def restor(self):
+        obj = bpy.data.objects.get(self.object_name)
+        if obj:
+            modifier = obj.modifiers.get(self.name)
+            if not modifier and not self.is_override_data:
+                modifier = obj.modifiers.new(
+                    self.name,
+                    self.type,
+                )
+            if modifier and modifier.type == self.type:
+                for prop_name in self.properties:
+                    self.restore_property(modifier, prop_name)
+
+
+class ConstraintDescriptor(StructDescriptor):
+    """
+    Store the name, type, properties and object of a constraint.
+    """
+
+    def restor(self, bone_name=None):
+        obj = bpy.data.objects.get(self.object_name)
+        if obj and obj.type == "ARMATURE" and bone_name:
+            obj = obj.pose.bones.get(bone_name)
+        if obj:
+            constraint = obj.constraints.get(self.name)
+            if not constraint and not self.is_override_data:
+                constraint = obj.constraints.new(
+                    self.name,
+                    self.type,
+                )
+            if constraint and constraint.type == self.type:
+                for prop_name, in self.properties:
+                    self.restore_property(constraint, prop_name)
