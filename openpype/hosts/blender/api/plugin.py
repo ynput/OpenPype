@@ -1,6 +1,6 @@
 """Shared functionality for pipeline plugins for Blender."""
 
-import contextlib
+from contextlib import contextmanager
 from inspect import getmembers
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -429,7 +429,7 @@ class AssetLoader(LoaderPlugin):
         mti = MainThreadItem(self.exec_remove, container)
         execute_in_main_thread(mti)
 
-    @contextlib.contextmanager
+    @contextmanager
     def maintained_parent(self, container):
         """Maintain parent during context."""
         container_objects = set(get_container_objects(container))
@@ -451,7 +451,7 @@ class AssetLoader(LoaderPlugin):
                 if obj and parent and obj.parent is not parent:
                     obj.parent = parent
 
-    @contextlib.contextmanager
+    @contextmanager
     def maintained_transforms(self, container):
         """Maintain transforms during context."""
         objects = get_container_objects(container)
@@ -484,7 +484,7 @@ class AssetLoader(LoaderPlugin):
                                 bones_transforms[obj.name][bone.name]
                             )
 
-    @contextlib.contextmanager
+    @contextmanager
     def maintained_modifiers(self, container):
         """Maintain modifiers during context."""
         objects = get_container_objects(container)
@@ -502,7 +502,7 @@ class AssetLoader(LoaderPlugin):
                 for modifier in modifiers:
                     modifier.restor()
 
-    @contextlib.contextmanager
+    @contextmanager
     def maintained_constraints(self, container):
         """Maintain constraints during context."""
         objects = get_container_objects(container)
@@ -533,7 +533,7 @@ class AssetLoader(LoaderPlugin):
                     for constraint in constraints:
                         constraint.restor(bone_name=bone_name)
 
-    @contextlib.contextmanager
+    @contextmanager
     def maintained_targets(self, container):
         """Maintain constraints during context."""
         container_objects = set(get_container_objects(container))
@@ -578,7 +578,7 @@ class AssetLoader(LoaderPlugin):
                 else:
                     entity.target = target
 
-    @contextlib.contextmanager
+    @contextmanager
     def maintained_drivers(self, container):
         """Maintain drivers during context."""
         objects = get_container_objects(container)
