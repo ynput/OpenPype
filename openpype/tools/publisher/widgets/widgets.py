@@ -428,6 +428,7 @@ class AssetsField(BaseClickableFrame):
         self._set_state_property(state)
 
     def _set_state_property(self, state):
+        set_style_property(self, "state", state)
         set_style_property(self._name_input, "state", state)
         set_style_property(self._icon_btn, "state", state)
 
