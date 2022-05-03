@@ -165,7 +165,7 @@
                     ]
                 }
             ],
-            "customNodes": []
+            "overrideNodes": []
         },
         "regexInputs": {
             "inputs": [
