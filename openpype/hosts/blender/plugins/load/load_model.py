@@ -255,12 +255,13 @@ class BlendModelLoader(plugin.AssetLoader):
         # clear orphan datablocks and libraries
         plugin.orphans_purge()
 
-        # update avalon metadata
-        metadata["libpath"] = str(libpath)
-        metadata["representation"] = str(representation["_id"])
-        metadata["parent"] = str(representation["parent"])
-        asset_group[AVALON_PROPERTY] = dict()
-        asset_group[AVALON_PROPERTY].update(metadata)
+        # update metadata
+        metadata.update({
+            "libpath": str(libpath),
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"]),
+        })
+        plugin.metadata_update(asset_group, metadata)
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
