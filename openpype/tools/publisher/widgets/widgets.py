@@ -14,7 +14,8 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     IconButton,
     PixmapLabel,
-    BaseClickableFrame
+    BaseClickableFrame,
+    set_style_property,
 )
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from .assets_widget import AssetsDialog
@@ -350,15 +351,32 @@ class AssetsField(BaseClickableFrame):
         name_input = ClickableLineEdit(self)
         name_input.setObjectName("AssetNameInput")
 
+        icon_name = "fa.window-maximize"
+        icon = qtawesome.icon(icon_name, color="white")
+        icon_btn = QtWidgets.QPushButton(self)
+        icon_btn.setIcon(icon)
+        icon_btn.setObjectName("AssetNameInputButton")
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         layout.addWidget(name_input, 1)
+        layout.addWidget(icon_btn, 0)
 
+        for widget in (
+            name_input,
+            icon_btn
+        ):
+            size_policy = widget.sizePolicy()
+            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            widget.setSizePolicy(size_policy)
         name_input.clicked.connect(self._mouse_release_callback)
+        icon_btn.clicked.connect(self._mouse_release_callback)
         dialog.finished.connect(self._on_dialog_finish)
 
         self._dialog = dialog
         self._name_input = name_input
+        self._icon_btn = icon_btn
 
         self._origin_value = []
         self._origin_selection = []
@@ -406,10 +424,8 @@ class AssetsField(BaseClickableFrame):
         self._set_state_property(state)
 
     def _set_state_property(self, state):
-        current_value = self._name_input.property("state")
-        if current_value != state:
-            self._name_input.setProperty("state", state)
-            self._name_input.style().polish(self._name_input)
+        set_style_property(self._name_input, "state", state)
+        set_style_property(self._icon_btn, "state", state)
 
     def is_valid(self):
         """Is asset valid."""

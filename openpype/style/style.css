@@ -1027,7 +1027,24 @@ VariantInputsWidget QToolButton {
     border-left: 1px solid {color:border};
 }
 
-#TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"] {
+#AssetNameInputButton {
+    background: {color:bg-inputs};
+    border: 1px solid {color:border};
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 0px;
+    qproperty-iconSize: 11px 11px;
+}
+#AssetNameInputButton:disabled {
+    background: {color:bg-inputs-disabled};
+}
+#AssetNameInput {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+    border-right: none;
+}
+
+#TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"], #AssetNameInputButton[state="invalid"] {
     border-color: {color:publisher:error};
 }
 
