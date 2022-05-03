@@ -364,7 +364,7 @@ def _load_modules():
                         basename
                     )
                 else:
-                    msg = "Failed to import '{}'.".format(fullpath)
+                    msg = "Failed to import module '{}'.".format(fullpath)
                 log.error(msg, exc_info=True)
 
 
