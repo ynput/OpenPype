@@ -1059,12 +1059,12 @@ def create_write_node(name, data, input=None, prenodes=None,
     GN["tile_color"].setValue(tile_color)
 
     # finally add knob overrides
-    set_node_knobs_from_settings(GN, knob_overrides)
+    set_node_knobs_from_settings(GN, knob_overrides, **kwargs)
 
     return GN
 
 
-def set_node_knobs_from_settings(node, knob_settings):
+def set_node_knobs_from_settings(node, knob_settings, **kwargs):
     """ Overriding knob values from settings
 
     Using `schema_nuke_knob_inputs` for knob type definitions.
@@ -1072,13 +1072,37 @@ def set_node_knobs_from_settings(node, knob_settings):
     Args:
         node (nuke.Node): nuke node
         knob_settings (list): list of dict. Keys are `type`, `name`, `value`
+        kwargs (dict)[optional]: keys for formatable knob settings
     """
     for knob in knob_settings:
         knob_type = knob["type"]
         knob_name = knob["name"]
-        knob_value = knob["value"]
+
         if knob_name not in node.knobs():
             continue
+
+        # first deal with formatable knob settings
+        if knob_type == "formatable":
+            template = knob["template"]
+            to_type = knob["to_type"]
+            try:
+                _knob_value = template.format(
+                    **kwargs
+                )
+            except KeyError as msg:
+                raise KeyError(msg)
+
+            # convert value to correct type
+            if to_type == "2d_vector":
+                knob_value = _knob_value.split(";").split(",")
+            else:
+                knob_value = _knob_value
+
+            knob_type = to_type
+
+        else:
+            knob_value = knob["value"]
+
         if not knob_value:
             continue
 
@@ -1103,8 +1127,9 @@ def set_node_knobs_from_settings(node, knob_settings):
                         pformat(knob_settings)
                     ))
             knob_value = int(knob_value, 16)
-        if knob_type in ["2d_vector", "3d_vector", "color"]:
+        elif knob_type in ["2d_vector", "3d_vector", "color"]:
             knob_value = [float(v) for v in knob_value]
+
 
         node[knob_name].setValue(knob_value)
 

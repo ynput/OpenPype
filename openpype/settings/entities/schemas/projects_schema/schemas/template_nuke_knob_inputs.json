@@ -29,6 +29,42 @@
                         ]
                     },
                     {
+                        "key": "formatable",
+                        "label": "Formate from template",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template",
+                                "label": "Template",
+                                "placeholder": "{{key}} or {{key}};{{key}}"
+                            },
+                            {
+                                "type": "enum",
+                                "key": "to_type",
+                                "label": "Knob type",
+                                "enum_items": [
+                                    {
+                                        "text": "Text"
+                                    },
+                                    {
+                                        "number": "Number"
+                                    },
+                                    {
+                                        "decimal_number": "Decimal number"
+                                    },
+                                    {
+                                        "2d_vector": "2D vector"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
                         "key": "hex",
                         "label": "Hexadecimal (0x)",
                         "children": [
