@@ -345,8 +345,11 @@ class AssetsField(BaseClickableFrame):
 
     def __init__(self, controller, parent):
         super(AssetsField, self).__init__(parent)
+        self.setObjectName("AssetNameInputWidget")
 
-        dialog = AssetsDialog(controller, self)
+        # Don't use 'self' for parent!
+        # - this widget has specific styles
+        dialog = AssetsDialog(controller, parent)
 
         name_input = ClickableLineEdit(self)
         name_input.setObjectName("AssetNameInput")
@@ -363,6 +366,7 @@ class AssetsField(BaseClickableFrame):
         layout.addWidget(name_input, 1)
         layout.addWidget(icon_btn, 0)
 
+        # Make sure all widgets are vertically extended to highest widget
         for widget in (
             name_input,
             icon_btn

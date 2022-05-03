@@ -1027,24 +1027,44 @@ VariantInputsWidget QToolButton {
     border-left: 1px solid {color:border};
 }
 
-#AssetNameInputButton {
+#AssetNameInputWidget {
     background: {color:bg-inputs};
     border: 1px solid {color:border};
+    border-radius: 0.3em;
+}
+
+#AssetNameInputWidget QWidget {
+    background: transparent;
+}
+
+#AssetNameInputButton {
     border-bottom-left-radius: 0px;
     border-top-left-radius: 0px;
     padding: 0px;
     qproperty-iconSize: 11px 11px;
+    border-left: 1px solid {color:border};
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
 }
-#AssetNameInputButton:disabled {
-    background: {color:bg-inputs-disabled};
-}
+
 #AssetNameInput {
     border-bottom-right-radius: 0px;
     border-top-right-radius: 0px;
-    border-right: none;
+    border: none;
 }
 
-#TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"], #AssetNameInputButton[state="invalid"] {
+#AssetNameInputWidget:hover {
+    border-color: {color:border-hover};
+}
+#AssetNameInputWidget:focus{
+    border-color: {color:border-focus};
+}
+#AssetNameInputWidget:disabled {
+    background: {color:bg-inputs-disabled};
+}
+
+#TasksCombobox[state="invalid"], #AssetNameInputWidget[state="invalid"], #AssetNameInputButton[state="invalid"] {
     border-color: {color:publisher:error};
 }
 
