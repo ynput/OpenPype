@@ -897,6 +897,51 @@ def _bootstrap_from_code(use_version, use_staging):
     return version_path
 
 
+def _boot_validate_versions(use_version, local_version):
+    _print(f">>> Validating version [ {use_version} ]")
+    openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                staging=True)
+    openpype_versions += bootstrap.find_openpype(include_zips=True,
+                                                 staging=False)
+    v: OpenPypeVersion
+    found = [v for v in openpype_versions if str(v) == use_version]
+    if not found:
+        _print(f"!!! Version [ {use_version} ] not found.")
+        list_versions(openpype_versions, local_version)
+        sys.exit(1)
+
+    # print result
+    result = bootstrap.validate_openpype_version(
+        bootstrap.get_version_path_from_list(
+            use_version, openpype_versions))
+
+    _print("{}{}".format(
+        ">>> " if result[0] else "!!! ",
+        bootstrap.validate_openpype_version(
+            bootstrap.get_version_path_from_list(
+                use_version, openpype_versions)
+        )[1])
+    )
+
+
+def _boot_print_versions(use_staging, local_version, openpype_root):
+    if not use_staging:
+        _print("--- This will list only non-staging versions detected.")
+        _print("    To see staging versions, use --use-staging argument.")
+    else:
+        _print("--- This will list only staging versions detected.")
+        _print("    To see other version, omit --use-staging argument.")
+    _openpype_root = OPENPYPE_ROOT
+    openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                staging=use_staging)
+    if getattr(sys, 'frozen', False):
+        local_version = bootstrap.get_version(Path(_openpype_root))
+    else:
+        local_version = OpenPypeVersion.get_installed_version_str()
+
+    list_versions(openpype_versions, local_version)
+
+
 def boot():
     """Bootstrap OpenPype."""
 
@@ -966,30 +1011,7 @@ def boot():
         local_version = OpenPypeVersion.get_installed_version_str()
 
     if "validate" in commands:
-        _print(f">>> Validating version [ {use_version} ]")
-        openpype_versions = bootstrap.find_openpype(include_zips=True,
-                                                    staging=True)
-        openpype_versions += bootstrap.find_openpype(include_zips=True,
-                                                     staging=False)
-        v: OpenPypeVersion
-        found = [v for v in openpype_versions if str(v) == use_version]
-        if not found:
-            _print(f"!!! Version [ {use_version} ] not found.")
-            list_versions(openpype_versions, local_version)
-            sys.exit(1)
-
-        # print result
-        result = bootstrap.validate_openpype_version(
-            bootstrap.get_version_path_from_list(
-                use_version, openpype_versions))
-
-        _print("{}{}".format(
-            ">>> " if result[0] else "!!! ",
-            bootstrap.validate_openpype_version(
-                bootstrap.get_version_path_from_list(
-                    use_version, openpype_versions)
-            )[1])
-        )
+        _boot_validate_versions(use_version, local_version)
         sys.exit(1)
 
     if not openpype_path:
@@ -999,21 +1021,7 @@ def boot():
         os.environ["OPENPYPE_PATH"] = openpype_path
 
     if "print_versions" in commands:
-        if not use_staging:
-            _print("--- This will list only non-staging versions detected.")
-            _print("    To see staging versions, use --use-staging argument.")
-        else:
-            _print("--- This will list only staging versions detected.")
-            _print("    To see other version, omit --use-staging argument.")
-        _openpype_root = OPENPYPE_ROOT
-        openpype_versions = bootstrap.find_openpype(include_zips=True,
-                                                    staging=use_staging)
-        if getattr(sys, 'frozen', False):
-            local_version = bootstrap.get_version(Path(_openpype_root))
-        else:
-            local_version = OpenPypeVersion.get_installed_version_str()
-
-        list_versions(openpype_versions, local_version)
+        _boot_print_versions(use_staging, local_version, OPENPYPE_ROOT)
         sys.exit(1)
 
     # ------------------------------------------------------------------------
