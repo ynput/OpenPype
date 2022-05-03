@@ -120,7 +120,7 @@
                     "filter": {
                         "task_types": [],
                         "families": [],
-                        "sebsets": []
+                        "subsets": []
                     },
                     "read_raw": false,
                     "viewer_process_override": "",
