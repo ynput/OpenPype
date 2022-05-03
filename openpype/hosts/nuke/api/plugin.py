@@ -27,9 +27,6 @@ class OpenPypeCreator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(OpenPypeCreator, self).__init__(*args, **kwargs)
-        self.presets = get_current_project_settings()["nuke"]["create"].get(
-            self.__class__.__name__, {}
-        )
         if check_subsetname_exists(
                 nuke.allNodes(),
                 self.data["subset"]):
@@ -606,6 +603,7 @@ class AbstractWriteRender(OpenPypeCreator):
     icon = "sign-out"
     defaults = ["Main", "Mask"]
     knobs = []
+    prenodes = {}
 
     def __init__(self, *args, **kwargs):
         super(AbstractWriteRender, self).__init__(*args, **kwargs)
@@ -682,21 +680,12 @@ class AbstractWriteRender(OpenPypeCreator):
         self.data.update(creator_data)
         write_data.update(creator_data)
 
-        if self.presets.get('fpath_template'):
-            self.log.info("Adding template path from preset")
-            write_data.update(
-                {"fpath_template": self.presets["fpath_template"]}
-            )
-        else:
-            self.log.info("Adding template path from plugin")
-            write_data.update({
-                "fpath_template":
-                    ("{work}/" + self.family + "s/nuke/{subset}"
-                     "/{subset}.{frame}.{ext}")})
-
-        write_node = self._create_write_node(selected_node,
-                                             inputs, outputs,
-                                             write_data)
+        write_node = self._create_write_node(
+            selected_node,
+            inputs,
+            outputs,
+            write_data
+        )
 
         # relinking to collected connections
         for i, input in enumerate(inputs):

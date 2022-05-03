@@ -12,42 +12,52 @@ class CreateWriteStill(plugin.AbstractWriteRender):
     n_class = "Write"
     family = "still"
     icon = "image"
+
+    # settings
+    fpath_template = "{work}/render/nuke/{subset}/{subset}.{ext}"
     defaults = [
-        "ImageFrame{:0>4}".format(nuke.frame()),
-        "MPFrame{:0>4}".format(nuke.frame()),
-        "LayoutFrame{:0>4}".format(nuke.frame())
+        "ImageFrame{frame:0>4}",
+        "MPFrame{frame:0>4}",
+        "LayoutFrame{frame:0>4}"
     ]
+    prenodes = {
+        "FrameHold01": {
+            "nodeclass": "FrameHold",
+            "dependent": None,
+            "knobs": [
+                {
+                    "type": "formatable",
+                    "name": "first_frame",
+                    "template": "{frame}",
+                    "to_type": "number"
+                }
+            ]
+        }
+    }
 
     def __init__(self, *args, **kwargs):
+        # format defaults
+        new_defaults = []
+        for _d in self.defaults:
+            new_d = _d.format(frame=nuke.frame())
+            new_defaults.append(new_d)
+        self.defaults = new_defaults
+
         super(CreateWriteStill, self).__init__(*args, **kwargs)
 
     def _create_write_node(self, selected_node, inputs, outputs, write_data):
-        # explicitly reset template to 'renders', not same as other 2 writes
-        write_data.update({
-            "fpath_template": (
-                "{work}/renders/nuke/{subset}/{subset}.{ext}")})
+        # add fpath_template
+        write_data["fpath_template"] = self.fpath_template
 
-        _prenodes = [
-            {
-                "name": "FrameHold01",
-                "class": "FrameHold",
-                "knobs": [
-                    ("first_frame", nuke.frame())
-                ],
-                "dependent": None
-            }
-        ]
-
-        write_node = create_write_node(
+        return create_write_node(
             self.name,
             write_data,
             input=selected_node,
             review=False,
-            prenodes=_prenodes,
+            prenodes=self.prenodes,
             farm=False,
-            linked_knobs=["channels", "___", "first", "last", "use_limit"])
-
-        return write_node
+            linked_knobs=["channels", "___", "first", "last", "use_limit"]
+        )
 
     def _modify_write_node(self, write_node):
         write_node.begin()
