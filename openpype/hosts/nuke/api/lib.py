@@ -1099,7 +1099,7 @@ def set_node_knobs_from_settings(node, knob_settings):
             knob_value = float(knob_value)
         elif knob_type == "number":
             knob_value = int(knob_value)
-        elif knob_type == "string":
+        elif knob_type == "text":
             knob_value = knob_value
         elif knob_type == "hex":
             if not knob_value.startswith("0x"):

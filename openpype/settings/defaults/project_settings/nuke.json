@@ -131,17 +131,17 @@
                     "reformat_node_add": false,
                     "reformat_node_config": [
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "type",
                             "value": "to format"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "format",
                             "value": "HD_1080"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "filter",
                             "value": "Lanczos6"
                         },

@@ -12,8 +12,8 @@
             "enum_label": "Type",
             "enum_children": [
                 {
-                    "key": "string",
-                    "label": "String",
+                    "key": "text",
+                    "label": "Text",
                     "children": [
                         {
                             "type": "text",
