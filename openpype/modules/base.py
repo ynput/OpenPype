@@ -326,11 +326,25 @@ def _load_modules():
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
 
+            # Validations
+            if os.path.isdir(fullpath):
+                # Check existence of init file
+                init_path = os.path.join(fullpath, "__init__.py")
+                if not os.path.exists(init_path):
+                    log.debug((
+                        "Module directory does not contan __init__.py"
+                        " file {}"
+                    ).format(fullpath))
+                    continue
+
+            elif ext not in (".py", ):
+                continue
+
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest
             try:
+                # Don't import dynamically current directory modules
                 if is_in_current_dir:
-                    # Don't import dynamically
                     import_str = "openpype.modules.{}".format(basename)
                     new_import_str = "{}.{}".format(modules_key, basename)
                     default_module = __import__(import_str, fromlist=("", ))
@@ -338,18 +352,9 @@ def _load_modules():
                     setattr(openpype_modules, basename, default_module)
 
                 elif os.path.isdir(fullpath):
-                    # Check existence of init file
-                    init_path = os.path.join(fullpath, "__init__.py")
-                    if not os.path.exists(init_path):
-                        log.debug((
-                            "Module directory does not contan __init__.py"
-                            " file {}"
-                        ).format(fullpath))
-                        continue
-
                     import_module_from_dirpath(dirpath, filename, modules_key)
 
-                elif ext in (".py", ):
+                else:
                     module = import_filepath(fullpath)
                     setattr(openpype_modules, basename, module)
 
