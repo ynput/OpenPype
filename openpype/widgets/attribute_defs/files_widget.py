@@ -151,7 +151,7 @@ class FilesModel(QtGui.QStandardItemModel):
         item = QtGui.QStandardItem()
         item_id = str(uuid.uuid4())
         item.setData(item_id, ITEM_ID_ROLE)
-        item.setData(file_item.label, ITEM_LABEL_ROLE)
+        item.setData(file_item.label or "< empty >", ITEM_LABEL_ROLE)
         item.setData(file_item.filenames, FILENAMES_ROLE)
         item.setData(file_item.directory, DIRPATH_ROLE)
         item.setData(icon_pixmap, ITEM_ICON_ROLE)
@@ -512,7 +512,9 @@ class FilesWidget(QtWidgets.QFrame):
             return file_items
         if file_items:
             return file_items[0]
-        return FileDefItem.create_empty_item()
+
+        empty_item = FileDefItem.create_empty_item()
+        return empty_item.to_dict()
 
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)
