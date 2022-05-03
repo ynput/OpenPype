@@ -332,7 +332,7 @@ def _load_modules():
                 init_path = os.path.join(fullpath, "__init__.py")
                 if not os.path.exists(init_path):
                     log.debug((
-                        "Module directory does not contan __init__.py"
+                        "Module directory does not contain __init__.py"
                         " file {}"
                     ).format(fullpath))
                     continue
