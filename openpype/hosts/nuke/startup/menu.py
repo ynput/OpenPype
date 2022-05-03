@@ -1,5 +1,6 @@
 import nuke
 import os
+import json
 
 import avalon.api
 from openpype.api import Logger
@@ -59,4 +60,61 @@ def add_scripts_menu():
     studio_menu.build_from_configuration(studio_menu, config)
 
 
+def add_gizmos():
+    """ Build a custom gizmo menu from a yaml description file.
+    """
+    quad_plugin_path = os.environ.get("QUAD_PLUGIN_PATH")
+    gizmos_folder = os.path.join(quad_plugin_path, 'nuke/gizmos')
+    icons_folder = os.path.join(quad_plugin_path, 'nuke/icons')
+    json_file = os.path.join(quad_plugin_path, 'nuke/toolbar.json')
+
+    if os.path.isdir(gizmos_folder):
+        for p in os.listdir(gizmos_folder):
+            if os.path.isdir(os.path.join(gizmos_folder, p)):
+                nuke.pluginAddPath(os.path.join(gizmos_folder, p))
+        nuke.pluginAddPath(gizmos_folder)
+
+    with open(json_file, 'rb') as fd:
+        try:
+            data = json.loads(fd.read())
+        except Exception as e:
+            print(f"Problem occurs when reading toolbar file: {e}")
+            return
+
+        if data is None or not isinstance(data, list):
+            # return early if the json file is empty or not well structured
+            return
+
+        bar = nuke.menu("Nodes")
+        menu = bar.addMenu(
+            "FixStudio",
+            icon=os.path.join(icons_folder, 'fixstudio.png')
+        )
+
+        # populate the menu
+        for entry in data:
+            # make fail if the name or command key doesn't exists
+            name = entry['name']
+
+            command = entry.get('command', "")
+
+            if command.find('{pipe_path}') > -1:
+                command = command.format(pipe_path=os.environ['QUAD_PLUGIN_PATH'])
+
+            hotkey = entry.get('hotkey', "")
+            icon = entry.get('icon', "")
+
+            parent_name = os.path.dirname(name)
+
+            if 'separator' in name:
+                current = menu.findItem(parent_name)
+                if current:
+                    current.addSeparator()
+            else:
+                menu.addCommand(
+                    name, command=command, shortcut=hotkey, icon=icon,
+                )
+
+
+add_gizmos()
 add_scripts_menu()
