@@ -1,5 +1,6 @@
 """Load a rig asset in Blender."""
 
+import contextlib
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
@@ -25,22 +26,6 @@ class BlendRigLoader(plugin.AssetLoader):
     color = "orange"
 
     @staticmethod
-    def _remove(asset_group):
-        # remove all objects in asset_group
-        objects = list(asset_group.objects)
-        for obj in objects:
-            try:
-                objects.extend(obj.children)
-                bpy.data.objects.remove(obj)
-            except:
-                pass
-        # remove all collections in asset_group
-        childrens = list(asset_group.children)
-        for child in childrens:
-            childrens.extend(child.children)
-            bpy.data.collections.remove(child)
-
-    @staticmethod
     def _process(libpath, group_name):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
@@ -64,6 +49,8 @@ class BlendRigLoader(plugin.AssetLoader):
 
         for obj in container.all_objects:
             obj.name = f"{group_name}:{obj.name}"
+        for child in container.children_recursive:
+            child.name = f"{group_name}:{child.name}"
 
         # Create override library for container and elements.
         override = container.override_hierarchy_create(
@@ -76,21 +63,18 @@ class BlendRigLoader(plugin.AssetLoader):
         if len(parent_collection.children) == 1:
             parent_collection = parent_collection.children[0]
 
-        # Relink and rename the override container using asset_group.
+        # Relink and rename the override container.
         bpy.context.scene.collection.children.unlink(override)
         parent_collection.children.link(override)
         override.name = group_name
 
-        # clear and assign asset_group and objects variables
+        # clear unnecessary elements
         bpy.data.collections.remove(container)
-        asset_group = override
-        objects = list(override.all_objects)
 
-        bpy.data.orphans_purge(do_local_ids=False)
-
+        plugin.orphans_purge()
         plugin.deselect_all()
 
-        return asset_group, objects
+        return override, list(override.all_objects)
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -159,7 +143,7 @@ class BlendRigLoader(plugin.AssetLoader):
             f"The asset is not loaded: {container['objectName']}"
         )
         assert libpath, (
-            "No existing library file found for {container['objectName']}"
+            f"No existing library file found for {container['objectName']}"
         )
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
@@ -168,7 +152,7 @@ class BlendRigLoader(plugin.AssetLoader):
             f"Unsupported file: {libpath}"
         )
 
-        metadata = asset_group.get(AVALON_PROPERTY)
+        metadata = asset_group.get(AVALON_PROPERTY).to_dict()
         group_libpath = metadata["libpath"]
 
         normalized_group_libpath = (
@@ -186,42 +170,31 @@ class BlendRigLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
-        # Check how many assets use the same library
-        count = 0
-        assets = [o for o in bpy.data.objects if o.get(AVALON_PROPERTY)]
-        assets += [c for c in bpy.data.collections if c.get(AVALON_PROPERTY)]
-        for asset in assets:
-            if asset.get(AVALON_PROPERTY).get('libpath') == libpath:
-                count += 1
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(self.maintained_parent(asset_group))
+            stack.enter_context(self.maintained_transforms(asset_group))
+            stack.enter_context(self.maintained_modifiers(asset_group))
+            stack.enter_context(self.maintained_constraints(asset_group))
+            stack.enter_context(self.maintained_action(asset_group))
+            stack.enter_context(self.maintained_targets(asset_group))
 
-        # Get the armature of the rig
-        objects = asset_group.all_objects
-        armature = [obj for obj in objects if obj.type == 'ARMATURE'][0]
+            plugin.remove_container(asset_group)
 
-        action = None
-        if armature.animation_data and armature.animation_data.action:
-            action = armature.animation_data.action
+            asset_group, objects = self._process(str(libpath), object_name)
 
-        self._remove(asset_group)
+        # update override library operations from asset objects
+        for obj in objects:
+            if obj.override_library:
+                obj.override_library.operations_update()
 
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
-            if library:
-                bpy.data.libraries.remove(library)
+        # clear orphan datablocks and libraries
+        plugin.orphans_purge()
 
-        asset_group, objects = self._process(str(libpath), object_name)
-
-        if action:
-            for obj in objects:
-                if obj.animation_data is None:
-                    obj.animation_data_create()
-                obj.animation_data.action = action
-
-        metadata = asset_group.get(AVALON_PROPERTY)
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
         metadata["parent"] = str(representation["parent"])
+        asset_group[AVALON_PROPERTY] = dict()
+        asset_group[AVALON_PROPERTY].update(metadata)
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -242,24 +215,32 @@ class BlendRigLoader(plugin.AssetLoader):
         if not asset_group:
             return False
 
-        # Check how many assets use the same library
-        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
-        count = 0
-        assets = [o for o in bpy.data.objects if o.get(AVALON_PROPERTY)]
-        assets += [c for c in bpy.data.collections if c.get(AVALON_PROPERTY)]
-        for asset in assets:
-            if asset.get(AVALON_PROPERTY).get('libpath') == libpath:
-                count += 1
-
-        if isinstance(asset_group, bpy.types.Collection):
-            self._remove(asset_group)
-            bpy.data.collections.remove(asset_group)
-        else:
-            bpy.data.objects.remove(asset_group)
-
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(libpath))
-            bpy.data.libraries.remove(library)
+        plugin.remove_container(asset_group)
+        plugin.orphans_purge()
 
         return True
+
+    @contextlib.contextmanager
+    def maintained_action(asset_group):
+        """Maintain action during context."""
+        asset_group_name = asset_group.name
+        # Get the armature from asset_group.
+        armature = None
+        for obj in asset_group.all_objects:
+            if obj.type == "ARMATURE":
+                armature = obj
+                break
+        # Store action from armature.
+        action = None
+        if armature and armature.animation_data and armature.animation_data.action:
+            action = armature.animation_data.action
+        try:
+            yield
+        finally:
+            # Restor action.
+            asset_group = bpy.data.collections.get(asset_group_name)
+            if asset_group and action:
+                for obj in asset_group.all_objects:
+                    if obj.animation_data is None:
+                        obj.animation_data_create()
+                    obj.animation_data.action = action
