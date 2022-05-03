@@ -106,8 +106,14 @@
                             }
                         },
                         {
-                            "type": "schema",
-                            "name": "schema_nuke_knob_inputs"
+                            "type": "schema_template",
+                            "name": "template_nuke_knob_inputs",
+                            "template_data": [
+                                {
+                                    "label": "Node knobs",
+                                    "key": "knobs"
+                                }
+                            ]
                         }
                     ]
                 },
@@ -142,8 +148,14 @@
                             "label": "Add reviewable toggle"
                         },
                         {
-                            "type": "schema",
-                            "name": "schema_nuke_knob_inputs"
+                            "type": "schema_template",
+                            "name": "template_nuke_knob_inputs",
+                            "template_data": [
+                                {
+                                    "label": "Node knobs",
+                                    "key": "knobs"
+                                }
+                            ]
                         }
                     ]
                 }

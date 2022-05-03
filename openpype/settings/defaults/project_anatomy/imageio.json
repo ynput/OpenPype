@@ -55,36 +55,44 @@
                     "nukeNodeClass": "Write",
                     "knobs": [
                         {
+                            "type": "text",
                             "name": "file_type",
                             "value": "exr"
                         },
                         {
+                            "type": "text",
                             "name": "datatype",
                             "value": "16 bit half"
                         },
                         {
+                            "type": "text",
                             "name": "compression",
                             "value": "Zip (1 scanline)"
                         },
                         {
+                            "type": "bool",
                             "name": "autocrop",
-                            "value": "True"
+                            "value": true
                         },
                         {
+                            "type": "hex",
                             "name": "tile_color",
                             "value": "0xff0000ff"
                         },
                         {
+                            "type": "text",
                             "name": "channels",
                             "value": "rgb"
                         },
                         {
+                            "type": "text",
                             "name": "colorspace",
                             "value": "linear"
                         },
                         {
+                            "type": "bool",
                             "name": "create_directories",
-                            "value": "True"
+                            "value": true
                         }
                     ]
                 },
@@ -95,36 +103,44 @@
                     "nukeNodeClass": "Write",
                     "knobs": [
                         {
+                            "type": "text",
                             "name": "file_type",
                             "value": "exr"
                         },
                         {
+                            "type": "text",
                             "name": "datatype",
                             "value": "16 bit half"
                         },
                         {
+                            "type": "text",
                             "name": "compression",
                             "value": "Zip (1 scanline)"
                         },
                         {
+                            "type": "bool",
                             "name": "autocrop",
-                            "value": "False"
+                            "value": true
                         },
                         {
+                            "type": "hex",
                             "name": "tile_color",
                             "value": "0xadab1dff"
                         },
                         {
+                            "type": "text",
                             "name": "channels",
                             "value": "rgb"
                         },
                         {
+                            "type": "text",
                             "name": "colorspace",
                             "value": "linear"
                         },
                         {
+                            "type": "bool",
                             "name": "create_directories",
-                            "value": "True"
+                            "value": true
                         }
                     ]
                 },
@@ -135,32 +151,39 @@
                     "nukeNodeClass": "Write",
                     "knobs": [
                         {
+                            "type": "text",
                             "name": "file_type",
                             "value": "tiff"
                         },
                         {
+                            "type": "text",
                             "name": "datatype",
                             "value": "16 bit"
                         },
                         {
+                            "type": "text",
                             "name": "compression",
                             "value": "Deflate"
                         },
                         {
+                            "type": "hex",
                             "name": "tile_color",
                             "value": "0x23ff00ff"
                         },
                         {
+                            "type": "text",
                             "name": "channels",
                             "value": "rgb"
                         },
                         {
+                            "type": "text",
                             "name": "colorspace",
                             "value": "sRGB"
                         },
                         {
+                            "type": "bool",
                             "name": "create_directories",
-                            "value": "True"
+                            "value": true
                         }
                     ]
                 }
