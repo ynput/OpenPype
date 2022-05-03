@@ -908,10 +908,22 @@ class MultipleItemWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
+        model.rowsInserted.connect(self._on_insert)
+
         self._view = view
         self._model = model
 
         self._value = []
+
+    def _on_insert(self):
+        self._update_size()
+
+    def _update_size(self):
+        model = self._view.model()
+        if model.rowCount() == 0:
+            return
+        height = self._view.sizeHintForRow(0)
+        self.setMaximumHeight(height + (2 * self._view.spacing()))
 
     def showEvent(self, event):
         super(MultipleItemWidget, self).showEvent(event)
@@ -920,12 +932,14 @@ class MultipleItemWidget(QtWidgets.QWidget):
             # Add temp item to be able calculate maximum height of widget
             tmp_item = QtGui.QStandardItem("tmp")
             self._model.appendRow(tmp_item)
-
-        height = self._view.sizeHintForRow(0)
-        self.setMaximumHeight(height + (2 * self._view.spacing()))
+            self._update_size()
 
         if tmp_item is not None:
             self._model.clear()
+
+    def resizeEvent(self, event):
+        super(MultipleItemWidget, self).resizeEvent(event)
+        self._update_size()
 
     def set_value(self, value=None):
         """Set value/s of currently selected instance."""
