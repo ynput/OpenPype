@@ -59,9 +59,9 @@
         "CreateWriteStill": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
             "defaults": [
-                "ImageFrame{frame:0>4}",
-                "MPFrame{frame:0>4}",
-                "LayoutFrame{frame:0>4}"
+                "ImageFrame",
+                "MPFrame",
+                "LayoutFrame"
             ],
             "knobs": [],
             "prenodes": {
@@ -71,7 +71,7 @@
                     "knobs": [
                         {
                             "type": "formatable",
-                            "name": "FrameHold",
+                            "name": "first_frame",
                             "template": "{frame}",
                             "to_type": "number"
                         }

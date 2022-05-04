@@ -2,6 +2,10 @@ import nuke
 
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import create_write_node
+from openpype.api import (
+    Logger
+)
+log = Logger.get_logger(__name__)
 
 
 class CreateWriteStill(plugin.AbstractWriteRender):
@@ -16,9 +20,9 @@ class CreateWriteStill(plugin.AbstractWriteRender):
     # settings
     fpath_template = "{work}/render/nuke/{subset}/{subset}.{ext}"
     defaults = [
-        "ImageFrame{frame:0>4}",
-        "MPFrame{frame:0>4}",
-        "LayoutFrame{frame:0>4}"
+        "ImageFrame",
+        "MPFrame",
+        "LayoutFrame"
     ]
     prenodes = {
         "FrameHold01": {
@@ -36,13 +40,6 @@ class CreateWriteStill(plugin.AbstractWriteRender):
     }
 
     def __init__(self, *args, **kwargs):
-        # format defaults
-        new_defaults = []
-        for _d in self.defaults:
-            new_d = _d.format(frame=nuke.frame())
-            new_defaults.append(new_d)
-        self.defaults = new_defaults
-
         super(CreateWriteStill, self).__init__(*args, **kwargs)
 
     def _create_write_node(self, selected_node, inputs, outputs, write_data):
@@ -56,7 +53,10 @@ class CreateWriteStill(plugin.AbstractWriteRender):
             review=False,
             prenodes=self.prenodes,
             farm=False,
-            linked_knobs=["channels", "___", "first", "last", "use_limit"]
+            linked_knobs=["channels", "___", "first", "last", "use_limit"],
+            **{
+                "frame": nuke.frame()
+            }
         )
 
     def _modify_write_node(self, write_node):
