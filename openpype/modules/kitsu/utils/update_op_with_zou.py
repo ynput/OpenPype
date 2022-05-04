@@ -10,7 +10,7 @@ from gazu.task import (
     all_tasks_for_shot,
 )
 
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib import create_project
 from openpype.modules.kitsu.utils.credentials import validate_credentials

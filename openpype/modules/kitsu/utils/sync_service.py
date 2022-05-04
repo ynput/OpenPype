@@ -2,7 +2,7 @@ import os
 
 import gazu
 
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 from .credentials import validate_credentials
 from .update_op_with_zou import (
     create_op_asset,
