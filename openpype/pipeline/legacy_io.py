@@ -25,7 +25,7 @@ def install():
 
     session = session_data_from_environment(context_keys=True)
 
-    session["schema"] = "openpype:session-2.0"
+    session["schema"] = "openpype:session-3.0"
     try:
         schema.validate(session)
     except schema.ValidationError as e:
@@ -55,7 +55,7 @@ def uninstall():
 def requires_install(func):
     @functools.wraps(func)
     def decorated(*args, **kwargs):
-        if not module._is_installed:
+        if not _is_installed:
             install()
         return func(*args, **kwargs)
     return decorated

@@ -1,0 +1,127 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:session-3.0",
+    "description": "The Avalon environment",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "AVALON_PROJECT",
+        "AVALON_ASSET"
+    ],
+
+    "properties": {
+        "AVALON_PROJECTS": {
+            "description": "Absolute path to root of project directories",
+            "type": "string",
+            "example": "/nas/projects"
+        },
+        "AVALON_PROJECT": {
+            "description": "Name of project",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "Hulk"
+        },
+        "AVALON_ASSET": {
+            "description": "Name of asset",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "Bruce"
+        },
+        "AVALON_SILO": {
+            "description": "Name of asset group or container",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "assets"
+        },
+        "AVALON_TASK": {
+            "description": "Name of task",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "modeling"
+        },
+        "AVALON_APP": {
+            "description": "Name of application",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "maya2016"
+        },
+        "AVALON_DB": {
+            "description": "Name of database",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "avalon",
+            "default": "avalon"
+        },
+        "AVALON_LABEL": {
+            "description": "Nice name of Avalon, used in e.g. graphical user interfaces",
+            "type": "string",
+            "example": "Mindbender",
+            "default": "Avalon"
+        },
+        "AVALON_SENTRY": {
+            "description": "Address to Sentry",
+            "type": "string",
+            "pattern": "^http[\\w/@:.]*$",
+            "example": "https://5b872b280de742919b115bdc8da076a5:8d278266fe764361b8fa6024af004a9c@logs.mindbender.com/2",
+            "default": null
+        },
+        "AVALON_DEADLINE": {
+            "description": "Address to Deadline",
+            "type": "string",
+            "pattern": "^http[\\w/@:.]*$",
+            "example": "http://192.168.99.101",
+            "default": null
+        },
+        "AVALON_TIMEOUT": {
+            "description": "Wherever there is a need for a timeout, this is the default value.",
+            "type": "string",
+            "pattern": "^[0-9]*$",
+            "default": "1000",
+            "example": "1000"
+        },
+        "AVALON_UPLOAD": {
+            "description": "Boolean of whether to upload published material to central asset repository",
+            "type": "string",
+            "default": null,
+            "example": "True"
+        },
+        "AVALON_USERNAME": {
+            "description": "Generic username",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "default": "avalon",
+            "example": "myself"
+        },
+        "AVALON_PASSWORD": {
+            "description": "Generic password",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "default": "secret",
+            "example": "abc123"
+        },
+        "AVALON_INSTANCE_ID": {
+            "description": "Unique identifier for instances in a working file",
+            "type": "string",
+            "pattern": "^[\\w.]*$",
+            "default": "avalon.instance",
+            "example": "avalon.instance"
+        },
+        "AVALON_CONTAINER_ID": {
+            "description": "Unique identifier for a loaded representation in a working file",
+            "type": "string",
+            "pattern": "^[\\w.]*$",
+            "default": "avalon.container",
+            "example": "avalon.container"
+        },
+        "AVALON_DEBUG": {
+            "description": "Enable debugging mode. Some applications may use this for e.g. extended verbosity or mock plug-ins.",
+            "type": "string",
+            "default": null,
+            "example": "True"
+        }
+    }
+}
