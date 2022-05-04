@@ -31,12 +31,6 @@
             "pattern": "^\\w*$",
             "example": "Bruce"
         },
-        "AVALON_SILO": {
-            "description": "Name of asset group or container",
-            "type": "string",
-            "pattern": "^\\w*$",
-            "example": "assets"
-        },
         "AVALON_TASK": {
             "description": "Name of task",
             "type": "string",
@@ -44,7 +38,7 @@
             "example": "modeling"
         },
         "AVALON_APP": {
-            "description": "Name of application",
+            "description": "Name of host",
             "type": "string",
             "pattern": "^\\w*$",
             "example": "maya2016"
@@ -62,46 +56,12 @@
             "example": "Mindbender",
             "default": "Avalon"
         },
-        "AVALON_SENTRY": {
-            "description": "Address to Sentry",
-            "type": "string",
-            "pattern": "^http[\\w/@:.]*$",
-            "example": "https://5b872b280de742919b115bdc8da076a5:8d278266fe764361b8fa6024af004a9c@logs.mindbender.com/2",
-            "default": null
-        },
-        "AVALON_DEADLINE": {
-            "description": "Address to Deadline",
-            "type": "string",
-            "pattern": "^http[\\w/@:.]*$",
-            "example": "http://192.168.99.101",
-            "default": null
-        },
         "AVALON_TIMEOUT": {
             "description": "Wherever there is a need for a timeout, this is the default value.",
             "type": "string",
             "pattern": "^[0-9]*$",
             "default": "1000",
             "example": "1000"
-        },
-        "AVALON_UPLOAD": {
-            "description": "Boolean of whether to upload published material to central asset repository",
-            "type": "string",
-            "default": null,
-            "example": "True"
-        },
-        "AVALON_USERNAME": {
-            "description": "Generic username",
-            "type": "string",
-            "pattern": "^\\w*$",
-            "default": "avalon",
-            "example": "myself"
-        },
-        "AVALON_PASSWORD": {
-            "description": "Generic password",
-            "type": "string",
-            "pattern": "^\\w*$",
-            "default": "secret",
-            "example": "abc123"
         },
         "AVALON_INSTANCE_ID": {
             "description": "Unique identifier for instances in a working file",
@@ -116,12 +76,6 @@
             "pattern": "^[\\w.]*$",
             "default": "avalon.container",
             "example": "avalon.container"
-        },
-        "AVALON_DEBUG": {
-            "description": "Enable debugging mode. Some applications may use this for e.g. extended verbosity or mock plug-ins.",
-            "type": "string",
-            "default": null,
-            "example": "True"
         }
     }
 }
