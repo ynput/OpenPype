@@ -812,6 +812,47 @@ def add_button_clear_rendered(node, path):
     node.addKnob(knob)
 
 
+def create_prenodes(prev_node, nodes_setting, **kwargs):
+    last_node = None
+    for_dependency = {}
+    for name, node in nodes_setting.items():
+        # get attributes
+        nodeclass = node["nodeclass"]
+        knobs = node["knobs"]
+
+        # create node
+        now_node = nuke.createNode(
+            nodeclass, "name {}".format(name))
+        now_node.hideControlPanel()
+
+        # add for dependency linking
+        for_dependency[name] = {
+            "node": now_node,
+            "dependent": node["dependent"]
+        }
+
+        # add data to knob
+        set_node_knobs_from_settings(now_node, knobs, **kwargs)
+
+        # switch actual node to previous
+        last_node = now_node
+
+    for _node_name, node_prop in for_dependency.items():
+        if not node_prop["dependent"]:
+            node_prop["node"].setInput(
+                0, prev_node)
+        elif node_prop["dependent"] in for_dependency:
+            _prev_node = for_dependency[node_prop["dependent"]]
+            node_prop["node"].setInput(
+                0, _prev_node)
+        else:
+            log.warning("Dependency has wrong name of node: {}".format(
+                node_prop
+            ))
+
+    return last_node
+
+
 def create_write_node(
     name,
     data,
@@ -938,62 +979,7 @@ def create_write_node(
         prev_node.hideControlPanel()
 
         # creating pre-write nodes `prenodes`
-        if prenodes:
-            for node in prenodes:
-                # get attributes
-                pre_node_name = node["name"]
-                klass = node["class"]
-                knobs = node["knobs"]
-                dependent = node["dependent"]
-
-                # create node
-                now_node = nuke.createNode(
-                    klass, "name {}".format(pre_node_name))
-                now_node.hideControlPanel()
-
-                # add data to knob
-                for _knob in knobs:
-                    knob, value = _knob
-                    try:
-                        now_node[knob].value()
-                    except NameError:
-                        log.warning(
-                            "knob `{}` does not exist on node `{}`".format(
-                                knob, now_node["name"].value()
-                            ))
-                        continue
-
-                    if not knob and not value:
-                        continue
-
-                    log.info((knob, value))
-
-                    if isinstance(value, str):
-                        if "[" in value:
-                            now_node[knob].setExpression(value)
-                    else:
-                        now_node[knob].setValue(value)
-
-                # connect to previous node
-                if dependent:
-                    if isinstance(dependent, (tuple or list)):
-                        for i, node_name in enumerate(dependent):
-                            input_node = nuke.createNode(
-                                "Input", "name {}".format(node_name))
-                            input_node.hideControlPanel()
-                            now_node.setInput(1, input_node)
-
-                    elif isinstance(dependent, str):
-                        input_node = nuke.createNode(
-                            "Input", "name {}".format(node_name))
-                        input_node.hideControlPanel()
-                        now_node.setInput(0, input_node)
-
-                else:
-                    now_node.setInput(0, prev_node)
-
-                # switch actual node to previous
-                prev_node = now_node
+        create_prenodes(prev_node, prenodes, **kwargs)
 
         # creating write node
         write_node = now_node = add_write_node(
