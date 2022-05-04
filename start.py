@@ -911,17 +911,11 @@ def _boot_validate_versions(use_version, local_version):
         sys.exit(1)
 
     # print result
-    result = bootstrap.validate_openpype_version(
-        bootstrap.get_version_path_from_list(
-            use_version, openpype_versions))
-
-    _print("{}{}".format(
-        ">>> " if result[0] else "!!! ",
-        bootstrap.validate_openpype_version(
-            bootstrap.get_version_path_from_list(
-                use_version, openpype_versions)
-        )[1])
+    version_path = bootstrap.get_version_path_from_list(
+        use_version, openpype_versions
     )
+    valid, message = bootstrap.validate_openpype_version(version_path)
+    _print("{}{}".format(">>> " if valid else "!!! ", message))
 
 
 def _boot_print_versions(use_staging, local_version, openpype_root):
