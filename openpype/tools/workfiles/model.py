@@ -228,6 +228,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             color=get_disabled_entity_icon_color()
         )
         self._invalid_item_visible = False
+        self._one_file_available = False
 
         self._items_by_id = {}
 
@@ -377,6 +378,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
 
         new_items = []
         items_to_remove = set(self._items_by_id.keys())
+        one_file_available = False
         for item in self._get_workfie_representations():
             filepath, repre_id = item
             # TODO handle empty filepaths
@@ -394,6 +396,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
                 self._items_by_id[repre_id] = item
 
             if os.path.exists(filepath):
+                one_file_available = True
                 modified = os.path.getmtime(filepath)
                 tooltip = None
                 self._set_item_valid(item)
@@ -420,9 +423,12 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             self._invalid_item_visible = True
             item = self._get_empty_root_item()
             root_item.appendRow(item)
+        self._one_file_available = one_file_available
 
     def has_valid_items(self):
-        return not self._invalid_item_visible
+        if self._invalid_item_visible:
+            return False
+        return self._one_file_available
 
     def flags(self, index):
         if index.column() != 0:
