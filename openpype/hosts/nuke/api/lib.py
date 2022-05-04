@@ -365,7 +365,7 @@ def fix_data_for_node_create(data):
     return data
 
 
-def add_write_node(name, **kwarg):
+def add_write_node(name, file_path, knobs, **kwarg):
     """Adding nuke write node
 
     Arguments:
@@ -375,8 +375,6 @@ def add_write_node(name, **kwarg):
     Returns:
         node (obj): nuke write node
     """
-    file_path = kwarg["path"]
-    knobs = kwarg["knobs"]
     frame_range = kwarg.get("frame_range", None)
 
     w = nuke.createNode(
@@ -386,7 +384,7 @@ def add_write_node(name, **kwarg):
     w["file"].setValue(file_path)
 
     # finally add knob overrides
-    set_node_knobs_from_settings(w, knobs)
+    set_node_knobs_from_settings(w, knobs, **kwarg)
 
     if frame_range:
         w["use_limit"].setValue(True)
@@ -501,7 +499,6 @@ def get_imageio_node_setting(node_class, plugin_name, subset):
     '''
     imageio_nodes = get_nuke_imageio_settings()["nodes"]
     required_nodes = imageio_nodes["requiredNodes"]
-    override_nodes = imageio_nodes["overrideNodes"]
 
     imageio_node = None
     for node in required_nodes:
@@ -515,14 +512,34 @@ def get_imageio_node_setting(node_class, plugin_name, subset):
 
     log.debug("__ imageio_node: {}".format(imageio_node))
 
+    # find overrides and update knobs with them
+    get_imageio_node_override_setting(
+        node_class,
+        plugin_name,
+        subset,
+        imageio_node["knobs"]
+    )
+
+    log.info("ImageIO node: {}".format(imageio_node))
+    return imageio_node
+
+
+def get_imageio_node_override_setting(
+    node_class, plugin_name, subset, knobs_settings
+):
+    ''' Get imageio node overrides from settings
+    '''
+    imageio_nodes = get_nuke_imageio_settings()["nodes"]
+    override_nodes = imageio_nodes["overrideNodes"]
+
     # find matching override node
     override_imageio_node = None
     for onode in override_nodes:
         log.info(onode)
-        if node_class not in node["nukeNodeClass"]:
+        if node_class not in onode["nukeNodeClass"]:
             continue
 
-        if plugin_name not in node["plugins"]:
+        if plugin_name not in onode["plugins"]:
             continue
 
         if (
@@ -538,10 +555,10 @@ def get_imageio_node_setting(node_class, plugin_name, subset):
     # add overrides to imageio_node
     if override_imageio_node:
         # get all knob names in imageio_node
-        knob_names = [k["name"] for k in imageio_node["knobs"]]
+        knob_names = [k["name"] for k in knobs_settings]
 
         for oknob in override_imageio_node["knobs"]:
-            for knob in imageio_node["knobs"]:
+            for knob in knobs_settings:
                 # override matching knob name
                 if oknob["name"] == knob["name"]:
                     log.debug(
@@ -550,7 +567,7 @@ def get_imageio_node_setting(node_class, plugin_name, subset):
                         ))
                     if not oknob["value"]:
                         # remove original knob if no value found in oknob
-                        imageio_node["knobs"].remove(knob)
+                        knobs_settings.remove(knob)
                     else:
                         # override knob value with oknob's
                         knob["value"] = oknob["value"]
@@ -559,11 +576,10 @@ def get_imageio_node_setting(node_class, plugin_name, subset):
                 if oknob["name"] not in knob_names:
                     log.debug(
                         "_ adding knob: `{}`".format(oknob))
-                    imageio_node["knobs"].append(oknob)
+                    knobs_settings.append(oknob)
                     knob_names.append(oknob["name"])
 
-    log.info("ImageIO node: {}".format(imageio_node))
-    return imageio_node
+    return knobs_settings
 
 
 def get_imageio_input_colorspace(filename):
@@ -812,7 +828,13 @@ def add_button_clear_rendered(node, path):
     node.addKnob(knob)
 
 
-def create_prenodes(prev_node, nodes_setting, **kwargs):
+def create_prenodes(
+    prev_node,
+    nodes_setting,
+    plugin_name=None,
+    subset=None,
+    **kwargs
+):
     last_node = None
     for_dependency = {}
     for name, node in nodes_setting.items():
@@ -830,6 +852,15 @@ def create_prenodes(prev_node, nodes_setting, **kwargs):
             "node": now_node,
             "dependent": node["dependent"]
         }
+
+        if all([plugin_name, subset]):
+            # find imageio overrides
+            get_imageio_node_override_setting(
+                now_node.Class(),
+                plugin_name,
+                subset,
+                knobs
+            )
 
         # add data to knob
         set_node_knobs_from_settings(now_node, knobs, **kwargs)
@@ -902,7 +933,7 @@ def create_write_node(
     prenodes = prenodes or {}
 
     # group node knob overrides
-    knob_overrides = data.get("knobs", [])
+    knob_overrides = data.pop("knobs", [])
 
     # filtering variables
     plugin_name = data["creator"]
@@ -948,21 +979,6 @@ def create_write_node(
         log.warning("Path does not exist! I am creating it.")
         os.makedirs(os.path.dirname(fpath))
 
-    _wn_props = {
-        "path": fpath,
-        "knobs": imageio_writes["knobs"]
-    }
-
-    # adding dataflow template
-    log.debug("__ _wn_props: `{}`".format(
-        pformat(_wn_props)
-    ))
-
-    if "frame_range" in data.keys():
-        _wn_props["frame_range"] = data.get("frame_range", None)
-        log.debug("_wn_props[frame_range]: `{}`".format(
-            _wn_props["frame_range"]))
-
     GN = nuke.createNode("Group", "name {}".format(name))
 
     prev_node = None
@@ -979,14 +995,22 @@ def create_write_node(
         prev_node.hideControlPanel()
 
         # creating pre-write nodes `prenodes`
-        last_prenode = create_prenodes(prev_node, prenodes, **kwargs)
+        last_prenode = create_prenodes(
+            prev_node,
+            prenodes,
+            plugin_name,
+            subset,
+            **kwargs
+        )
         if last_prenode:
             prev_node = last_prenode
 
         # creating write node
         write_node = now_node = add_write_node(
             "inside_{}".format(name),
-            **_wn_props
+            fpath,
+            imageio_writes["knobs"],
+            **data
         )
         write_node.hideControlPanel()
         # connect to previous node
@@ -1063,7 +1087,7 @@ def create_write_node(
     # set tile color
     tile_color = next(
         iter(
-            k["value"] for k in _wn_props["knobs"]
+            k["value"] for k in imageio_writes["knobs"]
             if "tile_color" in k["name"]
         ), "0xff0000ff"
     )
@@ -1144,7 +1168,6 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
             knob_value = int(knob_value, 16)
         elif knob_type in ["2d_vector", "3d_vector", "color"]:
             knob_value = [float(v) for v in knob_value]
-
 
         node[knob_name].setValue(knob_value)
 
