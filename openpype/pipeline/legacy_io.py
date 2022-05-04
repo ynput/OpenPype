@@ -55,7 +55,7 @@ def uninstall():
 def requires_install(func):
     @functools.wraps(func)
     def decorated(*args, **kwargs):
-        if not _is_installed:
+        if not module._is_installed:
             install()
         return func(*args, **kwargs)
     return decorated
