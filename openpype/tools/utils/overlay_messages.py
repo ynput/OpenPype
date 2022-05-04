@@ -107,6 +107,7 @@ class OverlayMessageWidget(QtWidgets.QFrame):
         label_widget = QtWidgets.QLabel(message, self)
         label_widget.setAlignment(QtCore.Qt.AlignCenter)
         label_widget.setWordWrap(True)
+        label_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         close_btn = CloseButton(self)
 
         layout = QtWidgets.QHBoxLayout(self)
