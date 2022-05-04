@@ -346,7 +346,7 @@ class Window(QtWidgets.QMainWindow):
             # Force disable the other widgets if no
             # active selection
             self.tasks_widget.setEnabled(False)
-            self.files_widget.setEnabled(False)
+            self.files_widget.set_asset_task(asset_id, None, None)
 
         self.tasks_widget.set_asset_id(asset_id)
 
@@ -358,6 +358,5 @@ class Window(QtWidgets.QMainWindow):
         asset_is_valid = asset_id is not None
         self.tasks_widget.setEnabled(asset_is_valid)
 
-        self.files_widget.setEnabled(bool(task_name) and asset_is_valid)
         self.files_widget.set_asset_task(asset_id, task_name, task_type)
         self.files_widget.refresh()

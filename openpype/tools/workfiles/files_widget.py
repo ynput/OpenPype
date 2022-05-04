@@ -175,6 +175,7 @@ class FilesWidget(QtWidgets.QWidget):
         publish_files_view.setColumnWidth(0, 330)
 
         publish_context_overlay = SelectContextOverlay(views_widget)
+        publish_context_overlay.setEnabled(False)
         publish_context_overlay.setVisible(False)
 
         views_layout = QtWidgets.QHBoxLayout(views_widget)
@@ -313,6 +314,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         self._update_filtering()
         self._update_asset_task()
+        self._update_enabled_states()
 
         self.published_visible_changed.emit(published_enabled)
 
@@ -341,6 +343,38 @@ class FilesWidget(QtWidgets.QWidget):
         self._task_name = task_name
         self._task_type = task_type
         self._update_asset_task()
+        self._update_enabled_states()
+
+    def _update_enabled_states(self):
+        workarea_valid_context = all(
+            [self._asset_id, self._task_name, self._task_type]
+        )
+        worarea_has_valid_items = self._workarea_files_model.has_valid_items()
+
+        self._workarea_btns_widget.setEnabled(workarea_valid_context)
+        self._btn_browse.setEnabled(worarea_has_valid_items)
+        self._btn_open.setEnabled(worarea_has_valid_items)
+
+        if not self.published_enabled:
+            self._workarea_files_view.setEnabled(workarea_valid_context)
+            return
+
+        publish_valid_context = bool(self._asset_id)
+        self._publish_files_view.setEnabled(publish_valid_context)
+
+        self._workarea_files_view.setEnabled(False)
+        if not self._publish_context_select_mode:
+            self._publish_btns_widget.setEnabled(publish_valid_context)
+            has_valid_items = self._publish_files_model.has_valid_items()
+            self._btn_save_as_published.setEnabled(
+                worarea_has_valid_items and has_valid_items
+            )
+            self._btn_change_context.setEnabled(has_valid_items)
+        else:
+            self._publish_btns_widget.setEnabled(True)
+            self._btn_select_context_published.setEnabled(
+                workarea_valid_context
+            )
 
     def _update_asset_task(self):
         if self.published_enabled and not self._publish_context_select_mode:
@@ -348,8 +382,6 @@ class FilesWidget(QtWidgets.QWidget):
                 self._asset_id, self._task_name
             )
             has_valid_items = self._publish_files_model.has_valid_items()
-            self._btn_save_as_published.setEnabled(has_valid_items)
-            self._btn_change_context.setEnabled(has_valid_items)
 
         else:
             # Define a custom session so we can query the work root
@@ -364,16 +396,10 @@ class FilesWidget(QtWidgets.QWidget):
             else:
                 self._workarea_files_model.set_root(None)
 
-            # Disable/Enable buttons based on available files in model
-            has_valid_items = self._workarea_files_model.has_valid_items()
-            self._btn_browse.setEnabled(has_valid_items)
-            self._btn_open.setEnabled(has_valid_items)
-
             if self._publish_context_select_mode:
-                self._btn_select_context_published.setEnabled(
-                    bool(self._asset_id) and bool(self._task_name)
-                )
                 return
+
+            has_valid_items = self._workarea_files_model.has_valid_items()
 
         # Manually trigger file selection
         if not has_valid_items:
@@ -629,10 +655,6 @@ class FilesWidget(QtWidgets.QWidget):
         self._publish_context_overlay.setVisible(enabled)
         self._btn_cancel_published.setVisible(enabled)
         self._btn_select_context_published.setVisible(enabled)
-        # Change enabled state based on select context
-        self._btn_select_context_published.setEnabled(
-            bool(self._asset_id) and bool(self._task_name)
-        )
 
         self._btn_save_as_published.setVisible(not enabled)
         self._btn_change_context.setVisible(not enabled)
@@ -650,6 +672,8 @@ class FilesWidget(QtWidgets.QWidget):
         self._published_checkbox.setEnabled(not enabled)
         self._filter_input.setEnabled(not enabled)
 
+        self._update_enabled_states()
+
     def _on_publish_change_context_pressed(self):
         self._set_publish_context_select_mode(True)
 
@@ -658,10 +682,12 @@ class FilesWidget(QtWidgets.QWidget):
         if result is not None:
             self._set_publish_context_select_mode(False)
             self._update_asset_task()
+            self._update_enabled_states()
 
     def _on_publish_cancel_pressed(self):
         self._set_publish_context_select_mode(False)
         self._update_asset_task()
+        self._update_enabled_states()
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
