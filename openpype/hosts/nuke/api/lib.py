@@ -30,6 +30,8 @@ from openpype.pipeline import (
     legacy_io,
 )
 
+from . import gizmo_menu
+
 from .workio import (
     save_file,
     open_file
@@ -2496,6 +2498,52 @@ def recreate_instance(origin_node, avalon_data=None):
             dn.setInput(0, new_node)
 
     return new_node
+
+
+def find_scripts_gizmo(title, parent):
+    """
+    Check if the menu exists with the given title in the parent
+
+    Args:
+        title (str): the title name of the scripts menu
+
+        parent (QtWidgets.QMenuBar): the menubar to check
+
+    Returns:
+        QtWidgets.QMenu or None
+
+    """
+
+    menu = None
+    search = [i for i in parent.items() if
+              isinstance(i, gizmo_menu.GizmoMenu)
+              and i.title() == title]
+
+    if search:
+        assert len(search) < 2, ("Multiple instances of menu '{}' "
+                                 "in toolbar".format(title))
+        menu = search[0]
+
+    return menu
+
+
+def gizmo_creation(title="Gizmos", parent=None, objectName=None, icon=None):
+    try:
+        toolbar = find_scripts_gizmo(title, parent)
+        if not toolbar:
+            log.info("Attempting to build toolbar...")
+            object_name = objectName or title.lower()
+            toolbar = gizmo_menu.GizmoMenu(
+                title=title,
+                parent=parent,
+                objectName=object_name,
+                icon=icon
+            )
+    except Exception as e:
+        log.error(e)
+        return
+
+    return toolbar
 
 
 class NukeDirmap(HostDirmap):

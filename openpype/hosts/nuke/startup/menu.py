@@ -2,7 +2,7 @@ import nuke
 import os
 
 from openpype.api import Logger
-from openpype.pipeline import install_host
+from openpype.settings import get_project_settings
 from openpype.hosts.nuke import api
 from openpype.hosts.nuke.api.lib import (
     on_script_load,
@@ -31,6 +31,7 @@ nuke.addFilenameFilter(dirmap_file_name_filter)
 
 log.info('Automatic syncing of write file knob to script version')
 
+
 def add_scripts_menu():
     try:
         from scriptsmenu import launchfornuke
@@ -58,3 +59,59 @@ def add_scripts_menu():
 
 
 add_scripts_menu()
+
+
+def add_scripts_gizmo():
+    try:
+        from openpype.hosts.nuke.api import lib
+    except ImportError:
+        log.warning(
+            "Skipping studio.gizmo install, because "
+            "'scriptsgizmo' module seems unavailable."
+        )
+        return
+
+    for gizmo in project_settings["nuke"]["gizmo"]:
+        config = gizmo["gizmo_definition"]
+        toolbar_name = gizmo["toolbar_menu_name"]
+        gizmo_path = gizmo["gizmo_path"]
+        icon = gizmo['toolbar_icon_path']
+
+        if not any(gizmo_path):
+            log.warning("Skipping studio gizmo, no gizmo path found.")
+            return
+
+        if not config:
+            log.warning("Skipping studio gizmo, no definition found.")
+            return
+
+        try:
+            icon = icon.format(**os.environ)
+        except KeyError as e:
+            log.warning(f"This environment variable doesn't exist: {e}")
+
+        for gizmo in gizmo_path:
+            try:
+                gizmo = gizmo.format(**os.environ)
+                gizmo_path.append(gizmo)
+                gizmo_path.pop(0)
+            except KeyError as e:
+                log.warning(f"This environment variable doesn't exist: {e}")
+
+        nuke_toolbar = nuke.menu("Nodes")
+        toolbar = nuke_toolbar.addMenu(toolbar_name, icon=icon)
+
+        # run the launcher for Nuke toolbar
+        studio_menu = lib.gizmo_creation(
+            title=toolbar_name,
+            parent=toolbar,
+            objectName=toolbar_name.lower().replace(" ", "_"),
+            icon=icon
+        )
+
+        # apply configuration
+        studio_menu.add_gizmo_path(gizmo_path)
+        studio_menu.build_from_configuration(toolbar, config)
+
+
+add_scripts_gizmo()

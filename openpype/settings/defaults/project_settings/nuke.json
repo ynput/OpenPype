@@ -293,8 +293,8 @@
     "gizmo": [
         {
             "toolbar_menu_name": "FixStudio",
-            "toolbar_icon_path": "{QUAD_PLUGIN_PATH}/nuke/icons/fixstudio.png",
-            "gizmo_path": ["{QUAD_PLUGIN_PATH}/nuke/gizmos"],
+            "toolbar_icon_path": "openpype/modules/quad/nuke/icons/fixstudio.png",
+            "gizmo_path": ["openpype/modules/quad/nuke/gizmos/3D"],
             "gizmo_definition": [
                 {
                     "type": "menu",
@@ -302,11 +302,10 @@
                     "items": [
                         {
                             "type": "action",
-                            "command": "nuke.createNode('Camera_Smoother')",
                             "sourcetype": "python",
-                            "title": "Camera_Smoother"
+                            "title": "Camera Smoother",
+                            "command": "nuke.createNodes('Camera_Smoother)"
                         }
-
                     ]
                 }
             ]
