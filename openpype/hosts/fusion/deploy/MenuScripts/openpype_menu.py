@@ -16,7 +16,6 @@ def main(env):
     # so we make sure to move out of it to avoid DLL Load Failed errors.
     os.chdir("..")
 
-    import avalon.api
     from openpype.hosts.fusion import api
     from openpype.hosts.fusion.api import menu
 
