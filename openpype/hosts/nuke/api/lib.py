@@ -842,7 +842,7 @@ def create_prenodes(prev_node, nodes_setting, **kwargs):
             node_prop["node"].setInput(
                 0, prev_node)
         elif node_prop["dependent"] in for_dependency:
-            _prev_node = for_dependency[node_prop["dependent"]]
+            _prev_node = for_dependency[node_prop["dependent"]]["node"]
             node_prop["node"].setInput(
                 0, _prev_node)
         else:
@@ -905,7 +905,7 @@ def create_write_node(
     knob_overrides = data.get("knobs", [])
 
     # filtering variables
-    plugin_name = data["creator"],
+    plugin_name = data["creator"]
     subset = data["subset"]
 
     # get knob settings for write node
@@ -979,7 +979,9 @@ def create_write_node(
         prev_node.hideControlPanel()
 
         # creating pre-write nodes `prenodes`
-        create_prenodes(prev_node, prenodes, **kwargs)
+        last_prenode = create_prenodes(prev_node, prenodes, **kwargs)
+        if last_prenode:
+            prev_node = last_prenode
 
         # creating write node
         write_node = now_node = add_write_node(
@@ -1059,8 +1061,14 @@ def create_write_node(
     GN[_NODE_TAB_NAME].setFlag(0)
 
     # set tile color
-    tile_color = _wn_props["knobs"].get("tile_color", "0xff0000ff")
-    GN["tile_color"].setValue(tile_color)
+    tile_color = next(
+        iter(
+            k["value"] for k in _wn_props["knobs"]
+            if "tile_color" in k["name"]
+        ), "0xff0000ff"
+    )
+    GN["tile_color"].setValue(
+        int(tile_color, 16))
 
     # finally add knob overrides
     set_node_knobs_from_settings(GN, knob_overrides, **kwargs)
@@ -1079,6 +1087,7 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
         kwargs (dict)[optional]: keys for formatable knob settings
     """
     for knob in knob_settings:
+        log.debug("__ knob: {}".format(pformat(knob)))
         knob_type = knob["type"]
         knob_name = knob["name"]
 
@@ -1093,7 +1102,9 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
                 _knob_value = template.format(
                     **kwargs
                 )
+                log.debug("__ knob_value0: {}".format(_knob_value))
             except KeyError as msg:
+                log.warning("__ msg: {}".format(msg))
                 raise KeyError(msg)
 
             # convert value to correct type
