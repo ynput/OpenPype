@@ -31,7 +31,6 @@ nuke.addFilenameFilter(dirmap_file_name_filter)
 
 log.info('Automatic syncing of write file knob to script version')
 
-
 def add_scripts_menu():
     try:
         from scriptsmenu import launchfornuke

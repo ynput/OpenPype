@@ -290,5 +290,27 @@
             }
         ]
     },
+    "gizmo": [
+        {
+            "toolbar_menu_name": "FixStudio",
+            "toolbar_icon_path": "{QUAD_PLUGIN_PATH}/nuke/icons/fixstudio.png",
+            "gizmo_path": ["{QUAD_PLUGIN_PATH}/nuke/gizmos"],
+            "gizmo_definition": [
+                {
+                    "type": "menu",
+                    "title": "3D",
+                    "items": [
+                        {
+                            "type": "action",
+                            "command": "nuke.createNode('Camera_Smoother')",
+                            "sourcetype": "python",
+                            "title": "Camera_Smoother"
+                        }
+
+                    ]
+                }
+            ]
+        }
+    ],
     "filters": {}
 }

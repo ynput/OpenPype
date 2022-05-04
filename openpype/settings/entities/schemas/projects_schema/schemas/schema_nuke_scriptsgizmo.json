@@ -1,0 +1,42 @@
+{
+    "type": "list",
+    "key": "gizmo",
+    "label": "Gizmo Menu",
+    "is_group": true,
+    "use_label_wrap": true,
+    "object_type": {
+        "type": "dict",
+        "children": [
+            {
+                "type": "text",
+                "key": "toolbar_menu_name",
+                "label": "Toolbar Menu Name"
+            },
+            {
+                "type": "path",
+                "key": "toolbar_icon_path",
+                "label": "Toolbar Icon Path",
+                "multipath": false
+            },
+            {
+                "type": "splitter"
+            },
+            {
+                "type": "label",
+                "label": "Absolute path to gizmo folders."
+            },
+            {
+                "type": "path",
+                "key": "gizmo_path",
+                "label": "Gizmo Path",
+                "multipath": true
+            },
+            {
+                "type": "raw-json",
+                "key": "gizmo_definition",
+                "label": "Gizmo definition",
+                "is_list": true
+            }
+        ]
+    }
+}
