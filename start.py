@@ -942,6 +942,17 @@ def _boot_print_versions(use_staging, local_version, openpype_root):
     list_versions(openpype_versions, local_version)
 
 
+def _boot_handle_missing_version(local_version, use_staging, message):
+    _print(message)
+    if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+        openpype_versions = bootstrap.find_openpype(
+            include_zips=True, staging=use_staging
+        )
+        list_versions(openpype_versions, local_version)
+    else:
+        igniter.show_message_dialog("Version not found", message)
+
+
 def boot():
     """Bootstrap OpenPype."""
 
@@ -1034,15 +1045,7 @@ def boot():
         try:
             version_path = _find_frozen_openpype(use_version, use_staging)
         except OpenPypeVersionNotFound as exc:
-            message = str(exc)
-            _print(message)
-            if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
-                openpype_versions = bootstrap.find_openpype(
-                    include_zips=True, staging=use_staging
-                )
-                list_versions(openpype_versions, local_version)
-            else:
-                igniter.show_message_dialog("Version not found", message)
+            _boot_handle_missing_version(local_version, use_staging, str(exc))
             sys.exit(1)
 
         except RuntimeError as e:
@@ -1061,15 +1064,7 @@ def boot():
             version_path = _bootstrap_from_code(use_version, use_staging)
 
         except OpenPypeVersionNotFound as exc:
-            message = str(exc)
-            _print(message)
-            if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
-                openpype_versions = bootstrap.find_openpype(
-                    include_zips=True, staging=use_staging
-                )
-                list_versions(openpype_versions, local_version)
-            else:
-                igniter.show_message_dialog("Version not found", message)
+            _boot_handle_missing_version(local_version, use_staging, str(exc))
             sys.exit(1)
 
     # set this to point either to `python` from venv in case of live code
