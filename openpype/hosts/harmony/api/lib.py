@@ -463,7 +463,7 @@ def imprint(node_id, data, remove=False):
         remove (bool): Removes the data from the scene.
 
     Example:
-        >>> from avalon.harmony import lib
+        >>> from openpype.hosts.harmony.api import lib
         >>> node = "Top/Display"
         >>> data = {"str": "someting", "int": 1, "float": 0.32, "bool": True}
         >>> lib.imprint(layer, data)
