@@ -438,6 +438,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return vf_back
 
+
 def _get_format_codec_args(self, repre):
         """Detect possible codec arguments from representation."""
         codec_args = []
