@@ -226,13 +226,15 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 ))
                 input_args.extend(["-timecode {}".format(offset_timecode)])
             if use_legacy_code:
+                format_args = []
                 codec_args = repre["_profile"].get('codec', [])
                 output_args.extend(codec_args)
                 # preset's output data
                 output_args.extend(repre["_profile"].get('output', []))
             else:
                 # Codecs are copied from source for whole input
-                codec_args = self._get_codec_args(repre)
+                format_args, codec_args = self._get_format_codec_args(repre)
+                output_args.extend(format_args)
                 output_args.extend(codec_args)
 
             # make sure colors are correct
@@ -338,6 +340,11 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-c", "copy",
                 "-timecode", offset_timecode,
             ]
+            # NOTE: Added because of OP Atom demuxers
+            # Add format arguments if there are any
+            # - keep format of output
+            if format_args:
+                concat_args.extend(format_args)
             # Use arguments from ffmpeg preset
             source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
             if source_ffmpeg_cmd:
@@ -351,7 +358,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         concat_args.append(arg)
                         # assumes arg has one parameter
                         concat_args.append(args[indx + 1])
-            # add output
+            # add final output path
             concat_args.append(output_path)
 
             if not input_audio:
@@ -431,7 +438,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return vf_back
 
-    def _get_codec_args(self, repre):
+def _get_format_codec_args(self, repre):
         """Detect possible codec arguments from representation."""
         codec_args = []
 
@@ -454,16 +461,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
             return codec_args
 
         source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
-        codec_args.extend(
-            get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd)
-        )
-        codec_args.extend(
-            get_ffmpeg_codec_args(
-                ffprobe_data, source_ffmpeg_cmd, logger=self.log
-            )
+        format_args = get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd)
+        codec_args = get_ffmpeg_codec_args(
+            ffprobe_data, source_ffmpeg_cmd, logger=self.log
         )
 
-        return codec_args
+        return format_args, codec_args
 
     def _tc_offset(self, timecode, framerate=24.0, frame_offset=-1):
         """Offsets timecode by frame"""
