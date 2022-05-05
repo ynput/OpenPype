@@ -23,8 +23,12 @@ class ExtractThumbnail(openpype.api.Extractor):
     families = ["review"]
     hosts = ["nuke"]
 
-    # presets
+    # settings
+    use_rendered = False
+    bake_viewer_process = True
+    bake_viewer_input_process = True
     nodes = {}
+
 
     def process(self, instance):
         if "render.farm" in instance.data["families"]:
@@ -53,48 +57,58 @@ class ExtractThumbnail(openpype.api.Extractor):
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
         temporary_nodes = []
-        collection = instance.data.get("collection", None)
 
-        if collection:
-            # get path
-            fname = os.path.basename(collection.format(
-                "{head}{padding}{tail}"))
-            fhead = collection.format("{head}")
+        # try to connect already rendered images
+        if self.use_rendered:
+            collection = instance.data.get("collection", None)
+            self.log.debug("__ collection: `{}`".format(collection))
 
-            # get first and last frame
-            first_frame = min(collection.indexes)
-            last_frame = max(collection.indexes)
-        else:
-            fname = os.path.basename(instance.data.get("path", None))
-            fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("frameStart", None)
-            last_frame = instance.data.get("frameEnd", None)
+            if collection:
+                # get path
+                fname = os.path.basename(collection.format(
+                    "{head}{padding}{tail}"))
+                fhead = collection.format("{head}")
 
-        if "#" in fhead:
-            fhead = fhead.replace("#", "")[:-1]
+                # get first and last frame
+                first_frame = min(collection.indexes)
+                last_frame = max(collection.indexes)
+            else:
+                fname = os.path.basename(instance.data.get("path", None))
+                fhead = os.path.splitext(fname)[0] + "."
+                first_frame = instance.data.get("frameStart", None)
+                last_frame = instance.data.get("frameEnd", None)
 
-        path_render = os.path.join(staging_dir, fname).replace("\\", "/")
-        # check if file exist otherwise connect to write node
-        if os.path.isfile(path_render):
-            rnode = nuke.createNode("Read")
+            self.log.debug("__ fhead: `{}`".format(fhead))
 
-            rnode["file"].setValue(path_render)
+            if "#" in fhead:
+                fhead = fhead.replace("#", "")[:-1]
 
-            rnode["first"].setValue(first_frame)
-            rnode["origfirst"].setValue(first_frame)
-            rnode["last"].setValue(last_frame)
-            rnode["origlast"].setValue(last_frame)
-            temporary_nodes.append(rnode)
-            previous_node = rnode
-        else:
-            previous_node = node
+            path_render = os.path.join(staging_dir, fname).replace("\\", "/")
+            self.log.debug("__ path_render: `{}`".format(path_render))
 
-        # get input process and connect it to baking
-        ipn = self.get_view_process_node()
-        if ipn is not None:
-            ipn.setInput(0, previous_node)
-            previous_node = ipn
-            temporary_nodes.append(ipn)
+            # check if file exist otherwise connect to write node
+            if os.path.isfile(path_render):
+                rnode = nuke.createNode("Read")
+
+                rnode["file"].setValue(path_render)
+
+                rnode["first"].setValue(first_frame)
+                rnode["origfirst"].setValue(first_frame)
+                rnode["last"].setValue(last_frame)
+                rnode["origlast"].setValue(last_frame)
+                temporary_nodes.append(rnode)
+                previous_node = rnode
+            else:
+                previous_node = node
+
+        # bake viewer input look node into thumbnail image
+        if self.bake_viewer_input_process:
+            # get input process and connect it to baking
+            ipn = self.get_view_process_node()
+            if ipn is not None:
+                ipn.setInput(0, previous_node)
+                previous_node = ipn
+                temporary_nodes.append(ipn)
 
         reformat_node = nuke.createNode("Reformat")
 
@@ -110,10 +124,12 @@ class ExtractThumbnail(openpype.api.Extractor):
         previous_node = reformat_node
         temporary_nodes.append(reformat_node)
 
-        dag_node = nuke.createNode("OCIODisplay")
-        dag_node.setInput(0, previous_node)
-        previous_node = dag_node
-        temporary_nodes.append(dag_node)
+        # bake viewer colorspace into thumbnail image
+        if self.bake_viewer_process:
+            dag_node = nuke.createNode("OCIODisplay")
+            dag_node.setInput(0, previous_node)
+            previous_node = dag_node
+            temporary_nodes.append(dag_node)
 
         # create write node
         write_node = nuke.createNode("Write")
