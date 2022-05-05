@@ -266,6 +266,7 @@ def get_renderer_variables(renderlayer, root):
 
     filename_prefix = cmds.getAttr(prefix_attr)
     return {"ext": extension,
+            "renderer": renderer,
             "filename_prefix": filename_prefix,
             "padding": padding,
             "filename_0": filename_0}
@@ -440,7 +441,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         output_filename_0 = filename_0
 
-        dirname = os.path.dirname(output_filename_0)
+        if render_variables["renderer"] == "renderman":
+            dirname = os.path.dirname(output_filename_0)
 
         # Create render folder ----------------------------------------------
         try:
