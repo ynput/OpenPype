@@ -42,11 +42,17 @@ class ExtractThumbnail(openpype.api.Extractor):
             self.render_thumbnail(instance)
 
     def render_thumbnail(self, instance):
+        first_frame = instance.data["frameStartHandle"]
+        last_frame = instance.data["frameEndHandle"]
+
+        # find frame range and define middle thumb frame
+        mid_frame = int((last_frame - first_frame) / 2)
+
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
-            instance.data["representations"] = list()
+            instance.data["representations"] = []
 
         staging_dir = os.path.normpath(
             os.path.dirname(instance.data['path']))
@@ -69,21 +75,19 @@ class ExtractThumbnail(openpype.api.Extractor):
                     "{head}{padding}{tail}"))
                 fhead = collection.format("{head}")
 
-                # get first and last frame
-                first_frame = min(collection.indexes)
-                last_frame = max(collection.indexes)
+                thumb_fname = list(collection)[mid_frame]
             else:
-                fname = os.path.basename(instance.data.get("path", None))
+                fname = thumb_fname = os.path.basename(
+                    instance.data.get("path", None))
                 fhead = os.path.splitext(fname)[0] + "."
-                first_frame = instance.data.get("frameStart", None)
-                last_frame = instance.data.get("frameEnd", None)
 
             self.log.debug("__ fhead: `{}`".format(fhead))
 
             if "#" in fhead:
                 fhead = fhead.replace("#", "")[:-1]
 
-            path_render = os.path.join(staging_dir, fname).replace("\\", "/")
+            path_render = os.path.join(
+                staging_dir, thumb_fname).replace("\\", "/")
             self.log.debug("__ path_render: `{}`".format(path_render))
 
             # check if file exist otherwise connect to write node
@@ -92,10 +96,13 @@ class ExtractThumbnail(openpype.api.Extractor):
 
                 rnode["file"].setValue(path_render)
 
-                rnode["first"].setValue(first_frame)
-                rnode["origfirst"].setValue(first_frame)
-                rnode["last"].setValue(last_frame)
-                rnode["origlast"].setValue(last_frame)
+                # turn it raw if none of baking is ON
+                if all([
+                    not self.bake_viewer_input_process,
+                    not self.bake_viewer_process
+                ]):
+                    rnode["raw"].setValue(True)
+
                 temporary_nodes.append(rnode)
                 previous_node = rnode
             else:
@@ -144,26 +151,18 @@ class ExtractThumbnail(openpype.api.Extractor):
         temporary_nodes.append(write_node)
         tags = ["thumbnail", "publish_on_farm"]
 
-        # retime for
-        mid_frame = int((int(last_frame) - int(first_frame)) / 2) \
-            + int(first_frame)
-        first_frame = int(last_frame) / 2
-        last_frame = int(last_frame) / 2
-
         repre = {
             'name': name,
             'ext': "jpg",
             "outputName": "thumb",
             'files': file,
             "stagingDir": staging_dir,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
             "tags": tags
         }
         instance.data["representations"].append(repre)
 
         # Render frames
-        nuke.execute(write_node.name(), int(mid_frame), int(mid_frame))
+        nuke.execute(write_node.name(), mid_frame, mid_frame)
 
         self.log.debug(
             "representations: {}".format(instance.data["representations"]))
