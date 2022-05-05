@@ -605,6 +605,7 @@ class AbstractWriteRender(OpenPypeCreator):
     family = "render"
     icon = "sign-out"
     defaults = ["Main", "Mask"]
+    knobs = []
 
     def __init__(self, *args, **kwargs):
         super(AbstractWriteRender, self).__init__(*args, **kwargs)
@@ -672,7 +673,8 @@ class AbstractWriteRender(OpenPypeCreator):
             "nodeclass": self.n_class,
             "families": [self.family],
             "avalon": self.data,
-            "subset": self.data["subset"]
+            "subset": self.data["subset"],
+            "knobs": self.knobs
         }
 
         # add creator data
