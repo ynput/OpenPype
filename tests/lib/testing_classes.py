@@ -153,7 +153,7 @@ class ModuleUnitTest(BaseTest):
 
             Database prepared from dumps with 'db_setup' fixture.
         """
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
         yield dbcon
