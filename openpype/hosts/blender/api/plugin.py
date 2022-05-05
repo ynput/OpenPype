@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 from collections.abc import Iterable
 
 import bpy
+from mathutils import Matrix
 
 from openpype.pipeline import (
     legacy_io,
@@ -21,6 +22,8 @@ from .lib import (
     imprint,
     get_selection
 )
+from .pipeline import AVALON_PROPERTY
+
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
@@ -457,13 +460,13 @@ class AssetLoader(LoaderPlugin):
         objects = get_container_objects(container)
         # Store transforms for all objects in container.
         objects_transforms = {
-            obj.name: obj.matrix_local.copy()
+            obj.name: obj.matrix_basis.copy()
             for obj in objects
         }
         # Store transforms for all bones from armatures in container.
         bones_transforms = {
             obj.name: {
-                bone.name: bone.matrix_local.copy()
+                bone.name: bone.matrix.copy()
                 for bone in obj.pose.bones
             }
             for obj in objects
@@ -475,12 +478,12 @@ class AssetLoader(LoaderPlugin):
             # Restor transforms.
             for obj in bpy.data.objects:
                 if obj.name in objects_transforms:
-                    obj.matrix_local = objects_transforms[obj.name]
+                    obj.matrix_basis = objects_transforms[obj.name]
                 # Restor transforms for bones from armature.
                 if obj.type == "ARMATURE" and obj.name in bones_transforms:
                     for bone in obj.pose.bones:
                         if bone.name in bones_transforms[obj.name]:
-                            bone.matrix_local = (
+                            bone.matrix = (
                                 bones_transforms[obj.name][bone.name]
                             )
 
@@ -628,6 +631,8 @@ class StructDescriptor:
     def store_property(self, prop_name, prop_value):
         if isinstance(prop_value, bpy.types.Object):
             prop_value = f"bpy.data.objects:{prop_value.name}"
+        elif isinstance(prop_value, Matrix):
+            prop_value = prop_value.copy()
         self.properties[prop_name] = prop_value
 
     def restore_property(self, entity, prop_name):
@@ -694,10 +699,8 @@ class ConstraintDescriptor(StructDescriptor):
         if obj:
             constraint = obj.constraints.get(self.name)
             if not constraint and not self.is_override_data:
-                constraint = obj.constraints.new(
-                    self.name,
-                    self.type,
-                )
+                constraint = obj.constraints.new(self.type)
+                constraint.name = self.name
             if constraint and constraint.type == self.type:
-                for prop_name, in self.properties:
+                for prop_name in self.properties:
                     self.restore_property(constraint, prop_name)

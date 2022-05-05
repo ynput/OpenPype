@@ -66,26 +66,56 @@ class BlendLayoutLoader(plugin.AssetLoader):
             bpy.data.libraries.remove(library)
 
     def _process(
-        self, libpath, asset_group, group_name, asset, representation, actions
+        self, libpath, asset_name, asset, representation, actions
     ):
+        # Get the first collection if only child or the scene root collection
+        # to use it as asset group parent collection.
+        parent_collection = bpy.context.scene.collection
+        if len(parent_collection.children) == 1:
+            parent_collection = parent_collection.children[0]
+
+        # Load collections from libpath library
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
-            data_to.objects = data_from.objects
-
-        parent = bpy.context.scene.collection
-
-        empties = [obj for obj in data_to.objects if obj.type == 'EMPTY']
+            data_to.collections = data_from.collections
 
         container = None
 
-        for empty in empties:
-            if (empty.get(AVALON_PROPERTY) and
-                    empty.get(AVALON_PROPERTY).get('family') == 'layout'):
-                container = empty
+        # get valid container from loaded collections
+        for collection in data_to.collections:
+            collection_metadata = collection.get(AVALON_PROPERTY)
+            if (
+                collection_metadata and
+                collection_metadata.get("family") == "layout"
+            ):
+                container = collection
                 break
 
         assert container, "No asset group found"
+
+        # Create override library for container and elements.
+        override = container.override_hierarchy_create(
+            bpy.context.scene,
+            bpy.context.view_layer,
+        )
+
+        # Relink and rename the override container.
+        bpy.context.scene.collection.children.unlink(override)
+        parent_collection.children.link(override)
+        override.name = asset_name
+
+        # make all actions local
+        for action in bpy.data.actions:
+            action.make_local()
+
+        # clear unnecessary elements
+        bpy.data.collections.remove(container)
+
+        plugin.orphans_purge()
+        plugin.deselect_all()
+
+        return override, list(override.all_objects)
 
         # Children must be linked before parents,
         # otherwise the hierarchy will break
@@ -94,9 +124,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         allowed_types = ['ARMATURE', 'MESH', 'EMPTY']
 
-        for obj in nodes:
-            if obj.type in allowed_types:
-                obj.parent = asset_group
+        # for obj in nodes:
+        #     if obj.type in allowed_types:
+        #         obj.parent = asset_group
 
         for obj in nodes:
             if obj.type in allowed_types:
@@ -116,7 +146,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                         constraints.append(constraint)
 
         for obj in objects:
-            parent.objects.link(obj)
+            parent_collection.objects.link(obj)
 
         for obj in objects:
             local_obj = plugin.prepare_data(obj)
@@ -175,7 +205,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 local_obj[AVALON_PROPERTY] = dict()
 
             avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
+            avalon_info.update({"container_name": asset_name})
 
         objects.reverse()
 
@@ -206,7 +236,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
             # Curves need to reset the hook, but to do that they need to be
             # in the view layer.
-            parent.objects.link(local_obj)
+            parent_collection.objects.link(local_obj)
             plugin.deselect_all()
             local_obj.select_set(True)
             bpy.context.view_layer.objects.active = local_obj
@@ -214,7 +244,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 bpy.ops.object.mode_set(mode='EDIT')
                 bpy.ops.object.hook_reset()
                 bpy.ops.object.mode_set(mode='OBJECT')
-            parent.objects.unlink(local_obj)
+            parent_collection.objects.unlink(local_obj)
 
             local_obj.use_fake_user = True
 
@@ -225,7 +255,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 local_obj[AVALON_PROPERTY] = dict()
 
             avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
+            avalon_info.update({"container_name": asset_name})
 
             local_obj.parent = curve_obj
             objects.append(local_obj)
@@ -258,27 +288,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
         representation = str(context["representation"]["_id"])
 
         asset_name = plugin.asset_name(asset, subset)
-        unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
-        namespace = namespace or f"{asset}_{unique_number}"
 
-        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-        if not avalon_container:
-            avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
-            bpy.context.scene.collection.children.link(avalon_container)
-
-        asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        avalon_container.objects.link(asset_group)
-
-        objects = self._process(
-            libpath, asset_group, group_name, asset, representation, None)
-
-        for child in asset_group.children:
-            if child.get(AVALON_PROPERTY):
-                avalon_container.objects.link(child)
-
-        bpy.context.scene.collection.objects.link(asset_group)
+        asset_group, objects = self._process(
+            libpath, asset_name, asset, representation, None
+        )
 
         asset_group[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
@@ -291,7 +304,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             "asset_name": asset_name,
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
-            "objectName": group_name
+            "objectName": asset_name
         }
 
         self[:] = objects

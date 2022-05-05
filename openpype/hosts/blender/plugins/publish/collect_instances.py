@@ -52,7 +52,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             for obj in objects:
                 objects.extend(list(obj.children))
                 members.add(obj)
-            # append the collection to members and update intances list
+            # append the collections to members and update intances list
+            members.update(set(collection.children_recursive))
             members.add(collection)
             instance[:] = list(members)
             self.log.debug(json.dumps(instance.data, indent=4))
