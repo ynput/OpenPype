@@ -1012,8 +1012,8 @@ class ApplicationLaunchContext:
         self.log.debug("Discovery of launch hooks started.")
 
         paths = self.paths_to_launch_hooks()
-        self.log.debug("Paths where will look for launch hooks:{}".format(
-            "\n- ".join(paths)
+        self.log.debug("Paths searched for launch hooks:\n{}".format(
+            "\n".join("- {}".format(path) for path in paths)
         ))
 
         all_classes = {
@@ -1023,7 +1023,7 @@ class ApplicationLaunchContext:
         for path in paths:
             if not os.path.exists(path):
                 self.log.info(
-                    "Path to launch hooks does not exists: \"{}\"".format(path)
+                    "Path to launch hooks does not exist: \"{}\"".format(path)
                 )
                 continue
 
@@ -1044,7 +1044,8 @@ class ApplicationLaunchContext:
                     hook = klass(self)
                     if not hook.is_valid:
                         self.log.debug(
-                            "Hook is not valid for current launch context."
+                            "Hook is not valid for current "
+                            "launch context: {}".format(str(hook))
                         )
                         continue
 
