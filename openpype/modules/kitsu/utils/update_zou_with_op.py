@@ -6,7 +6,7 @@ from typing import List
 import gazu
 from pymongo import UpdateOne
 
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
