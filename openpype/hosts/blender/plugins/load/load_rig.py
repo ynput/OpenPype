@@ -12,7 +12,10 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import (
+    metadata_update,
+    AVALON_PROPERTY,
+)
 
 
 class BlendRigLoader(plugin.AssetLoader):
@@ -27,6 +30,13 @@ class BlendRigLoader(plugin.AssetLoader):
 
     @staticmethod
     def _process(libpath, group_name):
+        # Get the first collection if only child or the scene root collection
+        # to use it as asset group parent collection.
+        parent_collection = bpy.context.scene.collection
+        if len(parent_collection.children) == 1:
+            parent_collection = parent_collection.children[0]
+
+        # Load collections from libpath library
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
@@ -39,8 +49,7 @@ class BlendRigLoader(plugin.AssetLoader):
             collection_metadata = collection.get(AVALON_PROPERTY)
             if (
                 collection_metadata and
-                collection_metadata.get("family") == "rig" and
-                collection_metadata.get("asset") == group_name.split("_")[0]
+                collection_metadata.get("family") == "rig"
             ):
                 container = collection
                 break
@@ -57,11 +66,6 @@ class BlendRigLoader(plugin.AssetLoader):
             bpy.context.scene,
             bpy.context.view_layer,
         )
-        # Get the first collection if only child or the scene root collection
-        # to use it as asset group parent collection.
-        parent_collection = bpy.context.scene.collection
-        if len(parent_collection.children) == 1:
-            parent_collection = parent_collection.children[0]
 
         # Relink and rename the override container.
         bpy.context.scene.collection.children.unlink(override)
@@ -172,11 +176,11 @@ class BlendRigLoader(plugin.AssetLoader):
 
         with contextlib.ExitStack() as stack:
             stack.enter_context(self.maintained_parent(asset_group))
-            stack.enter_context(self.maintained_transforms(asset_group))
             stack.enter_context(self.maintained_modifiers(asset_group))
             stack.enter_context(self.maintained_constraints(asset_group))
-            stack.enter_context(self.maintained_action(asset_group))
+            stack.enter_context(self.maintained_transforms(asset_group))
             stack.enter_context(self.maintained_targets(asset_group))
+            stack.enter_context(self.maintained_action(asset_group))
 
             plugin.remove_container(asset_group)
 
@@ -196,7 +200,7 @@ class BlendRigLoader(plugin.AssetLoader):
             "representation": str(representation["_id"]),
             "parent": str(representation["parent"]),
         })
-        plugin.metadata_update(asset_group, metadata)
+        metadata_update(asset_group, metadata)
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -223,7 +227,7 @@ class BlendRigLoader(plugin.AssetLoader):
         return True
 
     @contextlib.contextmanager
-    def maintained_action(asset_group):
+    def maintained_action(self, asset_group):
         """Maintain action during context."""
         asset_group_name = asset_group.name
         # Get the armature from asset_group.
@@ -234,7 +238,11 @@ class BlendRigLoader(plugin.AssetLoader):
                 break
         # Store action from armature.
         action = None
-        if armature and armature.animation_data and armature.animation_data.action:
+        if (
+            armature and
+            armature.animation_data and
+            armature.animation_data.action
+        ):
             action = armature.animation_data.action
         try:
             yield

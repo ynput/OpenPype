@@ -24,7 +24,7 @@ class ExtractLayout(openpype.api.Extractor):
     def _export_animation(self, asset, instance, stagingdir, fbx_count):
         n = fbx_count
 
-        for obj in asset.children:
+        for obj in asset.all_objects:
             if obj.type != "ARMATURE":
                 continue
 
@@ -50,11 +50,8 @@ class ExtractLayout(openpype.api.Extractor):
                 self.log.info("Object have no animation.")
                 continue
 
-            asset_group_name = asset.name
-            asset.name = asset.get(AVALON_PROPERTY).get("asset_name")
-
             armature_name = obj.name
-            original_name = armature_name.split(':')[1]
+            original_name = armature_name.split(':')[-1]
             obj.name = original_name
 
             object_action_pairs.append((obj, copy_action))
@@ -75,13 +72,12 @@ class ExtractLayout(openpype.api.Extractor):
             for o in bpy.data.objects:
                 o.select_set(False)
 
-            asset.select_set(True)
             obj.select_set(True)
             fbx_filename = f"{n:03d}.fbx"
             filepath = os.path.join(stagingdir, fbx_filename)
 
             override = plugin.create_blender_context(
-                active=asset, selected=[asset, obj])
+                active=obj, selected=[obj])
             bpy.ops.export_scene.fbx(
                 override,
                 filepath=filepath,
@@ -94,8 +90,6 @@ class ExtractLayout(openpype.api.Extractor):
                 object_types={'EMPTY', 'ARMATURE'}
             )
             obj.name = armature_name
-            asset.name = asset_group_name
-            asset.select_set(False)
             obj.select_set(False)
 
             # We delete the baked action and set the original one back
@@ -127,15 +121,17 @@ class ExtractLayout(openpype.api.Extractor):
         json_data = []
         fbx_files = []
 
-        asset_group = bpy.data.objects[str(instance)]
+        asset_group = bpy.data.collections[str(instance)]
 
         fbx_count = 0
 
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
 
-            parent = metadata["parent"]
-            family = metadata["family"]
+            self.log.info(f"Extracting: {asset.name}")
+
+            parent = metadata.get("parent")
+            family = metadata.get("family")
 
             self.log.debug("Parent: {}".format(parent))
             # Get blend reference
@@ -181,26 +177,33 @@ class ExtractLayout(openpype.api.Extractor):
                 json_element["reference_abc"] = str(abc_id)
             json_element["family"] = family
             json_element["instance_name"] = asset.name
-            json_element["asset_name"] = metadata["asset_name"]
-            json_element["file_path"] = metadata["libpath"]
+            json_element["asset_name"] = metadata.get("asset_name")
+            json_element["file_path"] = metadata.get("libpath")
 
-            json_element["transform"] = {
-                "translation": {
-                    "x": asset.location.x,
-                    "y": asset.location.y,
-                    "z": asset.location.z
-                },
-                "rotation": {
-                    "x": asset.rotation_euler.x,
-                    "y": asset.rotation_euler.y,
-                    "z": asset.rotation_euler.z,
-                },
-                "scale": {
-                    "x": asset.scale.x,
-                    "y": asset.scale.y,
-                    "z": asset.scale.z
+            if isinstance(asset, bpy.types.Collection):
+                json_element["instance_offset"] = {
+                    "x": asset.instance_offset.x,
+                    "y": asset.instance_offset.y,
+                    "z": asset.instance_offset.z
                 }
-            }
+            else:
+                json_element["transform"] = {
+                    "translation": {
+                        "x": asset.location.x,
+                        "y": asset.location.y,
+                        "z": asset.location.z
+                    },
+                    "rotation": {
+                        "x": asset.rotation_euler.x,
+                        "y": asset.rotation_euler.y,
+                        "z": asset.rotation_euler.z,
+                    },
+                    "scale": {
+                        "x": asset.scale.x,
+                        "y": asset.scale.y,
+                        "z": asset.scale.z
+                    }
+                }
 
             # Extract the animation as well
             if family == "rig":

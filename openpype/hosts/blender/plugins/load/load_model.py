@@ -13,7 +13,10 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import (
+    metadata_update,
+    AVALON_PROPERTY,
+)
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -46,8 +49,7 @@ class BlendModelLoader(plugin.AssetLoader):
             collection_metadata = collection.get(AVALON_PROPERTY)
             if (
                 collection_metadata and
-                collection_metadata.get("family") == "model" and
-                collection_metadata.get("asset") == group_name.split("_")[0]
+                collection_metadata.get("family") == "model"
             ):
                 container = collection
                 break
@@ -72,6 +74,12 @@ class BlendModelLoader(plugin.AssetLoader):
             bpy.data.collections.remove(container)
             asset_group = override
             objects = list(override.all_objects)
+
+            overridden_data = set()
+            for obj in set(objects):
+                if obj.data and obj.data not in overridden_data:
+                    obj.data.override_create(remap_local_usages=True)
+                    overridden_data.add(obj.data)
 
         # If asset_group is an Empty, set instance collection with container.
         elif isinstance(asset_group, bpy.types.Object):
@@ -105,9 +113,6 @@ class BlendModelLoader(plugin.AssetLoader):
         parent_collection = bpy.context.scene.collection
         if len(parent_collection.children) == 1:
             parent_collection = parent_collection.children[0]
-
-        import pprint
-        pprint.pprint(legacy_io.Session)
 
         # Create override library if current task needed it.
         if (
@@ -261,7 +266,7 @@ class BlendModelLoader(plugin.AssetLoader):
             "representation": str(representation["_id"]),
             "parent": str(representation["parent"]),
         })
-        plugin.metadata_update(asset_group, metadata)
+        metadata_update(asset_group, metadata)
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
