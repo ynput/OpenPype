@@ -22,7 +22,6 @@ from .lib import (
     imprint,
     get_selection
 )
-from .pipeline import AVALON_PROPERTY
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -119,6 +118,9 @@ def remove_container(container, content_only=False):
     if isinstance(container, bpy.types.Collection):
         # remove all objects in container collection
         for obj in set(container.all_objects):
+            if obj.original and obj != obj.original:
+                obj.original.name = f"{obj.name}.removed"
+                bpy.data.objects.remove(obj.original)
             obj.name = f"{obj.name}.removed"
             bpy.data.objects.remove(obj)
         # remove all child collections in container
@@ -428,9 +430,33 @@ class AssetLoader(LoaderPlugin):
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def remove(self, container: Dict) -> bool:
-        """ Run the remove on Blender main thread"""
+        """Run the remove on Blender main thread"""
         mti = MainThreadItem(self.exec_remove, container)
         execute_in_main_thread(mti)
+
+    @staticmethod
+    def _remove_container(container: Dict) -> bool:
+        """Remove an existing container from a Blender scene.
+
+        Arguments:
+            container: Container to remove.
+
+        Returns:
+            bool: Whether the container was deleted.
+        """
+        object_name = container["objectName"]
+        asset_group = (
+            bpy.data.objects.get(object_name) or
+            bpy.data.collections.get(object_name)
+        )
+
+        if not asset_group:
+            return False
+
+        remove_container(asset_group)
+        orphans_purge()
+
+        return True
 
     @contextmanager
     def maintained_parent(self, container):

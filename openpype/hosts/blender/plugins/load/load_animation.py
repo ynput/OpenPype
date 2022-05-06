@@ -39,27 +39,42 @@ class BlendAnimationLoader(plugin.AssetLoader):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
-            data_to.objects = data_from.objects
+            data_to.collections = data_from.collections
             data_to.actions = data_from.actions
 
-        container = data_to.objects[0]
+        container = None
 
-        assert container, "No asset group found"
+        # get valid container from loaded collections
+        for collection in data_to.collections:
+            collection_metadata = collection.get(AVALON_PROPERTY)
+            if (
+                collection_metadata and
+                collection_metadata.get("family") == "animation"
+            ):
+                container = collection
+                break
+
+        assert container, "No asset container found"
+        assert data_to.actions, "No actions found"
 
         target_namespace = container.get(AVALON_PROPERTY).get('namespace')
 
         action = data_to.actions[0].make_local().copy()
 
-        for obj in bpy.data.objects:
-            if obj.get(AVALON_PROPERTY) and obj.get(AVALON_PROPERTY).get(
-                    'namespace') == target_namespace:
-                if obj.children[0]:
-                    if not obj.children[0].animation_data:
-                        obj.children[0].animation_data_create()
-                    obj.children[0].animation_data.action = action
-                break
+        for collection in bpy.data.collections:
+            metadata = collection.get(AVALON_PROPERTY)
+            if (
+                metadata and
+                metadata.get('namespace') == target_namespace
+            ):
+                for obj in collection.all_objects:
+                    if not obj.animation_data:
+                        obj.animation_data_create()
+                    obj.animation_data.action = action
 
-        bpy.data.objects.remove(container)
+        plugin.remove_container(container)
 
         library = bpy.data.libraries.get(bpy.path.basename(libpath))
         bpy.data.libraries.remove(library)
+
+        plugin.orphans_purge()
