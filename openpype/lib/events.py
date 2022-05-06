@@ -11,6 +11,10 @@ except Exception:
     from openpype.lib.python_2_comp import WeakMethod
 
 
+class MissingEventSystem(Exception):
+    pass
+
+
 class EventCallback(object):
     """Callback registered to a topic.
 
@@ -179,13 +183,14 @@ class Event(object):
     """
     _data = {}
 
-    def __init__(self, topic, data=None, source=None):
+    def __init__(self, topic, data=None, source=None, event_system=None):
         self._id = str(uuid4())
         self._topic = topic
         if data is None:
             data = {}
         self._data = data
         self._source = source
+        self._event_system = event_system
 
     def __getitem__(self, key):
         return self._data[key]
@@ -211,28 +216,69 @@ class Event(object):
 
     def emit(self):
         """Emit event and trigger callbacks."""
-        StoredCallbacks.emit_event(self)
+        if self._event_system is None:
+            raise MissingEventSystem(
+                "Can't emit event {}. Does not have set event system.".format(
+                    str(repr(self))
+                )
+            )
+        self._event_system.emit_event(self)
 
 
-class StoredCallbacks:
-    _registered_callbacks = []
+class EventSystem(object):
+    def __init__(self):
+        self._registered_callbacks = []
 
-    @classmethod
-    def add_callback(cls, topic, callback):
+    def add_callback(self, topic, callback):
         callback = EventCallback(topic, callback)
-        cls._registered_callbacks.append(callback)
+        self._registered_callbacks.append(callback)
         return callback
 
-    @classmethod
-    def emit_event(cls, event):
+    def create_event(self, topic, data, source):
+        return Event(topic, data, source, self)
+
+    def emit(self, topic, data, source):
+        event = self.create_event(topic, data, source)
+        event.emit()
+        return event
+
+    def emit_event(self, event):
         invalid_callbacks = []
-        for callback in cls._registered_callbacks:
+        for callback in self._registered_callbacks:
             callback.process_event(event)
             if not callback.is_ref_valid:
                 invalid_callbacks.append(callback)
 
         for callback in invalid_callbacks:
-            cls._registered_callbacks.remove(callback)
+            self._registered_callbacks.remove(callback)
+
+
+class GlobalEvent(Event):
+    def __init__(self, topic, data=None, source=None):
+        event_system = GlobalEventSystem.get_global_event_system()
+
+        super(GlobalEvent, self).__init__(topic, data, source, event_system)
+
+
+class GlobalEventSystem:
+    _global_event_system = None
+
+    @classmethod
+    def get_global_event_system(cls):
+        if cls._global_event_system is None:
+            cls._global_event_system = EventSystem()
+        return cls._global_event_system
+
+    @classmethod
+    def add_callback(cls, topic, callback):
+        event_system = cls.get_global_event_system()
+        return event_system.add_callback(topic, callback)
+
+    @classmethod
+    def emit(cls, topic, data, source):
+        event = GlobalEvent(topic, data, source)
+        event.emit()
+        return event
 
 
 def register_event_callback(topic, callback):
@@ -249,7 +295,8 @@ def register_event_callback(topic, callback):
             enable/disable listening to a topic or remove the callback from
             the topic completely.
     """
-    return StoredCallbacks.add_callback(topic, callback)
+
+    return GlobalEventSystem.add_callback(topic, callback)
 
 
 def emit_event(topic, data=None, source=None):
@@ -263,6 +310,5 @@ def emit_event(topic, data=None, source=None):
     Returns:
         Event: Object of event that was emitted.
     """
-    event = Event(topic, data, source)
-    event.emit()
-    return event
+
+    return GlobalEventSystem.emit(topic, data, source)
