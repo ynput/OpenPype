@@ -301,7 +301,7 @@ def _project_anatomy_backwards_compatible_conversion(project_anatomy):
         value = value[key]
 
     for item in value:
-        for node in item.get("requiredNodes") or []:
+        for node in item.get("knobs") or []:
             if "type" in node:
                 break
             node["type"] = "__legacy__"
