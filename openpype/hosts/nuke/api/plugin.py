@@ -17,7 +17,8 @@ from .lib import (
     reset_selection,
     maintained_selection,
     set_avalon_knob_data,
-    add_publish_knob
+    add_publish_knob,
+    get_nuke_imageio_settings
 )
 
 
@@ -699,6 +700,20 @@ class AbstractWriteRender(OpenPypeCreator):
         write_node = self._modify_write_node(write_node)
 
         return write_node
+
+    def is_legacy(self):
+        """Check if it needs to run legacy code
+
+        In case where `type` key is missing in singe
+        knob it is legacy project anatomy.
+
+        Returns:
+            bool: True if legacy
+        """
+        imageio_nodes = get_nuke_imageio_settings()["nodes"]
+        node = imageio_nodes["requiredNodes"][0]
+        if "type" not in node["knobs"][0]:
+            return True
 
     @abstractmethod
     def _create_write_node(self, selected_node, inputs, outputs, write_data):

@@ -365,6 +365,40 @@ def fix_data_for_node_create(data):
     return data
 
 
+def add_write_node_legacy(name, **kwarg):
+    """Adding nuke write node
+    Arguments:
+        name (str): nuke node name
+        kwarg (attrs): data for nuke knobs
+    Returns:
+        node (obj): nuke write node
+    """
+    frame_range = kwarg.get("use_range_limit", None)
+
+    w = nuke.createNode(
+        "Write",
+        "name {}".format(name))
+
+    w["file"].setValue(kwarg["file"])
+
+    for k, v in kwarg.items():
+        if "frame_range" in k:
+            continue
+        log.info([k, v])
+        try:
+            w[k].setValue(v)
+        except KeyError as e:
+            log.debug(e)
+            continue
+
+    if frame_range:
+        w["use_limit"].setValue(True)
+        w["first"].setValue(frame_range[0])
+        w["last"].setValue(frame_range[1])
+
+    return w
+
+
 def add_write_node(name, file_path, knobs, **kwarg):
     """Adding nuke write node
 
@@ -375,7 +409,7 @@ def add_write_node(name, file_path, knobs, **kwarg):
     Returns:
         node (obj): nuke write node
     """
-    frame_range = kwarg.get("frame_range", None)
+    frame_range = kwarg.get("use_range_limit", None)
 
     w = nuke.createNode(
         "Write",
@@ -492,6 +526,80 @@ def get_node_path(path, padding=4):
 
 def get_nuke_imageio_settings():
     return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
+
+
+def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
+    ''' Get preset data for dataflow (fileType, compression, bitDepth)
+    '''
+
+    assert any([creator, nodeclass]), nuke.message(
+        "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
+
+    imageio_nodes = get_nuke_imageio_settings()["nodes"]
+    required_nodes = imageio_nodes["requiredNodes"]
+    override_nodes = imageio_nodes["overrideNodes"]
+
+    imageio_node = None
+    for node in required_nodes:
+        log.info(node)
+        if (
+                nodeclass in node["nukeNodeClass"]
+                and creator in node["plugins"]
+        ):
+            imageio_node = node
+            break
+
+    log.debug("__ imageio_node: {}".format(imageio_node))
+
+    # find matching override node
+    override_imageio_node = None
+    for onode in override_nodes:
+        log.info(onode)
+        if nodeclass not in node["nukeNodeClass"]:
+            continue
+
+        if creator not in node["plugins"]:
+            continue
+
+        if (
+            onode["subsets"]
+            and not any(re.search(s, subset) for s in onode["subsets"])
+        ):
+            continue
+
+        override_imageio_node = onode
+        break
+
+    log.debug("__ override_imageio_node: {}".format(override_imageio_node))
+    # add overrides to imageio_node
+    if override_imageio_node:
+        # get all knob names in imageio_node
+        knob_names = [k["name"] for k in imageio_node["knobs"]]
+
+        for oknob in override_imageio_node["knobs"]:
+            for knob in imageio_node["knobs"]:
+                # override matching knob name
+                if oknob["name"] == knob["name"]:
+                    log.debug(
+                        "_ overriding knob: `{}` > `{}`".format(
+                            knob, oknob
+                        ))
+                    if not oknob["value"]:
+                        # remove original knob if no value found in oknob
+                        imageio_node["knobs"].remove(knob)
+                    else:
+                        # override knob value with oknob's
+                        knob["value"] = oknob["value"]
+
+                # add missing knobs into imageio_node
+                if oknob["name"] not in knob_names:
+                    log.debug(
+                        "_ adding knob: `{}`".format(oknob))
+                    imageio_node["knobs"].append(oknob)
+                    knob_names.append(oknob["name"])
+
+    log.info("ImageIO node: {}".format(imageio_node))
+    return imageio_node
 
 
 def get_imageio_node_setting(node_class, plugin_name, subset):
@@ -1096,6 +1204,276 @@ def create_write_node(
 
     # finally add knob overrides
     set_node_knobs_from_settings(GN, knob_overrides, **kwargs)
+
+    return GN
+
+
+def create_write_node_legacy(name, data, input=None, prenodes=None,
+                      review=True, linked_knobs=None, farm=True):
+    ''' Creating write node which is group node
+
+    Arguments:
+        name (str): name of node
+        data (dict): data to be imprinted
+        input (node): selected node to connect to
+        prenodes (list, optional): list of lists, definitions for nodes
+                                to be created before write
+        review (bool): adding review knob
+
+    Example:
+        prenodes = [
+            {
+                "nodeName": {
+                    "class": ""  # string
+                    "knobs": [
+                        ("knobName": value),
+                        ...
+                    ],
+                    "dependent": [
+                        following_node_01,
+                        ...
+                    ]
+                }
+            },
+            ...
+        ]
+
+    Return:
+        node (obj): group node with avalon data as Knobs
+    '''
+    knob_overrides = data.get("knobs", [])
+    nodeclass = data["nodeclass"]
+    creator = data["creator"]
+    subset = data["subset"]
+
+    imageio_writes = get_created_node_imageio_setting_legacy(
+        nodeclass, creator, subset
+    )
+    for knob in imageio_writes["knobs"]:
+        if knob["name"] == "file_type":
+            representation = knob["value"]
+
+    host_name = os.environ.get("AVALON_APP")
+    try:
+        data.update({
+            "app": host_name,
+            "imageio_writes": imageio_writes,
+            "representation": representation,
+        })
+        anatomy_filled = format_anatomy(data)
+
+    except Exception as e:
+        msg = "problem with resolving anatomy template: {}".format(e)
+        log.error(msg)
+        nuke.message(msg)
+
+    # build file path to workfiles
+    fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
+    fpath = data["fpath_template"].format(
+        work=fdir, version=data["version"], subset=data["subset"],
+        frame=data["frame"],
+        ext=representation
+    )
+
+    # create directory
+    if not os.path.isdir(os.path.dirname(fpath)):
+        log.warning("Path does not exist! I am creating it.")
+        os.makedirs(os.path.dirname(fpath))
+
+    _data = OrderedDict({
+        "file": fpath
+    })
+
+    # adding dataflow template
+    log.debug("imageio_writes: `{}`".format(imageio_writes))
+    for knob in imageio_writes["knobs"]:
+        _data[knob["name"]] = knob["value"]
+
+    _data = fix_data_for_node_create(_data)
+
+    log.debug("_data: `{}`".format(_data))
+
+    if "frame_range" in data.keys():
+        _data["frame_range"] = data.get("frame_range", None)
+        log.debug("_data[frame_range]: `{}`".format(_data["frame_range"]))
+
+    GN = nuke.createNode("Group", "name {}".format(name))
+
+    prev_node = None
+    with GN:
+        if input:
+            input_name = str(input.name()).replace(" ", "")
+            # if connected input node was defined
+            prev_node = nuke.createNode(
+                "Input", "name {}".format(input_name))
+        else:
+            # generic input node connected to nothing
+            prev_node = nuke.createNode(
+                "Input", "name {}".format("rgba"))
+        prev_node.hideControlPanel()
+        # creating pre-write nodes `prenodes`
+        if prenodes:
+            for node in prenodes:
+                # get attributes
+                pre_node_name = node["name"]
+                klass = node["class"]
+                knobs = node["knobs"]
+                dependent = node["dependent"]
+
+                # create node
+                now_node = nuke.createNode(
+                    klass, "name {}".format(pre_node_name))
+                now_node.hideControlPanel()
+
+                # add data to knob
+                for _knob in knobs:
+                    knob, value = _knob
+                    try:
+                        now_node[knob].value()
+                    except NameError:
+                        log.warning(
+                            "knob `{}` does not exist on node `{}`".format(
+                                knob, now_node["name"].value()
+                            ))
+                        continue
+
+                    if not knob and not value:
+                        continue
+
+                    log.info((knob, value))
+
+                    if isinstance(value, str):
+                        if "[" in value:
+                            now_node[knob].setExpression(value)
+                    else:
+                        now_node[knob].setValue(value)
+
+                # connect to previous node
+                if dependent:
+                    if isinstance(dependent, (tuple or list)):
+                        for i, node_name in enumerate(dependent):
+                            input_node = nuke.createNode(
+                                "Input", "name {}".format(node_name))
+                            input_node.hideControlPanel()
+                            now_node.setInput(1, input_node)
+
+                    elif isinstance(dependent, str):
+                        input_node = nuke.createNode(
+                            "Input", "name {}".format(node_name))
+                        input_node.hideControlPanel()
+                        now_node.setInput(0, input_node)
+
+                else:
+                    now_node.setInput(0, prev_node)
+
+                # switch actual node to previous
+                prev_node = now_node
+
+        # creating write node
+
+        write_node = now_node = add_write_node_legacy(
+            "inside_{}".format(name),
+            **_data
+        )
+        write_node.hideControlPanel()
+        # connect to previous node
+        now_node.setInput(0, prev_node)
+
+        # switch actual node to previous
+        prev_node = now_node
+
+        now_node = nuke.createNode("Output", "name Output1")
+        now_node.hideControlPanel()
+
+        # connect to previous node
+        now_node.setInput(0, prev_node)
+
+    # imprinting group node
+    set_avalon_knob_data(GN, data["avalon"])
+    add_publish_knob(GN)
+    add_rendering_knobs(GN, farm)
+
+    if review:
+        add_review_knob(GN)
+
+    # add divider
+    GN.addKnob(nuke.Text_Knob('', 'Rendering'))
+
+    # Add linked knobs.
+    linked_knob_names = []
+
+    # add input linked knobs and create group only if any input
+    if linked_knobs:
+        linked_knob_names.append("_grp-start_")
+        linked_knob_names.extend(linked_knobs)
+        linked_knob_names.append("_grp-end_")
+
+    linked_knob_names.append("Render")
+
+    for _k_name in linked_knob_names:
+        if "_grp-start_" in _k_name:
+            knob = nuke.Tab_Knob(
+                "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
+            GN.addKnob(knob)
+        elif "_grp-end_" in _k_name:
+            knob = nuke.Tab_Knob(
+                "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
+            GN.addKnob(knob)
+        else:
+            if "___" in _k_name:
+                # add divider
+                GN.addKnob(nuke.Text_Knob(""))
+            else:
+                # add linked knob by _k_name
+                link = nuke.Link_Knob("")
+                link.makeLink(write_node.name(), _k_name)
+                link.setName(_k_name)
+
+                # make render
+                if "Render" in _k_name:
+                    link.setLabel("Render Local")
+                link.setFlag(0x1000)
+                GN.addKnob(link)
+
+    # adding write to read button
+    add_button_write_to_read(GN)
+
+    # adding write to read button
+    add_button_clear_rendered(GN, os.path.dirname(fpath))
+
+    # Deadline tab.
+    add_deadline_tab(GN)
+
+    # open the our Tab as default
+    GN[_NODE_TAB_NAME].setFlag(0)
+
+    # set tile color
+    tile_color = _data.get("tile_color", "0xff0000ff")
+    GN["tile_color"].setValue(tile_color)
+
+    # overrie knob values from settings
+    for knob in knob_overrides:
+        knob_type = knob["type"]
+        knob_name = knob["name"]
+        knob_value = knob["value"]
+        if knob_name not in GN.knobs():
+            continue
+        if not knob_value:
+            continue
+
+        # set correctly knob types
+        if knob_type == "string":
+            knob_value = str(knob_value)
+        if knob_type == "number":
+            knob_value = int(knob_value)
+        if knob_type == "decimal_number":
+            knob_value = float(knob_value)
+        if knob_type == "bool":
+            knob_value = bool(knob_value)
+        if knob_type in ["2d_vector", "3d_vector"]:
+            knob_value = list(knob_value)
+
+        GN[knob_name].setValue(knob_value)
 
     return GN
 

@@ -1,7 +1,8 @@
 import nuke
 
 from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import create_write_node
+from openpype.hosts.nuke.api.lib import (
+    create_write_node, create_write_node_legacy)
 
 
 class CreateWriteStill(plugin.AbstractWriteRender):
@@ -42,18 +43,39 @@ class CreateWriteStill(plugin.AbstractWriteRender):
         # add fpath_template
         write_data["fpath_template"] = self.fpath_template
 
-        return create_write_node(
-            self.name,
-            write_data,
-            input=selected_node,
-            review=False,
-            prenodes=self.prenodes,
-            farm=False,
-            linked_knobs=["channels", "___", "first", "last", "use_limit"],
-            **{
-                "frame": nuke.frame()
-            }
-        )
+        if not self.is_legacy():
+            return create_write_node(
+                self.name,
+                write_data,
+                input=selected_node,
+                review=False,
+                prenodes=self.prenodes,
+                farm=False,
+                linked_knobs=["channels", "___", "first", "last", "use_limit"],
+                **{
+                    "frame": nuke.frame()
+                }
+            )
+        else:
+            _prenodes = [
+                {
+                    "name": "FrameHold01",
+                    "class": "FrameHold",
+                    "knobs": [
+                        ("first_frame", nuke.frame())
+                    ],
+                    "dependent": None
+                }
+            ]
+            return create_write_node_legacy(
+                self.name,
+                write_data,
+                input=selected_node,
+                review=False,
+                prenodes=_prenodes,
+                farm=False,
+                linked_knobs=["channels", "___", "first", "last", "use_limit"]
+            )
 
     def _modify_write_node(self, write_node):
         write_node.begin()

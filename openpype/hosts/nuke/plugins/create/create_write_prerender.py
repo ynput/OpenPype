@@ -1,7 +1,8 @@
 import nuke
 
 from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import create_write_node
+from openpype.hosts.nuke.api.lib import (
+    create_write_node, create_write_node_legacy)
 
 
 class CreateWritePrerender(plugin.AbstractWriteRender):
@@ -25,14 +26,24 @@ class CreateWritePrerender(plugin.AbstractWriteRender):
     def _create_write_node(self, selected_node, inputs, outputs, write_data):
         # add fpath_template
         write_data["fpath_template"] = self.fpath_template
+        write_data["use_range_limit"] = self.use_range_limit
 
-        return create_write_node(
-            self.data["subset"],
-            write_data,
-            input=selected_node,
-            review=self.reviewable,
-            linked_knobs=["channels", "___", "first", "last", "use_limit"]
-        )
+        if not self.is_legacy():
+            return create_write_node(
+                self.data["subset"],
+                write_data,
+                input=selected_node,
+                review=self.reviewable,
+                linked_knobs=["channels", "___", "first", "last", "use_limit"]
+            )
+        else:
+            return create_write_node_legacy(
+                self.data["subset"],
+                write_data,
+                input=selected_node,
+                review=self.reviewable,
+                linked_knobs=["channels", "___", "first", "last", "use_limit"]
+            )
 
     def _modify_write_node(self, write_node):
         # open group node

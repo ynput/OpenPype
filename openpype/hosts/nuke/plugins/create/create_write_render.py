@@ -1,7 +1,8 @@
 import nuke
 
 from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import create_write_node
+from openpype.hosts.nuke.api.lib import (
+    create_write_node, create_write_node_legacy)
 
 
 class CreateWriteRender(plugin.AbstractWriteRender):
@@ -50,16 +51,36 @@ class CreateWriteRender(plugin.AbstractWriteRender):
             actual_format = nuke.root().knob('format').value()
             width, height = (actual_format.width(), actual_format.height())
 
-        return create_write_node(
-            self.data["subset"],
-            write_data,
-            input=selected_node,
-            prenodes=self.prenodes,
-            **{
-                "width": width,
-                "height": height
-            }
-        )
+        if not self.is_legacy():
+            return create_write_node(
+                self.data["subset"],
+                write_data,
+                input=selected_node,
+                prenodes=self.prenodes,
+                **{
+                    "width": width,
+                    "height": height
+                }
+            )
+        else:
+            _prenodes = [
+                {
+                    "name": "Reformat01",
+                    "class": "Reformat",
+                    "knobs": [
+                        ("resize", 0),
+                        ("black_outside", 1),
+                    ],
+                    "dependent": None
+                }
+            ]
+
+            return create_write_node_legacy(
+                self.data["subset"],
+                write_data,
+                input=selected_node,
+                prenodes=_prenodes
+            )
 
     def _modify_write_node(self, write_node):
         return write_node
