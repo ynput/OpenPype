@@ -2,10 +2,6 @@ import nuke
 
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import create_write_node
-from openpype.api import (
-    Logger
-)
-log = Logger.get_logger(__name__)
 
 
 class CreateWriteStill(plugin.AbstractWriteRender):
