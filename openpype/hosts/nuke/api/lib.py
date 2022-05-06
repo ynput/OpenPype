@@ -194,7 +194,7 @@ def imprint(node, data, tab=None):
     Examples:
         ```
         import nuke
-        from avalon.nuke import lib
+        from openpype.hosts.nuke.api import lib
 
         node = nuke.createNode("NoOp")
         data = {
