@@ -251,6 +251,22 @@
                                 ]
                             }
                         ]
+                    },
+                    {
+                        "key": "__legacy__",
+                        "label": "_ Legacy type _",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "text",
+                                "key": "value",
+                                "label": "Value"
+                            }
+                        ]
                     }
                 ]
             }

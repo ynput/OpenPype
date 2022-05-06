@@ -713,6 +713,14 @@ class AbstractWriteRender(OpenPypeCreator):
         imageio_nodes = get_nuke_imageio_settings()["nodes"]
         node = imageio_nodes["requiredNodes"][0]
         if "type" not in node["knobs"][0]:
+            # if type is not yet in project anatomy
+            return True
+        elif next(iter(
+            _k for _k in node["knobs"]
+            if _k.get("type") == "__legacy__"
+        ), None):
+            # in case someone re-saved anatomy
+            # with old configuration
             return True
 
     @abstractmethod
