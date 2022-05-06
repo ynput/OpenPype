@@ -96,9 +96,14 @@ class RenderSettings(object):
     def _set_Arnold_settings(self, width, height):
         """Sets settings for Arnold."""
         from mtoa.core import createOptions
+        from mtoa.aovs import AOVInterface
         createOptions()
         arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
         img_ext = arnold_render_presets["image_format"]
+        aovs = arnold_render_presets["aov_list"]
+
+        for aov in aovs:
+            AOVInterface('defaultArnoldRenderOptions'.addAOV(aov))
 
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
