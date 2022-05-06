@@ -106,9 +106,7 @@ install_requires = [
     "dns",
     # Python defaults (cx_Freeze skip them by default)
     "dbm",
-    "sqlite3",
-    "dataclasses",
-    "timeit"
+    "sqlite3"
 ]
 
 includes = []
@@ -125,6 +123,7 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
+    "repos",
     "schema",
     "LICENSE",
     "README.md"
