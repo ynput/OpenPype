@@ -87,7 +87,7 @@
             "children": [
                 {
                     "type": "dict",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "CreateWriteRender",
                     "label": "CreateWriteRender",
                     "is_group": true,
@@ -104,12 +104,16 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "schema",
+                            "name": "schema_nuke_knob_inputs"
                         }
                     ]
                 },
                 {
                     "type": "dict",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "CreateWritePrerender",
                     "label": "CreateWritePrerender",
                     "is_group": true,
@@ -136,6 +140,10 @@
                             "type": "boolean",
                             "key": "reviewable",
                             "label": "Add reviewable toggle"
+                        },
+                        {
+                            "type": "schema",
+                            "name": "schema_nuke_knob_inputs"
                         }
                     ]
                 }
