@@ -149,12 +149,6 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         with maintained_selection():
             members = instance.data("setMembers")
-            members = cmds.ls(members,
-                              dag=True,
-                              shapes=True,
-                              type=("mesh"),
-                              noIntermediate=True,
-                              long=True)
             self.log.info('Collected object {}'.format(members))
 
             import multiverse
