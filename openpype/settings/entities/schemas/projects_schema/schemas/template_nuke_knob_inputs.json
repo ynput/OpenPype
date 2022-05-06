@@ -65,8 +65,8 @@
                         ]
                     },
                     {
-                        "key": "hex",
-                        "label": "Hexadecimal (0x)",
+                        "key": "color_gui",
+                        "label": "Color GUI",
                         "children": [
                             {
                                 "type": "text",
@@ -74,9 +74,10 @@
                                 "label": "Name"
                             },
                             {
-                                "type": "text",
+                                "type": "color",
                                 "key": "value",
-                                "label": "Value"
+                                "label": "Value",
+                                "use_alpha": false
                             }
                         ]
                     },

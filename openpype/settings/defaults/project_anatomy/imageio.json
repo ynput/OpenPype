@@ -75,9 +75,14 @@
                             "value": true
                         },
                         {
-                            "type": "hex",
+                            "type": "color_gui",
                             "name": "tile_color",
-                            "value": "0xff0000ff"
+                            "value": [
+                                186,
+                                35,
+                                35,
+                                255
+                            ]
                         },
                         {
                             "type": "text",
@@ -123,9 +128,14 @@
                             "value": true
                         },
                         {
-                            "type": "hex",
+                            "type": "color_gui",
                             "name": "tile_color",
-                            "value": "0xadab1dff"
+                            "value": [
+                                171,
+                                171,
+                                10,
+                                255
+                            ]
                         },
                         {
                             "type": "text",
@@ -166,9 +176,14 @@
                             "value": "Deflate"
                         },
                         {
-                            "type": "hex",
+                            "type": "color_gui",
                             "name": "tile_color",
-                            "value": "0x23ff00ff"
+                            "value": [
+                                56,
+                                162,
+                                7,
+                                255
+                            ]
                         },
                         {
                             "type": "text",
