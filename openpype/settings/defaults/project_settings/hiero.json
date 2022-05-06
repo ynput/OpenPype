@@ -1,4 +1,36 @@
 {
+    "ext_mapping": {
+        "model": "hrox",
+        "mayaAscii": "hrox",
+        "camera": "hrox",
+        "rig": "hrox",
+        "workfile": "hrox",
+        "yetiRig": "hrox"
+    },
+    "heiro-dirmap": {
+        "enabled": false,
+        "paths": {
+            "source-path": [],
+            "destination-path": []
+        }
+    },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "command": "import openpype.hosts.hiero.api.commands as hiero; hiero.edit_shader_definitions()",
+                "sourcetype": "python",
+                "title": "Edit shader name definitions",
+                "tooltip": "Edit shader name definitions used in validation and renaming.",
+                "tags": [
+                    "pipeline",
+                    "shader"
+                ]
+            }
+        ]
+    },
+
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
