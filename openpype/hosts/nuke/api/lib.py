@@ -1089,10 +1089,10 @@ def create_write_node(
         iter(
             k["value"] for k in imageio_writes["knobs"]
             if "tile_color" in k["name"]
-        ), "0xff0000ff"
+        ), [255, 0, 0, 255]
     )
     GN["tile_color"].setValue(
-        int(tile_color, 16))
+        color_gui_to_int(tile_color))
 
     # finally add knob overrides
     set_node_knobs_from_settings(GN, knob_overrides, **kwargs)
@@ -1159,17 +1159,18 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
             knob_value = int(knob_value)
         elif knob_type == "text":
             knob_value = knob_value
-        elif knob_type == "hex":
-            if not knob_value.startswith("0x"):
-                raise ValueError(
-                    "Check your settings! Input Hexa is wrong! \n{}".format(
-                        pformat(knob_settings)
-                    ))
-            knob_value = int(knob_value, 16)
+        elif knob_type == "color_gui":
+            knob_value = color_gui_to_int(knob_value)
         elif knob_type in ["2d_vector", "3d_vector", "color"]:
             knob_value = [float(v) for v in knob_value]
 
         node[knob_name].setValue(knob_value)
+
+
+def color_gui_to_int(color_gui):
+    hex_value = (
+        "0x{0:0>2x}{1:0>2x}{2:0>2x}{3:0>2x}").format(*color_gui)
+    return int(hex_value, 16)
 
 
 def add_rendering_knobs(node, farm=True):
