@@ -291,6 +291,22 @@ def _system_settings_backwards_compatible_conversion(studio_overrides):
                     }
 
 
+def _project_anatomy_backwards_compatible_conversion(project_anatomy):
+    # Backwards compatibility of node settings in Nuke 3.9.x - 3.10.0
+    # - source PR - https://github.com/pypeclub/OpenPype/pull/3143
+    value = project_anatomy
+    for key in ("imageio", "nuke", "nodes", "requiredNodes"):
+        if key not in value:
+            return
+        value = value[key]
+
+    for item in value:
+        for node in item.get("requiredNodes") or []:
+            if "type" in node:
+                break
+            node["type"] = "__legacy__"
+
+
 @require_handler
 def get_studio_system_settings_overrides(return_version=False):
     output = _SETTINGS_HANDLER.get_studio_system_settings_overrides(
@@ -326,7 +342,9 @@ def get_project_settings_overrides(project_name, return_version=False):
 
 @require_handler
 def get_project_anatomy_overrides(project_name):
-    return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+    output = _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+    _project_anatomy_backwards_compatible_conversion(output)
+    return output
 
 
 @require_handler
