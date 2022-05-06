@@ -1,5 +1,6 @@
 """Load a layout in Blender."""
 
+import contextlib
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
@@ -14,7 +15,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
-    AVALON_CONTAINERS,
+    metadata_update,
     AVALON_PROPERTY,
 )
 
@@ -29,45 +30,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, asset_group):
-        objects = list(asset_group.children)
-
-        for obj in objects:
-            if obj.type == 'MESH':
-                for material_slot in list(obj.material_slots):
-                    if material_slot.material:
-                        bpy.data.materials.remove(material_slot.material)
-                bpy.data.meshes.remove(obj.data)
-            elif obj.type == 'ARMATURE':
-                objects.extend(obj.children)
-                bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'CURVE':
-                bpy.data.curves.remove(obj.data)
-            elif obj.type == 'EMPTY':
-                objects.extend(obj.children)
-                bpy.data.objects.remove(obj)
-
-    def _remove_asset_and_library(self, asset_group):
-        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
-
-        # Check how many assets use the same library
-        count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).all_objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == libpath:
-                count += 1
-
-        self._remove(asset_group)
-
-        bpy.data.objects.remove(asset_group)
-
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(libpath))
-            bpy.data.libraries.remove(library)
-
-    def _process(
-        self, libpath, asset_name, asset, representation, actions
-    ):
+    def _process(self, libpath, asset_name):  # asset, representation, actions
         # Get the first collection if only child or the scene root collection
         # to use it as asset group parent collection.
         parent_collection = bpy.context.scene.collection
@@ -92,7 +55,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 container = collection
                 break
 
-        assert container, "No asset group found"
+        assert container, "No asset container found"
 
         # Create override library for container and elements.
         override = container.override_hierarchy_create(
@@ -117,160 +80,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         return override, list(override.all_objects)
 
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
-        objects = []
-        nodes = list(container.children)
-
-        allowed_types = ['ARMATURE', 'MESH', 'EMPTY']
-
-        # for obj in nodes:
-        #     if obj.type in allowed_types:
-        #         obj.parent = asset_group
-
-        for obj in nodes:
-            if obj.type in allowed_types:
-                objects.append(obj)
-                nodes.extend(list(obj.children))
-
-        objects.reverse()
-
-        constraints = []
-
-        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
-
-        for armature in armatures:
-            for bone in armature.pose.bones:
-                for constraint in bone.constraints:
-                    if hasattr(constraint, 'target'):
-                        constraints.append(constraint)
-
-        for obj in objects:
-            parent_collection.objects.link(obj)
-
-        for obj in objects:
-            local_obj = plugin.prepare_data(obj)
-
-            action = None
-
-            if actions:
-                action = actions.get(local_obj.name, None)
-
-            if local_obj.type == 'MESH':
-                plugin.prepare_data(local_obj.data)
-
-                if obj != local_obj:
-                    for constraint in constraints:
-                        if constraint.target == obj:
-                            constraint.target = local_obj
-
-                for material_slot in local_obj.material_slots:
-                    if material_slot.material:
-                        plugin.prepare_data(material_slot.material)
-            elif local_obj.type == 'ARMATURE':
-                plugin.prepare_data(local_obj.data)
-
-                if action is not None:
-                    if local_obj.animation_data is None:
-                        local_obj.animation_data_create()
-                    local_obj.animation_data.action = action
-                elif (local_obj.animation_data and
-                      local_obj.animation_data.action is not None):
-                    plugin.prepare_data(
-                        local_obj.animation_data.action)
-
-                # Set link the drivers to the local object
-                if local_obj.data.animation_data:
-                    for d in local_obj.data.animation_data.drivers:
-                        for v in d.driver.variables:
-                            for t in v.targets:
-                                t.id = local_obj
-
-            elif local_obj.type == 'EMPTY':
-                creator_plugin = lib.get_creator_by_name("CreateAnimation")
-                if not creator_plugin:
-                    raise ValueError("Creator plugin \"CreateAnimation\" was "
-                                     "not found.")
-
-                legacy_create(
-                    creator_plugin,
-                    name=local_obj.name.split(':')[-1] + "_animation",
-                    asset=asset,
-                    options={"useSelection": False,
-                             "asset_group": local_obj},
-                    data={"dependencies": representation}
-                )
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": asset_name})
-
-        objects.reverse()
-
-        armatures = [
-            obj for obj in bpy.data.objects
-            if obj.type == 'ARMATURE' and obj.library is None]
-        arm_act = {}
-
-        # The armatures with an animation need to be at the center of the
-        # scene to be hooked correctly by the curves modifiers.
-        for armature in armatures:
-            if armature.animation_data and armature.animation_data.action:
-                arm_act[armature] = armature.animation_data.action
-                armature.animation_data.action = None
-                armature.location = (0.0, 0.0, 0.0)
-                for bone in armature.pose.bones:
-                    bone.location = (0.0, 0.0, 0.0)
-                    bone.rotation_euler = (0.0, 0.0, 0.0)
-
-        curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
-
-        for curve in curves:
-            curve_name = curve.name.split(':')[0]
-            curve_obj = bpy.data.objects.get(curve_name)
-
-            local_obj = plugin.prepare_data(curve)
-            plugin.prepare_data(local_obj.data)
-
-            # Curves need to reset the hook, but to do that they need to be
-            # in the view layer.
-            parent_collection.objects.link(local_obj)
-            plugin.deselect_all()
-            local_obj.select_set(True)
-            bpy.context.view_layer.objects.active = local_obj
-            if local_obj.library is None:
-                bpy.ops.object.mode_set(mode='EDIT')
-                bpy.ops.object.hook_reset()
-                bpy.ops.object.mode_set(mode='OBJECT')
-            parent_collection.objects.unlink(local_obj)
-
-            local_obj.use_fake_user = True
-
-            for mod in local_obj.modifiers:
-                mod.object = bpy.data.objects.get(f"{mod.object.name}")
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": asset_name})
-
-            local_obj.parent = curve_obj
-            objects.append(local_obj)
-
-        for armature in armatures:
-            if arm_act.get(armature):
-                armature.animation_data.action = arm_act[armature]
-
-        while bpy.data.orphans_purge(do_local_ids=False):
-            pass
-
-        plugin.deselect_all()
-
-        return objects
-
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
         options: Optional[Dict] = None
@@ -285,13 +94,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        representation = str(context["representation"]["_id"])
 
         asset_name = plugin.asset_name(asset, subset)
 
-        asset_group, objects = self._process(
-            libpath, asset_name, asset, representation, None
-        )
+        asset_group, objects = self._process(libpath, asset_name)
 
         asset_group[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
@@ -326,6 +132,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.get(object_name)
         libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
+
+        if not asset_group:
+            asset_group = bpy.data.collections.get(object_name)
 
         self.log.info(
             "Container: %s\nRepresentation: %s",
@@ -364,76 +173,68 @@ class BlendLayoutLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
-        actions = {}
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(self.maintained_parent(asset_group))
+            stack.enter_context(self.maintained_modifiers(asset_group))
+            stack.enter_context(self.maintained_constraints(asset_group))
+            stack.enter_context(self.maintained_transforms(asset_group))
+            stack.enter_context(self.maintained_targets(asset_group))
+            stack.enter_context(self.maintained_action(asset_group))
 
-        for obj in asset_group.children:
-            obj_meta = obj.get(AVALON_PROPERTY)
-            if obj_meta.get('family') == 'rig':
-                rig = None
-                for child in obj.children:
-                    if child.type == 'ARMATURE':
-                        rig = child
-                        break
-                if not rig:
-                    raise Exception("No armature in the rig asset group.")
-                if rig.animation_data and rig.animation_data.action:
-                    instance_name = obj_meta.get('instance_name')
-                    actions[instance_name] = rig.animation_data.action
+            plugin.remove_container(asset_group)
 
-        mat = asset_group.matrix_basis.copy()
+            asset_group, objects = self._process(str(libpath), object_name)
 
-        # Remove the children of the asset_group first
-        for child in list(asset_group.children):
-            self._remove_asset_and_library(child)
+        # update override library operations from asset objects
+        for obj in objects:
+            if obj.override_library:
+                obj.override_library.operations_update()
 
-        # Check how many assets use the same library
-        count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
-                count += 1
+        # clear orphan datablocks and libraries
+        plugin.orphans_purge()
 
-        self._remove(asset_group)
-
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
-            bpy.data.libraries.remove(library)
-
-        self._process(str(libpath), asset_group, object_name, actions)
-
-        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-        for child in asset_group.children:
-            if child.get(AVALON_PROPERTY):
-                avalon_container.objects.link(child)
-
-        asset_group.matrix_basis = mat
+        # update metadata
+        metadata.update({
+            "libpath": str(libpath),
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"]),
+        })
+        metadata_update(asset_group, metadata)
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
 
-    def exec_remove(self, container: Dict) -> bool:
-        """Remove an existing container from a Blender scene.
+    def exec_remove(self, container) -> bool:
+        """Remove the existing container from Blender scene"""
+        return self._remove_container(container)
 
-        Arguments:
-            container (openpype:container-1.0): Container to remove,
-                from `host.ls()`.
-
-        Returns:
-            bool: Whether the container was deleted.
-
-        Warning:
-            No nested collections are supported at the moment!
-        """
-        object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
-
-        if not asset_group:
-            return False
-
-        # Remove the children of the asset_group first
-        for child in list(asset_group.children):
-            self._remove_asset_and_library(child)
-
-        self._remove_asset_and_library(asset_group)
-
-        return True
+    @contextlib.contextmanager
+    def maintained_action(self, asset_group):
+        """Maintain action during context."""
+        asset_group_name = asset_group.name
+        # Get the armatures from asset_group.
+        armatures = [
+            obj
+            for obj in asset_group.all_objects
+            if obj.type == "ARMATURE"
+        ]
+        actions = {}
+        # Store actions from armatures.
+        for armature in armatures:
+            if armature.animation_data and armature.animation_data.action:
+                actions[armature.name] = armature.animation_data.action
+                armature.animation_data.action.use_fake_user = True
+        try:
+            yield
+        finally:
+            # Restor actions.
+            asset_group = bpy.data.collections.get(asset_group_name)
+            if asset_group and actions:
+                for obj in asset_group.all_objects:
+                    action = actions.get(obj.name)
+                    if action:
+                        if obj.animation_data is None:
+                            obj.animation_data_create()
+                        obj.animation_data.action = action
+            for action in actions.values():
+                action.use_fake_user = False

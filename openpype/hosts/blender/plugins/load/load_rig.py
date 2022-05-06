@@ -56,24 +56,33 @@ class BlendRigLoader(plugin.AssetLoader):
 
         assert container, "No asset container found"
 
-        for obj in container.all_objects:
-            obj.name = f"{group_name}:{obj.name}"
-        for child in container.children_recursive:
-            child.name = f"{group_name}:{child.name}"
-
         # Create override library for container and elements.
         override = container.override_hierarchy_create(
             bpy.context.scene,
             bpy.context.view_layer,
         )
 
+        # Rename all objects from override container with group_name.
+        for obj in set(override.all_objects):
+            obj.name = f"{group_name}:{obj.name}"
+
+        # Force override collection from override container and rename.
+        for child in set(override.children_recursive):
+            # child = child.override_create(remap_local_usages=True)
+            child.name = f"{group_name}:{child.name}"
+
+        # force override object data from overridden objects and rename.
+        overridden_data = set()
+        for obj in set(override.all_objects):
+            if obj.data and obj.data not in overridden_data:
+                overridden_data.add(obj.data)
+                obj.data.override_create(remap_local_usages=True)
+                obj.data.name = f"{group_name}:{obj.data.name}"
+
         # Relink and rename the override container.
         bpy.context.scene.collection.children.unlink(override)
         parent_collection.children.link(override)
         override.name = group_name
-
-        # clear unnecessary elements
-        bpy.data.collections.remove(container)
 
         plugin.orphans_purge()
         plugin.deselect_all()
@@ -202,29 +211,9 @@ class BlendRigLoader(plugin.AssetLoader):
         })
         metadata_update(asset_group, metadata)
 
-    def exec_remove(self, container: Dict) -> bool:
-        """Remove an existing container from a Blender scene.
-
-        Arguments:
-            container (openpype:container-1.0): Container to remove,
-                from `host.ls()`.
-
-        Returns:
-            bool: Whether the container was deleted.
-        """
-        object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
-
-        if not asset_group:
-            asset_group = bpy.data.collections.get(object_name)
-
-        if not asset_group:
-            return False
-
-        plugin.remove_container(asset_group)
-        plugin.orphans_purge()
-
-        return True
+    def exec_remove(self, container) -> bool:
+        """Remove the existing container from Blender scene"""
+        return self._remove_container(container)
 
     @contextlib.contextmanager
     def maintained_action(self, asset_group):

@@ -28,14 +28,24 @@ class ExtractAnimationFBX(api.Extractor):
         # The first collection object in the instance is taken, as there
         # should be only one that contains the asset group.
         collection = [
-            obj for obj in instance if type(obj) is bpy.types.Collection][0]
+            obj for obj in instance if isinstance(obj, bpy.types.Collection)
+        ]
+
+        if not collection:
+            return
 
         # Again, the first object in the collection is taken , as there
         # should be only the asset group in the collection.
-        asset_group = collection.objects[0]
+        asset_group = collection[0]
 
         armature = [
-            obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
+            obj for obj in asset_group.objects if obj.type == 'ARMATURE'
+        ]
+
+        if not armature:
+            return
+
+        armature = [0]
 
         object_action_pairs = []
         original_actions = []

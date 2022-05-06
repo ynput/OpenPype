@@ -32,19 +32,26 @@ class ExtractBlend(openpype.api.Extractor):
             data_blocks.add(obj)
             if not isinstance(obj, bpy.types.Object):
                 continue
+            # Get reference from override library.
+            if obj.override_library:
+                data_blocks.add(obj.override_library.reference)
             # Pack used images in the blend files.
             if obj.type == 'MESH':
                 obj.select_set(True)
-                for material_slot in obj.material_slots:
-                    mat = material_slot.material
-                    if mat and mat.use_nodes:
-                        tree = mat.node_tree
-                        if tree.type == 'SHADER':
-                            for node in tree.nodes:
-                                if node.bl_idname == 'ShaderNodeTexImage':
-                                    if node.image:
-                                        node.image.pack()
+                for mtl_slot in obj.material_slots:
+                    if (
+                        mtl_slot.material and
+                        mtl_slot.material.use_nodes and
+                        mtl_slot.material.node_tree.type == 'SHADER'
+                    ):
+                        for node in mtl_slot.material.node_tree.nodes:
+                            if (
+                                node.bl_idname == 'ShaderNodeTexImage' and
+                                node.image
+                            ):
+                                node.image.pack()
 
+        bpy.ops.file.make_paths_absolute()
         bpy.data.libraries.write(filepath, data_blocks)
 
         plugin.deselect_all()

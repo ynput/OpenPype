@@ -69,17 +69,18 @@ class BlendModelLoader(plugin.AssetLoader):
             parent_collection = plugin.get_parent_collection(asset_group)
             parent_collection.children.link(override)
             override.name = group_name
-            # clear and reassign asset_group and objects variables
-            bpy.data.collections.remove(asset_group)
-            bpy.data.collections.remove(container)
-            asset_group = override
-            objects = list(override.all_objects)
 
+            # force override object data like meshes and curves.
             overridden_data = set()
-            for obj in set(objects):
+            for obj in set(override.all_objects):
                 if obj.data and obj.data not in overridden_data:
                     obj.data.override_create(remap_local_usages=True)
                     overridden_data.add(obj.data)
+
+            # clear and reassign asset_group and objects variables
+            bpy.data.collections.remove(asset_group)
+            asset_group = override
+            objects = list(override.all_objects)
 
         # If asset_group is an Empty, set instance collection with container.
         elif isinstance(asset_group, bpy.types.Object):
@@ -268,25 +269,6 @@ class BlendModelLoader(plugin.AssetLoader):
         })
         metadata_update(asset_group, metadata)
 
-    def exec_remove(self, container: Dict) -> bool:
-        """Remove an existing container from a Blender scene.
-
-        Arguments:
-            container (openpype:container-1.0): Container to remove.
-
-        Returns:
-            bool: Whether the container was deleted.
-        """
-        object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
-
-        if not asset_group:
-            asset_group = bpy.data.collections.get(object_name)
-
-        if not asset_group:
-            return False
-
-        plugin.remove_container(asset_group)
-        plugin.orphans_purge()
-
-        return True
+    def exec_remove(self, container) -> bool:
+        """Remove the existing container from Blender scene"""
+        return self._remove_container(container)
