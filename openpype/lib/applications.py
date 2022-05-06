@@ -1045,13 +1045,13 @@ class ApplicationLaunchContext:
                     if not hook.is_valid:
                         self.log.debug(
                             "Hook is not valid for current "
-                            "launch context: {}".format(str(hook))
+                            "launch context: {}".format(klass.__name__)
                         )
                         continue
 
                     if inspect.isabstract(hook):
                         self.log.debug("Skipped abstract hook: {}".format(
-                            str(hook)
+                            klass.__name__
                         ))
                         continue
 
@@ -1063,7 +1063,8 @@ class ApplicationLaunchContext:
 
                 except Exception:
                     self.log.warning(
-                        "Initialization of hook failed. {}".format(str(klass)),
+                        "Initialization of hook failed: "
+                        "{}".format(klass.__name__),
                         exc_info=True
                     )
 
