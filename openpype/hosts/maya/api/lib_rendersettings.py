@@ -81,8 +81,7 @@ class RenderSettings(object):
         asset_doc = get_asset()
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
-        height = asset_doc["data"].get("resolutionHeight")# TODO: don't camelcase 
-        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"]
+        height = asset_doc["data"].get("resolutionHeight")
 
         if renderer == "arnold":
             # set renderer settings for Arnold from project settings
@@ -94,13 +93,16 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
 
-    def _set_Arnold_settings(self, settings, width, height):
+    def _set_Arnold_settings(self, width, height):
         """Sets settings for Arnold."""
         from mtoa.core import createOptions
         createOptions()
+        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
+        img_ext = arnold_render_presets["image_format"]
+
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
-        img_ext = settings["image_format"]
+
         self._set_global_output_settings()
         cmds.setAttr("defaultArnoldDriver.ai_translator", img_ext, type="string")
 
