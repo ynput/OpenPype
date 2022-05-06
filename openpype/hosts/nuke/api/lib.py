@@ -620,6 +620,9 @@ def get_imageio_node_setting(node_class, plugin_name, subset):
 
     log.debug("__ imageio_node: {}".format(imageio_node))
 
+    if not imageio_node:
+        return
+
     # find overrides and update knobs with them
     get_imageio_node_override_setting(
         node_class,
