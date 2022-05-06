@@ -1211,8 +1211,10 @@ def create_write_node(
     return GN
 
 
-def create_write_node_legacy(name, data, input=None, prenodes=None,
-                      review=True, linked_knobs=None, farm=True):
+def create_write_node_legacy(
+    name, data, input=None, prenodes=None,
+    review=True, linked_knobs=None, farm=True
+):
     ''' Creating write node which is group node
 
     Arguments:
