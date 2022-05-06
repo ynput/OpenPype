@@ -1044,8 +1044,8 @@ class ApplicationLaunchContext:
                     hook = klass(self)
                     if not hook.is_valid:
                         self.log.debug(
-                            "Hook is not valid for current "
-                            "launch context: {}".format(klass.__name__)
+                            "Skipped hook invalid for current launch context: "
+                            "{}".format(klass.__name__)
                         )
                         continue
 
