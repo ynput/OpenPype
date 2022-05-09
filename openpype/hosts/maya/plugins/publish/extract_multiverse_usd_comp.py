@@ -113,12 +113,18 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
                 time_opts.framePerSecond = fps
 
             comp_write_opts = multiverse.CompositionWriteOptions()
-            if not hasattr(comp_write_opts, "forceAbsolutePaths"):
-                self.log.warning("multiverse.CompositionWriteOptions is " +
-                                 "missing 'forceAbsolutePaths', extract " +
-                                 "will yield incorrect reference paths.")
-            else:
-                comp_write_opts.forceAbsolutePaths = True
+
+            """ 
+            OP tells MV to write to a staging directory, and then moves the
+            file to it's final publish directory. By default, MV write relative
+            paths, but these paths will break when the referencing file moves.
+            This option forces writes to absolute paths, which is ok within OP
+            because all published assets have static paths, and MV can only 
+            reference published assets. When a proper UsdAssetResolver is used,
+            this won't be needed.
+            """
+            comp_write_opts.forceAbsolutePaths = True
+
             options_discard_keys = {
                 'numTimeSamples',
                 'timeSamplesSpan',
