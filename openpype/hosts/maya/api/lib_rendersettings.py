@@ -87,7 +87,7 @@ class RenderSettings(object):
 
         if renderer == "arnold":
             # set renderer settings for Arnold from project settings
-            self._set_Arnold_settings(arnold_render_presets, width, height)
+            self._set_Arnold_settings(width, height)
 
         if renderer == "vray":
             self._set_vray_settings(aov_separator, width, height)
