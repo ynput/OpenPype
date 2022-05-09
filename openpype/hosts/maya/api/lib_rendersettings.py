@@ -63,6 +63,7 @@ class RenderSettings(object):
 
         """
         renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
+        asset_doc = get_asset()
         # project_settings/maya/create/CreateRender/aov_separator
         try:
             aov_separator = self._aov_chars[(
@@ -80,7 +81,7 @@ class RenderSettings(object):
                      prefix,
                      type="string")
 
-        asset_doc = get_asset()
+        
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
         height = asset_doc["data"].get("resolutionHeight")
