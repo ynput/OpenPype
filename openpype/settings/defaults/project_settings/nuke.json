@@ -15,6 +15,10 @@
             "destination-path": []
         }
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": []
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
