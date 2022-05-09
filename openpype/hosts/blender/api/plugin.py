@@ -22,6 +22,7 @@ from .lib import (
     imprint,
     get_selection
 )
+from .pipeline import AVALON_PROPERTY
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -164,6 +165,29 @@ def get_parent_collection(collection):
     return None
 
 
+def get_main_collection():
+    """Get main collection.
+        - the scene root collection if has no children.
+        - the first collection if only child of root collection.
+        - the only avalon instance collection child of root collection.
+    """
+    main_collection = bpy.context.scene.collection
+    if len(main_collection.children) == 1:
+        main_collection = main_collection.children[0]
+    else:
+        instance_collections = [
+            child
+            for child in main_collection.children
+            if (
+                child.get(AVALON_PROPERTY) and
+                child[AVALON_PROPERTY].get("id") == "pyblish.avalon.instance"
+            )
+        ]
+        if len(instance_collections) == 1:
+            main_collection = instance_collections[0]
+    return main_collection
+
+
 def get_local_collection_with_name(name):
     for collection in bpy.data.collections:
         if collection.name == name and collection.library is None:
@@ -269,10 +293,11 @@ class Creator(LegacyCreator):
             for collection in get_collections_by_objects(selected_objects):
                 selected_collection.add(collection)
                 selected_objects -= set(collection.all_objects)
-                print(collection)
 
             link_to_collection(selected_objects, container)
             link_to_collection(selected_collection, container)
+
+        imprint(container, self.data)
 
         return container
 
@@ -342,6 +367,20 @@ class AssetLoader(LoaderPlugin):
 
         return list(libraries)[0]
 
+    @staticmethod
+    def _get_container_from_collections(
+        collections: List,
+        famillies: Optional[List] = None
+    ) -> Optional[bpy.types.Collection]:
+        """Get valid container from loaded collections."""
+        for collection in collections:
+            metadata = collection.get(AVALON_PROPERTY)
+            if (
+                metadata and
+                (not famillies or metadata.get("family") in famillies)
+            ):
+                return collection
+
     def process_asset(self,
                       context: dict,
                       name: str,
@@ -359,11 +398,12 @@ class AssetLoader(LoaderPlugin):
         mti = MainThreadItem(self._load, context, name, namespace, options)
         execute_in_main_thread(mti)
 
-    def _load(self,
-              context: dict,
-              name: Optional[str] = None,
-              namespace: Optional[str] = None,
-              options: Optional[Dict] = None
+    def _load(
+        self,
+        context: dict,
+        name: Optional[str] = None,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None
     ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
@@ -415,6 +455,36 @@ class AssetLoader(LoaderPlugin):
         # instance_name = asset_name(asset, subset, unique_number) + '_CON'
 
         # return self._get_instance_collection(instance_name, nodes)
+
+    def _is_updated(self, asset_group, object_name, libpath):
+        """Check data before update. Return True if already updated"""
+
+        assert asset_group, (
+            f"The asset is not loaded: {object_name}"
+        )
+        assert libpath, (
+            f"No existing library file found for {object_name}"
+        )
+        assert libpath.is_file(), (
+            f"The file doesn't exist: {libpath}"
+        )
+        assert libpath.suffix.lower() in VALID_EXTENSIONS, (
+            f"Unsupported file: {libpath}"
+        )
+
+        group_libpath = asset_group[AVALON_PROPERTY]["libpath"]
+
+        normalized_group_libpath = (
+            str(Path(bpy.path.abspath(group_libpath)).resolve())
+        )
+        normalized_libpath = (
+            str(Path(bpy.path.abspath(str(libpath))).resolve())
+        )
+        self.log.debug(
+            f"normalized_group_libpath:\n  {normalized_group_libpath}\n"
+            f"normalized_libpath:\n  {normalized_libpath}"
+        )
+        return normalized_group_libpath == normalized_libpath
 
     def exec_update(self, container: Dict, representation: Dict):
         """Must be implemented by a sub-class"""

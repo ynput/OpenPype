@@ -248,8 +248,6 @@ def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     if not node.get(AVALON_PROPERTY):
         node[AVALON_PROPERTY] = dict()
     for key, value in data.items():
-        if value is None:
-            continue
         node[AVALON_PROPERTY][key] = value
 
 
@@ -375,7 +373,8 @@ def ls() -> Iterator:
 
     collections = lib.lsattr("id", AVALON_CONTAINER_ID)
     for container in collections:
-        yield parse_container(container)
+        if not container.override_library:
+            yield parse_container(container)
 
 
 def update_hierarchy(containers):

@@ -7,17 +7,12 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from openpype import lib
 from openpype.pipeline import (
-    legacy_create,
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import (
-    metadata_update,
-    AVALON_PROPERTY,
-)
+from openpype.hosts.blender.api.pipeline import metadata_update
 
 
 class BlendLayoutLoader(plugin.AssetLoader):
@@ -30,55 +25,38 @@ class BlendLayoutLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _process(self, libpath, asset_name):  # asset, representation, actions
-        # Get the first collection if only child or the scene root collection
-        # to use it as asset group parent collection.
-        parent_collection = bpy.context.scene.collection
-        if len(parent_collection.children) == 1:
-            parent_collection = parent_collection.children[0]
-
-        # Load collections from libpath library
+    def _process(self, libpath, asset_group):
+        # Load collections from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
             data_to.collections = data_from.collections
 
-        container = None
-
-        # get valid container from loaded collections
-        for collection in data_to.collections:
-            collection_metadata = collection.get(AVALON_PROPERTY)
-            if (
-                collection_metadata and
-                collection_metadata.get("family") == "layout"
-            ):
-                container = collection
-                break
-
+        # Get the right asset container from imported collections.
+        container = self._get_container_from_collections(
+            data_from.collections, self.families
+        )
         assert container, "No asset container found"
 
         # Create override library for container and elements.
         override = container.override_hierarchy_create(
-            bpy.context.scene,
-            bpy.context.view_layer,
+            bpy.context.scene, bpy.context.view_layer
         )
 
-        # Relink and rename the override container.
-        bpy.context.scene.collection.children.unlink(override)
-        parent_collection.children.link(override)
-        override.name = asset_name
+        # Move objects and child collections from override to asset_group.
+        plugin.link_to_collection(override.objects, asset_group)
+        plugin.link_to_collection(override.children, asset_group)
 
-        # make all actions local
+        # Make all actions local.
         for action in bpy.data.actions:
             action.make_local()
 
-        # clear unnecessary elements
+        # Clear and purge useless datablocks and selection.
         bpy.data.collections.remove(container)
-
         plugin.orphans_purge()
         plugin.deselect_all()
 
-        return override, list(override.all_objects)
+        return list(asset_group.all_objects)
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -97,21 +75,28 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         asset_name = plugin.asset_name(asset, subset)
 
-        asset_group, objects = self._process(libpath, asset_name)
+        asset_group = bpy.data.collections.new(asset_name)
+        asset_group.color_tag = "COLOR_02"
+        plugin.get_main_collection().children.link(asset_group)
 
-        asset_group[AVALON_PROPERTY] = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
-            "name": name,
-            "namespace": namespace or '',
-            "loader": str(self.__class__.__name__),
-            "representation": str(context["representation"]["_id"]),
-            "libpath": libpath,
-            "asset_name": asset_name,
-            "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"],
-            "objectName": asset_name
-        }
+        objects = self._process(libpath, asset_group)
+
+        metadata_update(
+            asset_group,
+            {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": name,
+                "namespace": namespace or '',
+                "loader": str(self.__class__.__name__),
+                "representation": str(context["representation"]["_id"]),
+                "libpath": libpath,
+                "asset_name": asset_name,
+                "parent": str(context["representation"]["parent"]),
+                "family": context["representation"]["context"]["family"],
+                "objectName": asset_name
+            }
+        )
 
         self[:] = objects
         return objects
@@ -129,12 +114,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
             No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
+        asset_group = bpy.data.collections.get(object_name)
         libpath = Path(get_representation_path(representation))
-        extension = libpath.suffix.lower()
-
-        if not asset_group:
-            asset_group = bpy.data.collections.get(object_name)
 
         self.log.info(
             "Container: %s\nRepresentation: %s",
@@ -142,35 +123,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
             pformat(representation, indent=2),
         )
 
-        assert asset_group, (
-            f"The asset is not loaded: {container['objectName']}"
-        )
-        assert libpath, (
-            "No existing library file found for {container['objectName']}"
-        )
-        assert libpath.is_file(), (
-            f"The file doesn't exist: {libpath}"
-        )
-        assert extension in plugin.VALID_EXTENSIONS, (
-            f"Unsupported file: {libpath}"
-        )
-
-        metadata = asset_group.get(AVALON_PROPERTY)
-        group_libpath = metadata["libpath"]
-
-        normalized_group_libpath = (
-            str(Path(bpy.path.abspath(group_libpath)).resolve())
-        )
-        normalized_libpath = (
-            str(Path(bpy.path.abspath(str(libpath))).resolve())
-        )
-        self.log.debug(
-            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_group_libpath,
-            normalized_libpath,
-        )
-        if normalized_group_libpath == normalized_libpath:
-            self.log.info("Library already loaded, not updating...")
+        if self._is_updated(asset_group, object_name, libpath):
+            self.log.info("Asset already up to date, not updating...")
             return
 
         with contextlib.ExitStack() as stack:
@@ -182,8 +136,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             stack.enter_context(self.maintained_action(asset_group))
 
             plugin.remove_container(asset_group)
-
-            asset_group, objects = self._process(str(libpath), object_name)
+            objects = self._process(str(libpath), asset_group, object_name)
 
         # update override library operations from asset objects
         for obj in objects:
@@ -192,17 +145,17 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # clear orphan datablocks and libraries
         plugin.orphans_purge()
+        plugin.deselect_all()
 
         # update metadata
-        metadata.update({
-            "libpath": str(libpath),
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"]),
-        })
-        metadata_update(asset_group, metadata)
-
-        metadata["libpath"] = str(libpath)
-        metadata["representation"] = str(representation["_id"])
+        metadata_update(
+            asset_group,
+            {
+                "libpath": str(libpath),
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"]),
+            }
+        )
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

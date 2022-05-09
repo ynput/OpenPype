@@ -22,9 +22,14 @@ class CreateCamera(plugin.Creator):
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
 
-        camera = bpy.data.cameras.new(name)
-        camera_obj = bpy.data.objects.new(name, camera)
-
-        container.objects.link(camera_obj)
+        for obj in container.all_objects:
+            if obj.type == "CAMERA":
+                obj.name = name
+                obj.data.name = name
+                break
+        else:
+            camera = bpy.data.cameras.new(name)
+            camera_obj = bpy.data.objects.new(name, camera)
+            container.objects.link(camera_obj)
 
         return container
