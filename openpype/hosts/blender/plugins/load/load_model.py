@@ -65,7 +65,7 @@ class BlendModelLoader(plugin.AssetLoader):
                 bpy.context.view_layer,
             )
             # Relink and rename the override container using asset_group.
-            bpy.context.scene.collection.children.unlink(override)
+            plugin.get_parent_collection(override).children.unlink(override)
             parent_collection = plugin.get_parent_collection(asset_group)
             parent_collection.children.link(override)
             override.name = group_name
