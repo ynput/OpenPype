@@ -292,10 +292,6 @@
         },
         {
             "type": "schema",
-            "name": "schema_nuke_scriptsmenu"
-        },
-        {
-            "type": "schema",
             "name": "schema_nuke_publish",
             "template_data": []
         },
