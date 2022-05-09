@@ -50,15 +50,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
     }
 
     ImagePrefixTokens = {
-
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         'vray': 'maya/<Scene>/<Layer>/<Layer>',
-        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>'  # noqa
+        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',  # noqa
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
     }
 
     _aov_chars = {
@@ -234,7 +236,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # load validation definitions from settings
         validation_settings = (
             instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
-                "{}_render_attributes".format(renderer))
+                "{}_render_attributes".format(renderer)) or []
         )
 
         # go through definitions and test if such node.attribute exists.
