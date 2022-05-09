@@ -28,6 +28,8 @@ class InstancesModel(QtGui.QStandardItemModel):
         self.clear()
         self._items_by_id.clear()
         self._plugin_items_by_id.clear()
+        if not report_item:
+            return
 
         root_item = self.invisibleRootItem()
 
@@ -119,6 +121,8 @@ class PluginsModel(QtGui.QStandardItemModel):
         self.clear()
         self._items_by_id.clear()
         self._plugin_items_by_id.clear()
+        if not report_item:
+            return
 
         root_item = self.invisibleRootItem()
 

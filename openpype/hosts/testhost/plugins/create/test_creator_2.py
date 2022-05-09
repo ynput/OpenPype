@@ -1,8 +1,8 @@
+from openpype.lib import NumberDef, TextDef
 from openpype.hosts.testhost.api import pipeline
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    lib
 )
 
 
@@ -15,7 +15,7 @@ class TestCreatorTwo(Creator):
     def get_icon(self):
         return "cube"
 
-    def create(self, subset_name, data, options=None):
+    def create(self, subset_name, data, pre_create_data):
         new_instance = CreatedInstance(self.family, subset_name, data, self)
         pipeline.HostContext.add_instance(new_instance.data_to_store())
         self.log.info(new_instance.data)
@@ -38,10 +38,10 @@ class TestCreatorTwo(Creator):
         for instance in instances:
             self._remove_instance_from_context(instance)
 
-    def get_attribute_defs(self):
+    def get_instance_attr_defs(self):
         output = [
-            lib.NumberDef("number_key"),
-            lib.TextDef("text_key")
+            NumberDef("number_key"),
+            TextDef("text_key")
         ]
         return output
 

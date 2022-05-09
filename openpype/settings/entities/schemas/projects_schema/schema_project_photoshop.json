@@ -37,12 +37,22 @@
                     "type": "dict",
                     "collapsible": true,
                     "is_group": true,
-                    "key": "CollectRemoteInstances",
-                    "label": "Collect Instances for Webpublish",
+                    "key": "CollectColorCodedInstances",
+                    "label": "Collect Color Coded Instances",
                     "children": [
                         {
                             "type": "label",
-                            "label": "Set color for publishable layers, set publishable families."
+                            "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "create_flatten_image",
+                            "label": "Create flatten image"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
                         },
                         {
                             "type": "list",
@@ -95,6 +105,23 @@
                                     }
                                 ]
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectInstances",
+                    "label": "Collect Instances",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Name for flatten image created if no image instance present"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
                         }
                     ]
                 },
@@ -154,6 +181,11 @@
                     "key": "ExtractReview",
                     "label": "Extract Review",
                     "children": [
+                        {
+                            "type": "boolean",
+                            "key": "make_image_sequence",
+                            "label": "Makes an image sequence instead of a flatten image"
+                        },
                         {
                             "type": "dict",
                             "collapsible": false,

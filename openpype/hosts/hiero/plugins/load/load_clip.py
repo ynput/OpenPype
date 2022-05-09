@@ -1,4 +1,7 @@
-from avalon import io, api
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 import openpype.hosts.hiero.api as phiero
 # from openpype.hosts.hiero.api import plugin, lib
 # reload(lib)
@@ -104,7 +107,7 @@ class LoadClip(phiero.SequenceLoader):
         namespace = container['namespace']
         track_item = phiero.get_track_items(
             track_item_name=namespace)
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -112,7 +115,7 @@ class LoadClip(phiero.SequenceLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         clip = track_item.source()
 
         # reconnect media to new path
@@ -173,7 +176,7 @@ class LoadClip(phiero.SequenceLoader):
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')

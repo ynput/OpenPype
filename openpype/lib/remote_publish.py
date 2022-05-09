@@ -1,13 +1,12 @@
 import os
 from datetime import datetime
-import sys
-from bson.objectid import ObjectId
 import collections
+
+from bson.objectid import ObjectId
 
 import pyblish.util
 import pyblish.api
 
-from openpype import uninstall
 from openpype.lib.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
@@ -21,9 +20,6 @@ FINISHED_OK_STATUS = "finished_ok"
 
 def headless_publish(log, close_plugin_name=None, is_test=False):
     """Runs publish in a opened host with a context and closes Python process.
-
-        Host is being closed via ClosePS pyblish plugin which triggers 'exit'
-        method in ConsoleTrayApp.
     """
     if not is_test:
         dbcon = get_webpublish_conn()
@@ -84,11 +80,9 @@ def publish(log, close_plugin_name=None):
 
         if result["error"]:
             log.error(error_format.format(**result))
-            uninstall()
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
-            sys.exit(1)
 
 
 def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
@@ -122,7 +116,6 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
 
         if result["error"]:
             log.error(error_format.format(**result))
-            uninstall()
             log_lines = [error_format.format(**result)] + log_lines
             dbcon.update_one(
                 {"_id": _id},
@@ -137,7 +130,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
-            sys.exit(1)
+            return
         elif processed % log_every == 0:
             # pyblish returns progress in 0.0 - 2.0
             progress = min(round(result["progress"] / 2 * 100), 99)

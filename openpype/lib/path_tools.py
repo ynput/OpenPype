@@ -4,14 +4,50 @@ import abc
 import json
 import logging
 import six
+import platform
 
 from openpype.settings import get_project_settings
-from openpype.settings.lib import get_site_local_overrides
 
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
+
+
+def create_hard_link(src_path, dst_path):
+    """Create hardlink of file.
+
+    Args:
+        src_path(str): Full path to a file which is used as source for
+            hardlink.
+        dst_path(str): Full path to a file where a link of source will be
+            added.
+    """
+    # Use `os.link` if is available
+    #   - should be for all platforms with newer python versions
+    if hasattr(os, "link"):
+        os.link(src_path, dst_path)
+        return
+
+    # Windows implementation of hardlinks
+    #   - used in Python 2
+    if platform.system().lower() == "windows":
+        import ctypes
+        from ctypes.wintypes import BOOL
+        CreateHardLink = ctypes.windll.kernel32.CreateHardLinkW
+        CreateHardLink.argtypes = [
+            ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_void_p
+        ]
+        CreateHardLink.restype = BOOL
+
+        res = CreateHardLink(dst_path, src_path, None)
+        if res == 0:
+            raise ctypes.WinError()
+        return
+    # Raises not implemented error if gets here
+    raise NotImplementedError(
+        "Implementation of hardlink for current environment is missing."
+    )
 
 
 def _rreplace(s, a, b, n=1):
@@ -51,12 +87,6 @@ def version_up(filepath):
                                                      padding=padding)
         new_label = label.replace(version, new_version, 1)
         new_basename = _rreplace(basename, label, new_label)
-
-    if not new_basename.endswith(new_label):
-        index = (new_basename.find(new_label))
-        index += len(new_label)
-        new_basename = new_basename[:index]
-
     new_filename = "{}{}".format(new_basename, ext)
     new_filename = os.path.join(dirname, new_filename)
     new_filename = os.path.normpath(new_filename)
@@ -65,8 +95,19 @@ def version_up(filepath):
         raise RuntimeError("Created path is the same as current file,"
                            "this is a bug")
 
+    # We check for version clashes against the current file for any file
+    # that matches completely in name up to the {version} label found. Thus
+    # if source file was test_v001_test.txt we want to also check clashes
+    # against test_v002.txt but do want to preserve the part after the version
+    # label for our new filename
+    clash_basename = new_basename
+    if not clash_basename.endswith(new_label):
+        index = (clash_basename.find(new_label))
+        index += len(new_label)
+        clash_basename = clash_basename[:index]
+
     for file in os.listdir(dirname):
-        if file.endswith(ext) and file.startswith(new_basename):
+        if file.endswith(ext) and file.startswith(clash_basename):
             log.info("Skipping existing version %s" % new_label)
             return version_up(new_filename)
 

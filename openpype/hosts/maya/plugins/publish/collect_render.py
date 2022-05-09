@@ -49,7 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import maya, api
+from openpype.lib import get_formatted_current_time
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -92,7 +93,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
-        asset = api.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
         deadline_settings = (
@@ -207,6 +208,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                             product)
                     })
 
+            has_cameras = any(product.camera for product in render_products)
+            assert has_cameras, "No render cameras found."
+
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
@@ -234,13 +238,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             publish_meta_path = None
             for aov in exp_files:
                 full_paths = []
-                for file in aov[aov.keys()[0]]:
+                aov_first_key = list(aov.keys())[0]
+                for file in aov[aov_first_key]:
                     full_path = os.path.join(workspace, default_render_file,
                                              file)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
                     publish_meta_path = os.path.dirname(full_path)
-                aov_dict[aov.keys()[0]] = full_paths
+                aov_dict[aov_first_key] = full_paths
 
             frame_start_render = int(self.get_render_attribute(
                 "startFrame", layer=layer_name))
@@ -327,7 +332,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "family": "renderlayer",
                 "families": ["renderlayer"],
                 "asset": asset,
-                "time": api.time(),
+                "time": get_formatted_current_time(),
                 "author": context.data["user"],
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
@@ -384,6 +389,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             overrides = self.parse_options(str(render_globals))
             data.update(**overrides)
 
+            # get string values for pools
+            primary_pool = overrides["renderGlobals"]["Pool"]
+            secondary_pool = overrides["renderGlobals"].get("SecondaryPool")
+            data["primaryPool"] = primary_pool
+            data["secondaryPool"] = secondary_pool
+
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
             label += "  [{0}-{1}]".format(
@@ -409,7 +420,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             dict: only overrides with values
 
         """
-        attributes = maya.read(render_globals)
+        attributes = lib.read(render_globals)
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]

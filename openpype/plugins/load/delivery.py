@@ -3,9 +3,7 @@ from collections import defaultdict
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api
-from avalon.api import AvalonMongoDB
-
+from openpype.pipeline import load, AvalonMongoDB
 from openpype.api import Anatomy, config
 from openpype import resources, style
 
@@ -20,7 +18,7 @@ from openpype.lib.delivery import (
 )
 
 
-class Delivery(api.SubsetLoader):
+class Delivery(load.SubsetLoaderPlugin):
     """Export selected versions to folder structure from Template"""
 
     is_multiple_contexts_compatible = True

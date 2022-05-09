@@ -1,5 +1,5 @@
 from Qt import QtCore, QtWidgets
-from avalon.vendor import qtawesome
+import qtawesome
 from .models import LogModel, LogsFilterProxy
 
 
@@ -155,6 +155,11 @@ class LogsWidget(QtWidgets.QWidget):
             QtCore.Qt.DescendingOrder
         )
 
+        refresh_triggered_timer = QtCore.QTimer()
+        refresh_triggered_timer.setSingleShot(True)
+        refresh_triggered_timer.setInterval(200)
+
+        refresh_triggered_timer.timeout.connect(self._on_refresh_timeout)
         view.selectionModel().selectionChanged.connect(self._on_index_change)
         refresh_btn.clicked.connect(self._on_refresh_clicked)
 
@@ -169,10 +174,12 @@ class LogsWidget(QtWidgets.QWidget):
         self.detail_widget = detail_widget
         self.refresh_btn = refresh_btn
 
-        # prepare
-        self.refresh()
+        self._refresh_triggered_timer = refresh_triggered_timer
 
     def refresh(self):
+        self._refresh_triggered_timer.start()
+
+    def _on_refresh_timeout(self):
         self.model.refresh()
         self.detail_widget.refresh()
 

@@ -138,7 +138,7 @@ $ exec $SHELL
 
 # install Python 3.7.10
 # python will be downloaded and build so please make sure
-# you have all necessary requirements installed (see bellow).
+# you have all necessary requirements installed (see below).
 $ pyenv install -v 3.7.10
 
 # change path to pype 3
@@ -193,7 +193,7 @@ For more information about setting your build environment please refer to [pyenv
 <TabItem value="mac">
 
 ### MacOS
-To build pype on MacOS you wil need:
+To build pype on MacOS you will need:
 
 - **[Homebrew](https://brew.sh)** - easy way of installing everything necessary.
 - **[CMake](https://cmake.org/)** to build some external OpenPype dependencies.
@@ -338,7 +338,7 @@ to update packages version, just run `poetry update` or delete lock file.
 
 ### create_zip
 Script to create packaged OpenPype version from current sources. This will strip developer stuff and
-package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute#automatic-updates), etc.
+package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute.md#automatic-updates), etc.
 Same as:
 ```shell
 poetry run python ./tools/create_zip.py

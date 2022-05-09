@@ -8,7 +8,7 @@ from openpype.lib import (
     path_to_subprocess_arg,
 
     get_transcode_temp_directory,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     should_convert_for_ffmpeg
 )
 
@@ -34,7 +34,12 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         self.log.info("subset {}".format(instance.data['subset']))
 
         # skip crypto passes.
-        if 'crypto' in instance.data['subset']:
+        # TODO: This is just a quick fix and has its own side-effects - it is
+        #       affecting every subset name with `crypto` in its name.
+        #       This must be solved properly, maybe using tags on
+        #       representation that can be determined much earlier and
+        #       with better precision.
+        if 'crypto' in instance.data['subset'].lower():
             self.log.info("Skipping crypto passes.")
             return
 
@@ -74,11 +79,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if do_convert:
                 convert_dir = get_transcode_temp_directory()
                 filename = os.path.basename(full_input_path)
-                convert_for_ffmpeg(
-                    full_input_path,
+                convert_input_paths_for_ffmpeg(
+                    [full_input_path],
                     convert_dir,
-                    None,
-                    None,
                     self.log
                 )
                 full_input_path = os.path.join(convert_dir, filename)

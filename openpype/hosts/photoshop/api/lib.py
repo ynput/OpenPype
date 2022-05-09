@@ -5,11 +5,11 @@ import traceback
 
 from Qt import QtWidgets
 
-import avalon.api
-
 from openpype.api import Logger
+from openpype.pipeline import install_host
 from openpype.tools.utils import host_tools
 from openpype.lib.remote_publish import headless_publish
+from openpype.lib import env_value_to_bool
 
 from .launch_logic import ProcessLauncher, stub
 
@@ -23,10 +23,10 @@ def safe_excepthook(*args):
 def main(*subprocess_args):
     from openpype.hosts.photoshop import api
 
-    avalon.api.install(api)
+    install_host(api)
     sys.excepthook = safe_excepthook
 
-    # coloring in ConsoleTrayApp
+    # coloring in StdOutBroker
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
@@ -34,20 +34,19 @@ def main(*subprocess_args):
     launcher = ProcessLauncher(subprocess_args)
     launcher.start()
 
-    if os.environ.get("HEADLESS_PUBLISH"):
+    if env_value_to_bool("HEADLESS_PUBLISH"):
         launcher.execute_in_main_thread(
             headless_publish,
             log,
             "ClosePS",
             os.environ.get("IS_TEST")
         )
-    elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
-        save = False
-        if os.getenv("WORKFILES_SAVE_AS"):
-            save = True
+    elif env_value_to_bool("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
+                           default=True):
 
         launcher.execute_in_main_thread(
-            host_tools.show_workfiles, save=save
+            host_tools.show_workfiles,
+            save=env_value_to_bool("WORKFILES_SAVE_AS")
         )
 
     sys.exit(app.exec_())

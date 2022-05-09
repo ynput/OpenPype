@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateWorkfileProjectName(pyblish.api.ContextPlugin):
@@ -31,15 +32,23 @@ class ValidateWorkfileProjectName(pyblish.api.ContextPlugin):
             return
 
         # Raise an error
-        raise AssertionError((
-            # Short message
-            "Workfile from different Project ({})."
-            # Description what's wrong
-            " It is not possible to publish when TVPaint was launched in"
-            "context of different project. Current context project is \"{}\"."
-            " Launch TVPaint in context of project \"{}\" and then publish."
-        ).format(
-            workfile_project_name,
-            env_project_name,
-            workfile_project_name,
-        ))
+        raise PublishXmlValidationError(
+            self,
+            (
+                # Short message
+                "Workfile from different Project ({})."
+                # Description what's wrong
+                " It is not possible to publish when TVPaint was launched in"
+                "context of different project. Current context project is"
+                " \"{}\". Launch TVPaint in context of project \"{}\""
+                " and then publish."
+            ).format(
+                workfile_project_name,
+                env_project_name,
+                workfile_project_name,
+            ),
+            formatting_data={
+                "workfile_project_name": workfile_project_name,
+                "expected_project_name": env_project_name
+            }
+        )

@@ -8,8 +8,7 @@ from .exceptions import (
     SaveWarningExc
 )
 from .constants import (
-    M_OVERRIDEN_KEY,
-    M_ENVIRONMENT_KEY,
+    M_OVERRIDDEN_KEY,
 
     METADATA_KEYS,
 
@@ -265,29 +264,186 @@ def save_project_anatomy(project_name, anatomy_data):
         raise SaveWarningExc(warnings)
 
 
-@require_handler
-def get_studio_system_settings_overrides():
-    return _SETTINGS_HANDLER.get_studio_system_settings_overrides()
+def _system_settings_backwards_compatible_conversion(studio_overrides):
+    # Backwards compatibility of tools 3.9.1 - 3.9.2 to keep
+    #   "tools" environments
+    if (
+        "tools" in studio_overrides
+        and "tool_groups" in studio_overrides["tools"]
+    ):
+        tool_groups = studio_overrides["tools"]["tool_groups"]
+        for tool_group, group_value in tool_groups.items():
+            if tool_group in METADATA_KEYS:
+                continue
+
+            variants = group_value.get("variants")
+            if not variants:
+                continue
+
+            for key in set(variants.keys()):
+                if key in METADATA_KEYS:
+                    continue
+
+                variant_value = variants[key]
+                if "environment" not in variant_value:
+                    variants[key] = {
+                        "environment": variant_value
+                    }
 
 
 @require_handler
-def get_studio_project_settings_overrides():
-    return _SETTINGS_HANDLER.get_studio_project_settings_overrides()
+def get_studio_system_settings_overrides(return_version=False):
+    output = _SETTINGS_HANDLER.get_studio_system_settings_overrides(
+        return_version
+    )
+    value = output
+    if return_version:
+        value, version = output
+    _system_settings_backwards_compatible_conversion(value)
+    return output
 
 
 @require_handler
-def get_studio_project_anatomy_overrides():
-    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+def get_studio_project_settings_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_project_settings_overrides(
+        return_version
+    )
 
 
 @require_handler
-def get_project_settings_overrides(project_name):
-    return _SETTINGS_HANDLER.get_project_settings_overrides(project_name)
+def get_studio_project_anatomy_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides(
+        return_version
+    )
+
+
+@require_handler
+def get_project_settings_overrides(project_name, return_version=False):
+    return _SETTINGS_HANDLER.get_project_settings_overrides(
+        project_name, return_version
+    )
 
 
 @require_handler
 def get_project_anatomy_overrides(project_name):
     return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+
+
+@require_handler
+def get_studio_system_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_system_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_studio_project_anatomy_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_project_anatomy_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_studio_project_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_project_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_project_settings_overrides_for_version(
+    project_name, version
+):
+    return (
+        _SETTINGS_HANDLER
+        .get_project_settings_overrides_for_version(project_name, version)
+    )
+
+
+@require_handler
+def get_available_studio_system_settings_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_system_settings_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_studio_project_anatomy_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_project_anatomy_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_studio_project_settings_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_project_settings_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_project_settings_overrides_versions(
+    project_name, sorted=None
+):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_project_settings_overrides_versions(
+            project_name, sorted=sorted
+        )
+    )
+
+
+@require_handler
+def find_closest_version_for_projects(project_names):
+    return (
+        _SETTINGS_HANDLER
+        .find_closest_version_for_projects(project_names)
+    )
+
+
+@require_handler
+def clear_studio_system_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_system_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_studio_project_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_project_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_studio_project_anatomy_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_project_anatomy_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_project_settings_overrides_for_version(
+    version, project_name
+):
+    return _SETTINGS_HANDLER.clear_project_settings_overrides_for_version(
+        version, project_name
+    )
 
 
 @require_local_handler
@@ -298,24 +454,6 @@ def save_local_settings(data):
 @require_local_handler
 def get_local_settings():
     return _LOCAL_SETTINGS_HANDLER.get_local_settings()
-
-
-class DuplicatedEnvGroups(Exception):
-    def __init__(self, duplicated):
-        self.origin_duplicated = duplicated
-        self.duplicated = {}
-        for key, items in duplicated.items():
-            self.duplicated[key] = []
-            for item in items:
-                self.duplicated[key].append("/".join(item["parents"]))
-
-        msg = "Duplicated environment group keys. {}".format(
-            ", ".join([
-                "\"{}\"".format(env_key) for env_key in self.duplicated.keys()
-            ])
-        )
-
-        super(DuplicatedEnvGroups, self).__init__(msg)
 
 
 def load_openpype_default_settings():
@@ -467,69 +605,6 @@ def load_jsons_from_dir(path, *args, **kwargs):
     return output
 
 
-def find_environments(data, with_items=False, parents=None):
-    """ Find environemnt values from system settings by it's metadata.
-
-    Args:
-        data(dict): System settings data or dictionary which may contain
-            environments metadata.
-
-    Returns:
-        dict: Key as Environment key and value for `acre` module.
-    """
-    if not data or not isinstance(data, dict):
-        return {}
-
-    output = {}
-    if parents is None:
-        parents = []
-
-    if M_ENVIRONMENT_KEY in data:
-        metadata = data.get(M_ENVIRONMENT_KEY)
-        for env_group_key, env_keys in metadata.items():
-            if env_group_key not in output:
-                output[env_group_key] = []
-
-            _env_values = {}
-            for key in env_keys:
-                _env_values[key] = data[key]
-
-            item = {
-                "env": _env_values,
-                "parents": parents[:-1]
-            }
-            output[env_group_key].append(item)
-
-    for key, value in data.items():
-        _parents = copy.deepcopy(parents)
-        _parents.append(key)
-        result = find_environments(value, True, _parents)
-        if not result:
-            continue
-
-        for env_group_key, env_values in result.items():
-            if env_group_key not in output:
-                output[env_group_key] = []
-
-            for env_values_item in env_values:
-                output[env_group_key].append(env_values_item)
-
-    if with_items:
-        return output
-
-    duplicated_env_groups = {}
-    final_output = {}
-    for key, value_in_list in output.items():
-        if len(value_in_list) > 1:
-            duplicated_env_groups[key] = value_in_list
-        else:
-            final_output[key] = value_in_list[0]["env"]
-
-    if duplicated_env_groups:
-        raise DuplicatedEnvGroups(duplicated_env_groups)
-    return final_output
-
-
 def subkey_merge(_dict, value, keys):
     key = keys.pop(0)
     if not keys:
@@ -546,13 +621,13 @@ def subkey_merge(_dict, value, keys):
 def merge_overrides(source_dict, override_dict):
     """Merge data from override_dict to source_dict."""
 
-    if M_OVERRIDEN_KEY in override_dict:
-        overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
+    if M_OVERRIDDEN_KEY in override_dict:
+        overridden_keys = set(override_dict.pop(M_OVERRIDDEN_KEY))
     else:
-        overriden_keys = set()
+        overridden_keys = set()
 
     for key, value in override_dict.items():
-        if (key in overriden_keys or key not in source_dict):
+        if (key in overridden_keys or key not in source_dict):
             source_dict[key] = value
 
         elif isinstance(value, dict) and isinstance(source_dict[key], dict):
@@ -574,17 +649,32 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
     """Apply local settings on studio system settings.
 
     ATM local settings can modify only application executables. Executable
-    values are not overriden but prepended.
+    values are not overridden but prepended.
     """
     if not local_settings or "applications" not in local_settings:
         return
 
     current_platform = platform.system().lower()
+    apps_settings = system_settings["applications"]
+    additional_apps = apps_settings["additional_apps"]
     for app_group_name, value in local_settings["applications"].items():
-        if not value or app_group_name not in system_settings["applications"]:
+        if not value:
             continue
 
-        variants = system_settings["applications"][app_group_name]["variants"]
+        if (
+            app_group_name not in apps_settings
+            and app_group_name not in additional_apps
+        ):
+            continue
+
+        if app_group_name in apps_settings:
+            variants = apps_settings[app_group_name]["variants"]
+
+        else:
+            variants = (
+                apps_settings["additional_apps"][app_group_name]["variants"]
+            )
+
         for app_name, app_value in value.items():
             if (
                 not app_value
@@ -910,19 +1000,6 @@ def get_current_project_settings():
     return get_project_settings(project_name)
 
 
-def get_environments():
-    """Calculated environment based on defaults and system settings.
-
-    Any default environment also found in the system settings will be fully
-    overriden by the one from the system settings.
-
-    Returns:
-        dict: Output should be ready for `acre` module.
-    """
-
-    return find_environments(get_system_settings(False))
-
-
 def get_general_environments():
     """Get general environments.
 
@@ -940,6 +1017,14 @@ def get_general_environments():
     environments = result["general"]["environment"]
 
     clear_metadata_from_settings(environments)
+
+    whitelist_envs = result["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        for key, value in local_envs.items():
+            if key in whitelist_envs and key in environments:
+                environments[key] = value
 
     return environments
 

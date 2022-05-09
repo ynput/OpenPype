@@ -21,7 +21,8 @@
             "defaults": [
                 "Main",
                 "Mask"
-            ]
+            ],
+            "knobs": []
         },
         "CreateWritePrerender": {
             "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
@@ -32,7 +33,9 @@
                 "Fg01",
                 "Branch01",
                 "Part01"
-            ]
+            ],
+            "reviewable": false,
+            "knobs": []
         }
     },
     "publish": {
@@ -105,6 +108,9 @@
                 ]
             }
         },
+        "ExtractReviewData": {
+            "enabled": false
+        },
         "ExtractReviewDataLut": {
             "enabled": false
         },
@@ -115,18 +121,62 @@
                 "baking": {
                     "filter": {
                         "task_types": [],
-                        "families": []
+                        "families": [],
+                        "subsets": []
                     },
-                    "extension": "mov",
+                    "read_raw": false,
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
+                    "reformat_node_add": false,
+                    "reformat_node_config": [
+                        {
+                            "type": "string",
+                            "name": "type",
+                            "value": "to format"
+                        },
+                        {
+                            "type": "string",
+                            "name": "format",
+                            "value": "HD_1080"
+                        },
+                        {
+                            "type": "string",
+                            "name": "filter",
+                            "value": "Lanczos6"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        },
+                        {
+                            "type": "bool",
+                            "name": "pbb",
+                            "value": false
+                        }
+                    ],
+                    "extension": "mov",
                     "add_tags": []
                 }
             }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "key_value_mapping": {
+                "f_submission_note": [
+                    true,
+                    "{comment}"
+                ],
+                "f_submitting_for": [
+                    true,
+                    "{intent[value]}"
+                ],
+                "f_vfx_scope_of_work": [
+                    false,
+                    ""
+                ]
+            }
         },
         "IncrementScriptVersion": {
             "enabled": true,
@@ -172,11 +222,12 @@
                         "repre_names": [
                             "exr",
                             "dpx",
-                            "mov"
+                            "mov",
+                            "mp4",
+                            "h264"
                         ],
                         "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
+                            "LoadClip"
                         ]
                     }
                 ],

@@ -1,5 +1,8 @@
-from avalon import api
-from avalon.houdini import pipeline
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.hosts.houdini.api import pipeline
 
 
 ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'
@@ -74,7 +77,7 @@ def transfer_non_default_values(src, dest, ignore=None):
         dest_parm.setFromParm(parm)
 
 
-class CameraLoader(api.Loader):
+class CameraLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["camera"]
@@ -129,7 +132,7 @@ class CameraLoader(api.Loader):
         node = container["node"]
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         # Update attributes

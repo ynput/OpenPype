@@ -1,6 +1,8 @@
 import os
 import sys
 import types
+import inspect
+import xml.etree.ElementTree
 
 import six
 import pyblish.plugin
@@ -28,10 +30,64 @@ class DiscoverResult:
         self.plugins[item] = value
 
 
+class HelpContent:
+    def __init__(self, title, description, detail=None):
+        self.title = title
+        self.description = description
+        self.detail = detail
+
+
+def load_help_content_from_filepath(filepath):
+    """Load help content from xml file.
+    Xml file may containt errors and warnings.
+    """
+    errors = {}
+    warnings = {}
+    output = {
+        "errors": errors,
+        "warnings": warnings
+    }
+    if not os.path.exists(filepath):
+        return output
+    tree = xml.etree.ElementTree.parse(filepath)
+    root = tree.getroot()
+    for child in root:
+        child_id = child.attrib.get("id")
+        if child_id is None:
+            continue
+
+        # Make sure ID is string
+        child_id = str(child_id)
+
+        title = child.find("title").text
+        description = child.find("description").text
+        detail_node = child.find("detail")
+        detail = None
+        if detail_node is not None:
+            detail = detail_node.text
+        if child.tag == "error":
+            errors[child_id] = HelpContent(title, description, detail)
+        elif child.tag == "warning":
+            warnings[child_id] = HelpContent(title, description, detail)
+    return output
+
+
+def load_help_content_from_plugin(plugin):
+    cls = plugin
+    if not inspect.isclass(plugin):
+        cls = plugin.__class__
+    plugin_filepath = inspect.getfile(cls)
+    plugin_dir = os.path.dirname(plugin_filepath)
+    basename = os.path.splitext(os.path.basename(plugin_filepath))[0]
+    filename = basename + ".xml"
+    filepath = os.path.join(plugin_dir, "help", filename)
+    return load_help_content_from_filepath(filepath)
+
+
 def publish_plugins_discover(paths=None):
     """Find and return available pyblish plug-ins
 
-    Overriden function from `pyblish` module to be able collect crashed files
+    Overridden function from `pyblish` module to be able collect crashed files
     and reason of their crash.
 
     Arguments:

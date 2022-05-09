@@ -9,7 +9,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 :::warning
-Before you are able to start with OpenPype tools in DaVinci Resolve, installation of its own Python 3.6 interpreter and PySide 2 has to be done. Go to [Installation of python and pyside](#installation-of-python-and-pyside) link for more information
+Before you are able to start with OpenPype tools in DaVinci Resolve, installation of its own Python 3.6 interpreter and PySide 2 has to be done. Go to [Installation of python and pyside](admin_hosts_resolve.md#installation-of-python-and-pyside) link for more information
 :::
 
 
@@ -141,7 +141,7 @@ As you can see the in `{shot}` key within *Shot Template Keywords* section, you 
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-Notice the relationship of following sections. Keys from **Shot Template Keywords** sections will be used for formating of templates in **Shot Hierarchy And Rename Settings** section.
+Notice the relationship of following sections. Keys from **Shot Template Keywords** sections will be used for formatting of templates in **Shot Hierarchy And Rename Settings** section.
 
 **Shot parent hierarchy** will be forming parents of the asset (shot) *the hidden root for this is project folder*. So for example of this template we will get resulging string `shots/sq01`
 
@@ -149,7 +149,7 @@ Notice the relationship of following sections. Keys from **Shot Template Keyword
 - `{_sequence_}`: timeline name
 - `{_clip_}`: clip name
 - `{_trackIndex_}`: position of track on timeline from bottom
-- `{_clipIndex_}`: clip positon on timeline from left
+- `{_clipIndex_}`: clip position on timeline from left
 
 </div>
 <div class="col col--6 markdown">

@@ -1,6 +1,10 @@
 import nuke
 
-from avalon import api, io
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api import (
     containerise,
     update_container,
@@ -11,7 +15,7 @@ from openpype.hosts.nuke.api.lib import (
 )
 
 
-class AlembicCameraLoader(api.Loader):
+class AlembicCameraLoader(load.LoaderPlugin):
     """
     This will load alembic camera into script.
     """
@@ -98,7 +102,7 @@ class AlembicCameraLoader(api.Loader):
             None
         """
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -127,7 +131,7 @@ class AlembicCameraLoader(api.Loader):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
 
         with maintained_selection():
             camera_node = nuke.toNode(object_name)
@@ -171,7 +175,7 @@ class AlembicCameraLoader(api.Loader):
         """ Coloring a node by correct color by actual version
         """
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')

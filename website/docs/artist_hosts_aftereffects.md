@@ -15,7 +15,7 @@ sidebar_label: AfterEffects
 
 ## Setup
 
-To install the extension, download, install [Anastasyi's Extention Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}/repos/avalon-core/avalon/aftereffects/extension.zxp`. 
+To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}hosts/aftereffects/api/extension.zxp`. 
 
 Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension will install itself. 
 
@@ -49,7 +49,7 @@ Because of current rendering limitations, it is expected that only single compos
 After Creator is successfully triggered on selected composition, it will be marked with an icon and its color
 will be changed.
 
-![Higlights](assets/aftereffects_creator_after.png)
+![Highlights](assets/aftereffects_creator_after.png)
 
 ### Publish
 
@@ -109,5 +109,5 @@ You can switch to a previous version of the image or update to the latest.
 All created compositions will be shown in a simple list. If user decides, that this composition shouldn't be
 published after all, right click on that item in the list and select 'Remove instance'
 
-Removing composition direclty in the AE would result to worfile contain phantom metadata which could result in
+Removing composition directly in the AE would result to worfile contain phantom metadata which could result in
 errors during publishing!

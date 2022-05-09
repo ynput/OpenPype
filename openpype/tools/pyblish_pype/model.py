@@ -29,10 +29,9 @@ import pyblish
 
 from . import settings, util
 from .awesome import tags as awesome
-import Qt
 from Qt import QtCore, QtGui
+import qtawesome
 from six import text_type
-from .vendor import qtawesome
 from .constants import PluginStates, InstanceStates, GroupStates, Roles
 
 from openpype.api import get_system_settings
@@ -428,12 +427,12 @@ class PluginModel(QtGui.QStandardItemModel):
         self.clear()
 
     def append(self, plugin):
-        plugin_groups = self.controller.order_groups.groups()
+        plugin_groups = self.controller.order_groups.groups
         label = None
         order = None
-        for _order, _label in reversed(plugin_groups.items()):
+        for _order, item in reversed(plugin_groups.items()):
             if _order is None or plugin.order < _order:
-                label = _label
+                label = item["label"]
                 order = _order
             else:
                 break

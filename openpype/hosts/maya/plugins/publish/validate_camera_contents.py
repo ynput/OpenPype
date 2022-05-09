@@ -40,7 +40,14 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
             # list when there are no actual cameras results in
             # still an empty 'invalid' list
             if len(cameras) < 1:
-                raise RuntimeError("No cameras in instance.")
+                if members:
+                    # If there are members in the instance return all of
+                    # them as 'invalid' so the user can still select invalid
+                    cls.log.error("No cameras found in instance "
+                                  "members: {}".format(members))
+                    return members
+
+                raise RuntimeError("No cameras found in empty instance.")
 
         # non-camera shapes
         valid_shapes = cmds.ls(shapes, type=('camera', 'locator'), long=True)

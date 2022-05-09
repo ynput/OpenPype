@@ -4,10 +4,10 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from openpype.hosts.maya.api.lib import assign_look_by_version
-
-from avalon import style, io
+from openpype import style
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.lib import qt_app_context
+from openpype.hosts.maya.api.lib import assign_look_by_version
 
 from maya import cmds
 # old api for MFileIO
@@ -28,10 +28,10 @@ module = sys.modules[__name__]
 module.window = None
 
 
-class App(QtWidgets.QWidget):
+class MayaLookAssignerWindow(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
+        super(MayaLookAssignerWindow, self).__init__(parent=parent)
 
         self.log = logging.getLogger(__name__)
 
@@ -56,30 +56,41 @@ class App(QtWidgets.QWidget):
     def setup_ui(self):
         """Build the UI"""
 
+        main_splitter = QtWidgets.QSplitter(self)
+
         # Assets (left)
-        asset_outliner = AssetOutliner()
+        asset_outliner = AssetOutliner(main_splitter)
 
         # Looks (right)
-        looks_widget = QtWidgets.QWidget()
-        looks_layout = QtWidgets.QVBoxLayout(looks_widget)
+        looks_widget = QtWidgets.QWidget(main_splitter)
 
-        look_outliner = LookOutliner()  # Database look overview
+        look_outliner = LookOutliner(looks_widget)  # Database look overview
 
-        assign_selected = QtWidgets.QCheckBox("Assign to selected only")
+        assign_selected = QtWidgets.QCheckBox(
+            "Assign to selected only", looks_widget
+        )
         assign_selected.setToolTip("Whether to assign only to selected nodes "
                                    "or to the full asset")
-        remove_unused_btn = QtWidgets.QPushButton("Remove Unused Looks")
+        remove_unused_btn = QtWidgets.QPushButton(
+            "Remove Unused Looks", looks_widget
+        )
 
+        looks_layout = QtWidgets.QVBoxLayout(looks_widget)
         looks_layout.addWidget(look_outliner)
         looks_layout.addWidget(assign_selected)
         looks_layout.addWidget(remove_unused_btn)
 
+        main_splitter.addWidget(asset_outliner)
+        main_splitter.addWidget(looks_widget)
+        main_splitter.setSizes([350, 200])
+
         # Footer
-        status = QtWidgets.QStatusBar()
+        status = QtWidgets.QStatusBar(self)
         status.setSizeGripEnabled(False)
         status.setFixedHeight(25)
-        warn_layer = QtWidgets.QLabel("Current Layer is not "
-                                      "defaultRenderLayer")
+        warn_layer = QtWidgets.QLabel(
+            "Current Layer is not defaultRenderLayer", self
+        )
         warn_layer.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         warn_layer.setStyleSheet("color: #DD5555; font-weight: bold;")
         warn_layer.setFixedHeight(25)
@@ -92,11 +103,6 @@ class App(QtWidgets.QWidget):
         # Build up widgets
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setSpacing(0)
-        main_splitter = QtWidgets.QSplitter()
-        main_splitter.setStyleSheet("QSplitter{ border: 0px; }")
-        main_splitter.addWidget(asset_outliner)
-        main_splitter.addWidget(looks_widget)
-        main_splitter.setSizes([350, 200])
         main_layout.addWidget(main_splitter)
         main_layout.addLayout(footer)
 
@@ -124,6 +130,8 @@ class App(QtWidgets.QWidget):
         self.remove_unused = remove_unused_btn
         self.assign_selected = assign_selected
 
+        self._first_show = True
+
     def setup_connections(self):
         """Connect interactive widgets with actions"""
         if self._connections_set_up:
@@ -147,11 +155,14 @@ class App(QtWidgets.QWidget):
 
     def showEvent(self, event):
         self.setup_connections()
-        super(App, self).showEvent(event)
+        super(MayaLookAssignerWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def closeEvent(self, event):
         self.remove_connection()
-        super(App, self).closeEvent(event)
+        super(MayaLookAssignerWindow, self).closeEvent(event)
 
     def _on_renderlayer_switch(self, *args):
         """Callback that updates on Maya renderlayer switch"""
@@ -216,9 +227,13 @@ class App(QtWidgets.QWidget):
                 continue
 
             # Get the latest version of this asset's look subset
-            version = io.find_one({"type": "version",
-                                   "parent": assign_look["_id"]},
-                                  sort=[("name", -1)])
+            version = legacy_io.find_one(
+                {
+                    "type": "version",
+                    "parent": assign_look["_id"]
+                },
+                sort=[("name", -1)]
+            )
 
             subset_name = assign_look["name"]
             self.echo("{} Assigning {} to {}\t".format(prefix,
@@ -267,8 +282,7 @@ def show():
                       if widget.objectName() == "MayaWindow")
 
     with qt_app_context():
-        window = App(parent=mainwindow)
-        window.setStyleSheet(style.load_stylesheet())
+        window = MayaLookAssignerWindow(parent=mainwindow)
         window.show()
 
         module.window = window

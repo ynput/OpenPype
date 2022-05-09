@@ -52,13 +52,18 @@
                 "",
                 "_Main"
             ],
-            "static_mesh_prefix": "S_",
+            "static_mesh_prefix": "S",
             "collision_prefixes": [
                 "UBX",
                 "UCP",
                 "USP",
                 "UCX"
             ]
+        },
+        "CreateUnrealSkeletalMesh": {
+            "enabled": true,
+            "defaults": [],
+            "joint_hints": "jnt_org"
         },
         "CreateAnimation": {
             "enabled": true,
@@ -170,6 +175,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateShaderName": {
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"
@@ -188,17 +198,26 @@
             "whitelist_native_plugins": false,
             "authorized_plugins": []
         },
+        "ValidateMayaUnits": {
+            "enabled": true,
+            "optional": false,
+            "validate_linear_units": true,
+            "linear_units": "cm",
+            "validate_angular_units": true,
+            "angular_units": "deg",
+            "validate_fps": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": true,
+            "validate_mesh": false,
+            "validate_collision": true
+        },
         "ValidateCycleError": {
             "enabled": true,
             "optional": false,
             "families": [
                 "rig"
             ]
-        },
-        "ValidateUnrealStaticMeshName": {
-            "enabled": true,
-            "validate_mesh": false,
-            "validate_collision": true
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
@@ -371,6 +390,10 @@
             "optional": true,
             "active": true
         },
+        "ValidateRigOutSetNodeIds": {
+            "enabled": true,
+            "allow_history_only": false
+        },
         "ValidateCameraAttributes": {
             "enabled": false,
             "optional": true,
@@ -488,6 +511,12 @@
                 }
             }
         },
+        "ExtractMayaSceneRaw": {
+            "enabled": true,
+            "add_for_families": [
+                "layout"
+            ]
+        },
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,
@@ -570,6 +599,12 @@
                 255
             ],
             "vrayproxy": [
+                255,
+                150,
+                12,
+                255
+            ],
+            "vrayscene_layer": [
                 255,
                 150,
                 12,

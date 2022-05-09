@@ -11,7 +11,8 @@ import os
 import json
 
 import pyblish.api
-from avalon import api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -21,7 +22,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
     """
     order = pyblish.api.CollectorOrder - 0.2
-    targets = ["filesequence"]
+    # Keep "filesequence" for backwards compatibility of older jobs
+    targets = ["filesequence", "farm"]
     label = "Collect rendered frames"
 
     _context = None
@@ -149,7 +151,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                         session_data["AVALON_WORKDIR"] = remapped
 
                     self.log.info("Setting session using data from file")
-                    api.Session.update(session_data)
+                    legacy_io.Session.update(session_data)
                     os.environ.update(session_data)
                     session_is_set = True
                 self._process_path(data, anatomy)

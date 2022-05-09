@@ -5,6 +5,8 @@ from .constants import (
     PROJECT_ANATOMY_KEY,
     LOCAL_SETTING_KEY,
 
+    LEGACY_SETTINGS_VERSION,
+
     SCHEMA_KEY_SYSTEM_SETTINGS,
     SCHEMA_KEY_PROJECT_SETTINGS,
 
@@ -20,7 +22,6 @@ from .lib import (
     get_project_settings,
     get_current_project_settings,
     get_anatomy_settings,
-    get_environments,
     get_local_settings
 )
 from .entities import (
@@ -37,6 +38,8 @@ __all__ = (
     "PROJECT_ANATOMY_KEY",
     "LOCAL_SETTING_KEY",
 
+    "LEGACY_SETTINGS_VERSION",
+
     "SCHEMA_KEY_SYSTEM_SETTINGS",
     "SCHEMA_KEY_PROJECT_SETTINGS",
 
@@ -50,7 +53,6 @@ __all__ = (
     "get_project_settings",
     "get_current_project_settings",
     "get_anatomy_settings",
-    "get_environments",
     "get_local_settings",
 
     "SystemSettings",

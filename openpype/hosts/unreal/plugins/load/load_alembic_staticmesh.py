@@ -1,12 +1,17 @@
+# -*- coding: utf-8 -*-
+"""Loader for Static Mesh alembics."""
 import os
 
-from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-import unreal
+from openpype.pipeline import (
+    get_representation_path,
+    AVALON_CONTAINER_ID
+)
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+import unreal  # noqa
 
 
-class StaticMeshAlembicLoader(api.Loader):
+class StaticMeshAlembicLoader(plugin.Loader):
     """Load Unreal StaticMesh from Alembic"""
 
     families = ["model"]
@@ -49,8 +54,7 @@ class StaticMeshAlembicLoader(api.Loader):
         return task
 
     def load(self, context, name, namespace, data):
-        """
-        Load and containerise representation into Content Browser.
+        """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
@@ -69,10 +73,10 @@ class StaticMeshAlembicLoader(api.Loader):
 
         Returns:
             list(str): list of container content
-        """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        """
+        # Create directory for asset and OpenPype container
+        root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -93,12 +97,12 @@ class StaticMeshAlembicLoader(api.Loader):
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -122,7 +126,7 @@ class StaticMeshAlembicLoader(api.Loader):
 
     def update(self, container, representation):
         name = container["asset_name"]
-        source_path = api.get_representation_path(representation)
+        source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
         task = self.get_task(source_path, destination_path, name, True)

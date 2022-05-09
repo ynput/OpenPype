@@ -1,6 +1,7 @@
 import sys
 import json
 import traceback
+import functools
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -28,6 +29,9 @@ class BaseWidget(QtWidgets.QWidget):
         super(BaseWidget, self).__init__(entity_widget.content_widget)
         if not self.entity.gui_type:
             self.entity.on_change_callbacks.append(self._on_entity_change)
+
+        if self.entity.tooltip:
+            self.setToolTip(self.entity.tooltip)
 
         self.label_widget = None
         self.create_ui()
@@ -93,7 +97,7 @@ class BaseWidget(QtWidgets.QWidget):
         if is_modified:
             return "modified"
         if has_project_override:
-            return "overriden"
+            return "overridden"
         if has_studio_override:
             return "studio"
         return ""
@@ -168,7 +172,7 @@ class BaseWidget(QtWidgets.QWidget):
             with self.category_widget.working_state_context():
                 self.entity.add_to_project_override
 
-        action = QtWidgets.QAction("Add to project project override")
+        action = QtWidgets.QAction("Add to project override")
         actions_mapping[action] = add_to_project_override
         menu.addAction(action)
 
@@ -289,7 +293,7 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Paste", menu)
         output.append((action, paste_value))
 
-        # Paste value to matchin entity
+        # Paste value to matching entity
         def paste_value_to_path():
             with self.category_widget.working_state_context():
                 _set_entity_value(matching_entity, value)
@@ -325,7 +329,8 @@ class BaseWidget(QtWidgets.QWidget):
 
             action = QtWidgets.QAction(project_name)
             submenu.addAction(action)
-            actions_mapping[action] = lambda: self._apply_values_from_project(
+            actions_mapping[action] = functools.partial(
+                self._apply_values_from_project,
                 project_name
             )
         menu.addMenu(submenu)
@@ -562,7 +567,9 @@ class GUIWidget(BaseWidget):
 
     def _create_label_ui(self):
         label = self.entity["label"]
+        word_wrap = self.entity.schema_data.get("word_wrap", False)
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setWordWrap(word_wrap)
         label_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         label_widget.setObjectName("SettingsLabel")
         label_widget.linkActivated.connect(self._on_link_activate)

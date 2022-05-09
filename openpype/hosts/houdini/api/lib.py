@@ -2,9 +2,11 @@ import uuid
 import logging
 from contextlib import contextmanager
 
+import six
+
 from openpype.api import get_asset
-from avalon import api, io
-from avalon.houdini import lib as houdini
+from openpype.pipeline import legacy_io
+
 
 import hou
 
@@ -15,11 +17,11 @@ def get_asset_fps():
     """Return current asset fps."""
     return get_asset()["data"].get("fps")
 
-def set_id(node, unique_id, overwrite=False):
 
+def set_id(node, unique_id, overwrite=False):
     exists = node.parm("id")
     if not exists:
-        houdini.imprint(node, {"id": unique_id})
+        imprint(node, {"id": unique_id})
 
     if not exists and overwrite:
         node.setParm("id", unique_id)
@@ -73,9 +75,13 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]},
-                                 projection={"_id": True})
+        asset_data = legacy_io.find_one(
+            {
+                "type": "asset",
+                "name": legacy_io.Session["AVALON_ASSET"]
+            },
+            projection={"_id": True}
+        )
         assert asset_data, "No current asset found in Session"
         asset_id = asset_data['_id']
 
@@ -95,65 +101,6 @@ def get_id_required_nodes():
              n.type().name() in valid_types}
 
     return list(nodes)
-
-
-def get_additional_data(container):
-    """Not implemented yet!"""
-    return container
-
-
-def set_parameter_callback(node, parameter, language, callback):
-    """Link a callback to a parameter of a node
-
-    Args:
-        node(hou.Node): instance of the nodee
-        parameter(str): name of the parameter
-        language(str): name of the language, e.g.: python
-        callback(str): command which needs to be triggered
-
-    Returns:
-        None
-
-    """
-
-    template_grp = node.parmTemplateGroup()
-    template = template_grp.find(parameter)
-    if not template:
-        return
-
-    script_language = (hou.scriptLanguage.Python if language == "python" else
-                       hou.scriptLanguage.Hscript)
-
-    template.setScriptCallbackLanguage(script_language)
-    template.setScriptCallback(callback)
-
-    template.setTags({"script_callback": callback,
-                      "script_callback_language": language.lower()})
-
-    # Replace the existing template with the adjusted one
-    template_grp.replace(parameter, template)
-
-    node.setParmTemplateGroup(template_grp)
-
-
-def set_parameter_callbacks(node, parameter_callbacks):
-    """Set callbacks for multiple parameters of a node
-
-    Args:
-        node(hou.Node): instance of a hou.Node
-        parameter_callbacks(dict): collection of parameter and callback data
-            example:  {"active" :
-                        {"language": "python",
-                         "callback": "print('hello world)'"}
-                     }
-    Returns:
-        None
-    """
-    for parameter, data in parameter_callbacks.items():
-        language = data["language"]
-        callback = data["callback"]
-
-        set_parameter_callback(node, parameter, language, callback)
 
 
 def get_output_parameter(node):
@@ -180,21 +127,11 @@ def get_output_parameter(node):
         return node.parm("filename")
     elif node_type == "comp":
         return node.parm("copoutput")
-    else:
-        raise TypeError("Node type '%s' not supported" % node_type)
+    elif node_type == "arnold":
+        if node.evalParm("ar_ass_export_enable"):
+            return node.parm("ar_ass_file")
 
-
-@contextmanager
-def attribute_values(node, data):
-
-    previous_attrs = {key: node.parm(key).eval() for key in data.keys()}
-    try:
-        node.setParms(data)
-        yield
-    except Exception as exc:
-        pass
-    finally:
-        node.setParms(previous_attrs)
+    raise TypeError("Node type '%s' not supported" % node_type)
 
 
 def set_scene_fps(fps):
@@ -222,7 +159,7 @@ def validate_fps():
         if parent is None:
             pass
         else:
-            dialog = popup.Popup(parent=parent)
+            dialog = popup.PopupUpdateKeys(parent=parent)
             dialog.setModal(True)
             dialog.setWindowTitle("Houdini scene does not match project FPS")
             dialog.setMessage("Scene %i FPS does not match project %i FPS" %
@@ -230,7 +167,7 @@ def validate_fps():
             dialog.setButtonText("Fix")
 
             # on_show is the Fix button clicked callback
-            dialog.on_clicked.connect(lambda: set_scene_fps(fps))
+            dialog.on_clicked_state.connect(lambda: set_scene_fps(fps))
 
             dialog.show()
 
@@ -342,3 +279,181 @@ def render_rop(ropnode):
         import traceback
         traceback.print_exc()
         raise RuntimeError("Render failed: {0}".format(exc))
+
+
+def imprint(node, data):
+    """Store attributes with value on a node
+
+    Depending on the type of attribute it creates the correct parameter
+    template. Houdini uses a template per type, see the docs for more
+    information.
+
+    http://www.sidefx.com/docs/houdini/hom/hou/ParmTemplate.html
+
+    Args:
+        node(hou.Node): node object from Houdini
+        data(dict): collection of attributes and their value
+
+    Returns:
+        None
+
+    """
+
+    parm_group = node.parmTemplateGroup()
+
+    parm_folder = hou.FolderParmTemplate("folder", "Extra")
+    for key, value in data.items():
+        if value is None:
+            continue
+
+        if isinstance(value, float):
+            parm = hou.FloatParmTemplate(name=key,
+                                         label=key,
+                                         num_components=1,
+                                         default_value=(value,))
+        elif isinstance(value, bool):
+            parm = hou.ToggleParmTemplate(name=key,
+                                          label=key,
+                                          default_value=value)
+        elif isinstance(value, int):
+            parm = hou.IntParmTemplate(name=key,
+                                       label=key,
+                                       num_components=1,
+                                       default_value=(value,))
+        elif isinstance(value, six.string_types):
+            parm = hou.StringParmTemplate(name=key,
+                                          label=key,
+                                          num_components=1,
+                                          default_value=(value,))
+        else:
+            raise TypeError("Unsupported type: %r" % type(value))
+
+        parm_folder.addParmTemplate(parm)
+
+    parm_group.append(parm_folder)
+    node.setParmTemplateGroup(parm_group)
+
+
+def lsattr(attr, value=None, root="/"):
+    """Return nodes that have `attr`
+     When `value` is not None it will only return nodes matching that value
+     for the given attribute.
+     Args:
+         attr (str): Name of the attribute (hou.Parm)
+         value (object, Optional): The value to compare the attribute too.
+            When the default None is provided the value check is skipped.
+        root (str): The root path in Houdini to search in.
+    Returns:
+        list: Matching nodes that have attribute with value.
+    """
+    if value is None:
+        # Use allSubChildren() as allNodes() errors on nodes without
+        # permission to enter without a means to continue of querying
+        # the rest
+        nodes = hou.node(root).allSubChildren()
+        return [n for n in nodes if n.parm(attr)]
+    return lsattrs({attr: value})
+
+
+def lsattrs(attrs, root="/"):
+    """Return nodes matching `key` and `value`
+    Arguments:
+        attrs (dict): collection of attribute: value
+        root (str): The root path in Houdini to search in.
+    Example:
+        >> lsattrs({"id": "myId"})
+        ["myNode"]
+        >> lsattr("id")
+        ["myNode", "myOtherNode"]
+    Returns:
+        list: Matching nodes that have attribute with value.
+    """
+
+    matches = set()
+    # Use allSubChildren() as allNodes() errors on nodes without
+    # permission to enter without a means to continue of querying
+    # the rest
+    nodes = hou.node(root).allSubChildren()
+    for node in nodes:
+        for attr in attrs:
+            if not node.parm(attr):
+                continue
+            elif node.evalParm(attr) != attrs[attr]:
+                continue
+            else:
+                matches.add(node)
+
+    return list(matches)
+
+
+def read(node):
+    """Read the container data in to a dict
+
+    Args:
+        node(hou.Node): Houdini node
+
+    Returns:
+        dict
+
+    """
+    # `spareParms` returns a tuple of hou.Parm objects
+    return {parameter.name(): parameter.eval() for
+            parameter in node.spareParms()}
+
+
+@contextmanager
+def maintained_selection():
+    """Maintain selection during context
+    Example:
+        >>> with maintained_selection():
+        ...     # Modify selection
+        ...     node.setSelected(on=False, clear_all_selected=True)
+        >>> # Selection restored
+    """
+
+    previous_selection = hou.selectedNodes()
+    try:
+        yield
+    finally:
+        # Clear the selection
+        # todo: does hou.clearAllSelected() do the same?
+        for node in hou.selectedNodes():
+            node.setSelected(on=False)
+
+        if previous_selection:
+            for node in previous_selection:
+                node.setSelected(on=True)
+
+
+def reset_framerange():
+    """Set frame range to current asset"""
+
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = legacy_io.find_one({"name": asset_name, "type": "asset"})
+
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+
+    if frame_start is None or frame_end is None:
+        log.warning("No edit information found for %s" % asset_name)
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+
+    frame_start -= int(handle_start)
+    frame_end += int(handle_end)
+
+    hou.playbar.setFrameRange(frame_start, frame_end)
+    hou.playbar.setPlaybackRange(frame_start, frame_end)
+    hou.setFrame(frame_start)

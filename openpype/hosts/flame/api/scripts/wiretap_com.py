@@ -185,7 +185,9 @@ class WireTapCom(object):
 
             exit_code = subprocess.call(
                 project_create_cmd,
-                cwd=os.path.expanduser('~'))
+                cwd=os.path.expanduser('~'),
+                preexec_fn=_subprocess_preexec_fn
+            )
 
             if exit_code != 0:
                 RuntimeError("Cannot create project in flame db")
@@ -254,7 +256,7 @@ class WireTapCom(object):
         filtered_users = [user for user in used_names if user_name in user]
 
         if filtered_users:
-            # todo: need to find lastly created following regex pattern for
+            # TODO: need to find lastly created following regex pattern for
             # date used in name
             return filtered_users.pop()
 
@@ -420,13 +422,26 @@ class WireTapCom(object):
             RuntimeError: Not able to set colorspace policy
         """
         color_policy = color_policy or "Legacy"
+
+        # check if the colour policy in custom dir
+        if "/" in color_policy:
+            # if unlikelly full path was used make it redundant
+            color_policy = color_policy.replace("/syncolor/policies/", "")
+            # expecting input is `Shared/NameOfPolicy`
+            color_policy = "/syncolor/policies/{}".format(
+                color_policy)
+        else:
+            color_policy = "/syncolor/policies/Autodesk/{}".format(
+                color_policy)
+
+        # create arguments
         project_colorspace_cmd = [
             os.path.join(
                 self.wiretap_tools_dir,
                 "wiretap_duplicate_node"
             ),
             "-s",
-            "/syncolor/policies/Autodesk/{}".format(color_policy),
+            color_policy,
             "-n",
             "/projects/{}/syncolor".format(project_name)
         ]
@@ -435,12 +450,23 @@ class WireTapCom(object):
 
         exit_code = subprocess.call(
             project_colorspace_cmd,
-            cwd=os.path.expanduser('~'))
+            cwd=os.path.expanduser('~'),
+            preexec_fn=_subprocess_preexec_fn
+        )
 
         if exit_code != 0:
             RuntimeError("Cannot set colorspace {} on project {}".format(
                 color_policy, project_name
             ))
+
+
+def _subprocess_preexec_fn():
+    """ Helper function
+
+    Setting permission mask to 0777
+    """
+    os.setpgrp()
+    os.umask(0o000)
 
 
 if __name__ == "__main__":

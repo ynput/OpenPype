@@ -23,7 +23,8 @@ from .user_settings import (
     OpenPypeSettingsRegistry
 )
 from .tools import (
-    get_openpype_path_from_db,
+    get_openpype_global_settings,
+    get_openpype_path_from_settings,
     get_expected_studio_version_str
 )
 
@@ -626,8 +627,6 @@ class BootstrapRepos:
 
     Attributes:
         data_dir (Path): local OpenPype installation directory.
-        live_repo_dir (Path): path to repos directory if running live,
-            otherwise `None`.
         registry (OpenPypeSettingsRegistry): OpenPype registry object.
         zip_filter (list): List of files to exclude from zip
         openpype_filter (list): list of top level directories to
@@ -653,7 +652,7 @@ class BootstrapRepos:
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "openpype", "repos", "schema", "LICENSE"
+            "openpype", "schema", "LICENSE"
         ]
         self._message = message
 
@@ -665,11 +664,6 @@ class BootstrapRepos:
         if not progress_callback:
             progress_callback = empty_progress
         self._progress_callback = progress_callback
-
-        if getattr(sys, "frozen", False):
-            self.live_repo_dir = Path(sys.executable).parent / "repos"
-        else:
-            self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
 
     @staticmethod
     def get_version_path_from_list(
@@ -735,11 +729,12 @@ class BootstrapRepos:
         # if repo dir is not set, we detect local "live" OpenPype repository
         # version and use it as a source. Otherwise repo_dir is user
         # entered location.
-        if not repo_dir:
-            version = OpenPypeVersion.get_installed_version_str()
-            repo_dir = self.live_repo_dir
-        else:
+        if repo_dir:
             version = self.get_version(repo_dir)
+        else:
+            installed_version = OpenPypeVersion.get_installed_version()
+            version = str(installed_version)
+            repo_dir = installed_version.path
 
         if not version:
             self._print("OpenPype not found.", LOG_ERROR)
@@ -755,7 +750,7 @@ class BootstrapRepos:
                 Path(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
-            self._create_openpype_zip(temp_zip, repo_dir.parent)
+            self._create_openpype_zip(temp_zip, repo_dir)
             if not os.path.exists(temp_zip):
                 self._print("make archive failed.", LOG_ERROR)
                 return None
@@ -973,9 +968,19 @@ class BootstrapRepos:
                 for line in checksums_data.split("\n") if line
             ]
 
+            # get list of files in zip minus `checksums` file itself
+            # and turn in to set to compare against list of files
+            # from checksum file. If difference exists, something is
+            # wrong
+            files_in_zip = set(zip_file.namelist())
+            files_in_zip.remove("checksums")
+            files_in_checksum = {file[1] for file in checksums}
+            diff = files_in_zip.difference(files_in_checksum)
+            if diff:
+                return False, f"Missing files {diff}"
+
             # calculate and compare checksums in the zip file
-            for file in checksums:
-                file_name = file[1]
+            for file_checksum, file_name in checksums:
                 if platform.system().lower() == "windows":
                     file_name = file_name.replace("/", "\\")
                 h = hashlib.sha256()
@@ -983,20 +988,8 @@ class BootstrapRepos:
                     h.update(zip_file.read(file_name))
                 except FileNotFoundError:
                     return False, f"Missing file [ {file_name} ]"
-                if h.hexdigest() != file[0]:
+                if h.hexdigest() != file_checksum:
                     return False, f"Invalid checksum on {file_name}"
-
-            # get list of files in zip minus `checksums` file itself
-            # and turn in to set to compare against list of files
-            # from checksum file. If difference exists, something is
-            # wrong
-            files_in_zip = zip_file.namelist()
-            files_in_zip.remove("checksums")
-            files_in_zip = set(files_in_zip)
-        files_in_checksum = {file[1] for file in checksums}
-        diff = files_in_zip.difference(files_in_checksum)
-        if diff:
-            return False, f"Missing files {diff}"
 
         return True, "All ok"
 
@@ -1011,16 +1004,22 @@ class BootstrapRepos:
             tuple(line.split(":"))
             for line in checksums_data.split("\n") if line
         ]
-        files_in_dir = [
+
+        # compare file list against list of files from checksum file.
+        # If difference exists, something is wrong and we invalidate directly
+        files_in_dir = set(
             file.relative_to(path).as_posix()
             for file in path.iterdir() if file.is_file()
-        ]
+        )
         files_in_dir.remove("checksums")
-        files_in_dir = set(files_in_dir)
         files_in_checksum = {file[1] for file in checksums}
 
-        for file in checksums:
-            file_name = file[1]
+        diff = files_in_dir.difference(files_in_checksum)
+        if diff:
+            return False, f"Missing files {diff}"
+
+        # calculate and compare checksums
+        for file_checksum, file_name in checksums:
             if platform.system().lower() == "windows":
                 file_name = file_name.replace("/", "\\")
             try:
@@ -1028,11 +1027,8 @@ class BootstrapRepos:
             except FileNotFoundError:
                 return False, f"Missing file [ {file_name} ]"
 
-            if file[0] != current:
+            if file_checksum != current:
                 return False, f"Invalid checksum on {file_name}"
-        diff = files_in_dir.difference(files_in_checksum)
-        if diff:
-            return False, f"Missing files {diff}"
 
         return True, "All ok"
 
@@ -1055,27 +1051,11 @@ class BootstrapRepos:
         if not archive.is_file() and not archive.exists():
             raise ValueError("Archive is not file.")
 
-        with ZipFile(archive, "r") as zip_file:
-            name_list = zip_file.namelist()
-
-        roots = []
-        paths = []
-        for item in name_list:
-            if not item.startswith("repos/"):
-                continue
-
-            root = item.split("/")[1]
-
-            if root not in roots:
-                roots.append(root)
-                paths.append(
-                    f"{archive}{os.path.sep}repos{os.path.sep}{root}")
-                sys.path.insert(0, paths[-1])
-
-        sys.path.insert(0, f"{archive}")
+        archive_path = str(archive)
+        sys.path.insert(0, archive_path)
         pythonpath = os.getenv("PYTHONPATH", "")
         python_paths = pythonpath.split(os.pathsep)
-        python_paths += paths
+        python_paths.insert(0, archive_path)
 
         os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
@@ -1092,24 +1072,8 @@ class BootstrapRepos:
             directory (Path): path to directory.
 
         """
+
         sys.path.insert(0, directory.as_posix())
-        directory /= "repos"
-        if not directory.exists() and not directory.is_dir():
-            raise ValueError("directory is invalid")
-
-        roots = []
-        for item in directory.iterdir():
-            if item.is_dir():
-                root = item.as_posix()
-                if root not in roots:
-                    roots.append(root)
-                    sys.path.insert(0, root)
-
-        pythonpath = os.getenv("PYTHONPATH", "")
-        paths = pythonpath.split(os.pathsep)
-        paths += roots
-
-        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
     @staticmethod
     def find_openpype_version(version, staging):
@@ -1262,7 +1226,8 @@ class BootstrapRepos:
         openpype_path = None
         # try to get OpenPype path from mongo.
         if location.startswith("mongodb"):
-            openpype_path = get_openpype_path_from_db(location)
+            global_settings = get_openpype_global_settings(location)
+            openpype_path = get_openpype_path_from_settings(global_settings)
             if not openpype_path:
                 self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
@@ -1434,6 +1399,7 @@ class BootstrapRepos:
             # create destination parent directories even if they don't exist.
             destination.mkdir(parents=True)
 
+        remove_source_file = False
         # version is directory
         if openpype_version.path.is_dir():
             # create zip inside temporary directory.
@@ -1467,6 +1433,8 @@ class BootstrapRepos:
                 self._progress_callback(35)
                 openpype_version.path = self._copy_zip(
                     openpype_version.path, destination)
+                # Mark zip to be deleted when done
+                remove_source_file = True
 
         # extract zip there
         self._print("extracting zip to destination ...")
@@ -1474,6 +1442,10 @@ class BootstrapRepos:
             self._progress_callback(75)
             zip_ref.extractall(destination)
             self._progress_callback(100)
+
+        # Remove zip file copied to local app data
+        if remove_source_file:
+            os.remove(openpype_version.path)
 
         return destination
 

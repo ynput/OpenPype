@@ -1,9 +1,12 @@
-from avalon import api
+import os
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.hosts.houdini.api import pipeline
 
-from avalon.houdini import pipeline
 
-
-class AbcLoader(api.Loader):
+class AbcLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["model", "animation", "pointcache", "gpuCache"]
@@ -14,8 +17,6 @@ class AbcLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
-
-        import os
         import hou
 
         # Format file name, Houdini only wants forward slashes
@@ -91,7 +92,7 @@ class AbcLoader(api.Loader):
             return
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         alembic_node.setParms({"fileName": file_path})

@@ -1,6 +1,9 @@
 import os
 import nuke
+import copy
+
 import pyblish.api
+
 import openpype
 from openpype.hosts.nuke.api.lib import maintained_selection
 
@@ -18,6 +21,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
     families = ["slate"]
     hosts = ["nuke"]
 
+    # Settings values
+    # - can be extended by other attributes from node in the future
+    key_value_mapping = {
+        "f_submission_note": [True, "{comment}"],
+        "f_submitting_for": [True, "{intent[value]}"],
+        "f_vfx_scope_of_work": [False, ""]
+    }
 
     def process(self, instance):
         if hasattr(self, "viewer_lut_raw"):
@@ -48,8 +58,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+
         frame_length = int(
-            instance.data["frameEnd"] - instance.data["frameStart"] + 1
+            (frame_end - frame_start + 1) + (handle_start + handle_end)
         )
 
         temporary_nodes = []
@@ -124,9 +139,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         for node in temporary_nodes:
             nuke.delete(node)
 
-
     def get_view_process_node(self):
-
         # Select only the target node
         if nuke.selectedNodes():
             [n.setSelected(False) for n in nuke.selectedNodes()]
@@ -157,13 +170,56 @@ class ExtractSlateFrame(openpype.api.Extractor):
             return
 
         comment = instance.context.data.get("comment")
-        intent_value = instance.context.data.get("intent")
-        if intent_value and isinstance(intent_value, dict):
-            intent_value = intent_value.get("value")
+        intent = instance.context.data.get("intent")
+        if not isinstance(intent, dict):
+            intent = {
+                "label": intent,
+                "value": intent
+            }
 
-        try:
-            node["f_submission_note"].setValue(comment)
-            node["f_submitting_for"].setValue(intent_value or "")
-        except NameError:
-            return
-        instance.data.pop("slateNode")
+        fill_data = copy.deepcopy(instance.data["anatomyData"])
+        fill_data.update({
+            "custom": copy.deepcopy(
+                instance.data.get("customData") or {}
+            ),
+            "comment": comment,
+            "intent": intent
+        })
+
+        for key, value in self.key_value_mapping.items():
+            enabled, template = value
+            if not enabled:
+                self.log.debug("Key \"{}\" is disabled".format(key))
+                continue
+
+            try:
+                value = template.format(**fill_data)
+
+            except ValueError:
+                self.log.warning(
+                    "Couldn't fill template \"{}\" with data: {}".format(
+                        template, fill_data
+                    ),
+                    exc_info=True
+                )
+                continue
+
+            except KeyError:
+                self.log.warning(
+                    (
+                        "Template contains unknown key."
+                        " Template \"{}\" Data: {}"
+                    ).format(template, fill_data),
+                    exc_info=True
+                )
+                continue
+
+            try:
+                node[key].setValue(value)
+                self.log.info("Change key \"{}\" to value \"{}\"".format(
+                    key, value
+                ))
+            except NameError:
+                self.log.warning((
+                    "Failed to set value \"{}\" on node attribute \"{}\""
+                ).format(value))

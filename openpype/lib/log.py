@@ -98,6 +98,10 @@ class PypeStreamHandler(logging.StreamHandler):
             self.flush()
         except (KeyboardInterrupt, SystemExit):
             raise
+
+        except OSError:
+            self.handleError(record)
+
         except Exception:
             print(repr(record))
             self.handleError(record)
@@ -212,8 +216,8 @@ class PypeLogger:
     # Collection name under database in Mongo
     log_collection_name = "logs"
 
-    # OPENPYPE_DEBUG
-    pype_debug = 0
+    # Logging level - OPENPYPE_LOG_LEVEL
+    log_level = None
 
     # Data same for all record documents
     process_data = None
@@ -227,10 +231,7 @@ class PypeLogger:
 
         logger = logging.getLogger(name or "__main__")
 
-        if cls.pype_debug > 1:
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.INFO)
+        logger.setLevel(cls.log_level)
 
         add_mongo_handler = cls.use_mongo_logging
         add_console_handler = True
@@ -329,6 +330,9 @@ class PypeLogger:
 
         # Define if should logging to mongo be used
         use_mongo_logging = bool(log4mongo is not None)
+        if use_mongo_logging:
+            use_mongo_logging = os.environ.get("OPENPYPE_LOG_TO_SERVER") == "1"
+
         # Set mongo id for process (ONLY ONCE)
         if use_mongo_logging and cls.mongo_process_id is None:
             try:
@@ -353,8 +357,16 @@ class PypeLogger:
         # Store result to class definition
         cls.use_mongo_logging = use_mongo_logging
 
-        # Define if is in OPENPYPE_DEBUG mode
-        cls.pype_debug = int(os.getenv("OPENPYPE_DEBUG") or "0")
+        # Define what is logging level
+        log_level = os.getenv("OPENPYPE_LOG_LEVEL")
+        if not log_level:
+            # Check OPENPYPE_DEBUG for backwards compatibility
+            op_debug = os.getenv("OPENPYPE_DEBUG")
+            if op_debug and int(op_debug) > 0:
+                log_level = 10
+            else:
+                log_level = 20
+        cls.log_level = int(log_level)
 
         if not os.environ.get("OPENPYPE_MONGO"):
             cls.use_mongo_logging = False

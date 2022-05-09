@@ -1,22 +1,24 @@
-from avalon import api
+from openpype.pipeline import InventoryAction
 
 
-class FusionSelectContainers(api.InventoryAction):
+class FusionSelectContainers(InventoryAction):
 
     label = "Select Containers"
     icon = "mouse-pointer"
     color = "#d8d8d8"
 
     def process(self, containers):
-
-        import avalon.fusion
+        from openpype.hosts.fusion.api import (
+            get_current_comp,
+            comp_lock_and_undo_chunk
+        )
 
         tools = [i["_tool"] for i in containers]
 
-        comp = avalon.fusion.get_current_comp()
+        comp = get_current_comp()
         flow = comp.CurrentFrame.FlowView
 
-        with avalon.fusion.comp_lock_and_undo_chunk(comp, self.label):
+        with comp_lock_and_undo_chunk(comp, self.label):
             # Clear selection
             flow.Select()
 

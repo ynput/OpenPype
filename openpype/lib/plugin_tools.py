@@ -72,9 +72,9 @@ def get_subset_name_with_asset_doc(
     family = family.rsplit(".", 1)[-1]
 
     if project_name is None:
-        import avalon.api
+        from openpype.pipeline import legacy_io
 
-        project_name = avalon.api.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
 
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
@@ -136,7 +136,7 @@ def get_subset_name(
     `get_subset_name_with_asset_doc` where asset document is expected.
     """
     if dbcon is None:
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
@@ -280,6 +280,7 @@ def set_plugin_attributes_from_settings(
         project_name (str): Name of project for which settings will be loaded.
             Value from environment `AVALON_PROJECT` is used if not entered.
     """
+    from openpype.pipeline import LegacyCreator, LoaderPlugin
 
     # determine host application to use for finding presets
     if host_name is None:
@@ -289,11 +290,11 @@ def set_plugin_attributes_from_settings(
         project_name = os.environ.get("AVALON_PROJECT")
 
     # map plugin superclass to preset json. Currently supported is load and
-    # create (avalon.api.Loader and avalon.api.Creator)
+    # create (LoaderPlugin and LegacyCreator)
     plugin_type = None
-    if superclass.__name__.split(".")[-1] in ("Loader", "SubsetLoader"):
+    if superclass is LoaderPlugin or issubclass(superclass, LoaderPlugin):
         plugin_type = "load"
-    elif superclass.__name__.split(".")[-1] == "Creator":
+    elif superclass is LegacyCreator or issubclass(superclass, LegacyCreator):
         plugin_type = "create"
 
     if not host_name or not project_name or plugin_type is None:

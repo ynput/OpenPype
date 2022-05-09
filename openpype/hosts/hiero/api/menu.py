@@ -1,20 +1,22 @@
 import os
 import sys
+
 import hiero.core
-from openpype.api import Logger
-from openpype.tools.utils import host_tools
-from avalon.api import Session
 from hiero.ui import findMenuAction
+
+from openpype.api import Logger
+from openpype.pipeline import legacy_io
+from openpype.tools.utils import host_tools
 
 from . import tags
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self._change_context_menu = None
 
 
-def update_menu_task_label(*args):
+def update_menu_task_label():
     """Update the task label in Avalon menu to current session"""
 
     object_name = self._change_context_menu
@@ -24,8 +26,10 @@ def update_menu_task_label(*args):
         log.warning("Can't find menuItem: {}".format(object_name))
         return
 
-    label = "{}, {}".format(Session["AVALON_ASSET"],
-                            Session["AVALON_TASK"])
+    label = "{}, {}".format(
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
+    )
 
     menu = found_menu.menu()
     self._change_context_menu = label
@@ -51,7 +55,8 @@ def menu_install():
     menu_name = os.environ['AVALON_LABEL']
 
     context_label = "{0}, {1}".format(
-        Session["AVALON_ASSET"], Session["AVALON_TASK"]
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
 
     self._change_context_menu = context_label
@@ -72,7 +77,7 @@ def menu_install():
 
     menu.addSeparator()
 
-    workfiles_action = menu.addAction("Work Files ...")
+    workfiles_action = menu.addAction("Work Files...")
     workfiles_action.setIcon(QtGui.QIcon("icons:Position.png"))
     workfiles_action.triggered.connect(launch_workfiles_app)
 
@@ -82,28 +87,34 @@ def menu_install():
 
     menu.addSeparator()
 
-    publish_action = menu.addAction("Publish ...")
+    publish_action = menu.addAction("Publish...")
     publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
     publish_action.triggered.connect(
         lambda *args: publish(hiero.ui.mainWindow())
     )
 
-    creator_action = menu.addAction("Create ...")
+    creator_action = menu.addAction("Create...")
     creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     creator_action.triggered.connect(
         lambda: host_tools.show_creator(parent=main_window)
     )
 
-    loader_action = menu.addAction("Load ...")
+    loader_action = menu.addAction("Load...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     loader_action.triggered.connect(
         lambda: host_tools.show_loader(parent=main_window)
     )
 
-    sceneinventory_action = menu.addAction("Manage ...")
+    sceneinventory_action = menu.addAction("Manage...")
     sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     sceneinventory_action.triggered.connect(
         lambda: host_tools.show_scene_inventory(parent=main_window)
+    )
+
+    library_action = menu.addAction("Library...")
+    library_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    library_action.triggered.connect(
+        lambda: host_tools.show_library_loader(parent=main_window)
     )
 
     if os.getenv("OPENPYPE_DEVELOP"):

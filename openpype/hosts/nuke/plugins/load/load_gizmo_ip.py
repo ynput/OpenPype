@@ -1,5 +1,11 @@
-from avalon import api, style, io
 import nuke
+import six
+
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     create_backdrop,
@@ -13,7 +19,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadGizmoInputProcess(api.Loader):
+class LoadGizmoInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["gizmo"]
@@ -22,7 +28,7 @@ class LoadGizmoInputProcess(api.Loader):
     label = "Load Gizmo - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     node_color = "0x7533c1ff"
 
     def load(self, context, name, namespace, data):
@@ -102,14 +108,14 @@ class LoadGizmoInputProcess(api.Loader):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)
@@ -150,7 +156,7 @@ class LoadGizmoInputProcess(api.Loader):
             GN["name"].setValue(object_name)
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -234,11 +240,11 @@ class LoadGizmoInputProcess(api.Loader):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 

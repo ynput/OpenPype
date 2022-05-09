@@ -1,7 +1,8 @@
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
-from avalon import style
-from avalon.vendor import qtawesome
+from openpype.style import get_disabled_entity_icon_color
+from openpype.tools.utils.lib import get_task_icon
 
 from .views import DeselectableTreeView
 
@@ -9,63 +10,47 @@ from .views import DeselectableTreeView
 TASK_NAME_ROLE = QtCore.Qt.UserRole + 1
 TASK_TYPE_ROLE = QtCore.Qt.UserRole + 2
 TASK_ORDER_ROLE = QtCore.Qt.UserRole + 3
+TASK_ASSIGNEE_ROLE = QtCore.Qt.UserRole + 4
 
 
 class TasksModel(QtGui.QStandardItemModel):
     """A model listing the tasks combined for a list of assets"""
+
     def __init__(self, dbcon, parent=None):
         super(TasksModel, self).__init__(parent=parent)
         self.dbcon = dbcon
         self.setHeaderData(
             0, QtCore.Qt.Horizontal, "Tasks", QtCore.Qt.DisplayRole
         )
-        self._default_icon = qtawesome.icon(
-            "fa.male",
-            color=style.colors.default
-        )
+
         self._no_tasks_icon = qtawesome.icon(
             "fa.exclamation-circle",
-            color=style.colors.mid
+            color=get_disabled_entity_icon_color()
         )
         self._cached_icons = {}
-        self._project_task_types = {}
+        self._project_doc = {}
 
         self._empty_tasks_item = None
         self._last_asset_id = None
         self._loaded_project_name = None
 
     def _context_is_valid(self):
-        if self.dbcon.Session.get("AVALON_PROJECT"):
+        if self._get_current_project():
             return True
         return False
 
     def refresh(self):
-        self._refresh_task_types()
+        self._refresh_project_doc()
         self.set_asset_id(self._last_asset_id)
 
-    def _refresh_task_types(self):
+    def _refresh_project_doc(self):
         # Get the project configured icons from database
-        task_types = {}
+        project_doc = {}
         if self._context_is_valid():
-            project = self.dbcon.find_one(
-                {"type": "project"},
-                {"config.tasks"}
-            )
-            task_types = project["config"].get("tasks") or task_types
-        self._project_task_types = task_types
+            project_doc = self.dbcon.find_one({"type": "project"})
 
-    def _try_get_awesome_icon(self, icon_name):
-        icon = None
-        if icon_name:
-            try:
-                icon = qtawesome.icon(
-                    "fa.{}".format(icon_name),
-                    color=style.colors.default
-                )
-
-            except Exception:
-                pass
-        return icon
+        self._loaded_project_name = self._get_current_project()
+        self._project_doc = project_doc
 
     def headerData(self, section, orientation, role=None):
         if role is None:
@@ -80,28 +65,8 @@ class TasksModel(QtGui.QStandardItemModel):
 
         return super(TasksModel, self).headerData(section, orientation, role)
 
-    def _get_icon(self, task_icon, task_type_icon):
-        if task_icon in self._cached_icons:
-            return self._cached_icons[task_icon]
-
-        icon = self._try_get_awesome_icon(task_icon)
-        if icon is not None:
-            self._cached_icons[task_icon] = icon
-            return icon
-
-        if task_type_icon in self._cached_icons:
-            icon = self._cached_icons[task_type_icon]
-            self._cached_icons[task_icon] = icon
-            return icon
-
-        icon = self._try_get_awesome_icon(task_type_icon)
-        if icon is None:
-            icon = self._default_icon
-
-        self._cached_icons[task_icon] = icon
-        self._cached_icons[task_type_icon] = icon
-
-        return icon
+    def _get_current_project(self):
+        return self.dbcon.Session.get("AVALON_PROJECT")
 
     def set_asset_id(self, asset_id):
         asset_doc = None
@@ -126,6 +91,9 @@ class TasksModel(QtGui.QStandardItemModel):
         Arguments:
             asset_doc (dict): Asset document from MongoDB.
         """
+        if self._loaded_project_name != self._get_current_project():
+            self._refresh_project_doc()
+
         asset_tasks = {}
         self._last_asset_id = None
         if asset_doc:
@@ -136,19 +104,25 @@ class TasksModel(QtGui.QStandardItemModel):
         root_item.removeRows(0, root_item.rowCount())
 
         items = []
+
         for task_name, task_info in asset_tasks.items():
-            task_icon = task_info.get("icon")
             task_type = task_info.get("type")
             task_order = task_info.get("order")
-            task_type_info = self._project_task_types.get(task_type) or {}
-            task_type_icon = task_type_info.get("icon")
-            icon = self._get_icon(task_icon, task_type_icon)
+            icon = get_task_icon(self._project_doc, asset_doc, task_name)
+
+            task_assignees = set()
+            assignees_data = task_info.get("assignees") or []
+            for assignee in assignees_data:
+                username = assignee.get("username")
+                if username:
+                    task_assignees.add(username)
 
             label = "{} ({})".format(task_name, task_type or "type N/A")
             item = QtGui.QStandardItem(label)
             item.setData(task_name, TASK_NAME_ROLE)
             item.setData(task_type, TASK_TYPE_ROLE)
             item.setData(task_order, TASK_ORDER_ROLE)
+            item.setData(task_assignees, TASK_ASSIGNEE_ROLE)
             item.setData(icon, QtCore.Qt.DecorationRole)
             item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
             items.append(item)
@@ -255,6 +229,10 @@ class TasksWidget(QtWidgets.QWidget):
         # Force a task changed emit.
         self.task_changed.emit()
 
+    def _clear_selection(self):
+        selection_model = self._tasks_view.selectionModel()
+        selection_model.clearSelection()
+
     def select_task_name(self, task_name):
         """Select a task by name.
 
@@ -284,6 +262,10 @@ class TasksWidget(QtWidgets.QWidget):
                 # Set the currently active index
                 self._tasks_view.setCurrentIndex(index)
                 break
+
+        last_selected_task_name = self.get_selected_task_name()
+        if last_selected_task_name:
+            self._last_selected_task_name = last_selected_task_name
 
     def get_selected_task_name(self):
         """Return name of task at current index (selected)

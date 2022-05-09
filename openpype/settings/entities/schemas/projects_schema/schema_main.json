@@ -68,6 +68,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_royalrender"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_slack"
                 },
                 {
@@ -121,6 +125,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_standalonepublisher"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_traypublisher"
                 },
                 {
                     "type": "schema",

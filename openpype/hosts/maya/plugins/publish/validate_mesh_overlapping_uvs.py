@@ -5,6 +5,8 @@ import math
 import maya.api.OpenMaya as om
 import pymel.core as pm
 
+from six.moves import xrange
+
 
 class GetOverlappingUVs(object):
 

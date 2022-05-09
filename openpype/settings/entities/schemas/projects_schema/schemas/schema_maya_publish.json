@@ -49,6 +49,16 @@
             ]
         },
         {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateFrameRange",
+                    "label": "Validate Frame Range"
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateShaderName",
@@ -71,7 +81,6 @@
                 }
             ]
         },
-
         {
             "type": "schema_template",
             "name": "template_publish_plugin",
@@ -82,7 +91,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -102,7 +110,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -128,7 +135,68 @@
                 }
             ]
         },
-
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateMayaUnits",
+            "label": "Validate Maya Units",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_linear_units",
+                    "label": "Validate linear units"
+                },
+                {
+                    "key": "linear_units",
+                    "label": "Linear units",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "cm",
+                    "enum_items": [
+                        {"mm": "millimeter"},
+                        {"cm": "centimeter"},
+                        {"m": "meter"},
+                        {"km": "kilometer"},
+                        {"in": "inch"},
+                        {"ft": "foot"},
+                        {"yd": "yard"},
+                        {"mi": "mile"}
+                    ]
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_angular_units",
+                    "label": "Validate angular units"
+                },
+                {
+                    "key": "angular_units",
+                    "label": "Angular units",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "cm",
+                    "enum_items": [
+                        {"deg": "degree"},
+                        {"rad": "radian"}
+                    ]
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_fps",
+                    "label": "Validate fps"
+                }
+            ]
+        },
         {
             "type": "dict",
             "collapsible": true,
@@ -153,7 +221,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -180,7 +247,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -284,7 +350,7 @@
                     "label": "Validate Model Content",
                     "checkbox_key": "enabled",
                     "children": [
-                         {
+                        {
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
@@ -448,6 +514,26 @@
                             "label": "Validate Rig Controllers"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateRigOutSetNodeIds",
+                    "label": "Validate Rig Out Set Node Ids",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_history_only",
+                            "label": "Allow history only"
+                        }
+                    ]
                 }
             ]
         },
@@ -480,6 +566,30 @@
         {
             "type": "schema",
             "name": "schema_maya_capture"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractMayaSceneRaw",
+            "label": "Maya Scene (Raw)",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Add loaded instances to those published families:"
+                },
+                {
+                    "key": "add_for_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
         },
         {
             "type": "dict",

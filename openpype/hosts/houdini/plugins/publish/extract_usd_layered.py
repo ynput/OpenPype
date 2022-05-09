@@ -7,6 +7,10 @@ from collections import deque
 import pyblish.api
 import openpype.api
 
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
 import openpype.hosts.houdini.api.usd as hou_usdlib
 from openpype.hosts.houdini.api.lib import render_rop
 
@@ -265,8 +269,6 @@ class ExtractUSDLayered(openpype.api.Extractor):
         instance.data["files"].append(fname)
 
     def _compare_with_latest_publish(self, dependency, new_file):
-
-        from avalon import api, io
         import filecmp
 
         _, ext = os.path.splitext(new_file)
@@ -274,10 +276,10 @@ class ExtractUSDLayered(openpype.api.Extractor):
         # Compare this dependency with the latest published version
         # to detect whether we should make this into a new publish
         # version. If not, skip it.
-        asset = io.find_one(
+        asset = legacy_io.find_one(
             {"name": dependency.data["asset"], "type": "asset"}
         )
-        subset = io.find_one(
+        subset = legacy_io.find_one(
             {
                 "name": dependency.data["subset"],
                 "type": "subset",
@@ -289,7 +291,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
             self.log.debug("No existing subset..")
             return False
 
-        version = io.find_one(
+        version = legacy_io.find_one(
             {"type": "version", "parent": subset["_id"], },
             sort=[("name", -1)]
         )
@@ -297,7 +299,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
             self.log.debug("No existing version..")
             return False
 
-        representation = io.find_one(
+        representation = legacy_io.find_one(
             {
                 "name": ext.lstrip("."),
                 "type": "representation",
@@ -308,7 +310,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
             self.log.debug("No existing representation..")
             return False
 
-        old_file = api.get_representation_path(representation)
+        old_file = get_representation_path(representation)
         if not os.path.exists(old_file):
             return False
 

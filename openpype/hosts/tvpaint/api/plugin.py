@@ -1,16 +1,17 @@
 import re
 import uuid
 
-import avalon.api
-
-from openpype.api import PypeCreatorMixin
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from openpype.hosts.tvpaint.api import (
     pipeline,
     lib
 )
 
 
-class Creator(PypeCreatorMixin, avalon.api.Creator):
+class Creator(LegacyCreator):
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
         # Add unified identifier created with `uuid` module
@@ -74,7 +75,7 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
         self.write_instances(data)
 
 
-class Loader(avalon.api.Loader):
+class Loader(LoaderPlugin):
     hosts = ["tvpaint"]
 
     @staticmethod

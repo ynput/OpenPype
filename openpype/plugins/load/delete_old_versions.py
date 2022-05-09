@@ -5,16 +5,16 @@ import uuid
 import clique
 from pymongo import UpdateOne
 import ftrack_api
+import qargparse
 from Qt import QtWidgets, QtCore
 
-from avalon import api, style
-from avalon.vendor import qargparse
-from avalon.api import AvalonMongoDB
-import avalon.pipeline
+from openpype import style
+from openpype.pipeline import load, AvalonMongoDB
+from openpype.lib import StringTemplate
 from openpype.api import Anatomy
 
 
-class DeleteOldVersions(api.SubsetLoader):
+class DeleteOldVersions(load.SubsetLoaderPlugin):
     """Deletes specific number of old version"""
 
     is_multiple_contexts_compatible = True
@@ -89,16 +89,12 @@ class DeleteOldVersions(api.SubsetLoader):
         try:
             context = representation["context"]
             context["root"] = anatomy.roots
-            path = avalon.pipeline.format_template_with_optional_keys(
-                context, template
-            )
+            path = str(StringTemplate.format_template(template, context))
             if "frame" in context:
                 context["frame"] = self.sequence_splitter
-                sequence_path = os.path.normpath(
-                    avalon.pipeline.format_template_with_optional_keys(
-                        context, template
-                    )
-                )
+                sequence_path = os.path.normpath(str(
+                    StringTemplate.format_template(template, context)
+                ))
 
         except KeyError:
             # Template references unavailable data
@@ -129,7 +125,8 @@ class DeleteOldVersions(api.SubsetLoader):
                         os.remove(file_path)
                         self.log.debug("Removed file: {}".format(file_path))
 
-                    remainders.remove(file_path_base)
+                    if file_path_base in remainders:
+                        remainders.remove(file_path_base)
                     continue
 
                 seq_path_base = os.path.split(seq_path)[1]
@@ -336,6 +333,8 @@ class DeleteOldVersions(api.SubsetLoader):
     def main(self, data, remove_publish_folder):
         # Size of files.
         size = 0
+        if not data:
+            return size
 
         if remove_publish_folder:
             size = self.delete_whole_dir_paths(data["dir_paths"].values())
@@ -421,6 +420,8 @@ class DeleteOldVersions(api.SubsetLoader):
                     )
 
                 data = self.get_data(context, versions_to_keep)
+                if not data:
+                    continue
 
                 size += self.main(data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))
