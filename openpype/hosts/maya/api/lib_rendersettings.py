@@ -81,7 +81,6 @@ class RenderSettings(object):
                      prefix,
                      type="string")
 
-        
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
         height = asset_doc["data"].get("resolutionHeight")
