@@ -54,13 +54,15 @@ class RenderSettings(object):
         render_settings = RenderSettings(project_settings)
         render_settings.set_default_renderer_settings(renderer)
 
-    def set_default_renderer_settings(self, renderer):
+    @staticmethod
+    def set_default_renderer_settings(self):
         """Set basic settings based on renderer.
 
         Args:
             renderer (str): Renderer name.
 
         """
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # project_settings/maya/create/CreateRender/aov_separator
         try:
             aov_separator = self._aov_chars[(
