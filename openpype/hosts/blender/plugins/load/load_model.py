@@ -13,10 +13,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import (
-    metadata_update,
-    AVALON_PROPERTY,
-)
+from openpype.hosts.blender.api.pipeline import metadata_update
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -35,52 +32,38 @@ class BlendModelLoader(plugin.AssetLoader):
 
     _downstream_tasks = ("Rigging", "Modeling", "Texture", "Lookdev")
 
-    @staticmethod
-    def _process(libpath, asset_group, group_name):
+    def _process(self, libpath, asset_group):
+        # Load collections from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
             data_to.collections = data_from.collections
 
-        container = None
-
-        # get valid container from loaded collections
-        for collection in data_to.collections:
-            collection_metadata = collection.get(AVALON_PROPERTY)
-            if (
-                collection_metadata and
-                collection_metadata.get("family") == "model"
-            ):
-                container = collection
-                break
-
+        # Get the right asset container from imported collections.
+        container = self._get_container_from_collections(
+            data_from.collections, self.families
+        )
         assert container, "No asset container found"
 
         if isinstance(asset_group, bpy.types.Collection):
-            # temp rename asset_group
-            asset_group.name = f'{asset_group.name}.temp'
             # Create override library for container and elements.
             override = container.override_hierarchy_create(
-                bpy.context.scene,
-                bpy.context.view_layer,
+                bpy.context.scene, bpy.context.view_layer
             )
-            # Relink and rename the override container using asset_group.
-            plugin.get_parent_collection(override).children.unlink(override)
-            parent_collection = plugin.get_parent_collection(asset_group)
-            parent_collection.children.link(override)
-            override.name = group_name
-
-            # force override object data like meshes and curves.
+            # Force override object data like meshes and curves.
             overridden_data = set()
             for obj in set(override.all_objects):
                 if obj.data and obj.data not in overridden_data:
                     obj.data.override_create(remap_local_usages=True)
                     overridden_data.add(obj.data)
 
-            # clear and reassign asset_group and objects variables
-            bpy.data.collections.remove(asset_group)
-            asset_group = override
-            objects = list(override.all_objects)
+            # Move objects and child collections from override to asset_group.
+            plugin.link_to_collection(override.objects, asset_group)
+            plugin.link_to_collection(override.children, asset_group)
+
+            # Clear override container and assign objects variables.
+            bpy.data.collections.remove(override)
+            objects = list(asset_group.all_objects)
 
         # If asset_group is an Empty, set instance collection with container.
         elif isinstance(asset_group, bpy.types.Object):
@@ -88,10 +71,11 @@ class BlendModelLoader(plugin.AssetLoader):
             asset_group.instance_type = 'COLLECTION'
             objects = list(container.all_objects)
 
+        # Purge useless datablocks and selection.
         plugin.orphans_purge()
         plugin.deselect_all()
 
-        return asset_group, objects
+        return objects
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -109,11 +93,8 @@ class BlendModelLoader(plugin.AssetLoader):
         subset = context["subset"]["name"]
         asset_name = plugin.asset_name(asset, subset)
 
-        # Get the first collection if only child or the scene root collection
-        # to use it as asset group parent collection.
-        parent_collection = bpy.context.scene.collection
-        if len(parent_collection.children) == 1:
-            parent_collection = parent_collection.children[0]
+        # Get the main collection to parent asset group.
+        parent_collection = plugin.get_main_collection()
 
         # Create override library if current task needed it.
         if (
@@ -122,6 +103,7 @@ class BlendModelLoader(plugin.AssetLoader):
         ):
             group_name = plugin.asset_name(asset, subset)
             asset_group = bpy.data.collections.new(group_name)
+            asset_group.color_tag = "COLOR_04"
             parent_collection.children.link(asset_group)
         else:
             unique_number = plugin.get_unique_number(asset, subset)
@@ -165,22 +147,24 @@ class BlendModelLoader(plugin.AssetLoader):
 
                     plugin.deselect_all()
 
-        asset_group, objects = self._process(libpath, asset_group, group_name)
+        objects = self._process(libpath, asset_group)
 
-        # update avalon metadata
-        asset_group[AVALON_PROPERTY] = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
-            "name": name,
-            "namespace": namespace or '',
-            "loader": str(self.__class__.__name__),
-            "representation": str(context["representation"]["_id"]),
-            "libpath": libpath,
-            "asset_name": asset_name,
-            "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"],
-            "objectName": group_name
-        }
+        metadata_update(
+            asset_group,
+            {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": name,
+                "namespace": namespace or '',
+                "loader": str(self.__class__.__name__),
+                "representation": str(context["representation"]["_id"]),
+                "libpath": libpath,
+                "asset_name": asset_name,
+                "parent": str(context["representation"]["parent"]),
+                "family": context["representation"]["context"]["family"],
+                "objectName": group_name
+            }
+        )
 
         self[:] = objects
         return objects
@@ -197,7 +181,6 @@ class BlendModelLoader(plugin.AssetLoader):
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
         libpath = Path(get_representation_path(representation))
-        extension = libpath.suffix.lower()
 
         if not asset_group:
             asset_group = bpy.data.collections.get(object_name)
@@ -208,35 +191,8 @@ class BlendModelLoader(plugin.AssetLoader):
             pformat(representation, indent=2),
         )
 
-        assert asset_group, (
-            f"The asset is not loaded: {container['objectName']}"
-        )
-        assert libpath, (
-            "No existing library file found for {container['objectName']}"
-        )
-        assert libpath.is_file(), (
-            f"The file doesn't exist: {libpath}"
-        )
-        assert extension in plugin.VALID_EXTENSIONS, (
-            f"Unsupported file: {libpath}"
-        )
-
-        metadata = asset_group.get(AVALON_PROPERTY).to_dict()
-        group_libpath = metadata["libpath"]
-
-        normalized_group_libpath = (
-            str(Path(bpy.path.abspath(group_libpath)).resolve())
-        )
-        normalized_libpath = (
-            str(Path(bpy.path.abspath(str(libpath))).resolve())
-        )
-        self.log.debug(
-            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_group_libpath,
-            normalized_libpath,
-        )
-        if normalized_group_libpath == normalized_libpath:
-            self.log.info("Library already loaded, not updating...")
+        if self._is_updated(asset_group, object_name, libpath):
+            self.log.info("Asset already up to date, not updating...")
             return
 
         with contextlib.ExitStack() as stack:
@@ -248,10 +204,7 @@ class BlendModelLoader(plugin.AssetLoader):
             stack.enter_context(self.maintained_drivers(asset_group))
 
             plugin.remove_container(asset_group, content_only=True)
-
-            asset_group, objects = self._process(
-                str(libpath), asset_group, object_name
-            )
+            objects = self._process(str(libpath), asset_group)
 
         # update override library operations from asset objects
         for obj in objects:
@@ -260,14 +213,17 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # clear orphan datablocks and libraries
         plugin.orphans_purge()
+        plugin.deselect_all()
 
         # update metadata
-        metadata.update({
-            "libpath": str(libpath),
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"]),
-        })
-        metadata_update(asset_group, metadata)
+        metadata_update(
+            asset_group,
+            {
+                "libpath": str(libpath),
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"]),
+            }
+        )
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

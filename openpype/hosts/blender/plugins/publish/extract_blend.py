@@ -4,6 +4,7 @@ import bpy
 
 import openpype.api
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractBlend(openpype.api.Extractor):
@@ -30,6 +31,7 @@ class ExtractBlend(openpype.api.Extractor):
 
         for obj in instance:
             data_blocks.add(obj)
+            # Skip and non Object type like Collections.
             if not isinstance(obj, bpy.types.Object):
                 continue
             # Get reference from override library.
