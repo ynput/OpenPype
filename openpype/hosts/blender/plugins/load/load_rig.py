@@ -68,7 +68,6 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Force override collection from override container and rename.
         for child in set(override.children_recursive):
-            # child = child.override_create(remap_local_usages=True)
             child.name = f"{group_name}:{child.name}"
 
         # force override object data from overridden objects and rename.
@@ -80,7 +79,7 @@ class BlendRigLoader(plugin.AssetLoader):
                 obj.data.name = f"{group_name}:{obj.data.name}"
 
         # Relink and rename the override container.
-        bpy.context.scene.collection.children.unlink(override)
+        plugin.get_parent_collection(override).children.unlink(override)
         parent_collection.children.link(override)
         override.name = group_name
 
