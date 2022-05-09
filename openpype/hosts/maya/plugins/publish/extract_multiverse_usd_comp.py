@@ -113,10 +113,10 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
                 time_opts.framePerSecond = fps
 
             comp_write_opts = multiverse.CompositionWriteOptions()
-            if not hasattr(comp_write_opts,"forceAbsolutePaths"):
+            if not hasattr(comp_write_opts, "forceAbsolutePaths"):
                 self.log.warning("multiverse.CompositionWriteOptions is " +
-                    "missing forceAbsolutePaths', extract will yield " +
-                    "inccorect reference paths.")
+                                 "missing 'forceAbsolutePaths', extract " +
+                                 "will yield incorrect reference paths.")
             else:
                 comp_write_opts.forceAbsolutePaths = True
             options_discard_keys = {
