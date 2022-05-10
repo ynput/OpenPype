@@ -334,8 +334,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 slate_silent_subprocess_cmd = " ".join(slate_silent_args)
                 # run slate generation subprocess
                 self.log.debug(
-                    "Silent Slate Executing: {}".format(slate_silent_subprocess_cmd)
-                )
+                    "Silent Slate Executing: {}".format(
+                        slate_silent_subprocess_cmd))
                 openpype.api.run_subprocess(
                     slate_silent_subprocess_cmd, shell=True, logger=self.log
                 )
