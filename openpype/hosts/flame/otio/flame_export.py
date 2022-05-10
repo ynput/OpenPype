@@ -310,7 +310,7 @@ def create_otio_clip(clip_data):
     if MARKERS_INCLUDE:
         create_otio_markers(otio_clip, segment)
 
-    create_time_effects(otio_clip, clip_data)
+    # create_time_effects(otio_clip, clip_data)
 
     return otio_clip
 
