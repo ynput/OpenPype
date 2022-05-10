@@ -2,7 +2,10 @@ import os
 import tempfile
 import pyblish.api
 import openpype.api
-import openpype.lib
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    get_ffprobe_streams,
+)
 
 
 class ExtractThumbnailSP(pyblish.api.InstancePlugin):
@@ -71,7 +74,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             full_thumbnail_path = tempfile.mkstemp(suffix=".jpg")[1]
             self.log.info("output {}".format(full_thumbnail_path))
 
-            ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+            ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
             ffmpeg_args = self.ffmpeg_args or {}
 
@@ -110,6 +113,13 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         # remove thumbnail key from origin repre
         thumbnail_repre.pop("thumbnail")
+        streams = get_ffprobe_streams(full_thumbnail_path)
+        width = height = None
+        for stream in streams:
+            if "width" in stream and "height" in stream:
+                width = stream["width"]
+                height = stream["height"]
+                break
 
         filename = os.path.basename(full_thumbnail_path)
         staging_dir = staging_dir or os.path.dirname(full_thumbnail_path)
@@ -122,6 +132,9 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             "stagingDir": staging_dir,
             "tags": ["thumbnail"],
         }
+        if width and height:
+            representation["width"] = width
+            representation["height"] = height
 
         # # add Delete tag when temp file was rendered
         if not is_jpeg:
