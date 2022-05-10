@@ -17,7 +17,8 @@ from .lib import (
     reset_selection,
     maintained_selection,
     set_avalon_knob_data,
-    add_publish_knob
+    add_publish_knob,
+    get_nuke_imageio_settings
 )
 
 
@@ -27,9 +28,6 @@ class OpenPypeCreator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(OpenPypeCreator, self).__init__(*args, **kwargs)
-        self.presets = get_current_project_settings()["nuke"]["create"].get(
-            self.__class__.__name__, {}
-        )
         if check_subsetname_exists(
                 nuke.allNodes(),
                 self.data["subset"]):
@@ -605,6 +603,8 @@ class AbstractWriteRender(OpenPypeCreator):
     family = "render"
     icon = "sign-out"
     defaults = ["Main", "Mask"]
+    knobs = []
+    prenodes = {}
 
     def __init__(self, *args, **kwargs):
         super(AbstractWriteRender, self).__init__(*args, **kwargs)
@@ -672,7 +672,8 @@ class AbstractWriteRender(OpenPypeCreator):
             "nodeclass": self.n_class,
             "families": [self.family],
             "avalon": self.data,
-            "subset": self.data["subset"]
+            "subset": self.data["subset"],
+            "knobs": self.knobs
         }
 
         # add creator data
@@ -680,21 +681,12 @@ class AbstractWriteRender(OpenPypeCreator):
         self.data.update(creator_data)
         write_data.update(creator_data)
 
-        if self.presets.get('fpath_template'):
-            self.log.info("Adding template path from preset")
-            write_data.update(
-                {"fpath_template": self.presets["fpath_template"]}
-            )
-        else:
-            self.log.info("Adding template path from plugin")
-            write_data.update({
-                "fpath_template":
-                    ("{work}/" + self.family + "s/nuke/{subset}"
-                     "/{subset}.{frame}.{ext}")})
-
-        write_node = self._create_write_node(selected_node,
-                                             inputs, outputs,
-                                             write_data)
+        write_node = self._create_write_node(
+            selected_node,
+            inputs,
+            outputs,
+            write_data
+        )
 
         # relinking to collected connections
         for i, input in enumerate(inputs):
@@ -708,6 +700,28 @@ class AbstractWriteRender(OpenPypeCreator):
         write_node = self._modify_write_node(write_node)
 
         return write_node
+
+    def is_legacy(self):
+        """Check if it needs to run legacy code
+
+        In case where `type` key is missing in singe
+        knob it is legacy project anatomy.
+
+        Returns:
+            bool: True if legacy
+        """
+        imageio_nodes = get_nuke_imageio_settings()["nodes"]
+        node = imageio_nodes["requiredNodes"][0]
+        if "type" not in node["knobs"][0]:
+            # if type is not yet in project anatomy
+            return True
+        elif next(iter(
+            _k for _k in node["knobs"]
+            if _k.get("type") == "__legacy__"
+        ), None):
+            # in case someone re-saved anatomy
+            # with old configuration
+            return True
 
     @abstractmethod
     def _create_write_node(self, selected_node, inputs, outputs, write_data):

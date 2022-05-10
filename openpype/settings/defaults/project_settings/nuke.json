@@ -21,10 +21,29 @@
             "defaults": [
                 "Main",
                 "Mask"
-            ]
+            ],
+            "knobs": [],
+            "prenodes": {
+                "Reformat01": {
+                    "nodeclass": "Reformat",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "resize",
+                            "value": "none"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        }
+                    ]
+                }
+            }
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
             "use_range_limit": true,
             "defaults": [
                 "Key01",
@@ -33,7 +52,32 @@
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false
+            "reviewable": false,
+            "knobs": [],
+            "prenodes": {}
+        },
+        "CreateWriteStill": {
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
+            "defaults": [
+                "ImageFrame",
+                "MPFrame",
+                "LayoutFrame"
+            ],
+            "knobs": [],
+            "prenodes": {
+                "FrameHold01": {
+                    "nodeclass": "FrameHold",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "formatable",
+                            "name": "first_frame",
+                            "template": "{frame}",
+                            "to_type": "number"
+                        }
+                    ]
+                }
+            }
         }
     },
     "publish": {
@@ -129,17 +173,17 @@
                     "reformat_node_add": false,
                     "reformat_node_config": [
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "type",
                             "value": "to format"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "format",
                             "value": "HD_1080"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "filter",
                             "value": "Lanczos6"
                         },
@@ -220,11 +264,12 @@
                         "repre_names": [
                             "exr",
                             "dpx",
-                            "mov"
+                            "mov",
+                            "mp4",
+                            "h264"
                         ],
                         "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
+                            "LoadClip"
                         ]
                     }
                 ],

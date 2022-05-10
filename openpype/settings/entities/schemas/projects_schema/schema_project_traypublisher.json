@@ -46,12 +46,6 @@
                         }
                     },
                     {
-                        "type": "boolean",
-                        "key": "enable_review",
-                        "label": "Enable review",
-                        "tooltip": "Allow to create review from source file/s.\nFiles must be supported to be able create review."
-                    },
-                    {
                         "type": "separator"
                     },
                     {

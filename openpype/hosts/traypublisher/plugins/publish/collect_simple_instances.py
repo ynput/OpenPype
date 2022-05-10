@@ -24,10 +24,6 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         repres = instance.data["representations"]
 
         creator_attributes = instance.data["creator_attributes"]
-
-        if creator_attributes.get("review"):
-            instance.data["families"].append("review")
-
         filepath_item = creator_attributes["filepath"]
         self.log.info(filepath_item)
         filepaths = [
@@ -36,9 +32,11 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         ]
 
         instance.data["sourceFilepaths"] = filepaths
+        instance.data["stagingDir"] = filepath_item["directory"]
 
         filenames = filepath_item["filenames"]
-        ext = os.path.splitext(filenames[0])[-1]
+        _, ext = os.path.splitext(filenames[0])
+        ext = ext[1:]
         if len(filenames) == 1:
             filenames = filenames[0]
 
@@ -48,3 +46,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             "stagingDir": filepath_item["directory"],
             "files": filenames
         })
+
+        self.log.debug("Created Simple Settings instance {}".format(
+            instance.data
+        ))
