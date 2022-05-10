@@ -1,4 +1,8 @@
-from maya import cmds
+# -*- coding: utf-8 -*-
+"""Class for handling Render Settings."""
+from maya import cmds  # noqa
+import six
+import sys
 
 from openpype.api import (
     get_project_settings,
@@ -36,8 +40,12 @@ class RenderSettings(object):
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
-    def __init__(self, project_settings):
+    def __init__(self, project_settings=None):
         self._project_settings = project_settings
+        if not self._project_settings:
+            self._project_settings = get_project_settings(
+                legacy_io.Session["AVALON_PROJECT"]
+            )
 
     @staticmethod
     def apply_defaults(renderer=None, project_settings=None):
@@ -48,21 +56,15 @@ class RenderSettings(object):
             if renderer.startswith('renderman'):
                 renderer = 'renderman'
 
-        if project_settings is None:
-            project_settings = get_project_settings(legacy_io.Session["AVALON_PROJECT"])
-
         render_settings = RenderSettings(project_settings)
         render_settings.set_default_renderer_settings(renderer)
 
-    @staticmethod
-    def set_default_renderer_settings(self):
-        """Set basic settings based on renderer.
+    def set_default_renderer_settings(self, renderer=None):
+        """Set basic settings based on renderer."""
+        if not renderer:
+            renderer = cmds.getAttr(
+                'defaultRenderGlobals.currentRenderer').lower()
 
-        Args:
-            renderer (str): Renderer name.
-
-        """
-        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         asset_doc = get_asset()
         # project_settings/maya/create/CreateRender/aov_separator
         try:
@@ -87,7 +89,7 @@ class RenderSettings(object):
 
         if renderer == "arnold":
             # set renderer settings for Arnold from project settings
-            self._set_Arnold_settings(width, height)
+            self._set_arnold_settings(width, height)
 
         if renderer == "vray":
             self._set_vray_settings(aov_separator, width, height)
@@ -95,28 +97,34 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
 
-    def _set_Arnold_settings(self, width, height):
+    def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
-        from mtoa.core import createOptions
-        from mtoa.aovs import AOVInterface
+        from mtoa.core import createOptions  # noqa
+        from mtoa.aovs import AOVInterface  # noqa
         createOptions()
         arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
         img_ext = arnold_render_presets["image_format"]
         aovs = arnold_render_presets["aov_list"]
 
         for aov in aovs:
-            AOVInterface('defaultArnoldRenderOptions'.addAOV(aov))
+            AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
 
         self._set_global_output_settings()
-        cmds.setAttr("defaultArnoldDriver.ai_translator", img_ext, type="string")
+        cmds.setAttr(
+            "defaultArnoldDriver.ai_translator", img_ext, type="string")
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
-
-        img_ext = self.redshift_renderer.get("image_format")
+        redshift_render_presets = (
+            self._project_settings
+            ["maya"]
+            ["RenderSettings"]
+            ["redshift_renderer"]
+        )
+        img_ext = redshift_render_presets.get("image_format")
         self._set_global_output_settings()
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
         cmds.setAttr("defaultResolution.width", width)
@@ -138,10 +146,13 @@ class RenderSettings(object):
             separators = [cmds.menuItem(i, query=True, label=True) for i in items]  # noqa: E501
             try:
                 sep_idx = separators.index(aov_separator)
-            except ValueError:
-                raise CreatorError(
-                    "AOV character {} not in {}".format(
-                        aov_separator, separators))
+            except ValueError as e:
+                six.reraise(
+                    CreatorError,
+                    CreatorError(
+                        "AOV character {} not in {}".format(
+                            aov_separator, separators)),
+                    sys.exc_info()[2])
 
             cmds.optionMenuGrp(MENU, edit=True, select=sep_idx + 1)
 

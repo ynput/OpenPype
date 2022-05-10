@@ -101,7 +101,7 @@ def install():
 
         cmds.menuItem(
             "Set Render Settings",
-            command=lambda *args: lib_rendersettings.RenderSettings.set_default_renderer_settings(renderer)    # noqa
+            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
         )
 
         cmds.menuItem(divider=True)
