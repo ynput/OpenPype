@@ -94,83 +94,30 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 def _get_metadata(item):
     if hasattr(item, 'metadata'):
-        if not item.metadata:
-            return {}
-        return {key: value for key, value in dict(item.metadata)}
+        return dict(dict(item.metadata)) if item.metadata else {}
     return {}
 
 
-def create_time_effects(otio_clip, item):
-    # todo #2426: add retiming effects to export
-    # get all subtrack items
-    # subTrackItems = flatten(track_item.parent().subTrackItems())
-    # speed = track_item.playbackSpeed()
+# def create_time_effects(otio_clip, clip_data):
+#     otio_effect = None
 
-    # otio_effect = None
-    # # retime on track item
-    # if speed != 1.:
-    #     # make effect
-    #     otio_effect = otio.schema.LinearTimeWarp()
-    #     otio_effect.name = "Speed"
-    #     otio_effect.time_scalar = speed
-    #     otio_effect.metadata = {}
+#     # retime on track item
+#     if speed != 1.:
+#         # make effect
+#         otio_effect = otio.schema.LinearTimeWarp()
+#         otio_effect.name = "Speed"
+#         otio_effect.time_scalar = speed
+#         otio_effect.metadata = {}
 
-    # # freeze frame effect
-    # if speed == 0.:
-    #     otio_effect = otio.schema.FreezeFrame()
-    #     otio_effect.name = "FreezeFrame"
-    #     otio_effect.metadata = {}
+#     # freeze frame effect
+#     if speed == 0.:
+#         otio_effect = otio.schema.FreezeFrame()
+#         otio_effect.name = "FreezeFrame"
+#         otio_effect.metadata = {}
 
-    # if otio_effect:
-    #     # add otio effect to clip effects
-    #     otio_clip.effects.append(otio_effect)
-
-    # # loop through and get all Timewarps
-    # for effect in subTrackItems:
-    #     if ((track_item not in effect.linkedItems())
-    #             and (len(effect.linkedItems()) > 0)):
-    #         continue
-    #     # avoid all effect which are not TimeWarp and disabled
-    #     if "TimeWarp" not in effect.name():
-    #         continue
-
-    #     if not effect.isEnabled():
-    #         continue
-
-    #     node = effect.node()
-    #     name = node["name"].value()
-
-    #     # solve effect class as effect name
-    #     _name = effect.name()
-    #     if "_" in _name:
-    #         effect_name = re.sub(r"(?:_)[_0-9]+", "", _name)  # more numbers
-    #     else:
-    #         effect_name = re.sub(r"\d+", "", _name)  # one number
-
-    #     metadata = {}
-    #     # add knob to metadata
-    #     for knob in ["lookup", "length"]:
-    #         value = node[knob].value()
-    #         animated = node[knob].isAnimated()
-    #         if animated:
-    #             value = [
-    #                 ((node[knob].getValueAt(i)) - i)
-    #                 for i in range(
-    #                     track_item.timelineIn(),
-    #                     track_item.timelineOut() + 1)
-    #             ]
-
-    #         metadata[knob] = value
-
-    #     # make effect
-    #     otio_effect = otio.schema.TimeEffect()
-    #     otio_effect.name = name
-    #     otio_effect.effect_name = effect_name
-    #     otio_effect.metadata = metadata
-
-    #     # add otio effect to clip effects
-    #     otio_clip.effects.append(otio_effect)
-    pass
+#     if otio_effect:
+#         # add otio effect to clip effects
+#         otio_clip.effects.append(otio_effect)
 
 
 def _get_marker_color(flame_colour):
@@ -362,6 +309,8 @@ def create_otio_clip(clip_data):
     # Add markers
     if MARKERS_INCLUDE:
         create_otio_markers(otio_clip, segment)
+
+    create_time_effects(otio_clip, clip_data)
 
     return otio_clip
 
