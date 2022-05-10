@@ -51,7 +51,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
         fps = plib.get_asset()["data"]["fps"]
 
         tracks = timeline.each_child(
-            descended_from_type=otio.schema.Track
+            descended_from_type=otio.schema.TrackKind
         )
 
         # get data from avalon

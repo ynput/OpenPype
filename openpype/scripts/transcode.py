@@ -40,7 +40,6 @@ def main(input_path="",
 
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     preset_templates = (project_settings["traypublisher"]
-                                        ["publish"]
                                         ["TranscodeCreator"]
                                         ["preset_templates"])
 

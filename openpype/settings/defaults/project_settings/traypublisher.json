@@ -1,40 +1,38 @@
 {
-    "publish": {
-        "TranscodeCreator": {
-            "preset_templates": {
-                "prores422HQ": {
-                    "args": [
-                        "-c:v prores_ks",
-                        "-profile:v 3",
-                        "-qscale:v 5",
-                        "-codec:a pcm_s16le"
-                    ],
-                    "output_extension": ".mov"
-                },
-                "proresProxy": {
-                    "args": [
-                        "-c:v prores_ks",
-                        "-profile:v 0",
-                        "-pix_fmt yuv422p10le",
-                        "-qscale:v 5",
-                        "-codec:a pcm_s16le",
-                        "-vf scale=trunc(oh*a/2)*2:trunc(ih/2)"
-                    ],
-                    "output_extension": ".mov"
-                },
-                "h264": {
-                    "args": [
-                        "-crf 18",
-                        "-pix_fmt yuv420p"
-                    ],
-                    "output_extension": ".mov"
-                },
-                "concat": {
-                    "args": [
-                        "-c copy"
-                    ],
-                    "output_extension": ".mov"
-                }
+    "TranscodeCreator": {
+        "preset_templates": {
+            "prores422HQ": {
+                "args": [
+                    "-c:v prores_ks",
+                    "-profile:v 3",
+                    "-qscale:v 5",
+                    "-codec:a pcm_s16le"
+                ],
+                "output_extension": ".mov"
+            },
+            "proresProxy": {
+                "args": [
+                    "-c:v prores_ks",
+                    "-profile:v 0",
+                    "-pix_fmt yuv422p10le",
+                    "-qscale:v 5",
+                    "-codec:a pcm_s16le",
+                    "-vf scale=trunc(oh*a/2)*2:trunc(ih/2)"
+                ],
+                "output_extension": ".mov"
+            },
+            "h264": {
+                "args": [
+                    "-crf 18",
+                    "-pix_fmt yuv420p"
+                ],
+                "output_extension": ".mov"
+            },
+            "concat": {
+                "args": [
+                    "-c copy"
+                ],
+                "output_extension": ".mov"
             }
         }
     },

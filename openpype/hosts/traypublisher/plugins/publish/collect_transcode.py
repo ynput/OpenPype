@@ -17,53 +17,51 @@ class CollectTranscode(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.debug(f"instance: `{instance}`")
+        import pprint
+        self.log.debug("{}".format(pprint.pformat(instance.data, indent=4)))
         # get representation with editorial file
         audio_path = None
-        import pprint
-        self.log.info(pprint.pformat(instance.data, indent=4))
-        for representation in instance.data["representations"]:
-            self.log.debug(f"representation: `{representation}`")
-            # make editorial sequence file path
-            staging_dir = representation["stagingDir"]
-            instance.data["stagingDir"] = staging_dir
-            file_path = os.path.join(
-                staging_dir, str(representation["files"])
+        source_file_info = instance.data["creator_attributes"]["filepath"]
+        source_file_name = source_file_info["filenames"][0]
+        # make editorial sequence file path
+        staging_dir = source_file_info["directory"]
+        instance.data["stagingDir"] = staging_dir
+        file_path = os.path.join(
+            staging_dir, source_file_name
+        )
+        instance.context.data["currentFile"] = file_path
+        name = os.path.splitext(source_file_name)[0]
+        instance.data["name"] = name
+        instance.data["label"] = name
+        instance.data["families"].append("transcode")
+
+        # Get version from published versions.
+        instance.data["version"] = 1
+
+        version = api.get_latest_version(
+            instance.data["asset"], instance.data["subset"]
+        )
+
+        if version:
+            instance.data["version"] = version["name"] + 1
+
+        self.log.info(
+            "Setting version to: {}".format(instance.data["version"])
+        )
+        # Get audio file path.
+        for f in os.listdir(staging_dir):
+            self.log.debug(f"search file: `{f}`")
+            # filter out by not sharing the same name
+            if os.path.splitext(f)[0] not in name:
+                continue
+            # filter out by respected audio_extensions
+            if os.path.splitext(f)[1] not in self.audio_extensions:
+                continue
+            audio_path = os.path.join(
+                staging_dir, f
             )
-            instance.context.data["currentFile"] = file_path
-            name = os.path.splitext(os.path.basename(file_path))[0]
-            instance.data["name"] = name
-            instance.data["label"] = name
-            instance.data["families"].append("transcode")
-
-            # Get version from published versions.
-            instance.data["version"] = 1
-
-            version = api.get_latest_version(
-                instance.data["asset"], instance.data["subset"]
-            )
-
-            if version:
-                instance.data["version"] = version["name"] + 1
-
-            self.log.info(
-                "Setting version to: {}".format(instance.data["version"])
-            )
-
-            # Get audio file path.
-            basename = os.path.splitext(os.path.basename(file_path))[0]
-            for f in os.listdir(staging_dir):
-                self.log.debug(f"search file: `{f}`")
-                # filter out by not sharing the same name
-                if os.path.splitext(f)[0] not in basename:
-                    continue
-                # filter out by respected audio_extensions
-                if os.path.splitext(f)[1] not in self.audio_extensions:
-                    continue
-                audio_path = os.path.join(
-                    staging_dir, f
-                )
-                self.log.debug(f"audio_path: `{audio_path}`")
-            instance.data["audioPath"] = audio_path
+            self.log.debug(f"audio_path: `{audio_path}`")
+        instance.data["audioPath"] = audio_path
 
         if audio_path:
             representation = {
