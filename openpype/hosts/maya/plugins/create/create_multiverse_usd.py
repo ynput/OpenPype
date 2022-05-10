@@ -2,7 +2,7 @@ from openpype.hosts.maya.api import plugin, lib
 
 
 class CreateMultiverseUsd(plugin.Creator):
-    """Multiverse USD data"""
+    """Create Multiverse USD Asset"""
 
     name = "usdMain"
     label = "Multiverse USD"
@@ -15,6 +15,7 @@ class CreateMultiverseUsd(plugin.Creator):
         # Add animation data first, since it maintains order.
         self.data.update(lib.collect_animation_data(True))
 
+        self.data["fileFormat"] = ["usd", "usda", "usdz"]
         self.data["stripNamespaces"] = False
         self.data["mergeTransformAndShape"] = False
         self.data["writeAncestors"] = True

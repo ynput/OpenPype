@@ -15,6 +15,7 @@ class CreateMultiverseUsdComp(plugin.Creator):
         # Add animation data first, since it maintains order.
         self.data.update(lib.collect_animation_data(True))
 
+        self.data["fileFormat"] = ["usd", "usda"]
         self.data["stripNamespaces"] = False
         self.data["mergeTransformAndShape"] = False
         self.data["flattenContent"] = False

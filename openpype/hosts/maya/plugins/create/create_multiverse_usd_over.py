@@ -2,7 +2,7 @@ from openpype.hosts.maya.api import plugin, lib
 
 
 class CreateMultiverseUsdOver(plugin.Creator):
-    """Multiverse USD data"""
+    """Create Multiverse USD Override"""
 
     name = "usdOverrideMain"
     label = "Multiverse USD Override"
@@ -15,6 +15,7 @@ class CreateMultiverseUsdOver(plugin.Creator):
         # Add animation data first, since it maintains order.
         self.data.update(lib.collect_animation_data(True))
 
+        self.data["fileFormat"] = ["usd", "usda"]
         self.data["writeAll"] = False
         self.data["writeTransforms"] = True
         self.data["writeVisibility"] = True

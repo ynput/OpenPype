@@ -13,6 +13,8 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
     label = "Extract Multiverse USD"
     hosts = ["maya"]
     families = ["usd"]
+    scene_type = "usd"
+    file_formats = ["usd", "usda", "usdz"]
 
     @property
     def options(self):
@@ -129,13 +131,19 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         return options
 
+    def get_file_format(self, instance):
+        fileFormat = instance.data["fileFormat"]
+        if fileFormat in range(len(self.file_formats)):
+            self.scene_type = self.file_formats[fileFormat]
+
     def process(self, instance):
-        # Load plugin firstly
+        # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
         # Define output file path
         staging_dir = self.staging_dir(instance)
-        file_name = "{}.usd".format(instance.name)
+        self.get_file_format(instance)
+        file_name = "{0}.{1}".format(instance.name, self.scene_type)
         file_path = os.path.join(staging_dir, file_name)
         file_path = file_path.replace('\\', '/')
 
@@ -193,10 +201,10 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'usd',
-            'ext': 'usd',
+            'name': self.scene_type,
+            'ext': self.scene_type,
             'files': file_name,
-            "stagingDir": staging_dir
+            'stagingDir': staging_dir
         }
         instance.data["representations"].append(representation)
 
