@@ -5,6 +5,7 @@ import pyblish.api
 
 from openpype.lib import prepare_template_data
 from openpype.hosts.photoshop import api as photoshop
+from openpype.settings import get_project_settings
 
 
 class CollectColorCodedInstances(pyblish.api.ContextPlugin):
@@ -49,6 +50,12 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         asset_name = context.data["asset"]
         task_name = context.data["task"]
         variant = context.data["variant"]
+        project_name = context.data["projectEntity"]["name"]
+
+        naming_conventions = get_project_settings(project_name).get(
+            "photoshop", {}).get(
+            "publish", {}).get(
+            "ValidateNaming", {})
 
         stub = photoshop.stub()
         layers = stub.get_layers()
@@ -82,6 +89,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             subset = resolved_subset_template.format(
                 **prepare_template_data(fill_pairs))
+
+            subset = self._clean_subset_name(stub, naming_conventions,
+                                             subset, layer)
 
             if subset in existing_subset_names:
                 self.log.info(
@@ -186,3 +196,21 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         self.log.debug("resolved_subset_template {}".format(
             resolved_subset_template))
         return family, resolved_subset_template
+
+    def _clean_subset_name(self, stub, naming_conventions, subset, layer):
+        """Cleans invalid characters from subset name and layer name."""
+        if re.search(naming_conventions["invalid_chars"], subset):
+            subset = re.sub(
+                naming_conventions["invalid_chars"],
+                naming_conventions["replace_char"],
+                subset
+            )
+            layer_name = re.sub(
+                naming_conventions["invalid_chars"],
+                naming_conventions["replace_char"],
+                layer.clean_name
+            )
+            layer.name = layer_name
+            stub.rename_layer(layer.id, layer_name)
+
+        return subset
