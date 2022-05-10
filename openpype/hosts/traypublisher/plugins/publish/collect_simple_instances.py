@@ -33,7 +33,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         instance.data["stagingDir"] = filepath_item["directory"]
 
         filenames = filepath_item["filenames"]
-        ext = os.path.splitext(filenames[0])[-1]
+        _, ext = os.path.splitext(filenames[0])
+        ext = ext[1:]
         if len(filenames) == 1:
             filenames = filenames[0]
 
