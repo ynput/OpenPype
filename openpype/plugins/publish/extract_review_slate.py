@@ -1,5 +1,4 @@
 import os
-import shutil
 import openpype.api
 import pyblish
 from openpype.lib import (
@@ -10,6 +9,7 @@ from openpype.lib import (
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
 )
+
 
 class ExtractReviewSlate(openpype.api.Extractor):
     """
@@ -122,10 +122,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     if stream["channel_layout"]:
                         audio_channel_layout = str(
                             stream.get("channel_layout"))
+                    if stream["codec_name"]:
+                        audio_codec = str(
+                            stream.get("codec_name"))
                     if (
                         audio_channels
                         and audio_sample_rate
                         and audio_channel_layout
+                        and audio_codec
                     ):
                         input_audio = True
                         break
@@ -200,16 +204,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             input_args.append("-loop 1 -i {}".format(
                 openpype.lib.path_to_subprocess_arg(slate_path)))
-            # if input has an audio, add silent audio to the slate
-            if input_audio:
-                input_args.extend(
-                    ["-f lavfi -i anullsrc=r={}:cl={}:d={}".format(
-                        audio_sample_rate,
-                        audio_channel_layout,
-                        one_frame_duration
-                    )]
-                )
-
             input_args.extend(["-r {}".format(input_frame_rate)])
             input_args.extend(["-frames:v 1"])
             # add timecode from source to the slate, substract one frame
@@ -314,6 +308,41 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 slate_subprocess_cmd, shell=True, logger=self.log
             )
 
+            # Create slate with silent audio track
+            if input_audio:
+                # silent slate output path
+                slate_silent_path = slate_path.replace(".png", "Silent" + ext)
+                _remove_at_end.append(slate_silent_path)
+
+                slate_silent_args = [
+                    ffmpeg_path,
+                    "-i", slate_v_path,
+                    "-f", "lavfi", "-i",
+                    "anullsrc=r={}:cl={}:d={}".format(
+                        audio_sample_rate,
+                        audio_channel_layout,
+                        one_frame_duration
+                    ),
+                    "-c:v", "copy",
+                    "-c:a", audio_codec,
+                    "-map", "0:v",
+                    "-map", "1:a",
+                    "-shortest",
+                    "-y",
+                    slate_silent_path
+                ]
+                slate_silent_subprocess_cmd = " ".join(slate_silent_args)
+                # run slate generation subprocess
+                self.log.debug(
+                    "Silent Slate Executing: {}".format(slate_silent_subprocess_cmd)
+                )
+                openpype.api.run_subprocess(
+                    slate_silent_subprocess_cmd, shell=True, logger=self.log
+                )
+
+                # replace slate with silent slate for concat
+                slate_v_path = slate_silent_path
+
             # create ffmpeg concat text file path
             conc_text_file = input_file.replace(ext, "") + "_concat" + ".txt"
             conc_text_path = os.path.join(
@@ -361,21 +390,13 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # add final output path
             concat_args.append(output_path)
 
-            if not input_audio:
-                # ffmpeg concat subprocess
-                self.log.debug(
-                    "Executing concat: {}".format(" ".join(concat_args))
-                )
-                openpype.api.run_subprocess(
-                    concat_args, logger=self.log
-                )
-            else:
-                self.log.warning(
-                    "Audio found. Creating slate with audio"
-                    " is not supported at this time. Outputing slate-less"
-                    ":\n{}".format(input_file))
-                # skip concatenating slate, use slate-less file instead
-                shutil.copyfile(input_path, output_path)
+            # ffmpeg concat subprocess
+            self.log.debug(
+                "Executing concat: {}".format(" ".join(concat_args))
+            )
+            openpype.api.run_subprocess(
+                concat_args, logger=self.log
+            )
 
             self.log.debug("__ repre[tags]: {}".format(repre["tags"]))
             repre_update = {
@@ -437,7 +458,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
-
 
     def _get_format_codec_args(self, repre):
         """Detect possible codec arguments from representation."""
