@@ -187,11 +187,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 try:
                     streams = get_ffprobe_streams(component_path)
                 except Exception:
-                    self.log.debug(
-                        "Failed to retrieve information about intput {}".format(
-                            component_path
-                        )
-                    )
+                    self.log.debug((
+                        "Failed to retrieve information about intput {}"
+                    ).format(component_path))
 
                 for stream in streams:
                     if "width" in stream and "height" in stream:
