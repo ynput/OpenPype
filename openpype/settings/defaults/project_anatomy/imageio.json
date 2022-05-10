@@ -165,12 +165,12 @@
                     ]
                 }
             ],
-            "customNodes": []
+            "overrideNodes": []
         },
         "regexInputs": {
             "inputs": [
                 {
-                    "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
+                    "regex": "(beauty).*(?=.exr)",
                     "colorspace": "linear"
                 }
             ]
@@ -185,8 +185,8 @@
                 "linux": []
             },
             "renderSpace": "ACEScg",
-            "viewName": "ACES 1.0 SDR-video",
-            "displayName": "sRGB"
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
         },
         "colorManagementPreference": {
             "configFilePath": {

@@ -3,23 +3,13 @@ import os
 import hiero
 
 from openpype.api import Logger
-from avalon import io
+from openpype.pipeline import legacy_io
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def tag_data():
     return {
-        # "Retiming": {
-        #     "editable": "1",
-        #     "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa
-        #     "icon": "retiming.png",
-        #     "metadata": {
-        #         "family": "retiming",
-        #         "marginIn": 1,
-        #         "marginOut": 1
-        #     }
-        # },
         "[Lenses]": {
             "Set lense here": {
                 "editable": "1",
@@ -47,6 +37,16 @@ def tag_data():
             "metadata": {
                 "family": "comment",
                 "subset": "main"
+            }
+        },
+        "FrameMain": {
+            "editable": "1",
+            "note": "Publishing a frame subset.",
+            "icon": "z_layer_main.png",
+            "metadata": {
+                "family": "frame",
+                "subset": "main",
+                "format": "png"
             }
         }
     }
@@ -141,7 +141,7 @@ def add_tags_to_workfile():
     nks_pres_tags = tag_data()
 
     # Get project task types.
-    tasks = io.find_one({"type": "project"})["config"]["tasks"]
+    tasks = legacy_io.find_one({"type": "project"})["config"]["tasks"]
     nks_pres_tags["[Tasks]"] = {}
     log.debug("__ tasks: {}".format(tasks))
     for task_type in tasks.keys():
@@ -159,7 +159,7 @@ def add_tags_to_workfile():
     # asset builds and shots.
     if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) == 1:
         nks_pres_tags["[AssetBuilds]"] = {}
-        for asset in io.find({"type": "asset"}):
+        for asset in legacy_io.find({"type": "asset"}):
             if asset["data"]["entityType"] == "AssetBuild":
                 nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
                     "editable": "1",

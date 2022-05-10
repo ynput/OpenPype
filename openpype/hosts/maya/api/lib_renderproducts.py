@@ -79,6 +79,7 @@ IMAGE_PREFIXES = {
     "redshift": "defaultRenderGlobals.imageFilePrefix",
 }
 
+RENDERMAN_IMAGE_DIR = "maya/<scene>/<layer>"
 
 @attr.s
 class LayerMetadata(object):
@@ -1054,6 +1055,8 @@ class RenderProductsRenderman(ARenderProducts):
             :func:`ARenderProducts.get_render_products()`
 
         """
+        from rfm2.api.displays import get_displays  # noqa
+
         cameras = [
             self.sanitize_camera_name(c)
             for c in self.get_renderable_cameras()
@@ -1066,42 +1069,56 @@ class RenderProductsRenderman(ARenderProducts):
             ]
         products = []
 
-        default_ext = "exr"
-        displays = cmds.listConnections("rmanGlobals.displays")
-        for aov in displays:
-            enabled = self._get_attr(aov, "enabled")
+        # NOTE: This is guessing extensions from renderman display types.
+        #       Some of them are just framebuffers, d_texture format can be
+        #       set in display setting. We set those now to None, but it
+        #       should be handled more gracefully.
+        display_types = {
+            "d_deepexr": "exr",
+            "d_it": None,
+            "d_null": None,
+            "d_openexr": "exr",
+            "d_png": "png",
+            "d_pointcloud": "ptc",
+            "d_targa": "tga",
+            "d_texture": None,
+            "d_tiff": "tif"
+        }
+
+        displays = get_displays()["displays"]
+        for name, display in displays.items():
+            enabled = display["params"]["enable"]["value"]
             if not enabled:
                 continue
 
-            aov_name = str(aov)
+            aov_name = name
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
 
+            extensions = display_types.get(
+                display["driverNode"]["type"], "exr")
+
             for camera in cameras:
                 product = RenderProduct(productName=aov_name,
-                                        ext=default_ext,
+                                        ext=extensions,
                                         camera=camera)
                 products.append(product)
 
         return products
 
-    def get_files(self, product, camera):
+    def get_files(self, product):
         """Get expected files.
 
-        In renderman we hack it with prepending path. This path would
-        normally be translated from `rmanGlobals.imageOutputDir`. We skip
-        this and hardcode prepend path we expect. There is no place for user
-        to mess around with this settings anyway and it is enforced in
-        render settings validator.
         """
-        files = super(RenderProductsRenderman, self).get_files(product, camera)
+        files = super(RenderProductsRenderman, self).get_files(product)
 
         layer_data = self.layer_data
         new_files = []
+
+        resolved_image_dir = re.sub("<scene>", layer_data.sceneName, RENDERMAN_IMAGE_DIR, flags=re.IGNORECASE)  # noqa: E501
+        resolved_image_dir = re.sub("<layer>", layer_data.layerName, resolved_image_dir, flags=re.IGNORECASE)  # noqa: E501
         for file in files:
-            new_file = "{}/{}/{}".format(
-                layer_data["sceneName"], layer_data["layerName"], file
-            )
+            new_file = "{}/{}".format(resolved_image_dir, file)
             new_files.append(new_file)
 
         return new_files

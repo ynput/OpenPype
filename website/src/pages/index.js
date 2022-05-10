@@ -148,6 +148,11 @@ const studios = [
       title: "Ember Light",
       image: "/img/EmberLight_black.png",
       infoLink: "https://emberlight.se/",
+  },
+  {
+      title: "IGG Canada",
+      image: "/img/igg-logo.png",
+      infoLink: "https://www.igg.com/",
   }
 ];
 

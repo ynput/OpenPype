@@ -1,11 +1,12 @@
 """Houdini-specific USD Library functions."""
 
 import contextlib
-
 import logging
+
 from Qt import QtWidgets, QtCore, QtGui
-from avalon import io
+
 from openpype import style
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 
 from pxr import Sdf
@@ -20,11 +21,12 @@ class SelectAssetDialog(QtWidgets.QWidget):
     Args:
         parm: Parameter where selected asset name is set.
     """
+
     def __init__(self, parm):
         self.setWindowTitle("Pick Asset")
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.Popup)
 
-        assets_widget = SingleSelectAssetsWidget(io, parent=self)
+        assets_widget = SingleSelectAssetsWidget(legacy_io, parent=self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(assets_widget)
@@ -44,7 +46,7 @@ class SelectAssetDialog(QtWidgets.QWidget):
         select_id = None
         name = self._parm.eval()
         if name:
-            db_asset = io.find_one(
+            db_asset = legacy_io.find_one(
                 {"name": name, "type": "asset"},
                 {"_id": True}
             )

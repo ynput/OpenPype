@@ -1,6 +1,8 @@
 import os
 import random
 import string
+from collections import OrderedDict
+from abc import abstractmethod
 
 import nuke
 
@@ -256,8 +258,6 @@ class ExporterReview(object):
             return nuke_imageio["baking"]["viewerProcess"]
         else:
             return nuke_imageio["viewer"]["viewerProcess"]
-
-
 
 
 class ExporterReviewLut(ExporterReview):
@@ -594,3 +594,142 @@ class ExporterReviewMov(ExporterReview):
         nuke.scriptSave()
 
         return self.data
+
+
+class AbstractWriteRender(OpenPypeCreator):
+    """Abstract creator to gather similar implementation for Write creators"""
+    name = ""
+    label = ""
+    hosts = ["nuke"]
+    n_class = "Write"
+    family = "render"
+    icon = "sign-out"
+    defaults = ["Main", "Mask"]
+    knobs = []
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractWriteRender, self).__init__(*args, **kwargs)
+
+        data = OrderedDict()
+
+        data["family"] = self.family
+        data["families"] = self.n_class
+
+        for k, v in self.data.items():
+            if k not in data.keys():
+                data.update({k: v})
+
+        self.data = data
+        self.nodes = nuke.selectedNodes()
+        self.log.debug("_ self.data: '{}'".format(self.data))
+
+    def process(self):
+
+        inputs = []
+        outputs = []
+        instance = nuke.toNode(self.data["subset"])
+        selected_node = None
+
+        # use selection
+        if (self.options or {}).get("useSelection"):
+            nodes = self.nodes
+
+            if not (len(nodes) < 2):
+                msg = ("Select only one node. "
+                       "The node you want to connect to, "
+                       "or tick off `Use selection`")
+                self.log.error(msg)
+                nuke.message(msg)
+                return
+
+            if len(nodes) == 0:
+                msg = (
+                    "No nodes selected. Please select a single node to connect"
+                    " to or tick off `Use selection`"
+                )
+                self.log.error(msg)
+                nuke.message(msg)
+                return
+
+            selected_node = nodes[0]
+            inputs = [selected_node]
+            outputs = selected_node.dependent()
+
+            if instance:
+                if (instance.name() in selected_node.name()):
+                    selected_node = instance.dependencies()[0]
+
+        # if node already exist
+        if instance:
+            # collect input / outputs
+            inputs = instance.dependencies()
+            outputs = instance.dependent()
+            selected_node = inputs[0]
+            # remove old one
+            nuke.delete(instance)
+
+        # recreate new
+        write_data = {
+            "nodeclass": self.n_class,
+            "families": [self.family],
+            "avalon": self.data,
+            "subset": self.data["subset"],
+            "knobs": self.knobs
+        }
+
+        # add creator data
+        creator_data = {"creator": self.__class__.__name__}
+        self.data.update(creator_data)
+        write_data.update(creator_data)
+
+        if self.presets.get('fpath_template'):
+            self.log.info("Adding template path from preset")
+            write_data.update(
+                {"fpath_template": self.presets["fpath_template"]}
+            )
+        else:
+            self.log.info("Adding template path from plugin")
+            write_data.update({
+                "fpath_template":
+                    ("{work}/" + self.family + "s/nuke/{subset}"
+                     "/{subset}.{frame}.{ext}")})
+
+        write_node = self._create_write_node(selected_node,
+                                             inputs, outputs,
+                                             write_data)
+
+        # relinking to collected connections
+        for i, input in enumerate(inputs):
+            write_node.setInput(i, input)
+
+        write_node.autoplace()
+
+        for output in outputs:
+            output.setInput(0, write_node)
+
+        write_node = self._modify_write_node(write_node)
+
+        return write_node
+
+    @abstractmethod
+    def _create_write_node(self, selected_node, inputs, outputs, write_data):
+        """Family dependent implementation of Write node creation
+
+        Args:
+            selected_node (nuke.Node)
+            inputs (list of nuke.Node) - input dependencies (what is connected)
+            outputs (list of nuke.Node) - output dependencies
+            write_data (dict) - values used to fill Knobs
+        Returns:
+            node (nuke.Node): group node with  data as Knobs
+        """
+        pass
+
+    @abstractmethod
+    def _modify_write_node(self, write_node):
+        """Family dependent modification of created 'write_node'
+
+        Returns:
+            node (nuke.Node): group node with data as Knobs
+        """
+        pass

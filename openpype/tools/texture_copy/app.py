@@ -1,14 +1,12 @@
 import os
 import re
 import click
-from avalon import io, api
-from pprint import pprint
+
+import speedcopy
 
 from openpype.lib import Terminal
 from openpype.api import Anatomy
-
-import shutil
-import speedcopy
+from openpype.pipeline import legacy_io
 
 
 t = Terminal()
@@ -20,8 +18,8 @@ texture_extensions = ['.tif', '.tiff', '.jpg', '.jpeg', '.tx', '.png', '.tga',
 class TextureCopy:
 
     def __init__(self):
-        if not io.Session:
-            io.install()
+        if not legacy_io.Session:
+            legacy_io.install()
 
     def _get_textures(self, path):
         textures = []
@@ -32,14 +30,14 @@ class TextureCopy:
         return textures
 
     def _get_project(self, project_name):
-        project = io.find_one({
+        project = legacy_io.find_one({
             'type': 'project',
             'name': project_name
         })
         return project
 
     def _get_asset(self, asset_name):
-        asset = io.find_one({
+        asset = legacy_io.find_one({
             'type': 'asset',
             'name': asset_name
         })

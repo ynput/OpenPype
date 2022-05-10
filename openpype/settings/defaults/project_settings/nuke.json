@@ -21,7 +21,8 @@
             "defaults": [
                 "Main",
                 "Mask"
-            ]
+            ],
+            "knobs": []
         },
         "CreateWritePrerender": {
             "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
@@ -33,7 +34,8 @@
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false
+            "reviewable": false,
+            "knobs": []
         }
     },
     "publish": {
@@ -120,7 +122,7 @@
                     "filter": {
                         "task_types": [],
                         "families": [],
-                        "sebsets": []
+                        "subsets": []
                     },
                     "read_raw": false,
                     "viewer_process_override": "",
@@ -160,7 +162,21 @@
             }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "key_value_mapping": {
+                "f_submission_note": [
+                    true,
+                    "{comment}"
+                ],
+                "f_submitting_for": [
+                    true,
+                    "{intent[value]}"
+                ],
+                "f_vfx_scope_of_work": [
+                    false,
+                    ""
+                ]
+            }
         },
         "IncrementScriptVersion": {
             "enabled": true,
@@ -206,11 +222,12 @@
                         "repre_names": [
                             "exr",
                             "dpx",
-                            "mov"
+                            "mov",
+                            "mp4",
+                            "h264"
                         ],
                         "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
+                            "LoadClip"
                         ]
                     }
                 ],

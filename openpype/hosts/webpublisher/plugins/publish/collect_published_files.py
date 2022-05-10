@@ -12,7 +12,6 @@ import clique
 import tempfile
 import math
 
-from avalon import io
 import pyblish.api
 from openpype.lib import (
     prepare_template_data,
@@ -24,6 +23,7 @@ from openpype.lib.plugin_tools import (
     parse_json,
     get_subset_name_with_asset_doc
 )
+from openpype.pipeline import legacy_io
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -40,7 +40,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
     label = "Collect rendered frames"
-    host = ["webpublisher"]
+    hosts = ["webpublisher"]
     targets = ["filespublish"]
 
     # from Settings
@@ -61,6 +61,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         task_name = context.data["task"]
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
+        variant = context.data["variant"]
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
@@ -76,7 +77,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension.replace(".", ''))
 
             subset_name = get_subset_name_with_asset_doc(
-                family, task_data["variant"], task_name, asset_doc,
+                family, variant, task_name, asset_doc,
                 project_name=project_name, host_name="webpublisher"
             )
             version = self._get_last_version(asset_name, subset_name) + 1
@@ -108,15 +109,18 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"], tags
                 )
-                file_url = os.path.join(task_dir, task_data["files"][0])
-                no_of_frames = self._get_number_of_frames(file_url)
-                if no_of_frames:
+                if family != 'workfile':
+                    file_url = os.path.join(task_dir, task_data["files"][0])
                     try:
-                        frame_end = int(frame_start) + math.ceil(no_of_frames)
-                        instance.data["frameEnd"] = math.ceil(frame_end) - 1
-                        self.log.debug("frameEnd:: {}".format(
-                            instance.data["frameEnd"]))
-                    except ValueError:
+                        no_of_frames = self._get_number_of_frames(file_url)
+                        if no_of_frames:
+                            frame_end = int(frame_start) + \
+                                        math.ceil(no_of_frames)
+                            frame_end = math.ceil(frame_end) - 1
+                            instance.data["frameEnd"] = frame_end
+                            self.log.debug("frameEnd:: {}".format(
+                                instance.data["frameEnd"]))
+                    except Exception:
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
@@ -258,7 +262,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 }
             }
         ]
-        version = list(io.aggregate(query))
+        version = list(legacy_io.aggregate(query))
 
         if version:
             return version[0].get("version") or 0
