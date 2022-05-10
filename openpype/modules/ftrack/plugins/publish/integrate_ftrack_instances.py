@@ -3,6 +3,7 @@ import json
 import copy
 import pyblish.api
 
+from openpype.lib import get_ffprobe_streams
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -142,6 +143,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Create thumbnail components
         # TODO what if there is multiple thumbnails?
         first_thumbnail_component = None
+        first_thumbnail_component_repre = None
         for repre in thumbnail_representations:
             published_path = repre.get("published_path")
             if not published_path:
@@ -169,11 +171,44 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             src_components_to_add.append(copy.deepcopy(thumbnail_item))
             # Create copy of first thumbnail
             if first_thumbnail_component is None:
-                first_thumbnail_component = copy.deepcopy(thumbnail_item)
+                first_thumbnail_component_repre = repre
+                first_thumbnail_component = thumbnail_item
             # Set location
             thumbnail_item["component_location"] = ftrack_server_location
             # Add item to component list
             component_list.append(thumbnail_item)
+
+        if first_thumbnail_component is not None:
+            width = first_thumbnail_component_repre.get("width")
+            height = first_thumbnail_component_repre.get("height")
+            if not width or not height:
+                component_path = first_thumbnail_component["component_path"]
+                streams = []
+                try:
+                    streams = get_ffprobe_streams(component_path)
+                except Exception:
+                    self.log.debug(
+                        "Failed to retrieve information about intput {}".format(
+                            component_path
+                        )
+                    )
+
+                for stream in streams:
+                    if "width" in stream and "height" in stream:
+                        width = stream["width"]
+                        height = stream["height"]
+                        break
+
+            if width and height:
+                component_data = first_thumbnail_component["component_data"]
+                component_data["name"] = "ftrackreview-image"
+                component_data["metadata"] = {
+                    "ftr_meta": json.dumps({
+                        "width": width,
+                        "height": height,
+                        "format": "image"
+                    })
+                }
 
         # Create review components
         # Change asset name of each new component for review
