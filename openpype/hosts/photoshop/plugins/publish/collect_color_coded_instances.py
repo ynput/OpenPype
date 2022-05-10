@@ -151,6 +151,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         instance.data["task"] = task_name
         instance.data["subset"] = subset
         instance.data["layer"] = layer
+        instance.data["families"] = []
 
         return instance
 
