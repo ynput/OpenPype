@@ -28,6 +28,16 @@ class PSItem(object):
     long_name = attr.ib(default=None)
     color_code = attr.ib(default=None)  # color code of layer
 
+    @property
+    def clean_name(self):
+        """Returns layer name without publish icon highlight
+
+        Returns:
+            (str)
+        """
+        return (self.name.replace(PhotoshopServerStub.PUBLISH_ICON, '')
+                         .replace(PhotoshopServerStub.LOADED_ICON, ''))
+
 
 class PhotoshopServerStub:
     """
