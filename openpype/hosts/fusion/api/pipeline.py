@@ -7,14 +7,14 @@ import logging
 import contextlib
 
 import pyblish.api
-import avalon.api
 
 from openpype.api import Logger
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
-    deregister_loader_plugin_path,
+    register_creator_plugin_path,
     register_inventory_action_path,
+    deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
@@ -45,7 +45,8 @@ def install():
     This is where you install menus and register families, data
     and loaders into fusion.
 
-    It is called automatically when installing via `api.install(avalon.fusion)`
+    It is called automatically when installing via
+    `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
 
     See the Maya equivalent for inspiration on how to implement this.
 
@@ -70,7 +71,7 @@ def install():
     log.info("Registering Fusion plug-ins..")
 
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     register_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.register_callback(
@@ -94,7 +95,7 @@ def uninstall():
     log.info("Deregistering Fusion plug-ins..")
 
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(

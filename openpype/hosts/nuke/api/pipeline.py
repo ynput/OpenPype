@@ -5,7 +5,6 @@ from collections import OrderedDict
 import nuke
 
 import pyblish.api
-import avalon.api
 
 import openpype
 from openpype.api import (
@@ -15,10 +14,11 @@ from openpype.api import (
 )
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     register_inventory_action_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
@@ -32,13 +32,12 @@ from .lib import (
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
-    read,
+    read_avalon_data,
     Context
 )
 
 log = Logger.get_logger(__name__)
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -79,11 +78,11 @@ def reload_config():
     """
 
     for module in (
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.actions".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.menu".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.plugin".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.lib".format(AVALON_CONFIG),
+        "openpype.api",
+        "openpype.hosts.nuke.api.actions",
+        "openpype.hosts.nuke.api.menu",
+        "openpype.hosts.nuke.api.plugin",
+        "openpype.hosts.nuke.api.lib",
     ):
         log.info("Reloading module: {}...".format(module))
 
@@ -106,7 +105,7 @@ def install():
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     register_inventory_action_path(INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
@@ -132,7 +131,7 @@ def uninstall():
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(
@@ -360,7 +359,7 @@ def parse_container(node):
         dict: The container schema data for this container node.
 
     """
-    data = read(node)
+    data = read_avalon_data(node)
 
     # (TODO) Remove key validation when `ls` has re-implemented.
     #

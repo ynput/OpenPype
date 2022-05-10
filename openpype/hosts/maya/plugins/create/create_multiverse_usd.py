@@ -5,7 +5,7 @@ class CreateMultiverseUsd(plugin.Creator):
     """Create Multiverse USD Asset"""
 
     name = "usdMain"
-    label = "Multiverse USD"
+    label = "Multiverse USD Asset"
     family = "usd"
     icon = "cubes"
 

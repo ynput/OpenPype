@@ -128,6 +128,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_traypublisher"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_webpublisher"
                 },
                 {

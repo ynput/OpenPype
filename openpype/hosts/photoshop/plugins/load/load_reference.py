@@ -61,7 +61,7 @@ class ReferenceLoader(photoshop.PhotoshopLoader):
             )
 
         stub.imprint(
-            layer, {"representation": str(representation["_id"])}
+            layer.id, {"representation": str(representation["_id"])}
         )
 
     def remove(self, container):
@@ -72,7 +72,7 @@ class ReferenceLoader(photoshop.PhotoshopLoader):
         """
         stub = self.get_stub()
         layer = container.pop("layer")
-        stub.imprint(layer, {})
+        stub.imprint(layer.id, {})
         stub.delete_layer(layer.id)
 
     def switch(self, container, representation):

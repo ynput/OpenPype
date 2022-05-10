@@ -1,5 +1,5 @@
 from pyblish import api
-from avalon import io
+from openpype.pipeline import legacy_io
 
 
 class CollectAssetBuilds(api.ContextPlugin):
@@ -18,7 +18,7 @@ class CollectAssetBuilds(api.ContextPlugin):
 
     def process(self, context):
         asset_builds = {}
-        for asset in io.find({"type": "asset"}):
+        for asset in legacy_io.find({"type": "asset"}):
             if asset["data"]["entityType"] == "AssetBuild":
                 self.log.debug("Found \"{}\" in database.".format(asset))
                 asset_builds[asset["name"]] = asset

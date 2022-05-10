@@ -687,6 +687,26 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
+/* Messages overlay */
+#OverlayMessageWidget {
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+
+#OverlayMessageWidget:hover {
+    background: {color:bg-button-hover};
+}
+#OverlayMessageWidget {
+    background: {color:overlay-messages:bg-success};
+}
+#OverlayMessageWidget:hover {
+    background: {color:overlay-messages:bg-success-hover};
+}
+
+#OverlayMessageWidget QWidget {
+    background: transparent;
+}
+
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -852,7 +872,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #PublishLogConsole {
     font-family: "Noto Sans Mono";
 }
-
+VariantInputsWidget QLineEdit {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+}
+VariantInputsWidget QToolButton {
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
 }
@@ -1269,6 +1298,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: #21252B;
 }
 
+/* Workfiles */
+#WorkfilesPublishedContextSelect {
+    background: rgba(0, 0, 0, 127);
+}
+#WorkfilesPublishedContextSelect QLabel {
+    font-size: 17pt;
+}
+
 /* Tray */
 #TrayRestartButton {
     background: {color:restart-btn-bg};
@@ -1322,4 +1359,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 #LikeDisabledInput:focus {
     border-color: {color:border};
+}
+
+/* Attribute Definition widgets */
+InViewButton, InViewButton:disabled {
+    background: transparent;
+}
+InViewButton:hover {
+    background: rgba(255, 255, 255, 37);
 }

@@ -9,7 +9,6 @@ from .exceptions import (
 )
 from .constants import (
     M_OVERRIDDEN_KEY,
-    M_ENVIRONMENT_KEY,
 
     METADATA_KEYS,
 
@@ -265,11 +264,43 @@ def save_project_anatomy(project_name, anatomy_data):
         raise SaveWarningExc(warnings)
 
 
+def _system_settings_backwards_compatible_conversion(studio_overrides):
+    # Backwards compatibility of tools 3.9.1 - 3.9.2 to keep
+    #   "tools" environments
+    if (
+        "tools" in studio_overrides
+        and "tool_groups" in studio_overrides["tools"]
+    ):
+        tool_groups = studio_overrides["tools"]["tool_groups"]
+        for tool_group, group_value in tool_groups.items():
+            if tool_group in METADATA_KEYS:
+                continue
+
+            variants = group_value.get("variants")
+            if not variants:
+                continue
+
+            for key in set(variants.keys()):
+                if key in METADATA_KEYS:
+                    continue
+
+                variant_value = variants[key]
+                if "environment" not in variant_value:
+                    variants[key] = {
+                        "environment": variant_value
+                    }
+
+
 @require_handler
 def get_studio_system_settings_overrides(return_version=False):
-    return _SETTINGS_HANDLER.get_studio_system_settings_overrides(
+    output = _SETTINGS_HANDLER.get_studio_system_settings_overrides(
         return_version
     )
+    value = output
+    if return_version:
+        value, version = output
+    _system_settings_backwards_compatible_conversion(value)
+    return output
 
 
 @require_handler
@@ -425,24 +456,6 @@ def get_local_settings():
     return _LOCAL_SETTINGS_HANDLER.get_local_settings()
 
 
-class DuplicatedEnvGroups(Exception):
-    def __init__(self, duplicated):
-        self.origin_duplicated = duplicated
-        self.duplicated = {}
-        for key, items in duplicated.items():
-            self.duplicated[key] = []
-            for item in items:
-                self.duplicated[key].append("/".join(item["parents"]))
-
-        msg = "Duplicated environment group keys. {}".format(
-            ", ".join([
-                "\"{}\"".format(env_key) for env_key in self.duplicated.keys()
-            ])
-        )
-
-        super(DuplicatedEnvGroups, self).__init__(msg)
-
-
 def load_openpype_default_settings():
     """Load openpype default settings."""
     return load_jsons_from_dir(DEFAULTS_DIR)
@@ -590,69 +603,6 @@ def load_jsons_from_dir(path, *args, **kwargs):
     for sub_key in sub_keys:
         output = output[sub_key]
     return output
-
-
-def find_environments(data, with_items=False, parents=None):
-    """ Find environemnt values from system settings by it's metadata.
-
-    Args:
-        data(dict): System settings data or dictionary which may contain
-            environments metadata.
-
-    Returns:
-        dict: Key as Environment key and value for `acre` module.
-    """
-    if not data or not isinstance(data, dict):
-        return {}
-
-    output = {}
-    if parents is None:
-        parents = []
-
-    if M_ENVIRONMENT_KEY in data:
-        metadata = data.get(M_ENVIRONMENT_KEY)
-        for env_group_key, env_keys in metadata.items():
-            if env_group_key not in output:
-                output[env_group_key] = []
-
-            _env_values = {}
-            for key in env_keys:
-                _env_values[key] = data[key]
-
-            item = {
-                "env": _env_values,
-                "parents": parents[:-1]
-            }
-            output[env_group_key].append(item)
-
-    for key, value in data.items():
-        _parents = copy.deepcopy(parents)
-        _parents.append(key)
-        result = find_environments(value, True, _parents)
-        if not result:
-            continue
-
-        for env_group_key, env_values in result.items():
-            if env_group_key not in output:
-                output[env_group_key] = []
-
-            for env_values_item in env_values:
-                output[env_group_key].append(env_values_item)
-
-    if with_items:
-        return output
-
-    duplicated_env_groups = {}
-    final_output = {}
-    for key, value_in_list in output.items():
-        if len(value_in_list) > 1:
-            duplicated_env_groups[key] = value_in_list
-        else:
-            final_output[key] = value_in_list[0]["env"]
-
-    if duplicated_env_groups:
-        raise DuplicatedEnvGroups(duplicated_env_groups)
-    return final_output
 
 
 def subkey_merge(_dict, value, keys):
@@ -1050,19 +1000,6 @@ def get_current_project_settings():
     return get_project_settings(project_name)
 
 
-def get_environments():
-    """Calculated environment based on defaults and system settings.
-
-    Any default environment also found in the system settings will be fully
-    overridden by the one from the system settings.
-
-    Returns:
-        dict: Output should be ready for `acre` module.
-    """
-
-    return find_environments(get_system_settings(False))
-
-
 def get_general_environments():
     """Get general environments.
 
@@ -1080,6 +1017,14 @@ def get_general_environments():
     environments = result["general"]["environment"]
 
     clear_metadata_from_settings(environments)
+
+    whitelist_envs = result["general"].get("local_env_white_list")
+    if whitelist_envs:
+        local_settings = get_local_settings()
+        local_envs = local_settings.get("environments") or {}
+        for key, value in local_envs.items():
+            if key in whitelist_envs and key in environments:
+                environments[key] = value
 
     return environments
 

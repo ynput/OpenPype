@@ -106,7 +106,8 @@ install_requires = [
     "dns",
     # Python defaults (cx_Freeze skip them by default)
     "dbm",
-    "sqlite3"
+    "sqlite3",
+    "dataclasses"
 ]
 
 includes = []
@@ -123,7 +124,6 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
-    "repos",
     "schema",
     "LICENSE",
     "README.md"
@@ -187,5 +187,6 @@ setup(
             "build_dir": (openpype_root / "docs" / "build").as_posix()
         }
     },
-    executables=executables
+    executables=executables,
+    packages=[]
 )

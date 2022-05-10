@@ -73,6 +73,11 @@ class ExtractPlayblast(openpype.api.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
+        # Override transparency if requested.
+        transparency = instance.data.get("transparency", 0)
+        if transparency != 0:
+            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
         # Isolate view is requested by having objects in the set besides a
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):

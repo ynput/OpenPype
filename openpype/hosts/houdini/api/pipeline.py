@@ -4,14 +4,11 @@ import logging
 import contextlib
 
 import hou
-import hdefereval
 
 import pyblish.api
-import avalon.api
-from avalon.lib import find_submodule
 
 from openpype.pipeline import (
-    LegacyCreator,
+    register_creator_plugin_path,
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
@@ -54,7 +51,7 @@ def install():
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
     log.info("Installing callbacks ... ")
     # register_event_callback("init", on_init)
@@ -215,24 +212,12 @@ def ls():
                        "pyblish.mindbender.container"):
         containers += lib.lsattr("id", identifier)
 
-    has_metadata_collector = False
-    config_host = find_submodule(avalon.api.registered_config(), "houdini")
-    if hasattr(config_host, "collect_container_metadata"):
-        has_metadata_collector = True
-
     for container in sorted(containers,
                             # Hou 19+ Python 3 hou.ObjNode are not
                             # sortable due to not supporting greater
                             # than comparisons
                             key=lambda node: node.path()):
-        data = parse_container(container)
-
-        # Collect custom data if attribute is present
-        if has_metadata_collector:
-            metadata = config_host.collect_container_metadata(container)
-            data.update(metadata)
-
-        yield data
+        yield parse_container(container)
 
 
 def before_save():
@@ -305,7 +290,13 @@ def on_new():
         start = hou.playbar.playbackRange()[0]
         hou.setFrame(start)
 
-    hdefereval.executeDeferred(_enforce_start_frame)
+    if hou.isUIAvailable():
+        import hdefereval
+        hdefereval.executeDeferred(_enforce_start_frame)
+    else:
+        # Run without execute deferred when no UI is available because
+        # without UI `hdefereval` is not available to import
+        _enforce_start_frame()
 
 
 def _set_context_settings():

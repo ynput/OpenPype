@@ -1,11 +1,8 @@
 import os
+import collections
+import copy
+from openpype.api import Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
-from avalon import lib as avalonlib
-from openpype.api import (
-    Anatomy,
-    get_project_settings
-)
-from openpype.lib import ApplicationManager
 
 
 class CreateFolders(BaseAction):
@@ -14,55 +11,59 @@ class CreateFolders(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "CreateFolders.svg")
 
     def discover(self, session, entities, event):
-        if len(entities) != 1:
-            return False
-
-        not_allowed = ["assetversion", "project"]
-        if entities[0].entity_type.lower() in not_allowed:
-            return False
-
-        return True
+        for entity_item in event["data"]["selection"]:
+            if entity_item.get("entityType").lower() in ("task", "show"):
+                return True
+        return False
 
     def interface(self, session, entities, event):
         if event["data"].get("values", {}):
             return
-        entity = entities[0]
-        without_interface = True
-        for child in entity["children"]:
-            if child["object_type"]["name"].lower() != "task":
-                without_interface = False
+
+        with_interface = False
+        for entity in entities:
+            if entity.entity_type.lower() != "task":
+                with_interface = True
                 break
-        self.without_interface = without_interface
-        if without_interface:
+
+        if "values" not in event["data"]:
+            event["data"]["values"] = {}
+
+        event["data"]["values"]["with_interface"] = with_interface
+        if not with_interface:
             return
+
         title = "Create folders"
 
         entity_name = entity["name"]
         msg = (
             "<h2>Do you want create folders also"
-            " for all children of \"{}\"?</h2>"
+            " for all children of your selection?</h2>"
         )
         if entity.entity_type.lower() == "project":
             entity_name = entity["full_name"]
             msg = msg.replace(" also", "")
             msg += "<h3>(Project root won't be created if not checked)</h3>"
-        items = []
-        item_msg = {
-            "type": "label",
-            "value": msg.format(entity_name)
-        }
-        item_label = {
-            "type": "label",
-            "value": "With all chilren entities"
-        }
-        item = {
-            "name": "children_included",
-            "type": "boolean",
-            "value": False
-        }
-        items.append(item_msg)
-        items.append(item_label)
-        items.append(item)
+        items = [
+            {
+                "type": "label",
+                "value": msg.format(entity_name)
+            },
+            {
+                "type": "label",
+                "value": "With all chilren entities"
+            },
+            {
+                "name": "children_included",
+                "type": "boolean",
+                "value": False
+            },
+            {
+                "type": "hidden",
+                "name": "with_interface",
+                "value": with_interface
+            }
+        ]
 
         return {
             "items": items,
@@ -71,30 +72,47 @@ class CreateFolders(BaseAction):
 
     def launch(self, session, entities, event):
         '''Callback method for custom action.'''
+
+        if "values" not in event["data"]:
+            return
+
+        with_interface = event["data"]["values"]["with_interface"]
         with_childrens = True
-        if self.without_interface is False:
-            if "values" not in event["data"]:
-                return
+        if with_interface:
             with_childrens = event["data"]["values"]["children_included"]
 
-        entity = entities[0]
-        if entity.entity_type.lower() == "project":
-            proj = entity
-        else:
-            proj = entity["project"]
-        project_name = proj["full_name"]
-        project_code = proj["name"]
+        filtered_entities = []
+        for entity in entities:
+            low_context_type = entity["context_type"].lower()
+            if low_context_type in ("task", "show"):
+                if not with_childrens and low_context_type == "show":
+                    continue
+                filtered_entities.append(entity)
 
-        if entity.entity_type.lower() == 'project' and with_childrens is False:
+        if not filtered_entities:
             return {
-                'success': True,
-                'message': 'Nothing was created'
+                "success": True,
+                "message": 'Nothing was created'
             }
 
-        all_entities = []
-        all_entities.append(entity)
-        if with_childrens:
-            all_entities = self.get_notask_children(entity)
+        project_entity = self.get_project_from_entity(filtered_entities[0])
+
+        project_name = project_entity["full_name"]
+        project_code = project_entity["name"]
+
+        task_entities = []
+        other_entities = []
+        self.get_all_entities(
+            session, entities, task_entities, other_entities
+        )
+        hierarchy = self.get_entities_hierarchy(
+            session, task_entities, other_entities
+        )
+        task_types = session.query("select id, name from Type").all()
+        task_type_names_by_id = {
+            task_type["id"]: task_type["name"]
+            for task_type in task_types
+        }
 
         anatomy = Anatomy(project_name)
 
@@ -102,77 +120,67 @@ class CreateFolders(BaseAction):
         work_template = anatomy.templates
         for key in work_keys:
             work_template = work_template[key]
-        work_has_apps = "{app" in work_template
 
         publish_keys = ["publish", "folder"]
         publish_template = anatomy.templates
         for key in publish_keys:
             publish_template = publish_template[key]
-        publish_has_apps = "{app" in publish_template
+
+        project_data = {
+            "project": {
+                "name": project_name,
+                "code": project_code
+            }
+        }
 
         collected_paths = []
-        for entity in all_entities:
-            if entity.entity_type.lower() == "project":
-                continue
-            ent_data = {
-                "project": {
-                    "name": project_name,
-                    "code": project_code
-                }
-            }
+        for item in hierarchy:
+            parent_entity, task_entities = item
 
-            ent_data["asset"] = entity["name"]
+            parent_data = copy.deepcopy(project_data)
 
-            parents = entity["link"][1:-1]
+            parents = parent_entity["link"][1:-1]
             hierarchy_names = [p["name"] for p in parents]
-            hierarchy = ""
+            hierarchy = "/".join(hierarchy_names)
+
             if hierarchy_names:
-                hierarchy = os.path.sep.join(hierarchy_names)
-            ent_data["hierarchy"] = hierarchy
+                parent_name = hierarchy_names[-1]
+            else:
+                parent_name = project_name
 
-            tasks_created = False
-            for child in entity["children"]:
-                if child["object_type"]["name"].lower() != "task":
-                    continue
-                tasks_created = True
-                task_data = ent_data.copy()
-                task_data["task"] = child["name"]
+            parent_data.update({
+                "asset": parent_entity["name"],
+                "hierarchy": hierarchy,
+                "parent": parent_name
+            })
 
-                apps = []
-
-                # Template wok
-                if work_has_apps:
-                    app_data = task_data.copy()
-                    for app in apps:
-                        app_data["app"] = app
-                        collected_paths.append(self.compute_template(
-                            anatomy, app_data, work_keys
-                        ))
-                else:
-                    collected_paths.append(self.compute_template(
-                        anatomy, task_data, work_keys
-                    ))
-
-                # Template publish
-                if publish_has_apps:
-                    app_data = task_data.copy()
-                    for app in apps:
-                        app_data["app"] = app
-                        collected_paths.append(self.compute_template(
-                            anatomy, app_data, publish_keys
-                        ))
-                else:
-                    collected_paths.append(self.compute_template(
-                        anatomy, task_data, publish_keys
-                    ))
-
-            if not tasks_created:
+            if not task_entities:
                 # create path for entity
                 collected_paths.append(self.compute_template(
-                    anatomy, ent_data, work_keys
+                    anatomy, parent_data, work_keys
                 ))
                 collected_paths.append(self.compute_template(
-                    anatomy, ent_data, publish_keys
+                    anatomy, parent_data, publish_keys
+                ))
+                continue
+
+            for task_entity in task_entities:
+                task_type_id = task_entity["type_id"]
+                task_type_name = task_type_names_by_id[task_type_id]
+                task_data = copy.deepcopy(parent_data)
+                task_data["task"] = {
+                    "name": task_entity["name"],
+                    "type": task_type_name
+                }
+
+                # Template wok
+                collected_paths.append(self.compute_template(
+                    anatomy, task_data, work_keys
+                ))
+
+                # Template publish
+                collected_paths.append(self.compute_template(
+                    anatomy, task_data, publish_keys
                 ))
 
         if len(collected_paths) == 0:
@@ -193,14 +201,65 @@ class CreateFolders(BaseAction):
             "message": "Successfully created project folders."
         }
 
-    def get_notask_children(self, entity):
+    def get_all_entities(
+        self, session, entities, task_entities, other_entities
+    ):
+        if not entities:
+            return
+
+        no_task_entities = []
+        for entity in entities:
+            if entity.entity_type.lower() == "task":
+                task_entities.append(entity)
+            else:
+                no_task_entities.append(entity)
+
+        if not no_task_entities:
+            return task_entities
+
+        other_entities.extend(no_task_entities)
+
+        no_task_entity_ids = [entity["id"] for entity in no_task_entities]
+        next_entities = session.query((
+            "select id, parent_id"
+            " from TypedContext where parent_id in ({})"
+        ).format(self.join_query_keys(no_task_entity_ids))).all()
+
+        self.get_all_entities(
+            session, next_entities, task_entities, other_entities
+        )
+
+    def get_entities_hierarchy(self, session, task_entities, other_entities):
+        task_entity_ids = [entity["id"] for entity in task_entities]
+        full_task_entities = session.query((
+            "select id, name, type_id, parent_id"
+            " from TypedContext where id in ({})"
+        ).format(self.join_query_keys(task_entity_ids)))
+        task_entities_by_parent_id = collections.defaultdict(list)
+        for entity in full_task_entities:
+            parent_id = entity["parent_id"]
+            task_entities_by_parent_id[parent_id].append(entity)
+
         output = []
-        if entity.entity_type.lower() == "task":
+        if not task_entities_by_parent_id:
             return output
 
-        output.append(entity)
-        for child in entity["children"]:
-            output.extend(self.get_notask_children(child))
+        other_ids = set()
+        for entity in other_entities:
+            other_ids.add(entity["id"])
+        other_ids |= set(task_entities_by_parent_id.keys())
+
+        parent_entities = session.query((
+            "select id, name from TypedContext where id in ({})"
+        ).format(self.join_query_keys(other_ids))).all()
+
+        for parent_entity in parent_entities:
+            parent_id = parent_entity["id"]
+            output.append((
+                parent_entity,
+                task_entities_by_parent_id[parent_id]
+            ))
+
         return output
 
     def compute_template(self, anatomy, data, anatomy_keys):

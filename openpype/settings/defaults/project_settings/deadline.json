@@ -4,6 +4,10 @@
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": false
         },
+        "CollectDeadlinePools": {
+            "primary_pool": "",
+            "secondary_pool": ""
+        },
         "ValidateExpectedFiles": {
             "enabled": true,
             "active": true,
@@ -15,33 +19,6 @@
                 "deadline"
             ]
         },
-        "ProcessSubmittedJobOnFarm": {
-            "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
-            "publishing_script": "",
-            "skip_integration_repre_list": [],
-            "aov_filter": {
-                "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
-                ],
-                "nuke": [
-                    ".*"
-                ],
-                "aftereffects": [
-                    ".*"
-                ],
-                "celaction": [
-                    ".*"
-                ],
-                "harmony": [
-                    ".*"
-                ]
-            }
-        },
         "MayaSubmitDeadline": {
             "enabled": true,
             "optional": false,
@@ -49,6 +26,8 @@
             "tile_assembler_plugin": "OpenPypeTileAssembler",
             "use_published": true,
             "asset_dependencies": true,
+            "priority": 50,
+            "tile_priority": 50,
             "group": "none",
             "limit": [],
             "jobInfo": {},
@@ -62,8 +41,7 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "primary_pool": "",
-            "secondary_pool": "",
+            "concurrent_tasks": 1,
             "group": "",
             "department": "",
             "use_gpu": true,
@@ -78,8 +56,6 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10000,
-            "primary_pool": "",
-            "secondary_pool": "",
             "group": "",
             "department": ""
         },
@@ -90,11 +66,36 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10000,
-            "primary_pool": "",
-            "secondary_pool": "",
             "group": "",
             "department": "",
             "multiprocess": true
+        },
+        "ProcessSubmittedJobOnFarm": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_pool": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 1,
+            "deadline_priority": 50,
+            "publishing_script": "",
+            "skip_integration_repre_list": [],
+            "aov_filter": {
+                "maya": [
+                    ".*([Bb]eauty).*"
+                ],
+                "nuke": [
+                    ".*"
+                ],
+                "aftereffects": [
+                    ".*"
+                ],
+                "celaction": [
+                    ".*"
+                ],
+                "harmony": [
+                    ".*"
+                ]
+            }
         }
     }
 }

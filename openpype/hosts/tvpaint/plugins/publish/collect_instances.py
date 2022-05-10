@@ -1,10 +1,9 @@
-import os
 import json
 import copy
 import pyblish.api
-from avalon import io
 
 from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline import legacy_io
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -20,30 +19,57 @@ class CollectInstances(pyblish.api.ContextPlugin):
             json.dumps(workfile_instances, indent=4)
         ))
 
+        filtered_instance_data = []
         # Backwards compatibility for workfiles that already have review
         #   instance in metadata.
         review_instance_exist = False
         for instance_data in workfile_instances:
-            if instance_data["family"] == "review":
+            family = instance_data["family"]
+            if family == "review":
                 review_instance_exist = True
-                break
+
+            elif family not in ("renderPass", "renderLayer"):
+                self.log.info("Unknown family \"{}\". Skipping {}".format(
+                    family, json.dumps(instance_data, indent=4)
+                ))
+                continue
+
+            filtered_instance_data.append(instance_data)
 
         # Fake review instance if review was not found in metadata families
         if not review_instance_exist:
-            workfile_instances.append(
+            filtered_instance_data.append(
                 self._create_review_instance_data(context)
             )
 
-        for instance_data in workfile_instances:
+        for instance_data in filtered_instance_data:
             instance_data["fps"] = context.data["sceneFps"]
+
+            # Conversion from older instances
+            # - change 'render_layer' to 'renderlayer'
+            render_layer = instance_data.get("instance_data")
+            if not render_layer:
+                # Render Layer has only variant
+                if instance_data["family"] == "renderLayer":
+                    render_layer = instance_data.get("variant")
+
+                # Backwards compatibility for renderPasses
+                elif "render_layer" in instance_data:
+                    render_layer = instance_data["render_layer"]
+
+                if render_layer:
+                    instance_data["renderlayer"] = render_layer
 
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
             # Global instance data modifications
             # Fill families
             family = instance_data["family"]
+            families = [family]
+            if family != "review":
+                families.append("review")
             # Add `review` family for thumbnail integration
-            instance_data["families"] = [family, "review"]
+            instance_data["families"] = families
 
             # Instance name
             subset_name = instance_data["subset"]
@@ -70,7 +96,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # - not sure if it's good idea to require asset id in
                 #   get_subset_name?
                 asset_name = context.data["workfile_context"]["asset"]
-                asset_doc = io.find_one({
+                asset_doc = legacy_io.find_one({
                     "type": "asset",
                     "name": asset_name
                 })
@@ -78,10 +104,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # Project name from workfile context
                 project_name = context.data["workfile_context"]["project"]
                 # Host name from environment variable
-                host_name = os.environ["AVALON_APP"]
+                host_name = context.data["hostName"]
                 # Use empty variant value
                 variant = ""
-                task_name = io.Session["AVALON_TASK"]
+                task_name = legacy_io.Session["AVALON_TASK"]
                 new_subset_name = get_subset_name_with_asset_doc(
                     family,
                     variant,
@@ -105,12 +131,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             elif family == "renderPass":
                 instance = self.create_render_pass_instance(
                     context, instance_data
-                )
-            else:
-                raise AssertionError(
-                    "Instance with unknown family \"{}\": {}".format(
-                        family, instance_data
-                    )
                 )
 
             if instance is None:
@@ -151,7 +171,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Change subset name
             # Final family of an instance will be `render`
             new_family = "render"
-            task_name = io.Session["AVALON_TASK"]
+            task_name = legacy_io.Session["AVALON_TASK"]
             new_subset_name = "{}{}_{}_Beauty".format(
                 new_family, task_name.capitalize(), name
             )
@@ -186,7 +206,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             "Creating render pass instance. \"{}\"".format(pass_name)
         )
         # Change label
-        render_layer = instance_data["render_layer"]
+        render_layer = instance_data["renderlayer"]
 
         # Backwards compatibility
         # - subset names were not stored as final subset names during creation
@@ -196,7 +216,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Final family of an instance will be `render`
             new_family = "render"
             old_subset_name = instance_data["subset"]
-            task_name = io.Session["AVALON_TASK"]
+            task_name = legacy_io.Session["AVALON_TASK"]
             new_subset_name = "{}{}_{}_{}".format(
                 new_family, task_name.capitalize(), render_layer, pass_name
             )

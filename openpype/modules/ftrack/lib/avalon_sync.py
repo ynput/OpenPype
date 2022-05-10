@@ -6,16 +6,12 @@ import numbers
 
 import six
 
-from avalon.api import AvalonMongoDB
-
-import avalon
-
 from openpype.api import (
     Logger,
-    Anatomy,
     get_anatomy_settings
 )
 from openpype.lib import ApplicationManager
+from openpype.pipeline import AvalonMongoDB, schema
 
 from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
 from .custom_attributes import get_openpype_attr, query_custom_attributes
@@ -175,7 +171,7 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
 
     if not name_pattern:
         default_pattern = "^[a-zA-Z0-9_.]*$"
-        schema_obj = avalon.schema._cache.get(schema_name + ".json")
+        schema_obj = schema._cache.get(schema_name + ".json")
         if not schema_obj:
             name_pattern = default_pattern
         else:
@@ -284,21 +280,6 @@ def from_dict_to_set(data, is_project):
     if task_changes is not not_set and task_changes_key:
         result["$set"][task_changes_key] = task_changes
     return result
-
-
-def get_avalon_project_template(project_name):
-    """Get avalon template
-    Args:
-        project_name: (string)
-    Returns:
-        dictionary with templates
-    """
-    templates = Anatomy(project_name).templates
-    return {
-        "workfile": templates["avalon"]["workfile"],
-        "work": templates["avalon"]["work"],
-        "publish": templates["avalon"]["publish"]
-    }
 
 
 def get_project_apps(in_app_list):

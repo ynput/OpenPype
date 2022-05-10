@@ -7,7 +7,7 @@ from maya import cmds
 
 
 class ExtractMultiverseUsdOverride(openpype.api.Extractor):
-    """Extractor for USD Override by Multiverse."""
+    """Extractor for Multiverse USD Override."""
 
     label = "Extract Multiverse USD Override"
     hosts = ["maya"]

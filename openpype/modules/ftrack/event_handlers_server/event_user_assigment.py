@@ -1,10 +1,9 @@
-import os
 import re
 import subprocess
 
 from openpype_modules.ftrack.lib import BaseEvent
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 from bson.objectid import ObjectId
 

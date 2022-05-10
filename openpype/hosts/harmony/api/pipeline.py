@@ -5,15 +5,14 @@ import logging
 from bson.objectid import ObjectId
 import pyblish.api
 
-from avalon import io
-import avalon.api
-
 from openpype import lib
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
+    legacy_io,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 import openpype.hosts.harmony
@@ -108,11 +107,10 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = avalon.api.registered_host()
     outdated_containers = []
-    for container in host.ls():
+    for container in ls():
         representation = container['representation']
-        representation_doc = io.find_one(
+        representation_doc = legacy_io.find_one(
             {
                 "_id": ObjectId(representation),
                 "type": "representation"
@@ -186,7 +184,7 @@ def install():
     pyblish.api.register_host("harmony")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     # Register callbacks.
@@ -200,7 +198,7 @@ def install():
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):

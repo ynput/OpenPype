@@ -7,8 +7,12 @@ from Qt import QtCore, QtGui
 import qtawesome
 from bson.objectid import ObjectId
 
-from avalon import api, io, schema
-from openpype.pipeline import HeroVersionType
+from openpype.pipeline import (
+    legacy_io,
+    schema,
+    HeroVersionType,
+    registered_host,
+)
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.modules import ModulesManager
@@ -51,7 +55,7 @@ class InventoryModel(TreeModel):
         if not self.sync_enabled:
             return
 
-        project_name = io.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
         active_site = sync_server.get_active_site(project_name)
         remote_site = sync_server.get_remote_site(project_name)
 
@@ -181,7 +185,7 @@ class InventoryModel(TreeModel):
     def refresh(self, selected=None, items=None):
         """Refresh the model"""
 
-        host = api.registered_host()
+        host = registered_host()
         if not items:  # for debugging or testing, injecting items from outside
             items = host.ls()
 
@@ -300,32 +304,32 @@ class InventoryModel(TreeModel):
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
             # Get parenthood per group
-            representation = io.find_one({"_id": ObjectId(repre_id)})
+            representation = legacy_io.find_one({"_id": ObjectId(repre_id)})
             if not representation:
                 not_found["representation"].append(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            version = io.find_one({"_id": representation["parent"]})
+            version = legacy_io.find_one({"_id": representation["parent"]})
             if not version:
                 not_found["version"].append(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
             elif version["type"] == "hero_version":
-                _version = io.find_one({
+                _version = legacy_io.find_one({
                     "_id": version["version_id"]
                 })
                 version["name"] = HeroVersionType(_version["name"])
                 version["data"] = _version["data"]
 
-            subset = io.find_one({"_id": version["parent"]})
+            subset = legacy_io.find_one({"_id": version["parent"]})
             if not subset:
                 not_found["subset"].append(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            asset = io.find_one({"_id": subset["parent"]})
+            asset = legacy_io.find_one({"_id": subset["parent"]})
             if not asset:
                 not_found["asset"].append(group_items)
                 not_found_ids.append(repre_id)
@@ -386,7 +390,7 @@ class InventoryModel(TreeModel):
 
             # Store the highest available version so the model can know
             # whether current version is currently up-to-date.
-            highest_version = io.find_one({
+            highest_version = legacy_io.find_one({
                 "type": "version",
                 "parent": version["parent"]
             }, sort=[("name", -1)])

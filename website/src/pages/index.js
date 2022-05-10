@@ -68,6 +68,10 @@ const collab = [
     title: 'Ellipse Studio',
     image: '/img/ellipse-studio.png',
     infoLink: 'http://www.dargaudmedia.com'
+  }, {
+    title: 'J Cube Inc',
+    image: '/img/jcube_logo_bw.png',
+    infoLink: 'https://j-cube.jp'
   }
 ];
 
@@ -144,6 +148,11 @@ const studios = [
       title: "Ember Light",
       image: "/img/EmberLight_black.png",
       infoLink: "https://emberlight.se/",
+  },
+  {
+      title: "IGG Canada",
+      image: "/img/igg-logo.png",
+      infoLink: "https://www.igg.com/",
   }
 ];
 
@@ -224,7 +233,7 @@ function Home() {
               Get Support
             </Link>
           </div>
-          
+
           <p>
           OpenPYPE is developed, maintained and supported by <b><a href="https://pype.club">PYPE.club</a></b> </p>
 
@@ -285,7 +294,7 @@ function Home() {
             </div>
           </div>
         </section>
-        
+
         <section className={classnames(styles.gallery, "center darkBackground")}>
           <div className="container">
               <h2>Integrations</h2>
@@ -334,7 +343,7 @@ function Home() {
                   <img src="/img/app_aftereffects.png" alt="" title=""></img>
                   <span className="caption">After Effects</span>
                 </a>
-                
+
                 <a className="link" href="https://www.unrealengine.com">
                   <img src="/img/app_unreal.png" alt="" title=""></img>
                   <span className="caption">Unreal Engine (Beta)</span>
