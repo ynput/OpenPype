@@ -839,14 +839,13 @@ class MediaInfoFile(object):
         # ignore reminders as we dont need them
         collections = clique.assemble(files)[0]
 
-        # if no collection rise
+        # in case no collection found return None
+        # it is probably just single file
         if not collections:
-            raise IOError("_get_collection is failing on: {} {} {}".format(
-                feed_basename, feed_dir, feed_ext
-            ))
-        else:
-            # we expect only one collection
-            collection = collections[0]
+            return
+
+        # we expect only one collection
+        collection = collections[0]
 
         if collection.is_contiguous():
             # if no holes then return collection
