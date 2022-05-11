@@ -89,8 +89,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         tags = stream.get("tags") or {}
                         input_timecode = tags.get("timecode") or ""
                         if "width" in stream and "height" in stream:
-                            input_width = stream.get("width")
-                            input_height = stream.get("height")
+                            input_width = int(stream.get("width"))
+                            input_height = int(stream.get("height"))
                         if "r_frame_rate" in stream:
                             # get frame rate in a form of
                             # x/y, like 24000/1001 for 23.976
@@ -100,8 +100,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
                             and input_height
                             and input_frame_rate
                         ):
-                            input_width = int(input_width)
-                            input_height = int(input_height)
                             input_frame_rate = str(input_frame_rate)
                             break
             # Raise exception of any stream didn't define input resolution
