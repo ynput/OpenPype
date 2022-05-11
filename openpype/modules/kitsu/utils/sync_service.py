@@ -149,7 +149,6 @@ class Listener:
 
     def _update_asset(self, data):
         """Update asset into OP DB."""
-        # TODO check if asset doesn't exist, create it (case where name wasn't valid)
         set_op_project(self.dbcon, data["project_id"])
         project_doc = self.dbcon.find_one({"type": "project"})
 
@@ -167,7 +166,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            self.dbcon[asset], zou_ids_and_asset_docs
+            self.dbcon, project_doc, [asset], zou_ids_and_asset_docs
         )[0]
         self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
@@ -214,7 +213,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            self.dbcon, [episode], zou_ids_and_asset_docs
+            self.dbcon, project_doc, [episode], zou_ids_and_asset_docs
         )[0]
         self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
@@ -262,7 +261,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            self.dbcon, [sequence], zou_ids_and_asset_docs
+            self.dbcon, project_doc, [sequence], zou_ids_and_asset_docs
         )[0]
         self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
@@ -310,7 +309,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            self.dbcon, [shot], zou_ids_and_asset_docs
+            self.dbcon, project_doc, [shot], zou_ids_and_asset_docs
         )[0]
         self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 

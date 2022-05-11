@@ -38,7 +38,7 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
     """Set project context.
 
     Args:
-        dbcon (AvalonMongoDB): Connection to DB.
+        dbcon (AvalonMongoDB): Connection to DB
         project_id (str): Project zou ID
     """
     project = gazu.project.get_project(project_id)
@@ -47,7 +47,8 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 
 
 def update_op_assets(
-    project_col: Collection,
+    dbcon: AvalonMongoDB,
+    project_doc: dict,
     entities_list: List[dict],
     asset_doc_ids: Dict[str, dict],
 ) -> List[Dict[str, dict]]:
@@ -55,19 +56,27 @@ def update_op_assets(
     Set 'data' and 'parent' fields.
 
     Args:
-        project_col (Collection): Mongo project collection to sync
+        dbcon (AvalonMongoDB): Connection to DB
         entities_list (List[dict]): List of zou entities to update
         asset_doc_ids (Dict[str, dict]): Dicts of [{zou_id: asset_doc}, ...]
 
     Returns:
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
-    project_name = project_col.name
+    project_name = project_doc["name"]
 
     assets_with_update = []
     for item in entities_list:
+        # Check asset exists
+        item_doc = asset_doc_ids.get(item["id"])
+        if not item_doc:  # Create asset
+            op_asset = create_op_asset(item)
+            insert_result = dbcon.insert_one(op_asset)
+            item_doc = dbcon.find_one(
+                {"type": "asset", "_id": insert_result.inserted_id}
+            )
+
         # Update asset
-        item_doc = asset_doc_ids[item["id"]]
         item_data = deepcopy(item_doc["data"])
         item_data.update(item.get("data") or {})
         item_data["zou"] = item
@@ -86,7 +95,6 @@ def update_op_assets(
         item_data["frameEnd"] = int(frame_out)
         # Fps, fallback to project's value when entity fps is deleted
         if not item_data.get("fps") and item_doc["data"].get("fps"):
-            project_doc = project_col.find_one({"type": "project"})
             item_data["fps"] = project_doc["data"]["fps"]
 
         # Tasks
@@ -139,7 +147,7 @@ def update_op_assets(
         )
         if visual_parent_doc_id is None:
             # Find root folder doc
-            root_folder_doc = project_col.find_one(
+            root_folder_doc = dbcon.find_one(
                 {
                     "type": "asset",
                     "name": entity_parent_folders[-1],
@@ -358,7 +366,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon, all_entities, zou_ids_and_asset_docs
+                dbcon, project_doc, all_entities, zou_ids_and_asset_docs
             )
         ]
     )
