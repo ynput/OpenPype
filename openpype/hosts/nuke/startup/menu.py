@@ -2,7 +2,7 @@ import nuke
 import os
 
 from openpype.api import Logger
-from openpype.settings import get_project_settings
+from openpype.pipeline import install_host
 from openpype.hosts.nuke import api
 from openpype.hosts.nuke.api.lib import (
     on_script_load,
