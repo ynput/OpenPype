@@ -963,6 +963,16 @@ class MediaInfoFile(object):
                 self.MEDIA_SCRIPT_PATH))
 
     def _generate_media_info_file(self, fpath, feed_ext, feed_dir):
+        """ Generate media info xml .clip file
+
+        Args:
+            fpath (str): .clip file path
+            feed_ext (str): file extension to be filtered
+            feed_dir (str): look up directory
+
+        Raises:
+            TypeError: Type error if it fails
+        """
         # Create cmd arguments for gettig xml file info file
         cmd_args = [
             self.MEDIA_SCRIPT_PATH,
@@ -979,6 +989,19 @@ class MediaInfoFile(object):
                 "Error creating `{}` due: {}".format(fpath, error))
 
     def _make_single_clip_media_info(self, fpath, feed_basename, path_pattern):
+        """ Separate only relative clip object form .clip file
+
+        Args:
+            fpath (str): clip file path
+            feed_basename (str): search basename
+            path_pattern (str): search file pattern (file.[1-2].exr)
+
+        Raises:
+            ET.ParseError: if nothing found
+
+        Returns:
+            ET.Element: xml element data of matching clip
+        """
         with open(fpath) as f:
             lines = f.readlines()
             _added_root = itertools.chain(
