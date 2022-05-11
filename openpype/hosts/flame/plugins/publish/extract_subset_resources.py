@@ -236,6 +236,17 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
             # define kwargs based on preset type
             if "thumbnail" in unique_name:
+                if export_type != "Sequence Publish":
+                    # if not sequence preset
+                    in_mark = int(source_start_handles - source_first_frame)
+
+                self.log.debug("__ in_mark: {}".format(in_mark))
+                self.log.debug("__ source_duration_handles: {}".format(
+                    source_duration_handles))
+                self.log.debug("__ thumb_frame_number: {}".format(
+                    int(in_mark + (source_duration_handles / 2))
+                ))
+
                 export_kwargs["thumb_frame_number"] = int(in_mark + (
                     source_duration_handles / 2))
             else:
