@@ -807,12 +807,26 @@ class MediaInfoFile(object):
             self.clip_data = xml_data
 
     def _get_collection(self, feed_basename, feed_dir, feed_ext):
+        """ Get collection string
+
+        Args:
+            feed_basename (str): file base name
+            feed_dir (str): file's directory
+            feed_ext (str): file extension
+
+        Raises:
+            AttributeError: feed_ext is not matching feed_basename
+            IOError: Failing on not correct input data
+
+        Returns:
+            str: collection basename with range of sequence
+        """
         partialname = self._separate_file_head(feed_basename, feed_ext)
         self.log.debug("__ partialname: {}".format(partialname))
 
         # make sure partial input basename is having correct extensoon
         if not partialname:
-            raise IOError("File doesnt exists. Basename - {}, Ext - {}".format(
+            raise AttributeError("Wrong input attributes. Basename - {}, Ext - {}".format(
                 feed_basename, feed_ext
             ))
 
@@ -850,6 +864,15 @@ class MediaInfoFile(object):
                 return coll_to_text
 
     def _separate_file_head(self, basename, extension):
+        """ Get only head with out sequence and extension
+
+        Args:
+            basename (str): file base name
+            extension (str): file extension
+
+        Returns:
+            str: file head
+        """
         # in case sequence file
         found = re.findall(
             r"(.*)[._][\d]*(?=.{})".format(extension),
@@ -865,6 +888,15 @@ class MediaInfoFile(object):
             return name
 
     def _separate_number(self, basename, extension):
+        """ Get only sequence number as string
+
+        Args:
+            basename (str): file base name
+            extension (str): file extension
+
+        Returns:
+            str: number with padding
+        """
         # in case sequence file
         found = re.findall(
             r"[._]([\d]*)(?=.{})".format(extension),
@@ -989,6 +1021,11 @@ class MediaInfoFile(object):
         return matching_clip
 
     def _get_time_info_from_origin(self, xml_data):
+        """Set time info to class attributes
+
+        Args:
+            xml_data (ET.Element): clip data
+        """
         try:
             for out_track in xml_data.iter('track'):
                 for out_feed in out_track.iter('feed'):
