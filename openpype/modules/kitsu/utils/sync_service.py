@@ -131,7 +131,6 @@ class Listener:
         # Delete project collection
         self.dbcon.database[project_doc["name"]].drop()
 
-
     # == Asset ==
 
     def _new_asset(self, data):
@@ -150,6 +149,7 @@ class Listener:
 
     def _update_asset(self, data):
         """Update asset into OP DB."""
+        # TODO check if asset doesn't exist, create it (case where name wasn't valid)
         set_op_project(self.dbcon, data["project_id"])
         project_doc = self.dbcon.find_one({"type": "project"})
 

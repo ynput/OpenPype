@@ -1,5 +1,6 @@
 """Functions to update OpenPype data using Kitsu DB (a.k.a Zou)."""
 from copy import deepcopy
+import re
 from typing import Dict, List
 
 from pymongo import DeleteOne, UpdateOne
@@ -14,6 +15,10 @@ from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib import create_project
 from openpype.modules.kitsu.utils.credentials import validate_credentials
+
+
+# Accepted namin pattern for OP
+naming_pattern = re.compile("^[a-zA-Z0-9_.]*$")
 
 
 def create_op_asset(gazu_entity: dict) -> dict:
@@ -261,9 +266,7 @@ def sync_all_project(login: str, password: str):
         sync_project_from_kitsu(dbcon, project)
 
 
-def sync_project_from_kitsu(
-    dbcon: AvalonMongoDB, project: dict
-):
+def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     """Update OP project in DB with Zou data.
 
     Args:
@@ -283,7 +286,11 @@ def sync_project_from_kitsu(
     all_episodes = gazu.shot.all_episodes_for_project(project)
     all_seqs = gazu.shot.all_sequences_for_project(project)
     all_shots = gazu.shot.all_shots_for_project(project)
-    all_entities = all_assets + all_episodes + all_seqs + all_shots
+    all_entities = [
+        item
+        for item in all_assets + all_episodes + all_seqs + all_shots
+        if naming_pattern.match(item["name"])
+    ]
 
     # Sync project. Create if doesn't exist
     bulk_writes.append(write_project_to_op(project, dbcon))
