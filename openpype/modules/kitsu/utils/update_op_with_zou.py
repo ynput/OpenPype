@@ -29,17 +29,16 @@ def create_op_asset(gazu_entity: dict) -> dict:
     }
 
 
-def set_op_project(dbcon, project_id) -> Collection:
+def set_op_project(dbcon: AvalonMongoDB, project_id: str):
     """Set project context.
 
-    :param dbcon: Connection to DB.
-    :param project_id: Project zou ID
+    Args:
+        dbcon (AvalonMongoDB): Connection to DB.
+        project_id (str): Project zou ID
     """
     project = gazu.project.get_project(project_id)
     project_name = project["name"]
     dbcon.Session["AVALON_PROJECT"] = project_name
-
-    return dbcon.database[project_name]
 
 
 def update_op_assets(
@@ -258,28 +257,25 @@ def sync_all_project(login: str, password: str):
     dbcon.install()
     all_projects = gazu.project.all_open_projects()
     for project in all_projects:
-        sync_project_from_kitsu(project["name"], dbcon, project)
+        sync_project_from_kitsu(dbcon, project)
 
 
 def sync_project_from_kitsu(
-    project_name: str, dbcon: AvalonMongoDB, project: dict = None
+    dbcon: AvalonMongoDB, project: dict
 ):
     """Update OP project in DB with Zou data.
 
     Args:
-        project_name (str): Name of project to sync
         dbcon (AvalonMongoDB): MongoDB connection
-        project (dict, optional): Project dict got using gazu.
-                                  Defaults to None.
+        project (dict): Project dict got using gazu.
     """
     bulk_writes = []
 
     # Get project from zou
     if not project:
-        project = gazu.project.get_project_by_name(project_name)
-    project_code = project_name
+        project = gazu.project.get_project_by_name(project["name"])
 
-    print(f"Synchronizing {project_name}...")
+    print(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
@@ -292,28 +288,28 @@ def sync_project_from_kitsu(
     bulk_writes.append(write_project_to_op(project, dbcon))
 
     # Try to find project document
-    project_col = dbcon.database[project_code]
-    project_doc = project_col.find_one({"type": "project"})
+    dbcon.Session["AVALON_PROJECT"] = project["name"]
+    project_doc = dbcon.find_one({"type": "project"})
 
     # Query all assets of the local project
     zou_ids_and_asset_docs = {
         asset_doc["data"]["zou"]["id"]: asset_doc
-        for asset_doc in project_col.find({"type": "asset"})
+        for asset_doc in dbcon.find({"type": "asset"})
         if asset_doc["data"].get("zou", {}).get("id")
     }
     zou_ids_and_asset_docs[project["id"]] = project_doc
 
     # Create entities root folders
-    project_module_settings = get_project_settings(project_name)["kitsu"]
+    project_module_settings = get_project_settings(project["name"])["kitsu"]
     for entity_type, root in project_module_settings["entities_root"].items():
         parent_folders = root.split("/")
         direct_parent_doc = None
         for i, folder in enumerate(parent_folders, 1):
-            parent_doc = project_col.find_one(
+            parent_doc = dbcon.find_one(
                 {"type": "asset", "name": folder, "data.root_of": entity_type}
             )
             if not parent_doc:
-                direct_parent_doc = project_col.insert_one(
+                direct_parent_doc = dbcon.insert_one(
                     {
                         "name": folder,
                         "type": "asset",
@@ -338,13 +334,13 @@ def sync_project_from_kitsu(
     )
     if to_insert:
         # Insert doc in DB
-        project_col.insert_many(to_insert)
+        dbcon.insert_many(to_insert)
 
         # Update existing docs
         zou_ids_and_asset_docs.update(
             {
                 asset_doc["data"]["zou"]["id"]: asset_doc
-                for asset_doc in project_col.find({"type": "asset"})
+                for asset_doc in dbcon.find({"type": "asset"})
                 if asset_doc["data"].get("zou")
             }
         )
@@ -354,7 +350,7 @@ def sync_project_from_kitsu(
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                project_col, all_entities, zou_ids_and_asset_docs
+                dbcon, all_entities, zou_ids_and_asset_docs
             )
         ]
     )
@@ -373,4 +369,4 @@ def sync_project_from_kitsu(
 
     # Write into DB
     if bulk_writes:
-        project_col.bulk_write(bulk_writes)
+        dbcon.bulk_write(bulk_writes)

@@ -93,10 +93,10 @@ def sync_zou_from_op_project(
 
     # Query all assets of the local project
     project_module_settings = get_project_settings(project_name)["kitsu"]
-    project_col = dbcon.database[project_name]
+    dbcon.Session["AVALON_PROJECT"] = project_name
     asset_docs = {
         asset_doc["_id"]: asset_doc
-        for asset_doc in project_col.find({"type": "asset"})
+        for asset_doc in dbcon.find({"type": "asset"})
     }
 
     # Create new assets
@@ -259,4 +259,4 @@ def sync_zou_from_op_project(
 
     # Write into DB
     if bulk_writes:
-        project_col.bulk_write(bulk_writes)
+        dbcon.bulk_write(bulk_writes)
