@@ -280,7 +280,9 @@ def create_otio_clip(clip_data):
     segment = clip_data["PySegment"]
 
     # calculate source in
-    media_info = MediaInfoFile(clip_data["fpath"])
+    media_info = MediaInfoFile(clip_data["fpath"], **{
+        "logger": log
+    })
     media_timecode_start = media_info.start_frame
     media_fps = media_info.fps
 

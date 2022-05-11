@@ -804,7 +804,7 @@ class MediaInfoFile(object):
 
     def _get_collection(self, feed_basename, feed_dir, feed_ext):
         partialname = self._separate_file_head(feed_basename, feed_ext)
-        log.debug("__ partialname: {}".format(partialname))
+        self.log.debug("__ partialname: {}".format(partialname))
 
         # make sure partial input basename is having correct extensoon
         if not partialname:
@@ -841,7 +841,7 @@ class MediaInfoFile(object):
         _continues_colls = collection.separate()
         for _coll in _continues_colls:
             coll_to_text = _coll.format("{head}[{range}]{tail}")
-            log.debug("__ coll_to_text: {}".format(coll_to_text))
+            self.log.debug("__ coll_to_text: {}".format(coll_to_text))
             if number_from_path in coll_to_text:
                 return coll_to_text
 
@@ -954,7 +954,7 @@ class MediaInfoFile(object):
         matching_clip = None
         for xml_clip in xml_clips:
             clip_name = xml_clip.find("name").text
-            log.debug("__ clip_name: `{}`".format(clip_name))
+            self.log.debug("__ clip_name: `{}`".format(clip_name))
             if clip_name not in feed_basename:
                 continue
 
@@ -966,7 +966,7 @@ class MediaInfoFile(object):
                         span_path = span.find("path")
                         if not span_path:
                             continue
-                        log.debug(
+                        self.log.debug(
                             "__ span_path.text: {}, path_pattern: {}".format(
                                 span_path.text, path_pattern
                             )
