@@ -423,17 +423,19 @@ class ExtractSubsetResources(openpype.api.Extractor):
         """
         Import clip from path
         """
+        dir_path = os.path.dirname(path)
         media_info = MediaInfoFile(path, **{
             "logger": self.log
         })
         file_pattern = media_info.file_pattern
         self.log.debug("__ file_pattern: {}".format(file_pattern))
 
-        project_desktop = self.project.current_workspace.desktop
-        reel = project_desktop.reel_groups[0].reels[0]
+        # rejoin the pattern to dir path
+        new_path = os.path.join(dir_path, file_pattern)
 
-        clips = flame.import_clips(file_pattern, reel)
+        clips = flame.import_clips(new_path)
         self.log.info("Clips [{}] imported from `{}`".format(clips, path))
+
         if not clips:
             self.log.warning("Path `{}` is not having any clips".format(path))
             return None
