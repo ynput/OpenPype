@@ -34,16 +34,24 @@ from openpype.settings.lib import (
     reset_default_settings,
 
     get_studio_system_settings_overrides,
+    get_studio_system_settings_overrides_for_version,
     save_studio_settings,
+    get_available_studio_system_settings_overrides_versions,
 
     get_studio_project_settings_overrides,
+    get_studio_project_settings_overrides_for_version,
     get_studio_project_anatomy_overrides,
+    get_studio_project_anatomy_overrides_for_version,
     get_project_settings_overrides,
+    get_project_settings_overrides_for_version,
     get_project_anatomy_overrides,
     save_project_settings,
     save_project_anatomy,
 
-    find_environments,
+    get_available_project_settings_overrides_versions,
+    get_available_studio_project_settings_overrides_versions,
+    get_available_studio_project_anatomy_overrides_versions,
+
     apply_overrides
 )
 
@@ -413,11 +421,6 @@ class RootEntity(BaseItemEntity):
         """
         pass
 
-    @abstractmethod
-    def _validate_defaults_to_save(self, value):
-        """Validate default values before save."""
-        pass
-
     def _save_default_values(self):
         """Save default values.
 
@@ -426,7 +429,6 @@ class RootEntity(BaseItemEntity):
         DEFAULTS.
         """
         settings_value = self.settings_value()
-        self._validate_defaults_to_save(settings_value)
 
         defaults_dir = self.defaults_dir()
         for file_path, value in settings_value.items():
@@ -495,16 +497,26 @@ class SystemSettings(RootEntity):
     root_key = SYSTEM_SETTINGS_KEY
 
     def __init__(
-        self, set_studio_state=True, reset=True, schema_hub=None
+        self,
+        set_studio_state=True,
+        reset=True,
+        schema_hub=None,
+        source_version=None
     ):
         if schema_hub is None:
             # Load system schemas
             schema_hub = SchemasHub(SCHEMA_KEY_SYSTEM_SETTINGS)
 
+        self._source_version = source_version
+
         super(SystemSettings, self).__init__(schema_hub, reset)
 
         if set_studio_state:
             self.set_studio_state()
+
+    @property
+    def source_version(self):
+        return self._source_version
 
     def get_entity_from_path(self, path):
         """Return system settings entity."""
@@ -524,12 +536,24 @@ class SystemSettings(RootEntity):
             value = default_value.get(key, NOT_SET)
             child_obj.update_default_value(value)
 
-        studio_overrides = get_studio_system_settings_overrides()
+        if self._source_version is None:
+            studio_overrides, version = get_studio_system_settings_overrides(
+                return_version=True
+            )
+            self._source_version = version
+
+        else:
+            studio_overrides = (
+                get_studio_system_settings_overrides_for_version(
+                    self._source_version
+                )
+            )
+
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
             child_obj.update_studio_value(value)
 
-    def reset(self, new_state=None):
+    def reset(self, new_state=None, source_version=None):
         """Discard changes and reset entit's values.
 
         Reload default values and studio override values and update entities.
@@ -547,8 +571,21 @@ class SystemSettings(RootEntity):
         if new_state is OverrideState.PROJECT:
             raise ValueError("System settings can't store poject overrides.")
 
+        if source_version is not None:
+            self._source_version = source_version
+
         self._reset_values()
         self.set_override_state(new_state)
+
+    def get_available_source_versions(self, sorted=None):
+        if self.is_in_studio_state():
+            return self.get_available_studio_versions(sorted=sorted)
+        return []
+
+    def get_available_studio_versions(self, sorted=None):
+        return get_available_studio_system_settings_overrides_versions(
+            sorted=sorted
+        )
 
     def defaults_dir(self):
         """Path to defaults directory.
@@ -560,35 +597,12 @@ class SystemSettings(RootEntity):
     def _save_studio_values(self):
         settings_value = self.settings_value()
 
-        self._validate_duplicated_env_group(settings_value)
-
         self.log.debug("Saving system settings: {}".format(
             json.dumps(settings_value, indent=4)
         ))
         save_studio_settings(settings_value)
-
-    def _validate_defaults_to_save(self, value):
-        """Valiations of default values before save."""
-        self._validate_duplicated_env_group(value)
-
-    def _validate_duplicated_env_group(self, value, override_state=None):
-        """ Validate duplicated environment groups.
-
-        Raises:
-            DuplicatedEnvGroups: When value contain duplicated env groups.
-        """
-        value = copy.deepcopy(value)
-        if override_state is None:
-            override_state = self._override_state
-
-        if override_state is OverrideState.STUDIO:
-            default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-            final_value = apply_overrides(default_values, value)
-        else:
-            final_value = value
-
-        # Check if final_value contain duplicated environment groups
-        find_environments(final_value)
+        # Reset source version after restart
+        self._source_version = None
 
     def _save_project_values(self):
         """System settings can't have project overrides.
@@ -622,11 +636,15 @@ class ProjectSettings(RootEntity):
         project_name=None,
         change_state=True,
         reset=True,
-        schema_hub=None
+        schema_hub=None,
+        source_version=None,
+        anatomy_source_version=None
     ):
         self._project_name = project_name
 
         self._system_settings_entity = None
+        self._source_version = source_version
+        self._anatomy_source_version = anatomy_source_version
 
         if schema_hub is None:
             # Load system schemas
@@ -639,6 +657,14 @@ class ProjectSettings(RootEntity):
                 self.set_studio_state()
             else:
                 self.set_project_state()
+
+    @property
+    def source_version(self):
+        return self._source_version
+
+    @property
+    def anatomy_source_version(self):
+        return self._anatomy_source_version
 
     @property
     def project_name(self):
@@ -682,23 +708,20 @@ class ProjectSettings(RootEntity):
             output = output[path_part]
         return output
 
-    def change_project(self, project_name):
+    def change_project(self, project_name, source_version=None):
         if project_name == self._project_name:
-            return
+            if (
+                source_version is None
+                or source_version == self._source_version
+            ):
+                if not self.is_in_project_state():
+                    self.set_project_state()
+                return
 
-        self._project_name = project_name
-        if project_name is None:
-            self.set_studio_state()
-            return
+        self._source_version = source_version
+        self._anatomy_source_version = None
 
-        project_override_value = {
-            PROJECT_SETTINGS_KEY: get_project_settings_overrides(project_name),
-            PROJECT_ANATOMY_KEY: get_project_anatomy_overrides(project_name)
-        }
-        for key, child_obj in self.non_gui_children.items():
-            value = project_override_value.get(key, NOT_SET)
-            child_obj.update_project_value(value)
-
+        self._set_values_for_project(project_name)
         self.set_project_state()
 
     def _reset_values(self):
@@ -710,26 +733,96 @@ class ProjectSettings(RootEntity):
             value = default_values.get(key, NOT_SET)
             child_obj.update_default_value(value)
 
+        self._set_values_for_project(self.project_name)
+
+    def _set_values_for_project(self, project_name):
+        self._project_name = project_name
+        if project_name:
+            project_settings_overrides = (
+                get_studio_project_settings_overrides()
+            )
+            project_anatomy_overrides = (
+                get_studio_project_anatomy_overrides()
+            )
+        else:
+            if self._source_version is None:
+                project_settings_overrides, version = (
+                    get_studio_project_settings_overrides(return_version=True)
+                )
+                self._source_version = version
+            else:
+                project_settings_overrides = (
+                    get_studio_project_settings_overrides_for_version(
+                        self._source_version
+                    )
+                )
+
+            if self._anatomy_source_version is None:
+                project_anatomy_overrides, anatomy_version = (
+                    get_studio_project_anatomy_overrides(return_version=True)
+                )
+                self._anatomy_source_version = anatomy_version
+            else:
+                project_anatomy_overrides = (
+                    get_studio_project_anatomy_overrides_for_version(
+                        self._anatomy_source_version
+                    )
+                )
+
         studio_overrides = {
-            PROJECT_SETTINGS_KEY: get_studio_project_settings_overrides(),
-            PROJECT_ANATOMY_KEY: get_studio_project_anatomy_overrides()
+            PROJECT_SETTINGS_KEY: project_settings_overrides,
+            PROJECT_ANATOMY_KEY: project_anatomy_overrides
         }
 
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
             child_obj.update_studio_value(value)
 
-        if not self.project_name:
+        if not project_name:
             return
 
-        project_name = self.project_name
+        if self._source_version is None:
+            project_settings_overrides, version = (
+                get_project_settings_overrides(
+                    project_name, return_version=True
+                )
+            )
+            self._source_version = version
+        else:
+            project_settings_overrides = (
+                get_project_settings_overrides_for_version(
+                    project_name, self._source_version
+                )
+            )
+
         project_override_value = {
-            PROJECT_SETTINGS_KEY: get_project_settings_overrides(project_name),
+            PROJECT_SETTINGS_KEY: project_settings_overrides,
             PROJECT_ANATOMY_KEY: get_project_anatomy_overrides(project_name)
         }
         for key, child_obj in self.non_gui_children.items():
             value = project_override_value.get(key, NOT_SET)
             child_obj.update_project_value(value)
+
+    def get_available_source_versions(self, sorted=None):
+        if self.is_in_studio_state():
+            return self.get_available_studio_versions(sorted=sorted)
+        elif self.is_in_project_state():
+            return get_available_project_settings_overrides_versions(
+                self.project_name, sorted=sorted
+            )
+        return []
+
+    def get_available_studio_versions(self, sorted=None):
+        return get_available_studio_project_settings_overrides_versions(
+            sorted=sorted
+        )
+
+    def get_available_anatomy_source_versions(self, sorted=None):
+        if self.is_in_studio_state():
+            return get_available_studio_project_anatomy_overrides_versions(
+                sorted=sorted
+            )
+        return []
 
     def reset(self, new_state=None):
         """Discard changes and reset entit's values.
@@ -763,6 +856,9 @@ class ProjectSettings(RootEntity):
 
         self._validate_values_to_save(settings_value)
 
+        self._source_version = None
+        self._anatomy_source_version = None
+
         self.log.debug("Saving project settings: {}".format(
             json.dumps(settings_value, indent=4)
         ))
@@ -782,10 +878,6 @@ class ProjectSettings(RootEntity):
 
         if warnings:
             raise SaveWarningExc(warnings)
-
-    def _validate_defaults_to_save(self, value):
-        """Valiations of default values before save."""
-        pass
 
     def _validate_values_to_save(self, value):
         pass

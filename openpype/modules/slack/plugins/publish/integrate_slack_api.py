@@ -35,7 +35,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             message = self._get_filled_message(message_profile["message"],
                                                instance,
                                                review_path)
-            self.log.info("message:: {}".format(message))
+            self.log.debug("message:: {}".format(message))
             if not message:
                 return
 
@@ -43,7 +43,8 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 publish_files.add(thumbnail_path)
 
             if message_profile["upload_review"] and review_path:
-                publish_files.add(review_path)
+                message, publish_files = self._handle_review_upload(
+                    message, message_profile, publish_files, review_path)
 
             project = instance.context.data["anatomyData"]["project"]["code"]
             for channel in message_profile["channels"]:
@@ -60,6 +61,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                                            message,
                                            publish_files)
 
+                if not msg_id:
+                    return
+
                 msg = {
                     "type": "slack",
                     "msg_id": msg_id,
@@ -71,6 +75,19 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 database_name = os.environ["OPENPYPE_DATABASE_NAME"]
                 dbcon = mongo_client[database_name]["notification_messages"]
                 dbcon.insert_one(msg)
+
+    def _handle_review_upload(self, message, message_profile, publish_files,
+                              review_path):
+        """Check if uploaded file is not too large"""
+        review_file_size_MB = os.path.getsize(review_path) / 1024 / 1024
+        file_limit = message_profile.get("review_upload_limit", 50)
+        if review_file_size_MB > file_limit:
+            message += "\nReview upload omitted because of file size."
+            if review_path not in message:
+                message += "\nFile located at: {}".format(review_path)
+        else:
+            publish_files.add(review_path)
+        return message, publish_files
 
     def _get_filled_message(self, message_templ, instance, review_path=None):
         """Use message_templ and data from instance to get message content.
@@ -118,7 +135,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def _get_thumbnail_path(self, instance):
         """Returns abs url for thumbnail if present in instance repres"""
         published_path = None
-        for repre in instance.data['representations']:
+        for repre in instance.data.get("representations", []):
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
                 if os.path.exists(repre["published_path"]):
                     published_path = repre["published_path"]
@@ -128,7 +145,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def _get_review_path(self, instance):
         """Returns abs url for review if present in instance repres"""
         published_path = None
-        for repre in instance.data['representations']:
+        for repre in instance.data.get("representations", []):
             tags = repre.get('tags', [])
             if (repre.get("review")
                     or "review" in tags
@@ -177,6 +194,8 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             error_str = self._enrich_error(str(e), channel)
             self.log.warning("Error happened: {}".format(error_str))
 
+        return None, []
+
     def _python3_call(self, token, channel, message, publish_files):
         from slack_sdk import WebClient
         from slack_sdk.errors import SlackApiError
@@ -205,6 +224,11 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             # You will get a SlackApiError if "ok" is False
             error_str = self._enrich_error(str(e.response["error"]), channel)
             self.log.warning("Error happened {}".format(error_str))
+        except Exception as e:
+            error_str = self._enrich_error(str(e), channel)
+            self.log.warning("Not SlackAPI error", exc_info=True)
+
+        return None, []
 
     def _enrich_error(self, error_str, channel):
         """Enhance known errors with more helpful notations."""

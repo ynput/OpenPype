@@ -1,11 +1,13 @@
 import os
 import json
 
+from bson.objectid import ObjectId
+
 import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
-from avalon import io
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 import openpype.api
@@ -137,10 +139,10 @@ class ExtractLayout(openpype.api.Extractor):
 
             self.log.debug("Parent: {}".format(parent))
             # Get blend reference
-            blend = io.find_one(
+            blend = legacy_io.find_one(
                 {
                     "type": "representation",
-                    "parent": io.ObjectId(parent),
+                    "parent": ObjectId(parent),
                     "name": "blend"
                 },
                 projection={"_id": True})
@@ -148,10 +150,10 @@ class ExtractLayout(openpype.api.Extractor):
             if blend:
                 blend_id = blend["_id"]
             # Get fbx reference
-            fbx = io.find_one(
+            fbx = legacy_io.find_one(
                 {
                     "type": "representation",
-                    "parent": io.ObjectId(parent),
+                    "parent": ObjectId(parent),
                     "name": "fbx"
                 },
                 projection={"_id": True})
@@ -159,10 +161,10 @@ class ExtractLayout(openpype.api.Extractor):
             if fbx:
                 fbx_id = fbx["_id"]
             # Get abc reference
-            abc = io.find_one(
+            abc = legacy_io.find_one(
                 {
                     "type": "representation",
-                    "parent": io.ObjectId(parent),
+                    "parent": ObjectId(parent),
                     "name": "abc"
                 },
                 projection={"_id": True})

@@ -1,9 +1,18 @@
-from avalon import api
+import os
+import clique
+
+from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.plugin import get_reference_node
-import os
-from openpype.api import get_project_settings
-import clique
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    unique_namespace
+)
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -20,7 +29,6 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def process_reference(self, context, name, namespace, options):
 
         import maya.cmds as cmds
-        from avalon import maya
         import pymel.core as pm
 
         version = context['version']
@@ -35,7 +43,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "ass"
 
-        with maya.maintained_selection():
+        with maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
             path = self.fname
@@ -95,15 +103,13 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self.update(container, representation)
 
     def update(self, container, representation):
-
-        import os
         from maya import cmds
         import pymel.core as pm
 
         node = container["objectName"]
 
         representation["context"].pop("frame", None)
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         print(path)
         # path = self.fname
         print(self.fname)
@@ -161,7 +167,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                      type="string")
 
 
-class AssStandinLoader(api.Loader):
+class AssStandinLoader(load.LoaderPlugin):
     """Load .ASS file as standin"""
 
     families = ["ass"]
@@ -175,8 +181,6 @@ class AssStandinLoader(api.Loader):
     def load(self, context, name, namespace, options):
 
         import maya.cmds as cmds
-        import avalon.maya.lib as lib
-        from avalon.maya.pipeline import containerise
         import mtoa.ui.arnoldmenu
         import pymel.core as pm
 
@@ -188,7 +192,7 @@ class AssStandinLoader(api.Loader):
         frameStart = version_data.get("frameStart", None)
 
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
@@ -239,7 +243,7 @@ class AssStandinLoader(api.Loader):
 
         import pymel.core as pm
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         files_in_path = os.listdir(os.path.split(path)[0])
         sequence = 0

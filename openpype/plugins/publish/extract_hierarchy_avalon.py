@@ -1,6 +1,9 @@
-import pyblish.api
-from avalon import io
 from copy import deepcopy
+
+import pyblish.api
+
+from openpype.pipeline import legacy_io
+
 
 class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""
@@ -16,8 +19,8 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             return
         hierarchy_context = deepcopy(context.data["hierarchyContext"])
 
-        if not io.Session:
-            io.install()
+        if not legacy_io.Session:
+            legacy_io.install()
 
         active_assets = []
         # filter only the active publishing insatnces
@@ -64,7 +67,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     data["tasks"] = tasks
                 parents = []
                 visualParent = None
-                # do not store project"s id as visualParent (silo asset)
+                # do not store project"s id as visualParent
                 if self.project is not None:
                     if self.project["_id"] != parent["_id"]:
                         visualParent = parent["_id"]
@@ -78,7 +81,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             update_data = True
             # Process project
             if entity_type.lower() == "project":
-                entity = io.find_one({"type": "project"})
+                entity = legacy_io.find_one({"type": "project"})
                 # TODO: should be in validator?
                 assert (entity is not None), "Did not find project in DB"
 
@@ -95,7 +98,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 )
             # Else process assset
             else:
-                entity = io.find_one({"type": "asset", "name": name})
+                entity = legacy_io.find_one({"type": "asset", "name": name})
                 if entity:
                     # Do not override data, only update
                     cur_entity_data = entity.get("data") or {}
@@ -119,7 +122,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     # Skip updating data
                     update_data = False
 
-                    archived_entities = io.find({
+                    archived_entities = legacy_io.find({
                         "type": "archived_asset",
                         "name": name
                     })
@@ -143,7 +146,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
             if update_data:
                 # Update entity data with input data
-                io.update_many(
+                legacy_io.update_many(
                     {"_id": entity["_id"]},
                     {"$set": {"data": data}}
                 )
@@ -161,7 +164,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             "type": "asset",
             "data": data
         }
-        io.replace_one(
+        legacy_io.replace_one(
             {"_id": entity["_id"]},
             new_entity
         )
@@ -176,9 +179,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             "data": data
         }
         self.log.debug("Creating asset: {}".format(item))
-        entity_id = io.insert_one(item).inserted_id
+        entity_id = legacy_io.insert_one(item).inserted_id
 
-        return io.find_one({"_id": entity_id})
+        return legacy_io.find_one({"_id": entity_id})
 
     def _get_assets(self, input_dict):
         """ Returns only asset dictionary.

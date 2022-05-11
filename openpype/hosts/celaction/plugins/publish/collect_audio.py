@@ -1,10 +1,10 @@
 import os
 import collections
+from pprint import pformat
 
 import pyblish.api
-from avalon import io
 
-from pprint import pformat
+from openpype.pipeline import legacy_io
 
 
 class AppendCelactionAudio(pyblish.api.ContextPlugin):
@@ -60,7 +60,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         """
 
         # Query all subsets for asset
-        subset_docs = io.find({
+        subset_docs = legacy_io.find({
             "type": "subset",
             "parent": asset_doc["_id"]
         })
@@ -93,7 +93,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
             }}
         ]
         last_versions_by_subset_id = dict()
-        for doc in io.aggregate(pipeline):
+        for doc in legacy_io.aggregate(pipeline):
             doc["parent"] = doc["_id"]
             doc["_id"] = doc.pop("_version_id")
             last_versions_by_subset_id[doc["parent"]] = doc
@@ -102,7 +102,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         for version_doc in last_versions_by_subset_id.values():
             version_docs_by_id[version_doc["_id"]] = version_doc
 
-        repre_docs = io.find({
+        repre_docs = legacy_io.find({
             "type": "representation",
             "parent": {"$in": list(version_docs_by_id.keys())},
             "name": {"$in": representations}

@@ -10,6 +10,8 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
+                    "subsets": [],
+                    "review_upload_limit": 50.0,
                     "channel_messages": []
                 }
             ]

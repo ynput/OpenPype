@@ -25,7 +25,7 @@ class PypeCommands:
     Most of its methods are called by :mod:`cli` module.
     """
     @staticmethod
-    def launch_tray(debug=False):
+    def launch_tray():
         PypeLogger.set_process_name("Tray")
 
         from openpype.tools import tray
@@ -81,6 +81,11 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def launch_traypublisher():
+        from openpype.tools import traypublisher
+        traypublisher.main()
+
+    @staticmethod
     def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
@@ -96,7 +101,8 @@ class PypeCommands:
             RuntimeError: When there is no path to process.
         """
         from openpype.modules import ModulesManager
-        from openpype import install, uninstall
+        from openpype.pipeline import install_openpype_plugins
+
         from openpype.api import Logger
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
@@ -107,7 +113,7 @@ class PypeCommands:
 
         log = Logger.get_logger()
 
-        install()
+        install_openpype_plugins()
 
         manager = ModulesManager()
 
@@ -119,13 +125,14 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        env = get_app_environments_for_context(
-            os.environ["AVALON_PROJECT"],
-            os.environ["AVALON_ASSET"],
-            os.environ["AVALON_TASK"],
-            os.environ["AVALON_APP_NAME"]
-        )
-        os.environ.update(env)
+        if os.getenv("AVALON_APP_NAME"):
+            env = get_app_environments_for_context(
+                os.environ["AVALON_PROJECT"],
+                os.environ["AVALON_ASSET"],
+                os.environ["AVALON_TASK"],
+                os.environ["AVALON_APP_NAME"]
+            )
+            os.environ.update(env)
 
         pyblish.api.register_host("shell")
 
@@ -134,7 +141,7 @@ class PypeCommands:
                 print(f"setting target: {target}")
                 pyblish.api.register_target(target)
         else:
-            pyblish.api.register_target("filesequence")
+            pyblish.api.register_target("farm")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
@@ -251,7 +258,10 @@ class PypeCommands:
 
         data = {
             "last_workfile_path": workfile_path,
-            "start_last_workfile": True
+            "start_last_workfile": True,
+            "project_name": project,
+            "asset_name": asset,
+            "task_name": task_name
         }
 
         launched_app = application_manager.launch(app_name, **data)
@@ -286,7 +296,8 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
-        import avalon.api
+
+        from openpype.pipeline import install_host
         from openpype.hosts.webpublisher import api as webpublisher
 
         log = PypeLogger.get_logger()
@@ -307,7 +318,7 @@ class PypeCommands:
             for target in targets:
                 pyblish.api.register_target(target)
 
-        avalon.api.install(webpublisher)
+        install_host(webpublisher)
 
         log.info("Running publish ...")
 
@@ -360,7 +371,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant):
+                  test_data_folder, persist, app_variant, timeout):
         """
             Runs tests from 'folder'
 
@@ -398,6 +409,9 @@ class PypeCommands:
         if app_variant:
             args.extend(["--app_variant", app_variant])
 
+        if timeout:
+            args.extend(["--timeout", timeout])
+
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
@@ -433,3 +447,13 @@ class PypeCommands:
 
         version_packer = VersionRepacker(directory)
         version_packer.process()
+
+    def pack_project(self, project_name, dirpath):
+        from openpype.lib.project_backpack import pack_project
+
+        pack_project(project_name, dirpath)
+
+    def unpack_project(self, zip_filepath, new_root):
+        from openpype.lib.project_backpack import unpack_project
+
+        unpack_project(zip_filepath, new_root)

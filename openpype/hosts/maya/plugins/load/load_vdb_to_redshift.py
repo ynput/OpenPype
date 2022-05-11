@@ -1,8 +1,10 @@
-from avalon import api
 import os
-from openpype.api import get_project_settings
 
-class LoadVDBtoRedShift(api.Loader):
+from openpype.api import get_project_settings
+from openpype.pipeline import load
+
+
+class LoadVDBtoRedShift(load.LoaderPlugin):
     """Load OpenVDB in a Redshift Volume Shape"""
 
     families = ["vdbcache"]
@@ -15,8 +17,8 @@ class LoadVDBtoRedShift(api.Loader):
     def load(self, context, name=None, namespace=None, data=None):
 
         from maya import cmds
-        import avalon.maya.lib as lib
-        from avalon.maya.pipeline import containerise
+        from openpype.hosts.maya.api.pipeline import containerise
+        from openpype.hosts.maya.api.lib import unique_namespace
 
         try:
             family = context["representation"]["context"]["family"]
@@ -45,7 +47,7 @@ class LoadVDBtoRedShift(api.Loader):
         asset = context['asset']
 
         asset_name = asset["name"]
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset_name + "_",
             prefix="_" if asset_name[0].isdigit() else "",
             suffix="_",

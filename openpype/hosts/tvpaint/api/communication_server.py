@@ -21,7 +21,7 @@ from aiohttp_json_rpc.protocol import (
 )
 from aiohttp_json_rpc.exceptions import RpcError
 
-from avalon import api
+from openpype.lib import emit_event
 from openpype.hosts.tvpaint.tvpaint_plugin import get_plugin_files_path
 
 log = logging.getLogger(__name__)
@@ -586,7 +586,10 @@ class BaseCommunicator:
             "additional_libraries"
         )
         additional_libs_folder = additional_libs_folder.replace("\\", "/")
-        if additional_libs_folder not in os.environ["PATH"]:
+        if (
+            os.path.exists(additional_libs_folder)
+            and additional_libs_folder not in os.environ["PATH"]
+        ):
             os.environ["PATH"] += (os.pathsep + additional_libs_folder)
 
         # Path to TVPaint's plugins folder (where we want to add our plugin)
@@ -751,7 +754,7 @@ class BaseCommunicator:
 
         self._on_client_connect()
 
-        api.emit("application.launched")
+        emit_event("application.launched")
 
     def _on_client_connect(self):
         self._initial_textfile_write()
@@ -935,5 +938,5 @@ class QtCommunicator(BaseCommunicator):
 
     def _exit(self, *args, **kwargs):
         super()._exit(*args, **kwargs)
-        api.emit("application.exit")
+        emit_event("application.exit")
         self.qt_app.exit(self.exit_code)

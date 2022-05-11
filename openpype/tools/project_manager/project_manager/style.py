@@ -1,8 +1,8 @@
 import os
-from Qt import QtCore, QtGui
+from Qt import QtGui
 
-from openpype.style import get_objected_colors
-from avalon.vendor import qtawesome
+import qtawesome
+from openpype.tools.utils import paint_image_with_color
 
 
 class ResourceCache:
@@ -91,17 +91,6 @@ class ResourceCache:
         icon.addPixmap(disabled_pix, QtGui.QIcon.Disabled, QtGui.QIcon.Off)
         return icon
 
-    @classmethod
-    def get_warning_pixmap(cls):
-        src_image = get_warning_image()
-        colors = get_objected_colors()
-        color_value = colors["delete-btn-bg"]
-
-        return paint_image_with_color(
-            src_image,
-            color_value.get_qcolor()
-        )
-
 
 def get_remove_image():
     image_path = os.path.join(
@@ -110,36 +99,3 @@ def get_remove_image():
         "bin.png"
     )
     return QtGui.QImage(image_path)
-
-
-def get_warning_image():
-    image_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "images",
-        "warning.png"
-    )
-    return QtGui.QImage(image_path)
-
-
-def paint_image_with_color(image, color):
-    """TODO: This function should be imported from utils.
-
-    At the moment of creation is not available yet.
-    """
-    width = image.width()
-    height = image.height()
-
-    alpha_mask = image.createAlphaMask()
-    alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
-
-    pixmap = QtGui.QPixmap(width, height)
-    pixmap.fill(QtCore.Qt.transparent)
-
-    painter = QtGui.QPainter(pixmap)
-    painter.setClipRegion(alpha_region)
-    painter.setPen(QtCore.Qt.NoPen)
-    painter.setBrush(color)
-    painter.drawRect(QtCore.QRect(0, 0, width, height))
-    painter.end()
-
-    return pixmap

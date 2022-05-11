@@ -1,10 +1,10 @@
 import contextlib
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from openpype.tools.utils import PlaceholderLineEdit
 
-from avalon.vendor import qtawesome
-from avalon import style
+from openpype.style import get_default_tools_icon_color
 
 from . import RecursiveSortFilterProxyModel, AssetModel
 from . import TasksTemplateModel, DeselectableTreeView
@@ -18,7 +18,7 @@ def preserve_expanded_rows(tree_view,
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -68,7 +68,7 @@ def preserve_selection(tree_view,
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -165,7 +165,9 @@ class AssetWidget(QtWidgets.QWidget):
         # Header
         header = QtWidgets.QHBoxLayout()
 
-        icon = qtawesome.icon("fa.refresh", color=style.colors.light)
+        icon = qtawesome.icon(
+            "fa.refresh", color=get_default_tools_icon_color()
+        )
         refresh = QtWidgets.QPushButton(icon, "")
         refresh.setToolTip("Refresh items")
 
@@ -227,7 +229,6 @@ class AssetWidget(QtWidgets.QWidget):
         data = {
             'project': project['name'],
             'asset': asset['name'],
-            'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
             'task': task
         }
@@ -390,7 +391,7 @@ class AssetWidget(QtWidgets.QWidget):
             assets, (tuple, list)
         ), "Assets must be list or tuple"
 
-        # convert to list - tuple cant be modified
+        # convert to list - tuple can't be modified
         assets = list(assets)
 
         # Clear selection

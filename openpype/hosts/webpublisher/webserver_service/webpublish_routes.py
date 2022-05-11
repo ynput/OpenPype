@@ -7,18 +7,20 @@ import collections
 from aiohttp.web_response import Response
 import subprocess
 
-from avalon.api import AvalonMongoDB
-
-from openpype.lib import OpenPypeMongoConnection
-from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
-from openpype.settings import get_project_settings
-
-from openpype.lib import PypeLogger
+from openpype.lib import (
+    OpenPypeMongoConnection,
+    PypeLogger,
+)
 from openpype.lib.remote_publish import (
     get_task_data,
     ERROR_STATUS,
     REPROCESS_STATUS
 )
+from openpype.pipeline import AvalonMongoDB
+from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
+from openpype.settings import get_project_settings
+
+
 
 log = PypeLogger.get_logger("WebServer")
 
@@ -359,12 +361,19 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
             "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
         }
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
-        for _, mapping in collect_conf.get("task_type_to_family", {}).items():
-            for _family, config in mapping.items():
-                if config["is_sequence"]:
-                    configured["sequence_exts"].update(config["extensions"])
-                else:
-                    configured["file_exts"].update(config["extensions"])
+        configs = collect_conf.get("task_type_to_family", [])
+        mappings = []
+        for _, conf_mappings in configs.items():
+            if isinstance(conf_mappings, dict):
+                conf_mappings = conf_mappings.values()
+            for conf_mapping in conf_mappings:
+                mappings.append(conf_mapping)
+
+        for mapping in mappings:
+            if mapping["is_sequence"]:
+                configured["sequence_exts"].update(mapping["extensions"])
+            else:
+                configured["file_exts"].update(mapping["extensions"])
 
         return Response(
             status=200,

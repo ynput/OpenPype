@@ -20,131 +20,130 @@ class AERenderInstance(RenderInstance):
     fps = attr.ib(default=None)
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
+    app_version = attr.ib(default=None)
+    publish_attributes = attr.ib(default=None)
+    file_name = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
-    order = pyblish.api.CollectorOrder + 0.498
+    order = pyblish.api.CollectorOrder + 0.405
     label = "Collect After Effects Render Layers"
     hosts = ["aftereffects"]
 
-    # internal
-    family_remapping = {
-        "render": ("render.farm", "farm"),   # (family, label)
-        "renderLocal": ("render", "local")
-    }
     padding_width = 6
     rendered_extension = 'png'
 
-    stub = get_stub()
+    _stub = None
+
+    @classmethod
+    def get_stub(cls):
+        if not cls._stub:
+            cls._stub = get_stub()
+        return cls._stub
 
     def get_instances(self, context):
         instances = []
+        instances_to_remove = []
+
+        app_version = CollectAERender.get_stub().get_app_version()
+        app_version = app_version[0:4]
 
         current_file = context.data["currentFile"]
         version = context.data["version"]
-        asset_entity = context.data["assetEntity"]
+
         project_entity = context.data["projectEntity"]
 
-        compositions = self.stub.get_items(True)
+        compositions = CollectAERender.get_stub().get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
-        for inst in self.stub.get_metadata():
-            schema = inst.get('schema')
-            # loaded asset container skip it
-            if schema and 'container' in schema:
+        for inst in context:
+            if not inst.data.get("active", True):
                 continue
 
-            if not inst["members"]:
-                raise ValueError("Couldn't find id, unable to publish. " +
-                                 "Please recreate instance.")
-            item_id = inst["members"][0]
+            family = inst.data["family"]
+            if family not in ["render", "renderLocal"]:  # legacy
+                continue
 
-            work_area_info = self.stub.get_work_area(int(item_id))
+            item_id = inst.data["members"][0]
+
+            work_area_info = CollectAERender.get_stub().get_work_area(
+                int(item_id))
 
             if not work_area_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                self.stub.remove_instance(int(item_id))
+                inst_id = inst.get("instance_id") or item_id
+                CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
-            frameStart = work_area_info.workAreaStart
-
-            frameEnd = round(work_area_info.workAreaStart +
-                             float(work_area_info.workAreaDuration) *
-                             float(work_area_info.frameRate)) - 1
+            frame_start = work_area_info.workAreaStart
+            frame_end = round(work_area_info.workAreaStart +
+                              float(work_area_info.workAreaDuration) *
+                              float(work_area_info.frameRate)) - 1
             fps = work_area_info.frameRate
             # TODO add resolution when supported by extension
 
-            if inst["family"] in self.family_remapping.keys() \
-                    and inst["active"]:
-                remapped_family = self.family_remapping[inst["family"]]
-                instance = AERenderInstance(
-                    family=remapped_family[0],
-                    families=[remapped_family[0]],
-                    version=version,
-                    time="",
-                    source=current_file,
-                    label="{} - {}".format(inst["subset"], remapped_family[1]),
-                    subset=inst["subset"],
-                    asset=context.data["assetEntity"]["name"],
-                    attachTo=False,
-                    setMembers='',
-                    publish=True,
-                    renderer='aerender',
-                    name=inst["subset"],
-                    resolutionWidth=asset_entity["data"].get(
-                        "resolutionWidth",
-                        project_entity["data"]["resolutionWidth"]),
-                    resolutionHeight=asset_entity["data"].get(
-                        "resolutionHeight",
-                        project_entity["data"]["resolutionHeight"]),
-                    pixelAspect=1,
-                    tileRendering=False,
-                    tilesX=0,
-                    tilesY=0,
-                    frameStart=frameStart,
-                    frameEnd=frameEnd,
-                    frameStep=1,
-                    toBeRenderedOn='deadline',
-                    fps=fps
-                )
+            task_name = inst.data.get("task")  # legacy
 
-                comp = compositions_by_id.get(int(item_id))
-                if not comp:
-                    raise ValueError("There is no composition for item {}".
-                                     format(item_id))
-                instance.comp_name = comp.name
-                instance.comp_id = item_id
-                instance._anatomy = context.data["anatomy"]
-                instance.anatomyData = context.data["anatomyData"]
+            render_q = CollectAERender.get_stub().get_render_info()
+            if not render_q:
+                raise ValueError("No file extension set in Render Queue")
 
-                instance.outputDir = self._get_output_dir(instance)
+            subset_name = inst.data["subset"]
+            instance = AERenderInstance(
+                family=family,
+                families=inst.data.get("families", []),
+                version=version,
+                time="",
+                source=current_file,
+                label="{} - {}".format(subset_name, family),
+                subset=subset_name,
+                asset=inst.data["asset"],
+                task=task_name,
+                attachTo=False,
+                setMembers='',
+                publish=True,
+                renderer='aerender',
+                name=subset_name,
+                resolutionWidth=render_q.width,
+                resolutionHeight=render_q.height,
+                pixelAspect=1,
+                tileRendering=False,
+                tilesX=0,
+                tilesY=0,
+                frameStart=frame_start,
+                frameEnd=frame_end,
+                frameStep=1,
+                toBeRenderedOn='deadline',
+                fps=fps,
+                app_version=app_version,
+                publish_attributes=inst.data.get("publish_attributes"),
+                file_name=render_q.file_name
+            )
 
-                settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-                reviewable_subset_filter = \
-                    (settings["deadline"]
-                             ["publish"]
-                             ["ProcessSubmittedJobOnFarm"]
-                             ["aov_filter"])
+            comp = compositions_by_id.get(int(item_id))
+            if not comp:
+                raise ValueError("There is no composition for item {}".
+                                 format(item_id))
+            instance.outputDir = self._get_output_dir(instance)
+            instance.comp_name = comp.name
+            instance.comp_id = item_id
 
-                if inst["family"] == "renderLocal":
-                    # for local renders
-                    instance.anatomyData["version"] = instance.version
-                    instance.anatomyData["subset"] = instance.subset
-                    instance.stagingDir = tempfile.mkdtemp()
-                    instance.projectEntity = project_entity
+            is_local = "renderLocal" in inst.data["family"]  # legacy
+            if inst.data.get("creator_attributes"):
+                is_local = not inst.data["creator_attributes"].get("farm")
+            if is_local:
+                # for local renders
+                instance = self._update_for_local(instance, project_entity)
+            else:
+                fam = "render.farm"
+                if fam not in instance.families:
+                    instance.families.append(fam)
 
-                    if self.hosts[0] in reviewable_subset_filter.keys():
-                        for aov_pattern in \
-                                reviewable_subset_filter[self.hosts[0]]:
-                            if re.match(aov_pattern, instance.subset):
-                                instance.families.append("review")
-                                instance.review = True
-                                break
+            instances.append(instance)
+            instances_to_remove.append(inst)
 
-                self.log.info("New instance:: {}".format(instance))
-
-                instances.append(instance)
-
+        for instance in instances_to_remove:
+            context.remove(instance)
         return instances
 
     def get_expected_files(self, render_instance):
@@ -163,15 +162,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        # pull file name from Render Queue Output module
-        render_q = self.stub.get_render_info()
-        if not render_q:
-            raise ValueError("No file extension set in Render Queue")
-        _, ext = os.path.splitext(os.path.basename(render_q.file_name))
+        _, ext = os.path.splitext(os.path.basename(render_instance.file_name))
 
         base_dir = self._get_output_dir(render_instance)
         expected_files = []
-        if "#" not in render_q.file_name:  # single frame (mov)W
+        if "#" not in render_instance.file_name:  # single frame (mov)W
             path = os.path.join(base_dir, "{}_{}_{}.{}".format(
                 render_instance.asset,
                 render_instance.subset,
@@ -211,3 +206,24 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
         # for submit_publish_job
         return base_dir
+
+    def _update_for_local(self, instance, project_entity):
+        """Update old saved instances to current publishing format"""
+        instance.stagingDir = tempfile.mkdtemp()
+        instance.projectEntity = project_entity
+        fam = "render.local"
+        if fam not in instance.families:
+            instance.families.append(fam)
+
+        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        reviewable_subset_filter = (settings["deadline"]
+                                    ["publish"]
+                                    ["ProcessSubmittedJobOnFarm"]
+                                    ["aov_filter"].get(self.hosts[0]))
+        for aov_pattern in reviewable_subset_filter:
+            if re.match(aov_pattern, instance.subset):
+                instance.families.append("review")
+                instance.review = True
+                break
+
+        return instance

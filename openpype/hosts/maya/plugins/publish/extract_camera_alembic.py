@@ -2,9 +2,7 @@ import os
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
-
 from openpype.hosts.maya.api import lib
 
 
@@ -23,17 +21,9 @@ class ExtractCameraAlembic(openpype.api.Extractor):
 
     def process(self, instance):
 
-        # get settings
-        framerange = [instance.data.get("frameStart", 1),
-                      instance.data.get("frameEnd", 1)]
-        handle_start = instance.data.get("handleStart", 0)
-        handle_end = instance.data.get("handleEnd", 0)
-
-        # TODO: deprecated attribute "handles"
-
-        if handle_start is None:
-            handle_start = instance.data.get("handles", 0)
-            handle_end = instance.data.get("handles", 0)
+        # Collect the start and end including handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
@@ -54,7 +44,7 @@ class ExtractCameraAlembic(openpype.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform alembic extraction
-        with avalon.maya.maintained_selection():
+        with lib.maintained_selection():
             cmds.select(camera, replace=True, noExpand=True)
 
             # Enforce forward slashes for AbcExport because we're
@@ -63,10 +53,7 @@ class ExtractCameraAlembic(openpype.api.Extractor):
 
             job_str = ' -selection -dataFormat "ogawa" '
             job_str += ' -attrPrefix cb'
-            job_str += ' -frameRange {0} {1} '.format(framerange[0]
-                                                      - handle_start,
-                                                      framerange[1]
-                                                      + handle_end)
+            job_str += ' -frameRange {0} {1} '.format(start, end)
             job_str += ' -step {0} '.format(step)
 
             if bake_to_worldspace:
@@ -86,7 +73,7 @@ class ExtractCameraAlembic(openpype.api.Extractor):
                 job_str += " -attr {0}".format(attr)
 
             with lib.evaluation("off"):
-                with avalon.maya.suspended_refresh():
+                with lib.suspended_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
         if "representations" not in instance.data:

@@ -121,6 +121,20 @@ class EnumEntity(BaseEnumEntity):
             )
         super(EnumEntity, self).schema_validations()
 
+    def set_override_state(self, *args, **kwargs):
+        super(EnumEntity, self).set_override_state(*args, **kwargs)
+
+        # Make sure current value is valid
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
+            self._current_value = new_value
+
+        elif self._current_value not in self.valid_keys:
+            self._current_value = self.value_on_not_set
+
 
 class HostsEnumEntity(BaseEnumEntity):
     """Enumeration of host names.
@@ -249,6 +263,7 @@ class HostsEnumEntity(BaseEnumEntity):
 
 
 class AppsEnumEntity(BaseEnumEntity):
+    """Enum of applications for project anatomy attributes."""
     schema_types = ["apps-enum"]
 
     def _item_initialization(self):
@@ -265,16 +280,30 @@ class AppsEnumEntity(BaseEnumEntity):
         valid_keys = set()
         enum_items_list = []
         applications_entity = system_settings_entity["applications"]
+        app_entities = {}
+        additional_app_names = set()
+        additional_apps_entity = None
         for group_name, app_group in applications_entity.items():
+            if group_name != "additional_apps":
+                app_entities[group_name] = app_group
+                continue
+
+            additional_apps_entity = app_group
+            for _group_name, _group in app_group.items():
+                additional_app_names.add(_group_name)
+                app_entities[_group_name] = _group
+
+        for group_name, app_group in app_entities.items():
             enabled_entity = app_group.get("enabled")
             if enabled_entity and not enabled_entity.value:
                 continue
 
-            host_name_entity = app_group.get("host_name")
-            if not host_name_entity or not host_name_entity.value:
-                continue
-
-            group_label = app_group["label"].value
+            if group_name in additional_app_names:
+                group_label = additional_apps_entity.get_key_label(group_name)
+                if not group_label:
+                    group_label = group_name
+            else:
+                group_label = app_group["label"].value
             variants_entity = app_group["variants"]
             for variant_name, variant_entity in variants_entity.items():
                 enabled_entity = variant_entity.get("enabled")

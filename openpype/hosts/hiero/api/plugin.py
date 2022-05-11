@@ -1,12 +1,15 @@
-import re
 import os
-import hiero
-from Qt import QtWidgets, QtCore
-from avalon.vendor import qargparse
-import avalon.api as avalon
-import openpype.api as openpype
-from . import lib
+import re
 from copy import deepcopy
+
+import hiero
+
+from Qt import QtWidgets, QtCore
+import qargparse
+
+import openpype.api as openpype
+from openpype.pipeline import LoaderPlugin, LegacyCreator
+from . import lib
 
 log = openpype.Logger().get_logger(__name__)
 
@@ -303,7 +306,7 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class SequenceLoader(avalon.Loader):
+class SequenceLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that
@@ -589,7 +592,7 @@ class ClipLoader:
         return track_item
 
 
-class Creator(openpype.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     clip_color = "Purple"

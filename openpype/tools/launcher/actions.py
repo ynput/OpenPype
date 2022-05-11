@@ -1,6 +1,7 @@
 import os
 
-from avalon import api
+from Qt import QtWidgets, QtGui
+
 from openpype import PLUGINS_DIR
 from openpype import style
 from openpype.api import Logger, resources
@@ -8,7 +9,10 @@ from openpype.lib import (
     ApplictionExecutableNotFound,
     ApplicationLaunchFailed
 )
-from Qt import QtWidgets, QtGui
+from openpype.pipeline import (
+    LauncherAction,
+    register_launcher_action_path,
+)
 
 
 def register_actions_from_paths(paths):
@@ -29,14 +33,15 @@ def register_actions_from_paths(paths):
             print("Path was not found: {}".format(path))
             continue
 
-        api.register_plugin_path(api.Action, path)
+        register_launcher_action_path(path)
 
 
 def register_config_actions():
     """Register actions from the configuration for Launcher"""
 
     actions_dir = os.path.join(PLUGINS_DIR, "actions")
-    register_actions_from_paths([actions_dir])
+    if os.path.exists(actions_dir):
+        register_actions_from_paths([actions_dir])
 
 
 def register_environment_actions():
@@ -46,7 +51,9 @@ def register_environment_actions():
     register_actions_from_paths(paths_str.split(os.pathsep))
 
 
-class ApplicationAction(api.Action):
+# TODO move to 'openpype.pipeline.actions'
+# - remove Qt related stuff and implement exceptions to show error in launcher
+class ApplicationAction(LauncherAction):
     """Pype's application launcher
 
     Application action based on pype's ApplicationManager system.
@@ -62,6 +69,7 @@ class ApplicationAction(api.Action):
     icon = None
     color = None
     order = 0
+    data = {}
 
     _log = None
     required_session_keys = (
@@ -73,7 +81,7 @@ class ApplicationAction(api.Action):
     @property
     def log(self):
         if self._log is None:
-            self._log = Logger().get_logger(self.__class__.__name__)
+            self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def is_compatible(self, session):
@@ -103,7 +111,8 @@ class ApplicationAction(api.Action):
             self.application.launch(
                 project_name=project_name,
                 asset_name=asset_name,
-                task_name=task_name
+                task_name=task_name,
+                **self.data
             )
 
         except ApplictionExecutableNotFound as exc:

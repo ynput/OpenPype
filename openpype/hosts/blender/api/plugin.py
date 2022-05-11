@@ -5,8 +5,10 @@ from typing import Dict, List, Optional
 
 import bpy
 
-import avalon.api
-from openpype.api import PypeCreatorMixin
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from .pipeline import AVALON_CONTAINERS
 from .ops import (
     MainThreadItem,
@@ -129,8 +131,10 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
-class Creator(PypeCreatorMixin, avalon.api.Creator):
+class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
+    defaults = ['Main']
+
     def process(self):
         collection = bpy.data.collections.new(name=self.data["subset"])
         bpy.context.scene.collection.children.link(collection)
@@ -143,13 +147,13 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
         return collection
 
 
-class Loader(avalon.api.Loader):
+class Loader(LoaderPlugin):
     """Base class for Loader plug-ins."""
 
     hosts = ["blender"]
 
 
-class AssetLoader(avalon.api.Loader):
+class AssetLoader(LoaderPlugin):
     """A basic AssetLoader for Blender
 
     This will implement the basic logic for linking/appending assets
@@ -262,7 +266,7 @@ class AssetLoader(avalon.api.Loader):
         # Only containerise if it's not already a collection from a .blend file.
         # representation = context["representation"]["name"]
         # if representation != "blend":
-        #     from avalon.blender.pipeline import containerise
+        #     from openpype.hosts.blender.api.pipeline import containerise
         #     return containerise(
         #         name=name,
         #         namespace=namespace,

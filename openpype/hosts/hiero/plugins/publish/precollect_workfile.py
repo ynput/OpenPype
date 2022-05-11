@@ -1,12 +1,15 @@
 import os
-import pyblish.api
-import hiero.ui
-from openpype.hosts.hiero import api as phiero
-from avalon import api as avalon
-from pprint import pformat
-from openpype.hosts.hiero.api.otio import hiero_export
-from Qt.QtGui import QPixmap
 import tempfile
+from pprint import pformat
+
+import pyblish.api
+from Qt.QtGui import QPixmap
+
+import hiero.ui
+
+from openpype.pipeline import legacy_io
+from openpype.hosts.hiero import api as phiero
+from openpype.hosts.hiero.api.otio import hiero_export
 
 
 class PrecollectWorkfile(pyblish.api.ContextPlugin):
@@ -17,7 +20,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        asset = avalon.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         subset = "workfile"
         project = phiero.get_current_project()
         active_timeline = hiero.ui.activeSequence()
@@ -65,6 +68,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "subset": "{}{}".format(asset, subset.capitalize()),
             "item": project,
             "family": "workfile",
+            "families": [],
             "representations": [workfile_representation, thumb_representation]
         }
 
@@ -74,6 +78,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         # update context with main project attributes
         context_data = {
             "activeProject": project,
+            "activeTimeline": active_timeline,
             "otioTimeline": otio_timeline,
             "currentFile": curent_file,
             "colorspace": self.get_colorspace(project),

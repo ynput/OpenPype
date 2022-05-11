@@ -6,11 +6,15 @@ from pathlib import Path
 
 import clique
 
-from avalon import api, harmony
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+import openpype.hosts.harmony.api as harmony
 import openpype.lib
 
 
-class ImageSequenceLoader(api.Loader):
+class ImageSequenceLoader(load.LoaderPlugin):
     """Load image sequences.
 
     Stores the imported asset in a container named after the asset.
@@ -78,7 +82,7 @@ class ImageSequenceLoader(api.Loader):
         self_name = self.__class__.__name__
         node = container.get("nodes").pop()
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         collections, remainder = clique.assemble(
             os.listdir(os.path.dirname(path))
         )

@@ -29,6 +29,10 @@ from .lib import (
     maintained_selection
 )
 
+from .utils import (
+    colorspace_exists_on_node,
+    get_colorspace_list
+)
 
 __all__ = (
     "file_extensions",
@@ -54,4 +58,7 @@ __all__ = (
     "update_container",
 
     "maintained_selection",
+
+    "colorspace_exists_on_node",
+    "get_colorspace_list"
 )

@@ -1,9 +1,13 @@
 import json
 from collections import OrderedDict
-
+import six
 import nuke
 
-from avalon import api, style, io
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api import lib
 from openpype.hosts.nuke.api import (
     containerise,
@@ -12,7 +16,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadEffectsInputProcess(api.Loader):
+class LoadEffectsInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["effectJson"]
@@ -21,7 +25,7 @@ class LoadEffectsInputProcess(api.Loader):
     label = "Load Effects - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):
@@ -69,7 +73,7 @@ class LoadEffectsInputProcess(api.Loader):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
-                      for key, value in json.load(f).iteritems()}
+                      for key, value in json.load(f).items()}
 
         # get correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
@@ -149,14 +153,14 @@ class LoadEffectsInputProcess(api.Loader):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)
@@ -189,7 +193,7 @@ class LoadEffectsInputProcess(api.Loader):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
-                      for key, value in json.load(f).iteritems()}
+                      for key, value in json.load(f).items()}
 
         # get correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
@@ -247,7 +251,7 @@ class LoadEffectsInputProcess(api.Loader):
         #     return
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')
@@ -345,11 +349,11 @@ class LoadEffectsInputProcess(api.Loader):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 

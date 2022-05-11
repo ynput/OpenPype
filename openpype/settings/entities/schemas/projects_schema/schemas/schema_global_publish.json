@@ -21,6 +21,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectSceneVersion",
+            "label": "Collect Version from Workfile",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "hosts",
+                    "label": "Host names",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                },
+                {
+                    "key": "skip_hosts_headless_publish",
+                    "label": "Skip for host if headless publish",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
@@ -98,32 +119,6 @@
                             }
                         ]
                     }
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "key": "IntegrateHeroVersion",
-            "label": "IntegrateHeroVersion",
-            "is_group": true,
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
-                },
-                {
-                    "key": "families",
-                    "label": "Families",
-                    "type": "list",
-                    "object_type": "text"
                 }
             ]
         },
@@ -270,6 +265,15 @@
                                                     "label": "Families",
                                                     "type": "list",
                                                     "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "separator"
+                                                },
+                                                {
+                                                    "key": "subsets",
+                                                    "label": "Subsets",
+                                                    "type": "list",
+                                                    "object_type": "text"
                                                 }
                                             ]
                                         },
@@ -344,19 +348,6 @@
                                                     "default": 0,
                                                     "minimum": 0,
                                                     "maximum": 10000
-                                                },
-                                                {
-                                                    "key": "state",
-                                                    "label": "Type",
-                                                    "type": "enum",
-                                                    "enum_items": [
-                                                        {
-                                                            "letterbox": "Letterbox"
-                                                        },
-                                                        {
-                                                            "pillar": "Pillar"
-                                                        }
-                                                    ]
                                                 },
                                                 {
                                                     "type": "color",
@@ -638,6 +629,80 @@
         {
             "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "IntegrateHeroVersion",
+            "label": "IntegrateHeroVersion",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "template_name_profiles",
+                    "label": "Template name profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "task_names",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template_name",
+                                "label": "Template name",
+                                "tooltip": "Name of template from Anatomy templates"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CleanUp",
             "label": "Clean Up",
             "is_group": true,
@@ -656,8 +721,22 @@
                     "label": "Remove Temp renders",
                     "default": false
                 }
-
             ]
+        },
+        {
+          "type": "dict",
+          "collapsible": false,
+          "key": "CleanUpFarm",
+          "label": "Clean Up Farm",
+          "is_group": true,
+          "checkbox_key": "enabled",
+          "children": [
+              {
+                  "type": "boolean",
+                  "key": "enabled",
+                  "label": "Enabled"
+              }
+          ]
         }
     ]
 }

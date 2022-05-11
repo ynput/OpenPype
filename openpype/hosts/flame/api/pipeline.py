@@ -3,9 +3,16 @@ Basic avalon integration
 """
 import os
 import contextlib
-from avalon import api as avalon
 from pyblish import api as pyblish
+
 from openpype.api import Logger
+from openpype.pipeline import (
+    register_loader_plugin_path,
+    register_creator_plugin_path,
+    deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    AVALON_CONTAINER_ID,
+)
 from .lib import (
     set_segment_data_marker,
     set_publish_attribute,
@@ -20,7 +27,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
 
@@ -28,24 +34,10 @@ log = Logger.get_logger(__name__)
 
 
 def install():
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "render2d",
-        "plate",
-        "render",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
-
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    register_loader_plugin_path(LOAD_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info("OpenPype Flame plug-ins registred ...")
 
     # register callback for switching publishable
@@ -53,14 +45,14 @@ def install():
 
     log.info("OpenPype Flame host installed ...")
 
+
 def uninstall():
     pyblish.deregister_host("flame")
 
     log.info("Deregistering Flame plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -68,14 +60,31 @@ def uninstall():
     log.info("OpenPype Flame host uninstalled ...")
 
 
-def containerise(tl_segment,
+def containerise(flame_clip_segment,
                  name,
                  namespace,
                  context,
                  loader=None,
                  data=None):
-    # TODO: containerise
-    pass
+
+    data_imprint = {
+        "schema": "openpype:container-2.0",
+        "id": AVALON_CONTAINER_ID,
+        "name": str(name),
+        "namespace": str(namespace),
+        "loader": str(loader),
+        "representation": str(context["representation"]["_id"]),
+    }
+
+    if data:
+        for k, v in data.items():
+            data_imprint[k] = v
+
+    log.debug("_ data_imprint: {}".format(data_imprint))
+
+    set_segment_data_marker(flame_clip_segment, data_imprint)
+
+    return True
 
 
 def ls():

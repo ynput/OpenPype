@@ -7,15 +7,13 @@
         }
     },
     "publish": {
-        "CollectRemoteInstances": {
-            "color_code_mapping": [
-                {
-                    "color_code": [],
-                    "layer_name_regex": [],
-                    "family": "",
-                    "subset_template_name": ""
-                }
-            ]
+        "CollectColorCodedInstances": {
+            "create_flatten_image": false,
+            "flatten_subset_template": "",
+            "color_code_mapping": []
+        },
+        "CollectInstances": {
+            "flatten_subset_template": ""
         },
         "ValidateContainers": {
             "enabled": true,
@@ -23,7 +21,7 @@
             "active": true
         },
         "ValidateNaming": {
-            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,;]",
             "replace_char": "_"
         },
         "ExtractImage": {
@@ -33,6 +31,7 @@
             ]
         },
         "ExtractReview": {
+            "make_image_sequence": false,
             "jpg_options": {
                 "tags": []
             },

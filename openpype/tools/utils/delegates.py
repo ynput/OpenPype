@@ -6,8 +6,7 @@ import numbers
 import Qt
 from Qt import QtWidgets, QtGui, QtCore
 
-from avalon.lib import HeroVersionType
-from openpype.style import get_objected_colors
+from openpype.pipeline import HeroVersionType
 from .models import TreeModel
 from . import lib
 
@@ -288,9 +287,5 @@ class PrettyTimeDelegate(QtWidgets.QStyledItemDelegate):
     """
 
     def displayText(self, value, locale):
-
-        if value is None:
-            # Ignore None value
-            return
-
-        return pretty_timestamp(value)
+        if value is not None:
+            return pretty_timestamp(value)

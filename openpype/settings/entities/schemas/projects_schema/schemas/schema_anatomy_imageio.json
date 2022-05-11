@@ -196,6 +196,9 @@
                                             "aces_1.1": "aces_1.1"
                                         },
                                         {
+                                            "aces_1.2": "aces_1.2"
+                                        },
+                                        {
                                             "custom": "custom"
                                         }
                                     ]
@@ -250,7 +253,7 @@
                         {
                             "key": "requiredNodes",
                             "type": "list",
-                            "label": "Required Nodes",
+                            "label": "Plugin required",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -269,35 +272,43 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "splitter"
-                                    },
-                                    {
-                                        "key": "knobs",
+                                        "type": "collapsible-wrap",
                                         "label": "Knobs",
-                                        "type": "list",
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "type": "text",
-                                                    "key": "name",
-                                                    "label": "Name"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "value",
-                                                    "label": "Value"
+                                        "collapsible": true,
+                                        "collapsed": true,
+                                        "children": [
+                                            {
+                                                "key": "knobs",
+                                                "type": "list",
+                                                "object_type": {
+                                                    "type": "dict",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "key": "value",
+                                                            "label": "Value"
+                                                        }
+                                                    ]
                                                 }
-                                            ]
-                                        }
+                                            }
+                                        ]
                                     }
+
                                 ]
                             }
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "list",
-                            "key": "customNodes",
-                            "label": "Custom Nodes",
+                            "key": "overrideNodes",
+                            "label": "Plugin's node overrides",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -316,27 +327,37 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "splitter"
+                                        "key": "subsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
                                     },
                                     {
-                                        "key": "knobs",
-                                        "label": "Knobs",
-                                        "type": "list",
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "type": "text",
-                                                    "key": "name",
-                                                    "label": "Name"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "value",
-                                                    "label": "Value"
+                                        "type": "collapsible-wrap",
+                                        "label": "Knobs overrides",
+                                        "collapsible": true,
+                                        "collapsed": true,
+                                        "children": [
+                                            {
+                                                "key": "knobs",
+                                                "type": "list",
+                                                "object_type": {
+                                                    "type": "dict",
+                                                    "children": [
+                                                        {
+                                                            "type": "text",
+                                                            "key": "name",
+                                                            "label": "Name"
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "key": "value",
+                                                            "label": "Value"
+                                                        }
+                                                    ]
                                                 }
-                                            ]
-                                        }
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -378,10 +399,46 @@
             "label": "Maya",
             "children": [
                 {
+                    "key": "colorManagementPreference_v2",
+                    "type": "dict",
+                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Use Color Management Preference v2"
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "displayName",
+                            "label": "Display"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewName",
+                            "label": "View"
+                        }
+                    ]
+                },
+                {
                     "key": "colorManagementPreference",
                     "type": "dict",
-                    "label": "Color Managment Preference",
-                    "collapsible": false,
+                    "label": "Color Management Preference (legacy)",
+                    "collapsible": true,
                     "children": [
                         {
                             "type": "path",
@@ -401,7 +458,69 @@
                             "label": "Viewer Transform"
                         }
                     ]
-            }
+                }
+            ]
+        },
+        {
+            "key": "flame",
+            "type": "dict",
+            "label": "Flame & Flare",
+            "children": [
+                {
+                    "key": "project",
+                    "type": "dict",
+                    "label": "Project",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "form",
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "colourPolicy",
+                                    "label": "Colour Policy (name or path)"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "frameDepth",
+                                    "label": "Image Depth"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "fieldDominance",
+                                    "label": "Field Dominance"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "profilesMapping",
+                    "type": "dict",
+                    "label": "Profile names mapping",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "inputs",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "flameName",
+                                        "label": "Flame name"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "ocioName",
+                                        "label": "OCIO name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
             ]
         }
     ]

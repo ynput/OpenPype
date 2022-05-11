@@ -1,7 +1,7 @@
-from Qt import QtWidgets, QtCore, QtGui
-from . import FamilyRole, PluginRole
-from avalon.vendor import qtawesome
 import six
+from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
+from . import FamilyRole, PluginRole
 
 
 class FamilyDescriptionWidget(QtWidgets.QWidget):
@@ -52,6 +52,7 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         family.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
 
         help = QtWidgets.QLabel("help")
+        help.setWordWrap(True)
         help.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         label_layout.addWidget(family)

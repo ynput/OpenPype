@@ -1,9 +1,14 @@
 import sys
+import traceback
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io, pipeline
 
 from openpype import style
+from openpype.lib import register_event_callback
+from openpype.pipeline import (
+    install_openpype_plugins,
+    legacy_io,
+)
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -25,17 +30,6 @@ module = sys.modules[__name__]
 module.window = None
 
 
-# Register callback on task change
-# - callback can't be defined in Window as it is weak reference callback
-#   so `WeakSet` will remove it immidiatelly
-def on_context_task_change(*args, **kwargs):
-    if module.window:
-        module.window.on_context_task_change(*args, **kwargs)
-
-
-pipeline.on("taskChanged", on_context_task_change)
-
-
 class LoaderWindow(QtWidgets.QDialog):
     """Asset loader interface"""
 
@@ -45,14 +39,14 @@ class LoaderWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(LoaderWindow, self).__init__(parent)
         title = "Asset Loader 2.1"
-        project_name = api.Session.get("AVALON_PROJECT")
+        project_name = legacy_io.Session.get("AVALON_PROJECT")
         if project_name:
             title += " - {}".format(project_name)
         self.setWindowTitle(title)
 
         # Groups config
-        self.groups_config = lib.GroupsConfig(io)
-        self.family_config_cache = lib.FamilyConfigCache(io)
+        self.groups_config = lib.GroupsConfig(legacy_io)
+        self.family_config_cache = lib.FamilyConfigCache(legacy_io)
 
         # Enable minimize and maximize for app
         window_flags = QtCore.Qt.Window
@@ -69,13 +63,13 @@ class LoaderWindow(QtWidgets.QDialog):
 
         # Assets widget
         assets_widget = MultiSelectAssetsWidget(
-            io, parent=left_side_splitter
+            legacy_io, parent=left_side_splitter
         )
         assets_widget.set_current_asset_btn_visibility(True)
 
         # Families widget
         families_filter_view = FamilyListView(
-            io, self.family_config_cache, left_side_splitter
+            legacy_io, self.family_config_cache, left_side_splitter
         )
         left_side_splitter.addWidget(assets_widget)
         left_side_splitter.addWidget(families_filter_view)
@@ -85,7 +79,7 @@ class LoaderWindow(QtWidgets.QDialog):
         # --- Middle part ---
         # Subsets widget
         subsets_widget = SubsetWidget(
-            io,
+            legacy_io,
             self.groups_config,
             self.family_config_cache,
             tool_name=self.tool_name,
@@ -96,8 +90,12 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
 
-        thumbnail_widget = ThumbnailWidget(io, parent=thumb_ver_splitter)
-        version_info_widget = VersionWidget(io, parent=thumb_ver_splitter)
+        thumbnail_widget = ThumbnailWidget(
+            legacy_io, parent=thumb_ver_splitter
+        )
+        version_info_widget = VersionWidget(
+            legacy_io, parent=thumb_ver_splitter
+        )
 
         thumb_ver_splitter.addWidget(thumbnail_widget)
         thumb_ver_splitter.addWidget(version_info_widget)
@@ -114,7 +112,7 @@ class LoaderWindow(QtWidgets.QDialog):
         repres_widget = None
         if sync_server_enabled:
             repres_widget = RepresentationWidget(
-                io, self.tool_name, parent=thumb_ver_splitter
+                legacy_io, self.tool_name, parent=thumb_ver_splitter
             )
             thumb_ver_splitter.addWidget(repres_widget)
 
@@ -194,6 +192,8 @@ class LoaderWindow(QtWidgets.QDialog):
 
         self._first_show = True
 
+        register_event_callback("taskChanged", self.on_context_task_change)
+
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)
         self._overlay_frame.resize(self.size())
@@ -266,13 +266,15 @@ class LoaderWindow(QtWidgets.QDialog):
         # Refresh families config
         self._families_filter_view.refresh()
         # Change to context asset on context change
-        self._assets_widget.select_asset_by_name(io.Session["AVALON_ASSET"])
+        self._assets_widget.select_asset_by_name(
+            legacy_io.Session["AVALON_ASSET"]
+        )
 
     def _refresh(self):
         """Load assets from database"""
 
         # Ensure a project is loaded
-        project = io.find_one({"type": "project"}, {"type": 1})
+        project = legacy_io.find_one({"type": "project"}, {"type": 1})
         assert project, "Project was not found! This is a bug"
 
         self._assets_widget.refresh()
@@ -287,9 +289,7 @@ class LoaderWindow(QtWidgets.QDialog):
         on selection change so they match current selection.
         """
         # TODO do not touch inner attributes of asset widget
-        last_asset_ids = self.data["state"]["assetIds"]
-        if last_asset_ids:
-            self._assets_widget.clear_underlines()
+        self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
@@ -300,7 +300,6 @@ class LoaderWindow(QtWidgets.QDialog):
         subsets_model.clear()
         self.clear_assets_underlines()
 
-        # filter None docs they are silo
         asset_ids = self._assets_widget.get_selected_asset_ids()
         # Start loading
         subsets_widget.set_loading_state(
@@ -328,12 +327,11 @@ class LoaderWindow(QtWidgets.QDialog):
         asset_ids = self.data["state"]["assetIds"]
         # Skip setting colors if not asset multiselection
         if not asset_ids or len(asset_ids) < 2:
+            self.clear_assets_underlines()
             self._versionschanged()
             return
 
-        selected_subsets = self._subsets_widget.selected_subsets(
-            _merged=True, _other=False
-        )
+        selected_subsets = self._subsets_widget.get_selected_merge_items()
 
         asset_colors = {}
         asset_ids = []
@@ -358,37 +356,16 @@ class LoaderWindow(QtWidgets.QDialog):
         self._versionschanged()
 
     def _versionschanged(self):
-        subsets = self._subsets_widget
-        selection = subsets.view.selectionModel()
-
-        # Active must be in the selected rows otherwise we
-        # assume it's not actually an "active" current index.
+        items = self._subsets_widget.get_selected_subsets()
         version_doc = None
-        active = selection.currentIndex()
-        rows = selection.selectedRows(column=active.column())
-        if active:
-            if active in rows:
-                item = active.data(subsets.model.ItemRole)
-                if (
-                    item is not None and
-                    not (item.get("isGroup") or item.get("isMerged"))
-                ):
-                    version_doc = item["version_document"]
-        self._version_info_widget.set_version(version_doc)
-
         version_docs = []
-        if rows:
-            for index in rows:
-                if not index or not index.isValid():
-                    continue
-                item = index.data(subsets.model.ItemRole)
-                if item is None:
-                    continue
-                if item.get("isGroup") or item.get("isMerged"):
-                    for child in item.children():
-                        version_docs.append(child["version_document"])
-                else:
-                    version_docs.append(item["version_document"])
+        for item in items:
+            doc = item["version_document"]
+            version_docs.append(doc)
+            if version_doc is None:
+                version_doc = doc
+
+        self._version_info_widget.set_version(version_doc)
 
         thumbnail_src_ids = [
             version_doc["_id"]
@@ -413,17 +390,9 @@ class LoaderWindow(QtWidgets.QDialog):
 
         The context must contain `asset` data by name.
 
-        Note: Prior to setting context ensure `refresh` is triggered so that
-              the "silos" are listed correctly, aside from that setting the
-              context will force a refresh further down because it changes
-              the active silo and asset.
-
         Args:
             context (dict): The context to apply.
-
-        Returns:
-            None
-
+            refrest (bool): Trigger refresh on context set.
         """
 
         asset = context.get("asset", None)
@@ -431,12 +400,6 @@ class LoaderWindow(QtWidgets.QDialog):
             return
 
         if refresh:
-            # Workaround:
-            # Force a direct (non-scheduled) refresh prior to setting the
-            # asset widget's silo and asset selection to ensure it's correctly
-            # displaying the silo tabs. Calling `window.refresh()` and directly
-            # `window.set_context()` the `set_context()` seems to override the
-            # scheduled refresh and the silo tabs are not shown.
             self._refresh()
 
         self._assets_widget.select_asset_by_name(asset)
@@ -455,7 +418,7 @@ class LoaderWindow(QtWidgets.QDialog):
         shift_pressed = QtCore.Qt.ShiftModifier & modifiers
 
         if shift_pressed:
-            print("Force quitted..")
+            print("Force quit..")
             self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         print("Good bye")
@@ -480,18 +443,7 @@ class LoaderWindow(QtWidgets.QDialog):
             self.echo("Grouping not enabled.")
             return
 
-        selected = []
-        merged_items = []
-        for item in subsets.selected_subsets(_merged=True):
-            if item.get("isMerged"):
-                merged_items.append(item)
-            else:
-                selected.append(item)
-
-        for merged_item in merged_items:
-            for child_item in merged_item.children():
-                selected.append(child_item)
-
+        selected = self._subsets_widget.get_selected_subsets()
         if not selected:
             self.echo("No selected subset.")
             return
@@ -619,17 +571,16 @@ def show(debug=False, parent=None, use_context=False):
             module.window = None
 
     if debug:
-        import traceback
         sys.excepthook = lambda typ, val, tb: traceback.print_last()
 
-        io.install()
+        legacy_io.install()
 
         any_project = next(
-            project for project in io.projects()
+            project for project in legacy_io.projects()
             if project.get("active", True) is not False
         )
 
-        api.Session["AVALON_PROJECT"] = any_project["name"]
+        legacy_io.Session["AVALON_PROJECT"] = any_project["name"]
         module.project = any_project["name"]
 
     with lib.qt_app_context():
@@ -637,7 +588,7 @@ def show(debug=False, parent=None, use_context=False):
         window.show()
 
         if use_context:
-            context = {"asset": api.Session["AVALON_ASSET"]}
+            context = {"asset": legacy_io.Session["AVALON_ASSET"]}
             window.set_context(context, refresh=True)
         else:
             window.refresh()
@@ -661,19 +612,11 @@ def cli(args):
 
     print("Entering Project: %s" % project)
 
-    io.install()
+    legacy_io.install()
 
     # Store settings
-    api.Session["AVALON_PROJECT"] = project
+    legacy_io.Session["AVALON_PROJECT"] = project
 
-    from avalon import pipeline
-
-    # Find the set config
-    _config = pipeline.find_config()
-    if hasattr(_config, "install"):
-        _config.install()
-    else:
-        print("Config `%s` has no function `install`" %
-              _config.__name__)
+    install_openpype_plugins(project)
 
     show()

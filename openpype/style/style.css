@@ -387,10 +387,16 @@ QHeaderView::section:only-one {
 
 QHeaderView::down-arrow {
     image: url(:/openpype/images/down_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
 }
 
 QHeaderView::up-arrow {
     image: url(:/openpype/images/up_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
 }
 
 /* Checkboxes */
@@ -681,6 +687,26 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
+/* Messages overlay */
+#OverlayMessageWidget {
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+
+#OverlayMessageWidget:hover {
+    background: {color:bg-button-hover};
+}
+#OverlayMessageWidget {
+    background: {color:overlay-messages:bg-success};
+}
+#OverlayMessageWidget:hover {
+    background: {color:overlay-messages:bg-success-hover};
+}
+
+#OverlayMessageWidget QWidget {
+    background: transparent;
+}
+
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -830,10 +856,32 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* New Create/Publish UI */
+#CreateDialogHelpButton {
+    background: rgba(255, 255, 255, 31);
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: 3px 3px 3px 3px;
+}
+
+#CreateDialogHelpButton:hover {
+    background: rgba(255, 255, 255, 63);
+}
+
 #PublishLogConsole {
     font-family: "Noto Sans Mono";
 }
-
+VariantInputsWidget QLineEdit {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+}
+VariantInputsWidget QToolButton {
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
 }
@@ -1093,16 +1141,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExpandLabel[state="modified"]:hover, #SettingsLabel[state="modified"]:hover {
     color: {color:settings:modified-light};
 }
-#ExpandLabel[state="overriden-modified"], #SettingsLabel[state="overriden-modified"] {
+#ExpandLabel[state="overridden-modified"], #SettingsLabel[state="overridden-modified"] {
     color: {color:settings:modified-mid};
 }
-#ExpandLabel[state="overriden-modified"]:hover, #SettingsLabel[state="overriden-modified"]:hover {
+#ExpandLabel[state="overridden-modified"]:hover, #SettingsLabel[state="overridden-modified"]:hover {
     color: {color:settings:modified-light};
 }
-#ExpandLabel[state="overriden"], #SettingsLabel[state="overriden"] {
+#ExpandLabel[state="overridden"], #SettingsLabel[state="overridden"] {
     color: {color:settings:project-mid};
 }
-#ExpandLabel[state="overriden"]:hover, #SettingsLabel[state="overriden"]:hover {
+#ExpandLabel[state="overridden"]:hover, #SettingsLabel[state="overridden"]:hover {
     color: {color:settings:project-light};
 }
 #ExpandLabel[state="invalid"], #SettingsLabel[state="invalid"] {
@@ -1111,28 +1159,46 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExpandLabel[state="invalid"]:hover, #SettingsLabel[state="invalid"]:hover {
     color: {color:settings:invalid-dark};
 }
+#SettingsOutdatedSourceVersion {
+    color: {color:settings:source-version-outdated};
+}
+#SourceVersionLabel {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+#SourceVersionLabel[state="same"] {
+    color: {color:settings:source-version};
+}
+#SourceVersionLabel[state="different"] {
+    color: {color:settings:source-version-outdated};
+}
 
 /* TODO Replace these with explicit widget types if possible */
 #SettingsMainWidget QWidget[input-state="modified"] {
     border-color: {color:settings:modified-mid};
 }
-#SettingsMainWidget QWidget[input-state="overriden-modified"] {
+#SettingsMainWidget QWidget[input-state="overridden-modified"] {
     border-color: {color:settings:modified-mid};
 }
-#SettingsMainWidget QWidget[input-state="overriden"] {
+#SettingsMainWidget QWidget[input-state="overridden"] {
     border-color: {color:settings:project-mid};
 }
 #SettingsMainWidget QWidget[input-state="invalid"] {
     border-color: {color:settings:invalid-dark};
 }
 
-#GroupWidget {
-    border-bottom: 1px solid #21252B;
+#SettingsFooter {
+    border-top: 1px solid #21252B;
 }
 
 #ProjectListWidget QLabel {
     background: transparent;
     font-weight: bold;
+}
+
+#ProjectListContentWidget {
+    background: {color:bg-view};
 }
 
 #MultiSelectionComboBox {
@@ -1145,8 +1211,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ContentWidget {
     background-color: transparent;
 }
-#ContentWidget[content_state="hightlighted"] {
-    background-color: {color:settings:content-hightlighted};
+#ContentWidget[content_state="highlighted"] {
+    background-color: {color:settings:content-highlighted};
 }
 
 #SideLineWidget {
@@ -1172,11 +1238,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SideLineWidget[state="child-invalid"] {border-color: {color:settings:invalid-dark};}
 #SideLineWidget[state="child-invalid"]:hover {border-color: {color:settings:invalid-light};}
 
-#SideLineWidget[state="child-overriden"] {border-color: {color:settings:project-dark};}
-#SideLineWidget[state="child-overriden"]:hover {border-color: {color:settings:project-mid};}
+#SideLineWidget[state="child-overridden"] {border-color: {color:settings:project-dark};}
+#SideLineWidget[state="child-overridden"]:hover {border-color: {color:settings:project-mid};}
 
-#SideLineWidget[state="child-overriden-modified"] {border-color: {color:settings:modified-dark};}
-#SideLineWidget[state="child-overriden-modified"]:hover {border-color: {color:settings:modified-mid};}
+#SideLineWidget[state="child-overridden-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-overridden-modified"]:hover {border-color: {color:settings:modified-mid};}
 
 #DictAsWidgetBody {
     background: transparent;
@@ -1196,6 +1262,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #ShadowWidget {
     font-size: 36pt;
+}
+
+#OverlayFrame {
+    background: rgba(0, 0, 0, 127);
 }
 
 #BreadcrumbsPathInput {
@@ -1228,9 +1298,29 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: #21252B;
 }
 
+/* Workfiles */
+#WorkfilesPublishedContextSelect {
+    background: rgba(0, 0, 0, 127);
+}
+#WorkfilesPublishedContextSelect QLabel {
+    font-size: 17pt;
+}
+
 /* Tray */
 #TrayRestartButton {
     background: {color:restart-btn-bg};
+}
+
+/* Tray publisher */
+#ChooseProjectLabel {
+    font-size: 15pt;
+    font-weight: 750;
+}
+#ChooseProjectFrame {
+    border-radius: 10px;
+}
+#ChooseProjectView {
+    background: transparent;
 }
 
 /* Globally used names */
@@ -1269,4 +1359,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 #LikeDisabledInput:focus {
     border-color: {color:border};
+}
+
+/* Attribute Definition widgets */
+InViewButton, InViewButton:disabled {
+    background: transparent;
+}
+InViewButton:hover {
+    background: rgba(255, 255, 255, 37);
 }

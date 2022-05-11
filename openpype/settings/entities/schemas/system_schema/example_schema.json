@@ -11,13 +11,13 @@
         },
         {
             "type": "dict-conditional",
-            "key": "overriden_value",
-            "label": "Overriden value",
-            "enum_key": "overriden",
+            "key": "overridden_value",
+            "label": "Overridden value",
+            "enum_key": "overridden",
             "enum_is_horizontal": true,
             "enum_children": [
                 {
-                    "key": "overriden",
+                    "key": "overridden",
                     "label": "Override value",
                     "children": [
                         {
@@ -114,19 +114,6 @@
                         "host_label": "Application 2",
                         "host_name": "app_2"
                     }
-                }
-            ]
-        },
-        {
-            "key": "env_group_test",
-            "label": "EnvGroup Test",
-            "type": "dict",
-            "children": [
-                {
-                    "key": "key_to_store_in_system_settings",
-                    "label": "Testing environment group",
-                    "type": "raw-json",
-                    "env_group_key": "test_group"
                 }
             ]
         },

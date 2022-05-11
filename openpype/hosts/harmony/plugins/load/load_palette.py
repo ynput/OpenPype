@@ -1,10 +1,14 @@
 import os
 import shutil
 
-from avalon import api, harmony
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+import openpype.hosts.harmony.api as harmony
 
 
-class ImportPaletteLoader(api.Loader):
+class ImportPaletteLoader(load.LoaderPlugin):
     """Import palettes."""
 
     families = ["palette", "harmony.palette"]
@@ -30,7 +34,7 @@ class ImportPaletteLoader(api.Loader):
         scene_path = harmony.send(
             {"function": "scene.currentProjectPath"}
         )["result"]
-        src = api.get_representation_path(representation)
+        src = get_representation_path(representation)
         dst = os.path.join(
             scene_path,
             "palette-library",
@@ -41,7 +45,9 @@ class ImportPaletteLoader(api.Loader):
         harmony.save_scene()
 
         msg = "Updated {}.".format(subset_name)
-        msg += " You need to reload the scene to see the changes."
+        msg += " You need to reload the scene to see the changes.\n"
+        msg += "Please save workfile when ready and use Workfiles "
+        msg += "to reopen it."
 
         harmony.send(
             {

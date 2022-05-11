@@ -5,11 +5,17 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-import openpype.lib
+
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
+    convert_ffprobe_fps_value,
+)
 
 
-ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
-ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
+ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+ffprobe_path = get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
@@ -50,176 +56,6 @@ def _get_ffprobe_data(source):
     return json.loads(out)
 
 
-def get_fps(str_value):
-    if str_value == "0/0":
-        print("WARNING: Source has \"r_frame_rate\" value set to \"0/0\".")
-        return "Unknown"
-
-    items = str_value.split("/")
-    if len(items) == 1:
-        fps = float(items[0])
-
-    elif len(items) == 2:
-        fps = float(items[0]) / float(items[1])
-
-    # Check if fps is integer or float number
-    if int(fps) == fps:
-        fps = int(fps)
-
-    return str(fps)
-
-
-def _prores_codec_args(stream_data, source_ffmpeg_cmd):
-    output = []
-
-    tags = stream_data.get("tags") or {}
-    encoder = tags.get("encoder") or ""
-    if encoder.endswith("prores_ks"):
-        codec_name = "prores_ks"
-
-    elif encoder.endswith("prores_aw"):
-        codec_name = "prores_aw"
-
-    else:
-        codec_name = "prores"
-
-    output.extend(["-codec:v", codec_name])
-
-    pix_fmt = stream_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    # Rest of arguments is prores_kw specific
-    if codec_name == "prores_ks":
-        codec_tag_to_profile_map = {
-            "apco": "proxy",
-            "apcs": "lt",
-            "apcn": "standard",
-            "apch": "hq",
-            "ap4h": "4444",
-            "ap4x": "4444xq"
-        }
-        codec_tag_str = stream_data.get("codec_tag_string")
-        if codec_tag_str:
-            profile = codec_tag_to_profile_map.get(codec_tag_str)
-            if profile:
-                output.extend(["-profile:v", profile])
-
-    return output
-
-
-def _h264_codec_args(stream_data, source_ffmpeg_cmd):
-    output = ["-codec:v", "h264"]
-
-    # Use arguments from source if are available source arguments
-    if source_ffmpeg_cmd:
-        copy_args = (
-            "-crf",
-            "-b:v", "-vb",
-            "-minrate", "-minrate:",
-            "-maxrate", "-maxrate:",
-            "-bufsize", "-bufsize:"
-        )
-        args = source_ffmpeg_cmd.split(" ")
-        for idx, arg in enumerate(args):
-            if arg in copy_args:
-                output.extend([arg, args[idx + 1]])
-
-    pix_fmt = stream_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    output.extend(["-intra"])
-    output.extend(["-g", "1"])
-
-    return output
-
-
-def _dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
-    output = ["-codec:v", "dnxhd"]
-
-    # Use source profile (profiles in metadata are not usable in args directly)
-    profile = stream_data.get("profile") or ""
-    # Lower profile and replace space with underscore
-    cleaned_profile = profile.lower().replace(" ", "_")
-    dnx_profiles = {
-        "dnxhd",
-        "dnxhr_lb",
-        "dnxhr_sq",
-        "dnxhr_hq",
-        "dnxhr_hqx",
-        "dnxhr_444"
-    }
-    if cleaned_profile in dnx_profiles:
-        output.extend(["-profile:v", cleaned_profile])
-
-    pix_fmt = stream_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    # Use arguments from source if are available source arguments
-    if source_ffmpeg_cmd:
-        copy_args = (
-            "-b:v", "-vb",
-        )
-        args = source_ffmpeg_cmd.split(" ")
-        for idx, arg in enumerate(args):
-            if arg in copy_args:
-                output.extend([arg, args[idx + 1]])
-
-    output.extend(["-g", "1"])
-    return output
-
-
-def _mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
-    input_format = ffprobe_data["format"]
-    format_tags = input_format.get("tags") or {}
-    product_name = format_tags.get("product_name") or ""
-    output = []
-    if "opatom" in product_name.lower():
-        output.extend(["-f", "mxf_opatom"])
-    return output
-
-
-def get_format_args(ffprobe_data, source_ffmpeg_cmd):
-    input_format = ffprobe_data.get("format") or {}
-    if input_format.get("format_name") == "mxf":
-        return _mxf_format_args(ffprobe_data, source_ffmpeg_cmd)
-    return []
-
-
-def get_codec_args(ffprobe_data, source_ffmpeg_cmd):
-    stream_data = ffprobe_data["streams"][0]
-    codec_name = stream_data.get("codec_name")
-    # Codec "prores"
-    if codec_name == "prores":
-        return _prores_codec_args(stream_data, source_ffmpeg_cmd)
-
-    # Codec "h264"
-    if codec_name == "h264":
-        return _h264_codec_args(stream_data, source_ffmpeg_cmd)
-
-    # Coded DNxHD
-    if codec_name == "dnxhd":
-        return _dnxhd_codec_args(stream_data, source_ffmpeg_cmd)
-
-    output = []
-    if codec_name:
-        output.extend(["-codec:v", codec_name])
-
-    bit_rate = stream_data.get("bit_rate")
-    if bit_rate:
-        output.extend(["-b:v", bit_rate])
-
-    pix_fmt = stream_data.get("pix_fmt")
-    if pix_fmt:
-        output.extend(["-pix_fmt", pix_fmt])
-
-    output.extend(["-g", "1"])
-
-    return output
-
-
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
     '''
     This is modification of OTIO FFmpeg Burnin adapter.
@@ -252,7 +88,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         - required IF start frame is not set when using frames or timecode burnins
 
     On initializing class can be set General options through "options_init" arg.
-    General can be overriden when adding burnin
+    General can be overridden when adding burnin
 
     '''
     TOP_CENTERED = ffmpeg_burnins.TOP_CENTERED
@@ -549,7 +385,7 @@ def burnins_from_data(
         codec_data (list): All codec related arguments in list.
         options (dict): Options for burnins.
         burnin_values (dict): Contain positioned values.
-        overwrite (bool): Output will be overriden if already exists,
+        overwrite (bool): Output will be overwritten if already exists,
             True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
@@ -610,7 +446,9 @@ def burnins_from_data(
         data["resolution_height"] = stream.get("height", MISSING_KEY_VALUE)
 
     if "fps" not in data:
-        data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
+        data["fps"] = convert_ffprobe_fps_value(
+            stream.get("r_frame_rate", "0/0")
+        )
 
     # Check frame start and add expression if is available
     if frame_start is not None:
@@ -721,10 +559,10 @@ def burnins_from_data(
 
     else:
         ffmpeg_args.extend(
-            get_format_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+            get_ffmpeg_format_args(burnin.ffprobe_data, source_ffmpeg_cmd)
         )
         ffmpeg_args.extend(
-            get_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+            get_ffmpeg_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
         )
         # Use arguments from source if are available source arguments
         if source_ffmpeg_cmd:

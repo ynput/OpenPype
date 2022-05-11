@@ -354,7 +354,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.entity.has_unsaved_changes:
             return "modified"
         if self.entity.has_project_override:
-            return "overriden"
+            return "overridden"
         if self.entity.has_studio_override:
             return "studio"
         return ""
@@ -464,10 +464,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.entity_widget.change_key(key, self)
         self.update_style()
-
-    @property
-    def value_is_env_group(self):
-        return self.entity_widget.value_is_env_group
 
     def update_key_label(self):
         if not self.collapsible_key:
@@ -600,8 +596,8 @@ class DictMutableKeysWidget(BaseWidget):
         self.input_fields = []
         self.required_inputs_by_key = {}
 
-        if self.entity.hightlight_content:
-            content_state = "hightlighted"
+        if self.entity.highlight_content:
+            content_state = "highlighted"
             bottom_margin = 5
         else:
             content_state = ""

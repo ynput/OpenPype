@@ -37,7 +37,7 @@ Artists can explore their site ID by opening OpenPype Info tool by clicking on a
 
 Many different sites can be created and configured on the system level, and some or all can be assigned to each project.
 
-Each OpenPype Tray app works with two sites at one time. (Sites can be the same, and no synching is done in this setup).
+Each OpenPype Tray app works with two sites at one time. (Sites can be the same, and no syncing is done in this setup).
 
 Sites could be configured differently per project basis. 
 
@@ -49,7 +49,7 @@ This attribute is meant for special use cases only.
 
 One of the use cases is sftp site vendoring (exposing) same data as regular site (studio). Each site is accessible for different audience. 'studio' for artists in a studio via shared disk, 'sftp' for externals via sftp server with mounted 'studio' drive.
 
-Change of file status on one site actually means same change on 'alternate' site occured too. (eg. artists publish to 'studio', 'sftp' is using
+Change of file status on one site actually means same change on 'alternate' site occurred too. (eg. artists publish to 'studio', 'sftp' is using
 same location >> file is accessible on 'sftp' site right away, no need to sync it anyhow.)
 
 ##### Example
@@ -62,7 +62,7 @@ Alternative sites work both way:
 
 ## Project Settings
 
-Sites need to be made available for each project. Of course this is possible to do on the default project as well, in which case all other projects will inherit these settings until overriden explicitly.
+Sites need to be made available for each project. Of course this is possible to do on the default project as well, in which case all other projects will inherit these settings until overridden explicitly.
 
 You'll find the setting in **Settings/Project/Global/Site Sync**
 
@@ -103,7 +103,7 @@ Let's imagine a small globally distributed studio which wants all published work
 For this use case admin needs to configure:
 - how many times it tries to synchronize file in case of some issue (network, permissions)
 - how often should synchronization check for new assets
-- sites for synchronization - 'local' and 'gdrive' (this can be overriden in local settings)
+- sites for synchronization - 'local' and 'gdrive' (this can be overridden in local settings)
 - user credentials
 - root folder location on Google Drive side
 
@@ -123,6 +123,10 @@ To get working connection to Google Drive there are some necessary steps:
 - add new site back in OpenPype Settings, name as you want, provider needs to be 'gdrive'
 - distribute credentials file via shared mounted disk location
 
+:::note
+If you are using regular personal GDrive for testing don't forget adding `/My Drive` as the prefix in root configuration. Business accounts and share drives don't need this.
+:::
+
 ### SFTP
 
 SFTP provider is used to connect to SFTP server. Currently authentication with `user:password` or `user:ssh key` is implemented.
@@ -137,19 +141,19 @@ Beware that ssh key expects OpenSSH format (`.pem`) not a Putty format (`.ppk`)!
 - Enable Site Sync module in Settings
 - Add side with SFTP provider
 
-![Enable synching and create site](assets/site_sync_sftp_system.png)
+![Enable syncing and create site](assets/site_sync_sftp_system.png)
 
 - In Projects setting enable Site Sync (on default project - all project will be synched, or on specific project)
 - Configure SFTP connection and destination folder on a SFTP server (in screenshot `/upload`)
 
 ![SFTP connection](assets/site_sync_project_sftp_settings.png)
   
-- if you want to force synching between local and sftp site for all users, use combination `active site: local`, `remote site: NAME_OF_SFTP_SITE`
-- if you want to allow only specific users to use SFTP synching (external users, not located in the office), use `active site: studio`, `remote site: studio`. 
+- if you want to force syncing between local and sftp site for all users, use combination `active site: local`, `remote site: NAME_OF_SFTP_SITE`
+- if you want to allow only specific users to use SFTP syncing (external users, not located in the office), use `active site: studio`, `remote site: studio`. 
 
 ![Select active and remote site on a project](assets/site_sync_sftp_project_setting_not_forced.png)
 
-- Each artist can decide and configure synching from his/her local to SFTP via `Local Settings`
+- Each artist can decide and configure syncing from his/her local to SFTP via `Local Settings`
 
 ![Select active and remote site on a project](assets/site_sync_sftp_settings_local.png)
   
@@ -164,7 +168,7 @@ Site Sync server synchronizes new published files from artist machine into confi
 There might be a use case where you need to synchronize between "non-artist" sites, for example between studio site and cloud. In this case
 you need to run Site Sync as a background process from a command line (via service etc) 24/7.
 
-To configure all sites where all published files should be synced eventually you need to configure `project_settings/global/sync_server/config/always_accessible_on` property in Settins (per project) first.
+To configure all sites where all published files should be synced eventually you need to configure `project_settings/global/sync_server/config/always_accessible_on` property in Settings (per project) first.
 
 ![Set another non artist remote site](assets/site_sync_always_on.png)
 
@@ -190,7 +194,7 @@ To do this:
 - run OP from a command line with `syncserver` and `--active_site` arguments
 
 
-This is an example how to trigger background synching process where active (source) site is `studio`. 
+This is an example how to trigger background syncing process where active (source) site is `studio`. 
 (It is expected that OP is installed on a machine, `openpype_console` is on PATH. If not, add full path to executable.
 )
 ```shell

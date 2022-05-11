@@ -1,6 +1,5 @@
 import os
 import sys
-import importlib
 import traceback
 from typing import Callable, Dict, Iterator, List, Optional
 
@@ -10,11 +9,21 @@ from . import lib
 from . import ops
 
 import pyblish.api
-import avalon.api
-from avalon import io, schema
-from avalon.pipeline import AVALON_CONTAINER_ID
 
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+    register_loader_plugin_path,
+    register_creator_plugin_path,
+    deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    AVALON_CONTAINER_ID,
+)
 from openpype.api import Logger
+from openpype.lib import (
+    register_event_callback,
+    emit_event
+)
 import openpype.hosts.blender
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
@@ -22,7 +31,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 ORIGINAL_EXCEPTHOOK = sys.excepthook
 
@@ -45,13 +53,14 @@ def install():
     pyblish.api.register_host("blender")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
-    avalon.api.register_plugin_path(avalon.api.Loader, str(LOAD_PATH))
-    avalon.api.register_plugin_path(avalon.api.Creator, str(CREATE_PATH))
+    register_loader_plugin_path(str(LOAD_PATH))
+    register_creator_plugin_path(str(CREATE_PATH))
 
     lib.append_user_scripts()
 
-    avalon.api.on("new", on_new)
-    avalon.api.on("open", on_open)
+    register_event_callback("new", on_new)
+    register_event_callback("open", on_open)
+
     _register_callbacks()
     _register_events()
 
@@ -66,16 +75,16 @@ def uninstall():
     pyblish.api.deregister_host("blender")
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
 
-    avalon.api.deregister_plugin_path(avalon.api.Loader, str(LOAD_PATH))
-    avalon.api.deregister_plugin_path(avalon.api.Creator, str(CREATE_PATH))
+    deregister_loader_plugin_path(str(LOAD_PATH))
+    deregister_creator_plugin_path(str(CREATE_PATH))
 
     if not IS_HEADLESS:
         ops.unregister()
 
 
 def set_start_end_frames():
-    asset_name = io.Session["AVALON_ASSET"]
-    asset_doc = io.find_one({
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset_doc = legacy_io.find_one({
         "type": "asset",
         "name": asset_name
     })
@@ -113,22 +122,22 @@ def set_start_end_frames():
     scene.render.resolution_y = resolution_y
 
 
-def on_new(arg1, arg2):
+def on_new():
     set_start_end_frames()
 
 
-def on_open(arg1, arg2):
+def on_open():
     set_start_end_frames()
 
 
 @bpy.app.handlers.persistent
 def _on_save_pre(*args):
-    avalon.api.emit("before_save", args)
+    emit_event("before.save")
 
 
 @bpy.app.handlers.persistent
 def _on_save_post(*args):
-    avalon.api.emit("save", args)
+    emit_event("save")
 
 
 @bpy.app.handlers.persistent
@@ -136,9 +145,9 @@ def _on_load_post(*args):
     # Detect new file or opening an existing file
     if bpy.data.filepath:
         # Likely this was an open operation since it has a filepath
-        avalon.api.emit("open", args)
+        emit_event("open")
     else:
-        avalon.api.emit("new", args)
+        emit_event("new")
 
     ops.OpenFileCacher.post_load()
 
@@ -169,7 +178,7 @@ def _register_callbacks():
     log.info("Installed event handler _on_load_post...")
 
 
-def _on_task_changed(*args):
+def _on_task_changed():
     """Callback for when the task in the context is changed."""
 
     # TODO (jasper): Blender has no concept of projects or workspace.
@@ -179,39 +188,15 @@ def _on_task_changed(*args):
     # `directory` attribute, so it opens in that directory (does it?).
     # https://docs.blender.org/api/blender2.8/bpy.types.Operator.html#calling-a-file-selector
     # https://docs.blender.org/api/blender2.8/bpy.types.WindowManager.html#bpy.types.WindowManager.fileselect_add
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
     log.debug("New working directory: %s", workdir)
 
 
 def _register_events():
     """Install callbacks for specific events."""
 
-    avalon.api.on("taskChanged", _on_task_changed)
+    register_event_callback("taskChanged", _on_task_changed)
     log.info("Installed event callback for 'taskChanged'...")
-
-
-def reload_pipeline(*args):
-    """Attempt to reload pipeline at run-time.
-
-    Warning:
-        This is primarily for development and debugging purposes and not well
-        tested.
-
-    """
-
-    avalon.api.uninstall()
-
-    for module in (
-            "avalon.io",
-            "avalon.lib",
-            "avalon.pipeline",
-            "avalon.tools.creator.app",
-            "avalon.tools.manager.app",
-            "avalon.api",
-            "avalon.tools",
-    ):
-        module = importlib.import_module(module)
-        importlib.reload(module)
 
 
 def _discover_gui() -> Optional[Callable]:

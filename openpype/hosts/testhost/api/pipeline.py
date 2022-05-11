@@ -1,5 +1,6 @@
 import os
 import json
+from openpype.pipeline import legacy_io
 
 
 class HostContext:
@@ -16,9 +17,7 @@ class HostContext:
         if not asset_name:
             return project_name
 
-        from avalon import io
-
-        asset_doc = io.find_one(
+        asset_doc = legacy_io.find_one(
             {"type": "asset", "name": asset_name},
             {"data.parents": 1}
         )
@@ -114,7 +113,7 @@ def update_instances(update_list):
 
     instances = HostContext.get_instances()
     for instance_data in instances:
-        instance_id = instance_data["uuid"]
+        instance_id = instance_data["instance_id"]
         if instance_id in updated_instances:
             new_instance_data = updated_instances[instance_id]
             old_keys = set(instance_data.keys())
@@ -132,10 +131,10 @@ def remove_instances(instances):
 
     current_instances = HostContext.get_instances()
     for instance in instances:
-        instance_id = instance.data["uuid"]
+        instance_id = instance.data["instance_id"]
         found_idx = None
         for idx, _instance in enumerate(current_instances):
-            if instance_id == _instance["uuid"]:
+            if instance_id == _instance["instance_id"]:
                 found_idx = idx
                 break
 

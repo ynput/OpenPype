@@ -16,7 +16,7 @@ from openpype.lib import (
     run_openpype_process,
 
     get_transcode_temp_directory,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     should_convert_for_ffmpeg,
 
     CREATE_NO_WINDOW
@@ -41,6 +41,7 @@ class ExtractBurnin(openpype.api.Extractor):
         "shell",
         "hiero",
         "premiere",
+        "traypublisher",
         "standalonepublisher",
         "harmony",
         "fusion",
@@ -187,8 +188,13 @@ class ExtractBurnin(openpype.api.Extractor):
             repre_files = repre["files"]
             if isinstance(repre_files, (tuple, list)):
                 filename = repre_files[0]
+                src_filepaths = [
+                    os.path.join(src_repre_staging_dir, filename)
+                    for filename in repre_files
+                ]
             else:
                 filename = repre_files
+                src_filepaths = [os.path.join(src_repre_staging_dir, filename)]
 
             first_input_path = os.path.join(src_repre_staging_dir, filename)
             # Determine if representation requires pre conversion for ffmpeg
@@ -209,11 +215,9 @@ class ExtractBurnin(openpype.api.Extractor):
                 new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
-                convert_for_ffmpeg(
-                    first_input_path,
+                convert_input_paths_for_ffmpeg(
+                    src_filepaths,
                     new_staging_dir,
-                    _temp_data["frameStart"],
-                    _temp_data["frameEnd"],
                     self.log
                 )
 
@@ -221,10 +225,16 @@ class ExtractBurnin(openpype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
-            # Add context data burnin_data.
-            burnin_data["custom"] = (
+            custom_data = copy.deepcopy(
+                instance.data.get("customData") or {}
+            )
+            # Backwards compatibility (since 2022/04/07)
+            custom_data.update(
                 instance.data.get("custom_burnin_data") or {}
             )
+
+            # Add context data burnin_data.
+            burnin_data["custom"] = custom_data
 
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
@@ -477,6 +487,12 @@ class ExtractBurnin(openpype.api.Extractor):
             "frame_start_handle": frame_start_handle,
             "frame_end_handle": frame_end_handle
         }
+
+        # use explicit username for webpublishes as rewriting
+        # OPENPYPE_USERNAME might have side effects
+        webpublish_user_name = os.environ.get("WEBPUBLISH_OPENPYPE_USERNAME")
+        if webpublish_user_name:
+            burnin_data["username"] = webpublish_user_name
 
         self.log.debug(
             "Basic burnin_data: {}".format(json.dumps(burnin_data, indent=4))

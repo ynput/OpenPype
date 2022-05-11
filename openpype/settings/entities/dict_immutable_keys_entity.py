@@ -9,7 +9,7 @@ from .lib import (
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
-    M_OVERRIDEN_KEY,
+    M_OVERRIDDEN_KEY,
     KEY_REGEX
 )
 from . import (
@@ -183,7 +183,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         # `current_metadata` are still when schema is loaded
         # - only metadata stored with dict item are gorup overrides in
-        #   M_OVERRIDEN_KEY
+        #   M_OVERRIDDEN_KEY
         self._current_metadata = {}
         self._metadata_are_modified = False
 
@@ -257,9 +257,9 @@ class DictImmutableKeysEntity(ItemEntity):
             ):
                 continue
 
-            if M_OVERRIDEN_KEY not in current_metadata:
-                current_metadata[M_OVERRIDEN_KEY] = []
-            current_metadata[M_OVERRIDEN_KEY].append(key)
+            if M_OVERRIDDEN_KEY not in current_metadata:
+                current_metadata[M_OVERRIDDEN_KEY] = []
+            current_metadata[M_OVERRIDDEN_KEY].append(key)
 
         # Define if current metadata are avaialble for current override state
         metadata = NOT_SET
@@ -399,7 +399,7 @@ class DictImmutableKeysEntity(ItemEntity):
             if key in value:
                 metadata[key] = value.pop(key)
 
-        old_metadata = metadata.get(M_OVERRIDEN_KEY)
+        old_metadata = metadata.get(M_OVERRIDDEN_KEY)
         if old_metadata:
             old_metadata_set = set(old_metadata)
             new_metadata = []
@@ -410,16 +410,20 @@ class DictImmutableKeysEntity(ItemEntity):
 
             for key in old_metadata_set:
                 new_metadata.append(key)
-            metadata[M_OVERRIDEN_KEY] = new_metadata
+            metadata[M_OVERRIDDEN_KEY] = new_metadata
 
         return value, metadata
 
-    def update_default_value(self, value):
+    def update_default_value(self, value, log_invalid_types=True):
         """Update default values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "default")
+
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         self.has_default_value = value is not NOT_SET
         # TODO add value validation
         value, metadata = self._prepare_value(value)
@@ -427,13 +431,13 @@ class DictImmutableKeysEntity(ItemEntity):
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
-                child_obj.update_default_value(value)
+                child_obj.update_default_value(value, log_invalid_types)
             return
 
         value_keys = set(value.keys())
         expected_keys = set(self.non_gui_children)
         unknown_keys = value_keys - expected_keys
-        if unknown_keys:
+        if unknown_keys and log_invalid_types:
             self.log.warning(
                 "{} Unknown keys in default values: {}".format(
                     self.path,
@@ -443,27 +447,31 @@ class DictImmutableKeysEntity(ItemEntity):
 
         for key, child_obj in self.non_gui_children.items():
             child_value = value.get(key, NOT_SET)
-            child_obj.update_default_value(child_value)
+            child_obj.update_default_value(child_value, log_invalid_types)
 
-    def update_studio_value(self, value):
+    def update_studio_value(self, value, log_invalid_types=True):
         """Update studio override values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "studio override")
+
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         value, metadata = self._prepare_value(value)
         self._studio_override_metadata = metadata
         self.had_studio_override = metadata is not NOT_SET
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
-                child_obj.update_studio_value(value)
+                child_obj.update_studio_value(value, log_invalid_types)
             return
 
         value_keys = set(value.keys())
         expected_keys = set(self.non_gui_children)
         unknown_keys = value_keys - expected_keys
-        if unknown_keys:
+        if unknown_keys and log_invalid_types:
             self.log.warning(
                 "{} Unknown keys in studio overrides: {}".format(
                     self.path,
@@ -472,27 +480,31 @@ class DictImmutableKeysEntity(ItemEntity):
             )
         for key, child_obj in self.non_gui_children.items():
             child_value = value.get(key, NOT_SET)
-            child_obj.update_studio_value(child_value)
+            child_obj.update_studio_value(child_value, log_invalid_types)
 
-    def update_project_value(self, value):
+    def update_project_value(self, value, log_invalid_types=True):
         """Update project override values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "project override")
+
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         value, metadata = self._prepare_value(value)
         self._project_override_metadata = metadata
         self.had_project_override = metadata is not NOT_SET
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
-                child_obj.update_project_value(value)
+                child_obj.update_project_value(value, log_invalid_types)
             return
 
         value_keys = set(value.keys())
         expected_keys = set(self.non_gui_children)
         unknown_keys = value_keys - expected_keys
-        if unknown_keys:
+        if unknown_keys and log_invalid_types:
             self.log.warning(
                 "{} Unknown keys in project overrides: {}".format(
                     self.path,
@@ -502,7 +514,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         for key, child_obj in self.non_gui_children.items():
             child_value = value.get(key, NOT_SET)
-            child_obj.update_project_value(child_value)
+            child_obj.update_project_value(child_value, log_invalid_types)
 
     def _discard_changes(self, on_change_trigger):
         self._ignore_child_changes = True
@@ -694,37 +706,48 @@ class RootsDictEntity(DictImmutableKeysEntity):
         self._metadata_are_modified = False
         self._current_metadata = {}
 
-    def update_default_value(self, value):
+    def update_default_value(self, value, log_invalid_types=True):
         """Update default values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "default")
+
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         value, _ = self._prepare_value(value)
 
         self._default_value = value
         self._default_metadata = {}
         self.has_default_value = value is not NOT_SET
 
-    def update_studio_value(self, value):
+    def update_studio_value(self, value, log_invalid_types=True):
         """Update studio override values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "studio override")
+
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         value, _ = self._prepare_value(value)
 
         self._studio_value = value
         self._studio_override_metadata = {}
         self.had_studio_override = value is not NOT_SET
 
-    def update_project_value(self, value):
+    def update_project_value(self, value, log_invalid_types=True):
         """Update project override values.
 
         Not an api method, should be called by parent.
         """
 
-        value = self._check_update_value(value, "project override")
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         value, _metadata = self._prepare_value(value)
 
         self._project_value = value
@@ -886,37 +909,48 @@ class SyncServerSites(DictImmutableKeysEntity):
         self._metadata_are_modified = False
         self._current_metadata = {}
 
-    def update_default_value(self, value):
+    def update_default_value(self, value, log_invalid_types=True):
         """Update default values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "default")
+
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         value, _ = self._prepare_value(value)
 
         self._default_value = value
         self._default_metadata = {}
         self.has_default_value = value is not NOT_SET
 
-    def update_studio_value(self, value):
+    def update_studio_value(self, value, log_invalid_types=True):
         """Update studio override values.
 
         Not an api method, should be called by parent.
         """
-        value = self._check_update_value(value, "studio override")
+
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         value, _ = self._prepare_value(value)
 
         self._studio_value = value
         self._studio_override_metadata = {}
         self.had_studio_override = value is not NOT_SET
 
-    def update_project_value(self, value):
+    def update_project_value(self, value, log_invalid_types=True):
         """Update project override values.
 
         Not an api method, should be called by parent.
         """
 
-        value = self._check_update_value(value, "project override")
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         value, _metadata = self._prepare_value(value)
 
         self._project_value = value

@@ -11,10 +11,9 @@ from wsrpc_aiohttp import (
 from Qt import QtCore
 
 from openpype.api import Logger
+from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
-
-from avalon import api
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import PhotoshopServerStub
 
@@ -175,7 +174,7 @@ class ProcessLauncher(QtCore.QObject):
     def start(self):
         if self._started:
             return
-        self.log.info("Started launch logic of AfterEffects")
+        self.log.info("Started launch logic of Photoshop")
         self._started = True
         self._start_process_timer.start()
 
@@ -320,13 +319,13 @@ class PhotoshopRoute(WebSocketRoute):
         log.info("Setting context change")
         log.info("project {} asset {} ".format(project, asset))
         if project:
-            api.Session["AVALON_PROJECT"] = project
+            legacy_io.Session["AVALON_PROJECT"] = project
             os.environ["AVALON_PROJECT"] = project
         if asset:
-            api.Session["AVALON_ASSET"] = asset
+            legacy_io.Session["AVALON_ASSET"] = asset
             os.environ["AVALON_ASSET"] = asset
         if task:
-            api.Session["AVALON_TASK"] = task
+            legacy_io.Session["AVALON_TASK"] = task
             os.environ["AVALON_TASK"] = task
 
     async def read(self):

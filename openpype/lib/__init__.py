@@ -16,10 +16,38 @@ sys.path.insert(0, python_version_dir)
 site.addsitedir(python_version_dir)
 
 
+from .events import (
+    emit_event,
+    register_event_callback
+)
+
+from .vendor_bin_utils import (
+    find_executable,
+    get_vendor_bin_path,
+    get_oiio_tools_path,
+    get_ffmpeg_tool_path,
+    is_oiio_supported
+)
+
+from .attribute_definitions import (
+    AbtractAttrDef,
+
+    UIDef,
+    UISeparatorDef,
+    UILabelDef,
+
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef,
+    FileDefItem,
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
-    get_global_environments
 )
 
 from .terminal import Terminal
@@ -29,30 +57,35 @@ from .execute import (
     get_linux_launcher_args,
     execute,
     run_subprocess,
+    run_detached_process,
     run_openpype_process,
     clean_envs_for_openpype_process,
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
+
+from .path_templates import (
+    merge_dict,
+    TemplateMissingKey,
+    TemplateUnsolved,
+    StringTemplate,
+    TemplatesDict,
+    FormatObject,
+)
+
 from .mongo import (
     get_default_components,
     validate_mongo_connection,
     OpenPypeMongoConnection
 )
 from .anatomy import (
-    merge_dict,
     Anatomy
 )
 
-from .config import get_datetime_data
-
-from .vendor_bin_utils import (
-    get_vendor_bin_path,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
-    ffprobe_streams,
-    is_oiio_supported
+from .config import (
+    get_datetime_data,
+    get_formatted_current_time
 )
 
 from .python_module_tools import (
@@ -71,7 +104,13 @@ from .profiles_filtering import (
 from .transcoding import (
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
-    convert_for_ffmpeg
+    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
+    get_ffprobe_data,
+    get_ffprobe_streams,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
+    convert_ffprobe_fps_value,
 )
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
@@ -84,12 +123,15 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+    get_system_general_anatomy_data,
 
     get_workfile_template_key,
     get_workfile_template_key_from_context,
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
+    get_last_workfile_with_version,
+    get_last_workfile,
 
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -129,7 +171,7 @@ from .applications import (
     PostLaunchHook,
 
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments,
     get_app_environments_for_context,
     apply_project_environments_value
@@ -148,6 +190,7 @@ from .plugin_tools import (
 )
 
 from .path_tools import (
+    create_hard_link,
     version_up,
     get_version_from_path,
     get_last_version_from_path,
@@ -179,14 +222,25 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
+
+from .connections import (
+    requests_get,
+    requests_post
+)
+
 terminal = Terminal
 
 __all__ = [
+    "emit_event",
+    "register_event_callback",
+
+    "find_executable",
     "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
+    "run_detached_process",
     "run_openpype_process",
     "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
@@ -194,13 +248,25 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
-    "get_global_environments",
 
     "get_vendor_bin_path",
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
-    "ffprobe_streams",
     "is_oiio_supported",
+
+    "AbtractAttrDef",
+
+    "UIDef",
+    "UISeparatorDef",
+    "UILabelDef",
+
+    "UnknownDef",
+    "NumberDef",
+    "TextDef",
+    "EnumDef",
+    "BoolDef",
+    "FileDef",
+    "FileDefItem",
 
     "import_filepath",
     "modules_from_path",
@@ -211,6 +277,12 @@ __all__ = [
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
+    "convert_input_paths_for_ffmpeg",
+    "get_ffprobe_data",
+    "get_ffprobe_streams",
+    "get_ffmpeg_codec_args",
+    "get_ffmpeg_format_args",
+    "convert_ffprobe_fps_value",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
@@ -222,12 +294,15 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+    "get_system_general_anatomy_data",
 
     "get_workfile_template_key",
     "get_workfile_template_key_from_context",
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
+    "get_last_workfile_with_version",
+    "get_last_workfile",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",
@@ -259,7 +334,7 @@ __all__ = [
     "PreLaunchHook",
     "PostLaunchHook",
     "EnvironmentPrepData",
-    "prepare_host_environments",
+    "prepare_app_environments",
     "prepare_context_environments",
     "get_app_environments_for_context",
     "apply_project_environments_value",
@@ -277,16 +352,24 @@ __all__ = [
     "get_unique_layer_name",
     "get_background_layers",
 
+    "create_hard_link",
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
 
+    "merge_dict",
+    "TemplateMissingKey",
+    "TemplateUnsolved",
+    "StringTemplate",
+    "TemplatesDict",
+    "FormatObject",
+
     "terminal",
 
-    "merge_dict",
     "Anatomy",
 
     "get_datetime_data",
+    "get_formatted_current_time",
 
     "PypeLogger",
     "get_default_components",
@@ -315,4 +398,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "requests_get",
+    "requests_post"
 ]

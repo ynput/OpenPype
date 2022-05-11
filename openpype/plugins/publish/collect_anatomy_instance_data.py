@@ -25,8 +25,9 @@ import copy
 import json
 import collections
 
-from avalon import io
 import pyblish.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -52,7 +53,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     def fill_missing_asset_docs(self, context):
         self.log.debug("Qeurying asset documents for instances.")
 
-        context_asset_doc = context.data["assetEntity"]
+        context_asset_doc = context.data.get("assetEntity")
 
         instances_with_missing_asset_doc = collections.defaultdict(list)
         for instance in context:
@@ -69,7 +70,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # Check if asset name is the same as what is in context
             # - they may be different, e.g. in NukeStudio
-            if context_asset_doc["name"] == _asset_name:
+            if context_asset_doc and context_asset_doc["name"] == _asset_name:
                 instance.data["assetEntity"] = context_asset_doc
 
             else:
@@ -83,7 +84,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Querying asset documents with names: {}".format(
             ", ".join(["\"{}\"".format(name) for name in asset_names])
         ))
-        asset_docs = io.find({
+        asset_docs = legacy_io.find({
             "type": "asset",
             "name": {"$in": asset_names}
         })
@@ -153,7 +154,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
         subset_docs = []
         if subset_filters:
-            subset_docs = list(io.find({
+            subset_docs = list(legacy_io.find({
                 "type": "subset",
                 "$or": subset_filters
             }))
@@ -202,7 +203,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         ]
 
         last_version_by_subset_id = {}
-        for doc in io.aggregate(_pipeline):
+        for doc in legacy_io.aggregate(_pipeline):
             subset_id = doc["_id"]
             last_version_by_subset_id[subset_id] = doc["name"]
 
@@ -212,7 +213,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Storing anatomy data to instance data.")
 
         project_doc = context.data["projectEntity"]
-        context_asset_doc = context.data["assetEntity"]
+        context_asset_doc = context.data.get("assetEntity")
 
         project_task_types = project_doc["config"]["tasks"]
 
@@ -240,7 +241,13 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # Hiearchy
             asset_doc = instance.data.get("assetEntity")
-            if asset_doc and asset_doc["_id"] != context_asset_doc["_id"]:
+            if (
+                asset_doc
+                and (
+                    not context_asset_doc
+                    or asset_doc["_id"] != context_asset_doc["_id"]
+                )
+            ):
                 parents = asset_doc["data"].get("parents") or list()
                 parent_name = project_doc["name"]
                 if parents:

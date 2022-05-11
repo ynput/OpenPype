@@ -12,7 +12,7 @@ _**release date:** (2021-05-18)_
 **Enhancements:**
 
 - Use SubsetLoader and multiple contexts for delete_old_versions [\#1484](ttps://github.com/pypeclub/OpenPype/pull/1484))
-- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
+- TVPaint: Increment workfile version on successful publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
 - Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483)
 
 **Fixed bugs:**
