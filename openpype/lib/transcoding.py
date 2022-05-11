@@ -624,14 +624,13 @@ def convert_input_paths_for_ffmpeg(
                     len(attr_value)
                 )
 
-            if erase_attribute:
-                for char in NOT_ALLOWED_FFMPEG_CHARS:
-                    if char in attr_value:
-                        erase_attribute = True
-                        erase_reason = (
-                            "contains unsupported character \"{}\"."
-                        ).format(char)
-                        break
+            for char in NOT_ALLOWED_FFMPEG_CHARS:
+                if char in attr_value:
+                    erase_attribute = True
+                    erase_reason = (
+                        "contains unsupported character \"{}\"."
+                    ).format(char)
+                    break
 
             if erase_attribute:
                 # Set attribute to empty string
