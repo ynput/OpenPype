@@ -42,7 +42,8 @@ class ValidateNamingRepair(pyblish.api.Action):
 
             layer_name = re.sub(invalid_chars,
                                 replace_char,
-                                current_layer_state.name)
+                                current_layer_state.clean_name)
+            layer_name = stub.PUBLISH_ICON + layer_name
 
             stub.rename_layer(current_layer_state.id, layer_name)
 
@@ -73,13 +74,17 @@ class ValidateNaming(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         help_msg = ' Use Repair action (A) in Pyblish to fix it.'
-        msg = "Name \"{}\" is not allowed.{}".format(instance.data["name"],
-                                                     help_msg)
 
-        formatting_data = {"msg": msg}
-        if re.search(self.invalid_chars, instance.data["name"]):
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+        layer = instance.data.get("layer")
+        if layer:
+            msg = "Name \"{}\" is not allowed.{}".format(layer.clean_name,
+                                                         help_msg)
+
+            formatting_data = {"msg": msg}
+            if re.search(self.invalid_chars, layer.clean_name):
+                raise PublishXmlValidationError(self, msg,
+                                                formatting_data=formatting_data
+                                                )
 
         msg = "Subset \"{}\" is not allowed.{}".format(instance.data["subset"],
                                                        help_msg)
