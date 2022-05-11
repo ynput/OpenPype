@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import re
 
@@ -8,12 +9,14 @@ from openpype.pipeline import (
 from openpype.hosts.houdini.api import pipeline
 
 
-class VdbLoader(load.LoaderPlugin):
-    """Load VDB"""
+class BgeoLoader(load.LoaderPlugin):
+    """Load bgeo files to Houdini."""
 
-    families = ["vdbcache"]
-    label = "Load VDB"
-    representations = ["vdb"]
+    label = "Load bgeo"
+    families = ["model", "pointcache", "bgeo"]
+    representations = [
+        "bgeo", "bgeosc", "bgeogz",
+        "bgeo.sc", "bgeo.gz", "bgeo.lzma", "bgeo.bz2"]
     order = -10
     icon = "code-fork"
     color = "orange"
@@ -31,6 +34,7 @@ class VdbLoader(load.LoaderPlugin):
 
         # Create a new geo node
         container = obj.createNode("geo", node_name=node_name)
+        is_sequence = bool(context["representation"]["context"].get("frame"))
 
         # Remove the file node, it only loads static meshes
         # Houdini 17 has removed the file node from the geo node
@@ -40,7 +44,7 @@ class VdbLoader(load.LoaderPlugin):
 
         # Explicitly create a file node
         file_node = container.createNode("file", node_name=node_name)
-        file_node.setParms({"file": self.format_path(self.fname)})
+        file_node.setParms({"file": self.format_path(self.fname, is_sequence)})
 
         # Set display on last node
         file_node.setDisplayFlag(True)
@@ -57,30 +61,20 @@ class VdbLoader(load.LoaderPlugin):
             suffix="",
         )
 
-    def format_path(self, path):
-        """Format file path correctly for single vdb or vdb sequence."""
+    @staticmethod
+    def format_path(path, is_sequence):
+        """Format file path correctly for single bgeo or bgeo sequence."""
         if not os.path.exists(path):
             raise RuntimeError("Path does not exist: %s" % path)
 
         # The path is either a single file or sequence in a folder.
-        is_single_file = os.path.isfile(path)
-        if is_single_file:
+        if not is_sequence:
             filename = path
+            print("single")
         else:
-            # The path points to the publish .vdb sequence folder so we
-            # find the first file in there that ends with .vdb
-            files = sorted(os.listdir(path))
-            first = next((x for x in files if x.endswith(".vdb")), None)
-            if first is None:
-                raise RuntimeError(
-                    "Couldn't find first .vdb file of "
-                    "sequence in: %s" % path
-                )
+            filename = re.sub(r"(.*)\.(\d+)\.(bgeo.*)", "\\1.$F4.\\3", path)
 
-            # Set <frame>.vdb to $F.vdb
-            first = re.sub(r"\.(\d+)\.vdb$", ".$F.vdb", first)
-
-            filename = os.path.join(path, first)
+            filename = os.path.join(path, filename)
 
         filename = os.path.normpath(filename)
         filename = filename.replace("\\", "/")

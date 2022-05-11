@@ -1,0 +1,275 @@
+[
+    {
+        "type": "collapsible-wrap",
+        "label": "{label}",
+        "collapsible": true,
+        "collapsed": true,
+        "children": [{
+            "type": "list",
+            "key": "{key}",
+            "object_type": {
+                "type": "dict-conditional",
+                "enum_key": "type",
+                "enum_label": "Type",
+                "enum_children": [
+                    {
+                        "key": "text",
+                        "label": "Text",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "text",
+                                "key": "value",
+                                "label": "Value"
+                            }
+                        ]
+                    },
+                    {
+                        "key": "formatable",
+                        "label": "Formate from template",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template",
+                                "label": "Template",
+                                "placeholder": "{{key}} or {{key}};{{key}}"
+                            },
+                            {
+                                "type": "enum",
+                                "key": "to_type",
+                                "label": "Knob type",
+                                "enum_items": [
+                                    {
+                                        "text": "Text"
+                                    },
+                                    {
+                                        "number": "Number"
+                                    },
+                                    {
+                                        "decimal_number": "Decimal number"
+                                    },
+                                    {
+                                        "2d_vector": "2D vector"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "key": "color_gui",
+                        "label": "Color GUI",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "color",
+                                "key": "value",
+                                "label": "Value",
+                                "use_alpha": false
+                            }
+                        ]
+                    },
+                    {
+                        "key": "bool",
+                        "label": "Boolean",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "value",
+                                "label": "Value"
+                            }
+                        ]
+                    },
+                    {
+                        "key": "number",
+                        "label": "Number",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "number",
+                                "key": "value",
+                                "default": 1,
+                                "decimal": 0,
+                                "maximum": 99999999
+                            }
+
+                        ]
+                    },
+                    {
+                        "key": "decimal_number",
+                        "label": "Decimal number",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "number",
+                                "key": "value",
+                                "default": 1,
+                                "decimal": 4,
+                                "maximum": 99999999
+                            }
+
+                        ]
+                    },
+                    {
+                        "key": "2d_vector",
+                        "label": "2D vector",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "list-strict",
+                                "key": "value",
+                                "label": "Value",
+                                "object_types": [
+                                    {
+                                        "type": "number",
+                                        "key": "x",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "y",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "key": "3d_vector",
+                        "label": "3D vector",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "list-strict",
+                                "key": "value",
+                                "label": "Value",
+                                "object_types": [
+                                    {
+                                        "type": "number",
+                                        "key": "x",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "y",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "y",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "key": "color",
+                        "label": "Color",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "list-strict",
+                                "key": "value",
+                                "label": "Value",
+                                "object_types": [
+                                    {
+                                        "type": "number",
+                                        "key": "x",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "x",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "y",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "y",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "key": "__legacy__",
+                        "label": "_ Legacy type _",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "text",
+                                "key": "value",
+                                "label": "Value"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }]
+    }
+]
