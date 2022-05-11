@@ -10,7 +10,7 @@ from openpype.hosts.maya.api.lib import (
 
 
 class SetFrameRangeLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Set frame range excluding pre- and post-handles"""
 
     families = ["animation",
                 "camera",
@@ -44,7 +44,7 @@ class SetFrameRangeLoader(load.LoaderPlugin):
 
 
 class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Set frame range including pre- and post-handles"""
 
     families = ["animation",
                 "camera",
