@@ -218,6 +218,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "fps": project["fps"],
             "resolutionWidth": project["resolution"].split("x")[0],
             "resolutionHeight": project["resolution"].split("x")[1],
+            "zou_id": project["id"],
         }
     )
 
