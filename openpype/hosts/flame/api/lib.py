@@ -782,11 +782,15 @@ class MediaInfoFile(object):
             self.log.info("Temp File: {}".format(tmp_path))
             self._generate_media_info_file(tmp_path, feed_ext, feed_dir)
 
-            if os.path.exists(os.path.join(feed_dir, feed_basename)):
+            # get collection containing feed_basename from path
+            test_fname = self._get_collection(
+                feed_basename, feed_dir, feed_ext)
+
+            if (
+                not test_fname
+                and os.path.exists(os.path.join(feed_dir, feed_basename))
+            ):
                 test_fname = feed_basename
-            else:
-                # get collection containing feed_basename from path
-                test_fname = self._get_collection(feed_basename, feed_dir, feed_ext)
 
             # get clip data and make them single if there is multiple
             # clips data
