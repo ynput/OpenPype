@@ -7,10 +7,7 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from openpype.pipeline import (
-    get_representation_path,
-    AVALON_CONTAINER_ID,
-)
+from openpype.pipeline import get_representation_path, AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
@@ -37,7 +34,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Get the right asset container from imported collections.
         container = self._get_container_from_collections(
-            data_from.collections, self.families
+            data_to.collections, self.families
         )
         assert container, "No asset container found"
 

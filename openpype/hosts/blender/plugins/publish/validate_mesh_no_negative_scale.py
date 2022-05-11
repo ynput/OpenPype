@@ -18,12 +18,10 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     @staticmethod
     def get_invalid(instance) -> List:
         invalid = []
-        # TODO (jasper): only check objects in the collection that will be published?
-        for obj in [
-            obj for obj in bpy.data.objects if obj.type == 'MESH'
-        ]:
-            if any(v < 0 for v in obj.scale):
-                invalid.append(obj)
+        for obj in set(instance):
+            if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
+                if any(v < 0 for v in obj.scale):
+                    invalid.append(obj)
 
         return invalid
 

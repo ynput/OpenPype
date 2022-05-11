@@ -18,7 +18,7 @@ class ValidateObjectIsInObjectMode(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        for obj in [obj for obj in instance]:
+        for obj in set(instance):
             try:
                 if obj.type == 'MESH' or obj.type == 'ARMATURE':
                     # Check if the object is in object mode.
