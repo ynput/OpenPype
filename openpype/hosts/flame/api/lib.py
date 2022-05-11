@@ -968,8 +968,6 @@ class MediaInfoFile(object):
                     for span in out_feed.iter("span"):
                         # start frame
                         span_path = span.find("path")
-                        if not span_path:
-                            continue
                         self.log.debug(
                             "__ span_path.text: {}, path_pattern: {}".format(
                                 span_path.text, path_pattern
