@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Class for handling Render Settings."""
 from maya import cmds  # noqa
+import maya.mel as mel
 import six
 import sys
 
@@ -103,9 +104,17 @@ class RenderSettings(object):
         from mtoa.aovs import AOVInterface  # noqa
         createOptions()
         arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
+        # Force resetting settings and AOV list to avoid having to deal with
+        # AOV checking logic, for now.
+        # This is a work around because the standard
+        # function to revert render settings does not reset AOVs list in MtoA
+        # Fetch current aovs in case there's any.
+        current_aovs = AOVInterface().getAOVs()
+        # Remove fetched AOVs
+        AOVInterface().removeAOVs(current_aovs)
+        mel.eval("unifiedRenderGlobalsRevertToDefault")
         img_ext = arnold_render_presets["image_format"]
         aovs = arnold_render_presets["aov_list"]
-
         for aov in aovs:
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
