@@ -468,8 +468,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
-            if not instance_data.get("append"):
-                new_instance["subsetGroup"] = group_name
+            new_instance["subsetGroup"] = group_name
             if preview:
                 new_instance["review"] = True
 
@@ -886,6 +885,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i["subset"] = at.get("subset")
                     new_i["family"] = at.get("family")
                     new_i["append"] = True
+                    # don't set subsetGroup if we are attaching
+                    new_i.pop("subsetGroup")
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))
