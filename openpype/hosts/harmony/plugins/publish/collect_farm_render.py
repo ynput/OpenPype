@@ -144,6 +144,7 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
                 label=node.split("/")[1],
                 subset=subset_name,
                 asset=legacy_io.Session["AVALON_ASSET"],
+                task=task_name,
                 attachTo=False,
                 setMembers=[node],
                 publish=info[4],
