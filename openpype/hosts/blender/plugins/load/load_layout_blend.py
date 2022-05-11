@@ -34,7 +34,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Get the right asset container from imported collections.
         container = self._get_container_from_collections(
-            data_from.collections, self.families
+            data_to.collections, self.families
         )
         assert container, "No asset container found"
 

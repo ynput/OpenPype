@@ -2,6 +2,8 @@ from typing import List
 
 import mathutils
 
+import bpy
+
 import pyblish.api
 import openpype.hosts.blender.api.action
 
@@ -27,8 +29,8 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        for obj in [obj for obj in instance]:
-            if obj.type == "CAMERA":
+        for obj in set(instance):
+            if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA":
                 if obj.animation_data and obj.animation_data.action:
                     action = obj.animation_data.action
                     frames_set = set()
