@@ -55,12 +55,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     }
 
     ImagePrefixTokens = {
-        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         'vray': 'maya/<Scene>/<Layer>/<Layer>',
-        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',  # noqa
-        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
+        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
     }
 
     _aov_chars = {
