@@ -126,7 +126,7 @@ class Listener:
         """Delete project."""
         # Get project entity
         print(data)  # TODO check bugfix
-        project = gazu.project.get_project(data["project_id"])
+        # project = gazu.project.get_project(data["project_id"])
 
         # Delete project collection
         # self.dbcon = self.dbcon.database[project["name"]]
