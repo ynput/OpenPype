@@ -1,7 +1,6 @@
 import nuke
 import os
 
-import avalon.api
 from openpype.api import Logger
 from openpype.pipeline import install_host
 from openpype.hosts.nuke import api
