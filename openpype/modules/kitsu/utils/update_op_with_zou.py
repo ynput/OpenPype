@@ -4,7 +4,6 @@ import re
 from typing import Dict, List
 
 from pymongo import DeleteOne, UpdateOne
-from pymongo.collection import Collection
 import gazu
 from gazu.task import (
     all_tasks_for_asset,
