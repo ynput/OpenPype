@@ -114,7 +114,10 @@ class RenderSettings(object):
         AOVInterface().removeAOVs(current_aovs)
         mel.eval("unifiedRenderGlobalsRevertToDefault")
         img_ext = arnold_render_presets["image_format"]
+        img_prefix = arnold_render_presets["image_prefix"]
         aovs = arnold_render_presets["aov_list"]
+        img_tiled = arnold_render_presets["tiled"]
+        multi_exr = arnold_render_presets["multilayer_exr"]
         for aov in aovs:
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
@@ -122,8 +125,21 @@ class RenderSettings(object):
         cmds.setAttr("defaultResolution.height", height)
 
         self._set_global_output_settings()
+
+        cmds.setAttr(
+            "defaultRenderGlobals.imageFilePrefix", img_prefix, type="string")
+
         cmds.setAttr(
             "defaultArnoldDriver.ai_translator", img_ext, type="string")
+
+        cmds.setAttr(
+            "defaultArnoldDriver.exrTiled", img_tiled, type="boolean")
+
+        cmds.setAttr(
+            "defaultArnoldDriver.mergeAOVs", multi_exr, type="boolean")
+
+        for attr in additional_options.items():
+            cmds.setAttr(attr, additional_options.get(attr, None))
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
