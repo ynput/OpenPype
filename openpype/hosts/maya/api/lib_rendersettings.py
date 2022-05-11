@@ -118,6 +118,7 @@ class RenderSettings(object):
         aovs = arnold_render_presets["aov_list"]
         img_tiled = arnold_render_presets["tiled"]
         multi_exr = arnold_render_presets["multilayer_exr"]
+        additional_options = arnold_render_presets["additional_options"]
         for aov in aovs:
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
@@ -133,10 +134,10 @@ class RenderSettings(object):
             "defaultArnoldDriver.ai_translator", img_ext, type="string")
 
         cmds.setAttr(
-            "defaultArnoldDriver.exrTiled", img_tiled, type="boolean")
+            "defaultArnoldDriver.exrTiled", img_tiled)
 
         cmds.setAttr(
-            "defaultArnoldDriver.mergeAOVs", multi_exr, type="boolean")
+            "defaultArnoldDriver.mergeAOVs", multi_exr)
 
         for attr in additional_options.items():
             cmds.setAttr(attr, additional_options.get(attr, None))
