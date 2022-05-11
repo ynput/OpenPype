@@ -763,6 +763,7 @@ class MediaInfoFile(object):
     _start_frame = None
     _fps = None
     _drop_mode = None
+    _file_pattern = None
 
     def __init__(self, path, **kwargs):
 
@@ -778,24 +779,25 @@ class MediaInfoFile(object):
         feed_dir = os.path.dirname(path)
         feed_ext = os.path.splitext(feed_basename)[1][1:].lower()
 
+
         with maintained_temp_file_path(".clip") as tmp_path:
             self.log.info("Temp File: {}".format(tmp_path))
             self._generate_media_info_file(tmp_path, feed_ext, feed_dir)
 
             # get collection containing feed_basename from path
-            test_fname = self._get_collection(
+            self.file_pattern = self._get_collection(
                 feed_basename, feed_dir, feed_ext)
 
             if (
-                not test_fname
+                not self.file_pattern
                 and os.path.exists(os.path.join(feed_dir, feed_basename))
             ):
-                test_fname = feed_basename
+                self.file_pattern = feed_basename
 
             # get clip data and make them single if there is multiple
             # clips data
             xml_data = self._make_single_clip_media_info(
-                tmp_path, feed_basename, test_fname)
+                tmp_path, feed_basename, self.file_pattern)
             self.log.debug("xml_data: {}".format(xml_data))
             self.log.debug("type: {}".format(type(xml_data)))
 
@@ -816,7 +818,6 @@ class MediaInfoFile(object):
 
         Raises:
             AttributeError: feed_ext is not matching feed_basename
-            IOError: Failing on not correct input data
 
         Returns:
             str: collection basename with range of sequence
@@ -955,6 +956,19 @@ class MediaInfoFile(object):
     @drop_mode.setter
     def drop_mode(self, text):
         self._drop_mode = str(text)
+
+    @property
+    def file_pattern(self):
+        """Clips file patter
+
+        Returns:
+            str: file pattern. ex. file.[1-2].exr
+        """
+        return self._file_pattern
+
+    @file_pattern.setter
+    def file_pattern(self, fpattern):
+        self._file_pattern = fpattern
 
     def _validate_media_script_path(self):
         if not os.path.isfile(self.MEDIA_SCRIPT_PATH):

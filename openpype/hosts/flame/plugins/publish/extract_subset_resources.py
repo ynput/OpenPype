@@ -6,6 +6,7 @@ from copy import deepcopy
 import pyblish.api
 import openpype.api
 from openpype.hosts.flame import api as opfapi
+from openpype.hosts.flame.api import MediaInfoFile
 
 import flame
 
@@ -67,6 +68,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             instance.data["representations"] = []
 
         # flame objects
+        self.project = instance.context.data["flameProject"]
         segment = instance.data["item"]
         asset_name = instance.data["asset"]
         segment_name = segment.name.get_value()
@@ -239,16 +241,18 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 if export_type != "Sequence Publish":
                     # if not sequence preset
                     in_mark = int(source_start_handles - source_first_frame)
+                    thumb_frame_number = int(in_mark + (
+                        source_duration_handles / 2))
+                else:
+                    thumb_frame_number = int(in_mark + (
+                        (clip_out - clip_in) / 2))
 
                 self.log.debug("__ in_mark: {}".format(in_mark))
-                self.log.debug("__ source_duration_handles: {}".format(
-                    source_duration_handles))
                 self.log.debug("__ thumb_frame_number: {}".format(
-                    int(in_mark + (source_duration_handles / 2))
+                    thumb_frame_number
                 ))
 
-                export_kwargs["thumb_frame_number"] = int(in_mark + (
-                    source_duration_handles / 2))
+                export_kwargs["thumb_frame_number"] = thumb_frame_number
             else:
                 export_kwargs.update({
                     "in_mark": in_mark,
@@ -419,7 +423,16 @@ class ExtractSubsetResources(openpype.api.Extractor):
         """
         Import clip from path
         """
-        clips = flame.import_clips(path)
+        media_info = MediaInfoFile(path, **{
+            "logger": self.log
+        })
+        file_pattern = media_info.file_pattern
+        self.log.debug("__ file_pattern: {}".format(file_pattern))
+
+        project_desktop = self.project.current_workspace.desktop
+        reel = project_desktop.reel_groups[0].reels[0]
+
+        clips = flame.import_clips(file_pattern, reel)
         self.log.info("Clips [{}] imported from `{}`".format(clips, path))
         if not clips:
             self.log.warning("Path `{}` is not having any clips".format(path))
