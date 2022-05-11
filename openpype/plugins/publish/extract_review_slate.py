@@ -79,7 +79,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             )
             # Get video metadata
             for stream in streams:
-                input_timecode = None
+                input_timecode = ""
                 input_width = None
                 input_height = None
                 input_frame_rate = None
@@ -89,18 +89,20 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         tags = stream.get("tags") or {}
                         input_timecode = tags.get("timecode") or ""
                         if "width" in stream and "height" in stream:
-                            input_width = int(stream.get("width"))
-                            input_height = int(stream.get("height"))
+                            input_width = stream.get("width")
+                            input_height = stream.get("height")
                         if "r_frame_rate" in stream:
                             # get frame rate in a form of
                             # x/y, like 24000/1001 for 23.976
-                            input_frame_rate = str(stream.get("r_frame_rate"))
+                            input_frame_rate = stream.get("r_frame_rate")
                         if (
-                            input_timecode
-                            and input_width
+                            input_width
                             and input_height
                             and input_frame_rate
                         ):
+                            input_width = int(input_width)
+                            input_height = int(input_height)
+                            input_frame_rate = str(input_frame_rate)
                             break
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
@@ -131,7 +133,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         and audio_channel_layout
                         and audio_codec
                     ):
-                        input_audio = True
+                        input_audio = str(input_audio)
+                        audio_sample_rate = str(audio_sample_rate)
+                        audio_channel_layout = str(audio_channel_layout)
+                        audio_codec = str(audio_codec)
                         break
             # Get duration of one frame in micro seconds
             one_frame_duration = "40000us"
@@ -207,7 +212,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             input_args.extend(["-r {}".format(input_frame_rate)])
             input_args.extend(["-frames:v 1"])
             # add timecode from source to the slate, substract one frame
-            offset_timecode = "00:00:00:00"
+            offset_timecode = ""
             if input_timecode:
                 offset_timecode = str(input_timecode)
                 offset_timecode = self._tc_offset(
@@ -311,7 +316,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # Create slate with silent audio track
             if input_audio:
                 # silent slate output path
-                slate_silent_path = slate_path.replace(".png", "Silent" + ext)
+                slate_silent_path = "_silent".join(
+                    os.path.splitext(slate_v_path))
                 _remove_at_end.append(slate_silent_path)
 
                 slate_silent_args = [
@@ -331,13 +337,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     "-y",
                     slate_silent_path
                 ]
-                slate_silent_subprocess_cmd = " ".join(slate_silent_args)
                 # run slate generation subprocess
                 self.log.debug(
                     "Silent Slate Executing: {}".format(
-                        slate_silent_subprocess_cmd))
+                        " ".join(slate_silent_args)))
                 openpype.api.run_subprocess(
-                    slate_silent_subprocess_cmd, shell=True, logger=self.log
+                    slate_silent_args, logger=self.log
                 )
 
                 # replace slate with silent slate for concat
@@ -367,8 +372,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-safe", "0",
                 "-i", conc_text_path,
                 "-c", "copy",
-                "-timecode", offset_timecode,
             ]
+            if offset_timecode:
+                concat_args.extend(["-timecode", offset_timecode])
             # NOTE: Added because of OP Atom demuxers
             # Add format arguments if there are any
             # - keep format of output
