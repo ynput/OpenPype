@@ -289,13 +289,21 @@ class Creator(LegacyCreator):
         if (self.options or {}).get("useSelection"):
             selected_objects = set(get_selection())
             # Get collection from selected objects.
-            selected_collection = set()
+            selected_collections = set()
             for collection in get_collections_by_objects(selected_objects):
-                selected_collection.add(collection)
+                selected_collections.add(collection)
                 selected_objects -= set(collection.all_objects)
 
             link_to_collection(selected_objects, container)
-            link_to_collection(selected_collection, container)
+            link_to_collection(selected_collections, container)
+
+            # Unlink from scene collection root if needed
+            for obj in selected_objects:
+                if obj in set(bpy.context.scene.collection.objects):
+                    bpy.context.scene.collection.objects.unlink(obj)
+            for collection in selected_collections:
+                if collection in set(bpy.context.scene.collection.children):
+                    bpy.context.scene.collection.children.unlink(collection)
 
         imprint(container, self.data)
 
