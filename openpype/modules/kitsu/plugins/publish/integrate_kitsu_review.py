@@ -15,18 +15,23 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
 
         context = instance.context
         task = context.data["kitsu_task"]
-        comment = context.data["kitsu_comment"]
+        comment = context.data.get("kitsu_comment")
 
-        for representation in instance.data.get("representations", []):
+        # Check comment has been created
+        if not comment:
+            self.log.debug("Comment not created, review not pushed to preview.")
+            return
+
+        # Add review representations as preview of comment
+        for representation in [
+            r
+            for r in instance.data.get("representations", [])
+            if "review" in representation.get("tags", [])
+        ]:
 
             review_path = representation.get("published_path")
 
-            if "review" not in representation.get("tags", []):
-                continue
-
             self.log.debug("Found review at: {}".format(review_path))
 
-            gazu.task.add_preview(
-                task, comment, review_path, normalize_movie=True
-            )
+            gazu.task.add_preview(task, comment, review_path, normalize_movie=True)
             self.log.info("Review upload on comment")
