@@ -631,17 +631,15 @@ class AssetLoader(LoaderPlugin):
     def maintained_modifiers(self, container):
         """Maintain modifiers during context."""
         objects = get_container_objects(container)
-        objects_modifiers = {}
-        for obj in objects:
-            objects_modifiers[obj.name] = [
-                ModifierDescriptor(modifier)
-                for modifier in obj.modifiers
-            ]
+        objects_modifiers = [
+            [ModifierDescriptor(modifier) for modifier in obj.modifiers]
+            for obj in objects
+        ]
         try:
             yield
         finally:
             # Restor modifiers.
-            for obj_name, modifiers in objects_modifiers.items():
+            for modifiers in objects_modifiers:
                 for modifier in modifiers:
                     modifier.restor()
 
@@ -649,29 +647,33 @@ class AssetLoader(LoaderPlugin):
     def maintained_constraints(self, container):
         """Maintain constraints during context."""
         objects = get_container_objects(container)
-        objects_constraints = {}
-        armature_constraints = {}
+        objects_constraints = []
+        armature_constraints = []
         for obj in objects:
-            objects_constraints[obj.name] = [
-                ConstraintDescriptor(constraint)
-                for constraint in obj.constraints
-            ]
+            objects_constraints.append(
+                [
+                    ConstraintDescriptor(constraint)
+                    for constraint in obj.constraints
+                ]
+            )
             if obj.type == "ARMATURE":
-                armature_constraints[obj.name] = {
-                    bone.name: [
-                        ConstraintDescriptor(constraint)
-                        for constraint in bone.constraints
-                    ]
-                    for bone in obj.pose.bones
-                }
+                armature_constraints.append(
+                    {
+                        bone.name: [
+                            ConstraintDescriptor(constraint)
+                            for constraint in bone.constraints
+                        ]
+                        for bone in obj.pose.bones
+                    }
+                )
         try:
             yield
         finally:
             # Restor modifiers.
-            for obj_name, constraints in objects_constraints.items():
+            for constraints in objects_constraints:
                 for constraint in constraints:
                     constraint.restor()
-            for obj_name, bones_constraints in armature_constraints.items():
+            for bones_constraints in armature_constraints:
                 for bone_name, constraints in bones_constraints.items():
                     for constraint in constraints:
                         constraint.restor(bone_name=bone_name)
