@@ -12,6 +12,7 @@ class CreateCamera(plugin.Creator):
     label = "Camera"
     family = "camera"
     icon = "video-camera"
+    color_tag = "COLOR_05"
 
     def _process(self):
         # Get Instance Container

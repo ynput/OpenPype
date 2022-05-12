@@ -94,7 +94,7 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
     raise Exception("Could not create a custom Blender context.")
 
 
-def create_container(name):
+def create_container(name, color_tag=None):
     """
     Create the container with the given name
     """
@@ -103,7 +103,8 @@ def create_container(name):
     # if container doesn't exist create them
     if container is None:
         container = bpy.data.collections.new(name)
-        container.color_tag = "COLOR_05"
+        if color_tag:
+            container.color_tag = color_tag
         bpy.context.scene.collection.children.link(container)
         return container
 
@@ -305,6 +306,7 @@ def orphans_purge():
 class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
+    color_tag = "NONE"
 
     def _process(self):
         # Get info from data and create name value.
@@ -313,7 +315,8 @@ class Creator(LegacyCreator):
         name = asset_name(asset, subset)
 
         # Create the container.
-        container = create_container(name)
+
+        container = create_container(name, self.color_tag)
         if container is None:
             raise RuntimeError(f"This instance already exists: {name}")
 

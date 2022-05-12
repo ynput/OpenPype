@@ -29,6 +29,7 @@ class BlendModelLoader(plugin.AssetLoader):
     label = "Link Model"
     icon = "code-fork"
     color = "orange"
+    color_tag = "COLOR_04"
 
     _downstream_tasks = ("Rigging", "Modeling", "Texture", "Lookdev")
 
@@ -103,7 +104,7 @@ class BlendModelLoader(plugin.AssetLoader):
         ):
             group_name = plugin.asset_name(asset, subset)
             asset_group = bpy.data.collections.new(group_name)
-            asset_group.color_tag = "COLOR_04"
+            asset_group.color_tag = self.color_tag
             parent_collection.children.link(asset_group)
         else:
             unique_number = plugin.get_unique_number(asset, subset)

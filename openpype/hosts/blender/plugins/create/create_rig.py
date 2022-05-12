@@ -10,3 +10,4 @@ class CreateRig(plugin.Creator):
     label = "Rig"
     family = "rig"
     icon = "wheelchair"
+    color_tag = "COLOR_03"

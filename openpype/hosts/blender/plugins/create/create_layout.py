@@ -10,3 +10,4 @@ class CreateLayout(plugin.Creator):
     label = "Layout"
     family = "layout"
     icon = "cubes"
+    color_tag = "COLOR_02"

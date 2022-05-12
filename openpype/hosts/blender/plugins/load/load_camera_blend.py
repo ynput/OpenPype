@@ -35,6 +35,7 @@ class BlendCameraLoader(plugin.AssetLoader):
     label = "Link Camera (Blend)"
     icon = "code-fork"
     color = "orange"
+    color_tag = "COLOR_05"
 
     def _remove(self, asset_group):
         objects = list(asset_group.children)
