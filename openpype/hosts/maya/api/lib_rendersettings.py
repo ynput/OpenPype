@@ -138,9 +138,12 @@ class RenderSettings(object):
 
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
-
-        for attr in additional_options.keys():
-            cmds.setAttr(attr, additional_options.get(attr, None))
+        # Passes additional options in from the schema as a list
+        # but converts it to a dictionary because ftrack doesn't
+        # allow fullstops in custom attributes.
+        additional_options_dict = dict(additional_options)
+        for attr in additional_options_dict.keys():
+            cmds.setAttr(attr, additional_options_dict.get(attr, None))
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""

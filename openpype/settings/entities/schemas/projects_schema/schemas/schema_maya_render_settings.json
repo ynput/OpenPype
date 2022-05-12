@@ -134,6 +134,7 @@
                 },
                 {
                   "type": "dict-modifiable",
+                  "store_as_list": true,
                   "key": "additional_options",
                   "label": "Additional Renderer Options",
                   "use_label_wrap": true,
