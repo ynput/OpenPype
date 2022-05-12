@@ -292,21 +292,15 @@
     },
     "gizmo": [
         {
-            "toolbar_menu_name": "FixStudio",
+            "toolbar_menu_name": "OpenPype Gizmo",
             "toolbar_icon_path": "path/to/nuke/icon.png",
             "gizmo_path": ["path/to/nuke/gizmo"],
             "gizmo_definition": [
                 {
-                    "type": "menu",
-                    "title": "3D",
-                    "items": [
-                        {
-                            "type": "action",
-                            "sourcetype": "python",
-                            "title": "Camera Smoother",
-                            "command": "nuke.createNode('Camera_Smoother')"
-                        }
-                    ]
+                    "type": "action",
+                    "sourcetype": "python",
+                    "title": "Gizmo Note",
+                    "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')"
                 }
             ]
         }
