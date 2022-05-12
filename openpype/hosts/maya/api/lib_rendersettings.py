@@ -139,7 +139,7 @@ class RenderSettings(object):
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
 
-        for attr in additional_options.items():
+        for attr in additional_options.keys():
             cmds.setAttr(attr, additional_options.get(attr, None))
 
     def _set_redshift_settings(self, width, height):
