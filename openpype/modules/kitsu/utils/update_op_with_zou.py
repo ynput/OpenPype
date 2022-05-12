@@ -63,6 +63,7 @@ def update_op_assets(
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
     project_name = project_doc["name"]
+    project_module_settings = get_project_settings(project_name)["kitsu"]
 
     assets_with_update = []
     for item in entities_list:
@@ -126,7 +127,6 @@ def update_op_assets(
             )  # TODO check consistency
 
         # Substitute Episode and Sequence by Shot
-        project_module_settings = get_project_settings(project_name)["kitsu"]
         substitute_item_type = (
             "shots"
             if item_type in ["Episode", "Sequence"]
