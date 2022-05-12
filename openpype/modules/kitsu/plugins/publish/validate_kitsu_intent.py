@@ -12,10 +12,11 @@ class ValidateKitsuIntent(pyblish.api.ContextPlugin):
     optional = True
 
     def process(self, context):
-
+        # Check publish status exists
         publish_status = context.data.get("intent", {}).get("value")
         if not publish_status:
             self.log.info("Status is not set.")
+            return
 
         kitsu_status = gazu.task.get_task_status_by_short_name(publish_status)
         if not kitsu_status:
