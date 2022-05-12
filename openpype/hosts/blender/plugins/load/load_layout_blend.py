@@ -136,7 +136,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             stack.enter_context(self.maintained_action(asset_group))
 
             plugin.remove_container(asset_group)
-            objects = self._process(str(libpath), asset_group, object_name)
+            objects = self._process(str(libpath), asset_group)
 
         # update override library operations from asset objects
         for obj in objects:
