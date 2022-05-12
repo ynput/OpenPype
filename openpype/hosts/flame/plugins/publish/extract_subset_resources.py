@@ -160,7 +160,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             # get frame range with handles for representation range
             frame_start_handle = frame_start - handle_start
             source_duration_handles = (
-                source_end_handles - source_start_handles) + 1
+                source_end_handles - source_start_handles)
 
             # define in/out marks
             in_mark = (source_start_handles - source_first_frame) + 1
