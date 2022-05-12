@@ -85,6 +85,7 @@ def update_op_assets(
         # Frame in, fallback on 0
         frame_in = int(item_data.get("frame_in") or 0)
         item_data["frameStart"] = frame_in
+        item_data.pop("frame_in")
         # Frame out, fallback on frame_in + duration
         frames_duration = int(item.get("nb_frames") or 1)
         frame_out = (
@@ -93,6 +94,7 @@ def update_op_assets(
             else frame_in + frames_duration
         )
         item_data["frameEnd"] = int(frame_out)
+        item_data.pop("frame_out")
         # Fps, fallback to project's value when entity fps is deleted
         if not item_data.get("fps") and item_doc["data"].get("fps"):
             item_data["fps"] = project_doc["data"]["fps"]
