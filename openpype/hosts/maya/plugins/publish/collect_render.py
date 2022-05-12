@@ -326,8 +326,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
-                "renderer": self.get_render_attribute("currentRenderer",
-                                                      layer=layer_name),
+                "renderer": self.get_render_attribute(
+                    "currentRenderer", layer=layer_name).lower(),
                 # instance subset
                 "family": "renderlayer",
                 "families": ["renderlayer"],

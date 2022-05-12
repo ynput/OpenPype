@@ -493,8 +493,9 @@ def convert_for_ffmpeg(
             erase_reason = "has too long value ({} chars).".format(
                 len(attr_value)
             )
+            erase_attribute = True
 
-        if erase_attribute:
+        if not erase_attribute:
             for char in NOT_ALLOWED_FFMPEG_CHARS:
                 if char in attr_value:
                     erase_attribute = True
@@ -623,8 +624,9 @@ def convert_input_paths_for_ffmpeg(
                 erase_reason = "has too long value ({} chars).".format(
                     len(attr_value)
                 )
+                erase_attribute = True
 
-            if erase_attribute:
+            if not erase_attribute:
                 for char in NOT_ALLOWED_FFMPEG_CHARS:
                     if char in attr_value:
                         erase_attribute = True
