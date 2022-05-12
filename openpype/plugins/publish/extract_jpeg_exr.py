@@ -49,7 +49,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             return
 
         filtered_repres = self._get_filtered_repres(instance)
-        name_counter = 0
+
         for repre in filtered_repres:
             repre_files = repre["files"]
             if not isinstance(repre_files, (list, tuple)):
@@ -135,12 +135,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 self.log.warning("Conversion crashed", exc_info=True)
                 raise
 
-            repre_name = "thumbnail"
-            if name_counter > 0:
-                repre_name += str(name_counter)
-            name_counter += 1
             new_repre = {
-                "name": repre_name,
+                "name": "thumbnail",
                 "ext": "jpg",
                 "files": jpeg_file,
                 "stagingDir": stagingdir,
@@ -155,6 +151,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # Cleanup temp folder
             if convert_dir is not None and os.path.exists(convert_dir):
                 shutil.rmtree(convert_dir)
+
+            # Create only one representation with name 'thumbnail'
+            # TODO maybe handle way how to decide from which representation
+            #   will be thumbnail created
+            break
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
