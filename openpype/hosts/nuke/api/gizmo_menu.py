@@ -36,7 +36,8 @@ class GizmoMenu():
                     try:
                         icon = icon.format(**os.environ)
                     except KeyError as e:
-                        log.warning(f"This environment variable doesn't exist: {e}'")
+                        log.warning("This environment variable doesn't exist: "
+                                    "{}".format(e))
 
                 hotkey = config.get('hotkey', None)
 
@@ -62,7 +63,8 @@ class GizmoMenu():
                     try:
                         icon = icon.format(**os.environ)
                     except KeyError as e:
-                        log.warning(f"This environment variable doesn't exist: {e}'")
+                        log.warning("This environment variable doesn't exist: "
+                                    "{}".format(e))
                 menu = parent.addMenu(item['title'], icon=icon)
                 self.build_from_configuration(menu, item["items"])
 
@@ -74,4 +76,4 @@ class GizmoMenu():
                         nuke.pluginAddPath(os.path.join(gizmo_path, folder))
                 nuke.pluginAddPath(gizmo_path)
             else:
-                log.warning(f"This path doesn't exist: {gizmo_path}")
+                log.warning("This path doesn't exist: {}".format(gizmo_path))
