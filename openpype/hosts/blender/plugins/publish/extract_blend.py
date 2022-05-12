@@ -4,7 +4,6 @@ import bpy
 
 import openpype.api
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractBlend(openpype.api.Extractor):

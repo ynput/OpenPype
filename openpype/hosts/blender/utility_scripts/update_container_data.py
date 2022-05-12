@@ -19,7 +19,7 @@ def update_data(workfile, source, collection_name):
     sys.stdout.write(f"Open workfile: {workfile}\n")
     try:
         result = open_file(workfile)
-    except:
+    except Exception:
         result = False
     if not result:
         sys.stderr.write("ERROR: Open workfile failed !\n")
@@ -80,7 +80,7 @@ def update_data(workfile, source, collection_name):
 
 if __name__ == "__main__":
     argv = sys.argv
-    argv = argv[argv.index("--")+1:]
+    argv = argv[argv.index("--") + 1:]
     dest_workfile = argv[0]
     source_workfile = argv[1]
     collection_name = argv[2]

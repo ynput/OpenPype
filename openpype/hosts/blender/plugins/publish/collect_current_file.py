@@ -1,6 +1,7 @@
 import bpy
 
 import pyblish.api
+from openpype.hosts.blender.api import workio
 
 
 class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
@@ -12,8 +13,16 @@ class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Inject the current working file"""
-        current_file = bpy.data.filepath
+        current_file = workio.current_file()
+        has_unsaved_changes = workio.has_unsaved_changes()
+
         context.data['currentFile'] = current_file
 
-        assert current_file != '', "Current file is empty. " \
+        assert current_file, (
+            "Current file is empty. Save the file before continuing."
+        )
+
+        assert not has_unsaved_changes, (
+            "Current file has unsaved changes. "
             "Save the file before continuing."
+        )
