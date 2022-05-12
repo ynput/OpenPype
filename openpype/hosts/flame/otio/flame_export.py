@@ -305,15 +305,17 @@ def create_otio_clip(clip_data):
 
     source_duration = (source_out - source_in + 1)
 
+    # secondly check if any change of speed
+    if source_duration != _clip_record_duration:
+        retime_speed = source_duration / _clip_record_duration
+        log.debug("_ retime_speed: {}".format(retime_speed))
+        speed *= retime_speed
+
     log.debug("_ source_in: {}".format(source_in))
     log.debug("_ source_out: {}".format(source_out))
     log.debug("_ speed: {}".format(speed))
     log.debug("_ source_duration: {}".format(source_duration))
-
-    # secondly check if any change of speed
-    if source_duration != _clip_record_duration:
-        retime_speed = source_duration / _clip_record_duration
-        speed *= retime_speed
+    log.debug("_ _clip_record_duration: {}".format(_clip_record_duration))
 
     # create media reference
     media_reference = create_otio_reference(
