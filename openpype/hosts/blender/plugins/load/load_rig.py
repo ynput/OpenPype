@@ -24,6 +24,7 @@ class BlendRigLoader(plugin.AssetLoader):
     label = "Link Rig"
     icon = "code-fork"
     color = "orange"
+    color_tag = "COLOR_03"
 
     def _process(self, libpath, asset_group, group_name):
         # Load collections from libpath library.
@@ -98,7 +99,7 @@ class BlendRigLoader(plugin.AssetLoader):
         namespace = namespace or f"{asset}_{unique_number}"
 
         asset_group = bpy.data.collections.new(group_name)
-        asset_group.color_tag = "COLOR_03"
+        asset_group.color_tag = self.color_tag
         plugin.get_main_collection().children.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)

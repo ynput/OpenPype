@@ -24,6 +24,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     label = "Link Layout"
     icon = "code-fork"
     color = "orange"
+    color_tag = "COLOR_02"
 
     def _process(self, libpath, asset_group):
         # Load collections from libpath library.
@@ -76,7 +77,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         asset_name = plugin.asset_name(asset, subset)
 
         asset_group = bpy.data.collections.new(asset_name)
-        asset_group.color_tag = "COLOR_02"
+        asset_group.color_tag = self.color_tag
         plugin.get_main_collection().children.link(asset_group)
 
         objects = self._process(libpath, asset_group)

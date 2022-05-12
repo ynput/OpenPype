@@ -1,4 +1,3 @@
-import bpy
 
 import pyblish.api
 from openpype.hosts.blender.api import workio
