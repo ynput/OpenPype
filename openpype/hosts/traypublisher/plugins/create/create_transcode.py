@@ -5,6 +5,8 @@ from openpype.pipeline import (
     CreatedInstance
 )
 
+#@TODO - should be removed from this location after #3165 is fixed
+
 
 class TranscodeCreator(Creator):
     identifier = "transcode"
@@ -18,6 +20,18 @@ class TranscodeCreator(Creator):
         ".xml",
         ".edl"
     ]
+
+    def __init__(
+        self, create_context, system_settings, project_settings, headless=False
+    ):
+        super(TranscodeCreator, self).__init__(create_context, system_settings,
+                                               project_settings, headless)
+        preset_templates = (project_settings["transcode_addon"]
+                                            ["TranscodeCreator"]
+                                            ["preset_templates"])
+
+        self._outputs = {key: key for key in preset_templates.keys()
+                         if key != "concat"}
 
     def get_icon(self):
         return "fa.file"
@@ -63,13 +77,13 @@ class TranscodeCreator(Creator):
                 label="Filepath"
             ),
             EnumDef("preset_template",
-                    {"prores": "Prores", "other_one": "Other One"},
+                    self._outputs,
                     "Output preset")
         ]
         return output
 
     def get_pre_create_attr_defs(self):
-        # Use same attributes as for instance attrobites
+        # Use same attributes as for instance attributes
         return self.get_instance_attr_defs()
 
     def get_detail_description(self):

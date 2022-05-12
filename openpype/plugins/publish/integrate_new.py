@@ -112,7 +112,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usdComposition",
                 "usdOverride",
                 "simpleUnrealTexture",
-                "transcode"
                 ]
     exclude_families = ["clip", "render.farm"]
     db_representation_context_keys = [
