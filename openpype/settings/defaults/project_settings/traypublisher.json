@@ -8,7 +8,6 @@
             "default_variants": [
                 "Main"
             ],
-            "enable_review": false,
             "description": "Publish workfile backup",
             "detailed_description": "",
             "allow_sequences": true,
