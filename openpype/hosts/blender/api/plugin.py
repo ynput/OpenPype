@@ -116,31 +116,67 @@ def remove_container(container, content_only=False):
         This rename all removed elements with .removed suffix to prevent
         naming conflict with created object before calling orphans_purge.
     """
+    objects_to_remove = set()
+    collections_to_remove = set()
+    data_to_remove = set()
+    materials_to_remove = set()
+
     if isinstance(container, bpy.types.Collection):
-        # remove all objects in container collection
+        # Append all objects in container collection to be removed.
         for obj in set(container.all_objects):
-            if obj.original and obj != obj.original:
-                obj.original.name = f"{obj.name}.removed"
-                bpy.data.objects.remove(obj.original)
-            obj.name = f"{obj.name}.removed"
-            bpy.data.objects.remove(obj)
-        # remove all child collections in container
+            objects_to_remove.add(obj)
+            # Append original object if exists.
+            if obj.original:
+                objects_to_remove.add(obj.original)
+        # Append all child collections in container to be removed.
         for child in set(container.children_recursive):
-            child.name = f"{child.name}.removed"
-            bpy.data.collections.remove(child)
-        # remove the container collection
+            collections_to_remove.add(child)
+        # Append the container collection if content_only is False.
         if not content_only:
-            container.name = f"{container.name}.removed"
-            bpy.data.collections.remove(container)
+            collections_to_remove.add(container)
     else:
-        # remove all child objects in container object
-        for child in set(container.children_recursive):
-            child.name = f"{child.name}.removed"
-            bpy.data.objects.remove(child)
-        # remove the container object
+        # Append all child objects in container object.
+        for obj in set(container.children_recursive):
+            objects_to_remove.add(obj)
+        # Append the container object if content_only is False.
         if not content_only:
-            container.name = f"{container.name}.removed"
-            bpy.data.objects.remove(container)
+            objects_to_remove.add(container)
+
+    # Remove objects
+    for obj in objects_to_remove:
+        # Append object data if exists.
+        if obj.data:
+            data_to_remove.add(obj.data)
+        obj.name = f"{obj.name}.removed"
+        bpy.data.objects.remove(obj)
+    # Remove objects
+    for collection in collections_to_remove:
+        collection.name = f"{collection.name}.removed"
+        bpy.data.collections.remove(collection)
+    # Remove data
+    for data in data_to_remove:
+        if data.users == 0:
+            data.name = f"{data.name}.removed"
+            # Append materials if data is mesh.
+            if isinstance(data, bpy.types.Mesh):
+                for mtl in data.materials:
+                    if mtl:
+                        materials_to_remove.add(mtl)
+            # Remove data from this data collection type.
+            for data_collection in (
+                bpy.data.meshes,
+                bpy.data.curves,
+                bpy.data.lights,
+                bpy.data.cameras,
+                bpy.data.armatures,
+            ):
+                if data in data_collection.values():
+                    data_collection.remove(data)
+    # Remove materials
+    for mtl in materials_to_remove:
+        if mtl.users == 0:
+            mtl.name = f"{mtl.name}.removed"
+            bpy.data.materials.remove(mtl)
 
 
 def get_container_objects(container):
