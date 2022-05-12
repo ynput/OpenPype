@@ -19,7 +19,9 @@ class ValidateKitsuIntent(pyblish.api.ContextPlugin):
 
         kitsu_status = gazu.task.get_task_status_by_short_name(publish_status)
         if not kitsu_status:
-            raise AssertionError("Status `{}` not found in kitsu!".format(kitsu_status))
+            raise AssertionError(
+                "Status `{}` not found in kitsu!".format(kitsu_status)
+            )
         self.log.debug("Collect kitsu status: {}".format(kitsu_status))
 
         context.data["kitsu_status"] = kitsu_status
