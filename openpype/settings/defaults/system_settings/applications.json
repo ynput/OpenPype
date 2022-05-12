@@ -1232,6 +1232,35 @@
             }
         }
     },
+    "3dsmax": {
+        "enabled": true,
+        "label": "3ds max",
+        "icon": "{}/app_icons/3dsmax.png",
+        "host_name": "3dsmax",
+        "environment": {
+
+        },
+        "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\3ds Max 2023\\3dsmax.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "3DSMAX_VERSION": "2023"
+                }
+            }
+        }
+    },
     "djvview": {
         "enabled": true,
         "label": "DJV View",
