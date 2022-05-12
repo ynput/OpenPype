@@ -16,18 +16,27 @@ def update_data(workfile, source, collection_name):
     """
 
     # Open work file.
-    open_file(workfile)
+    sys.stdout.write(f"Open workfile: {workfile}\n")
+    try:
+        result = open_file(workfile)
+    except:
+        result = False
+    if not result:
+        sys.stderr.write("ERROR: Open workfile failed !\n")
+        sys.exit(1)
 
     # Rename temporary all scene objects.
     for obj in bpy.data.objects:
         obj.name = f"{obj.name}.to_update"
 
     # Load only the collection wanted.
+    sys.stdout.write(f"Load libraries from source: {source}\n")
     with bpy.data.libraries.load(
         source, link=False, relative=False
     ) as (data_from, data_to):
         for collection in data_from.collections:
             if collection == collection_name:
+                sys.stdout.write(f"load collection: {collection}\n")
                 data_to.collections.append(collection)
 
     # Reassign meshes from new data.
@@ -41,6 +50,7 @@ def update_data(workfile, source, collection_name):
                 # copy new data and restor original name
                 to_update.data = obj.data.copy()
                 to_update.data.name = original_data_name
+                sys.stdout.write(f"Data updated for: {obj.name}\n")
         plugin.remove_container(collection)
 
     plugin.orphans_purge()
@@ -51,9 +61,19 @@ def update_data(workfile, source, collection_name):
             obj.name = obj.name[:-10]
 
     # Save new work version
-    save_file(version_up(workfile), copy=False)
+    new_version = version_up(workfile)
+    sys.stdout.write(f"Save new version: {new_version}\n")
+    result = save_file(new_version, copy=False)
+    if not result:
+        sys.stderr.write("ERROR: Save new version failed !\n")
+        sys.exit(2)
     # Publish
-    pyblish.util.publish()
+    sys.stdout.write("Publishing ..\n")
+    result = pyblish.util.publish()
+    sys.stdout.write(f"Publish result: {result}\n")
+    if not result:
+        sys.stderr.write("ERROR: Publish failed !\n")
+        sys.exit(3)
     # Quit blender
     bpy.ops.wm.quit_blender()
 

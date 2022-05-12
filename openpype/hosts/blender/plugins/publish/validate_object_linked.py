@@ -39,14 +39,17 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
                 )
 
         for collection in local_collections:
-            # Get blender workfile path for parent representation.
+            container = collection[AVALON_PROPERTY]
+            # Get blender source workfile path for representation.
             representation = legacy_io.find_one(
-                {"_id": ObjectId(collection[AVALON_PROPERTY]["parent"])}
+                {"_id": ObjectId(container["representation"])}
             )
-            project_cfg = context.data["projectEntity"]["config"]
-            work_path = project_cfg["roots"]["work"][SYSTEM]
-            work_filepath = str(representation["data"]["source"]).replace(
-                "{root[work]}", work_path
+            parent = legacy_io.find_one(
+                {"_id": ObjectId(representation["parent"])}
+            )
+            work_filepath = str(parent["data"]["source"]).replace(
+                "{root[work]}",
+                representation["context"]["root"]["work"],
             )
             # Subprocess blender command.
             command = [
@@ -70,15 +73,15 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
                 universal_newlines=True,
             )
             for stdout_line in iter(p.stdout.readline, ""):
-                if stdout_line:
-                    print(stdout_line)
+                if stdout_line.strip():
+                    print(stdout_line.rstrip())
             p.stdout.close()
             returncode = p.wait()
             if returncode:
                 raise subprocess.CalledProcessError(returncode, command)
 
             self.log.info(f"Updating {collection.name} ..")
-            update_container(collection[AVALON_PROPERTY], -1)
+            update_container(container, -1)
 
 
 class ValidateObjectLinked(pyblish.api.InstancePlugin):
