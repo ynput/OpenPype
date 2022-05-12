@@ -307,7 +307,7 @@ def create_otio_clip(clip_data):
 
     # secondly check if any change of speed
     if source_duration != _clip_record_duration:
-        retime_speed = source_duration / _clip_record_duration
+        retime_speed = float(source_duration / _clip_record_duration)
         log.debug("_ retime_speed: {}".format(retime_speed))
         speed *= retime_speed
 
