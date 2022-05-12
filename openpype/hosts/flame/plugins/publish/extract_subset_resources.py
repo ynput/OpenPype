@@ -68,7 +68,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
             instance.data["representations"] = []
 
         # flame objects
-        self.project = instance.context.data["flameProject"]
         segment = instance.data["item"]
         asset_name = instance.data["asset"]
         segment_name = segment.name.get_value()
@@ -182,14 +181,14 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 name_patern_xml = (
                     "<segment name>_<shot name>_{}.").format(
                         unique_name)
+
+                # change in/out marks to timeline in/out
+                in_mark = clip_in
+                out_mark = clip_out
             else:
                 exporting_clip = self.import_clip(clip_path)
                 exporting_clip.name.set_value("{}_{}".format(
                     asset_name, segment_name))
-
-            # change in/out marks to timeline in/out
-            in_mark = clip_in
-            out_mark = clip_out
 
             # add xml tags modifications
             modify_xml_data.update({
@@ -238,14 +237,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
             # define kwargs based on preset type
             if "thumbnail" in unique_name:
-                if export_type != "Sequence Publish":
-                    # if not sequence preset
-                    in_mark = int(source_start_handles - source_first_frame)
-                    thumb_frame_number = int(in_mark + (
-                        source_duration_handles / 2))
-                else:
-                    thumb_frame_number = int(in_mark + (
-                        (clip_out - clip_in) / 2))
+                thumb_frame_number = int(in_mark + (
+                    source_duration_handles / 2))
 
                 self.log.debug("__ in_mark: {}".format(in_mark))
                 self.log.debug("__ thumb_frame_number: {}".format(
