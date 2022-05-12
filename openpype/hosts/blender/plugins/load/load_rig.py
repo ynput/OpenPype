@@ -50,11 +50,13 @@ class BlendRigLoader(plugin.AssetLoader):
         # Rename overridden collections with group_name prefix.
         for child in set(override.children_recursive):
             child.name = f"{group_name}:{child.name}"
-            # TODO Force lock model container.
-            # if (
-            #     child.get(AVALON_PROPERTY)
-            #     child[AVALON_PROPERTY].get("")
-            # ):
+            # Disable selection for modeling container.
+            if (
+                child.get(AVALON_PROPERTY) and
+                child[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID and
+                child[AVALON_PROPERTY].get("family") == "model"
+            ):
+                child.hide_select = True
 
         # Force override object data from overridden objects and rename.
         overridden_data = set()
