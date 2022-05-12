@@ -30,9 +30,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         self.log.debug("Kitsu status: {}".format(kitsu_status))
 
         kitsu_comment = gazu.task.add_comment(
-            context.data["kitsu_task"],
-            kitsu_status,
-            comment = publish_comment
+            context.data["kitsu_task"], kitsu_status, comment=publish_comment
         )
 
         context.data["kitsu_comment"] = kitsu_comment
