@@ -98,26 +98,26 @@ def _get_metadata(item):
     return {}
 
 
-# def create_time_effects(otio_clip, clip_data):
-#     otio_effect = None
+def create_time_effects(otio_clip, speed):
+    otio_effect = None
 
-#     # retime on track item
-#     if speed != 1.:
-#         # make effect
-#         otio_effect = otio.schema.LinearTimeWarp()
-#         otio_effect.name = "Speed"
-#         otio_effect.time_scalar = speed
-#         otio_effect.metadata = {}
+    # retime on track item
+    if speed != 1.:
+        # make effect
+        otio_effect = otio.schema.LinearTimeWarp()
+        otio_effect.name = "Speed"
+        otio_effect.time_scalar = speed
+        otio_effect.metadata = {}
 
-#     # freeze frame effect
-#     if speed == 0.:
-#         otio_effect = otio.schema.FreezeFrame()
-#         otio_effect.name = "FreezeFrame"
-#         otio_effect.metadata = {}
+    # freeze frame effect
+    if speed == 0.:
+        otio_effect = otio.schema.FreezeFrame()
+        otio_effect.name = "FreezeFrame"
+        otio_effect.metadata = {}
 
-#     if otio_effect:
-#         # add otio effect to clip effects
-#         otio_clip.effects.append(otio_effect)
+    if otio_effect:
+        # add otio effect to clip effects
+        otio_clip.effects.append(otio_effect)
 
 
 def _get_marker_color(flame_colour):
@@ -205,7 +205,7 @@ def create_otio_markers(otio_item, item):
         otio_item.markers.append(otio_marker)
 
 
-def create_otio_reference(clip_data, fps=None):
+def create_otio_reference(clip_data, duration, fps=None):
     metadata = _get_metadata(clip_data)
 
     # get file info for path and start frame
@@ -220,7 +220,6 @@ def create_otio_reference(clip_data, fps=None):
     # get padding and other file infos
     log.debug("_ path: {}".format(path))
 
-    frame_duration = clip_data["source_duration"]
     otio_ex_ref_item = None
 
     is_sequence = frame_number = utils.get_frame_from_filename(file_name)
@@ -247,7 +246,7 @@ def create_otio_reference(clip_data, fps=None):
                 rate=fps,
                 available_range=create_otio_time_range(
                     frame_start,
-                    frame_duration,
+                    duration,
                     fps
                 )
             )
@@ -263,7 +262,7 @@ def create_otio_reference(clip_data, fps=None):
             target_url=reformated_path,
             available_range=create_otio_time_range(
                 frame_start,
-                frame_duration,
+                duration,
                 fps
             )
         )
@@ -286,19 +285,39 @@ def create_otio_clip(clip_data):
     media_timecode_start = media_info.start_frame
     media_fps = media_info.fps
 
-    # create media reference
-    media_reference = create_otio_reference(clip_data, media_fps)
-
     # define first frame
     first_frame = media_timecode_start or utils.get_frame_from_filename(
         clip_data["fpath"]) or 0
 
-    source_in = int(clip_data["source_in"]) - int(first_frame)
+    _clip_source_in = int(clip_data["source_in"])
+    _clip_source_out = int(clip_data["source_out"])
+    _clip_record_duration = int(clip_data["record_duration"])
+
+    # first solve if the reverse timing
+    speed = 1
+    if clip_data["source_in"] > clip_data["source_out"]:
+        source_in = _clip_source_out - int(first_frame)
+        source_out = _clip_source_in - int(first_frame)
+        speed = -1
+    else:
+        source_in = _clip_source_in - int(first_frame)
+        source_out = _clip_source_out - int(first_frame)
+
+    source_duration = (source_out - source_in + 1)
+
+    # secondly check if any change of speed
+    if source_duration != _clip_record_duration:
+        retime_speed = source_duration / _clip_record_duration
+        speed *= retime_speed
+
+    # create media reference
+    media_reference = create_otio_reference(
+        clip_data, source_duration, media_fps)
 
     # creatae source range
     source_range = create_otio_time_range(
         source_in,
-        clip_data["record_duration"],
+        _clip_record_duration,
         CTX.get_fps()
     )
 
@@ -312,7 +331,8 @@ def create_otio_clip(clip_data):
     if MARKERS_INCLUDE:
         create_otio_markers(otio_clip, segment)
 
-    # create_time_effects(otio_clip, clip_data)
+    if speed != 1:
+        create_time_effects(otio_clip, speed)
 
     return otio_clip
 
