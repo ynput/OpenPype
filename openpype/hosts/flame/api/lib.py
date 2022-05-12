@@ -848,9 +848,10 @@ class MediaInfoFile(object):
         # we expect only one collection
         collection = collections[0]
 
+        self.log.debug("__ collection: {}".format(collection))
+
         if collection.is_contiguous():
-            # if no holes then return collection
-            return collection.format("{head}[{range}]{tail}")
+            return self._format_collection(collection)
 
         # add `[` in front to make sure it want capture
         # shot name with the same number
@@ -858,10 +859,24 @@ class MediaInfoFile(object):
         # convert to multiple collections
         _continues_colls = collection.separate()
         for _coll in _continues_colls:
-            coll_to_text = _coll.format("{head}[{range}]{tail}")
+            coll_to_text = self._format_collection(_coll)
             self.log.debug("__ coll_to_text: {}".format(coll_to_text))
             if number_from_path in coll_to_text:
                 return coll_to_text
+
+    @staticmethod
+    def _format_collection(collection):
+        # if no holes then return collection
+        head = collection.format("{head}")
+        tail = collection.format("{tail}")
+        range_template = "[{{:0{0}d}}-{{:0{0}d}}]".format(
+            len(str(max(collection.indexes))))
+        ranges = range_template.format(
+            min(collection.indexes),
+            max(collection.indexes)
+        )
+        # if no holes then return collection
+        return "{}{}{}".format(head, ranges, tail)
 
     def _separate_file_head(self, basename, extension):
         """ Get only head with out sequence and extension
