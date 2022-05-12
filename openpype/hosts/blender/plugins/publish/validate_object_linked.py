@@ -7,7 +7,7 @@ import platform
 import pyblish.api
 from typing import List
 
-from openpype.pipeline import(
+from openpype.pipeline import (
     legacy_io,
     update_container,
     AVALON_CONTAINER_ID,
