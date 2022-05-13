@@ -237,7 +237,7 @@ class CreateRender(plugin.Creator):
             # Uses function to get pool machines from the assigned deadline
             # url in settings
             pool_names = self.deadline_module.get_deadline_pools(deadline_url,
-                                                                  self.log)
+                                                                 self.log)
             maya_submit_dl = self._project_settings.get(
                 "deadline", {}).get(
                 "publish", {}).get(
