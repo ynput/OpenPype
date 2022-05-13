@@ -91,7 +91,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 for root in roots:
                     root.setParent(group_node)
 
-                cmds.setAttr(group_name + ".displayHandle", 1)
+                # TODO: Disable displayHandle through settings
+                # cmds.setAttr(group_name + ".displayHandle", 1)
 
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
                 colors = settings['maya']['load']['colors']
@@ -103,7 +104,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                         (float(c[1]) / 255),
                         (float(c[2]) / 255))
 
-                cmds.setAttr(group_name + ".displayHandle", 1)
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
