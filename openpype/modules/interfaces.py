@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+import six
+
 from openpype import resources
 
 from openpype.modules import OpenPypeInterface
@@ -14,10 +16,37 @@ class IPluginPaths(OpenPypeInterface):
         "publish": ["path/to/publish_plugins"]
     }
     """
-    # TODO validation of an output
+
     @abstractmethod
     def get_plugin_paths(self):
         pass
+
+    def get_creator_plugin_paths(self, host_name):
+        """Retreive creator plugin paths.
+
+        Give addons ability to add creator plugin paths based on host name.
+
+        NOTES:
+        - Default implementation uses 'get_plugin_paths' and always return
+            all creator plugins.
+        - Host name may help to organize plugins by host, but each creator
+            alsomay have host filtering.
+
+        Args:
+            host_name (str): For which host are the plugins meant.
+        """
+
+        paths = self.get_plugin_paths()
+        if not paths or "create" not in paths:
+            return []
+
+        create_paths = paths["create"]
+        if not create_paths:
+            return []
+
+        if not isinstance(create_paths, (list, tuple, set)):
+            create_paths = [create_paths]
+        return create_paths
 
 
 class ILaunchHookPaths(OpenPypeInterface):
