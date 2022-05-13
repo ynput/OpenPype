@@ -60,12 +60,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        if (
-            self.keep_original_representation
-            and "representations" not in instance.data
-            or not self.keep_original_representation
-        ):
-            instance.data["representations"] = []
+        self._make_representation_data(instance)
 
         # flame objects
         segment = instance.data["item"]
@@ -92,7 +87,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
         handles = max(handle_start, handle_end)
 
         # get media source range with handles
-        source_end_handles = instance.data["sourceEndH"]
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
 
@@ -109,27 +103,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         for unique_name, preset_config in export_presets.items():
             modify_xml_data = {}
 
-            # get activating attributes
-            activated_preset = preset_config["active"]
-            filter_path_regex = preset_config.get("filter_path_regex")
-
-            self.log.info(
-                "Preset `{}` is active `{}` with filter `{}`".format(
-                    unique_name, activated_preset, filter_path_regex
-                )
-            )
-            self.log.debug(
-                "__ clip_path: `{}`".format(clip_path))
-
-            # skip if not activated presete
-            if not activated_preset:
-                continue
-
-            # exclude by regex filter if any
-            if (
-                filter_path_regex
-                and not re.search(filter_path_regex, clip_path)
-            ):
+            if self._should_skip(preset_config, clip_path, unique_name):
                 continue
 
             # get all presets attributes
@@ -147,18 +121,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 )
             )
 
-            # get attribures related loading in integrate_batch_group
-            load_to_batch_group = preset_config.get(
-                "load_to_batch_group")
-            batch_group_loader_name = preset_config.get(
-                "batch_group_loader_name")
-
-            # convert to None if empty string
-            if batch_group_loader_name == "":
-                batch_group_loader_name = None
-
             # get frame range with handles for representation range
             frame_start_handle = frame_start - handle_start
+
+            # calculate duration with handles
             source_duration_handles = (
                 source_end_handles - source_start_handles)
 
@@ -272,8 +238,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 "data": {
                     "colorspace": color_out
                 },
-                "load_to_batch_group": load_to_batch_group,
-                "batch_group_loader_name": batch_group_loader_name
+                "load_to_batch_group": preset_config.get(
+                    "load_to_batch_group"),
+                "batch_group_loader_name": preset_config.get(
+                    "batch_group_loader_name") or None
             }
 
             # collect all available content of export dir
@@ -327,6 +295,38 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
+
+    def _should_skip(self, preset_config, clip_path, unique_name):
+        # get activating attributes
+        activated_preset = preset_config["active"]
+        filter_path_regex = preset_config.get("filter_path_regex")
+
+        self.log.info(
+            "Preset `{}` is active `{}` with filter `{}`".format(
+                unique_name, activated_preset, filter_path_regex
+            )
+        )
+        self.log.debug(
+            "__ clip_path: `{}`".format(clip_path))
+
+        # skip if not activated presete
+        if not activated_preset:
+            return True
+
+        # exclude by regex filter if any
+        if (
+            filter_path_regex
+            and not re.search(filter_path_regex, clip_path)
+        ):
+            return True
+
+    def _make_representation_data(self, instance):
+        if (
+            self.keep_original_representation
+            and "representations" not in instance.data
+            or not self.keep_original_representation
+        ):
+            instance.data["representations"] = []
 
     def _unfolds_nested_folders(self, stage_dir, files_list, ext):
         """Unfolds nested folders
