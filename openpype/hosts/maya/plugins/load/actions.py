@@ -1,7 +1,7 @@
 """A module containing generic loader actions that will display in the Loader.
 
 """
-
+import qargparse
 from openpype.pipeline import load
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
@@ -98,12 +98,23 @@ class ImportMayaLoader(load.LoaderPlugin):
     icon = "arrow-circle-down"
     color = "#775555"
 
+    options = [
+        qargparse.Boolean(
+            "clean_import",
+            label="Clean import",
+            default=False,
+            help="Should all occurences of cbId be purged?"
+        )
+    ]
+
     def load(self, context, name=None, namespace=None, data=None):
         import maya.cmds as cmds
 
         choice = self.display_warning()
         if choice is False:
             return
+
+        clean_import = data.get("clean_import", False)
 
         asset = context['asset']
 
@@ -114,13 +125,21 @@ class ImportMayaLoader(load.LoaderPlugin):
         )
 
         with maintained_selection():
-            cmds.file(self.fname,
-                      i=True,
-                      preserveReferences=True,
-                      namespace=namespace,
-                      returnNewNodes=True,
-                      groupReference=True,
-                      groupName="{}:{}".format(namespace, name))
+            nodes = cmds.file(self.fname,
+                              i=True,
+                              preserveReferences=True,
+                              namespace=namespace,
+                              returnNewNodes=True,
+                              groupReference=True,
+                              groupName="{}:{}".format(namespace, name))
+
+            if clean_import:
+                shapes = cmds.ls(nodes, shapes=True, long=True)
+                for shape in shapes:
+                    meshes = cmds.ls('{}.cbId'.format(shape))
+                    for mesh in meshes:
+                        print("Removing ... " + (mesh))
+                        cmds.deleteAttr(mesh)
 
         # We do not containerize imported content, it remains unmanaged
         return
