@@ -41,6 +41,9 @@
                         },
                         {
                             "render": "render"
+                        },
+                        {
+                            "write": "write"
                         }
                     ]
                 }
