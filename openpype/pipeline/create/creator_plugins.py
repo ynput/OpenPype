@@ -66,7 +66,7 @@ class BaseCreator:
     # Filtering by host name - can be used to be filtered by host name
     # - used on all hosts when set to 'None' for Backwards compatibility
     #   - was added afterwards
-    # QUESTIOn make this required?
+    # QUESTION make this required?
     host_name = None
 
     def __init__(
