@@ -205,8 +205,9 @@ def create_otio_markers(otio_item, item):
         otio_item.markers.append(otio_marker)
 
 
-def create_otio_reference(clip_data, duration, fps=None):
+def create_otio_reference(clip_data, fps=None):
     metadata = _get_metadata(clip_data)
+    duration = int(clip_data["source_duration"])
 
     # get file info for path and start frame
     frame_start = 0
@@ -307,7 +308,7 @@ def create_otio_clip(clip_data):
 
     # secondly check if any change of speed
     if source_duration != _clip_record_duration:
-        retime_speed = float(source_duration / _clip_record_duration)
+        retime_speed = float(source_duration) / float(_clip_record_duration)
         log.debug("_ retime_speed: {}".format(retime_speed))
         speed *= retime_speed
 
@@ -319,7 +320,7 @@ def create_otio_clip(clip_data):
 
     # create media reference
     media_reference = create_otio_reference(
-        clip_data, source_duration, media_fps)
+        clip_data, media_fps)
 
     # creatae source range
     source_range = create_otio_time_range(
