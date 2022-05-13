@@ -1,18 +1,13 @@
 """Load a rig asset in Blender."""
 
 import contextlib
-from pathlib import Path
-from pprint import pformat
 from typing import Dict, List, Optional
 
 import bpy
 
-from openpype.pipeline import get_representation_path, AVALON_CONTAINER_ID
+from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import (
-    metadata_update,
-    AVALON_PROPERTY,
-)
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendRigLoader(plugin.AssetLoader):
@@ -26,7 +21,7 @@ class BlendRigLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_03"
 
-    def _process(self, libpath, asset_group, group_name):
+    def _load_blend(self, libpath, asset_group):
         # Load collections from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
@@ -46,11 +41,11 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Rename all overridden objects with group_name prefix.
         for obj in set(override.all_objects):
-            obj.name = f"{group_name}:{obj.name}"
+            obj.name = f"{asset_group.name}:{obj.name}"
 
         # Rename overridden collections with group_name prefix.
         for child in set(override.children_recursive):
-            child.name = f"{group_name}:{child.name}"
+            child.name = f"{asset_group.name}:{child.name}"
             # Disable selection for modeling container.
             if (
                 child.get(AVALON_PROPERTY) and
@@ -65,7 +60,7 @@ class BlendRigLoader(plugin.AssetLoader):
             if obj.data and obj.data not in overridden_data:
                 overridden_data.add(obj.data)
                 obj.data.override_create(remap_local_usages=True)
-                obj.data.name = f"{group_name}:{obj.data.name}"
+                obj.data.name = f"{asset_group.name}:{obj.data.name}"
 
         # Move objects and child collections from override to asset_group.
         plugin.link_to_collection(override.objects, asset_group)
@@ -102,80 +97,18 @@ class BlendRigLoader(plugin.AssetLoader):
         asset_group.color_tag = self.color_tag
         plugin.get_main_collection().children.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name)
+        objects = self._load_blend(libpath, asset_group)
 
-        metadata_update(
-            asset_group,
-            {
-                "schema": "openpype:container-2.0",
-                "id": AVALON_CONTAINER_ID,
-                "name": name,
-                "namespace": namespace or '',
-                "loader": str(self.__class__.__name__),
-                "representation": str(context["representation"]["_id"]),
-                "libpath": libpath,
-                "asset_name": asset_name,
-                "parent": str(context["representation"]["parent"]),
-                "family": context["representation"]["context"]["family"],
-                "objectName": group_name
-            }
+        self._update_metadata(
+            asset_group, context, name, namespace, asset_name, libpath
         )
 
         self[:] = objects
         return objects
 
     def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset.
-
-        This will remove all objects of the current collection, load the new
-        ones and add them to the collection.
-        If the objects of the collection are used in another collection they
-        will not be removed, only unlinked. Normally this should not be the
-        case though.
-        """
-        object_name = container["objectName"]
-        asset_group = bpy.data.collections.get(object_name)
-        libpath = Path(get_representation_path(representation))
-
-        self.log.info(
-            "Container: %s\nRepresentation: %s",
-            pformat(container, indent=2),
-            pformat(representation, indent=2),
-        )
-
-        if self._is_updated(asset_group, object_name, libpath):
-            self.log.info("Asset already up to date, not updating...")
-            return
-
-        with contextlib.ExitStack() as stack:
-            stack.enter_context(self.maintained_parent(asset_group))
-            stack.enter_context(self.maintained_modifiers(asset_group))
-            stack.enter_context(self.maintained_constraints(asset_group))
-            stack.enter_context(self.maintained_transforms(asset_group))
-            stack.enter_context(self.maintained_targets(asset_group))
-            stack.enter_context(self.maintained_action(asset_group))
-
-            plugin.remove_container(asset_group, content_only=True)
-            objects = self._process(str(libpath), asset_group, object_name)
-
-        # update override library operations from asset objects
-        for obj in objects:
-            if obj.override_library:
-                obj.override_library.operations_update()
-
-        # clear orphan datablocks and libraries
-        plugin.orphans_purge()
-        plugin.deselect_all()
-
-        # update metadata
-        metadata_update(
-            asset_group,
-            {
-                "libpath": str(libpath),
-                "representation": str(representation["_id"]),
-                "parent": str(representation["parent"]),
-            }
-        )
+        """Update the loaded asset"""
+        self._update_blend(container, representation)
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

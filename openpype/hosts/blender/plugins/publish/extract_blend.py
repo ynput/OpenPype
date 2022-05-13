@@ -11,7 +11,7 @@ class ExtractBlend(openpype.api.Extractor):
 
     label = "Extract Blend"
     hosts = ["blender"]
-    families = ["model", "camera", "rig", "action", "layout"]
+    families = ["model", "camera", "rig", "action", "layout", "setdress"]
     optional = True
 
     def process(self, instance):

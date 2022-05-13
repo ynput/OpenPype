@@ -1,4 +1,4 @@
-"""Load a camera asset in Blender."""
+"""Load a layout in Blender."""
 
 from typing import Dict, List, Optional
 
@@ -7,21 +7,16 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class BlendCameraLoader(plugin.AssetLoader):
-    """Load a camera from a .blend file.
+class BlendSetdressLoader(plugin.AssetLoader):
+    """Load setdress from a .blend file."""
 
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
-    """
-
-    families = ["camera"]
+    families = ["setdress"]
     representations = ["blend"]
 
-    label = "Link Camera (Blend)"
+    label = "Link SetDress"
     icon = "code-fork"
     color = "orange"
-    color_tag = "COLOR_05"
+    color_tag = "COLOR_06"
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,

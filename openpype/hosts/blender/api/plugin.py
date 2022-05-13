@@ -1,8 +1,9 @@
 """Shared functionality for pipeline plugins for Blender."""
 
-from contextlib import contextmanager
+from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
+from contextlib import contextmanager, ExitStack
 from typing import Dict, List, Optional
 from collections.abc import Iterable
 
@@ -13,6 +14,8 @@ from openpype.pipeline import (
     legacy_io,
     LegacyCreator,
     LoaderPlugin,
+    get_representation_path,
+    AVALON_CONTAINER_ID,
 )
 from .ops import (
     MainThreadItem,
@@ -22,7 +25,7 @@ from .lib import (
     imprint,
     get_selection
 )
-from .pipeline import AVALON_PROPERTY
+from .pipeline import metadata_update, AVALON_PROPERTY
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -344,8 +347,6 @@ class Creator(LegacyCreator):
                 if collection in set(bpy.context.scene.collection.children):
                     bpy.context.scene.collection.children.unlink(collection)
 
-        imprint(container, self.data)
-
         return container
 
     def process(self):
@@ -427,6 +428,39 @@ class AssetLoader(LoaderPlugin):
                 (not famillies or metadata.get("family") in famillies)
             ):
                 return collection
+
+    def _load_blend(self, libpath, asset_group):
+        # Load collections from libpath library.
+        with bpy.data.libraries.load(
+            libpath, link=True, relative=False
+        ) as (data_from, data_to):
+            data_to.collections = data_from.collections
+
+        # Get the right asset container from imported collections.
+        container = self._get_container_from_collections(
+            data_to.collections, self.families
+        )
+        assert container, "No asset container found"
+
+        # Create override library for container and elements.
+        override = container.override_hierarchy_create(
+            bpy.context.scene, bpy.context.view_layer
+        )
+
+        # Move objects and child collections from override to asset_group.
+        link_to_collection(override.objects, asset_group)
+        link_to_collection(override.children, asset_group)
+
+        # Make all actions local.
+        for action in bpy.data.actions:
+            action.make_local()
+
+        # Clear and purge useless datablocks and selection.
+        bpy.data.collections.remove(override)
+        orphans_purge()
+        deselect_all()
+
+        return list(asset_group.all_objects)
 
     def process_asset(self,
                       context: dict,
@@ -532,6 +566,92 @@ class AssetLoader(LoaderPlugin):
             f"normalized_libpath:\n  {normalized_libpath}"
         )
         return normalized_group_libpath == normalized_libpath
+
+    def _update_blend(self, container: Dict, representation: Dict):
+        """Update the loaded asset.
+
+        This will remove all objects of the current collection, load the new
+        ones and add them to the collection.
+        If the objects of the collection are used in another collection they
+        will not be removed, only unlinked. Normally this should not be the
+        case though.
+
+        Warning:
+            No nested collections are supported at the moment!
+        """
+        object_name = container["objectName"]
+        asset_group = (
+            bpy.data.collections.get(object_name) or
+            bpy.data.objects.get(object_name)
+        )
+        libpath = Path(get_representation_path(representation))
+
+        self.log.info(
+            "Container: %s\nRepresentation: %s",
+            pformat(container, indent=2),
+            pformat(representation, indent=2),
+        )
+
+        if self._is_updated(asset_group, object_name, libpath):
+            self.log.info("Asset already up to date, not updating...")
+            return
+
+        with ExitStack() as stack:
+            stack.enter_context(self.maintained_parent(asset_group))
+            stack.enter_context(self.maintained_transforms(asset_group))
+            stack.enter_context(self.maintained_modifiers(asset_group))
+            stack.enter_context(self.maintained_constraints(asset_group))
+            stack.enter_context(self.maintained_targets(asset_group))
+            stack.enter_context(self.maintained_drivers(asset_group))
+            stack.enter_context(self.maintained_actions(asset_group))
+
+            remove_container(asset_group, content_only=True)
+            objects = self._load_blend(str(libpath), asset_group)
+
+        # update override library operations from asset objects
+        for obj in objects:
+            if obj.override_library:
+                obj.override_library.operations_update()
+
+        # clear orphan datablocks and libraries
+        orphans_purge()
+        deselect_all()
+
+        # update metadata
+        metadata_update(
+            asset_group,
+            {
+                "libpath": str(libpath),
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"]),
+            }
+        )
+
+    def _update_metadata(
+        self,
+        asset_group: bpy.types.ID,
+        context: dict,
+        name: str,
+        namespace: str,
+        asset_name: str,
+        libpath: str,
+    ):
+        metadata_update(
+            asset_group,
+            {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": name,
+                "namespace": namespace or '',
+                "loader": str(self.__class__.__name__),
+                "representation": str(context["representation"]["_id"]),
+                "libpath": libpath,
+                "asset_name": asset_name,
+                "parent": str(context["representation"]["parent"]),
+                "family": context["representation"]["context"]["family"],
+                "objectName": asset_group.name
+            }
+        )
 
     def exec_update(self, container: Dict, representation: Dict):
         """Must be implemented by a sub-class"""
@@ -758,6 +878,30 @@ class AssetLoader(LoaderPlugin):
             for obj_copy in objects_copies:
                 obj_copy.use_fake_user = False
                 bpy.data.objects.remove(obj_copy)
+
+    @contextmanager
+    def maintained_actions(self, container):
+        """Maintain action during context."""
+        objects = get_container_objects(container)
+        actions = {}
+        # Store actions from objects.
+        for obj in objects:
+            if obj.animation_data and obj.animation_data.action:
+                actions[obj.name] = obj.animation_data.action
+                obj.animation_data.action.use_fake_user = True
+        try:
+            yield
+        finally:
+            # Restor actions.
+            for obj_name, action in actions.items():
+                obj = bpy.data.objects.get(obj_name)
+                if obj:
+                    if obj.animation_data is None:
+                        obj.animation_data_create()
+                    obj.animation_data.action = action
+            # Clear fake user.
+            for action in actions.values():
+                action.use_fake_user = False
 
 
 class StructDescriptor:
