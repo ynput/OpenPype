@@ -18,7 +18,7 @@ from openpype.hosts.maya.api import (
     lib_rendersettings,
     plugin
 )
-
+from openpype.modules import ModulesManager
 from openpype.pipeline import legacy_io
 
 
@@ -79,6 +79,8 @@ class CreateRender(plugin.Creator):
         self._project_settings = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"])
 
+        manager = ModulesManager()
+        self.deadline_module = manager.modules_by_name["deadline"]
         try:
             default_servers = deadline_settings["deadline_urls"]
             project_servers = (
@@ -234,7 +236,8 @@ class CreateRender(plugin.Creator):
                 deadline_url = next(iter(self.deadline_servers.values()))
             # Uses function to get pool machines from the assigned deadline
             # url in settings
-            pool_names = self._get_deadline_pools(deadline_url)
+            pool_names = self.deadline_module.get_deadline_pools(deadline_url,
+                                                                  self.log)
             maya_submit_dl = self._project_settings.get(
                 "deadline", {}).get(
                 "publish", {}).get(
