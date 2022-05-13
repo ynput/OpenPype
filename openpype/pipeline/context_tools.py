@@ -119,7 +119,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     modules_manager = ModulesManager()
     publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
     for path in publish_plugin_dirs:
-        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        pyblish.api.register_plugin_path(path)
 
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
