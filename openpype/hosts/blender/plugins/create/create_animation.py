@@ -10,3 +10,4 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
+    color_tag = "COLOR_01"
