@@ -106,7 +106,9 @@ install_requires = [
     "dns",
     # Python defaults (cx_Freeze skip them by default)
     "dbm",
-    "sqlite3"
+    "sqlite3",
+    "dataclasses",
+    "timeit"
 ]
 
 includes = []

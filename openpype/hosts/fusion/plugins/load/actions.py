@@ -6,7 +6,7 @@ from openpype.pipeline import load
 
 
 class FusionSetFrameRangeLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Set frame range excluding pre- and post-handles"""
 
     families = ["animation",
                 "camera",
@@ -41,7 +41,7 @@ class FusionSetFrameRangeLoader(load.LoaderPlugin):
 
 
 class FusionSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Set frame range including pre- and post-handles"""
 
     families = ["animation",
                 "camera",
