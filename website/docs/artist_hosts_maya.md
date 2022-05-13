@@ -602,134 +602,116 @@ be published as separate entity.
 ## Working with Multiverse in OpenPype
 
 OpenPype supports creating, publishing and loading of [Multiverse | USD](
-https://multi-verse.io) data.
+https://multi-verse.io) data. The minimum Multiverse version supported is v6.7,
+and version 7.0 is recommended.
 
-More specifically it is possible to:
+In a nutshell it is possible to:
 
-- Create USD Assets, USD compositions and USD Overrides. This _creates_ OpenPype
-  instances as Maya set nodes that contain information for published USD data.
-- Publish USD Assets, USD compositions and USD Overrides. This _writes_ USD
-  files to disk and _publishes_ information to the OpenPype database.
-- Load any USD data into Multiverse "Compound" shape nodes. This _reads_ USD
-  files (and also Alembic files) into Maya by streaming them to the viewport.
+- Create USD Assets, USD compositions, USD Overrides.
+
+  This _creates_ OpenPype instances as Maya set nodes that contain information
+  for published USD data.
+
+- Create Multiverse Looks.
+
+  This _creates_ OpenPype instances as Maya set nodes that contain information
+  for published Maya shading networks data.
+
+- Publish USD Assets, USD compositions and USD Overrides.
+
+  This _writes_ USD files to disk and _publishes_ information to the OpenPype
+  database.
+
+- Publish Multiverse Looks.
+
+  This _writes_ Maya files to disk and _publishes_ information to the OpenPype
+  database.
+
+
+- Load any USD data into Multiverse "Compound" shape nodes.
+
+  This _reads_ USD files (and also Alembic files) into Maya by _streaming_ them
+  to the viewport.
+
 - Rendering USD data procedurally with 3Delight<sup>NSI</sup>, Arnold, Redshift,
-  RenderMan and VRay. This reads USD files by streaming them procedurally to the renderer, at render time.
+  RenderMan and VRay.
+
+  This reads USD files by _streaming_ them procedurally to the renderer, at
+  render time.
 
 USD files written by Multiverse are 100% native USD data, they can be exchanged
 with any other DCC applications able to interchange USD. Likewise, Multiverse
-can read native USD data created by other applications. All the extensions are
-supported: `.usd`, `.usdc`, `.usda`, `.usdz`. Sequences of USD files can also be
-read, as USD clips.
+can read native USD data created by other applications. The USD extensions are
+supported: `.usd` (binary), `.usda` (ASCII), `.usdz`. (zipped, optionally with
+textures). Sequences of USD files can also be read via "USD clips".
 
 It is also possible to load Alembic data (`.abc`) in Multiverse Compounds,
 further compose it & override it in other USD files, and render it procedurally.
 Alembic data is always converted on the fly (in memory) to USD data. USD clip
 from Alembic data are also supported.
 
+
 ### Configuration
 
-To configure Multiverse in OpenPype, a user with admin privileges needs to setup
-a new tool in OpenPype Project Settings, using a similar configuration as
-depicted here:
+To configure Multiverse in OpenPype, an admin privileges needs to setup a new
+OpenPype tool in the OpenPype Project Settings, using a similar configuration as
+the one depicted here:
 
 ![Maya - Multiverse Setup](assets/maya-multiverse_setup.png)
 
-For more information about setup of Multiverse please refer to: LINK.
+For more information about setup of Multiverse please refer to the relative page
+on the [Multiverse official documentation](https://multi-verse.io/docs).
 
 
-### Understanding Assets, Compositions and Overrides
+### Understanding Assets, Compounds, Compositions, Overrides and Layering
 
-In Multiverse there are three main concepts for representing USD data.
+In Multiverse we use some terminology that relates to USD I/O: terms like
+"Assets", "Compounds", "Compositions", "Overrides" and "Layering".
 
-
-#### Assets
-
-In Multiverse, the term "asset" refers to a USD file that contains a hierarchy
-of primitives (transforms and shapes). In Maya this is typically a hierarchy of
-nodes, as it can be seen in Outliner, that is written out to a USD file. Once
-loaded, the same hierarchy will be visible in MEOW (Multiverse Explore and
-Override Window).
-
-![Maya - Outliner vs MEOW](assets/maya-multiverse_asset_outliner_meow.png)
-
-An asset typically contains static or animated data such as: poly meshes, blend
-shapes, reference objects, particles/points, curves, joint, subdivision surfaces
-and other attributes such as normals, UVs, color sets, tangents, skin weights,
-material assignment and shading networks, cameras, lights etc. It is also
-possible to specify Maya data to be part of variants and to be used as proxies
-by tagging them with attributes.
-
-An asset is typically read back into Maya into a Multiverse Compound shape
-node and it can be composed and overridden.
-
-![Maya - Multiverse Compound Shape(assets/maya-multiverse_compound.png)
-
-
-#### Composition
-
-In Multiverse, the term "composition" refers to a USD file that contains a
-hierarchy of Multiverse Compounds shape nodes and Maya transform nodes, as it
-can be seen in Outliner. This hierarchy is written out to a USD file that
-effectively contains a static or animated composition of other USD files written
-as references or payloads (according to the relative setting in the Compound).
-
-![Maya - Multiverse Composition](assets/maya-multiverse_composition_outliner_meow.png)
-
-A Composition is is typically read back into Maya into a Multiverse Compound
-shape and it can be further composed and overridden.
-
-
-#### Override
-
-In Multiverse, the term "override" refers to a USD file that contains static or animated overrides for a USD hierarchy. Overrides are set in MEOW, they can be:
-
-- render visibility overrides
-- transform overrides
-- attribute overrides
-- material assignment overrides
-- variant and variant definition overrides
-- Instancing state overrides
-- activity state overrides
-
-![Maya - Multiverse Override](assets/maya-multiverse_override_meow.png)
-
-Overrides are written out to a USD file that effectively contains a static or
-animated hierarchy of overrides that can be "layered" on top of Assets,
-Compositions and other Overrides.
-
-![Maya - Multiverse Override](assets/maya-multiverse_override_compound_layer.png)
-
-An Override is is typically read back into Maya as a layer of a Multiverse
-Compound shape and it can be further composed and overridden.
+Please hop to the new [Multiverse Introduction](
+https://j-cube.jp/solutions/multiverse/docs/usage/introduction) page on the
+official documentation to understand them before reading the next sections.
 
 
 ### Creators
 
-It is possible to create OpenPype "instances" (Maya sets) for publishing
-Multiverse USD Asset, Composition and Override.
+It is possible to create OpenPype "instances" (resulting in Maya set containers)
+for publishing Multiverse USD Assets, Compositions, Overrides and Looks.
 
-![Maya - Multiverse Creators](assets/maya-multiverse_openpype_creator.png)
-
-When creating OpenPype instances for Multiverse USD asset, compositions and
-overrides the creator plug-in will put the relative selected data in a Maya set
-node which holds the properties used by the Multiverse data writer for
+When creating OpenPype instances for Multiverse USD Asset, Composition,
+Override and Look, the creator plug-in will put the relative selected data in a
+Maya set node which holds the properties used by the Multiverse data writer for
 publishing.
 
+You can choose the USD file format in the Creators' set nodes:
+
+- Assets: `.usd` or `.usda` or `.usdz`
+- Compositions: `.usd` or `.usda`
+- Overrides: `.usd` or `.usda`
+- Looks: `.ma`
+
+![Maya - Multiverse Asset Creator](assets/maya-multiverse_openpype_asset_creator.png)
+
+![Maya - Multiverse Asset Creator](assets/maya-multiverse_openpype_composition_creator.png)
+
+![Maya - Multiverse Asset Creator](assets/maya-multiverse_openpype_override_creator.png)
+
+![Maya - Multiverse Asset Creator](assets/maya-multiverse_openpype_look_creator.png)
 
 ### Publishers
 
-The relative publishers for Asset, Composition and Overrides are available. They
-all write USD files to disk and communicate publish info to the OpenPype
-database.
+The relative publishers for Multiverse USD Asset, Composition, Override and Look
+are available. The first three write USD files to disk, while look writes a maya
+file. All communicate publish info to the OpenPype database.
 
-![Maya - Multiverse Creators](assets/maya-multiverse_openpype_publisher.png)
+![Maya - Multiverse Publisher](assets/maya-multiverse_openpype_publishers.png)
 
 
 ### Loader
 
-The loader creates a Multiverse Compound shape node reading the USD file of
-choice. All data is streamed to the viewport and not contained in Maya. Thanks
-to the various viewport load options the user can strategically decide how to
+The loader creates a Multiverse "Compound" shape node reading the USD file of
+choice. All data is _streamed_ to the viewport and not contained in Maya. Thanks
+to the various viewport draw options the user can strategically decide how to
 minimize the cost of viewport draw effectively being able to load any data, this
 allows to bring into Maya scenes of virtually unlimited complexity.
 
@@ -741,8 +723,43 @@ Maya scene as Maya data. Instead, when desired, Multiverse permits to import
 specific USD primitives into the Maya scene as Maya data selectively from MEOW,
 it also tracks what is being imported, so upon modification, it is possible to
 write (create & publish) the modifies data as a USD file for being layered on
-top of its relative Compound. See LINK.
+top of its relative Compound. See the [Multiverse Importer](
+https://j-cube.jp/solutions/multiverse/docs/usage/importer)) documentation.
 :::
+
+### Look
+
+In OpenPype a Multiverse Look is a Maya file that contains shading networks that
+are assigned to the items of a Multiverse Compound.
+
+Multiverse Looks are typically Maya-referenced in the lighting and shot scenes.
+
+Materials are assigned to the USD items in the Compound via the "material
+assignment" information that is output in the lookdev stage by a Multiverse
+Override. Once published the override can be Layered on the Compound so that 
+materials will be assigned to items. Finally, an attribute Override on the root
+item of the Compound is used to define the `namespace` with which the shading
+networks were referenced in Maya. At this point the renderer knows which
+material to assign to which item and it is possible to render and edit the
+materials as usual. Because the material exists in Maya you can perform IPR and
+tune the materials as you please.
+
+As of Multiverse 7 it is also possible to write shading networks inside the USD
+files: that is achieved by using either the Asset writer (if material are
+defined in the modeling stage) and the Override writer (if materials are
+defined in the lookdev or later stage). Shading networks in USD can then be
+rendered in 3Delight NSI or used for interchange with DCC apps.
+
+Some interesting consequences of USD shading networks in Multiverse:
+
+1. they can be overridden by a shading network in Maya by assigning in MEOW a
+   Maya material as an override
+2. they are available for assignment in MEOW, so you can assign a USD material
+   to an item as an override
+3. From Hypershade you can use the Multiverse USD shading network write File>
+   Export option to write USD shading network libraries to then layer on an asset
+   and perform 2. again.
+
 
 ### Rendering
 
@@ -754,11 +771,28 @@ Multiverse offers procedural rendering with all the major production renderers:
 - RenderMan
 - VRay
 
+Procedural rendering effectively means that data is _streamed_ to the renderer
+at render-time, without the need to store the data in the Maya scene (this
+effectively means small .ma/.mb files that load fast) nor in the renderer native
+file format scene description file (this effectively means tiny `.nsi` / `.ass`
+/ `.vrscene` / `.rib` files that load fast).
+
 This is completely transparent to the user: Multiverse Compound nodes present in
 the scene, once a render is launched, will stream data to the renderer in a
 procedural fashion.
 
-![Maya - Multiverse Rendering](assets/maya-multiverse_rendering.png)
+
+### Example Multiverse Pipeline and API
+
+An example diagram of the data flow in a Maya pipeline using Multiverse is
+available, see the [Multiverse Pipeline](
+https://j-cube.jp/solutions/multiverse/docs/pipeline) documentation.
+
+
+A very easy to use Python API to automate any task is available, the API is
+user friendly and does not require any knowledge of the vast and complex USD
+APIs. See the [Multiverse Python API](
+https://j-cube.jp/solutions/multiverse/docs/dev/python-api.html) documentation.
 
 
 ## Working with Yeti in OpenPype
