@@ -1,7 +1,5 @@
 from abc import abstractmethod
 
-import six
-
 from openpype import resources
 
 from openpype.modules import OpenPypeInterface
