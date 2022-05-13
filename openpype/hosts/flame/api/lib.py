@@ -855,22 +855,24 @@ class MediaInfoFile(object):
 
         # add `[` in front to make sure it want capture
         # shot name with the same number
-        number_from_path = "[" + self._separate_number(feed_basename, feed_ext)
+        number_from_path = self._separate_number(feed_basename, feed_ext)
+        search_number_pattern = "[" + number_from_path
         # convert to multiple collections
         _continues_colls = collection.separate()
         for _coll in _continues_colls:
-            coll_to_text = self._format_collection(_coll)
+            coll_to_text = self._format_collection(_coll, len(number_from_path))
             self.log.debug("__ coll_to_text: {}".format(coll_to_text))
-            if number_from_path in coll_to_text:
+            if search_number_pattern in coll_to_text:
                 return coll_to_text
 
     @staticmethod
-    def _format_collection(collection):
+    def _format_collection(collection, padding=None):
+        padding = padding or collection.padding
         # if no holes then return collection
         head = collection.format("{head}")
         tail = collection.format("{tail}")
         range_template = "[{{:0{0}d}}-{{:0{0}d}}]".format(
-            len(str(max(collection.indexes))))
+            padding)
         ranges = range_template.format(
             min(collection.indexes),
             max(collection.indexes)
