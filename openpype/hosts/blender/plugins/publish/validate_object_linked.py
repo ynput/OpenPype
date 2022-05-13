@@ -87,7 +87,7 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
 class ValidateObjectLinked(pyblish.api.InstancePlugin):
     """Validate that the objects are linked."""
 
-    order = pyblish.api.ValidatorOrder - 0.9
+    order = pyblish.api.ValidatorOrder - 0.01
     hosts = ["blender"]
     families = ["rig"]
     category = "geometry"
