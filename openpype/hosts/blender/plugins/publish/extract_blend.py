@@ -30,14 +30,11 @@ class ExtractBlend(openpype.api.Extractor):
 
         for obj in instance:
             data_blocks.add(obj)
-            # Skip and non Object type like Collections.
-            if not isinstance(obj, bpy.types.Object):
-                continue
             # Get reference from override library.
-            if obj.override_library:
+            if obj.override_library and obj.override_library.reference:
                 data_blocks.add(obj.override_library.reference)
             # Pack used images in the blend files.
-            if obj.type == 'MESH':
+            if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
                 obj.select_set(True)
                 for mtl_slot in obj.material_slots:
                     if (
