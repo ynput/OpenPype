@@ -106,10 +106,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # These must be changed for each component
             "component_data": None,
             "component_path": None,
-            "component_location": None
+            "component_location": None,
+            "component_location_name": None
         }
-
-        ft_session = instance.context.data["ftrackSession"]
 
         # Filter types of representations
         review_representations = []
@@ -128,12 +127,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 other_representations.append(repre)
 
         # Prepare ftrack locations
-        unmanaged_location = ft_session.query(
-            "Location where name is \"ftrack.unmanaged\""
-        ).one()
-        ftrack_server_location = ft_session.query(
-            "Location where name is \"ftrack.server\""
-        ).one()
+        unmanaged_location_name = "ftrack.unmanaged"
+        ftrack_server_location_name = "ftrack.server"
 
         # Components data
         component_list = []
@@ -174,7 +169,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 first_thumbnail_component_repre = repre
                 first_thumbnail_component = thumbnail_item
             # Set location
-            thumbnail_item["component_location"] = ftrack_server_location
+            thumbnail_item["component_location_name"] = (
+                ftrack_server_location_name
+            )
+
             # Add item to component list
             component_list.append(thumbnail_item)
 
@@ -293,7 +291,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             src_components_to_add.append(copy.deepcopy(review_item))
 
             # Set location
-            review_item["component_location"] = ftrack_server_location
+            review_item["component_location_name"] = (
+                ftrack_server_location_name
+            )
             # Add item to component list
             component_list.append(review_item)
 
@@ -305,8 +305,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     first_thumbnail_component
                 )
                 new_thumbnail_component["asset_data"]["name"] = asset_name
-                new_thumbnail_component["component_location"] = (
-                    ftrack_server_location
+                new_thumbnail_component["component_location_name"] = (
+                    ftrack_server_location_name
                 )
                 component_list.append(new_thumbnail_component)
 
@@ -315,7 +315,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Make sure thumbnail is disabled
             copy_src_item["thumbnail"] = False
             # Set location
-            copy_src_item["component_location"] = unmanaged_location
+            copy_src_item["component_location_name"] = unmanaged_location_name
             # Modify name of component to have suffix "_src"
             component_data = copy_src_item["component_data"]
             component_name = component_data["name"]
@@ -340,7 +340,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             other_item["component_data"] = {
                 "name": repre["name"]
             }
-            other_item["component_location"] = unmanaged_location
+            other_item["component_location_name"] = unmanaged_location_name
             other_item["component_path"] = published_path
             component_list.append(other_item)
 
