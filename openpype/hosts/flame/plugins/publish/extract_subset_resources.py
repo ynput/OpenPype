@@ -168,10 +168,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # add any xml overrides collected form segment.comment
                 modify_xml_data.update(instance.data["xml_overrides"])
 
-                self.log.debug("__ modify_xml_data: {}".format(pformat(
-                    modify_xml_data
-                )))
-
             export_kwargs = {}
             # validate xml preset file is filled
             if preset_file == "":
@@ -198,11 +194,13 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 preset_dir, preset_file
             ))
 
-            preset_path = opfapi.modify_preset_file(
-                preset_orig_xml_path, staging_dir, modify_xml_data)
-
             # define kwargs based on preset type
             if "thumbnail" in unique_name:
+                modify_xml_data.update({
+                    "video/posterFrame": True,
+                    "video/useFrameAsPoster": 1,
+                    "namePattern": "__thumbnail"
+                })
                 thumb_frame_number = int(in_mark + (
                     source_duration_handles / 2))
 
@@ -217,6 +215,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "in_mark": in_mark,
                     "out_mark": out_mark
                 })
+
+            self.log.debug("__ modify_xml_data: {}".format(
+                pformat(modify_xml_data)
+            ))
+            preset_path = opfapi.modify_preset_file(
+                preset_orig_xml_path, staging_dir, modify_xml_data)
 
             # get and make export dir paths
             export_dir_path = str(os.path.join(
