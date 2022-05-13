@@ -176,7 +176,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Add item to component list
             component_list.append(thumbnail_item)
 
-        if first_thumbnail_component is not None:
+        if (
+            not review_representations
+            and first_thumbnail_component is not None
+        ):
             width = first_thumbnail_component_repre.get("width")
             height = first_thumbnail_component_repre.get("height")
             if not width or not height:
