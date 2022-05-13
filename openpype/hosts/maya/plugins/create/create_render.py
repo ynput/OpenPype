@@ -19,6 +19,8 @@ from openpype.hosts.maya.api import (
     plugin
 )
 
+from openpype.pipeline import legacy_io
+
 
 class CreateRender(plugin.Creator):
     """Create *render* instance.
