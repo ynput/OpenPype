@@ -7,7 +7,7 @@ from openpype.hosts.houdini.api import pipeline
 
 
 class AbcLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Load Alembic"""
 
     families = ["model", "animation", "pointcache", "gpuCache"]
     label = "Load Alembic"

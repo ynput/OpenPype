@@ -134,7 +134,6 @@ class AnimationFBXLoader(plugin.Loader):
         Returns:
             list(str): list of container content
         """
-
         # Create directory for asset and avalon container
         hierarchy = context.get('asset').get('data').get('parents')
         root = "/Game/OpenPype"
@@ -149,10 +148,29 @@ class AnimationFBXLoader(plugin.Loader):
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{root}/Animations/{asset}/{name}", suffix="")
 
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+        filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=[f"{root}/{hierarchy[0]}"],
+            recursive_paths=False)
+        levels = ar.get_assets(filter)
+        master_level = levels[0].get_editor_property('object_path')
+
         hierarchy_dir = root
         for h in hierarchy:
             hierarchy_dir = f"{hierarchy_dir}/{h}"
         hierarchy_dir = f"{hierarchy_dir}/{asset}"
+
+        filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=[f"{hierarchy_dir}/"],
+            recursive_paths=True)
+        levels = ar.get_assets(filter)
+        level = levels[0].get_editor_property('object_path')
+
+        unreal.EditorLevelLibrary.save_all_dirty_levels()
+        unreal.EditorLevelLibrary.load_level(level)
 
         container_name += suffix
 
@@ -165,7 +183,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         instance_name = data.get("instance_name")
 
-        animation = self._process(asset_dir, container_name, instance_name)
+        animation = self._process(asset_dir, asset_name, instance_name)
 
         asset_content = EditorAssetLibrary.list_assets(
             hierarchy_dir, recursive=True, include_folder=False)
@@ -223,6 +241,9 @@ class AnimationFBXLoader(plugin.Loader):
 
         for a in imported_content:
             EditorAssetLibrary.save_asset(a)
+
+        unreal.EditorLevelLibrary.save_current_level()
+        unreal.EditorLevelLibrary.load_level(master_level)
 
     def update(self, container, representation):
         name = container["asset_name"]

@@ -8,7 +8,7 @@ from openpype.api import get_project_settings
 
 
 class GpuCacheLoader(load.LoaderPlugin):
-    """Load model Alembic as gpuCache"""
+    """Load Alembic as gpuCache"""
 
     families = ["model"]
     representations = ["abc"]
