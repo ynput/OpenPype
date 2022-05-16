@@ -360,6 +360,7 @@ class PublishableClip:
     driving_layer_default = ""
     index_from_segment_default = False
     use_shot_name_default = False
+    include_handles_default = False
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
@@ -493,6 +494,8 @@ class PublishableClip:
             "reviewTrack", {}).get("value") or self.review_track_default
         self.audio = self.ui_inputs.get(
             "audio", {}).get("value") or False
+        self.include_handles = self.ui_inputs.get(
+            "includeHandles", {}).get("value") or self.include_handles_default
 
         # build subset name from layer name
         if self.subset_name == "[ track name ]":
