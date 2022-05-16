@@ -1,8 +1,8 @@
 import re
 import pyblish
-import openpype
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
+import openpype.lib as oplib
 
 # # developer reload modules
 from pprint import pformat
@@ -68,7 +68,12 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             first_frame = opfapi.get_frame_from_filename(file_path) or 0
 
-            head, tail = self._get_head_tail(clip_data, otio_data["otioClip"])
+            head, tail = self._get_head_tail(
+                clip_data,
+                otio_data["otioClip"],
+                marker_data["handleStart"],
+                marker_data["handleEnd"]
+            )
 
             # solve handles length
             marker_data["handleStart"] = min(
@@ -251,7 +256,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         return split_comments
 
-    def _get_head_tail(self, clip_data, otio_clip):
+    def _get_head_tail(self, clip_data, otio_clip, handle_start, handle_end):
         # calculate head and tail with forward compatibility
         head = clip_data.get("segment_head")
         tail = clip_data.get("segment_tail")
@@ -260,21 +265,14 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         # HACK: it is here to serve for versions bellow 2021.1
         if not any([head, tail]):
-            otio_source_range = otio_clip.source_range
-            otio_avalable_range = otio_clip.available_range()
-            range_convert = openpype.lib.otio_range_to_frame_range
-            src_start, src_end = range_convert(otio_source_range)
-            av_start, av_end = range_convert(otio_avalable_range)
-            av_range = av_end - av_start
-            av_tail = av_range - src_end
+            retimed_attributes = oplib.get_media_range_with_retimes(
+                otio_clip, handle_start, handle_end)
+            self.log.debug(
+                ">> retimed_attributes: {}".format(retimed_attributes))
 
-            self.log.debug("__ src_start: `{}`".format(src_start))
-            self.log.debug("__ src_end: `{}`".format(src_end))
-            self.log.debug("__ av_range: `{}`".format(av_range))
-            self.log.debug("__ av_tail: `{}`".format(av_tail))
-
-            head = src_start
-            tail = av_tail
+            # retimed head and tail
+            head = int(retimed_attributes["handleStart"])
+            tail = int(retimed_attributes["handleEnd"])
 
         return head, tail
 
@@ -366,7 +364,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 continue
             if otio_clip.name not in segment.name.get_value():
                 continue
-            if openpype.lib.is_overlapping_otio_ranges(
+            if oplib.is_overlapping_otio_ranges(
                     parent_range, timeline_range, strict=True):
 
                 # add pypedata marker to otio_clip metadata
