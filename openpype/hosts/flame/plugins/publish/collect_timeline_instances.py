@@ -58,12 +58,16 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             clip_name = clip_data["segment_name"]
             self.log.debug("clip_name: {}".format(clip_name))
 
+            # get otio clip data
+            otio_data = self._get_otio_clip_instance_data(clip_data) or {}
+            self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
+
             # get file path
             file_path = clip_data["fpath"]
 
             first_frame = opfapi.get_frame_from_filename(file_path) or 0
 
-            head, tail = self._get_head_tail(clip_data, first_frame)
+            head, tail = self._get_head_tail(clip_data, otio_data["otioClip"])
 
             # solve handles length
             marker_data["handleStart"] = min(
@@ -75,6 +79,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             # add marker data to instance data
             inst_data = dict(marker_data.items())
+
+            # add ocio_data to instance data
+            inst_data.update(otio_data)
 
             asset = marker_data["asset"]
             subset = marker_data["subset"]
@@ -105,13 +112,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                     task["name"]: {"type": task["type"]}
                     for task in self.add_tasks}
             })
-
-            # get otio clip data
-            otio_data = self._get_otio_clip_instance_data(clip_data) or {}
-            self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
-
-            # add to instance data
-            inst_data.update(otio_data)
             self.log.debug("__ inst_data: {}".format(pformat(inst_data)))
 
             # add resolution
@@ -236,20 +236,31 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         return split_comments
 
-    def _get_head_tail(self, clip_data, first_frame):
+    def _get_head_tail(self, clip_data, otio_clip):
         # calculate head and tail with forward compatibility
         head = clip_data.get("segment_head")
         tail = clip_data.get("segment_tail")
+        self.log.debug("__ head: `{}`".format(head))
+        self.log.debug("__ tail: `{}`".format(tail))
 
         # HACK: it is here to serve for versions bellow 2021.1
-        if not head:
-            head = int(clip_data["source_in"]) - int(first_frame)
-        if not tail:
-            tail = int(
-                clip_data["source_duration"] - (
-                    head + clip_data["record_duration"]
-                )
-            )
+        if not any([head, tail]):
+            otio_source_range = otio_clip.source_range
+            otio_avalable_range = otio_clip.available_range()
+            range_convert = openpype.lib.otio_range_to_frame_range
+            src_start, src_end = range_convert(otio_source_range)
+            av_start, av_end = range_convert(otio_avalable_range)
+            av_range = av_end - av_start
+            av_tail = av_range - src_end
+
+            self.log.debug("__ src_start: `{}`".format(src_start))
+            self.log.debug("__ src_end: `{}`".format(src_end))
+            self.log.debug("__ av_range: `{}`".format(av_range))
+            self.log.debug("__ av_tail: `{}`".format(av_tail))
+
+            head = src_start
+            tail = av_tail
+
         return head, tail
 
     def _get_resolution_to_data(self, data, context):
