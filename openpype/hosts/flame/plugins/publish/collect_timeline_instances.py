@@ -36,6 +36,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         for segment in selected_segments:
             # get openpype tag data
             marker_data = opfapi.get_segment_data_marker(segment)
+
             self.log.debug("__ marker_data: {}".format(
                 pformat(marker_data)))
 
@@ -75,6 +76,8 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             marker_data["handleEnd"] = min(
                 marker_data["handleEnd"], abs(tail))
 
+            workfile_start = self._set_workfile_start(marker_data)
+
             with_audio = bool(marker_data.pop("audio"))
 
             # add marker data to instance data
@@ -105,6 +108,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "families": families,
                 "publish": marker_data["publish"],
                 "fps": self.fps,
+                "workfileFrameStart": workfile_start,
                 "sourceFirstFrame": int(first_frame),
                 "path": file_path,
                 "flameAddTasks": self.add_tasks,
@@ -144,6 +148,17 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             # if reviewTrack is on
             if marker_data.get("reviewTrack") is not None:
                 instance.data["reviewAudio"] = True
+
+    @staticmethod
+    def _set_workfile_start(data):
+        include_handles = data.get("includeHandles")
+        workfile_start = data["workfileFrameStart"]
+        handle_start = data["handleStart"]
+
+        if include_handles:
+            workfile_start += handle_start
+
+        return workfile_start
 
     def _get_comment_attributes(self, segment):
         comment = segment.comment.get_value()
