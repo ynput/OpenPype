@@ -21,7 +21,7 @@ class AlembicModelLoader(load.LoaderPlugin):
     families = ["model", "pointcache", "animation"]
     representations = ["abc"]
 
-    label = "Load Alembic Model or Anim"
+    label = "Load Alembic"
     icon = "cube"
     color = "orange"
     node_color = "0x4ecd91ff"
