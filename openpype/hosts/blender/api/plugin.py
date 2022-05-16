@@ -214,7 +214,7 @@ def get_main_collection():
     main_collection = bpy.context.scene.collection
     if len(main_collection.children) == 1:
         main_collection = main_collection.children[0]
-    else:
+    elif len(main_collection.children) > 1:
         instance_collections = [
             child
             for child in main_collection.children
@@ -223,8 +223,17 @@ def get_main_collection():
                 child[AVALON_PROPERTY].get("id") == "pyblish.avalon.instance"
             )
         ]
+        if len(instance_collections) > 1:
+            instance_collections = [
+                collection
+                for collection in instance_collections
+                if collection[AVALON_PROPERTY].get("family") not in (
+                    "camera", "action", "pointcache"
+                )
+            ]
         if len(instance_collections) == 1:
             main_collection = instance_collections[0]
+
     return main_collection
 
 
@@ -450,10 +459,6 @@ class AssetLoader(LoaderPlugin):
         # Move objects and child collections from override to asset_group.
         link_to_collection(override.objects, asset_group)
         link_to_collection(override.children, asset_group)
-
-        # Make all actions local.
-        for action in bpy.data.actions:
-            action.make_local()
 
         # Clear and purge useless datablocks and selection.
         bpy.data.collections.remove(override)

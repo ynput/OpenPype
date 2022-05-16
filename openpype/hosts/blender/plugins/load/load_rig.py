@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from openpype.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import legacy_io, AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -73,6 +73,17 @@ class BlendRigLoader(plugin.AssetLoader):
 
         return list(asset_group.all_objects)
 
+    @staticmethod
+    def _assign_action(objects, namespace):
+        """Assign new action for all objects from linked rig."""
+        session_task = legacy_io.Session.get("AVALON_TASK", "")
+        action = bpy.data.actions.new(f"{namespace}_action{session_task}")
+        for obj in objects:
+            if obj.animation_data is None:
+                obj.animation_data_create()
+            obj.animation_data.action = action
+        plugin.orphans_purge()
+
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
         options: Optional[Dict] = None
@@ -99,6 +110,8 @@ class BlendRigLoader(plugin.AssetLoader):
 
         objects = self._load_blend(libpath, asset_group)
 
+        self._assign_action(objects, namespace)
+
         self._update_metadata(
             asset_group, context, name, namespace, asset_name, libpath
         )
@@ -115,8 +128,8 @@ class BlendRigLoader(plugin.AssetLoader):
         return self._remove_container(container)
 
     @contextlib.contextmanager
-    def maintained_action(self, asset_group):
-        """Maintain action during context."""
+    def maintained_actions(self, asset_group):
+        """Maintain actions during context."""
         asset_group_name = asset_group.name
         # Get the armature from asset_group.
         armature = None
@@ -132,6 +145,13 @@ class BlendRigLoader(plugin.AssetLoader):
             armature.animation_data.action
         ):
             action = armature.animation_data.action
+        else:
+            # If there is no armature nor action from armature,
+            # we try to get action from any objects from asset_group.
+            for obj in asset_group.all_objects:
+                if obj.animation_data and obj.animation_data.action:
+                    action = obj.animation_data.action
+                    break
         try:
             yield
         finally:
