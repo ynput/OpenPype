@@ -11,11 +11,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     # families = ["kitsu"]
 
     def process(self, context):
-        # Check if work version for user
-        is_work_version = bool(context.data.get("intent", {}).get("value"))
-        if is_work_version:
-            self.log.info("Work version, nothing pushed to Kitsu.")
-            return
 
         # Get comment text body
         publish_comment = context.data.get("comment")
