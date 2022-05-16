@@ -77,9 +77,14 @@ def node_uses_image_sequence(node):
     node_path = get_file_node_path(node).lower()
 
     # The following tokens imply a sequence
-    patterns = ["<udim>", "<tile>", "<uvtile>", "u<u>_v<v>", "<frame0"]
+    patterns = ["<udim>", "<tile>", "<uvtile>",
+                "u<u>_v<v>", "<frame0", "<f4>"]
+    try:
+        extension = cmds.getAttr('%s.useFrameExtension' % node)
+    except ValueError:
+        extension = None
 
-    return (cmds.getAttr('%s.useFrameExtension' % node) or
+    return (extension or
             any(pattern in node_path for pattern in patterns))
 
 
@@ -165,7 +170,7 @@ def get_file_node_path(node):
         if any(pattern in lower for pattern in patterns):
             return texture_pattern
 
-    if cmds.nodeType(node) == 'aiImage':
+    if cmds.nodeType(node) in ['aiImage', 'PxrTexture']:
         return cmds.getAttr('{0}.filename'.format(node))
     if cmds.nodeType(node) == 'RedshiftNormalMap':
         return cmds.getAttr('{}.tex0'.format(node))
@@ -326,7 +331,10 @@ class CollectLook(pyblish.api.InstancePlugin):
             "volumeShader",
             "displacementShader",
             "aiSurfaceShader",
-            "aiVolumeShader"]
+            "aiVolumeShader",
+            "rman__surface",
+            "rman__displacement"
+        ]
         if look_sets:
             materials = []
 
@@ -376,6 +384,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             files = cmds.ls(history, type="file", long=True)
             files.extend(cmds.ls(history, type="aiImage", long=True))
+            files.extend(cmds.ls(history, type="PxrTexture", long=True))
             files.extend(cmds.ls(history, type="RedshiftNormalMap", long=True))
 
         self.log.info("Collected file nodes:\n{}".format(files))
@@ -510,23 +519,21 @@ class CollectLook(pyblish.api.InstancePlugin):
         Returns:
             dict
         """
-
         self.log.debug("processing: {}".format(node))
-        if cmds.nodeType(node) not in ["file", "aiImage", "RedshiftNormalMap"]:
+        if cmds.nodeType(node) not in [
+                "file", "aiImage", "RedshiftNormalMap", "PxrTexture"]:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
 
+        self.log.debug("  - got {}".format(cmds.nodeType(node)))
         if cmds.nodeType(node) == 'file':
-            self.log.debug("  - file node")
             attribute = "{}.fileTextureName".format(node)
             computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        elif cmds.nodeType(node) == 'aiImage':
-            self.log.debug("aiImage node")
+        elif cmds.nodeType(node) in ['aiImage', 'PxrTexture']:
             attribute = "{}.filename".format(node)
             computed_attribute = attribute
         elif cmds.nodeType(node) == 'RedshiftNormalMap':
-            self.log.debug("RedshiftNormalMap node")
             attribute = "{}.tex0".format(node)
             computed_attribute = attribute
 
