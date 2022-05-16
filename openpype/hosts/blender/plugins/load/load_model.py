@@ -70,6 +70,27 @@ class BlendModelLoader(plugin.AssetLoader):
 
         return objects
 
+    def _apply_options(asset_group, options):
+        """Apply load options fro asset_group."""
+
+        transform = options.get('transform')
+        if options.get('transform'):
+            location = transform.get('translation')
+            rotation = transform.get('rotation')
+            scale = transform.get('scale')
+
+            asset_group.location = [location[n] for n in "xyz"]
+            asset_group.rotation_euler = [rotation[n] for n in "xyz"]
+            asset_group.scale = [scale[n] for n in "xyz"]
+
+        parent = options.get('parent')
+        if options.get('parent'):
+            plugin.deselect_all()
+            bpy.context.view_layer.objects.active = parent
+            asset_group.select_set(True)
+            bpy.ops.object.parent_set(keep_transform=True)
+            plugin.deselect_all()
+
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
         options: Optional[Dict] = None
@@ -106,39 +127,8 @@ class BlendModelLoader(plugin.AssetLoader):
             asset_group.empty_display_type = 'SINGLE_ARROW'
             parent_collection.objects.link(asset_group)
 
-            plugin.deselect_all()
-
             if options is not None:
-                parent = options.get('parent')
-                transform = options.get('transform')
-
-                if parent and transform:
-                    location = transform.get('translation')
-                    rotation = transform.get('rotation')
-                    scale = transform.get('scale')
-
-                    asset_group.location = (
-                        location.get('x'),
-                        location.get('y'),
-                        location.get('z')
-                    )
-                    asset_group.rotation_euler = (
-                        rotation.get('x'),
-                        rotation.get('y'),
-                        rotation.get('z')
-                    )
-                    asset_group.scale = (
-                        scale.get('x'),
-                        scale.get('y'),
-                        scale.get('z')
-                    )
-
-                    bpy.context.view_layer.objects.active = parent
-                    asset_group.select_set(True)
-
-                    bpy.ops.object.parent_set(keep_transform=True)
-
-                    plugin.deselect_all()
+                self._apply_options(asset_group, options)
 
         objects = self._load_blend(libpath, asset_group)
 

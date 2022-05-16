@@ -1,6 +1,7 @@
 """Load a camera asset in Blender."""
 
 from typing import Dict, List, Optional
+from contextlib import contextmanager
 
 import bpy
 
@@ -60,3 +61,16 @@ class BlendCameraLoader(plugin.AssetLoader):
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""
         return self._remove_container(container)
+
+    @contextmanager
+    def maintained_actions(self, container):
+        """Maintain action during context."""
+        # We always want the action from linked camera blend file.
+        # So this overload do maintain nothing to force current action to be
+        # overrided from linked file.
+        # TODO (kaamaurice): Add a Pyblish Validator + Action to allow user to
+        # update the camera action from an opened animation blend file.
+        try:
+            yield
+        finally:
+            pass

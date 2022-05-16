@@ -3,6 +3,7 @@ import os
 import bpy
 
 import openpype.api
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractBlendAnimation(openpype.api.Extractor):
@@ -25,19 +26,32 @@ class ExtractBlendAnimation(openpype.api.Extractor):
 
         data_blocks = set()
 
-        objects = [
-            obj for obj in instance
-            if isinstance(obj, bpy.types.Object)
-        ]
-        for obj in objects:
+        for obj in instance:
             if (
+                isinstance(obj, bpy.types.Object) and
                 obj.type == 'ARMATURE' and
                 obj.animation_data and
                 obj.animation_data.action
             ):
-                data_blocks.add(obj.animation_data.action)
+                action = obj.animation_data.action
+                data_blocks.add(action)
+
+                if not action.get(AVALON_PROPERTY):
+                    action[AVALON_PROPERTY] = {
+                        "namespaces": set(),
+                        "users": set(),
+                        "family": "action",
+                        "objectName": action.name,
+                    }
+
+                action[AVALON_PROPERTY]["users"].add(obj.name)
+
                 for collection in obj.users_collection:
-                    data_blocks.add(collection)
+                    metadata = collection.get(AVALON_PROPERTY)
+                    if metadata and metadata.get("namespace"):
+                        action[AVALON_PROPERTY]["namespaces"].add(
+                            metadata.get("namespace")
+                        )
 
         bpy.data.libraries.write(filepath, data_blocks)
 
