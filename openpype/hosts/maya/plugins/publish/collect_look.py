@@ -60,6 +60,7 @@ def get_look_attrs(node):
 
 
 def node_uses_image_sequence(node):
+    # type: (str) -> bool
     """Return whether file node uses an image sequence or single image.
 
     Determine if a node uses an image sequence or just a single image,
@@ -80,11 +81,11 @@ def node_uses_image_sequence(node):
     patterns = ["<udim>", "<tile>", "<uvtile>",
                 "u<u>_v<v>", "<frame0", "<f4>"]
     try:
-        extension = cmds.getAttr('%s.useFrameExtension' % node)
+        use_frame_extension = cmds.getAttr('%s.useFrameExtension' % node)
     except ValueError:
-        extension = None
+        use_frame_extension = False
 
-    return (extension or
+    return (use_frame_extension or
             any(pattern in node_path for pattern in patterns))
 
 
@@ -170,7 +171,7 @@ def get_file_node_path(node):
         if any(pattern in lower for pattern in patterns):
             return texture_pattern
 
-    if cmds.nodeType(node) in ['aiImage', 'PxrTexture']:
+    if cmds.nodeType(node) in {'aiImage', 'PxrTexture'}:
         return cmds.getAttr('{0}.filename'.format(node))
     if cmds.nodeType(node) == 'RedshiftNormalMap':
         return cmds.getAttr('{}.tex0'.format(node))
@@ -520,8 +521,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             dict
         """
         self.log.debug("processing: {}".format(node))
-        if cmds.nodeType(node) not in [
-                "file", "aiImage", "RedshiftNormalMap", "PxrTexture"]:
+        if cmds.nodeType(node) not in {
+                "file", "aiImage", "RedshiftNormalMap", "PxrTexture"}:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
