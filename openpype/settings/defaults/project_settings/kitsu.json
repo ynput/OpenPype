@@ -10,7 +10,8 @@
     },
     "publish": {
         "IntegrateKitsuNote": {
-            "waiting_for_approval_status": "wfa"
+            "set_status_note": false,
+            "note_status_shortname": "wfa"
         }
     }
 }

@@ -61,9 +61,14 @@
                     "label": "Integrate Kitsu Note",
                     "children": [
                         {
+                            "type": "boolean",
+                            "key": "set_status_note",
+                            "label": "Set status on note"
+                        },
+                        {
                             "type": "text",
-                            "key": "waiting_for_approval_status",
-                            "label": "Waiting for Aproval Status:"
+                            "key": "note_status_shortname",
+                            "label": "Note shortname"
                         }
                     ]
                 }
