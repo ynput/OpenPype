@@ -43,6 +43,31 @@
                     "label": "Shot:"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "label",
+                    "label": "Integrator"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "IntegrateKitsuNote",
+                    "label": "Integrate Kitsu Note",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "waiting_for_approval_status",
+                            "label": "Waiting for Aproval Status:"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

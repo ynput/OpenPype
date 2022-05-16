@@ -9,6 +9,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder
     label = "Kitsu Note and Status"
     # families = ["kitsu"]
+    waiting_for_approval_status = "wfa"
 
     def process(self, context):
 
@@ -20,11 +21,13 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         self.log.debug("Comment is `{}`".format(publish_comment))
 
         # Get Waiting for Approval status
-        kitsu_status = gazu.task.get_task_status_by_short_name("wfa")
+        kitsu_status = gazu.task.get_task_status_by_short_name(
+            self.waiting_for_approval_status
+        )
         if not kitsu_status:
             self.log.info(
-                "Cannot find 'Waiting For Approval' status."
-                "The status will not be changed"
+                "Cannot find {} status. The status will not be "
+                "changed!".format(self.waiting_for_approval_status)
             )
             kitsu_status = context.data["kitsu_task"].get("task_status")
         self.log.debug("Kitsu status: {}".format(kitsu_status))

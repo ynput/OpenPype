@@ -7,5 +7,10 @@
         "episode": "E##",
         "sequence": "SQ##",
         "shot": "SH##"
+    },
+    "publish": {
+        "IntegrateKitsuNote": {
+            "waiting_for_approval_status": "wfa"
+        }
     }
 }
