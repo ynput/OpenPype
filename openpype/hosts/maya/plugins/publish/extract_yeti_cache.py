@@ -29,9 +29,9 @@ class ExtractYetiCache(openpype.api.Extractor):
         data_file = os.path.join(dirname, "yeti.fursettings")
 
         # Collect information for writing cache
-        start_frame = instance.data.get("frameStartHandle")
-        end_frame = instance.data.get("frameEndHandle")
-        preroll = instance.data.get("preroll")
+        start_frame = instance.data["frameStartHandle"]
+        end_frame = instance.data["frameEndHandle"]
+        preroll = instance.data["preroll"]
         if preroll > 0:
             start_frame -= preroll
 
