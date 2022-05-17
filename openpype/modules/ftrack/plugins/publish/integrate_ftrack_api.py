@@ -12,6 +12,7 @@ Provides:
 
 import os
 import sys
+import collections
 import six
 import pyblish.api
 import clique
@@ -84,6 +85,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         asset_types_by_short = self._ensure_asset_types_exists(
             session, component_list
         )
+        self._fill_component_locations(session, component_list)
 
         asset_versions_data_by_id = {}
         used_asset_versions = []
@@ -192,6 +194,70 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             session.rollback()
             session._configure_locations()
             six.reraise(tp, value, tb)
+
+    def _fill_component_locations(self, session, component_list):
+        components_by_location_name = collections.defaultdict(list)
+        components_by_location_id = collections.defaultdict(list)
+        for component_item in component_list:
+            # Location entity can be prefilled
+            # - this is not recommended as connection to ftrack server may
+            #   be lost and in that case the entity is not valid when gets
+            #   to this plugin
+            location = component_item.get("component_location")
+            if location is not None:
+                continue
+
+            # Collect location id
+            location_id = component_item.get("component_location_id")
+            if location_id:
+                components_by_location_id[location_id].append(
+                    component_item
+                )
+                continue
+
+            location_name = component_item.get("component_location_name")
+            if location_name:
+                components_by_location_name[location_name].append(
+                    component_item
+                )
+                continue
+
+        # Skip if there is nothing to do
+        if not components_by_location_name and not components_by_location_id:
+            return
+
+        # Query locations
+        query_filters = []
+        if components_by_location_id:
+            joined_location_ids = ",".join([
+                '"{}"'.format(location_id)
+                for location_id in components_by_location_id
+            ])
+            query_filters.append("id in ({})".format(joined_location_ids))
+
+        if components_by_location_name:
+            joined_location_names = ",".join([
+                '"{}"'.format(location_name)
+                for location_name in components_by_location_name
+            ])
+            query_filters.append("name in ({})".format(joined_location_names))
+
+        locations = session.query(
+            "select id, name from Location where {}".format(
+                " or ".join(query_filters)
+            )
+        ).all()
+        # Fill locations in components
+        for location in locations:
+            location_id = location["id"]
+            location_name = location["name"]
+            if location_id in components_by_location_id:
+                for component in components_by_location_id[location_id]:
+                    component["component_location"] = location
+
+            if location_name in components_by_location_name:
+                for component in components_by_location_name[location_name]:
+                    component["component_location"] = location
 
     def _ensure_asset_types_exists(self, session, component_list):
         """Make sure that all AssetType entities exists for integration.
