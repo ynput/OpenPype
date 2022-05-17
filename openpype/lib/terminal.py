@@ -98,7 +98,7 @@ class Terminal:
             r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
             r"  \- ": _SB + _LY + r"  - " + _RST,
             r"\[ ": _SB + _LG + r"[ " + _RST,
-            r"\]": _SB + _LG + r"]" + _RST,
+            r" \]": _SB + _LG + r" ]" + _RST,
             r"{": _LG + r"{",
             r"}": r"}" + _RST,
             r"\(": _LY + r"(",

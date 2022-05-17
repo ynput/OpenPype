@@ -9,8 +9,9 @@ from abc import abstractmethod
 import attr
 import six
 
-from avalon import api
 import pyblish.api
+
+from openpype.pipeline import legacy_io
 
 from .abstract_metaplugins import AbstractMetaContextPlugin
 
@@ -128,7 +129,7 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         """Constructor."""
         super(AbstractCollectRender, self).__init__(*args, **kwargs)
         self._file_path = None
-        self._asset = api.Session["AVALON_ASSET"]
+        self._asset = legacy_io.Session["AVALON_ASSET"]
         self._context = None
 
     def process(self, context):

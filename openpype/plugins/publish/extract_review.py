@@ -45,13 +45,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "hiero",
         "premiere",
         "harmony",
+        "traypublisher",
         "standalonepublisher",
         "fusion",
         "tvpaint",
         "resolve",
         "webpublisher",
         "aftereffects",
-        "flame"
+        "flame",
+        "unreal"
     ]
 
     # Supported extensions

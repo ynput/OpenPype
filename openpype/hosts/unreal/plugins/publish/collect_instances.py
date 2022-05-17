@@ -17,7 +17,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Instances"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.1
     hosts = ["unreal"]
 
     def process(self, context):

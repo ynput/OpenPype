@@ -59,7 +59,7 @@ class DiscoverResult:
                     self.ignored_plugins
                 )))
                 for cls in self.ignored_plugins:
-                    lines.append("- {}".format(cls.__class__.__name__))
+                    lines.append("- {}".format(cls.__name__))
 
         # Abstract classes
         if self.abstract_plugins or full_report:
@@ -67,7 +67,7 @@ class DiscoverResult:
                 self.abstract_plugins
             )))
             for cls in self.abstract_plugins:
-                lines.append("- {}".format(cls.__class__.__name__))
+                lines.append("- {}".format(cls.__name__))
 
         # Abstract classes
         if self.duplicated_plugins or full_report:
@@ -75,7 +75,7 @@ class DiscoverResult:
                 self.duplicated_plugins
             )))
             for cls in self.duplicated_plugins:
-                lines.append("- {}".format(cls.__class__.__name__))
+                lines.append("- {}".format(cls.__name__))
 
         if self.crashed_file_paths or full_report:
             lines.append("*** Failed to load {} files".format(len(
