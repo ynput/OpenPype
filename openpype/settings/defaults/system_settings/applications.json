@@ -12,6 +12,26 @@
             "LC_ALL": "C"
         },
         "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2023\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2023/bin/maya"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2023"
+                }
+            },
             "2022": {
                 "use_python_2": false,
                 "executables": {
@@ -91,9 +111,6 @@
                 "environment": {
                     "MAYA_VERSION": "2018"
                 }
-            },
-            "__dynamic_keys_labels__": {
-                "2022": "2022"
             }
         }
     },
