@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from distutils.log import debug
 import gazu
 import pyblish.api
 
