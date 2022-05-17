@@ -29,14 +29,14 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             kitsu_status = gazu.task.get_task_status_by_short_name(
                 self.note_status_shortname
             )
-            if not kitsu_status:
+            if kitsu_status:
+                note_status = kitsu_status
+                self.log.info("Note Kitsu status: {}".format(note_status))
+            else:
                 self.log.info(
                     "Cannot find {} status. The status will not be "
                     "changed!".format(self.note_status_shortname)
                 )
-            else:
-                note_status = kitsu_status
-                self.log.info("Note Kitsu status: {}".format(note_status))
 
         # Add comment to kitsu task
         self.log.debug("Add new note in taks id {}".format(
