@@ -9,7 +9,8 @@ def add_implementation_envs(env, _app):
         os.path.dirname(os.path.abspath(openpype.hosts.__file__)),
         "unreal", "integration"
     )
-    env["OPENPYPE_UNREAL_PLUGIN"] = unreal_plugin_path
+    if not env.get("OPENPYPE_UNREAL_PLUGIN"):
+        env["OPENPYPE_UNREAL_PLUGIN"] = unreal_plugin_path
 
     # Set default environments if are not set via settings
     defaults = {

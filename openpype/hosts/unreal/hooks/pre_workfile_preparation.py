@@ -25,7 +25,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.signature = "( {} )".format(self.__class__.__name__)
+        self.signature = f"( {self.__class__.__name__} )"
 
     def _get_work_filename(self):
         # Use last workfile if was found
@@ -99,6 +99,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"character ({unreal_project_name}). Appending 'P'"
             ))
             unreal_project_name = f"P{unreal_project_name}"
+            unreal_project_filename = f'{unreal_project_name}.uproject'
 
         project_path = Path(os.path.join(workdir, unreal_project_name))
 
@@ -138,6 +139,11 @@ class UnrealPrelaunchHook(PreLaunchHook):
             ))
             # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
             # execution of `create_unreal_project`
+            if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
+                self.log.info((
+                    f"{self.signature} using OpenPype plugin from "
+                    f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
+                ))
             env_key = "OPENPYPE_UNREAL_PLUGIN"
             if self.launch_context.env.get(env_key):
                 os.environ[env_key] = self.launch_context.env[env_key]
