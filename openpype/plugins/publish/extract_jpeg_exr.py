@@ -15,7 +15,7 @@ from openpype.lib import (
 import shutil
 
 
-class ExtractJpegEXR(pyblish.api.InstancePlugin):
+class ExtractThumbnail(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
