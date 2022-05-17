@@ -157,7 +157,7 @@ class ExtractYetiRig(openpype.api.Extractor):
         input_set = next(i for i in instance if i == "input_SET")
 
         # Get all items
-        set_members = cmds.sets(input_set, query=True)
+        set_members = cmds.sets(input_set, query=True) or []
         set_members += cmds.listRelatives(set_members,
                                           allDescendents=True,
                                           fullPath=True) or []
