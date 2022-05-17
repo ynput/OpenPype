@@ -18,7 +18,7 @@ import shutil
 class ExtractThumbnail(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
 
-    label = "Extract Jpeg EXR"
+    label = "Extract Thumbnail"
     order = pyblish.api.ExtractorOrder
     families = [
         "imagesequence", "render", "render2d",
