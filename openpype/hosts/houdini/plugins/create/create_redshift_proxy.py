@@ -1,4 +1,3 @@
-import hou
 from openpype.hosts.houdini.api import plugin
 
 
