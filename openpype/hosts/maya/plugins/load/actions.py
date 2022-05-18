@@ -114,8 +114,6 @@ class ImportMayaLoader(load.LoaderPlugin):
         if choice is False:
             return
 
-        clean_import = data.get("clean_import", False)
-
         asset = context['asset']
 
         namespace = namespace or unique_namespace(
@@ -133,13 +131,14 @@ class ImportMayaLoader(load.LoaderPlugin):
                               groupReference=True,
                               groupName="{}:{}".format(namespace, name))
 
-            if clean_import:
-                shapes = cmds.ls(nodes, shapes=True, long=True)
-                for shape in shapes:
-                    meshes = cmds.ls('{}.cbId'.format(shape))
-                    for mesh in meshes:
-                        print("Removing ... " + (mesh))
-                        cmds.deleteAttr(mesh)
+            if data.get("clean_import", False):
+                remove_attributes = ["cbId"]
+                for node in nodes:
+                    for attr in remove_attributes:
+                        if cmds.attributeQuery(attr, node=node, exists=True):
+                            full_attr = "{}.{}".format(node, attr)
+                            print("Removing {}".format(full_attr))
+                            cmds.deleteAttr(full_attr)
 
         # We do not containerize imported content, it remains unmanaged
         return
