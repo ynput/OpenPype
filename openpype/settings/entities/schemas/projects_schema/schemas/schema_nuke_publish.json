@@ -212,7 +212,7 @@
                                         "object_type": "text"
                                     },
                                     {
-                                        "key": "sebsets",
+                                        "key": "subsets",
                                         "label": "Subsets",
                                         "type": "list",
                                         "object_type": "text"
@@ -253,108 +253,12 @@
                                 "default": false
                             },
                             {
-                                "type": "collapsible-wrap",
-                                "label": "Reformat Node Knobs",
-                                "collapsible": true,
-                                "collapsed": true,
-                                "children": [
+                                "type": "schema_template",
+                                "name": "template_nuke_knob_inputs",
+                                "template_data": [
                                     {
-                                        "type": "list",
-                                        "key": "reformat_node_config",
-                                        "object_type": {
-                                            "type": "dict-conditional",
-                                            "enum_key": "type",
-                                            "enum_label": "Type",
-                                            "enum_children": [
-                                                {
-                                                    "key": "string",
-                                                    "label": "String",
-                                                    "children": [
-                                                        {
-                                                            "type": "text",
-                                                            "key": "name",
-                                                            "label": "Name"
-                                                        },
-                                                        {
-                                                            "type": "text",
-                                                            "key": "value",
-                                                            "label": "Value"
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    "key": "bool",
-                                                    "label": "Boolean",
-                                                    "children": [
-                                                        {
-                                                            "type": "text",
-                                                            "key": "name",
-                                                            "label": "Name"
-                                                        },
-                                                        {
-                                                            "type": "boolean",
-                                                            "key": "value",
-                                                            "label": "Value"
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    "key": "number",
-                                                    "label": "Number",
-                                                    "children": [
-                                                        {
-                                                            "type": "text",
-                                                            "key": "name",
-                                                            "label": "Name"
-                                                        },
-                                                        {
-                                                            "type": "list-strict",
-                                                            "key": "value",
-                                                            "label": "Value",
-                                                            "object_types": [
-                                                                {
-                                                                    "type": "number",
-                                                                    "key": "number",
-                                                                    "default": 1,
-                                                                    "decimal": 4
-                                                                }
-                                                            ]
-                                                        }
-
-                                                    ]
-                                                },
-                                                {
-                                                    "key": "list_numbers",
-                                                    "label": "2 Numbers",
-                                                    "children": [
-                                                        {
-                                                            "type": "text",
-                                                            "key": "name",
-                                                            "label": "Name"
-                                                        },
-                                                        {
-                                                            "type": "list-strict",
-                                                            "key": "value",
-                                                            "label": "Value",
-                                                            "object_types": [
-                                                                {
-                                                                    "type": "number",
-                                                                    "key": "x",
-                                                                    "default": 1,
-                                                                    "decimal": 4
-                                                                },
-                                                                {
-                                                                    "type": "number",
-                                                                    "key": "y",
-                                                                    "default": 1,
-                                                                    "decimal": 4
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
+                                        "label": "Reformat Node Knobs",
+                                        "key": "reformat_node_config"
                                     }
                                 ]
                             },

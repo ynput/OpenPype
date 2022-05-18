@@ -32,7 +32,7 @@ from .lib import (
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
-    read,
+    read_avalon_data,
     Context
 )
 
@@ -359,7 +359,7 @@ def parse_container(node):
         dict: The container schema data for this container node.
 
     """
-    data = read(node)
+    data = read_avalon_data(node)
 
     # (TODO) Remove key validation when `ls` has re-implemented.
     #
