@@ -5,7 +5,6 @@ import openpype
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
-
 class ExtractReviewDataMov(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
@@ -88,7 +87,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 # check if settings have more then one preset
                 # so we dont need to add outputName to representation
                 # in case there is only one preset
-                multiple_presets = bool(len(self.outputs.keys()) > 1)
+                multiple_presets = len(self.outputs.keys()) > 1
 
                 # create exporter instance
                 exporter = plugin.ExporterReviewMov(

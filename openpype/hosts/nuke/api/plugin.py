@@ -407,6 +407,7 @@ class ExporterReviewMov(ExporterReview):
         # deal with now lut defined in viewer lut
         self.viewer_lut_raw = klass.viewer_lut_raw
         self.write_colorspace = instance.data["colorspace"]
+        self.render_group_node = instance[0]
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -428,11 +429,12 @@ class ExporterReviewMov(ExporterReview):
 
     def render(self, render_node_name):
         self.log.info("Rendering...  ")
-        # Render Write node
-        nuke.execute(
-            render_node_name,
-            int(self.first_frame),
-            int(self.last_frame))
+        with self.render_group_node:
+            # Render Write node
+            nuke.execute(
+                render_node_name,
+                int(self.first_frame),
+                int(self.last_frame))
 
         self.log.info("Rendered...")
 
@@ -476,99 +478,100 @@ class ExporterReviewMov(ExporterReview):
         self._temp_nodes[subset] = []
         # ---------- start nodes creation
 
-        # Read node
-        r_node = nuke.createNode("Read")
-        r_node["file"].setValue(self.path_in)
-        r_node["first"].setValue(self.first_frame)
-        r_node["origfirst"].setValue(self.first_frame)
-        r_node["last"].setValue(self.last_frame)
-        r_node["origlast"].setValue(self.last_frame)
-        r_node["colorspace"].setValue(self.write_colorspace)
+        with self.render_group_node:
+            # Read node
+            r_node = nuke.createNode("Read")
+            r_node["file"].setValue(self.path_in)
+            r_node["first"].setValue(self.first_frame)
+            r_node["origfirst"].setValue(self.first_frame)
+            r_node["last"].setValue(self.last_frame)
+            r_node["origlast"].setValue(self.last_frame)
+            r_node["colorspace"].setValue(self.write_colorspace)
 
-        if read_raw:
-            r_node["raw"].setValue(1)
-
-        # connect
-        self._temp_nodes[subset].append(r_node)
-        self.previous_node = r_node
-        self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
-
-        # add reformat node
-        if reformat_node_add:
-            # append reformated tag
-            add_tags.append("reformated")
-
-            rf_node = nuke.createNode("Reformat")
-            for kn_conf in reformat_node_config:
-                _type = kn_conf["type"]
-                k_name = str(kn_conf["name"])
-                k_value = kn_conf["value"]
-
-                # to remove unicode as nuke doesn't like it
-                if _type == "string":
-                    k_value = str(kn_conf["value"])
-
-                rf_node[k_name].setValue(k_value)
+            if read_raw:
+                r_node["raw"].setValue(1)
 
             # connect
-            rf_node.setInput(0, self.previous_node)
-            self._temp_nodes[subset].append(rf_node)
-            self.previous_node = rf_node
-            self.log.debug(
-                "Reformat...   `{}`".format(self._temp_nodes[subset]))
+            self._temp_nodes[subset].append(r_node)
+            self.previous_node = r_node
+            self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
 
-        # only create colorspace baking if toggled on
-        if bake_viewer_process:
-            if bake_viewer_input_process_node:
-                # View Process node
-                ipn = self.get_view_input_process_node()
-                if ipn is not None:
-                    # connect
-                    ipn.setInput(0, self.previous_node)
-                    self._temp_nodes[subset].append(ipn)
-                    self.previous_node = ipn
-                    self.log.debug(
-                        "ViewProcess...   `{}`".format(
-                            self._temp_nodes[subset]))
+            # add reformat node
+            if reformat_node_add:
+                # append reformated tag
+                add_tags.append("reformated")
 
-            if not self.viewer_lut_raw:
-                # OCIODisplay
-                dag_node = nuke.createNode("OCIODisplay")
-                dag_node["view"].setValue(str(baking_view_profile))
+                rf_node = nuke.createNode("Reformat")
+                for kn_conf in reformat_node_config:
+                    _type = kn_conf["type"]
+                    k_name = str(kn_conf["name"])
+                    k_value = kn_conf["value"]
+
+                    # to remove unicode as nuke doesn't like it
+                    if _type == "string":
+                        k_value = str(kn_conf["value"])
+
+                    rf_node[k_name].setValue(k_value)
 
                 # connect
-                dag_node.setInput(0, self.previous_node)
-                self._temp_nodes[subset].append(dag_node)
-                self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(
-                    self._temp_nodes[subset]))
+                rf_node.setInput(0, self.previous_node)
+                self._temp_nodes[subset].append(rf_node)
+                self.previous_node = rf_node
+                self.log.debug(
+                    "Reformat...   `{}`".format(self._temp_nodes[subset]))
 
-        # Write node
-        write_node = nuke.createNode("Write")
-        self.log.debug("Path: {}".format(self.path))
-        write_node["file"].setValue(str(self.path))
-        write_node["file_type"].setValue(str(self.ext))
+            # only create colorspace baking if toggled on
+            if bake_viewer_process:
+                if bake_viewer_input_process_node:
+                    # View Process node
+                    ipn = self.get_view_input_process_node()
+                    if ipn is not None:
+                        # connect
+                        ipn.setInput(0, self.previous_node)
+                        self._temp_nodes[subset].append(ipn)
+                        self.previous_node = ipn
+                        self.log.debug(
+                            "ViewProcess...   `{}`".format(
+                                self._temp_nodes[subset]))
 
-        # Knobs `meta_codec` and `mov64_codec` are not available on centos.
-        # TODO shouldn't this come from settings on outputs?
-        try:
-            write_node["meta_codec"].setValue("ap4h")
-        except Exception:
-            self.log.info("`meta_codec` knob was not found")
+                if not self.viewer_lut_raw:
+                    # OCIODisplay
+                    dag_node = nuke.createNode("OCIODisplay")
+                    dag_node["view"].setValue(str(baking_view_profile))
 
-        try:
-            write_node["mov64_codec"].setValue("ap4h")
-            write_node["mov64_fps"].setValue(float(fps))
-        except Exception:
-            self.log.info("`mov64_codec` knob was not found")
+                    # connect
+                    dag_node.setInput(0, self.previous_node)
+                    self._temp_nodes[subset].append(dag_node)
+                    self.previous_node = dag_node
+                    self.log.debug("OCIODisplay...   `{}`".format(
+                        self._temp_nodes[subset]))
 
-        write_node["mov64_write_timecode"].setValue(1)
-        write_node["raw"].setValue(1)
-        # connect
-        write_node.setInput(0, self.previous_node)
-        self._temp_nodes[subset].append(write_node)
-        self.log.debug("Write...   `{}`".format(self._temp_nodes[subset]))
-        # ---------- end nodes creation
+            # Write node
+            write_node = nuke.createNode("Write")
+            self.log.debug("Path: {}".format(self.path))
+            write_node["file"].setValue(str(self.path))
+            write_node["file_type"].setValue(str(self.ext))
+
+            # Knobs `meta_codec` and `mov64_codec` are not available on centos.
+            # TODO shouldn't this come from settings on outputs?
+            try:
+                write_node["meta_codec"].setValue("ap4h")
+            except Exception:
+                self.log.info("`meta_codec` knob was not found")
+
+            try:
+                write_node["mov64_codec"].setValue("ap4h")
+                write_node["mov64_fps"].setValue(float(fps))
+            except Exception:
+                self.log.info("`mov64_codec` knob was not found")
+
+            write_node["mov64_write_timecode"].setValue(1)
+            write_node["raw"].setValue(1)
+            # connect
+            write_node.setInput(0, self.previous_node)
+            self._temp_nodes[subset].append(write_node)
+            self.log.debug("Write...   `{}`".format(self._temp_nodes[subset]))
+            # ---------- end nodes creation
 
         # ---------- render or save to nk
         if self.publish_on_farm:
