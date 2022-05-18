@@ -125,12 +125,12 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
 
             comp_write_opts = multiverse.CompositionWriteOptions()
 
-            """ 
+            """
             OP tells MV to write to a staging directory, and then moves the
             file to it's final publish directory. By default, MV write relative
             paths, but these paths will break when the referencing file moves.
             This option forces writes to absolute paths, which is ok within OP
-            because all published assets have static paths, and MV can only 
+            because all published assets have static paths, and MV can only
             reference published assets. When a proper UsdAssetResolver is used,
             this won't be needed.
             """
