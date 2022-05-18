@@ -13,7 +13,8 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
     hosts = ["maya"]
     families = ["usdOverride"]
     scene_type = "usd"
-    file_formats = ["usd", "usda"]
+    # Order of `fileFormat` must match create_multiverse_usd_over.py
+    file_formats = ["usda", "usd"]
 
     @property
     def options(self):

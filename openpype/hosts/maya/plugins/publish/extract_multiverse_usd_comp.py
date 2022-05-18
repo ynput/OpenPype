@@ -13,7 +13,8 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
     hosts = ["maya"]
     families = ["usdComposition"]
     scene_type = "usd"
-    file_formats = ["usd", "usda"]
+    # Order of `fileFormat` must match create_multiverse_usd_comp.py
+    file_formats = ["usda", "usd"]
 
     @property
     def options(self):

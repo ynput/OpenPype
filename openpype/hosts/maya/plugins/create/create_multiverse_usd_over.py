@@ -15,7 +15,8 @@ class CreateMultiverseUsdOver(plugin.Creator):
         # Add animation data first, since it maintains order.
         self.data.update(lib.collect_animation_data(True))
 
-        self.data["fileFormat"] = ["usd", "usda"]
+        # Order of `fileFormat` must match extract_multiverse_usd_over.py
+        self.data["fileFormat"] = ["usda", "usd"]
         self.data["writeAll"] = False
         self.data["writeTransforms"] = True
         self.data["writeVisibility"] = True
