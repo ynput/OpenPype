@@ -39,6 +39,10 @@ class CollectBatchData(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CollectBatchData")
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
+        if (os.environ.get("IS_TEST") and
+                (not batch_dir or not os.path.exists(batch_dir))):
+            self.log.debug("Automatic testing, no batch data, skipping")
+            return
 
         assert batch_dir, (
             "Missing `OPENPYPE_PUBLISH_DATA`")
