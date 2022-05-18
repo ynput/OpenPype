@@ -23,7 +23,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         node = None
         for x in instance:
-            if x.Class() == "Write":
+            if x.Class() == "Write" and x.name().startswith("inside_"):
                 node = x
 
         if node is None:
