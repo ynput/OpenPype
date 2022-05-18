@@ -75,11 +75,17 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 marker_data["handleEnd"]
             )
 
+            # make sure value is absolute
+            if head != 0:
+                head = abs(head)
+            if tail != 0:
+                tail = abs(tail)
+
             # solve handles length
             marker_data["handleStart"] = min(
-                marker_data["handleStart"], abs(head))
+                marker_data["handleStart"], head)
             marker_data["handleEnd"] = min(
-                marker_data["handleEnd"], abs(tail))
+                marker_data["handleEnd"], tail)
 
             workfile_start = self._set_workfile_start(marker_data)
 
