@@ -22,21 +22,16 @@ RENDERER_NODE_TYPES = [
     # redshift
     "RedshiftMeshParameters"
 ]
-
 SHAPE_ATTRS = set(SHAPE_ATTRS)
-
 DEFAULT_FILE_NODES = frozenset(
     ["file"]
 )
-
 ARNOLD_FILE_NODES = frozenset(
     ["aiImage"]
 )
-
 REDSHIFT_FILE_NODES = frozenset(
     ["RedshiftNormalMap"]
 )
-
 RENDERMAN_FILE_NODES = frozenset(
     [
         "PxrBump",
@@ -46,9 +41,14 @@ RENDERMAN_FILE_NODES = frozenset(
         "PxrTexture",
     ]
 )
-
+NODES_WITH_FILE = frozenset().union(
+    DEFAULT_FILE_NODES
+)
 NODES_WITH_FILENAME = frozenset().union(
-    DEFAULT_FILE_NODES, ARNOLD_FILE_NODES, RENDERMAN_FILE_NODES
+    ARNOLD_FILE_NODES, RENDERMAN_FILE_NODES
+)
+NODES_WITH_TEX = frozenset().union(
+    REDSHIFT_FILE_NODES
 )
 
 
@@ -550,20 +550,23 @@ class CollectLook(pyblish.api.InstancePlugin):
             dict
         """
         self.log.debug("processing: {}".format(node))
-        if cmds.nodeType(node) not in {
-                "file", "aiImage", "RedshiftNormalMap", "PxrTexture"}:
+        all_supported_nodes = set().union(
+            DEFAULT_FILE_NODES, ARNOLD_FILE_NODES, REDSHIFT_FILE_NODES,
+            RENDERMAN_FILE_NODES
+        )
+        if cmds.nodeType(node) not in all_supported_nodes:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
 
         self.log.debug("  - got {}".format(cmds.nodeType(node)))
-        if cmds.nodeType(node) == 'file':
+        if cmds.nodeType(node) in NODES_WITH_FILE:
             attribute = "{}.fileTextureName".format(node)
             computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        elif cmds.nodeType(node) in ['aiImage', 'PxrTexture']:
+        elif cmds.nodeType(node) in NODES_WITH_FILENAME:
             attribute = "{}.filename".format(node)
             computed_attribute = attribute
-        elif cmds.nodeType(node) == 'RedshiftNormalMap':
+        elif cmds.nodeType(node) in NODES_WITH_TEX:
             attribute = "{}.tex0".format(node)
             computed_attribute = attribute
 
