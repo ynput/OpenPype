@@ -6,6 +6,7 @@ from pathlib import Path
 from contextlib import contextmanager, ExitStack
 from typing import Dict, List, Optional
 from collections.abc import Iterable
+from bson.objectid import ObjectId
 
 import bpy
 from mathutils import Matrix
@@ -542,20 +543,45 @@ class AssetLoader(LoaderPlugin):
 
         # return self._get_instance_collection(instance_name, nodes)
 
-    def _is_updated(self, asset_group, object_name, libpath):
+    @staticmethod
+    def _get_last_representation(asset_group):
+        current_representation = legacy_io.find_one({
+            "_id": ObjectId(asset_group[AVALON_PROPERTY]["representation"])
+        })
+        current_version, subset, asset, project = legacy_io.parenthood(
+            current_representation
+        )
+        last_version = legacy_io.find_one(
+            {"type": "version", "parent": subset["_id"]},
+            sort=[("name", -1)]
+        )
+        last_representation = legacy_io.find_one({
+            "type": "representation",
+            "parent": last_version["_id"],
+            "name": current_representation["name"]
+        })
+
+        assert last_representation is not None, "Representation wasn't found"
+
+        return last_representation
+
+    @classmethod
+    def is_updated(cls, asset_group, libpath=None):
         """Check data before update. Return True if already updated"""
 
-        assert asset_group, (
-            f"The asset is not loaded: {object_name}"
+        if libpath is None:
+            last_representation = cls._get_last_representation(asset_group)
+            libpath = get_representation_path(last_representation)
+
+            assert libpath, (
+                f"No existing library file found for {asset_group.name}"
+            )
+
+        assert Path(libpath).is_file(), (
+            f"The library file doesn't exist: {libpath}"
         )
-        assert libpath, (
-            f"No existing library file found for {object_name}"
-        )
-        assert libpath.is_file(), (
-            f"The file doesn't exist: {libpath}"
-        )
-        assert libpath.suffix.lower() in VALID_EXTENSIONS, (
-            f"Unsupported file: {libpath}"
+        assert Path(libpath).suffix.lower() in VALID_EXTENSIONS, (
+            f"Unsupported library file: {libpath}"
         )
 
         group_libpath = asset_group[AVALON_PROPERTY]["libpath"]
@@ -564,9 +590,9 @@ class AssetLoader(LoaderPlugin):
             str(Path(bpy.path.abspath(group_libpath)).resolve())
         )
         normalized_libpath = (
-            str(Path(bpy.path.abspath(str(libpath))).resolve())
+            str(Path(bpy.path.abspath(libpath)).resolve())
         )
-        self.log.debug(
+        cls.log.debug(
             f"normalized_group_libpath:\n  {normalized_group_libpath}\n"
             f"normalized_libpath:\n  {normalized_libpath}"
         )
@@ -589,7 +615,7 @@ class AssetLoader(LoaderPlugin):
             bpy.data.collections.get(object_name) or
             bpy.data.objects.get(object_name)
         )
-        libpath = Path(get_representation_path(representation))
+        libpath = get_representation_path(representation)
 
         self.log.info(
             "Container: %s\nRepresentation: %s",
@@ -597,7 +623,12 @@ class AssetLoader(LoaderPlugin):
             pformat(representation, indent=2),
         )
 
-        if self._is_updated(asset_group, object_name, libpath):
+        assert asset_group, f"The asset is not loaded: {object_name}"
+        assert libpath, (
+            f"No library file found for representation: {representation}"
+        )
+
+        if self.is_updated(asset_group, libpath):
             self.log.info("Asset already up to date, not updating...")
             return
 
@@ -611,10 +642,10 @@ class AssetLoader(LoaderPlugin):
             stack.enter_context(self.maintained_actions(asset_group))
 
             remove_container(asset_group, content_only=True)
-            objects = self._load_blend(str(libpath), asset_group)
+            self._load_blend(libpath, asset_group)
 
         # update override library operations from asset objects
-        for obj in objects:
+        for obj in set(asset_group.all_objects):
             if obj.override_library:
                 obj.override_library.operations_update()
 
@@ -626,7 +657,7 @@ class AssetLoader(LoaderPlugin):
         metadata_update(
             asset_group,
             {
-                "libpath": str(libpath),
+                "libpath": libpath,
                 "representation": str(representation["_id"]),
                 "parent": str(representation["parent"]),
             }
@@ -718,7 +749,7 @@ class AssetLoader(LoaderPlugin):
             # Restor parent.
             for obj_name, parent_name in objects_parents.items():
                 obj = bpy.data.objects.get(obj_name)
-                parent = bpy.data.objects.get(parent_name)
+                parent = bpy.context.scene.objects.get(parent_name)
                 if obj and parent and obj.parent is not parent:
                     obj.parent = parent
 
@@ -744,7 +775,7 @@ class AssetLoader(LoaderPlugin):
             yield
         finally:
             # Restor transforms.
-            for obj in bpy.data.objects:
+            for obj in set(bpy.context.scene.objects):
                 if obj.name in objects_transforms:
                     obj.matrix_basis = objects_transforms[obj.name]
                 # Restor transforms for bones from armature.
@@ -833,6 +864,12 @@ class AssetLoader(LoaderPlugin):
                             container_objects
                         )
                     ]
+            # store texture mesh target
+            if obj.type == "MESH":
+                if obj.data.texture_mesh in container_objects:
+                    stored_targets.append(
+                        (obj.data, obj.data.texture_mesh.name)
+                    )
             # store driver variable targets from animation data
             if obj.animation_data:
                 for driver in obj.animation_data.drivers:
@@ -845,9 +882,11 @@ class AssetLoader(LoaderPlugin):
         finally:
             # Restor targets.
             for entity, target_name in stored_targets:
-                target = bpy.data.objects.get(target_name)
+                target = bpy.context.scene.objects.get(target_name)
                 if isinstance(entity, bpy.types.DriverTarget):
                     entity.id = target
+                if isinstance(entity, bpy.types.Mesh):
+                    entity.texture_mesh = target
                 else:
                     entity.target = target
 
@@ -872,7 +911,7 @@ class AssetLoader(LoaderPlugin):
         finally:
             # Restor drivers.
             for obj_name, drivers in objects_drivers.items():
-                obj = bpy.data.objects.get(obj_name)
+                obj = bpy.context.scene.objects.get(obj_name)
                 if not obj:
                     continue
                 if not obj.animation_data:
@@ -899,7 +938,7 @@ class AssetLoader(LoaderPlugin):
         finally:
             # Restor actions.
             for obj_name, action in actions.items():
-                obj = bpy.data.objects.get(obj_name)
+                obj = bpy.context.scene.objects.get(obj_name)
                 if obj:
                     if obj.animation_data is None:
                         obj.animation_data_create()
@@ -907,6 +946,77 @@ class AssetLoader(LoaderPlugin):
             # Clear fake user.
             for action in actions.values():
                 action.use_fake_user = False
+
+    @contextmanager
+    def maintained_local_data(self, container, data_type):
+        """Maintain action during context."""
+        objects = get_container_objects(container)
+        local_data = {}
+        # Store local data from mesh objects.
+        if data_type:
+            for obj in objects:
+                if (
+                    obj.type == "MESH" and
+                    not obj.data.library and
+                    not obj.data.override_library
+                ):
+                    # TODO : check if obj.data has data_type
+                    local_copy = obj.data.copy()
+                    local_copy.name = f"{obj.data.name}.copy"
+                    local_copy.use_fake_user = True
+                    local_data[obj.name] = local_copy
+        try:
+            yield
+        finally:
+            # Transfert local data.
+            for obj_name, data in local_data.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                if obj and obj.type == "MESH":
+
+                    if obj.override_library:
+                        obj.override_library.destroy()
+                        obj = bpy.context.scene.objects.get(obj_name)
+                    if obj.library:
+                        obj = obj.make_local()
+                        obj.data.make_local()
+
+                    tmp = bpy.data.objects.new("tmp", data)
+                    link_to_collection(tmp, bpy.context.scene.collection)
+                    tmp.matrix_world = obj.matrix_world.copy()
+
+                    deselect_all()
+                    bpy.context.view_layer.objects.active = tmp
+                    obj.select_set(True)
+
+                    if data.unit_test_compare(mesh=obj.data) == "Same":
+                        bpy.ops.object.data_transfer(
+                            create_blender_context(active=tmp, selected=obj),
+                            data_type=data_type,
+                            vert_mapping="TOPOLOGY",
+                            edge_mapping="TOPOLOGY",
+                            loop_mapping="TOPOLOGY",
+                            poly_mapping="TOPOLOGY",
+                            layers_select_src="ALL",
+                            layers_select_dst="NAME",
+                        )
+                    else:
+                        bpy.ops.object.data_transfer(
+                            create_blender_context(active=tmp, selected=obj),
+                            data_type=data_type,
+                            vert_mapping="EDGE_NEAREST",
+                            edge_mapping="POLY_NEAREST",
+                            loop_mapping="NEAREST_POLYNOR",
+                            poly_mapping="NEAREST",
+                            layers_select_src="ALL",
+                            layers_select_dst="NAME",
+                        )
+
+                    bpy.data.objects.remove(tmp)
+                    deselect_all()
+
+            # Clear local data.
+            for data in local_data.values():
+                bpy.data.meshes.remove(data)
 
 
 class StructDescriptor:
