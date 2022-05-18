@@ -132,7 +132,7 @@ def create_time_effects(otio_clip, track_item):
         otio_effect = otio.schema.TimeEffect()
         otio_effect.name = name
         otio_effect.effect_name = effect_name
-        otio_effect.metadata = metadata
+        otio_effect.metadata.update(metadata)
 
         # add otio effect to clip effects
         otio_clip.effects.append(otio_effect)
