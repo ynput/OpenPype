@@ -3,6 +3,7 @@ import os
 import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
+    get_oiio_tools_path,
 
     run_subprocess,
     path_to_subprocess_arg,
@@ -29,6 +30,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     # presetable attribute
     ffmpeg_args = None
+    oiio_args = None
 
     def process(self, instance):
         self.log.info("subset {}".format(instance.data['subset']))
@@ -119,7 +121,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             jpeg_items.append(path_to_subprocess_arg(full_output_path))
 
             subprocess_command = " ".join(jpeg_items)
-
+            
             # run subprocess
             self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
