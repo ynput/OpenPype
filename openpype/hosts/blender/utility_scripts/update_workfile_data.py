@@ -9,10 +9,9 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.workio import save_file, open_file
 
 
-def update_data(workfile, source, collection_name):
-    """
-    Extract a container if some parts are local,
-    save a work file And publish
+def update_data(workfile, source, collection_name, publish=True):
+    """Update workfile data objects inside targeted collection from
+    source blend file, save increment and publish if requested.
     """
 
     # Open work file.
@@ -23,7 +22,7 @@ def update_data(workfile, source, collection_name):
         result = False
     if not result:
         sys.stderr.write("ERROR: Open workfile failed !\n")
-        sys.exit(1)
+        sys.exit(10)
 
     # Rename temporary all scene objects.
     for obj in bpy.data.objects:
@@ -31,13 +30,17 @@ def update_data(workfile, source, collection_name):
 
     # Load only the collection wanted.
     sys.stdout.write(f"Load libraries from source: {source}\n")
-    with bpy.data.libraries.load(
-        source, link=False, relative=False
-    ) as (data_from, data_to):
-        for collection in data_from.collections:
-            if collection == collection_name:
-                sys.stdout.write(f"load collection: {collection}\n")
-                data_to.collections.append(collection)
+    try:
+        with bpy.data.libraries.load(
+            source, link=False, relative=False
+        ) as (data_from, data_to):
+            for collection in data_from.collections:
+                if collection == collection_name:
+                    sys.stdout.write(f"load collection: {collection}\n")
+                    data_to.collections.append(collection)
+    except Exception:
+        sys.stderr.write("ERROR: Load libraries failed !\n")
+        sys.exit(11)
 
     # Reassign meshes from new data.
     for collection in data_to.collections:
@@ -66,22 +69,25 @@ def update_data(workfile, source, collection_name):
     result = save_file(new_version, copy=False)
     if not result:
         sys.stderr.write("ERROR: Save new version failed !\n")
-        sys.exit(2)
+        sys.exit(20)
+
     # Publish
-    sys.stdout.write("Publishing ..\n")
-    result = pyblish.util.publish()
-    sys.stdout.write(f"Publish result: {result}\n")
-    if not result:
-        sys.stderr.write("ERROR: Publish failed !\n")
-        sys.exit(3)
+    if publish:
+        sys.stdout.write("Publishing ..\n")
+        result = pyblish.util.publish()
+        sys.stdout.write(f"Publish result: {result}\n")
+        if not result:
+            sys.stderr.write("ERROR: Publish failed !\n")
+            sys.exit(30)
     # Quit blender
     bpy.ops.wm.quit_blender()
 
 
 if __name__ == "__main__":
-    argv = sys.argv
-    argv = argv[argv.index("--") + 1:]
-    dest_workfile = argv[0]
-    source_workfile = argv[1]
-    collection_name = argv[2]
-    update_data(dest_workfile, source_workfile, collection_name)
+    index = sys.argv.index("--")
+    dest_workfile = sys.argv[index + 1]
+    source_workfile = sys.argv[index + 2]
+    collection_name = sys.argv[index + 3]
+    publish = "--publish" in sys.argv
+
+    update_data(dest_workfile, source_workfile, collection_name, publish)

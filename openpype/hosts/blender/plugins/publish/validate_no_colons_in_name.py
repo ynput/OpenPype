@@ -21,8 +21,8 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     label = "No Colons in names"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
 
-    @classmethod
-    def get_invalid(cls, instance) -> List:
+    @staticmethod
+    def get_invalid(instance) -> List:
         invalid = []
         for obj in set(instance):
             if ':' in obj.name:
