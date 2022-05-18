@@ -32,6 +32,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             "stripNamespaces": bool,
             "mergeTransformAndShape": bool,
             "flattenContent": bool,
+            "writeAsCompoundLayers": bool,
             "writePendingOverrides": bool,
             "numTimeSamples": int,
             "timeSamplesSpan": float
@@ -45,6 +46,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             "stripNamespaces": True,
             "mergeTransformAndShape": False,
             "flattenContent": False,
+            "writeAsCompoundLayers": False,
             "writePendingOverrides": False,
             "numTimeSamples": 1,
             "timeSamplesSpan": 0.0

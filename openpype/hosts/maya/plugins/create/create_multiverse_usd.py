@@ -46,6 +46,7 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data["writeShadingNetworks"] = False
         self.data["writeTransformMatrix"] = True
         self.data["writeUsdAttributes"] = False
+        self.data["writeInstancesAsReferences"] = False
         self.data["timeVaryingTopology"] = False
         self.data["customMaterialNamespace"] = ''
         self.data["numTimeSamples"] = 1
