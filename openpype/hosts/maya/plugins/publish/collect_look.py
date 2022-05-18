@@ -25,6 +25,32 @@ RENDERER_NODE_TYPES = [
 
 SHAPE_ATTRS = set(SHAPE_ATTRS)
 
+DEFAULT_FILE_NODES = frozenset(
+    ["file"]
+)
+
+ARNOLD_FILE_NODES = frozenset(
+    ["aiImage"]
+)
+
+REDSHIFT_FILE_NODES = frozenset(
+    ["RedshiftNormalMap"]
+)
+
+RENDERMAN_FILE_NODES = frozenset(
+    [
+        "PxrBump",
+        "PxrNormalMap",
+        # PxrMultiTexture (need to handle multiple filename0 attrs)
+        "PxrPtexture",
+        "PxrTexture",
+    ]
+)
+
+NODES_WITH_FILENAME = frozenset().union(
+    DEFAULT_FILE_NODES, ARNOLD_FILE_NODES, RENDERMAN_FILE_NODES
+)
+
 
 def get_look_attrs(node):
     """Returns attributes of a node that are important for the look.
@@ -171,7 +197,7 @@ def get_file_node_path(node):
         if any(pattern in lower for pattern in patterns):
             return texture_pattern
 
-    if cmds.nodeType(node) in {'aiImage', 'PxrTexture'}:
+    if cmds.nodeType(node) in NODES_WITH_FILENAME:
         return cmds.getAttr('{0}.filename'.format(node))
     if cmds.nodeType(node) == 'RedshiftNormalMap':
         return cmds.getAttr('{}.tex0'.format(node))
@@ -383,10 +409,13 @@ class CollectLook(pyblish.api.InstancePlugin):
                     or []
                 )
 
-            files = cmds.ls(history, type="file", long=True)
-            files.extend(cmds.ls(history, type="aiImage", long=True))
-            files.extend(cmds.ls(history, type="PxrTexture", long=True))
-            files.extend(cmds.ls(history, type="RedshiftNormalMap", long=True))
+            all_supported_nodes = set().union(
+                DEFAULT_FILE_NODES, ARNOLD_FILE_NODES, REDSHIFT_FILE_NODES,
+                RENDERMAN_FILE_NODES
+            )
+            files = []
+            for node_type in all_supported_nodes:
+                files.extend(cmds.ls(history, type=node_type, long=True))
 
         self.log.info("Collected file nodes:\n{}".format(files))
         # Collect textures if any file nodes are found
