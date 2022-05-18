@@ -82,15 +82,11 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         families_filter_view = FamilyListView(
             dbcon, self.family_config_cache, left_side_splitter
         )
-        families_toggle_button = QtWidgets.QPushButton("Toggle All")
-
         left_side_splitter.addWidget(projects_combobox)
         left_side_splitter.addWidget(assets_widget)
         left_side_splitter.addWidget(families_filter_view)
-        left_side_splitter.addWidget(families_toggle_button)
         left_side_splitter.setStretchFactor(1, 65)
-        left_side_splitter.setStretchFactor(2, 30)
-        left_side_splitter.setStretchFactor(3, 5)
+        left_side_splitter.setStretchFactor(2, 35)
 
         # --- Middle part ---
         # Subsets widget
@@ -164,9 +160,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         families_filter_view.active_changed.connect(
             self._on_family_filter_change
-        )
-        families_toggle_button.clicked.connect(
-            families_filter_view.toggle_all
         )
         assets_widget.selection_changed.connect(self.on_assetschanged)
         assets_widget.refresh_triggered.connect(self.on_assetschanged)
