@@ -524,9 +524,12 @@ class ClipLoader:
         self.handle_start = self.data["versionData"].get("handleStart")
         self.handle_end = self.data["versionData"].get("handleEnd")
         if self.handle_start is None:
-            self.handle_start = int(self.data["assetData"]["handleStart"])
+            self.handle_start = self.data["assetData"]["handleStart"]
         if self.handle_end is None:
-            self.handle_end = int(self.data["assetData"]["handleEnd"])
+            self.handle_end = self.data["assetData"]["handleEnd"]
+
+        self.handle_start = int(self.handle_start)
+        self.handle_end = int(self.handle_end)
 
         if self.sequencial_load:
             last_track_item = lib.get_track_items(
@@ -556,9 +559,7 @@ class ClipLoader:
              if "slate" in f),
             # if nothing was found then use default None
             # so other bool could be used
-            None) or bool(int(
-                (self.timeline_out - self.timeline_in + 1)
-                + self.handle_start + self.handle_end) < self.media_duration)
+            None)
 
         log.debug("__ slate_on: {}".format(slate_on))
         # if slate is on then remove the slate frame from beginning
