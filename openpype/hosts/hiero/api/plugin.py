@@ -551,17 +551,11 @@ class ClipLoader:
 
         log.debug("__ self.timeline_in: {}".format(self.timeline_in))
         log.debug("__ self.timeline_out: {}".format(self.timeline_out))
-        # check if slate is included
-        # either in version data families or by calculating frame diff
-        slate_on = next(
-            # check iterate if slate is in families
-            (f for f in self.context["version"]["data"]["families"]
-             if "slate" in f),
-            # if nothing was found then use default None
-            # so other bool could be used
-            None)
 
+        # check if slate is included
+        slate_on = "slate" in self.context["version"]["data"]["families"]
         log.debug("__ slate_on: {}".format(slate_on))
+
         # if slate is on then remove the slate frame from beginning
         if slate_on:
             self.media_duration -= 1
@@ -581,7 +575,7 @@ class ClipLoader:
         # there were some cases were hiero was not creating it
         source_bin_item = None
         for item in self.active_bin.items():
-            if self.data["clip_name"] in item.name():
+            if self.data["clip_name"] == item.name():
                 source_bin_item = item
         if not source_bin_item:
             log.warning("Problem with created Source clip: `{}`".format(
