@@ -4,7 +4,6 @@ Host specific functions where host api is connected
 
 import contextlib
 import os
-from pprint import pformat
 import re
 import sys
 import platform
@@ -92,7 +91,7 @@ def get_current_sequence(name=None, new=False):
         if not sequence:
             # if nothing found create new with input name
             sequence = get_current_sequence(name, True)
-    elif not name and not new:
+    else:
         # if name is none and new is False then return current open sequence
         sequence = hiero.ui.activeSequence()
 
@@ -188,7 +187,6 @@ def get_track_items(
                 ):
                     log.info("___ valid trackitem: {}".format(track_item))
                     return_list.append(track_item)
-
 
     # collect all available active sequence track items
     if not return_list:
@@ -311,7 +309,7 @@ def set_track_item_pype_tag(track_item, data=None):
         "editable": "0",
         "note": "OpenPype data container",
         "icon": "openpype_icon.png",
-        "metadata": {k: v for k, v in data.items()}
+        "metadata": dict(data.items())
     }
     # get available pype tag if any
     _tag = get_track_item_pype_tag(track_item)
@@ -369,7 +367,7 @@ def get_track_item_pype_data(track_item):
             log.warning(msg)
             value = v
 
-        data.update({key: value})
+        data[key] = value
 
     return data
 
@@ -938,32 +936,32 @@ def apply_colorspace_clips():
 
 
 def is_overlapping(ti_test, ti_original, strict=False):
-    covering_exp = bool(
+    covering_exp = (
         (ti_test.timelineIn() <= ti_original.timelineIn())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
     )
-    inside_exp = bool(
+    inside_exp = (
         (ti_test.timelineIn() >= ti_original.timelineIn())
         and (ti_test.timelineOut() <= ti_original.timelineOut())
     )
-    overlaying_right_exp = bool(
+    overlaying_right_exp = (
         (ti_test.timelineIn() < ti_original.timelineOut())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
     )
-    overlaying_left_exp = bool(
+    overlaying_left_exp = (
         (ti_test.timelineOut() > ti_original.timelineIn())
         and (ti_test.timelineIn() <= ti_original.timelineIn())
     )
 
-    if not strict:
+    if strict:
+        return covering_exp
+    else:
         return any((
             covering_exp,
             inside_exp,
             overlaying_right_exp,
             overlaying_left_exp
         ))
-    else:
-        return covering_exp
 
 
 def get_sequence_pattern_and_padding(file):
@@ -981,17 +979,12 @@ def get_sequence_pattern_and_padding(file):
     """
     foundall = re.findall(
         r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
-    if foundall:
-        found = sorted(list(set(foundall[0])))[-1]
-
-        if "%" in found:
-            padding = int(re.findall(r"\d+", found)[-1])
-        else:
-            padding = len(found)
-
-        return found, padding
-    else:
+    if not foundall:
         return None, None
+    found = sorted(list(set(foundall[0])))[-1]
+
+    padding = int(re.findall(r"\d+", found)[-1]) if "%" in found else len(found)
+    return found, padding
 
 
 def sync_clip_name_to_data_asset(track_items_list):
