@@ -209,7 +209,7 @@ def get_track_items(
                 if not isinstance(track_item, hiero.core.TrackItem):
                     continue
 
-                if not _validate_all_atrributes(
+                if _validate_all_atrributes(
                     track_item,
                     track_item_name,
                     track_name,
@@ -1050,7 +1050,6 @@ def check_inventory_versions(track_items=None):
     # get all track items from current timeline
     for track_item in track_item:
         container = parse_container(track_item)
-        log.info("___> container: {}".format(pformat(container)))
         if container:
             # get representation from io
             representation = io.find_one({
