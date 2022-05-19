@@ -731,30 +731,38 @@ class AssetLoader(LoaderPlugin):
 
         return True
 
+    @staticmethod
     @contextmanager
-    def maintained_parent(self, container):
+    def maintained_parent(container):
         """Maintain parent during context."""
         container_objects = set(get_container_objects(container))
         scene_objects = set(bpy.context.scene.objects) - container_objects
         objects_parents = dict()
         for obj in scene_objects:
             if obj.parent in container_objects:
-                objects_parents[obj.name] = obj.parent.name
+                objects_parents[obj.name] = (
+                    obj.parent.name, obj.matrix_parent_inverse.copy()
+                )
         for obj in container_objects:
             if obj.parent in scene_objects:
-                objects_parents[obj.name] = obj.parent.name
+                objects_parents[obj.name] = (
+                    obj.parent.name, obj.matrix_parent_inverse.copy()
+                )
         try:
             yield
         finally:
             # Restor parent.
-            for obj_name, parent_name in objects_parents.items():
+            for obj_name, parent_tuple in objects_parents.items():
+                parent_name, matrix_inverse = parent_tuple
                 obj = bpy.context.scene.objects.get(obj_name)
                 parent = bpy.context.scene.objects.get(parent_name)
                 if obj and parent and obj.parent is not parent:
                     obj.parent = parent
+                    obj.matrix_parent_inverse = matrix_inverse
 
+    @staticmethod
     @contextmanager
-    def maintained_transforms(self, container):
+    def maintained_transforms(container):
         """Maintain transforms during context."""
         objects = get_container_objects(container)
         # Store transforms for all objects in container.
@@ -786,8 +794,9 @@ class AssetLoader(LoaderPlugin):
                                 bones_transforms[obj.name][bone.name]
                             )
 
+    @staticmethod
     @contextmanager
-    def maintained_modifiers(self, container):
+    def maintained_modifiers(container):
         """Maintain modifiers during context."""
         objects = get_container_objects(container)
         objects_modifiers = [
@@ -802,8 +811,9 @@ class AssetLoader(LoaderPlugin):
                 for modifier in modifiers:
                     modifier.restor()
 
+    @staticmethod
     @contextmanager
-    def maintained_constraints(self, container):
+    def maintained_constraints(container):
         """Maintain constraints during context."""
         objects = get_container_objects(container)
         objects_constraints = []
@@ -837,8 +847,9 @@ class AssetLoader(LoaderPlugin):
                     for constraint in constraints:
                         constraint.restor(bone_name=bone_name)
 
+    @staticmethod
     @contextmanager
-    def maintained_targets(self, container):
+    def maintained_targets(container):
         """Maintain constraints during context."""
         container_objects = set(get_container_objects(container))
         scene_objects = set(bpy.context.scene.objects) - container_objects
@@ -891,8 +902,9 @@ class AssetLoader(LoaderPlugin):
                 if target and hasattr(entity, attr_name):
                     setattr(entity, attr_name, target)
 
+    @staticmethod
     @contextmanager
-    def maintained_drivers(self, container):
+    def maintained_drivers(container):
         """Maintain drivers during context."""
         objects = get_container_objects(container)
         objects_drivers = {}
@@ -924,8 +936,9 @@ class AssetLoader(LoaderPlugin):
                 obj_copy.use_fake_user = False
                 bpy.data.objects.remove(obj_copy)
 
+    @staticmethod
     @contextmanager
-    def maintained_actions(self, container):
+    def maintained_actions(container):
         """Maintain action during context."""
         objects = get_container_objects(container)
         actions = {}
@@ -948,8 +961,9 @@ class AssetLoader(LoaderPlugin):
             for action in actions.values():
                 action.use_fake_user = False
 
+    @staticmethod
     @contextmanager
-    def maintained_local_data(self, container, data_types):
+    def maintained_local_data(container, data_types):
         """Maintain action during context."""
         objects = get_container_objects(container)
         local_data = {}

@@ -1,22 +1,20 @@
-import bpy
-import subprocess
-from bson.objectid import ObjectId
 import os
 import platform
-
-import pyblish.api
+import subprocess
 from typing import List
+from bson.objectid import ObjectId
+
+import bpy
+import pyblish.api
 
 from openpype.pipeline import (
     legacy_io,
     update_container,
     AVALON_CONTAINER_ID,
 )
-from openpype.hosts.blender.api.plugin import(
-    AssetLoader,
-    maintained_local_data,
-)
+from openpype.hosts.blender.api.plugin import AssetLoader
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.action import SelectInvalidAction
 from openpype.hosts.blender.utility_scripts import update_workfile_data
 
 
@@ -48,7 +46,7 @@ class UpdateContainer(pyblish.api.Action):
 
         for collection in out_to_date_collections:
             self.log.info(f"Updating {collection.name} ..")
-            with maintained_local_data(collection, data_type):
+            with AssetLoader.maintained_local_data(collection, data_type):
                 update_container(collection[AVALON_PROPERTY], -1)
 
 
@@ -125,8 +123,8 @@ class ValidateContainerLibrary(pyblish.api.InstancePlugin):
     families = ["rig"]
     category = "geometry"
     label = "Validate Container Library"
-    actions = []
-    optional = True
+    actions = [SelectInvalidAction]
+    optional = False
 
     @staticmethod
     def get_out_to_date(instance) -> List:
@@ -161,7 +159,15 @@ class ValidateContainerLibrary(pyblish.api.InstancePlugin):
                         (not o.data.library and not o.data.override_library)
                     ):
                         invalid.append(o)
-                        break
+        return invalid
+
+    @classmethod
+    def get_invalid(cls, instance) -> List:
+        invalid = []
+
+        invalid += cls.get_out_to_date(instance)
+        invalid += cls.get_local_data(instance)
+
         return invalid
 
     def process(self, instance):
