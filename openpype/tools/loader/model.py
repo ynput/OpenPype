@@ -1,6 +1,7 @@
 import copy
 import re
 import math
+import time
 from uuid import uuid4
 
 from Qt import QtCore, QtGui
@@ -38,6 +39,14 @@ def is_filtering_recursible():
 
 class BaseRepresentationModel(object):
     """Methods for SyncServer useful in multiple models"""
+    # Cheap & hackish way how to avoid refreshing of whole sync server module
+    #   on each selection change
+    _last_project = None
+    _modules_manager = None
+    _last_project_cache = 0
+    _last_manager_cache = 0
+    _max_project_cache_time = 30
+    _max_manager_cache_time = 60
 
     def reset_sync_server(self, project_name=None):
         """Sets/Resets sync server vars after every change (refresh.)"""
@@ -47,28 +56,53 @@ class BaseRepresentationModel(object):
         remote_site = remote_provider = None
 
         if not project_name:
-            project_name = self.dbcon.Session["AVALON_PROJECT"]
+            project_name = self.dbcon.Session.get("AVALON_PROJECT")
         else:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
 
-        if project_name:
-            manager = ModulesManager()
-            sync_server = manager.modules_by_name["sync_server"]
+        if not project_name:
+            self.repre_icons = repre_icons
+            self.sync_server = sync_server
+            self.active_site = active_site
+            self.active_provider = active_provider
+            self.remote_site = remote_site
+            self.remote_provider = remote_provider
+            return
 
-            if project_name in sync_server.get_enabled_projects():
-                active_site = sync_server.get_active_site(project_name)
-                active_provider = sync_server.get_provider_for_site(
-                    project_name, active_site)
-                if active_site == 'studio':  # for studio use explicit icon
-                    active_provider = 'studio'
+        now_time = time.time()
+        project_cache_diff = now_time - self._last_project_cache
+        if project_cache_diff > self._max_project_cache_time:
+            self._last_project = None
 
-                remote_site = sync_server.get_remote_site(project_name)
-                remote_provider = sync_server.get_provider_for_site(
-                    project_name, remote_site)
-                if remote_site == 'studio':  # for studio use explicit icon
-                    remote_provider = 'studio'
+        if project_name == self._last_project:
+            return
 
-                repre_icons = lib.get_repre_icons()
+        self._last_project = project_name
+        self._last_project_cache = now_time
+
+        manager_cache_diff = now_time - self._last_manager_cache
+        if manager_cache_diff > self._max_manager_cache_time:
+            self._modules_manager = None
+
+        if self._modules_manager is None:
+            self._modules_manager = ModulesManager()
+            self._last_manager_cache = now_time
+
+        sync_server = self._modules_manager.modules_by_name["sync_server"]
+        if sync_server.is_project_enabled(project_name):
+            active_site = sync_server.get_active_site(project_name)
+            active_provider = sync_server.get_provider_for_site(
+                project_name, active_site)
+            if active_site == 'studio':  # for studio use explicit icon
+                active_provider = 'studio'
+
+            remote_site = sync_server.get_remote_site(project_name)
+            remote_provider = sync_server.get_provider_for_site(
+                project_name, remote_site)
+            if remote_site == 'studio':  # for studio use explicit icon
+                remote_provider = 'studio'
+
+            repre_icons = lib.get_repre_icons()
 
         self.repre_icons = repre_icons
         self.sync_server = sync_server
