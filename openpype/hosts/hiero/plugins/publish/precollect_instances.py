@@ -19,9 +19,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.otio_timeline = context.data["otioTimeline"]
-
+        timeline_selection = phiero.get_timeline_selection()
         selected_timeline_items = phiero.get_track_items(
-            selected=True, check_tagged=True, check_enabled=True)
+            selection=timeline_selection,
+            check_tagged=True,
+            check_enabled=True
+        )
 
         # only return enabled track items
         if not selected_timeline_items:
