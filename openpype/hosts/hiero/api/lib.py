@@ -1027,7 +1027,7 @@ def sync_clip_name_to_data_asset(track_items_list):
             print("asset was changed in clip: {}".format(ti_name))
 
 
-def check_inventory_versions():
+def check_inventory_versions(track_items=None):
     """
     Actual version color idetifier of Loaded containers
 
@@ -1038,14 +1038,15 @@ def check_inventory_versions():
     """
     from . import parse_container
 
+    track_item = track_items or get_track_items()
     # presets
     clip_color_last = "green"
     clip_color = "red"
 
     # get all track items from current timeline
-    for track_item in get_track_items():
+    for track_item in track_item:
         container = parse_container(track_item)
-
+        log.info("___> container: {}".format(pformat(container)))
         if container:
             # get representation from io
             representation = legacy_io.find_one({
@@ -1083,29 +1084,31 @@ def selection_changed_timeline(event):
     timeline_editor = event.sender
     selection = timeline_editor.selection()
 
-    selection = [ti for ti in selection
-                 if isinstance(ti, hiero.core.TrackItem)]
+    track_items = get_track_items(
+        selection=selection,
+        track_type="video",
+        check_enabled=True,
+        check_locked=True,
+        check_tagged=True
+    )
 
     # run checking function
-    sync_clip_name_to_data_asset(selection)
-
-    # also mark old versions of loaded containers
-    check_inventory_versions()
+    sync_clip_name_to_data_asset(track_items)
 
 
 def before_project_save(event):
     track_items = get_track_items(
-        selected=False,
         track_type="video",
         check_enabled=True,
         check_locked=True,
-        check_tagged=True)
+        check_tagged=True
+    )
 
     # run checking function
     sync_clip_name_to_data_asset(track_items)
 
     # also mark old versions of loaded containers
-    check_inventory_versions()
+    check_inventory_versions(track_items)
 
 
 def get_main_window():
