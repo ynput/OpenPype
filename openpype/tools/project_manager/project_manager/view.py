@@ -195,13 +195,13 @@ class HierarchyView(QtWidgets.QTreeView):
         for idx, width in widths_by_idx.items():
             self.setColumnWidth(idx, width)
 
-    def set_project(self, project_name):
+    def set_project(self, project_name, force=False):
         # Trigger helpers first
         self._project_doc_cache.set_project(project_name)
         self._tools_cache.refresh()
 
         # Trigger update of model after all data for delegates are filled
-        self._source_model.set_project(project_name)
+        self._source_model.set_project(project_name, force)
 
     def _on_project_reset(self):
         self.header_init()
