@@ -228,7 +228,7 @@ def _get_close_plugin(close_plugin_name, log):
             if plugin.__name__ == close_plugin_name:
                 return plugin
 
-    log.warning("Close plugin not found, app might not close.")
+    log.debug("Close plugin not found, app might not close.")
 
 
 def get_task_data(batch_dir):

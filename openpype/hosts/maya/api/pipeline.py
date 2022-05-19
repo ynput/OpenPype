@@ -71,7 +71,14 @@ def install():
     if lib.IS_HEADLESS:
         log.info(("Running in headless mode, skipping Maya "
                  "save/open/new callback installation.."))
+
+        # Register default "local" target
+        print("Registering pyblish target: farm")
+        pyblish.api.register_target("farm")
         return
+
+    print("Registering pyblish target: local")
+    pyblish.api.register_target("local")
 
     _set_project()
     _register_callbacks()
