@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 import re
 from copy import deepcopy
 
@@ -400,7 +401,8 @@ class ClipLoader:
 
         # inject asset data to representation dict
         self._get_asset_data()
-        log.debug("__init__ self.data: `{}`".format(self.data))
+        log.info("__init__ self.data: `{}`".format(pformat(self.data)))
+        log.info("__init__ options: `{}`".format(pformat(options)))
 
         # add active components to class
         if self.new_sequence:
@@ -482,7 +484,9 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = openpype.get_asset(asset_name)["data"]
+        asset_doc = openpype.get_asset(asset_name)
+        log.debug("__ asset_doc: {}".format(pformat(asset_doc)))
+        self.data["assetData"] = asset_doc["data"]
 
     def _make_track_item(self, source_bin_item, audio=False):
         """ Create track item with """
@@ -527,7 +531,8 @@ class ClipLoader:
         if self.sequencial_load:
             last_track_item = lib.get_track_items(
                 sequence_name=self.active_sequence.name(),
-                track_name=self.active_track.name())
+                track_name=self.active_track.name()
+            )
             if len(last_track_item) == 0:
                 last_timeline_out = 0
             else:
@@ -541,6 +546,8 @@ class ClipLoader:
             self.timeline_in = int(self.data["assetData"]["clipIn"])
             self.timeline_out = int(self.data["assetData"]["clipOut"])
 
+        log.debug("__ self.timeline_in: {}".format(self.timeline_in))
+        log.debug("__ self.timeline_out: {}".format(self.timeline_out))
         # check if slate is included
         # either in version data families or by calculating frame diff
         slate_on = next(
@@ -553,6 +560,7 @@ class ClipLoader:
                 (self.timeline_out - self.timeline_in + 1)
                 + self.handle_start + self.handle_end) < self.media_duration)
 
+        log.debug("__ slate_on: {}".format(slate_on))
         # if slate is on then remove the slate frame from beginning
         if slate_on:
             self.media_duration -= 1
@@ -599,8 +607,8 @@ class Creator(LegacyCreator):
     rename_index = None
 
     def __init__(self, *args, **kwargs):
-        import openpype.hosts.hiero.api as phiero
         super(Creator, self).__init__(*args, **kwargs)
+        import openpype.hosts.hiero.api as phiero
         self.presets = openpype.get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})
 
@@ -609,7 +617,10 @@ class Creator(LegacyCreator):
         self.sequence = phiero.get_current_sequence()
 
         if (self.options or {}).get("useSelection"):
-            self.selected = phiero.get_track_items(selected=True)
+            timeline_selection = phiero.get_timeline_selection()
+            self.selected = phiero.get_track_items(
+                selection=timeline_selection
+            )
         else:
             self.selected = phiero.get_track_items()
 
@@ -715,6 +726,10 @@ class PublishClip:
             self.tag_data.update({"reviewTrack": self.review_layer})
         else:
             self.tag_data.update({"reviewTrack": None})
+
+        log.debug("___ self.tag_data: {}".format(
+            pformat(self.tag_data)
+        ))
 
         # create pype tag on track_item and add data
         lib.imprint(self.track_item, self.tag_data)
