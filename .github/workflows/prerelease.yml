@@ -62,7 +62,19 @@ jobs:
     - name: "🖨️ Print changelog to console"
       if: steps.version_type.outputs.type != 'skip'
       run: cat CHANGELOG.md
-    
+
+    - name: 💾 Commit and Tag
+      id: git_commit
+      if: steps.version_type.outputs.type != 'skip'
+      run: |
+        git config user.email ${{ secrets.CI_EMAIL }}
+        git config user.name ${{ secrets.CI_USER }}
+        git add .
+        git commit -m "[Automated] Bump version"
+        tag_name="CI/${{ steps.version.outputs.next_tag }}"
+        echo $tag_name
+        git tag -a $tag_name -m "nightly build"
+
     - name: Push to protected main branch
       uses: CasperWA/push-protected@v2.10.0
       with:
