@@ -191,7 +191,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._add_task_btn.setEnabled(project_name is not None)
         self._save_btn.setEnabled(project_name is not None)
         self._project_proxy_model.set_filter_default(project_name is not None)
-        self.hierarchy_view.set_project(project_name)
+        self.hierarchy_view.set_project(project_name, True)
 
     def _current_project(self):
         row = self._project_combobox.currentIndex()
