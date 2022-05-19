@@ -69,6 +69,8 @@ jobs:
       run: |
         git config user.email ${{ secrets.CI_EMAIL }}
         git config user.name ${{ secrets.CI_USER }}
+        git checkout main
+        git pull
         git add .
         git commit -m "[Automated] Bump version"
         tag_name="CI/${{ steps.version.outputs.next_tag }}"
