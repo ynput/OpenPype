@@ -1,10 +1,6 @@
 from avalon import io
 from openpype.pipeline import get_representation_path
 import openpype.hosts.hiero.api as phiero
-# from openpype.hosts.hiero.api import plugin, lib
-# reload(lib)
-# reload(plugin)
-# reload(phiero)
 
 
 class LoadClip(phiero.SequenceLoader):
@@ -104,7 +100,7 @@ class LoadClip(phiero.SequenceLoader):
         name = container['name']
         namespace = container['namespace']
         track_item = phiero.get_track_items(
-            track_item_name=namespace)
+            track_item_name=namespace).pop()
         version = io.find_one({
             "type": "version",
             "_id": representation["parent"]
@@ -155,7 +151,7 @@ class LoadClip(phiero.SequenceLoader):
         # load clip to timeline and get main variables
         namespace = container['namespace']
         track_item = phiero.get_track_items(
-            track_item_name=namespace)
+            track_item_name=namespace).pop()
         track = track_item.parent()
 
         # remove track item from track
