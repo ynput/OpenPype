@@ -71,7 +71,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
             if int(engine_version.split(".")[0]) < 4 and \
                     int(engine_version.split(".")[1]) < 26:
                 raise ApplicationLaunchFailed((
-                    f"{self.signature} Old unsupported version of UE4 "
+                    f"{self.signature} Old unsupported version of UE "
                     f"detected - {engine_version}"))
         except ValueError:
             # there can be string in minor version and in that case
@@ -104,14 +104,14 @@ class UnrealPrelaunchHook(PreLaunchHook):
         project_path = Path(os.path.join(workdir, unreal_project_name))
 
         self.log.info((
-            f"{self.signature} requested UE4 version: "
+            f"{self.signature} requested UE version: "
             f"[ {engine_version} ]"
         ))
 
         detected = unreal_lib.get_engine_versions(self.launch_context.env)
         detected_str = ', '.join(detected.keys()) or 'none'
         self.log.info((
-            f"{self.signature} detected UE4 versions: "
+            f"{self.signature} detected UE versions: "
             f"[ {detected_str} ]"
         ))
         if not detected:
@@ -124,10 +124,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"detected [ {engine_version} ]"
             ))
 
-        ue4_path = unreal_lib.get_editor_executable_path(
-            Path(detected[engine_version]))
+        ue_path = unreal_lib.get_editor_executable_path(
+            Path(detected[engine_version]), engine_version)
 
-        self.launch_context.launch_args = [ue4_path.as_posix()]
+        self.launch_context.launch_args = [ue_path.as_posix()]
         project_path.mkdir(parents=True, exist_ok=True)
 
         project_file = project_path / unreal_project_filename
