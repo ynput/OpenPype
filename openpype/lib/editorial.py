@@ -218,6 +218,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
                 "name": name
             }
             tw_node.update(metadata)
+            tw_node["lookup"] = list(lookup)
 
             # get first and last frame offsets
             offset_in += lookup[0]
