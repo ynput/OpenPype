@@ -120,7 +120,7 @@ def get_current_track(sequence, name, audio=False):
     # get track by name
     track = None
     for _track in tracks:
-        if _track.name() in name:
+        if _track.name() == name:
             track = _track
 
     if not track:
@@ -128,6 +128,7 @@ def get_current_track(sequence, name, audio=False):
             track = hiero.core.VideoTrack(name)
         else:
             track = hiero.core.AudioTrack(name)
+
         sequence.addTrack(track)
 
     return track
@@ -499,7 +500,7 @@ class PyblishSubmission(hiero.exporters.FnSubmission.Submission):
         from . import publish
         # Add submission to Hiero module for retrieval in plugins.
         hiero.submission = self
-        publish()
+        publish(hiero.ui.mainWindow())
 
 
 def add_submission():
@@ -529,7 +530,7 @@ class PublishAction(QtWidgets.QAction):
         # from getting picked up when not using the "Export" dialog.
         if hasattr(hiero, "submission"):
             del hiero.submission
-        publish()
+        publish(hiero.ui.mainWindow())
 
     def eventHandler(self, event):
         # Add the Menu to the right-click menu
