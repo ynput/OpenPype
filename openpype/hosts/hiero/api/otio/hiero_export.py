@@ -151,7 +151,7 @@ def create_otio_reference(clip):
     padding = media_source.filenamePadding()
     file_head = media_source.filenameHead()
     is_sequence = not media_source.singleFile()
-    frame_duration = media_source.duration() - 1
+    frame_duration = media_source.duration()
     fps = utils.get_rate(clip) or self.project_fps
     extension = os.path.splitext(path)[-1]
 
@@ -277,7 +277,7 @@ def create_otio_clip(track_item):
     # flip if speed is in minus
     source_in = track_item.sourceIn() if speed > 0 else track_item.sourceOut()
 
-    duration = int(track_item.duration())
+    duration = int(track_item.duration()) - 1
 
     fps = utils.get_rate(track_item) or self.project_fps
     name = track_item.name()
