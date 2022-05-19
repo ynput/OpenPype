@@ -34,9 +34,9 @@ class UpdateContainer(pyblish.api.Action):
 
     def process(self, context, plugin):
 
-        data_type = ""
+        data_type = []
         if legacy_io.Session.get("AVALON_TASK") == "Rigging":
-            data_type = "VGROUP_WEIGHTS"
+            data_type = ["VGROUP_WEIGHTS"]
 
         out_to_date_collections = set()
         for result in context.data["results"]:

@@ -735,7 +735,7 @@ class AssetLoader(LoaderPlugin):
     def maintained_parent(self, container):
         """Maintain parent during context."""
         container_objects = set(get_container_objects(container))
-        scene_objects = set(bpy.data.objects) - container_objects
+        scene_objects = set(bpy.context.scene.objects) - container_objects
         objects_parents = dict()
         for obj in scene_objects:
             if obj.parent in container_objects:
@@ -748,7 +748,7 @@ class AssetLoader(LoaderPlugin):
         finally:
             # Restor parent.
             for obj_name, parent_name in objects_parents.items():
-                obj = bpy.data.objects.get(obj_name)
+                obj = bpy.context.scene.objects.get(obj_name)
                 parent = bpy.context.scene.objects.get(parent_name)
                 if obj and parent and obj.parent is not parent:
                     obj.parent = parent
@@ -841,34 +841,37 @@ class AssetLoader(LoaderPlugin):
     def maintained_targets(self, container):
         """Maintain constraints during context."""
         container_objects = set(get_container_objects(container))
-        scene_objects = set(bpy.data.objects) - container_objects
+        scene_objects = set(bpy.context.scene.objects) - container_objects
         stored_targets = []
         for obj in scene_objects:
+            # store constraints targets from object
             stored_targets += [
-                (constraint, constraint.target.name)
+                (constraint, constraint.target.name, "target")
                 for constraint in obj.constraints
                 if getattr(constraint, "target", None) in container_objects
             ]
-            stored_targets += [
-                (modifier, modifier.target.name)
-                for modifier in obj.modifiers
-                if getattr(modifier, "target", None) in container_objects
+            # store modifiers targets from object
+            for attr_name in ("target", "object", "object_from", "object_to"):
+                stored_targets += [
+                    (modifier, modifier.target.name, attr_name)
+                    for modifier in obj.modifiers
+                    if getattr(modifier, attr_name, None) in container_objects
             ]
-            # store constraint targets from bones in armatures
+            # store constraints targets from bones in armature
             if obj.type == "ARMATURE":
                 for bone in obj.pose.bones:
                     stored_targets += [
-                        (constraint, constraint.target.name)
+                        (constraint, constraint.target.name, "target")
                         for constraint in bone.constraints
                         if getattr(constraint, "target", None) in (
                             container_objects
                         )
                     ]
-            # store texture mesh target
+            # store texture mesh target from mesh object
             if obj.type == "MESH":
                 if obj.data.texture_mesh in container_objects:
                     stored_targets.append(
-                        (obj.data, obj.data.texture_mesh.name)
+                        (obj.data, obj.data.texture_mesh.name, "texture_mesh")
                     )
             # store driver variable targets from animation data
             if obj.animation_data:
@@ -876,19 +879,17 @@ class AssetLoader(LoaderPlugin):
                     for var in driver.driver.variables:
                         for target in var.targets:
                             if target.id in container_objects:
-                                stored_targets.append(target, target.id.name)
+                                stored_targets.append(
+                                    target, target.id.name, "id"
+                                )
         try:
             yield
         finally:
             # Restor targets.
-            for entity, target_name in stored_targets:
+            for entity, target_name, attr_name in stored_targets:
                 target = bpy.context.scene.objects.get(target_name)
-                if isinstance(entity, bpy.types.DriverTarget):
-                    entity.id = target
-                if isinstance(entity, bpy.types.Mesh):
-                    entity.texture_mesh = target
-                else:
-                    entity.target = target
+                if target and hasattr(entity, attr_name):
+                    setattr(entity, attr_name, target)
 
     @contextmanager
     def maintained_drivers(self, container):
@@ -948,12 +949,12 @@ class AssetLoader(LoaderPlugin):
                 action.use_fake_user = False
 
     @contextmanager
-    def maintained_local_data(self, container, data_type):
+    def maintained_local_data(self, container, data_types):
         """Maintain action during context."""
         objects = get_container_objects(container)
         local_data = {}
         # Store local data from mesh objects.
-        if data_type:
+        if data_types:
             for obj in objects:
                 if (
                     obj.type == "MESH" and
@@ -987,28 +988,30 @@ class AssetLoader(LoaderPlugin):
                     deselect_all()
                     bpy.context.view_layer.objects.active = tmp
                     obj.select_set(True)
+                    context = create_blender_context(active=tmp, selected=obj)
 
                     if data.unit_test_compare(mesh=obj.data) == "Same":
-                        bpy.ops.object.data_transfer(
-                            create_blender_context(active=tmp, selected=obj),
-                            data_type=data_type,
-                            vert_mapping="TOPOLOGY",
-                            edge_mapping="TOPOLOGY",
-                            loop_mapping="TOPOLOGY",
-                            poly_mapping="TOPOLOGY",
-                            layers_select_src="ALL",
-                            layers_select_dst="NAME",
-                        )
+                        mapping = {
+                            "vert_mapping": "TOPOLOGY",
+                            "edge_mapping": "TOPOLOGY",
+                            "loop_mapping": "TOPOLOGY",
+                            "poly_mapping": "TOPOLOGY",
+                        }
                     else:
+                        mapping = {
+                            "vert_mapping": "EDGE_NEAREST",
+                            "edge_mapping": "POLY_NEAREST",
+                            "loop_mapping": "NEAREST_POLYNOR",
+                            "poly_mapping": "NEAREST",
+                        }
+
+                    for data_type in data_types:
                         bpy.ops.object.data_transfer(
-                            create_blender_context(active=tmp, selected=obj),
+                            context,
                             data_type=data_type,
-                            vert_mapping="EDGE_NEAREST",
-                            edge_mapping="POLY_NEAREST",
-                            loop_mapping="NEAREST_POLYNOR",
-                            poly_mapping="NEAREST",
                             layers_select_src="ALL",
                             layers_select_dst="NAME",
+                            **mapping
                         )
 
                     bpy.data.objects.remove(tmp)
@@ -1034,7 +1037,7 @@ class StructDescriptor:
 
     def store_property(self, prop_name, prop_value):
         if isinstance(prop_value, bpy.types.Object):
-            prop_value = f"bpy.data.objects:{prop_value.name}"
+            prop_value = f"bpy.types.object:{prop_value.name}"
         elif isinstance(prop_value, Matrix):
             prop_value = prop_value.copy()
         self.properties[prop_name] = prop_value
@@ -1043,11 +1046,9 @@ class StructDescriptor:
         prop_value = self.properties.get(prop_name)
         if (
             isinstance(prop_value, str) and
-            prop_value.startswith("bpy.data.objects:")
+            prop_value.startswith("bpy.types.object:")
         ):
-            prop_value = bpy.data.objects.get(
-                prop_value.split("bpy.data.objects:")[-1]
-            )
+            prop_value = bpy.context.scene.objects.get(prop_value[17:])
         setattr(entity, prop_name, prop_value)
 
     def __init__(self, bpy_struct: bpy.types.bpy_struct):
@@ -1078,7 +1079,10 @@ class ModifierDescriptor(StructDescriptor):
     """
 
     def restor(self):
-        obj = bpy.data.objects.get(self.object_name)
+        obj = (
+            bpy.context.scene.objects.get(self.object_name) or
+            bpy.data.objects.get(self.object_name)
+        )
         if obj:
             modifier = obj.modifiers.get(self.name)
             if not modifier and not self.is_override_data:
@@ -1097,9 +1101,15 @@ class ConstraintDescriptor(StructDescriptor):
     """
 
     def restor(self, bone_name=None):
-        obj = bpy.data.objects.get(self.object_name)
-        if obj and obj.type == "ARMATURE" and bone_name:
-            obj = obj.pose.bones.get(bone_name)
+        obj = (
+            bpy.context.scene.objects.get(self.object_name) or
+            bpy.data.objects.get(self.object_name)
+        )
+        if bone_name:
+            if obj and obj.type == "ARMATURE":
+                obj = obj.pose.bones.get(bone_name)
+            else:
+                return
         if obj:
             constraint = obj.constraints.get(self.name)
             if not constraint and not self.is_override_data:
