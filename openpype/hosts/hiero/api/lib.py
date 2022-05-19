@@ -96,6 +96,12 @@ def get_current_sequence(name=None, new=False):
     return sequence
 
 
+def get_timeline_selection():
+    active_sequence = hiero.ui.activeSequence()
+    timeline_editor = hiero.ui.getTimelineEditor(active_sequence)
+    return list(timeline_editor.selection())
+
+
 def get_current_track(sequence, name, audio=False):
     """
     Get current track in context of active project.
