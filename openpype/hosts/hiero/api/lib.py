@@ -1,7 +1,10 @@
 """
 Host specific functions where host api is connected
 """
+
+import contextlib
 import os
+from pprint import pformat
 import re
 import sys
 import platform
@@ -139,7 +142,7 @@ def get_current_track(sequence, name, audio=False):
 
 
 def get_track_items(
-        selected=False,
+        selection=False,
         sequence_name=None,
         track_item_name=None,
         track_name=None,
@@ -150,7 +153,7 @@ def get_track_items(
     """Get all available current timeline track items.
 
     Attribute:
-        selected (bool)[optional]: return only selected items on timeline
+        selection (list)[optional]: list of selected track items
         sequence_name (str)[optional]: return only clips from input sequence
         track_item_name (str)[optional]: return only item with input name
         track_name (str)[optional]: return only items from track name
@@ -162,32 +165,33 @@ def get_track_items(
     Return:
         list or hiero.core.TrackItem: list of track items or single track item
     """
-    return_list = list()
-    track_items = list()
+    track_type = track_type or "video"
+    selection = selection or []
+    return_list = []
 
     # get selected track items or all in active sequence
-    if selected:
-        try:
-            selected_items = list(hiero.selection)
-            for item in selected_items:
-                if track_name and track_name in item.parent().name():
-                    # filter only items fitting input track name
-                    track_items.append(item)
-                elif not track_name:
-                    # or add all if no track_name was defined
-                    track_items.append(item)
-        except AttributeError:
-            pass
+    if selection:
+        with contextlib.suppress(AttributeError):
+            for track_item in selection:
+                log.info("___ track_item: {}".format(track_item))
+                # make sure only trackitems are selected
+                if not isinstance(track_item, hiero.core.TrackItem):
+                    continue
 
-    # check if any collected track items are
-    # `core.Hiero.Python.TrackItem` instance
-    if track_items:
-        any_track_item = track_items[0]
-        if not isinstance(any_track_item, hiero.core.TrackItem):
-            selected_items = []
+                if _validate_all_atrributes(
+                    track_item,
+                    track_item_name,
+                    track_name,
+                    track_type,
+                    check_enabled,
+                    check_tagged
+                ):
+                    log.info("___ valid trackitem: {}".format(track_item))
+                    return_list.append(track_item)
+
 
     # collect all available active sequence track items
-    if not track_items:
+    if not return_list:
         sequence = get_current_sequence(name=sequence_name)
         # get all available tracks from sequence
         tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
@@ -198,42 +202,76 @@ def get_track_items(
             if check_enabled and not track.isEnabled():
                 continue
             # and all items in track
-            for item in track.items():
-                if check_tagged and not item.tags():
+            for track_item in track.items():
+                # make sure no subtrackitem is also track items
+                if not isinstance(track_item, hiero.core.TrackItem):
                     continue
 
-                # check if track item is enabled
-                if check_enabled:
-                    if not item.isEnabled():
-                        continue
-                if track_item_name:
-                    if track_item_name in item.name():
-                        return item
-                # make sure only track items with correct track names are added
-                if track_name and track_name in track.name():
-                    # filter out only defined track_name items
-                    track_items.append(item)
-                elif not track_name:
-                    # or add all if no track_name is defined
-                    track_items.append(item)
+                if not _validate_all_atrributes(
+                    track_item,
+                    track_item_name,
+                    track_name,
+                    track_type,
+                    check_enabled,
+                    check_tagged
+                ):
+                    return_list.append(track_item)
 
-    # filter out only track items with defined track_type
-    for track_item in track_items:
-        if track_type and track_type == "video" and isinstance(
+    return return_list
+
+
+def _validate_all_atrributes(
+    track_item,
+    track_item_name,
+    track_name,
+    track_type,
+    check_enabled,
+    check_tagged
+):
+    def _validate_correct_name_track_item():
+        if track_item_name and track_item_name in track_item.name():
+            return True
+        elif not track_item_name:
+            return True
+
+    def _validate_tagged_track_item():
+        if check_tagged and track_item.tags():
+            return True
+        elif not check_tagged:
+            return True
+
+    def _validate_enabled_track_item():
+        if check_enabled and track_item.isEnabled():
+            return True
+        elif not check_enabled:
+            return True
+
+    def _validate_parent_track_item():
+        if track_name and track_name in track_item.parent().name():
+            # filter only items fitting input track name
+            return True
+        elif not track_name:
+            # or add all if no track_name was defined
+            return True
+
+    def _validate_type_track_item():
+        if track_type == "video" and isinstance(
                 track_item.parent(), hiero.core.VideoTrack):
             # only video track items are allowed
-            return_list.append(track_item)
-        elif track_type and track_type == "audio" and isinstance(
+            return True
+        elif track_type == "audio" and isinstance(
                 track_item.parent(), hiero.core.AudioTrack):
             # only audio track items are allowed
-            return_list.append(track_item)
-        elif not track_type:
-            # add all if no track_type is defined
-            return_list.append(track_item)
+            return True
 
-    # return output list but make sure all items are TrackItems
-    return [_i for _i in return_list
-            if type(_i) == hiero.core.TrackItem]
+    # check if track item is enabled
+    return all([
+        _validate_enabled_track_item(),
+        _validate_type_track_item(),
+        _validate_tagged_track_item(),
+        _validate_parent_track_item(),
+        _validate_correct_name_track_item()
+    ])
 
 
 def get_track_item_pype_tag(track_item):
