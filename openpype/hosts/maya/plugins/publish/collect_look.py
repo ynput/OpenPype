@@ -23,33 +23,43 @@ RENDERER_NODE_TYPES = [
     "RedshiftMeshParameters"
 ]
 SHAPE_ATTRS = set(SHAPE_ATTRS)
-DEFAULT_FILE_NODES = frozenset(
-    ["file"]
-)
-ARNOLD_FILE_NODES = frozenset(
-    ["aiImage"]
-)
-REDSHIFT_FILE_NODES = frozenset(
-    ["RedshiftNormalMap"]
-)
-RENDERMAN_FILE_NODES = frozenset(
-    [
-        "PxrBump",
-        "PxrNormalMap",
-        # PxrMultiTexture (need to handle multiple filename0 attrs)
-        "PxrPtexture",
-        "PxrTexture",
-    ]
-)
-NODES_WITH_FILE = frozenset().union(
-    DEFAULT_FILE_NODES
-)
-NODES_WITH_FILENAME = frozenset().union(
-    ARNOLD_FILE_NODES, RENDERMAN_FILE_NODES
-)
-NODES_WITH_TEX = frozenset().union(
-    REDSHIFT_FILE_NODES
-)
+
+
+def get_pxr_multitexture_file_attrs(node):
+    attrs = []
+    for i in range(9):
+        if cmds.attributeQuery("filename{}".format(i), node):
+            file = cmds.getAttr("{}.filename{}".format(node, i))
+            if file:
+                attrs.append("filename{}".format(i))
+    return attrs
+
+
+FILE_NODES = {
+    "file": "fileTextureName",
+
+    "aiImage": "filename",
+
+    "RedshiftNormalMap": "text0",
+
+    "PxrBump": "filename",
+    "PxrNormalMap": "filename",
+    "PxrMultiTexture": get_pxr_multitexture_file_attrs,
+    "PxrPtexture": "filename",
+    "PxrTexture": "filename"
+}
+
+
+def get_attributes(dictionary, attr):
+    # type: (dict, str) -> list
+    if callable(dictionary[attr]):
+        val = dictionary[attr]()
+    else:
+        val = dictionary.get(attr, [])
+
+    if not isinstance(val, list):
+        return [val]
+    return val
 
 
 def get_look_attrs(node):
@@ -77,15 +87,13 @@ def get_look_attrs(node):
     if cmds.objectType(node, isAType="shape"):
         attrs = cmds.listAttr(node, changedSinceFileOpen=True) or []
         for attr in attrs:
-            if attr in SHAPE_ATTRS:
+            if attr in SHAPE_ATTRS or \
+                    attr not in SHAPE_ATTRS and attr.startswith('ai'):
                 result.append(attr)
-            elif attr.startswith('ai'):
-                result.append(attr)
-
     return result
 
 
-def node_uses_image_sequence(node):
+def node_uses_image_sequence(node, node_path):
     # type: (str) -> bool
     """Return whether file node uses an image sequence or single image.
 
@@ -101,8 +109,6 @@ def node_uses_image_sequence(node):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    node_path = get_file_node_path(node).lower()
-
     # The following tokens imply a sequence
     patterns = ["<udim>", "<tile>", "<uvtile>",
                 "u<u>_v<v>", "<frame0", "<f4>"]
@@ -169,14 +175,15 @@ def seq_to_glob(path):
         return path
 
 
-def get_file_node_path(node):
+def get_file_node_paths(node):
+    # type: (str) -> list
     """Get the file path used by a Maya file node.
 
     Args:
         node (str): Name of the Maya file node
 
     Returns:
-        str: the file path in use
+        list: the file paths in use
 
     """
     # if the path appears to be sequence, use computedFileTextureNamePattern,
@@ -195,15 +202,19 @@ def get_file_node_path(node):
                     "<uvtile>"]
         lower = texture_pattern.lower()
         if any(pattern in lower for pattern in patterns):
-            return texture_pattern
+            return [texture_pattern]
 
-    if cmds.nodeType(node) in NODES_WITH_FILENAME:
-        return cmds.getAttr('{0}.filename'.format(node))
-    if cmds.nodeType(node) == 'RedshiftNormalMap':
-        return cmds.getAttr('{}.tex0'.format(node))
+    try:
+        file_attributes = get_attributes(FILE_NODES, cmds.nodeType(node))
+    except AttributeError:
+        file_attributes = "fileTextureName"
 
-    # otherwise use fileTextureName
-    return cmds.getAttr('{0}.fileTextureName'.format(node))
+    files = []
+    for file_attr in file_attributes:
+        if cmds.attributeQuery(file_attr, node=node, exists=True):
+            files.append(cmds.getAttr("{}.{}".format(node, file_attr)))
+
+    return files
 
 
 def get_file_node_files(node):
@@ -217,16 +228,21 @@ def get_file_node_files(node):
         list: List of full file paths.
 
     """
+    paths = get_file_node_paths(node)
+    sequences = []
+    replaces = []
+    for index, path in enumerate(paths):
+        if node_uses_image_sequence(node, path):
+            glob_pattern = seq_to_glob(path)
+            sequences.extend(glob.glob(glob_pattern))
+            replaces.append(index)
 
-    path = get_file_node_path(node)
-    path = cmds.workspace(expandName=path)
-    if node_uses_image_sequence(node):
-        glob_pattern = seq_to_glob(path)
-        return glob.glob(glob_pattern)
-    elif os.path.exists(path):
-        return [path]
-    else:
-        return []
+    for index in replaces:
+        paths.pop(index)
+
+    paths.extend(sequences)
+
+    return [p for p in paths if os.path.exists(p)]
 
 
 class CollectLook(pyblish.api.InstancePlugin):
@@ -270,13 +286,13 @@ class CollectLook(pyblish.api.InstancePlugin):
                       "for %s" % instance.data['name'])
 
         # Discover related object sets
-        self.log.info("Gathering sets..")
+        self.log.info("Gathering sets ...")
         sets = self.collect_sets(instance)
 
         # Lookup set (optimization)
         instance_lookup = set(cmds.ls(instance, long=True))
 
-        self.log.info("Gathering set relations..")
+        self.log.info("Gathering set relations ...")
         # Ensure iteration happen in a list so we can remove keys from the
         # dict within the loop
 
@@ -409,10 +425,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                     or []
                 )
 
-            all_supported_nodes = set().union(
-                DEFAULT_FILE_NODES, ARNOLD_FILE_NODES, REDSHIFT_FILE_NODES,
-                RENDERMAN_FILE_NODES
-            )
+            all_supported_nodes = FILE_NODES.keys()
             files = []
             for node_type in all_supported_nodes:
                 files.extend(cmds.ls(history, type=node_type, long=True))
@@ -550,27 +563,23 @@ class CollectLook(pyblish.api.InstancePlugin):
             dict
         """
         self.log.debug("processing: {}".format(node))
-        all_supported_nodes = set().union(
-            DEFAULT_FILE_NODES, ARNOLD_FILE_NODES, REDSHIFT_FILE_NODES,
-            RENDERMAN_FILE_NODES
-        )
+        all_supported_nodes = FILE_NODES.keys()
         if cmds.nodeType(node) not in all_supported_nodes:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
 
         self.log.debug("  - got {}".format(cmds.nodeType(node)))
-        if cmds.nodeType(node) in NODES_WITH_FILE:
-            attribute = "{}.fileTextureName".format(node)
-            computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        elif cmds.nodeType(node) in NODES_WITH_FILENAME:
-            attribute = "{}.filename".format(node)
-            computed_attribute = attribute
-        elif cmds.nodeType(node) in NODES_WITH_TEX:
-            attribute = "{}.tex0".format(node)
-            computed_attribute = attribute
 
-        source = cmds.getAttr(attribute)
+        attribute = FILE_NODES.get(cmds.nodeType(node))
+        source = cmds.getAttr("{}.{}".format(
+            node,
+            attribute
+        ))
+        computed_attribute = "{}.{}".format(node, attribute)
+        if attribute == "fileTextureName":
+            computed_attribute = node + ".computedFileTextureNamePattern"
+
         self.log.info("  - file source: {}".format(source))
         color_space_attr = "{}.colorSpace".format(node)
         try:
