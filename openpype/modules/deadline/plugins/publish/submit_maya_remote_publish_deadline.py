@@ -4,18 +4,22 @@ import requests
 from maya import cmds
 
 from openpype.pipeline import legacy_io
+from openpype.settings import get_project_settings
 
 import pyblish.api
 
 
-class MayaSubmitRemotePublishDeadline(pyblish.api.ContextPlugin):
+class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
     """Submit Maya scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.
     This way it can process in the background on another machine without the
     Artist having to wait for the publish to finish on their local machine.
 
-    Submission is done through the Deadline Web Service.
+    Submission is done through the Deadline Web Service. DL then triggers
+    `openpype/scripts/remote_publish.py`.
+
+    Each publishable instance creates its own full publish job.
 
     Different from `ProcessSubmittedJobOnFarm` which creates publish job
     depending on metadata json containing context and instance data of
@@ -27,31 +31,24 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     families = ["deadline"]
 
-    # custom deadline attributes
-    deadline_department = ""
-    deadline_pool = ""
-    deadline_pool_secondary = ""
-    deadline_group = ""
-    deadline_chunk_size = 1
-    deadline_priority = 50
-
-    def process(self, context):
+    def process(self, instance):
+        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        # use setting for publish job on farm, no reason to have it separately
+        deadline_publish_job_sett = (settings["deadline"]
+                                     ["publish"]
+                                     ["ProcessSubmittedJobOnFarm"])
 
         # Ensure no errors so far
-        assert all(result["success"] for result in context.data["results"]), (
-            "Errors found, aborting integration..")
+        assert (all(result["success"]
+                    for result in instance.context.data["results"]),
+                    ("Errors found, aborting integration.."))
 
-        # Note that `publish` data member might change in the future.
-        # See: https://github.com/pyblish/pyblish-base/issues/307
-        actives = [i for i in context if i.data["publish"]]
-        instance_names = sorted(instance.name for instance in actives)
-
-        if not instance_names:
+        if not instance.data["publish"]:
             self.log.warning("No active instances found. "
                              "Skipping submission..")
             return
 
-        scene = context.data["currentFile"]
+        scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
 
         # Get project code
@@ -66,17 +63,15 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.ContextPlugin):
             "JobInfo": {
                 "Plugin": "MayaBatch",
                 "BatchName": batch_name,
-                "Priority": 50,
                 "Name": job_name,
-                "UserName": context.data["user"],
-                # "Comment": instance.context.data.get("comment", ""),
+                "UserName": instance.context.data["user"],
+                "Comment": instance.context.data.get("comment", ""),
                 # "InitialStatus": state
-                "Department": self.deadline_department,
-                "ChunkSize": self.deadline_chunk_size,
-                "Priority": self.deadline_priority,
-
-                "Group": self.deadline_group,
-
+                "Department": deadline_publish_job_sett["deadline_department"],
+                "ChunkSize": deadline_publish_job_sett["deadline_chunk_size"],
+                "Priority": deadline_publish_job_sett["deadline_priority"],
+                "Group": deadline_publish_job_sett["deadline_group"],
+                "Pool": deadline_publish_job_sett["deadline_pool"],
             },
             "PluginInfo": {
 
@@ -86,7 +81,7 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.ContextPlugin):
 
                 # Inputs
                 "SceneFile": scene,
-                "ScriptFilename": "{OPENPYPE_ROOT}/scripts/remote_publish.py",
+                "ScriptFilename": "{OPENPYPE_REPOS_ROOT}/openpype/scripts/remote_publish.py",   # noqa
 
                 # Mandatory for Deadline
                 "Version": cmds.about(version=True),
@@ -116,10 +111,9 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.ContextPlugin):
         environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
-        environment["OPENPYPE_USERNAME"] = context.data["user"]
-        environment["OPENPYPE_PUBLISH_JOB"] = "1"
-        environment["OPENPYPE_RENDER_JOB"] = "0"
-        environment["PYBLISH_ACTIVE_INSTANCES"] = ",".join(instance_names)
+        environment["OPENPYPE_REMOTE_JOB"] = "1"
+        environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
+        environment["OPENPYPE_PUBLISH_SUBSET"] = instance.data["subset"]
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -129,7 +123,10 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.ContextPlugin):
         })
 
         self.log.info("Submitting Deadline job ...")
-        deadline_url = context.data["defaultDeadline"]
+        deadline_url = instance.context.data["defaultDeadline"]
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            deadline_url = instance.data.get("deadlineUrl")
         assert deadline_url, "Requires Deadline Webservice URL"
         url = "{}/api/jobs".format(deadline_url)
         response = requests.post(url, json=payload, timeout=10)
