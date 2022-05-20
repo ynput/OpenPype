@@ -80,21 +80,35 @@ class BlendRigLoader(plugin.AssetLoader):
         session_asset = legacy_io.Session.get("AVALON_ASSET", "Local")
         session_task = legacy_io.Session.get("AVALON_TASK", "Task")
         session_action_name = f"action_{session_asset}_{session_task}"
+
         # If rig contain only one armature.
         armatures = [obj for obj in objects if obj.type == "ARMATURE"]
         if len(armatures) == 1:
-            if armatures[0].animation_data is None:
-                armatures[0].animation_data_create()
-            armatures[0].animation_data.action = bpy.data.actions.new(
-                f"{namespace}_{session_action_name}"
+            armature = armatures[0]
+            if armature.animation_data is None:
+                armature.animation_data_create()
+            armature.animation_data.action = bpy.data.actions.new(
+                f"{namespace or armature.name}_{session_action_name}"
             )
-        # If rig contain zero or multiple armatures.
-        for obj in objects:
-            if obj.animation_data is None:
-                obj.animation_data_create()
-            obj.animation_data.action = bpy.data.actions.new(
-                f"{obj.name}_{session_action_name}"
-            )
+
+        # If rig contain multiple armatures, we generate actions for
+        # each armature.
+        elif armatures:
+            for armature in armatures:
+                if armature.animation_data is None:
+                    armature.animation_data_create()
+                armature.animation_data.action = bpy.data.actions.new(
+                    f"{armature.name}_{session_action_name}"
+                )
+
+        # If rig contain no armature we generate actions for each object.
+        else:
+            for obj in objects:
+                if obj.animation_data is None:
+                    obj.animation_data_create()
+                obj.animation_data.action = bpy.data.actions.new(
+                    f"{obj.name}_{session_action_name}"
+                )
         plugin.orphans_purge()
 
     def process_asset(

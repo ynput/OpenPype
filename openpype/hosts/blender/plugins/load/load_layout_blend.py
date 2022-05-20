@@ -38,11 +38,14 @@ class BlendLayoutLoader(plugin.AssetLoader):
             linked_action = obj.animation_data.action
             local_action = local_actions.get(linked_action)
 
+            if not linked_action.library:
+                continue
+
             # Make action local if needed.
             if not local_action:
                 # Get local action name from linked action name.
                 re_match = re.match(
-                    r"*_action_(?P<asset>[^_]+)_(?P<task>[^_]+)$",
+                    r".*_action_(?P<asset>[^_]+)_(?P<task>[^_]+)$",
                     linked_action.name
                 )
                 if re_match:
@@ -95,6 +98,11 @@ class BlendLayoutLoader(plugin.AssetLoader):
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
         self._update_blend(container, representation)
+
+        # Ensure all updated actions are local.
+        collection = bpy.data.collections.get(container["objectName"])
+        if collection:
+            self._make_local_actions(collection.all_objects)
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""
