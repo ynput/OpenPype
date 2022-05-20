@@ -87,6 +87,13 @@ def inject_openpype_environment(deadlinePlugin):
             for key, value in contents.items():
                 deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
+        script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
+        if script_url:
+
+            script_url = script_url.format(**contents).replace("\\", "/")
+            print(">>> Setting script path {}".format(script_url))
+            job.SetJobPluginInfoKeyValue("ScriptFilename", script_url)
+
         print(">>> Removing temporary file")
         os.remove(export_url)
 
@@ -196,16 +203,19 @@ def __main__(deadlinePlugin):
         job.GetJobEnvironmentKeyValue('OPENPYPE_RENDER_JOB') or '0'
     openpype_publish_job = \
         job.GetJobEnvironmentKeyValue('OPENPYPE_PUBLISH_JOB') or '0'
+    openpype_remote_job = \
+        job.GetJobEnvironmentKeyValue('OPENPYPE_REMOTE_JOB') or '0'
 
     print("--- Job type - render {}".format(openpype_render_job))
     print("--- Job type - publish {}".format(openpype_publish_job))
+    print("--- Job type - remote {}".format(openpype_remote_job))
     if openpype_publish_job == '1' and openpype_render_job == '1':
         raise RuntimeError("Misconfiguration. Job couldn't be both " +
                            "render and publish.")
 
     if openpype_publish_job == '1':
         inject_render_job_id(deadlinePlugin)
-    elif openpype_render_job == '1':
+    elif openpype_render_job == '1' or openpype_remote_job == '1':
         inject_openpype_environment(deadlinePlugin)
     else:
         pype(deadlinePlugin)  # backward compatibility with Pype2
