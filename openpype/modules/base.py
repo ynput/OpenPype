@@ -450,14 +450,14 @@ class OpenPypeModule:
 
         return {}
 
-    def modify_application_launch_arguments(self, app, env):
+    def modify_application_launch_arguments(self, application, env):
         """Give option to modify launch environments before application launch.
 
         Implementation is optional. To change environments modify passed
         dictionary of environments.
 
         Args:
-            app (Application): Application that is launcher.
+            application (Application): Application that is launched.
             env (dict): Current environemnt variables.
         """
 
