@@ -3,6 +3,7 @@ Host specific functions where host api is connected
 """
 
 import contextlib
+from copy import deepcopy
 import os
 import re
 import sys
@@ -291,7 +292,7 @@ def get_track_item_pype_tag(track_item):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if tag.name() in self.pype_tag_name:
+        if tag.name() == self.pype_tag_name:
             return tag
 
 
@@ -347,9 +348,9 @@ def get_track_item_pype_data(track_item):
         return None
 
     # get tag metadata attribute
-    tag_data = tag.metadata()
+    tag_data = deepcopy(dict(tag.metadata()))
     # convert tag metadata to normal keys names and values to correct types
-    for k, v in dict(tag_data).items():
+    for k, v in tag_data.items():
         key = k.replace("tag.", "")
 
         try:
