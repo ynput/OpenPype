@@ -277,7 +277,7 @@ def create_otio_clip(track_item):
     # flip if speed is in minus
     source_in = track_item.sourceIn() if speed > 0 else track_item.sourceOut()
 
-    duration = int(track_item.duration()) - 1
+    duration = int(track_item.duration())
 
     fps = utils.get_rate(track_item) or self.project_fps
     name = track_item.name()

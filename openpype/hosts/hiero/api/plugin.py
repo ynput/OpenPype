@@ -504,7 +504,7 @@ class ClipLoader:
         track_item.setSource(clip)
         track_item.setSourceIn(self.handle_start)
         track_item.setTimelineIn(self.timeline_in)
-        track_item.setSourceOut((self.media_duration + 1) - self.handle_end)
+        track_item.setSourceOut((self.media_duration) - self.handle_end)
         track_item.setTimelineOut(self.timeline_out)
         track_item.setPlaybackSpeed(1)
         self.active_track.addTrackItem(track_item)
