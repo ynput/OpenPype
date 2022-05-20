@@ -73,8 +73,8 @@ def install():
                  "save/open/new callback installation.."))
 
         # Register default "local" target
-        print("Registering pyblish target: farm")
-        pyblish.api.register_target("farm")
+        print("Registering pyblish target: remote")
+        pyblish.api.register_target("remote")
         return
 
     print("Registering pyblish target: local")
