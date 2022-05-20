@@ -269,15 +269,8 @@ class YetiCacheLoader(load.LoaderPlugin):
         assert len(collections) == 1, "This is a bug"
         collection = collections[0]
 
-        # Assume padding from the first frame since clique returns 0 if the
-        # sequence contains no files padded with a zero at the start (e.g.
-        # a sequence starting at 1001)
-        padding = len(str(collection.indexes[0]))
-
-        fname = "{head}%0{padding}d{tail}".format(collection.head,
-                                                  padding,
-                                                  collection.tail)
-
+        # Formats name as {head}%d{tail} like cache.%04d.fur
+        fname = collection.format("{head}{padding}{tail}")
         return os.path.join(root, fname)
 
     def create_node(self, namespace, node_settings):
