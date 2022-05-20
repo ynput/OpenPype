@@ -218,6 +218,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
                 "name": name
             }
             tw_node.update(metadata)
+            tw_node["lookup"] = list(lookup)
 
             # get first and last frame offsets
             offset_in += lookup[0]
@@ -254,7 +255,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
         media_in + source_in + offset_in)
     media_out_trimmed = (
         media_in + source_in + (
-            (source_range.duration.value * abs(
+            ((source_range.duration.value - 1) * abs(
                 time_scalar)) + offset_out))
 
     # calculate available handles

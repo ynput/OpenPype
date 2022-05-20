@@ -109,8 +109,9 @@ def register_hiero_events():
     # hiero.core.events.registerInterest("kShutdown", shutDown)
     # hiero.core.events.registerInterest("kStartup", startupCompleted)
 
-    hiero.core.events.registerInterest(
-        ("kSelectionChanged", "kTimeline"), selection_changed_timeline)
+    # INFO: was disabled because it was slowing down timeline operations
+    # hiero.core.events.registerInterest(
+    #     ("kSelectionChanged", "kTimeline"), selection_changed_timeline)
 
     # workfiles
     try:

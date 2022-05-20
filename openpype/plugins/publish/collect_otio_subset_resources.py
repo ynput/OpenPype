@@ -64,8 +64,8 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         a_frame_end_h = media_out + handle_end
 
         # create trimmed otio time range
-        trimmed_media_range_h = oplib.range_from_frames(
-            a_frame_start_h, (a_frame_end_h - a_frame_start_h + 1),
+        trimmed_media_range_h = editorial.range_from_frames(
+            a_frame_start_h, (a_frame_end_h - a_frame_start_h) + 1,
             media_fps
         )
         trimmed_duration = trimmed_media_range_h.duration.value
