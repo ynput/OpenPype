@@ -113,9 +113,17 @@ def create_container(name, color_tag=None):
         return container
 
 
-def remove_container(container, content_only=False):
+def remove_container(
+    container: bpy.types.ID,
+    content_only: Optional[bool] = False
+):
     """
     Remove the container with all this objects and child collections.
+
+    Arguments:
+        container (bpy.data.ID): The collection container to be removed.
+        content_only (bool): Remove all the container content but keep the
+            container collection. Optional, default to False.
 
     Note:
         This rename all removed elements with .removed suffix to prevent
@@ -154,7 +162,7 @@ def remove_container(container, content_only=False):
             data_to_remove.add(obj.data)
         obj.name = f"{obj.name}.removed"
         bpy.data.objects.remove(obj)
-    # Remove objects
+    # Remove collections
     for collection in collections_to_remove:
         collection.name = f"{collection.name}.removed"
         bpy.data.collections.remove(collection)
@@ -867,7 +875,7 @@ class AssetLoader(LoaderPlugin):
                     (modifier, modifier.target.name, attr_name)
                     for modifier in obj.modifiers
                     if getattr(modifier, attr_name, None) in container_objects
-            ]
+                ]
             # store constraints targets from bones in armature
             if obj.type == "ARMATURE":
                 for bone in obj.pose.bones:

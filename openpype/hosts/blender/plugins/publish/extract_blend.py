@@ -55,14 +55,16 @@ class ExtractBlend(openpype.api.Extractor):
         data_blocks = set()
         objects = set()
 
-        for obj in instance:
-            data_blocks.add(obj)
+        # Adding all members of the instance to data blocks that will be
+        # written into the blender library.
+        for member in instance:
+            data_blocks.add(member)
             # Get reference from override library.
-            if obj.override_library and obj.override_library.reference:
-                data_blocks.add(obj.override_library.reference)
+            if member.override_library and member.override_library.reference:
+                data_blocks.add(member.override_library.reference)
             # Store objects to pack images from their materials.
-            if isinstance(obj, bpy.types.Object):
-                objects.add(obj)
+            if isinstance(member, bpy.types.Object):
+                objects.add(member)
 
         # Pack used images in the blend files.
         self._pack_images_from_objects(objects)
