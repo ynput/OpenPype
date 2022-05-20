@@ -213,6 +213,34 @@ class HierarchyView(QtWidgets.QTreeView):
             index = self._source_model.index_for_item(project_item)
             self.expand(index)
 
+        self._open_persistent_editors_on_project_refresh()
+
+    def _open_persistent_editors_on_project_refresh(self):
+        model = self._source_model
+        parent_index = QtCore.QModelIndex()
+        persistent_queue = collections.deque()
+        persistent_queue.append((parent_index, model.rowCount()))
+        while persistent_queue:
+            item = persistent_queue.popleft()
+            parent_index, rows = item
+            if not rows:
+                continue
+
+            for row in range(rows):
+                row_index = model.index(row, 0, parent_index)
+                persistent_queue.append(
+                    (row_index, model.rowCount(row_index))
+                )
+                for key, column in self._column_key_to_index.items():
+                    if key not in self.persistent_columns:
+                        continue
+                    col_index = model.index(row, column, parent_index)
+                    if bool(
+                        model.flags(col_index)
+                        & QtCore.Qt.ItemIsEditable
+                    ):
+                        self.openPersistentEditor(col_index)
+
     def _on_rows_moved(self, index):
         parent_index = index.parent()
         if not self.isExpanded(parent_index):
