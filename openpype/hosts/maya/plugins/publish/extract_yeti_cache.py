@@ -25,9 +25,6 @@ class ExtractYetiCache(openpype.api.Extractor):
         # Define extract output file path
         dirname = self.staging_dir(instance)
 
-        # Yeti related staging dirs
-        data_file = os.path.join(dirname, "yeti.fursettings")
-
         # Collect information for writing cache
         start_frame = instance.data["frameStartHandle"]
         end_frame = instance.data["frameEndHandle"]
@@ -57,32 +54,35 @@ class ExtractYetiCache(openpype.api.Extractor):
         cache_files = [x for x in os.listdir(dirname) if x.endswith(".fur")]
 
         self.log.info("Writing metadata file")
-        settings = instance.data.get("fursettings", None)
-        if settings is not None:
-            with open(data_file, "w") as fp:
-                json.dump(settings, fp, ensure_ascii=False)
+        settings = instance.data["fursettings"]
+        fursettings_path = os.path.join(dirname, "yeti.fursettings")
+        with open(fursettings_path, "w") as fp:
+            json.dump(settings, fp, ensure_ascii=False)
 
         # build representations
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         self.log.info("cache files: {}".format(cache_files[0]))
-        instance.data["representations"].append(
-            {
-                'name': 'fur',
-                'ext': 'fur',
-                'files': cache_files[0] if len(cache_files) == 1 else cache_files,
-                'stagingDir': dirname,
-                'frameStart': int(start_frame),
-                'frameEnd': int(end_frame)
-            }
-        )
+
+        # Workaround: We do not explicitly register these files with the
+        # representation solely so that we can write multiple sequences
+        # a single Subset without renaming - it's a bit of a hack
+        # TODO: Implement better way to manage this sort of integration
+        if 'transfers' not in instance.data:
+            instance.data['transfers'] = []
+
+        publish_dir = instance.data["publishDir"]
+        for cache_filename in cache_files:
+            src = os.path.join(dirname, cache_filename)
+            dst = os.path.join(publish_dir, os.path.basename(cache_filename))
+            instance.data['transfers'].append([src, dst])
 
         instance.data["representations"].append(
             {
-                'name': 'fursettings',
+                'name': 'fur',
                 'ext': 'fursettings',
-                'files': os.path.basename(data_file),
+                'files': os.path.basename(fursettings_path),
                 'stagingDir': dirname
             }
         )

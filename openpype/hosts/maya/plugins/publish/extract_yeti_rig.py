@@ -124,8 +124,8 @@ class ExtractYetiRig(openpype.api.Extractor):
         settings_path = os.path.join(dirname, "yeti.rigsettings")
 
         # Yeti related staging dirs
-        maya_path = os.path.join(
-            dirname, "yeti_rig.{}".format(self.scene_type))
+        maya_path = os.path.join(dirname,
+                                 "yeti_rig.{}".format(self.scene_type))
 
         self.log.info("Writing metadata file")
 

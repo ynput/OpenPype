@@ -1,15 +1,13 @@
 import os
 import json
 import re
-import glob
 from collections import defaultdict
-from pprint import pprint
 
+import clique
 from maya import cmds
 
 from openpype.api import get_project_settings
 from openpype.pipeline import (
-    legacy_io,
     load,
     get_representation_path
 )
@@ -17,7 +15,15 @@ from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.pipeline import containerise
 
 
+def set_attribute(node, attr, value):
+    """Wrapper of set attribute which ignores None values"""
+    if value is None:
+        return
+    lib.set_attribute(node, attr, value)
+
+
 class YetiCacheLoader(load.LoaderPlugin):
+    """Load Yeti Cache with one or more Yeti nodes"""
 
     families = ["yeticache", "yetiRig"]
     representations = ["fur"]
@@ -28,6 +34,16 @@ class YetiCacheLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
+        """Loads a .fursettings file defining how to load .fur sequences
+
+        A single yeticache or yetiRig can have more than a single pgYetiMaya
+        nodes and thus load more than a single yeti.fur sequence.
+
+        The .fursettings file defines what the node names should be and also
+        what "cbId" attribute they should receive to match the original source
+        and allow published looks to also work for Yeti rigs and its caches.
+
+        """
 
         try:
             family = context["representation"]["context"]["family"]
@@ -43,22 +59,11 @@ class YetiCacheLoader(load.LoaderPlugin):
         if not cmds.pluginInfo("pgYetiMaya", query=True, loaded=True):
             cmds.loadPlugin("pgYetiMaya", quiet=True)
 
-        # Get JSON
-        fbase = re.search(r'^(.+)\.(\d+|#+)\.fur', self.fname)
-        if not fbase:
-            raise RuntimeError('Cannot determine fursettings file path')
-        settings_fname = "{}.fursettings".format(fbase.group(1))
-        with open(settings_fname, "r") as fp:
-            fursettings = json.load(fp)
-
-        # Check if resources map exists
-        # Get node name from JSON
-        if "nodes" not in fursettings:
-            raise RuntimeError("Encountered invalid data, expect 'nodes' in "
-                               "fursettings.")
-
-        node_data = fursettings["nodes"]
-        nodes = self.create_nodes(namespace, node_data)
+        # Create Yeti cache nodes according to settings
+        settings = self.read_settings(self.fname)
+        nodes = []
+        for node in settings["nodes"]:
+            nodes.extend(self.create_node(namespace, node))
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
@@ -111,28 +116,14 @@ class YetiCacheLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
 
-        legacy_io.install()
         namespace = container["namespace"]
         container_node = container["objectName"]
 
-        fur_settings = legacy_io.find_one(
-            {"parent": representation["parent"], "name": "fursettings"}
-        )
-
-        pprint({"parent": representation["parent"], "name": "fursettings"})
-        pprint(fur_settings)
-        assert fur_settings is not None, (
-            "cannot find fursettings representation"
-        )
-
-        settings_fname = get_representation_path(fur_settings)
         path = get_representation_path(representation)
-        # Get all node data
-        with open(settings_fname, "r") as fp:
-            settings = json.load(fp)
+        settings = self.read_settings(path)
 
         # Collect scene information of asset
-        set_members = cmds.sets(container["objectName"], query=True)
+        set_members = lib.get_container_members(container)
         container_root = lib.get_container_transforms(container,
                                                       members=set_members,
                                                       root=True)
@@ -147,7 +138,7 @@ class YetiCacheLoader(load.LoaderPlugin):
         # Re-assemble metadata with cbId as keys
         meta_data_lookup = {n["cbId"]: n for n in settings["nodes"]}
 
-        # Compare look ups and get the nodes which ar not relevant any more
+        # Delete nodes by "cbId" that are not in the updated version
         to_delete_lookup = {cb_id for cb_id in scene_lookup.keys() if
                             cb_id not in meta_data_lookup}
         if to_delete_lookup:
@@ -163,25 +154,18 @@ class YetiCacheLoader(load.LoaderPlugin):
                                                 fullPath=True) or []
                 to_remove.extend(shapes + transforms)
 
-                # Remove id from look uop
+                # Remove id from lookup
                 scene_lookup.pop(_id, None)
 
             cmds.delete(to_remove)
 
-        # replace frame in filename with %04d
-        RE_frame = re.compile(r"(\d+)(\.fur)$")
-        file_name = re.sub(RE_frame, r"%04d\g<2>", os.path.basename(path))
-        for cb_id, data in meta_data_lookup.items():
-
-            # Update cache file name
-            data["attrs"]["cacheFileName"] = os.path.join(
-                os.path.dirname(path), file_name)
+        for cb_id, node_settings in meta_data_lookup.items():
 
             if cb_id not in scene_lookup:
-
+                # Create new nodes
                 self.log.info("Creating new nodes ..")
 
-                new_nodes = self.create_nodes(namespace, [data])
+                new_nodes = self.create_node(namespace, node_settings)
                 cmds.sets(new_nodes, addElement=container_node)
                 cmds.parent(new_nodes, container_root)
 
@@ -218,14 +202,8 @@ class YetiCacheLoader(load.LoaderPlugin):
                                                     children=True)
                     yeti_node = yeti_nodes[0]
 
-                    for attr, value in data["attrs"].items():
-                        # handle empty attribute strings. Those are reported
-                        # as None, so their type is NoneType and this is not
-                        # supported on attributes in Maya. We change it to
-                        # empty string.
-                        if value is None:
-                            value = ""
-                        lib.set_attribute(attr, value, yeti_node)
+                    for attr, value in node_settings["attrs"].items():
+                        set_attribute(attr, value, yeti_node)
 
         cmds.setAttr("{}.representation".format(container_node),
                      str(representation["_id"]),
@@ -235,7 +213,6 @@ class YetiCacheLoader(load.LoaderPlugin):
         self.update(container, representation)
 
     # helper functions
-
     def create_namespace(self, asset):
         """Create a unique namespace
         Args:
@@ -253,100 +230,129 @@ class YetiCacheLoader(load.LoaderPlugin):
 
         return namespace
 
-    def validate_cache(self, filename, pattern="%04d"):
-        """Check if the cache has more than 1 frame
+    def get_cache_node_filepath(self, root, node_name):
+        """Get the cache file path for one of the yeti nodes.
 
-        All caches with more than 1 frame need to be called with `%04d`
-        If the cache has only one frame we return that file name as we assume
+        All caches with more than 1 frame need cache file name set with `%04d`
+        If the cache has only one frame we return the file name as we assume
         it is a snapshot.
 
+        This expects the files to be named after the "node name" through
+        exports with <Name> in Yeti.
+
         Args:
-            filename(str)
-            pattern(str)
+            root(str): Folder containing cache files to search in.
+            node_name(str): Node name to search cache files for
 
         Returns:
-            str
+            str: Cache file path value needed for cacheFileName attribute
 
         """
 
-        glob_pattern = filename.replace(pattern, "*")
+        name = node_name.replace(":", "_")
+        pattern = r"^({name})(\.[0-4]+)?(\.fur)$".format(name=re.escape(name))
 
-        escaped = re.escape(filename)
-        re_pattern = escaped.replace(pattern, "-?[0-9]+")
-
-        files = glob.glob(glob_pattern)
-        files = [str(f) for f in files if re.match(re_pattern, f)]
+        files = [fname for fname in os.listdir(root) if re.match(pattern,
+                                                                 fname)]
+        if not files:
+            self.log.error("Could not find cache files for '{}' "
+                           "with pattern {}".format(node_name, pattern))
+            return
 
         if len(files) == 1:
-            return files[0]
-        elif len(files) == 0:
-            self.log.error("Could not find cache files for '%s'" % filename)
+            # Single file
+            return os.path.join(root, files[0])
 
-        return filename
+        # Get filename for the sequence with padding
+        collections, remainder = clique.assemble(files)
+        assert not remainder, "This is a bug"
+        assert len(collections) == 1, "This is a bug"
+        collection = collections[0]
 
-    def create_nodes(self, namespace, settings):
+        # Assume padding from the first frame since clique returns 0 if the
+        # sequence contains no files padded with a zero at the start (e.g.
+        # a sequence starting at 1001)
+        padding = len(str(collection.indexes[0]))
+
+        fname = "{head}%0{padding}d{tail}".format(collection.head,
+                                                  padding,
+                                                  collection.tail)
+
+        return os.path.join(root, fname)
+
+    def create_node(self, namespace, node_settings):
         """Create nodes with the correct namespace and settings
 
         Args:
             namespace(str): namespace
-            settings(list): list of dictionaries
+            node_settings(dict): Single "nodes" entry from .fursettings file.
 
         Returns:
-             list
+             list: Created nodes
 
         """
-
         nodes = []
-        for node_settings in settings:
 
-            # Create pgYetiMaya node
-            original_node = node_settings["name"]
-            node_name = "{}:{}".format(namespace, original_node)
-            yeti_node = cmds.createNode("pgYetiMaya", name=node_name)
+        # Get original names and ids
+        orig_transform_name = node_settings["transform"]["name"]
+        orig_shape_name = node_settings["name"]
 
-            # Create transform node
-            transform_node = node_name.rstrip("Shape")
+        # Add namespace
+        transform_name = "{}:{}".format(namespace, orig_transform_name)
+        shape_name = "{}:{}".format(namespace, orig_shape_name)
 
-            lib.set_id(transform_node, node_settings["transform"]["cbId"])
-            lib.set_id(yeti_node, node_settings["cbId"])
+        # Create pgYetiMaya node
+        transform_node = cmds.createNode("transform",
+                                         name=transform_name)
+        yeti_node = cmds.createNode("pgYetiMaya",
+                                    name=shape_name,
+                                    parent=transform_node)
 
-            nodes.extend([transform_node, yeti_node])
+        lib.set_id(transform_node, node_settings["transform"]["cbId"])
+        lib.set_id(yeti_node, node_settings["cbId"])
 
-            # Ensure the node has no namespace identifiers
-            attributes = node_settings["attrs"]
+        nodes.extend([transform_node, yeti_node])
 
-            # Check if cache file name is stored
+        # Update attributes with defaults
+        attributes = node_settings["attrs"]
+        attributes.update({
+            "viewportDensity": 0.1,
+            "verbosity": 2,
+            "fileMode": 1,
 
-            # get number of # in path and convert it to C prinf format
-            # like %04d expected by Yeti
-            fbase = re.search(r'^(.+)\.(\d+|#+)\.fur', self.fname)
-            if not fbase:
-                raise RuntimeError('Cannot determine file path')
-            padding = len(fbase.group(2))
-            if "cacheFileName" not in attributes:
-                cache = "{}.%0{}d.fur".format(fbase.group(1), padding)
+            # Fix render stats, like Yeti's own
+            # ../scripts/pgYetiNode.mel script
+            "visibleInReflections": True,
+            "visibleInRefractions": True
+        })
 
-                self.validate_cache(cache)
-                attributes["cacheFileName"] = cache
+        # Apply attributes to pgYetiMaya node
+        for attr, value in attributes.items():
+            set_attribute(attr, value, yeti_node)
 
-            # Update attributes with requirements
-            attributes.update({"viewportDensity": 0.1,
-                               "verbosity": 2,
-                               "fileMode": 1})
-
-            # Apply attributes to pgYetiMaya node
-            for attr, value in attributes.items():
-                if value is None:
-                    continue
-                lib.set_attribute(attr, value, yeti_node)
-
-            # Fix for : YETI-6
-            # Fixes the render stats (this is literally taken from Perigrene's
-            # ../scripts/pgYetiNode.mel script)
-            cmds.setAttr("{}.visibleInReflections".format(yeti_node), True)
-            cmds.setAttr("{}.visibleInRefractions".format(yeti_node), True)
-
-            # Connect to the time node
-            cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
+        # Connect to the time node
+        cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
 
         return nodes
+
+    def read_settings(self, path):
+        """Read .fursettings file and compute some additional attributes"""
+
+        with open(path, "r") as fp:
+            fur_settings = json.load(fp)
+
+        if "nodes" not in fur_settings:
+            raise RuntimeError("Encountered invalid data, "
+                               "expected 'nodes' in fursettings.")
+
+        # Compute the cache file name values we want to set for the nodes
+        root = os.path.dirname(path)
+        for node in fur_settings["nodes"]:
+            cache_filename = self.get_cache_node_filepath(
+                root=root, node_name=node["name"])
+
+            attrs = node.get("attrs", {})       # allow 'attrs' to not exist
+            attrs["cacheFileName"] = cache_filename
+            node["attrs"] = attrs
+
+        return fur_settings
