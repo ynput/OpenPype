@@ -124,8 +124,8 @@ class ExtractYetiRig(openpype.api.Extractor):
         settings_path = os.path.join(dirname, "yeti.rigsettings")
 
         # Yeti related staging dirs
-        maya_path = os.path.join(
-            dirname, "yeti_rig.{}".format(self.scene_type))
+        maya_path = os.path.join(dirname,
+                                 "yeti_rig.{}".format(self.scene_type))
 
         self.log.info("Writing metadata file")
 
@@ -157,7 +157,7 @@ class ExtractYetiRig(openpype.api.Extractor):
         input_set = next(i for i in instance if i == "input_SET")
 
         # Get all items
-        set_members = cmds.sets(input_set, query=True)
+        set_members = cmds.sets(input_set, query=True) or []
         set_members += cmds.listRelatives(set_members,
                                           allDescendents=True,
                                           fullPath=True) or []
@@ -167,7 +167,7 @@ class ExtractYetiRig(openpype.api.Extractor):
         resources = instance.data.get("resources", {})
         with disconnect_plugs(settings, members):
             with yetigraph_attribute_values(resources_dir, resources):
-                with maya.attribute_values(attr_value):
+                with lib.attribute_values(attr_value):
                     cmds.select(nodes, noExpand=True)
                     cmds.file(maya_path,
                               force=True,
