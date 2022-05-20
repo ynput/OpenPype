@@ -6,6 +6,7 @@ from maya import cmds
 import pyblish.api
 from openpype.hosts.maya.api import lib
 
+
 def get_look_attrs(node):
     """Returns attributes of a node that are important for the look.
 
@@ -191,20 +192,19 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
         import multiverse
 
-        self.log.info("Processing mvLook for '{}' / '{}'".format(
-            instance, instance.data['name']))
+        self.log.info("Processing mvLook for '{}'".format(instance))
 
         nodes = set()
         for node in instance:
             # We want only mvUsdCompoundShape nodes.
             nodes_of_interest = cmds.ls(node,
-                              dag=True,
-                              shapes=False,
-                              type="mvUsdCompoundShape",
-                              noIntermediate=True,
-                              long=True)
+                                        dag=True,
+                                        shapes=False,
+                                        type="mvUsdCompoundShape",
+                                        noIntermediate=True,
+                                        long=True)
             nodes.update(nodes_of_interest)
-    
+
         files = []
         sets = {}
         instance.data["resources"] = []
@@ -212,16 +212,21 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         for node in nodes:
             self.log.info("Getting resources for '{}'".format(node))
 
-            # We know what nodes 
+            # We know what nodes need to be collected, now we need to
+            # extract the materials overrides.
             overrides = multiverse.ListMaterialOverridePrims(node)
             for override in overrides:
                 matOver = multiverse.GetMaterialOverride(node, override)
 
                 if isinstance(matOver, multiverse.MaterialSourceShadingGroup):
+                    # We now need to grab the shadingGroup so add it to the
+                    # sets we pass down the pipe.
                     shadingGroup = matOver.shadingGroupName
                     self.log.debug("ShadingGroup = '{}'".format(shadingGroup))
-                    sets[shadingGroup] = {"uuid": lib.get_id(shadingGroup), "members": list()}
+                    sets[shadingGroup] = {"uuid": lib.get_id(
+                        shadingGroup), "members": list()}
 
+                    # The SG may reference files, add those too!
                     history = cmds.listHistory(shadingGroup)
                     files = cmds.ls(history, type="file", long=True)
 
@@ -229,27 +234,15 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                         resources = self.collect_resource(f)
                         instance.data["resources"].append(resources)
 
-                elif  isinstance(matOver, multiverse.MaterialSourceUsdPath):
+                elif isinstance(matOver, multiverse.MaterialSourceUsdPath):
                     # TODO: Handle this later.
                     pass
-                else:
-                    # TODO: What to do here?
-                    pass
 
-        # Store data on the instance
+        # Store data on the instance for validators, extractos, etc.
         instance.data["lookData"] = {
             "attributes": [],
             "relationships": sets
         }
-
-        self.log.info("-------------------------")
-        self.log.info("Instance: {},{}".format(type(instance),instance))
-        self.log.info("Instance.data: {},{}".format(type(instance.data),instance.data))
-        for k in instance.data.keys():
-            v = instance.data[k]
-            self.log.info(" data: {},{}".format(k,v))
-        self.log.info("-------------------------")
-
 
     def collect_resource(self, node):
         """Collect the link to the file(s) used (resource)
@@ -269,7 +262,8 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         if cmds.nodeType(node) == 'file':
             self.log.debug("  - file node")
             attribute = "{}.fileTextureName".format(node)
-            computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+            computed_attribute = "{}.computedFileTextureNamePattern".format(
+                node)
         elif cmds.nodeType(node) == 'aiImage':
             self.log.debug("aiImage node")
             attribute = "{}.filename".format(node)
