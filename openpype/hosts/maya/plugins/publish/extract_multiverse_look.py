@@ -1,5 +1,4 @@
 import os
-import six
 
 from maya import cmds
 

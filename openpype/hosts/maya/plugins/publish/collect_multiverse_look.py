@@ -6,6 +6,17 @@ from maya import cmds
 import pyblish.api
 from openpype.hosts.maya.api import lib
 
+SHAPE_ATTRS = ["castsShadows",
+               "receiveShadows",
+               "motionBlur",
+               "primaryVisibility",
+               "smoothShading",
+               "visibleInReflections",
+               "visibleInRefractions",
+               "doubleSided",
+               "opposite"]
+
+SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 def get_look_attrs(node):
     """Returns attributes of a node that are important for the look.
@@ -92,7 +103,7 @@ def seq_to_glob(path):
         "<uvtile>": "<uvtile>",
         "#": "#",
         "u<u>_v<v>": "<u>|<v>",
-        "<frame0": "<frame0\d+>",
+        "<frame0": "<frame0\d+>", #noqa - copied from collect_look.py
         "<f>": "<f>"
     }
 
