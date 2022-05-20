@@ -139,7 +139,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     ef, instance.data["family"], instance.data["families"]))
                 return
 
-        if "deadline" in instance.data["families"]:
+        # instance should be published on a farm
+        if instance.data["farm"]:
             return
 
         self.integrated_file_sizes = {}
