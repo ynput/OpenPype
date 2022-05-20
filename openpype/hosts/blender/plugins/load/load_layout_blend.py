@@ -23,8 +23,11 @@ class BlendLayoutLoader(plugin.AssetLoader):
     @staticmethod
     def _make_local_actions(objects):
         """Make local for all actions from objects."""
-        # Try to use session task to rename local action.
-        session_task = legacy_io.Session.get("AVALON_TASK", "Local")
+        # Get session action name suffix.
+        session_asset = legacy_io.Session.get("AVALON_ASSET", "Local")
+        session_task = legacy_io.Session.get("AVALON_TASK", "Task")
+        session_action = f"_action_{session_asset}_{session_task}"
+
         local_actions = {}
 
         for obj in objects:
@@ -38,14 +41,17 @@ class BlendLayoutLoader(plugin.AssetLoader):
             # Make action local if needed.
             if not local_action:
                 # Get local action name from linked action name.
-                if re.match("*_action[^_]+$", linked_action.name):
-                    local_name = re.sub(
-                        "*_(action[^_]+)$",
-                        linked_action.name,
-                        f"_action{session_task}"
+                re_match = re.match(
+                    r"*_action_(?P<asset>[^_]+)_(?P<task>[^_]+)$",
+                    linked_action.name
+                )
+                if re_match:
+                    local_name = linked_action.name.replace(
+                        f"_action_{re_match.group(1)}_{re_match.group(2)}",
+                        session_action
                     )
                 else:
-                    local_name = linked_action.name + f"_action{session_task}"
+                    local_name = linked_action.name + session_action
                 # Make local action, rename and upadate local_actions dict.
                 local_action = linked_action.make_local()
                 local_action.name = local_name

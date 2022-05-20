@@ -76,12 +76,25 @@ class BlendRigLoader(plugin.AssetLoader):
     @staticmethod
     def _assign_action(objects, namespace):
         """Assign new action for all objects from linked rig."""
-        session_task = legacy_io.Session.get("AVALON_TASK", "")
-        action = bpy.data.actions.new(f"{namespace}_action{session_task}")
+        # Get session action name suffix.
+        session_asset = legacy_io.Session.get("AVALON_ASSET", "Local")
+        session_task = legacy_io.Session.get("AVALON_TASK", "Task")
+        session_action_name = f"action_{session_asset}_{session_task}"
+        # If rig contain only one armature.
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if len(armatures) == 1:
+            if armatures[0].animation_data is None:
+                armatures[0].animation_data_create()
+            armatures[0].animation_data.action = bpy.data.actions.new(
+                f"{namespace}_{session_action_name}"
+            )
+        # If rig contain zero or multiple armatures.
         for obj in objects:
             if obj.animation_data is None:
                 obj.animation_data_create()
-            obj.animation_data.action = action
+            obj.animation_data.action = bpy.data.actions.new(
+                f"{obj.name}_{session_action_name}"
+            )
         plugin.orphans_purge()
 
     def process_asset(
@@ -131,34 +144,43 @@ class BlendRigLoader(plugin.AssetLoader):
     def maintained_actions(self, asset_group):
         """Maintain actions during context."""
         asset_group_name = asset_group.name
+        objects_actions = []
+        armature_action = None
         # Get the armature from asset_group.
-        armature = None
-        for obj in asset_group.all_objects:
-            if obj.type == "ARMATURE":
-                armature = obj
-                break
+        armatures = [
+            obj
+            for obj in asset_group.all_objects
+            if obj.type == "ARMATURE"
+        ]
         # Store action from armature.
-        action = None
         if (
-            armature and
-            armature.animation_data and
-            armature.animation_data.action
+            len(armatures) == 1 and
+            armatures[0].animation_data and
+            armatures[0].animation_data.action
         ):
-            action = armature.animation_data.action
+            armature_action = armatures[0].animation_data.action
         else:
-            # If there is no armature nor action from armature,
-            # we try to get action from any objects from asset_group.
+            # If there is no or multiple armature or no action from armature,
+            # we get actions from all objects from asset_group.
             for obj in asset_group.all_objects:
                 if obj.animation_data and obj.animation_data.action:
-                    action = obj.animation_data.action
-                    break
+                    objects_actions[obj.name] = obj.animation_data.action
         try:
             yield
         finally:
             # Restor action.
             asset_group = bpy.data.collections.get(asset_group_name)
-            if asset_group and action:
-                for obj in asset_group.all_objects:
-                    if obj.animation_data is None:
-                        obj.animation_data_create()
-                    obj.animation_data.action = action
+            if asset_group:
+                if armature_action:
+                    for obj in asset_group.all_objects:
+                        if obj.type == "ARMATURE":
+                            if obj.animation_data is None:
+                                obj.animation_data_create()
+                            obj.animation_data.action = armature_action
+                elif objects_actions:
+                    for obj in asset_group.all_objects:
+                        action = objects_actions.get(obj.name)
+                        if action:
+                            if obj.animation_data is None:
+                                obj.animation_data_create()
+                            obj.animation_data.action = action

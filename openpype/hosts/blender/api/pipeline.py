@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import traceback
 from typing import Callable, Dict, Iterator, List, Optional
@@ -357,6 +358,11 @@ def parse_container(container: bpy.types.Collection,
     # Append transient data
     data["objectName"] = container.name
 
+    # Fix namespace if empty
+    if not data.get("namespace"):
+        re_match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
+        data["namespace"] = re_match.group(1) if re_match else container.name
+
     if validate:
         schema.validate(data)
 
@@ -372,7 +378,7 @@ def ls() -> Iterator:
     """
 
     collections = lib.lsattr("id", AVALON_CONTAINER_ID)
-    scene_collections = list(bpy.context.scene.collection.children_recursive)
+    scene_collections = bpy.context.scene.collection.children_recursive
     for container in collections:
         if container in scene_collections and not container.override_library:
             yield parse_container(container)
