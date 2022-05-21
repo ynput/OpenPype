@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.10.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.10.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.8...HEAD)
 
@@ -14,13 +14,12 @@
 
 **🚀 Enhancements**
 
+- Project manager: Sped up project load [\#3216](https://github.com/pypeclub/OpenPype/pull/3216)
 - Maya: added clean\_import option to Import loader [\#3181](https://github.com/pypeclub/OpenPype/pull/3181)
 - Maya: add maya 2023 to default applications [\#3167](https://github.com/pypeclub/OpenPype/pull/3167)
-- Compressed bgeo publishing in SAP and Houdini loader [\#3153](https://github.com/pypeclub/OpenPype/pull/3153)
 - General: Add 'dataclasses' to required python modules [\#3149](https://github.com/pypeclub/OpenPype/pull/3149)
 - Hooks: Tweak logging grammar [\#3147](https://github.com/pypeclub/OpenPype/pull/3147)
 - Nuke: settings for reformat node in CreateWriteRender node [\#3143](https://github.com/pypeclub/OpenPype/pull/3143)
-- Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
 - Publisher: UI Modifications and fixes [\#3139](https://github.com/pypeclub/OpenPype/pull/3139)
 - General: Simplified OP modules/addons import [\#3137](https://github.com/pypeclub/OpenPype/pull/3137)
 - Terminal: Tweak coloring of TrayModuleManager logging enabled states [\#3133](https://github.com/pypeclub/OpenPype/pull/3133)
@@ -34,6 +33,8 @@
 
 **🐛 Bug fixes**
 
+- Deadline: instance data overwrite fix [\#3214](https://github.com/pypeclub/OpenPype/pull/3214)
+- Ftrack: Push hierarchical attributes action works [\#3210](https://github.com/pypeclub/OpenPype/pull/3210)
 - Standalone Publisher: Always create new representation for thumbnail [\#3203](https://github.com/pypeclub/OpenPype/pull/3203)
 - Photoshop: skip collector when automatic testing [\#3202](https://github.com/pypeclub/OpenPype/pull/3202)
 - Nuke: render/workfile version sync doesn't work on farm [\#3185](https://github.com/pypeclub/OpenPype/pull/3185)
@@ -47,6 +48,7 @@
 - Ftrack: Action delete old versions formatting works [\#3152](https://github.com/pypeclub/OpenPype/pull/3152)
 - Deadline: fix the output directory [\#3144](https://github.com/pypeclub/OpenPype/pull/3144)
 - General: New Session schema [\#3141](https://github.com/pypeclub/OpenPype/pull/3141)
+- General: Missing version on headless mode crash properly [\#3136](https://github.com/pypeclub/OpenPype/pull/3136)
 - TVPaint: Composite layers in reversed order [\#3135](https://github.com/pypeclub/OpenPype/pull/3135)
 - Nuke: fixing default settings for workfile builder loaders [\#3120](https://github.com/pypeclub/OpenPype/pull/3120)
 - Nuke: fix anatomy imageio regex default [\#3119](https://github.com/pypeclub/OpenPype/pull/3119)
@@ -59,6 +61,7 @@
 
 **Merged pull requests:**
 
+- Maya: added jpg to filter for Image Plane Loader [\#3223](https://github.com/pypeclub/OpenPype/pull/3223)
 - Webpublisher: replace space by underscore in subset names [\#3160](https://github.com/pypeclub/OpenPype/pull/3160)
 - StandalonePublisher: removed Extract Background plugins [\#3093](https://github.com/pypeclub/OpenPype/pull/3093)
 
@@ -95,7 +98,9 @@
 **🚀 Enhancements**
 
 - Deadline output dir issue to 3.9x [\#3155](https://github.com/pypeclub/OpenPype/pull/3155)
+- Compressed bgeo publishing in SAP and Houdini loader [\#3153](https://github.com/pypeclub/OpenPype/pull/3153)
 - nuke: removing redundant code from startup [\#3142](https://github.com/pypeclub/OpenPype/pull/3142)
+- Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
 
 **🐛 Bug fixes**
 
@@ -120,7 +125,6 @@
 
 **🐛 Bug fixes**
 
-- General: Missing version on headless mode crash properly [\#3136](https://github.com/pypeclub/OpenPype/pull/3136)
 - TVPaint: Composite layers in reversed order [\#3134](https://github.com/pypeclub/OpenPype/pull/3134)
 - General: Python 3 compatibility in queries [\#3111](https://github.com/pypeclub/OpenPype/pull/3111)
 
@@ -137,7 +141,6 @@
 
 - Ftrack: Update Create Folders action [\#3092](https://github.com/pypeclub/OpenPype/pull/3092)
 - General: Extract review sequence is not converted with same names [\#3075](https://github.com/pypeclub/OpenPype/pull/3075)
-- Webpublisher: Use variant value [\#3072](https://github.com/pypeclub/OpenPype/pull/3072)
 
 ## [3.9.4](https://github.com/pypeclub/OpenPype/tree/3.9.4) (2022-04-15)
 
