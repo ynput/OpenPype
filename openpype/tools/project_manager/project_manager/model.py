@@ -264,8 +264,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not project_doc:
             return
 
-        self.blockSignals(True)
-
         # Create project item
         project_item = ProjectItem(project_doc)
         self.add_item(project_item)
@@ -378,8 +376,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 task_items.append(task_item)
 
             self.add_items(task_items, asset_item)
-
-        self.blockSignals(False)
 
         # Emit that project was successfully changed
         self.project_changed.emit()
