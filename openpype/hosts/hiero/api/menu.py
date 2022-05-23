@@ -9,6 +9,7 @@ from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 
 from . import tags
+from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
 
@@ -41,6 +42,7 @@ def menu_install():
     Installing menu into Hiero
 
     """
+    print("YOLOOOOOOOOOOOOOOOOOO")
     from Qt import QtGui
     from . import (
         publish, launch_workfiles_app, reload_config,
@@ -138,3 +140,32 @@ def menu_install():
     exeprimental_action.triggered.connect(
         lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
     )
+
+
+def add_scripts_menu():
+    try:
+        from scriptsmenu import launchforhiero
+    except ImportError:
+        log.warning(
+            "Skipping studio.menu install, because "
+            "'scriptsmenu' module seems unavailable."
+        )
+        return
+
+    # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    config = project_settings["hiero"]["scriptsmenu"]["definition"]
+    _menu = project_settings["hiero"]["scriptsmenu"]["name"]
+
+    if not config:
+        log.warning("Skipping studio menu, no definition found.")
+        return
+
+    # run the launcher for Maya menu
+    studio_menu = launchforhiero.main(title=_menu.title())
+
+    # apply configuration
+    studio_menu.build_from_configuration(studio_menu, config)
+
+
+add_scripts_menu()
