@@ -165,12 +165,12 @@ def parse_group_data(data):
         if not group_raw:
             continue
 
-        parts = group_raw.split(" ")
+        parts = group_raw.split("|")
         # Check for length and concatenate 2 last items until length match
         # - this happens if name contain spaces
         while len(parts) > 6:
             last_item = parts.pop(-1)
-            parts[-1] = " ".join([parts[-1], last_item])
+            parts[-1] = "|".join([parts[-1], last_item])
         clip_id, group_id, red, green, blue, name = parts
 
         group = {
@@ -201,11 +201,16 @@ def get_groups_data(communicator=None):
     george_script_lines = (
         # Variable containing full path to output file
         "output_path = \"{}\"".format(output_filepath),
-        "loop = 1",
-        "FOR idx = 1 TO 12",
+        "empty = 0",
+        # Loop over 100 groups
+        "FOR idx = 1 TO 100",
+        # Receive information about groups
         "tv_layercolor \"getcolor\" 0 idx",
-        "tv_writetextfile \"strict\" \"append\" '\"'output_path'\"' result",
-        "END"
+        "PARSE result clip_id group_index c_red c_green c_blue group_name",
+        # Create and add line to output file
+        "line = group_index'|'c_red'|'c_green'|'c_blue'|'group_name",
+        "tv_writetextfile \"strict\" \"append\" '\"'output_path'\"' line",
+        "END",
     )
     george_script = "\n".join(george_script_lines)
     execute_george_through_file(george_script, communicator)
