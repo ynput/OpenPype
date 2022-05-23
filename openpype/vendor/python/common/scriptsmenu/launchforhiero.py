@@ -7,6 +7,7 @@ log = logging.getLogger(__name__)
 
 
 def _hiero_main_window():
+    print("YEAAAAAAAAAAAAAAAAAAAH")
     """Return Nuke's main window"""
     for obj in QtWidgets.QApplication.topLevelWidgets():
         if (obj.inherits('QMainWindow') and
