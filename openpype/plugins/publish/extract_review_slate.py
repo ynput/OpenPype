@@ -130,8 +130,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         input_audio = True
                         break
             # Get duration of one frame in micro seconds
-            one_frame_duration = "40000us"
-            if input_frame_rate:
+            if not input_frame_rate:
+                one_frame_duration = "40000us"
+            else:
                 items = input_frame_rate.split("/")
                 if len(items) == 1:
                     one_frame_duration = float(1.0) / float(items[0])
