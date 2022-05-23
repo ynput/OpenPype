@@ -124,9 +124,15 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
                 "source": context.data["currentFile"].replace("\\", "/"),
-                "resolutionWidth": cmds.getAttr("defaultResolution.width"),
-                "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
+                "resolutionWidth": lib.get_attr_in_layer(
+                    "defaultResolution.height", layer=layer
+                ),
+                "resolutionHeight": lib.get_attr_in_layer(
+                    "defaultResolution.width", layer=layer
+                ),
+                "pixelAspect": lib.get_attr_in_layer(
+                    "defaultResolution.pixelAspect", layer=layer
+                ),
                 "priority": instance.data.get("priority"),
                 "useMultipleSceneFiles": instance.data.get(
                     "vraySceneMultipleFiles")
