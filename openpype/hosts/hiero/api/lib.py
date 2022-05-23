@@ -171,7 +171,7 @@ def get_track_items(
 
     # get selected track items or all in active sequence
     if selection:
-        with contextlib.suppress(AttributeError):
+        try:
             for track_item in selection:
                 log.info("___ track_item: {}".format(track_item))
                 # make sure only trackitems are selected
@@ -188,6 +188,8 @@ def get_track_items(
                 ):
                     log.info("___ valid trackitem: {}".format(track_item))
                     return_list.append(track_item)
+        except AttributeError:
+            pass
 
     # collect all available active sequence track items
     if not return_list:
