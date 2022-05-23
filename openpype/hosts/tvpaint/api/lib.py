@@ -208,7 +208,7 @@ def get_groups_data(communicator=None):
         "tv_layercolor \"getcolor\" 0 idx",
         "PARSE result clip_id group_index c_red c_green c_blue group_name",
         # Create and add line to output file
-        "line = group_index'|'c_red'|'c_green'|'c_blue'|'group_name",
+        "line = clip_id'|'group_index'|'c_red'|'c_green'|'c_blue'|'group_name",
         "tv_writetextfile \"strict\" \"append\" '\"'output_path'\"' line",
         "END",
     )
