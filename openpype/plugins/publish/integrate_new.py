@@ -140,7 +140,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 return
 
         # instance should be published on a farm
-        if instance.data["farm"]:
+        if instance.data.get("farm"):
             return
 
         self.integrated_file_sizes = {}
