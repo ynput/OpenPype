@@ -365,20 +365,24 @@ class HierarchyView(QtWidgets.QTreeView):
             event.accept()
 
     def _copy_items(self, indexes=None):
+        clipboard = QtWidgets.QApplication.clipboard()
         try:
             if indexes is None:
                 indexes = self.selectedIndexes()
             mime_data = self._source_model.copy_mime_data(indexes)
 
-            QtWidgets.QApplication.clipboard().setMimeData(mime_data)
+            clipboard.setMimeData(mime_data)
             self._show_message("Tasks copied")
         except ValueError as exc:
+            # Change clipboard to contain empty data
+            empty_mime_data = QtCore.QMimeData()
+            clipboard.setMimeData(empty_mime_data)
             self._show_message(str(exc))
 
     def _paste_items(self):
-        index = self.currentIndex()
         mime_data = QtWidgets.QApplication.clipboard().mimeData()
-        self._source_model.paste_mime_data(index, mime_data)
+        rows = self.selectionModel().selectedRows()
+        self._source_model.paste(rows, mime_data)
 
     def _delete_items(self, indexes=None):
         if indexes is None:
