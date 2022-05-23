@@ -1476,7 +1476,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         mimedata.setData("application/copy_task", encoded_data)
         return mimedata
 
-    def paste_mime_data(self, item, mime_data):
+    def _paste_mime_data(self, item, mime_data):
         if not isinstance(item, (AssetItem, TaskItem)):
             return
 
@@ -1510,11 +1510,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             task_item = TaskItem(task_data, True)
             self.add_item(task_item, parent)
 
-    def paste(self, indices, mime_data):
+    def paste(self, indexes, mime_data):
 
         # Get the selected Assets uniquely
         items = set()
-        for index in indices:
+        for index in indexes:
             if not index.isValid():
                 return
             item_id = index.data(IDENTIFIER_ROLE)
@@ -1527,7 +1527,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             items.add(item)
 
         for item in items:
-            self.paste_mime_data(item, mime_data)
+            self._paste_mime_data(item, mime_data)
 
 
 class BaseItem:
