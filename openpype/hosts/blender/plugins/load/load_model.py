@@ -70,11 +70,12 @@ class BlendModelLoader(plugin.AssetLoader):
 
         return objects
 
+    @staticmethod
     def _apply_options(asset_group, options):
         """Apply load options fro asset_group."""
 
         transform = options.get('transform')
-        if options.get('transform'):
+        if transform:
             location = transform.get('translation')
             rotation = transform.get('rotation')
             scale = transform.get('scale')
@@ -84,12 +85,16 @@ class BlendModelLoader(plugin.AssetLoader):
             asset_group.scale = [scale[n] for n in "xyz"]
 
         parent = options.get('parent')
-        if options.get('parent'):
-            plugin.deselect_all()
-            bpy.context.view_layer.objects.active = parent
-            asset_group.select_set(True)
-            bpy.ops.object.parent_set(keep_transform=True)
-            plugin.deselect_all()
+        if isinstance(parent, bpy.types.Object):
+            bpy.ops.object.parent_set(
+                plugin.create_blender_context(
+                    active=bpy.context.scene.objects.get(parent),
+                    selected=[asset_group]
+                ),
+                keep_transform=True
+            )
+        elif isinstance(parent, bpy.types.Collection):
+            plugin.link_to_collection(asset_group, parent)
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -141,7 +146,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
-        self._update_blend(container, representation)
+        self._update_process(container, representation)
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

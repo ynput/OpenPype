@@ -7,7 +7,7 @@ import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 import openpype.api
@@ -121,19 +121,37 @@ class ExtractLayout(openpype.api.Extractor):
         json_data = []
         fbx_files = []
 
-        asset_group = bpy.data.collections[str(instance)]
+        members = instance[:-1]
 
         fbx_count = 0
 
-        for asset in asset_group.children:
+        assets = [
+            member
+            for member in members
+            if (
+                not member.override_library and
+                member.get(AVALON_PROPERTY) and
+                member.get(AVALON_PROPERTY).get("id") == AVALON_CONTAINER_ID
+            )
+        ]
+
+        for asset in assets:
             metadata = asset.get(AVALON_PROPERTY)
+
+            # skip invalid assets
+            for key in ("parent", "family", "asset_name", "libpath"):
+                if key not in metadata:
+                    self.log.debug(
+                        f"Missing metadata for {asset.name}: {key}"
+                    )
+                    continue
 
             self.log.info(f"Extracting: {asset.name}")
 
             parent = metadata.get("parent")
             family = metadata.get("family")
 
-            self.log.debug("Parent: {}".format(parent))
+            self.log.debug(f"Parent: {parent}")
             # Get blend reference
             blend = legacy_io.find_one(
                 {
@@ -180,13 +198,7 @@ class ExtractLayout(openpype.api.Extractor):
             json_element["asset_name"] = metadata.get("asset_name")
             json_element["file_path"] = metadata.get("libpath")
 
-            if isinstance(asset, bpy.types.Collection):
-                json_element["instance_offset"] = {
-                    "x": asset.instance_offset.x,
-                    "y": asset.instance_offset.y,
-                    "z": asset.instance_offset.z
-                }
-            else:
+            if isinstance(asset, bpy.types.Object):
                 json_element["transform"] = {
                     "translation": {
                         "x": asset.location.x,
@@ -208,7 +220,8 @@ class ExtractLayout(openpype.api.Extractor):
             # Extract the animation as well
             if family == "rig":
                 f, n = self._export_animation(
-                    asset, instance, stagingdir, fbx_count)
+                    asset, instance, stagingdir, fbx_count
+                )
                 if f:
                     fbx_files.append(f)
                     json_element["animation"] = f

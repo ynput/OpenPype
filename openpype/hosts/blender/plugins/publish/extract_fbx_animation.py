@@ -25,116 +25,103 @@ class ExtractAnimationFBX(api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        # The first collection object in the instance is taken, as there
-        # should be only one that contains the asset group.
-        collection = [
-            obj for obj in instance if isinstance(obj, bpy.types.Collection)
-        ]
+        # The asset group collection should be only the last instance member.
+        asset_group = instance[-1]
 
-        if not collection:
-            return
-
-        # Again, the first object in the collection is taken , as there
-        # should be only the asset group in the collection.
-        asset_group = collection[0]
-
-        armature = [
+        armatures = [
             obj for obj in asset_group.objects if obj.type == 'ARMATURE'
         ]
 
-        if not armature:
-            return
+        for armature in armatures:
 
-        armature = [0]
+            object_action_pairs = []
+            original_actions = []
 
-        object_action_pairs = []
-        original_actions = []
+            starting_frames = []
+            ending_frames = []
 
-        starting_frames = []
-        ending_frames = []
+            # For each armature, we make a copy of the current action
+            curr_action = None
+            copy_action = None
 
-        # For each armature, we make a copy of the current action
-        curr_action = None
-        copy_action = None
+            if armature.animation_data and armature.animation_data.action:
+                curr_action = armature.animation_data.action
+                copy_action = curr_action.copy()
 
-        if armature.animation_data and armature.animation_data.action:
-            curr_action = armature.animation_data.action
-            copy_action = curr_action.copy()
+                curr_frame_range = curr_action.frame_range
 
-            curr_frame_range = curr_action.frame_range
+                starting_frames.append(curr_frame_range[0])
+                ending_frames.append(curr_frame_range[1])
+            else:
+                self.log.info("Object have no animation.")
+                continue
 
-            starting_frames.append(curr_frame_range[0])
-            ending_frames.append(curr_frame_range[1])
-        else:
-            self.log.info("Object have no animation.")
-            return
+            asset_group_name = asset_group.name
+            asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
 
-        asset_group_name = asset_group.name
-        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+            armature_name = armature.name
+            original_name = armature_name.split(':')[1]
+            armature.name = original_name
 
-        armature_name = armature.name
-        original_name = armature_name.split(':')[1]
-        armature.name = original_name
+            object_action_pairs.append((armature, copy_action))
+            original_actions.append(curr_action)
 
-        object_action_pairs.append((armature, copy_action))
-        original_actions.append(curr_action)
+            # We compute the starting and ending frames
+            max_frame = min(starting_frames)
+            min_frame = max(ending_frames)
 
-        # We compute the starting and ending frames
-        max_frame = min(starting_frames)
-        min_frame = max(ending_frames)
+            # We bake the copy of the current action for each object
+            bpy_extras.anim_utils.bake_action_objects(
+                object_action_pairs,
+                frames=range(int(min_frame), int(max_frame)),
+                do_object=False,
+                do_clean=False
+            )
 
-        # We bake the copy of the current action for each object
-        bpy_extras.anim_utils.bake_action_objects(
-            object_action_pairs,
-            frames=range(int(min_frame), int(max_frame)),
-            do_object=False,
-            do_clean=False
-        )
+            for obj in bpy.data.objects:
+                obj.select_set(False)
 
-        for obj in bpy.data.objects:
-            obj.select_set(False)
+            asset_group.select_set(True)
+            armature.select_set(True)
+            fbx_filename = f"{instance.name}_{armature.name}.fbx"
+            filepath = os.path.join(stagingdir, fbx_filename)
 
-        asset_group.select_set(True)
-        armature.select_set(True)
-        fbx_filename = f"{instance.name}_{armature.name}.fbx"
-        filepath = os.path.join(stagingdir, fbx_filename)
+            override = plugin.create_blender_context(
+                active=asset_group, selected=[asset_group, armature])
+            bpy.ops.export_scene.fbx(
+                override,
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False,
+                add_leaf_bones=False,
+                armature_nodetype='ROOT',
+                object_types={'EMPTY', 'ARMATURE'}
+            )
+            armature.name = armature_name
+            asset_group.name = asset_group_name
+            asset_group.select_set(False)
+            armature.select_set(False)
 
-        override = plugin.create_blender_context(
-            active=asset_group, selected=[asset_group, armature])
-        bpy.ops.export_scene.fbx(
-            override,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            bake_anim_use_nla_strips=False,
-            bake_anim_use_all_actions=False,
-            add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'EMPTY', 'ARMATURE'}
-        )
-        armature.name = armature_name
-        asset_group.name = asset_group_name
-        asset_group.select_set(False)
-        armature.select_set(False)
+            # We delete the baked action and set the original one back
+            for i in range(0, len(object_action_pairs)):
+                pair = object_action_pairs[i]
+                action = original_actions[i]
 
-        # We delete the baked action and set the original one back
-        for i in range(0, len(object_action_pairs)):
-            pair = object_action_pairs[i]
-            action = original_actions[i]
+                if action:
+                    pair[0].animation_data.action = action
 
-            if action:
-                pair[0].animation_data.action = action
+                if pair[1]:
+                    pair[1].user_clear()
+                    bpy.data.actions.remove(pair[1])
 
-            if pair[1]:
-                pair[1].user_clear()
-                bpy.data.actions.remove(pair[1])
+            json_filename = f"{instance.name}.json"
+            json_path = os.path.join(stagingdir, json_filename)
 
-        json_filename = f"{instance.name}.json"
-        json_path = os.path.join(stagingdir, json_filename)
-
-        json_dict = {
-            "instance_name": asset_group.get(AVALON_PROPERTY).get("objectName")
-        }
+            json_dict = {
+                "instance_name": asset_group.get(AVALON_PROPERTY).get("objectName")
+            }
 
         # collection = instance.data.get("name")
         # container = None
