@@ -377,6 +377,7 @@ class Loader(LoaderPlugin):
     """Base class for Loader plug-ins."""
 
     hosts = ["blender"]
+    representations = []
 
 
 class AssetLoader(LoaderPlugin):
@@ -475,6 +476,41 @@ class AssetLoader(LoaderPlugin):
         deselect_all()
 
         return list(asset_group.all_objects)
+
+    def _load_fbx(self, libpath, asset_group):
+        deselect_all()
+
+        collection = bpy.context.view_layer.active_layer_collection.collection
+
+        bpy.ops.import_scene.fbx(filepath=libpath)
+
+        imported = get_selection()
+
+        empties = [obj for obj in imported if obj.type == 'EMPTY']
+
+        container = None
+
+        for empty in empties:
+            if not empty.parent:
+                container = empty
+                break
+
+        assert container, "No asset group found"
+
+        objects = list(container.children_recursive)
+
+        link_to_collection(objects, asset_group)
+
+        if collection is not asset_group:
+            for obj in objects:
+                if obj in collection.objects.values():
+                    collection.objects.unlink(obj)
+
+        bpy.data.objects.remove(container)
+        orphans_purge()
+        deselect_all()
+
+        return objects
 
     def process_asset(self,
                       context: dict,
@@ -606,7 +642,7 @@ class AssetLoader(LoaderPlugin):
         )
         return normalized_group_libpath == normalized_libpath
 
-    def _update_blend(self, container: Dict, representation: Dict):
+    def _update_process(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
@@ -650,10 +686,19 @@ class AssetLoader(LoaderPlugin):
             stack.enter_context(self.maintained_actions(asset_group))
 
             remove_container(asset_group, content_only=True)
-            self._load_blend(libpath, asset_group)
+
+            if "blend" in self.representations:
+                self._load_blend(libpath, asset_group)
+            elif "fbx" in self.representations:
+                self._load_fbx(libpath, asset_group)
+            elif hasattr(self, "_process"):
+                self._process(libpath, asset_group)
+            else:
+                raise NotImplementedError("Must be implemented")
 
         # update override library operations from asset objects
-        for obj in set(asset_group.all_objects):
+        objects = asset_group.all_objects
+        for obj in set(objects):
             if obj.override_library:
                 obj.override_library.operations_update()
 
@@ -670,6 +715,8 @@ class AssetLoader(LoaderPlugin):
                 "parent": str(representation["parent"]),
             }
         )
+
+        return objects
 
     def _update_metadata(
         self,

@@ -56,7 +56,7 @@ class BlendCameraLoader(plugin.AssetLoader):
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
-        self._update_blend(container, representation)
+        self._update_process(container, representation)
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

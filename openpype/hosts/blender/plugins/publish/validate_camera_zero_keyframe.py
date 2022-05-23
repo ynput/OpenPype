@@ -47,4 +47,4 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError(
-                f"Object found in instance is not in Object Mode: {invalid}")
+                f"Camera must have a keyframe at frame 0: {invalid}")
