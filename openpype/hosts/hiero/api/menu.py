@@ -42,7 +42,7 @@ def menu_install():
     Installing menu into Hiero
 
     """
-    print("YOLOOOOOOOOOOOOOOOOOO")
+
     from Qt import QtGui
     from . import (
         publish, launch_workfiles_app, reload_config,
