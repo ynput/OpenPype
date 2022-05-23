@@ -138,6 +138,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     one_frame_duration = float(1.0) / float(items[0])
                 elif len(items) == 2:
                     one_frame_duration = float(items[1]) / float(items[0])
+                else:
+                    one_frame_duration = 0
                 one_frame_duration *= 1000000
                 one_frame_duration = str(int(one_frame_duration)) + "us"
             self.log.debug(
