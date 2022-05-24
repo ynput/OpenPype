@@ -17,7 +17,7 @@ def otio_range_to_frame_range(otio_range):
     start = _ot.to_frames(
         otio_range.start_time, otio_range.start_time.rate)
     end = start + _ot.to_frames(
-        otio_range.duration, otio_range.duration.rate) - 1
+        otio_range.duration, otio_range.duration.rate)
     return start, end
 
 
@@ -218,6 +218,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
                 "name": name
             }
             tw_node.update(metadata)
+            tw_node["lookup"] = list(lookup)
 
             # get first and last frame offsets
             offset_in += lookup[0]
