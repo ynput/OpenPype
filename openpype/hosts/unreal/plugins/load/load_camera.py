@@ -57,6 +57,33 @@ class CameraLoader(plugin.Loader):
                 min_frame_j,
                 max_frame_j + 1)
 
+    def _import_camera(
+        self, world, sequence, bindings, import_fbx_settings, import_filename
+    ):
+        ue_version = unreal.SystemLibrary.get_engine_version().split('.')
+        ue_major = int(ue_version[0])
+        ue_minor = int(ue_version[1])
+
+        if ue_major == 4 and ue_minor <= 26:
+            unreal.SequencerTools.import_fbx(
+                world,
+                sequence,
+                bindings,
+                import_fbx_settings,
+                import_filename
+            )
+        elif (ue_major == 4 and ue_minor >= 27) or ue_major == 5:
+            unreal.SequencerTools.import_level_sequence_fbx(
+                world,
+                sequence,
+                bindings,
+                import_fbx_settings,
+                import_filename
+            )
+        else:
+            raise NotImplementedError(
+                f"Unreal version {ue_major} not supported")
+
     def load(self, context, name, namespace, data):
         """
         Load and containerise representation into Content Browser.
@@ -228,7 +255,7 @@ class CameraLoader(plugin.Loader):
         settings.set_editor_property('reduce_keys', False)
 
         if cam_seq:
-            unreal.SequencerTools.import_fbx(
+            self._import_camera(
                 EditorLevelLibrary.get_editor_world(),
                 cam_seq,
                 cam_seq.get_bindings(),
@@ -388,7 +415,7 @@ class CameraLoader(plugin.Loader):
 
         sub_scene.set_sequence(new_sequence)
 
-        unreal.SequencerTools.import_fbx(
+        self._import_camera(
             EditorLevelLibrary.get_editor_world(),
             new_sequence,
             new_sequence.get_bindings(),
