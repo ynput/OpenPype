@@ -77,13 +77,15 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'import_meshes_in_bone_hierarchy', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', True)
+            'use_default_sample_rate', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'custom_sample_rate', 25.0) # TODO: get from database
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
             'import_bone_tracks', True)
         task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', True)
+            'remove_redundant_keys', False)
         task.options.anim_sequence_import_data.set_editor_property(
             'convert_scene', True)
 
@@ -279,13 +281,15 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'import_meshes_in_bone_hierarchy', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', True)
+            'use_default_sample_rate', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'custom_sample_rate', 25.0) # TODO: get from database
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
             'import_bone_tracks', True)
         task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', True)
+            'remove_redundant_keys', False)
         task.options.anim_sequence_import_data.set_editor_property(
             'convert_scene', True)
 
