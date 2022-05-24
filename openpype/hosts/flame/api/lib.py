@@ -779,7 +779,6 @@ class MediaInfoFile(object):
         feed_dir = os.path.dirname(path)
         feed_ext = os.path.splitext(feed_basename)[1][1:].lower()
 
-
         with maintained_temp_file_path(".clip") as tmp_path:
             self.log.info("Temp File: {}".format(tmp_path))
             self._generate_media_info_file(tmp_path, feed_ext, feed_dir)
@@ -827,9 +826,11 @@ class MediaInfoFile(object):
 
         # make sure partial input basename is having correct extensoon
         if not partialname:
-            raise AttributeError("Wrong input attributes. Basename - {}, Ext - {}".format(
-                feed_basename, feed_ext
-            ))
+            raise AttributeError(
+                "Wrong input attributes. Basename - {}, Ext - {}".format(
+                    feed_basename, feed_ext
+                )
+            )
 
         # get all related files
         files = [
@@ -860,7 +861,8 @@ class MediaInfoFile(object):
         # convert to multiple collections
         _continues_colls = collection.separate()
         for _coll in _continues_colls:
-            coll_to_text = self._format_collection(_coll, len(number_from_path))
+            coll_to_text = self._format_collection(
+                _coll, len(number_from_path))
             self.log.debug("__ coll_to_text: {}".format(coll_to_text))
             if search_number_pattern in coll_to_text:
                 return coll_to_text

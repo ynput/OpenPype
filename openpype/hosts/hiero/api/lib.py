@@ -984,7 +984,8 @@ def get_sequence_pattern_and_padding(file):
         return None, None
     found = sorted(list(set(foundall[0])))[-1]
 
-    padding = int(re.findall(r"\d+", found)[-1]) if "%" in found else len(found)
+    padding = int(
+        re.findall(r"\d+", found)[-1]) if "%" in found else len(found)
     return found, padding
 
 
