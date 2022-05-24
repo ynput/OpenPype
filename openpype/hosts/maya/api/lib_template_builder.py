@@ -3,7 +3,7 @@ import maya.cmds as cmds
 
 import qargparse
 from openpype.tools.utils.widgets import OptionDialog
-from lib import get_main_window, imprint
+from .lib import get_main_window, imprint
 
 # To change as enum
 build_types = ["context_asset", "linked_asset", "all_assets"]
