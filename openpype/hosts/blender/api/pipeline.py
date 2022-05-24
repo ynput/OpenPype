@@ -40,6 +40,8 @@ AVALON_CONTAINERS = "AVALON_CONTAINERS"
 AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
 
+MODEL_DOWNSTREAM = ("Rigging", "Texture", "Lookdev")
+
 log = Logger.get_logger(__name__)
 
 

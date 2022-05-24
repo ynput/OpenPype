@@ -32,7 +32,9 @@ class ExtractABC(api.Extractor):
                 obj.select_set(True)
                 selected.append(obj)
 
-        context = plugin.create_blender_context(selected=selected)
+        context = plugin.create_blender_context(
+            active=selected[-1], selected=selected
+        )
 
         # We export the abc
         bpy.ops.wm.alembic_export(
@@ -55,5 +57,6 @@ class ExtractABC(api.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {representation}"
+        )

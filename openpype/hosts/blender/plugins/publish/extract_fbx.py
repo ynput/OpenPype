@@ -27,25 +27,25 @@ class ExtractFBX(api.Extractor):
 
         selected = []
 
-        # To match with extract fbx in other hosts like Maya, we need to
-        # create empty for instance and parent members.
-        asset_empty = bpy.data.objects.new(instance.name, object_data=None)
-        asset_empty.empty_display_type = 'SINGLE_ARROW'
-        bpy.context.scene.collection.objects.link(asset_empty)
-        asset_empty.select_set(True)
+        # # To match with extract fbx in other hosts like Maya, we need to
+        # # create empty for instance and parent members.
+        # asset_empty = bpy.data.objects.new(instance.name, object_data=None)
+        # asset_empty.empty_display_type = 'SINGLE_ARROW'
+        # bpy.context.scene.collection.objects.link(asset_empty)
+        # asset_empty.select_set(True)
 
         for obj in instance:
             if isinstance(obj, bpy.types.Object):
                 obj.select_set(True)
                 selected.append(obj)
-                if not obj.parent:
-                    obj.parent = asset_empty
-                elif obj.parent not in instance:
-                    # TODO : restor parent in this case.
-                    obj.parent = asset_empty
+                # if not obj.parent:
+                #     obj.parent = asset_empty
+                # elif obj.parent not in instance:
+                #     # TODO : restor parent in this case.
+                #     obj.parent = asset_empty
 
         context = plugin.create_blender_context(
-            active=asset_empty, selected=selected
+            active=selected[-1], selected=selected
         )
 
         new_materials = []
@@ -58,8 +58,8 @@ class ExtractFBX(api.Extractor):
                 new_materials.append(mat)
                 new_materials_objs.append(obj)
 
-        scale_length = bpy.context.scene.unit_settings.scale_length
-        bpy.context.scene.unit_settings.scale_length = 0.01
+        # scale_length = bpy.context.scene.unit_settings.scale_length
+        # bpy.context.scene.unit_settings.scale_length = 0.01
 
         # We export the fbx
         bpy.ops.export_scene.fbx(
@@ -71,7 +71,7 @@ class ExtractFBX(api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.context.scene.unit_settings.scale_length = scale_length
+        # bpy.context.scene.unit_settings.scale_length = scale_length
 
         plugin.deselect_all()
 
@@ -81,8 +81,8 @@ class ExtractFBX(api.Extractor):
         for obj in new_materials_objs:
             obj.data.materials.pop()
 
-        bpy.context.scene.collection.objects.unlink(asset_empty)
-        bpy.data.objects.remove(asset_empty)
+        # bpy.context.scene.collection.objects.unlink(asset_empty)
+        # bpy.data.objects.remove(asset_empty)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

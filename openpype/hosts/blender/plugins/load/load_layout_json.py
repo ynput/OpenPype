@@ -41,7 +41,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
 
         return None
 
-    def _process(self, libpath, asset_group):
+    def _process(self, libpath, asset_group, context=None):
         plugin.deselect_all()
 
         with open(libpath, "r") as fp:
@@ -50,8 +50,8 @@ class JsonLayoutLoader(plugin.AssetLoader):
         all_loaders = discover_loader_plugins()
 
         for element in data:
-            reference = element.get('reference')
-            family = element.get('family')
+            reference = element.get("reference")
+            family = element.get("family")
 
             loaders = loaders_from_representation(all_loaders, reference)
             loader = self._get_loader(loaders, family)
@@ -59,17 +59,18 @@ class JsonLayoutLoader(plugin.AssetLoader):
             if not loader:
                 continue
 
-            instance_name = element.get('instance_name')
-
             options = {
-                'parent': asset_group,
-                'transform': element.get('transform'),
-                'create_animation': True if family == 'rig' else False,
+                "parent": asset_group,
+                "transform": element.get("transform"),
+                "create_animation": True if family == "rig" else False,
+                "create_context": context,
             }
 
-            if element.get('animation'):
-                options['animation_file'] = str(Path(libpath).with_suffix(
-                    '')) + "." + element.get('animation')
+            if element.get("animation"):
+                options["animation_file"] = "{}.{}".format(
+                    Path(libpath).with_suffix(""),
+                    element.get("animation"),
+                )
 
             # This should return the loaded asset, but the load call will be
             # added to the queue to run in the Blender main thread, so
@@ -79,7 +80,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
             load_container(
                 loader,
                 reference,
-                namespace=instance_name,
+                namespace=element.get("namespace"),
                 options=options
             )
 
@@ -122,7 +123,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         asset_group.color_tag = self.color_tag
         plugin.get_main_collection().children.link(asset_group)
 
-        self._process(libpath, asset_group)
+        self._process(libpath, asset_group, context)
 
         self._update_metadata(
             asset_group, context, name, namespace, asset_name, libpath
