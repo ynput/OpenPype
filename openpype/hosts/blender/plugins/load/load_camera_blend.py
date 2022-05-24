@@ -24,34 +24,13 @@ class BlendCameraLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_05"
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
+    def _process(self, libpath, asset_group):
+        return self._load_blend(libpath, asset_group)
 
-        asset_name = plugin.asset_name(asset, subset)
-
-        asset_group = bpy.data.collections.new(asset_name)
+    def process_asset(self, context: dict, *args, **kwargs) -> List:
+        """Asset loading Process"""
+        asset_group, objects = super().process_asset(context, *args, **kwargs)
         asset_group.color_tag = self.color_tag
-        plugin.get_main_collection().children.link(asset_group)
-
-        objects = self._load_blend(libpath, asset_group)
-
-        self._update_metadata(
-            asset_group, context, name, namespace, asset_name, libpath
-        )
-
-        self[:] = objects
         return objects
 
     def exec_update(self, container: Dict, representation: Dict):

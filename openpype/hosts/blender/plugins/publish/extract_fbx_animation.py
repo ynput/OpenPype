@@ -57,7 +57,7 @@ class ExtractAnimationFBX(api.Extractor):
                 continue
 
             asset_group_name = asset_group.name
-            asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+            asset_group.name = asset_group[AVALON_PROPERTY].get("asset_name")
 
             armature_name = armature.name
             original_name = armature_name.split(':')[1]
@@ -120,19 +120,8 @@ class ExtractAnimationFBX(api.Extractor):
             json_path = os.path.join(stagingdir, json_filename)
 
             json_dict = {
-                "instance_name": asset_group.get(AVALON_PROPERTY).get("objectName")
+                "instance_name": asset_group[AVALON_PROPERTY].get("objectName")
             }
-
-        # collection = instance.data.get("name")
-        # container = None
-        # for obj in bpy.data.collections[collection].objects:
-        #     if obj.type == "ARMATURE":
-        #         container_name = obj.get("avalon").get("container_name")
-        #         container = bpy.data.collections[container_name]
-        # if container:
-        #     json_dict = {
-        #         "instance_name": container.get("avalon").get("instance_name")
-        #     }
 
         with open(json_path, "w+") as file:
             json.dump(json_dict, fp=file, indent=2)

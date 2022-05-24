@@ -195,6 +195,7 @@ class ExtractLayout(openpype.api.Extractor):
                 json_element["reference_abc"] = str(abc_id)
             json_element["family"] = family
             json_element["instance_name"] = asset.name
+            json_element["namespace"] = metadata.get("namespace")
             json_element["asset_name"] = metadata.get("asset_name")
             json_element["file_path"] = metadata.get("libpath")
 

@@ -6,6 +6,10 @@ import bpy
 
 from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_PROPERTY,
+    MODEL_DOWNSTREAM,
+)
 
 
 class FbxModelLoader(plugin.AssetLoader):
@@ -22,77 +26,48 @@ class FbxModelLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_04"
 
-    _downstream_tasks = ("Rigging", "Modeling", "Texture", "Lookdev")
-
     @staticmethod
-    def _rename_with_namespace(objects, namespace):
-        materials = set()
+    def _process(libpath, asset_group):
+
+        current_objects = set(bpy.data.objects)
+
+        bpy.ops.import_scene.fbx(filepath=libpath)
+
+        objects = set(bpy.data.objects) - current_objects
+
         for obj in objects:
-            obj.name = f"{namespace}:{obj.name}"
-            if obj.data:
-                obj.data.name = f"{namespace}:{obj.data.name}"
+            for collection in obj.users_collection:
+                collection.objects.unlink(obj)
 
-            if obj.type == 'MESH':
-                for material_slot in obj.material_slots:
-                    if material_slot.material:
-                        materials.add(material_slot.material)
+        plugin.link_to_collection(objects, asset_group)
 
-            elif obj.type == 'ARMATURE':
-                anim_data = obj.animation_data
-                if anim_data and anim_data.action:
-                    anim_data.action.name = (
-                        f"{namespace}:{anim_data.action.name}"
-                    )
-        for material in materials:
-            material.name = f"{namespace}:{material.name}"
+        plugin.orphans_purge()
+        plugin.deselect_all()
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
+        return objects
 
-        asset_name = plugin.asset_name(asset, subset)
-        unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
-        namespace = namespace or f"{asset}_{unique_number}"
+    def process_asset(self, context: dict, *args, **kwargs) -> List:
+        """Asset loading Process"""
+        asset_group, objects = super().process_asset(context, *args, **kwargs)
 
-        asset_group = bpy.data.collections.new(group_name)
-        plugin.get_main_collection().children.link(asset_group)
+        if legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM:
+            asset = context["asset"]["name"]
+            subset = context["subset"]["name"]
+            group_name = plugin.asset_name(asset, subset)
+            asset_group.name = group_name
+            asset_group[AVALON_PROPERTY]["namespace"] = asset
+        else:
+            namespace = asset_group[AVALON_PROPERTY]["namespace"]
+            self._rename_objects_with_namespace(objects, namespace)
 
-        objects = self._load_fbx(libpath, asset_group, group_name)
-
-        if (
-            legacy_io.Session.get("AVALON_ASSET") != asset or
-            legacy_io.Session.get("AVALON_TASK") not in self._downstream_tasks
-        ):
-            self._rename_with_namespace(objects, namespace)
-
-        self._update_metadata(
-            asset_group, context, name, namespace, asset_name, libpath
-        )
-
-        self[:] = objects
         return objects
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
         objects = self._update_process(container, representation)
 
-        if (
-            legacy_io.Session.get("AVALON_ASSET") != container["asset_name"] or
-            legacy_io.Session.get("AVALON_TASK") not in self._downstream_tasks
-        ):
-            self._rename_with_namespace(
+        if legacy_io.Session.get("AVALON_TASK") not in MODEL_DOWNSTREAM:
+            self._rename_objects_with_namespace(
                 objects, container["namespace"] or container["objectName"]
             )
 

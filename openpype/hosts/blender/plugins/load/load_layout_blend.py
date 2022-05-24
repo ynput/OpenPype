@@ -1,10 +1,13 @@
 """Load a layout in Blender."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import bpy
 
+from openpype import lib
+from openpype.pipeline import legacy_io, legacy_create, AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendLayoutLoader(plugin.AssetLoader):
@@ -19,8 +22,11 @@ class BlendLayoutLoader(plugin.AssetLoader):
     color_tag = "COLOR_02"
 
     @staticmethod
-    def _make_local_actions(objects, namespace):
+    def _make_local_actions(objects):
         """Make local for all actions from objects."""
+
+        task = legacy_io.Session.get("AVALON_TASK")
+        asset = legacy_io.Session.get("AVALON_ASSET")
 
         local_actions = {}
 
@@ -38,7 +44,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
             # Make action local if needed.
             if not local_action:
                 # Get local action name with namespace from linked action.
-                local_name = f"{namespace}:{linked_action.name}"
+                action_name = linked_action.name.split(":")[-1]
+                local_name = f"{asset}_{task}:{action_name}"
                 # Make local action, rename and upadate local_actions dict.
                 local_action = linked_action.make_local()
                 local_action.name = local_name
@@ -47,48 +54,59 @@ class BlendLayoutLoader(plugin.AssetLoader):
             # Assign local action.
             obj.animation_data.action = local_action
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
+    @staticmethod
+    def _create_animation_collection(asset_group, context):
+        creator_plugin = lib.get_creator_by_name("CreateAnimation")
+        if not creator_plugin:
+            raise ValueError(
+                'Creator plugin "CreateAnimation" was not found.'
+            )
 
-        asset_name = plugin.asset_name(asset, subset)
+        namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace")
 
-        asset_group = bpy.data.collections.new(asset_name)
-        asset_group.color_tag = self.color_tag
-        plugin.get_main_collection().children.link(asset_group)
-
-        objects = self._load_blend(libpath, asset_group)
-
-        self._make_local_actions(objects, asset_name)
-
-        self._update_metadata(
-            asset_group, context, name, namespace, asset_name, libpath
+        legacy_create(
+            creator_plugin,
+            name=f"{namespace or asset_group.name}_animation",
+            asset=context["asset"]["name"],
+            options={"useSelection": False, "asset_group": asset_group},
+            data={"dependencies": str(context["representation"]["_id"])}
         )
 
-        self[:] = objects
+    @staticmethod
+    def _is_rig_container(collection):
+        return (
+            collection.get(AVALON_PROPERTY) and
+            collection[AVALON_PROPERTY].get("family") == "rig" and
+            collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+        )
+
+    def _process(self, libpath, asset_group):
+        return self._load_blend(libpath, asset_group)
+
+    def process_asset(self, context, *args, **kwargs) -> List:
+        """Asset loading Process"""
+        asset_group, objects = super().process_asset(context, *args, **kwargs)
+        asset_group.color_tag = self.color_tag
+
+        self._make_local_actions(objects)
+
+        # Create animation collection subset for loaded rig asset group.
+        for child in asset_group.children_recursive:
+            if self._is_rig_container(child):
+                self._create_animation_collection(child, context)
+
         return objects
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
         self._update_process(container, representation)
 
+        # TODO : check animation collections.
+
         # Ensure all updated actions are local.
         collection = bpy.data.collections.get(container["objectName"])
         if collection:
-            self._make_local_actions(
-                collection.all_objects, container["namespace"]
-            )
+            self._make_local_actions(collection.all_objects)
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

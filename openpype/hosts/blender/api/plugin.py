@@ -448,7 +448,36 @@ class AssetLoader(LoaderPlugin):
             ):
                 return collection
 
-    def _load_blend(self, libpath, asset_group):
+    @staticmethod
+    def _rename_objects_with_namespace(objects, namespace):
+        """Rename objects and their dependencies and with namespace prefix."""
+        materials = set()
+        objects_data = set()
+
+        for obj in objects:
+            obj.name = f"{namespace}:{obj.name}"
+            if obj.data:
+                objects_data.add(obj.data)
+
+            if obj.type == 'MESH':
+                for material_slot in obj.material_slots:
+                    if material_slot.material:
+                        materials.add(material_slot.material)
+
+            elif obj.type == 'ARMATURE':
+                anim_data = obj.animation_data
+                if anim_data and anim_data.action:
+                    anim_data.action.name = (
+                        f"{namespace}:{anim_data.action.name}"
+                    )
+
+        for data in objects_data:
+            data.name = f"{namespace}:{data.name}"
+
+        for material in materials:
+            material.name = f"{namespace}:{material.name}"
+
+    def _load_library_collection(self, libpath):
         # Load collections from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
@@ -461,10 +490,23 @@ class AssetLoader(LoaderPlugin):
         )
         assert container, "No asset container found"
 
+        return container
+
+    def _load_blend(self, libpath, asset_group):
+        # Load collections from libpath library.
+        container = self._load_library_collection(libpath)
+
         # Create override library for container and elements.
         override = container.override_hierarchy_create(
             bpy.context.scene, bpy.context.view_layer
         )
+
+        # Force override object data like meshes and curves.
+        overridden_data = set()
+        for obj in set(override.all_objects):
+            if obj.data and obj.data not in overridden_data:
+                obj.data.override_create(remap_local_usages=True)
+                overridden_data.add(obj.data)
 
         # Move objects and child collections from override to asset_group.
         link_to_collection(override.objects, asset_group)
@@ -477,48 +519,47 @@ class AssetLoader(LoaderPlugin):
 
         return list(asset_group.all_objects)
 
-    def _load_fbx(self, libpath, asset_group):
-        deselect_all()
-
-        collection = bpy.context.view_layer.active_layer_collection.collection
-
-        bpy.ops.import_scene.fbx(filepath=libpath)
-
-        imported = get_selection()
-
-        empties = [obj for obj in imported if obj.type == 'EMPTY']
-
-        container = None
-
-        for empty in empties:
-            if not empty.parent:
-                container = empty
-                break
-
-        assert container, "No asset group found"
-
-        objects = list(container.children_recursive)
-
-        link_to_collection(objects, asset_group)
-
-        if collection is not asset_group:
-            for obj in objects:
-                if obj in collection.objects.values():
-                    collection.objects.unlink(obj)
-
-        bpy.data.objects.remove(container)
-        orphans_purge()
-        deselect_all()
-
-        return objects
-
-    def process_asset(self,
-                      context: dict,
-                      name: str,
-                      namespace: Optional[str] = None,
-                      options: Optional[Dict] = None):
+    def _process(*args, **kwargs):
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
+
+    def process_asset(
+        self,
+        context: dict,
+        name: str,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None
+    ):
+        """
+        Arguments:
+            name: Use pre-defined name
+            namespace: Use pre-defined namespace
+            context: Full parenthood of representation to load
+            options: Additional settings dictionary
+        """
+        libpath = self.fname
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+
+        unique_number = get_unique_number(asset, subset)
+        group_name = asset_name(asset, subset, unique_number)
+
+        asset_group = bpy.data.collections.new(group_name)
+        get_main_collection().children.link(asset_group)
+
+        objects = self._process(libpath, asset_group)
+
+        self._update_metadata(
+            asset_group,
+            context,
+            name,
+            namespace or f"{asset}_{unique_number}",
+            asset_name(asset, subset),
+            libpath
+        )
+
+        self[:] = objects
+        return asset_group, objects
 
     def load(self,
              context: dict,
@@ -631,10 +672,10 @@ class AssetLoader(LoaderPlugin):
         group_libpath = asset_group[AVALON_PROPERTY]["libpath"]
 
         normalized_group_libpath = (
-            str(Path(bpy.path.abspath(group_libpath)).resolve())
+            Path(bpy.path.abspath(group_libpath)).resolve()
         )
         normalized_libpath = (
-            str(Path(bpy.path.abspath(libpath)).resolve())
+            Path(bpy.path.abspath(libpath)).resolve()
         )
         cls.log.debug(
             f"normalized_group_libpath:\n  {normalized_group_libpath}\n"
@@ -687,14 +728,7 @@ class AssetLoader(LoaderPlugin):
 
             remove_container(asset_group, content_only=True)
 
-            if "blend" in self.representations:
-                self._load_blend(libpath, asset_group)
-            elif "fbx" in self.representations:
-                self._load_fbx(libpath, asset_group)
-            elif hasattr(self, "_process"):
-                self._process(libpath, asset_group)
-            else:
-                raise NotImplementedError("Must be implemented")
+            self._process(libpath, asset_group)
 
         # update override library operations from asset objects
         objects = asset_group.all_objects
@@ -725,7 +759,7 @@ class AssetLoader(LoaderPlugin):
         name: str,
         namespace: str,
         asset_name: str,
-        libpath: str,
+        libpath: str
     ):
         metadata_update(
             asset_group,

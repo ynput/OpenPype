@@ -1,9 +1,10 @@
 """Load an animation in Blender."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import bpy
 
+from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -24,7 +25,30 @@ class BlendAnimationLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_01"
 
-    def _load_blend(self, libpath, asset_group):
+    @staticmethod
+    def _restor_actions_from_library():
+        """Restor action from override library reference animation data"""
+        for obj in list(bpy.data.objects):
+            if (
+                obj.animation_data and
+                obj.override_library and
+                obj.override_library.reference and
+                obj.override_library.reference.animation_data and
+                obj.override_library.reference.animation_data.action
+            ):
+                obj.animation_data.action = (
+                    obj.override_library.reference.animation_data.action
+                )
+
+    @staticmethod
+    def _is_rig_container(collection):
+        return (
+            collection.get(AVALON_PROPERTY) and
+            collection[AVALON_PROPERTY].get("family") == "rig" and
+            collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+        )
+
+    def _process(self, libpath, asset_group):
         # Load actions from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
@@ -38,24 +62,25 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         # Collection action by namespace or in orphans_actions list.
         for action in data_to.actions:
-            metadata = action.get(AVALON_PROPERTY)
-            if metadata:
-                namespaces = metadata.get("namespaces")
-                if namespaces:
-                    for namespace in namespaces:
-                        actions_by_namespace[namespace] = action
-                else:
-                    orphans_actions.append(action)
+            namespaces = action[AVALON_PROPERTY].get("namespaces")
+            if namespaces:
+                for namespace in namespaces:
+                    actions_by_namespace[namespace] = action
+            else:
+                orphans_actions.append(action)
 
         # Try to assign linked actions by collection using namespace metadata.
         for collection in bpy.data.collections:
-            metadata = collection.get(AVALON_PROPERTY)
-            if metadata and metadata.get("namespace") in actions_by_namespace:
-                action = actions_by_namespace.get(metadata["namespace"])
-                for obj in collection.all_objects:
-                    if not obj.animation_data:
-                        obj.animation_data_create()
-                    obj.animation_data.action = action
+            if self._is_rig_container(collection):
+                metadata = collection[AVALON_PROPERTY]
+                if metadata.get("namespace") in actions_by_namespace:
+                    action = actions_by_namespace.get(metadata["namespace"])
+                    for obj in collection.all_objects:
+                        if obj.name in action[AVALON_PROPERTY]["users"]:
+                            if not obj.animation_data:
+                                obj.animation_data_create()
+                            obj.animation_data.action = action
+                    plugin.link_to_collection(collection, asset_group)
 
         # Try to assign linked actions by user names.
         for action in orphans_actions:
@@ -65,39 +90,16 @@ class BlendAnimationLoader(plugin.AssetLoader):
                     if not obj.animation_data:
                         obj.animation_data_create()
                     obj.animation_data.action = action
+                    plugin.link_to_collection(obj, asset_group)
 
         plugin.orphans_purge()
 
         return []
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-
-        asset_name = plugin.asset_name(asset, subset)
-
-        asset_group = bpy.data.collections.new(asset_name)
+    def process_asset(self, *args, **kwargs) -> List:
+        """Asset loading Process"""
+        asset_group, objects = super().process_asset(*args, **kwargs)
         asset_group.color_tag = self.color_tag
-        plugin.get_main_collection().children.link(asset_group)
-
-        objects = self._load_blend(libpath, asset_group)
-
-        self._update_metadata(
-            asset_group, context, name, namespace, asset_name, libpath
-        )
-
-        self[:] = objects
         return objects
 
     def exec_update(self, container: Dict, representation: Dict):
@@ -107,16 +109,6 @@ class BlendAnimationLoader(plugin.AssetLoader):
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""
         # Restor action from override library reference animation data.
-        for obj in list(bpy.data.objects):
-            if (
-                obj.animation_data and
-                obj.override_library and
-                obj.override_library.reference and
-                obj.override_library.reference.animation_data and
-                obj.override_library.reference.animation_data.action
-            ):
-                obj.animation_data.action = (
-                    obj.override_library.reference.animation_data.action
-                )
+        self._restor_actions_from_library()
 
         return self._remove_container(container)
