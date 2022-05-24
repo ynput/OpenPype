@@ -494,8 +494,6 @@ class AssetModel(QtGui.QStandardItemModel):
         # Remove cache of removed items
         for asset_id in removed_asset_ids:
             self._items_by_asset_id.pop(asset_id)
-            if asset_id in self._items_with_color_by_id:
-                self._items_with_color_by_id.pop(asset_id)
 
         # Refresh data
         # - all items refresh all data except id
