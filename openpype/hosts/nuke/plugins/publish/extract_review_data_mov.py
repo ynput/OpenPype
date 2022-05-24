@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 import re
 import pyblish.api
 import openpype
@@ -50,6 +51,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         with maintained_selection():
             generated_repres = []
             for o_name, o_data in self.outputs.items():
+                self.log.debug("o_name: {}, o_data: {}".format(o_name, pformat(o_data)))
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
                 f_subsets = o_data["filter"]["subsets"]
@@ -88,7 +90,13 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 # check if settings have more then one preset
                 # so we dont need to add outputName to representation
                 # in case there is only one preset
-                multiple_presets = bool(len(self.outputs.keys()) > 1)
+                multiple_presets = len(self.outputs.keys()) > 1
+
+                # adding bake presets to instance data for other plugins
+                if not instance.data.get("bakePresets"):
+                    instance.data["bakePresets"] = {}
+                # add preset to bakePresets
+                instance.data["bakePresets"][o_name] = o_data
 
                 # create exporter instance
                 exporter = plugin.ExporterReviewMov(
