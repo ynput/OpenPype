@@ -17,7 +17,7 @@ class ExtractThumbnail(openpype.api.Extractor):
 
     """
 
-    order = pyblish.api.ExtractorOrder + 0.01
+    order = pyblish.api.ExtractorOrder + 0.011
     label = "Extract Thumbnail"
 
     families = ["review"]
@@ -35,9 +35,26 @@ class ExtractThumbnail(openpype.api.Extractor):
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
 
-            self.render_thumbnail(instance)
+            if instance.data.get("bakePresets"):
+                for o_name, o_data in instance.data["bakePresets"].items():
+                    self.render_thumbnail(instance, o_name, **o_data)
+            else:
+                viewer_process_swithes = {
+                    "bake_viewer_process": True,
+                    "bake_viewer_input_process": True
+                }
+                self.render_thumbnail(instance, None, **viewer_process_swithes)
 
-    def render_thumbnail(self, instance):
+    def render_thumbnail(self, instance, output_name=None, **kwargs):
+        # solve output name if any is set
+        output_name = output_name or ""
+        if output_name:
+            output_name = "_" + output_name
+
+        bake_viewer_process = kwargs["bake_viewer_process"]
+        bake_viewer_input_process_node = kwargs[
+            "bake_viewer_input_process"]
+
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
 
@@ -89,15 +106,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         else:
             previous_node = node
 
-        # get input process and connect it to baking
-        ipn = self.get_view_process_node()
-        if ipn is not None:
-            ipn.setInput(0, previous_node)
-            previous_node = ipn
-            temporary_nodes.append(ipn)
-
         reformat_node = nuke.createNode("Reformat")
-
         ref_node = self.nodes.get("Reformat", None)
         if ref_node:
             for k, v in ref_node:
@@ -110,14 +119,24 @@ class ExtractThumbnail(openpype.api.Extractor):
         previous_node = reformat_node
         temporary_nodes.append(reformat_node)
 
-        dag_node = nuke.createNode("OCIODisplay")
-        dag_node.setInput(0, previous_node)
-        previous_node = dag_node
-        temporary_nodes.append(dag_node)
+        # only create colorspace baking if toggled on
+        if bake_viewer_process:
+            if bake_viewer_input_process_node:
+                # get input process and connect it to baking
+                ipn = self.get_view_process_node()
+                if ipn is not None:
+                    ipn.setInput(0, previous_node)
+                    previous_node = ipn
+                    temporary_nodes.append(ipn)
+
+            dag_node = nuke.createNode("OCIODisplay")
+            dag_node.setInput(0, previous_node)
+            previous_node = dag_node
+            temporary_nodes.append(dag_node)
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead + "jpg"
+        file = fhead[:-1] + output_name + ".jpg"
         name = "thumbnail"
         path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["thumbnail"] = path
