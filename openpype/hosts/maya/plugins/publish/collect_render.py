@@ -340,13 +340,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "expectedFiles": full_exp_files,
                 "publishRenderMetadataFolder": common_publish_meta_path,
                 "resolutionWidth": lib.get_attr_in_layer(
-                    "defaultResolution.height", layer=layer
+                    "defaultResolution.height", layer=layer_name
                 ),
                 "resolutionHeight": lib.get_attr_in_layer(
-                    "defaultResolution.width", layer=layer
+                    "defaultResolution.width", layer=layer_name
                 ),
                 "pixelAspect": lib.get_attr_in_layer(
-                    "defaultResolution.pixelAspect", layer=layer
+                    "defaultResolution.pixelAspect", layer=layer_name
                 ),
                 "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
                 "tilesX": render_instance.data.get("tilesX") or 2,

@@ -125,13 +125,13 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 # which was submitted originally
                 "source": context.data["currentFile"].replace("\\", "/"),
                 "resolutionWidth": lib.get_attr_in_layer(
-                    "defaultResolution.height", layer=layer
+                    "defaultResolution.height", layer=layer_name
                 ),
                 "resolutionHeight": lib.get_attr_in_layer(
-                    "defaultResolution.width", layer=layer
+                    "defaultResolution.width", layer=layer_name
                 ),
                 "pixelAspect": lib.get_attr_in_layer(
-                    "defaultResolution.pixelAspect", layer=layer
+                    "defaultResolution.pixelAspect", layer=layer_name
                 ),
                 "priority": instance.data.get("priority"),
                 "useMultipleSceneFiles": instance.data.get(
