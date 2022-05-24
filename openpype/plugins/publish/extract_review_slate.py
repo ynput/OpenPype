@@ -1,4 +1,6 @@
 import os
+from pprint import pformat
+import re
 import openpype.api
 import pyblish
 from openpype.lib import (
@@ -30,26 +32,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
             raise RuntimeError("Burnin needs already created mov to work on.")
 
         suffix = "_slate"
-        slate_path = inst_data.get("slateFrame")
+        slates_data = inst_data["slateFrames"]
+        self.log.info("_ slates_data: {}".format(pformat(slates_data)))
+
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-
-        slate_streams = get_ffprobe_streams(slate_path, self.log)
-        # Try to find first stream with defined 'width' and 'height'
-        # - this is to avoid order of streams where audio can be as first
-        # - there may be a better way (checking `codec_type`?)+
-        slate_width = None
-        slate_height = None
-        for slate_stream in slate_streams:
-            if "width" in slate_stream and "height" in slate_stream:
-                slate_width = int(slate_stream["width"])
-                slate_height = int(slate_stream["height"])
-                break
-
-        # Raise exception of any stream didn't define input resolution
-        if slate_width is None:
-            raise AssertionError((
-                "FFprobe couldn't read resolution from input file: \"{}\""
-            ).format(slate_path))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -76,6 +62,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
             video_streams = get_ffprobe_streams(
                 input_path, self.log
             )
+
+            # get slate data
+            slate_path = self._get_slate_path(input_file, slates_data)
+            self.log.info("_ slate_path: {}".format(slate_path))
+
+            slate_width, slate_height = self._get_slates_resolution(slate_path)
 
             # Try to find first stream with defined 'width' and 'height'
             # - this is to avoid order of streams where audio can be as first
@@ -308,6 +300,44 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 inst_data["representations"].remove(repre)
 
         self.log.debug(inst_data["representations"])
+
+    def _get_slate_path(self, input_file, slates_data):
+        slate_path = None
+        for sl_n, _slate_path in slates_data.items():
+            if "*" in sl_n:
+                slate_path = _slate_path
+                break
+            elif re.search(sl_n, input_file):
+                slate_path = _slate_path
+                break
+
+        if not slate_path:
+            raise AttributeError(
+                "Missing slates paths: {}".format(slates_data))
+
+        return slate_path
+
+
+    def _get_slates_resolution(self, slate_path):
+        slate_streams = get_ffprobe_streams(slate_path, self.log)
+        # Try to find first stream with defined 'width' and 'height'
+        # - this is to avoid order of streams where audio can be as first
+        # - there may be a better way (checking `codec_type`?)+
+        slate_width = None
+        slate_height = None
+        for slate_stream in slate_streams:
+            if "width" in slate_stream and "height" in slate_stream:
+                slate_width = int(slate_stream["width"])
+                slate_height = int(slate_stream["height"])
+                break
+
+        # Raise exception of any stream didn't define input resolution
+        if slate_width is None:
+            raise AssertionError((
+                "FFprobe couldn't read resolution from input file: \"{}\""
+            ).format(slate_path))
+
+        return (slate_width, slate_height)
 
     def add_video_filter_args(self, args, inserting_arg):
         """
