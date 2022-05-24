@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 import nuke
 import copy
 
@@ -15,7 +16,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
     """
 
-    order = pyblish.api.ExtractorOrder - 0.001
+    order = pyblish.api.ExtractorOrder + 0.011
     label = "Extract Slate Frame"
 
     families = ["slate"]
@@ -40,15 +41,33 @@ class ExtractSlateFrame(openpype.api.Extractor):
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
 
-            self.render_slate(instance)
+            if instance.data.get("bakePresets"):
+                for o_name, o_data in instance.data["bakePresets"].items():
+                    self.log.info("_ o_name: {}, o_data: {}".format(o_name, pformat(o_data)))
+                    self.render_slate(instance, o_name, **o_data)
+            else:
+                viewer_process_swithes = {
+                    "bake_viewer_process": True,
+                    "bake_viewer_input_process": True
+                }
+                self.render_slate(instance, None, **viewer_process_swithes)
 
-    def render_slate(self, instance):
+    def render_slate(self, instance, output_name=None, **kwargs):
+        # solve output name if any is set
+        _output_name = output_name or ""
+        if _output_name:
+            _output_name = "_" + _output_name
+
+        bake_viewer_process = kwargs["bake_viewer_process"]
+        bake_viewer_input_process_node = kwargs[
+            "bake_viewer_input_process"]
+
         node_subset_name = instance.data.get("name", None)
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
-            instance.data["representations"] = list()
+            instance.data["representations"] = []
 
         staging_dir = os.path.normpath(
             os.path.dirname(instance.data['path']))
@@ -76,7 +95,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 "{head}{padding}{tail}"))
             fhead = collection.format("{head}")
 
-            collected_frames_len = int(len(collection.indexes))
+            collected_frames_len = len(collection.indexes)
 
             # get first and last frame
             first_frame = min(collection.indexes) - 1
@@ -100,24 +119,34 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         previous_node = node
 
-        # get input process and connect it to baking
-        ipn = self.get_view_process_node()
-        if ipn is not None:
-            ipn.setInput(0, previous_node)
-            previous_node = ipn
-            temporary_nodes.append(ipn)
+        # only create colorspace baking if toggled on
+        if bake_viewer_process:
+            if bake_viewer_input_process_node:
+                # get input process and connect it to baking
+                ipn = self.get_view_process_node()
+                if ipn is not None:
+                    ipn.setInput(0, previous_node)
+                    previous_node = ipn
+                    temporary_nodes.append(ipn)
 
-        if not self.viewer_lut_raw:
-            dag_node = nuke.createNode("OCIODisplay")
-            dag_node.setInput(0, previous_node)
-            previous_node = dag_node
-            temporary_nodes.append(dag_node)
+            if not self.viewer_lut_raw:
+                dag_node = nuke.createNode("OCIODisplay")
+                dag_node.setInput(0, previous_node)
+                previous_node = dag_node
+                temporary_nodes.append(dag_node)
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead + "slate.png"
+        file = fhead[:-1] + _output_name + "_slate.png"
         path = os.path.join(staging_dir, file).replace("\\", "/")
-        instance.data["slateFrame"] = path
+
+        # add slate path to `slateFrames` instance data attr
+        if not instance.data.get("slateFrames"):
+            instance.data["slateFrames"] = {}
+
+        instance.data["slateFrames"][output_name or "*"] = path
+
+        # create write node
         write_node["file"].setValue(path)
         write_node["file_type"].setValue("png")
         write_node["raw"].setValue(1)
@@ -131,9 +160,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
         # also render slate as sequence frame
         nuke.execute(node_subset_name, int(first_frame), int(last_frame))
-
-        self.log.debug(
-            "slate frame path: {}".format(instance.data["slateFrame"]))
 
         # Clean up
         for node in temporary_nodes:
@@ -221,5 +247,5 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 ))
             except NameError:
                 self.log.warning((
-                    "Failed to set value \"{}\" on node attribute \"{}\""
+                    "Failed to set value \"{0}\" on node attribute \"{0}\""
                 ).format(value))
