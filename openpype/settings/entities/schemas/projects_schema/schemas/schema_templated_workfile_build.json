@@ -1,0 +1,29 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "templated_workfile_build",
+    "label": "Templated Workfile Build Settings",
+    "children": [
+        {
+            "type": "list",
+            "key": "profiles",
+            "label": "Profiles",
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "key": "task_types",
+                        "label": "Task types",
+                        "type": "task-types-enum"
+                    },
+                    {
+                        "key": "path",
+                        "label": "Path to template",
+                        "type": "text",
+                        "object_type": "text"
+                    }
+                ]
+            }
+        }
+    ]
+}

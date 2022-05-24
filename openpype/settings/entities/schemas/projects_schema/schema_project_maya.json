@@ -75,6 +75,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_templated_workfile_build"
+        },
+        {
+            "type": "schema",
             "name": "schema_publish_gui_filter"
         }
     ]
