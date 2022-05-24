@@ -27,6 +27,17 @@ class PSItem(object):
     members = attr.ib(factory=list)
     long_name = attr.ib(default=None)
     color_code = attr.ib(default=None)  # color code of layer
+    instance_id = attr.ib(default=None)
+
+    @property
+    def clean_name(self):
+        """Returns layer name without publish icon highlight
+
+        Returns:
+            (str)
+        """
+        return (self.name.replace(PhotoshopServerStub.PUBLISH_ICON, '')
+                         .replace(PhotoshopServerStub.LOADED_ICON, ''))
 
 
 class PhotoshopServerStub:
@@ -76,13 +87,31 @@ class PhotoshopServerStub:
             layer: (PSItem)
             layers_meta: full list from Headline (for performance in loops)
         Returns:
+            (dict) of layer metadata stored in PS file
+
+        Example:
+            {
+                'id': 'pyblish.avalon.container',
+                'loader': 'ImageLoader',
+                'members': ['64'],
+                'name': 'imageMainMiddle',
+                'namespace': 'Hero_imageMainMiddle_001',
+                'representation': '6203dc91e80934d9f6ee7d96',
+                'schema': 'openpype:container-2.0'
+            }
         """
         if layers_meta is None:
             layers_meta = self.get_layers_metadata()
 
-        return layers_meta.get(str(layer.id))
+        for layer_meta in layers_meta:
+            layer_id = layer_meta.get("uuid")  # legacy
+            if layer_meta.get("members"):
+                layer_id = layer_meta["members"][0]
+            if str(layer.id) == str(layer_id):
+                return layer_meta
+        print("Unable to find layer metadata for {}".format(layer.id))
 
-    def imprint(self, layer, data, all_layers=None, layers_meta=None):
+    def imprint(self, item_id, data, all_layers=None, items_meta=None):
         """Save layer metadata to Headline field of active document
 
         Stores metadata in format:
@@ -108,28 +137,37 @@ class PhotoshopServerStub:
         }] - for loaded instances
 
         Args:
-            layer (PSItem):
+            item_id (str):
             data(string): json representation for single layer
             all_layers (list of PSItem): for performance, could be
                 injected for usage in loop, if not, single call will be
                 triggered
-            layers_meta(string): json representation from Headline
+            items_meta(string): json representation from Headline
                            (for performance - provide only if imprint is in
                            loop - value should be same)
         Returns: None
         """
-        if not layers_meta:
-            layers_meta = self.get_layers_metadata()
+        if not items_meta:
+            items_meta = self.get_layers_metadata()
 
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
-        if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
-            if data:
-                layers_meta[str(layer.id)].update(data)
+        item_id = str(item_id)
+        is_new = True
+        result_meta = []
+        for item_meta in items_meta:
+            if ((item_meta.get('members') and
+                 item_id == str(item_meta.get('members')[0])) or
+                    item_meta.get("instance_id") == item_id):
+                is_new = False
+                if data:
+                    item_meta.update(data)
+                    result_meta.append(item_meta)
             else:
-                layers_meta.pop(str(layer.id))
-        else:
-            layers_meta[str(layer.id)] = data
+                result_meta.append(item_meta)
+
+        if is_new:
+            result_meta.append(data)
 
         # Ensure only valid ids are stored.
         if not all_layers:
@@ -137,12 +175,14 @@ class PhotoshopServerStub:
         layer_ids = [layer.id for layer in all_layers]
         cleaned_data = []
 
-        for layer_id in layers_meta:
-            if int(layer_id) in layer_ids:
-                cleaned_data.append(layers_meta[layer_id])
+        for item in result_meta:
+            if item.get("members"):
+                if int(item["members"][0]) not in layer_ids:
+                    continue
+
+            cleaned_data.append(item)
 
         payload = json.dumps(cleaned_data, indent=4)
-
         self.websocketserver.call(
             self.client.call('Photoshop.imprint', payload=payload)
         )
@@ -370,38 +410,27 @@ class PhotoshopServerStub:
         (Headline accessible by File > File Info)
 
         Returns:
-            (string): - json documents
+            (list)
             example:
                 {"8":{"active":true,"subset":"imageBG",
                       "family":"image","id":"pyblish.avalon.instance",
                       "asset":"Town"}}
                 8 is layer(group) id - used for deletion, update etc.
         """
-        layers_data = {}
         res = self.websocketserver.call(self.client.call('Photoshop.read'))
+        layers_data = []
         try:
-            layers_data = json.loads(res)
+            if res:
+                layers_data = json.loads(res)
         except json.decoder.JSONDecodeError:
-            pass
+            raise ValueError("{} cannot be parsed, recreate meta".format(res))
         # format of metadata changed from {} to [] because of standardization
         # keep current implementation logic as its working
-        if not isinstance(layers_data, dict):
-            temp_layers_meta = {}
-            for layer_meta in layers_data:
-                layer_id = layer_meta.get("uuid")
-                if not layer_id:
-                    layer_id = layer_meta.get("members")[0]
-
-                temp_layers_meta[layer_id] = layer_meta
-            layers_data = temp_layers_meta
-        else:
-            # legacy version of metadata
+        if isinstance(layers_data, dict):
             for layer_id, layer_meta in layers_data.items():
                 if layer_meta.get("schema") != "openpype:container-2.0":
-                    layer_meta["uuid"] = str(layer_id)
-                else:
                     layer_meta["members"] = [str(layer_id)]
-
+            layers_data = list(layers_data.values())
         return layers_data
 
     def import_smart_object(self, path, layer_name, as_reference=False):
@@ -472,11 +501,12 @@ class PhotoshopServerStub:
         )
 
     def remove_instance(self, instance_id):
-        cleaned_data = {}
+        cleaned_data = []
 
-        for key, instance in self.get_layers_metadata().items():
-            if key != instance_id:
-                cleaned_data[key] = instance
+        for item in self.get_layers_metadata():
+            inst_id = item.get("instance_id") or item.get("uuid")
+            if inst_id != instance_id:
+                cleaned_data.append(item)
 
         payload = json.dumps(cleaned_data, indent=4)
 
@@ -528,6 +558,7 @@ class PhotoshopServerStub:
                 d.get('type'),
                 d.get('members'),
                 d.get('long_name'),
-                d.get("color_code")
+                d.get("color_code"),
+                d.get("instance_id")
             ))
         return ret

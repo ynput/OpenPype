@@ -12,9 +12,9 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-from avalon import io
 
 import openpype.api
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
@@ -40,7 +40,7 @@ def find_paths_by_hash(texture_hash):
 
     """
     key = "data.sourceHashes.{0}".format(texture_hash)
-    return io.distinct(key, {"type": "version"})
+    return legacy_io.distinct(key, {"type": "version"})
 
 
 def maketx(source, destination, *args):

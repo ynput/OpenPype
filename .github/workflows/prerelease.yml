@@ -69,18 +69,16 @@ jobs:
       run: |
         git config user.email ${{ secrets.CI_EMAIL }}
         git config user.name ${{ secrets.CI_USER }}
-        cd repos/avalon-core
         git checkout main
         git pull
-        cd ../..
         git add .
         git commit -m "[Automated] Bump version"
         tag_name="CI/${{ steps.version.outputs.next_tag }}"
         echo $tag_name
         git tag -a $tag_name -m "nightly build"
-    
+
     - name: Push to protected main branch
-      uses: CasperWA/push-protected@v2
+      uses: CasperWA/push-protected@v2.10.0
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
         branch: main

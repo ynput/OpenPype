@@ -687,6 +687,26 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
+/* Messages overlay */
+#OverlayMessageWidget {
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+
+#OverlayMessageWidget:hover {
+    background: {color:bg-button-hover};
+}
+#OverlayMessageWidget {
+    background: {color:overlay-messages:bg-success};
+}
+#OverlayMessageWidget:hover {
+    background: {color:overlay-messages:bg-success-hover};
+}
+
+#OverlayMessageWidget QWidget {
+    background: transparent;
+}
+
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -836,23 +856,45 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* New Create/Publish UI */
+#CreatorDetailedDescription {
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    background: transparent;
+    border: 1px solid {color:border};
+}
+
 #CreateDialogHelpButton {
     background: rgba(255, 255, 255, 31);
+    border-top-left-radius: 0.2em;
+    border-bottom-left-radius: 0.2em;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     font-size: 10pt;
     font-weight: bold;
-    padding: 3px 3px 3px 3px;
+    padding: 0px;
 }
 
 #CreateDialogHelpButton:hover {
     background: rgba(255, 255, 255, 63);
 }
+#CreateDialogHelpButton QWidget {
+    background: transparent;
+}
 
 #PublishLogConsole {
     font-family: "Noto Sans Mono";
 }
-
+VariantInputsWidget QLineEdit {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+}
+VariantInputsWidget QToolButton {
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
 }
@@ -985,7 +1027,44 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-left: 1px solid {color:border};
 }
 
-#TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"] {
+#AssetNameInputWidget {
+    background: {color:bg-inputs};
+    border: 1px solid {color:border};
+    border-radius: 0.3em;
+}
+
+#AssetNameInputWidget QWidget {
+    background: transparent;
+}
+
+#AssetNameInputButton {
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 0px;
+    qproperty-iconSize: 11px 11px;
+    border-left: 1px solid {color:border};
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+}
+
+#AssetNameInput {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+    border: none;
+}
+
+#AssetNameInputWidget:hover {
+    border-color: {color:border-hover};
+}
+#AssetNameInputWidget:focus{
+    border-color: {color:border-focus};
+}
+#AssetNameInputWidget:disabled {
+    background: {color:bg-inputs-disabled};
+}
+
+#TasksCombobox[state="invalid"], #AssetNameInputWidget[state="invalid"], #AssetNameInputButton[state="invalid"] {
     border-color: {color:publisher:error};
 }
 
@@ -1330,4 +1409,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 #LikeDisabledInput:focus {
     border-color: {color:border};
+}
+
+/* Attribute Definition widgets */
+InViewButton, InViewButton:disabled {
+    background: transparent;
+}
+InViewButton:hover {
+    background: rgba(255, 255, 255, 37);
 }

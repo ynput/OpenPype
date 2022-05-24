@@ -573,7 +573,7 @@ def composite_rendered_layers(
         layer_ids_by_position[layer_position] = layer["layer_id"]
 
     # Sort layer positions
-    sorted_positions = tuple(sorted(layer_ids_by_position.keys()))
+    sorted_positions = tuple(reversed(sorted(layer_ids_by_position.keys())))
     # Prepare variable where filepaths without any rendered content
     #   - transparent will be created
     transparent_filepaths = set()

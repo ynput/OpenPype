@@ -12,8 +12,7 @@ from pymongo import UpdateOne
 import arrow
 import ftrack_api
 
-from avalon import schema
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB, schema
 
 from openpype_modules.ftrack.lib import (
     get_openpype_attr,

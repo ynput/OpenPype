@@ -9,7 +9,7 @@ from openpype.hosts.houdini.api import pipeline
 
 
 class VdbLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Load VDB"""
 
     families = ["vdbcache"]
     label = "Load VDB"

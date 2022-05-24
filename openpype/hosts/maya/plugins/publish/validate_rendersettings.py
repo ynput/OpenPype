@@ -50,15 +50,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
     }
 
     ImagePrefixTokens = {
-
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         'vray': 'maya/<Scene>/<Layer>/<Layer>',
-        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>'  # noqa
+        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
     }
 
     _aov_chars = {
@@ -69,14 +71,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>{aov_separator}<RenderPass>"  # noqa: E501
 
-    # WARNING: There is bug? in renderman, translating <scene> token
-    # to something left behind mayas default image prefix. So instead
-    # `SceneName_v01` it translates to:
-    # `SceneName_v01/<RenderLayer>/<RenderLayers_<RenderPass>` that means
-    # for example:
-    # `SceneName_v01/Main/Main_<RenderPass>`. Possible solution is to define
-    # custom token like <scene_name> to point to determined scene name.
-    RendermanDirPrefix = "<ws>/renders/maya/<scene>/<layer>"
+    renderman_dir_prefix = "maya/<scene>/<layer>"
 
     R_AOV_TOKEN = re.compile(
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
@@ -116,15 +111,22 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         prefix = prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
+
+        required_prefix = "maya/<scene>"
+
         if not anim_override:
             invalid = True
             cls.log.error("Animation needs to be enabled. Use the same "
                           "frame for start and end to render single frame")
 
-        if not prefix.lower().startswith("maya/<scene>"):
+        if renderer != "renderman" and not prefix.lower().startswith(
+                required_prefix):
             invalid = True
-            cls.log.error("Wrong image prefix [ {} ] - "
-                          "doesn't start with: 'maya/<scene>'".format(prefix))
+            cls.log.error(
+                ("Wrong image prefix [ {} ] "
+                 " - doesn't start with: '{}'").format(
+                    prefix, required_prefix)
+            )
 
         if not re.search(cls.R_LAYER_TOKEN, prefix):
             invalid = True
@@ -198,7 +200,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ]".format(file_prefix))
 
-            if dir_prefix.lower() != cls.RendermanDirPrefix.lower():
+            if dir_prefix.lower() != cls.renderman_dir_prefix.lower():
                 invalid = True
                 cls.log.error("Wrong directory prefix [ {} ]".format(
                     dir_prefix))
@@ -234,7 +236,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # load validation definitions from settings
         validation_settings = (
             instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
-                "{}_render_attributes".format(renderer))
+                "{}_render_attributes".format(renderer)) or []
         )
 
         # go through definitions and test if such node.attribute exists.
@@ -304,7 +306,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                              default_prefix,
                              type="string")
                 cmds.setAttr("rmanGlobals.imageOutputDir",
-                             cls.RendermanDirPrefix,
+                             cls.renderman_dir_prefix,
                              type="string")
 
             if renderer == "vray":
