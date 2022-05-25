@@ -36,6 +36,7 @@ class SelectInvalidInstances(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         if instances:
+            self.deselect()
             self.log.info(
                 "Selecting invalid nodes: %s" % ", ".join(
                     [str(x) for x in instances]
@@ -114,8 +115,10 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
             "Correct: `{}` | Wrong: `{}`").format(
                 instance.name, asset, context_asset)
 
+        self.log.debug(msg)
+
         if asset != context_asset:
-            PublishXmlValidationError(
+            raise PublishXmlValidationError(
                 self, msg, formatting_data={
                     "node_name": instance[0]["name"].value(),
                     "wrong_name": asset,

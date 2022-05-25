@@ -6,7 +6,7 @@
 ## Invalid Shot/Asset name in subset
 
 Following Node with name `{node_name}`:
-Is in context of `{context_asset}` but Node _asset_ knob is set as `{asset}`.
+Is in context of `{correct_name}` but Node _asset_ knob is set as `{wrong_name}`.
 
 ### How to repair?
 
