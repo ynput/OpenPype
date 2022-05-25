@@ -1,6 +1,6 @@
 """Load a camera asset in Blender."""
 
-from typing import Dict, List, Optional
+from typing import Dict
 from contextlib import contextmanager
 
 import bpy
@@ -27,11 +27,13 @@ class BlendCameraLoader(plugin.AssetLoader):
     def _process(self, libpath, asset_group):
         return self._load_blend(libpath, asset_group)
 
-    def process_asset(self, context: dict, *args, **kwargs) -> List:
+    def process_asset(
+        self, context: dict, *args, **kwargs
+    ) -> bpy.types.Collection:
         """Asset loading Process"""
-        asset_group, objects = super().process_asset(context, *args, **kwargs)
+        asset_group = super().process_asset(context, *args, **kwargs)
         asset_group.color_tag = self.color_tag
-        return objects
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""

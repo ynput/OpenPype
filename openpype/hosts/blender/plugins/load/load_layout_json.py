@@ -7,6 +7,7 @@ from typing import Dict, Optional
 import bpy
 
 from openpype.pipeline import (
+    legacy_io,
     discover_loader_plugins,
     load_container,
     loaders_from_representation,
@@ -48,6 +49,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
             data = json.load(fp)
 
         all_loaders = discover_loader_plugins()
+        task = legacy_io.Session.get("AVALON_TASK")
 
         for element in data:
             reference = element.get("reference")
@@ -62,7 +64,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
             options = {
                 "parent": asset_group,
                 "transform": element.get("transform"),
-                "create_animation": True if family == "rig" else False,
+                "create_animation": (task == "Animation" and family == "rig"),
                 "create_context": context,
             }
 
@@ -101,36 +103,39 @@ class JsonLayoutLoader(plugin.AssetLoader):
         #     # data={"dependencies": str(context["representation"]["_id"])}
         # )
 
-    def process_asset(self,
-                      context: dict,
-                      name: str,
-                      namespace: Optional[str] = None,
-                      options: Optional[Dict] = None):
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
+    def process_asset(
+        self,
+        context: dict,
+        name: str,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None
+    ) -> bpy.types.Collection:
+        """Asset loading Process"""
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        asset_name = plugin.asset_name(asset, subset)
+        unique_number = plugin.get_unique_number(asset, subset)
+        group_name = plugin.asset_name(asset, subset, unique_number)
+        namespace = namespace or asset
 
-        asset_group = bpy.data.collections.new(asset_name)
+        asset_group = bpy.data.collections.new(group_name)
         asset_group.color_tag = self.color_tag
         plugin.get_main_collection().children.link(asset_group)
 
         self._process(libpath, asset_group, context)
 
         self._update_metadata(
-            asset_group, context, name, namespace, asset_name, libpath
+            asset_group,
+            context,
+            name,
+            namespace or f"{asset}_{unique_number}",
+            plugin.asset_name(asset, subset),
+            libpath
         )
 
-        self[:] = asset_group.all_objects
-        return asset_group.all_objects
+        self[:] = list(asset_group.all_objects)
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
