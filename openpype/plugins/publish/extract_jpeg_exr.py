@@ -1,10 +1,15 @@
 import os
 
 import pyblish.api
+from openpype.pipeline import ( 
+    legacy_io,
+    KnownPublishError
+)
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_oiio_tools_path,
 
+    filter_profiles,
     run_subprocess,
     path_to_subprocess_arg,
 
@@ -33,6 +38,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     oiio_args = None
 
     def process(self, instance):
+        task_name = instance.data.get("task", legacy_io.Session["AVALON_TASK"])
+        host_name = legacy_io.Session["AVALON_APP"]
+        family = instance.data["family"]
+        filtering_criteria = {
+            "hosts": host_name,
+            "families": family,
+            "tasks": task_name
+        }
+        profile = filter_profiles(self.profiles, filtering_criteria,
+                                  logger=self.log)
+        if not profile:
+            return
+
+        oiio_path = get_oiio_tools_path()
+        # Raise an exception when oiiotool is not available
+        
+        if not os.path.exists(oiio_path):
+            KnownPublishError(
+                "OpenImageIO tool is not available on this machine."
+            )
         self.log.info("subset {}".format(instance.data['subset']))
 
         # skip crypto passes.
@@ -121,7 +146,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             jpeg_items.append(path_to_subprocess_arg(full_output_path))
 
             subprocess_command = " ".join(jpeg_items)
-            
+
             # run subprocess
             self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
