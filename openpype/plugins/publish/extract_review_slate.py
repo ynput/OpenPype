@@ -159,7 +159,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-loop", "1",
                 "-i", openpype.lib.path_to_subprocess_arg(slate_path),
                 "-r", str(input_frame_rate),
-                "-frames:v",  "1",
+                "-frames:v", "1",
             ])
 
             # add timecode from source to the slate, substract one frame
