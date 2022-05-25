@@ -326,7 +326,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return slate_path
 
-
     def _get_slates_resolution(self, slate_path):
         slate_streams = get_ffprobe_streams(slate_path, self.log)
         # Try to find first stream with defined 'width' and 'height'

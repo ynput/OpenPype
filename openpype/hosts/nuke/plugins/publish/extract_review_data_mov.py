@@ -51,7 +51,8 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         with maintained_selection():
             generated_repres = []
             for o_name, o_data in self.outputs.items():
-                self.log.debug("o_name: {}, o_data: {}".format(o_name, pformat(o_data)))
+                self.log.debug(
+                    "o_name: {}, o_data: {}".format(o_name, pformat(o_data)))
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
                 f_subsets = o_data["filter"]["subsets"]
