@@ -1,7 +1,7 @@
 
 import pyblish.api
 import openpype.api
-import avalon.nuke.lib as anlib
+from openpype.hosts.nuke.api import maintained_selection
 from openpype.pipeline import PublishXmlValidationError
 import nuke
 
@@ -62,7 +62,6 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
         if not correct_format:
             return cls.resolution_msg
 
-
     @classmethod
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
@@ -72,15 +71,15 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
             # make sure we are inside of the group node
             with grp_node:
                 # find input node and select it
-                input = None
+                _input = None
                 for inode in instance:
                     if inode.Class() != "Input":
                         continue
-                    input = inode
+                    _input = inode
 
                 # add reformat node under it
-                with anlib.maintained_selection():
-                    input['selected'].setValue(True)
+                with maintained_selection():
+                    _input['selected'].setValue(True)
                     _rfn = nuke.createNode("Reformat", "name Reformat01")
                     _rfn["resize"].setValue(0)
                     _rfn["black_outside"].setValue(1)
