@@ -337,7 +337,6 @@ function start() {
     var host = '127.0.0.1';
     /** port of the server */
     var port = parseInt(System.getenv('AVALON_HARMONY_PORT'));
-    MessageLog.trace("port " + port.toString());
 
     // Attach the client to the QApplication to preserve.
     var app = QCoreApplication.instance();
@@ -350,7 +349,6 @@ function start() {
     var widgets = QApplication.topLevelWidgets();
     for (var i = 0 ; i < widgets.length; i++) {
       if (widgets[i] instanceof QMainWindow){
-        MessageLog.trace('(DEBUG): START Main window ');
           mainWindow = widgets[i];
       }
     }
