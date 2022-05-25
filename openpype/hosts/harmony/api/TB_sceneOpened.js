@@ -279,19 +279,13 @@ function Client() {
     };
 
     self._send = function(message) {
-        var data = new QByteArray();
-        var outstr = new QDataStream(data, QIODevice.WriteOnly);
-        outstr.writeInt(0);
-        data.append('UTF-8');
-        outstr.device().seek(0);
-        outstr.writeInt(data.size() - 4);
-        var codec = QTextCodec.codecForUtfText(data);
-        var msg = codec.fromUnicode(message);
-        var l = msg.size();
-        var coded = new QByteArray('AH').append(self.pack(l));
-        coded = coded.append(msg);
-        self.socket.write(new QByteArray(coded));
-        self.logDebug('Sent.');
+      var codec_name = new QByteArray().append("ISO-8859-1");
+      var codec = QTextCodec.codecForName(codec_name);
+      var msg = codec.fromUnicode(message);
+      var l = msg.size();
+      var coded = new QByteArray().append('AH').append(self.pack(l)).append(msg);
+      self.socket.write(new QByteArray(coded));
+      self.logDebug('Sent.');
     };
 
     self.waitForLock = function() {
@@ -343,6 +337,7 @@ function start() {
     var host = '127.0.0.1';
     /** port of the server */
     var port = parseInt(System.getenv('AVALON_HARMONY_PORT'));
+    MessageLog.trace("port " + port.toString());
 
     // Attach the client to the QApplication to preserve.
     var app = QCoreApplication.instance();
@@ -351,7 +346,15 @@ function start() {
         app.avalonClient = new Client();
         app.avalonClient.socket.connectToHost(host, port);
     }
-    var menuBar = QApplication.activeWindow().menuBar();
+    var mainWindow = null;
+    var widgets = QApplication.topLevelWidgets();
+    for (var i = 0 ; i < widgets.length; i++) {
+      if (widgets[i] instanceof QMainWindow){
+        MessageLog.trace('(DEBUG): START Main window ');
+          mainWindow = widgets[i];
+      }
+    }
+    var menuBar = mainWindow.menuBar();
     var actions = menuBar.actions();
     app.avalonMenu = null;
 
