@@ -3,7 +3,10 @@ import os
 import nuke
 import pyblish.api
 import openpype
-from openpype.hosts.nuke.api.lib import maintained_selection
+from openpype.hosts.nuke.api import (
+    maintained_selection,
+    get_view_process_node
+)
 
 
 if sys.version_info[0] >= 3:
@@ -123,7 +126,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # get input process and connect it to baking
-                ipn = self.get_view_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     ipn.setInput(0, previous_node)
                     previous_node = ipn
@@ -174,30 +177,3 @@ class ExtractThumbnail(openpype.api.Extractor):
         # Clean up
         for node in temporary_nodes:
             nuke.delete(node)
-
-    def get_view_process_node(self):
-
-        # Select only the target node
-        if nuke.selectedNodes():
-            [n.setSelected(False) for n in nuke.selectedNodes()]
-
-        ipn_orig = None
-        for v in [n for n in nuke.allNodes()
-                  if "Viewer" == n.Class()]:
-            ip = v['input_process'].getValue()
-            ipn = v['input_process_node'].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
-
-        if ipn_orig:
-            nuke.nodeCopy('%clipboard%')
-
-            # Deselect all
-            [n.setSelected(False) for n in nuke.selectedNodes()]
-
-            nuke.nodePaste('%clipboard%')
-
-            ipn = nuke.selectedNode()
-
-            return ipn
