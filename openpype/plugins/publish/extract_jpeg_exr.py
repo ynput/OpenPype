@@ -53,7 +53,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
         oiio_path = get_oiio_tools_path()
         # Raise an exception when oiiotool is not available
-        
+
         if not os.path.exists(oiio_path):
             KnownPublishError(
                 "OpenImageIO tool is not available on this machine."
