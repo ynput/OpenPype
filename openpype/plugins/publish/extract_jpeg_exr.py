@@ -8,6 +8,7 @@ from openpype.pipeline import (
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_oiio_tools_path,
+    is_oiio_supported,
 
     filter_profiles,
     run_subprocess,
@@ -89,99 +90,121 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
-
-            do_convert = should_convert_for_ffmpeg(full_input_path)
-            # If result is None the requirement of conversion can't be
-            #   determined
-            if do_convert is None:
-                self.log.info((
-                    "Can't determine if representation requires conversion."
-                    " Skipped."
-                ))
-                continue
-
-            # Do conversion if needed
-            #   - change staging dir of source representation
-            #   - must be set back after output definitions processing
-            convert_dir = None
-            if do_convert:
-                convert_dir = get_transcode_temp_directory()
-                filename = os.path.basename(full_input_path)
-                convert_input_paths_for_ffmpeg(
-                    [full_input_path],
-                    convert_dir,
-                    self.log
-                )
-                full_input_path = os.path.join(convert_dir, filename)
-
-            filename = os.path.splitext(input_file)[0]
-            if not filename.endswith('.'):
-                filename += "."
-            jpeg_file = filename + "jpg"
-            full_output_path = os.path.join(stagingdir, jpeg_file)
-
-            self.log.info("output {}".format(full_output_path))
-
-            ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-            ffmpeg_args = self.ffmpeg_args or {}
-
-            jpeg_items = []
-            jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
-            # override file if already exists
-            jpeg_items.append("-y")
-            # use same input args like with mov
-            jpeg_items.extend(ffmpeg_args.get("input") or [])
-            # input file
-            jpeg_items.append("-i {}".format(
-                path_to_subprocess_arg(full_input_path)
-            ))
-            # output arguments from presets
-            jpeg_items.extend(ffmpeg_args.get("output") or [])
-
-            # If its a movie file, we just want one frame.
+            # If it's a movie file, use ffmpeg 
             if repre["ext"] == "mov":
+                do_convert = should_convert_for_ffmpeg(full_input_path)
+                # If result is None the requirement of conversion can't be
+                #   determined
+                if do_convert is None:
+                    self.log.info((
+                        "Can't determine if representation requires conversion."
+                        " Skipped."
+                    ))
+                    continue
+
+                # Do conversion if needed
+                #   - change staging dir of source representation
+                #   - must be set back after output definitions processing
+                convert_dir = None
+                if do_convert:
+                    convert_dir = get_transcode_temp_directory()
+                    filename = os.path.basename(full_input_path)
+                    convert_input_paths_for_ffmpeg(
+                        [full_input_path],
+                        convert_dir,
+                        self.log
+                    )
+                    full_input_path = os.path.join(convert_dir, filename)
+
+                filename = os.path.splitext(input_file)[0]
+                if not filename.endswith('.'):
+                    filename += "."
+                jpeg_file = filename + "jpg"
+                full_output_path = os.path.join(stagingdir, jpeg_file)
+
+                self.log.info("output {}".format(full_output_path))
+
+                ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+                ffmpeg_args = self.ffmpeg_args or {}
+
+                jpeg_items = []
+                jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
+                # override file if already exists
+                jpeg_items.append("-y")
+                # use same input args like with mov
+                jpeg_items.extend(ffmpeg_args.get("input") or [])
+                # input file
+                jpeg_items.append("-i {}".format(
+                    path_to_subprocess_arg(full_input_path)
+                ))
+                # output arguments from presets
+                jpeg_items.extend(ffmpeg_args.get("output") or [])
+                # we just want one frame from movie files
                 jpeg_items.append("-vframes 1")
 
-            # output file
-            jpeg_items.append(path_to_subprocess_arg(full_output_path))
-            subprocess_command = " ".join(jpeg_items)
+                # output file
+                jpeg_items.append(path_to_subprocess_arg(full_output_path))
+                subprocess_command = " ".join(jpeg_items)
 
-            # run subprocess
-            self.log.debug("{}".format(subprocess_command))
-            try:  # temporary until oiiotool is supported cross platform
-                run_subprocess(
-                    subprocess_command, shell=True, logger=self.log
-                )
-            except RuntimeError as exp:
-                if "Compression" in str(exp):
-                    self.log.debug(
-                        "Unsupported compression on input files. Skipping!!!"
+                # run subprocess
+                self.log.debug("{}".format(subprocess_command))
+                try:  # temporary until oiiotool is supported cross platform
+                    run_subprocess(
+                        subprocess_command, shell=True, logger=self.log
                     )
-                    return
-                self.log.warning("Conversion crashed", exc_info=True)
-                raise
+                except RuntimeError as exp:
+                    if "Compression" in str(exp):
+                        self.log.debug(
+                            "Unsupported compression on input files. Skipping!"
+                        )
+                        return
+                    self.log.warning("Conversion crashed", exc_info=True)
+                    raise
 
-            new_repre = {
-                "name": "thumbnail",
-                "ext": "jpg",
-                "files": jpeg_file,
-                "stagingDir": stagingdir,
-                "thumbnail": True,
-                "tags": ["thumbnail"]
-            }
+                new_repre = {
+                    "name": "thumbnail",
+                    "ext": "jpg",
+                    "files": jpeg_file,
+                    "stagingDir": stagingdir,
+                    "thumbnail": True,
+                    "tags": ["thumbnail"]
+                }
 
-            # adding representation
-            self.log.debug("Adding: {}".format(new_repre))
-            instance.data["representations"].append(new_repre)
+                # adding representation
+                self.log.debug("Adding: {}".format(new_repre))
+                instance.data["representations"].append(new_repre)
 
-            # Cleanup temp folder
-            if convert_dir is not None and os.path.exists(convert_dir):
-                shutil.rmtree(convert_dir)
+                # Cleanup temp folder
+                if convert_dir is not None and os.path.exists(convert_dir):
+                    shutil.rmtree(convert_dir)
 
-            # Create only one representation with name 'thumbnail'
-            # TODO maybe handle way how to decide from which representation
-            #   will be thumbnail created
-            break
+            elif repre["ext"] == "exr":
+                oiio_support = is_oiio_supported()
+                
+                if oiio_support:
+                    oiio_tool_path = get_oiio_tools_path()
+                    args = [oiio_tool_path]
+
+                    ext = os.path.splitext(input_path)[1][1:]
+                    if ext in self.movie_extensions:
+                        args.extend(["--subimage", str(int(input_frame))])
+                    else:
+                        args.extend(["--frames", str(int(input_frame))])
+
+                    if ext == "exr":
+                        args.extend(["--powc", "0.45,0.45,0.45,1.0"])
+
+                    args.extend([input_path, "-o", output_path])
+                    output = openpype.api.run_subprocess(args)
+
+                    failed_output = "oiiotool produced no output."
+                    if failed_output in output:
+                    raise ValueError(
+                        "oiiotool processing failed. Args: {}".format(args)
+                # Create only one representation with name 'thumbnail'
+                # TODO maybe handle way how to decide from which representation
+                #   will be thumbnail created
+                break
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
