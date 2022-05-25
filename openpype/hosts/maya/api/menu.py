@@ -6,7 +6,13 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.api import BuildWorkfile
+from openpype.api import (
+    BuildWorkfile,
+    # build_workfile_template
+    # update_workfile_template
+)
+
+from openpype.lib.build_template import build_workfile_template, update_workfile_template
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
@@ -157,6 +163,16 @@ def install():
             "Update Placeholder",
             parent=builder_menu,
             command=lambda *args: update_placeholder()
+        )
+        cmds.menuItem(
+            "Build Workfile from template",
+            parent=builder_menu,
+            command=lambda *args: build_workfile_template()
+        )
+        cmds.menuItem(
+            "Update Workfile from template",
+            parent=builder_menu,
+            command=lambda *args: update_workfile_template()
         )
 
         cmds.setParent(MENU_NAME, menu=True)
