@@ -533,7 +533,7 @@ def convert_input_paths_for_ffmpeg(
     output_dir,
     logger=None
 ):
-    """Contert source file to format supported in ffmpeg.
+    """Convert source file to format supported in ffmpeg.
 
     Currently can convert only exrs. The input filepaths should be files
     with same type. Information about input is loaded only from first found
