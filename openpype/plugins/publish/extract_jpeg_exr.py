@@ -1,4 +1,5 @@
 import os
+from urllib.parse import MAX_CACHE_SIZE
 
 import pyblish.api
 from openpype.pipeline import ( 
@@ -131,6 +132,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
                 # override file if already exists
                 jpeg_items.append("-y")
+                # flag for large file sizes
+                max_int = 2147483647
+                jpeg_items.append("-analyzeduration {}".format(max_int))
+                jpeg_items.append("-probesize {}".format(max_int))
                 # use same input args like with mov
                 jpeg_items.extend(ffmpeg_args.get("input") or [])
                 # input file
