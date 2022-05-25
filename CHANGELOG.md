@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.10.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.10.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.8...HEAD)
 
@@ -14,12 +14,16 @@
 
 **🚀 Enhancements**
 
+- Project Manager: Allow to paste Tasks into multiple assets at the same time [\#3226](https://github.com/pypeclub/OpenPype/pull/3226)
 - Project manager: Sped up project load [\#3216](https://github.com/pypeclub/OpenPype/pull/3216)
+- Loader UI: Speed issues of loader with sync server [\#3199](https://github.com/pypeclub/OpenPype/pull/3199)
 - Maya: added clean\_import option to Import loader [\#3181](https://github.com/pypeclub/OpenPype/pull/3181)
 - Maya: add maya 2023 to default applications [\#3167](https://github.com/pypeclub/OpenPype/pull/3167)
+- Compressed bgeo publishing in SAP and Houdini loader [\#3153](https://github.com/pypeclub/OpenPype/pull/3153)
 - General: Add 'dataclasses' to required python modules [\#3149](https://github.com/pypeclub/OpenPype/pull/3149)
 - Hooks: Tweak logging grammar [\#3147](https://github.com/pypeclub/OpenPype/pull/3147)
 - Nuke: settings for reformat node in CreateWriteRender node [\#3143](https://github.com/pypeclub/OpenPype/pull/3143)
+- Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
 - Publisher: UI Modifications and fixes [\#3139](https://github.com/pypeclub/OpenPype/pull/3139)
 - General: Simplified OP modules/addons import [\#3137](https://github.com/pypeclub/OpenPype/pull/3137)
 - Terminal: Tweak coloring of TrayModuleManager logging enabled states [\#3133](https://github.com/pypeclub/OpenPype/pull/3133)
@@ -28,18 +32,19 @@
 - Unreal: Layout and Camera update and remove functions reimplemented and improvements [\#3116](https://github.com/pypeclub/OpenPype/pull/3116)
 - Settings: Remove environment groups from settings [\#3115](https://github.com/pypeclub/OpenPype/pull/3115)
 - TVPaint: Match renderlayer key with other hosts [\#3110](https://github.com/pypeclub/OpenPype/pull/3110)
-- Ftrack: AssetVersion status on publish [\#3108](https://github.com/pypeclub/OpenPype/pull/3108)
 - Tray publisher: Simple families from settings [\#3105](https://github.com/pypeclub/OpenPype/pull/3105)
 
 **🐛 Bug fixes**
 
+- Ftrack: Validate that the user exists on ftrack [\#3237](https://github.com/pypeclub/OpenPype/pull/3237)
+- TVPaint: Look for more groups than 12 [\#3228](https://github.com/pypeclub/OpenPype/pull/3228)
+- Project Manager: Fix persistent editors on project change [\#3218](https://github.com/pypeclub/OpenPype/pull/3218)
 - Deadline: instance data overwrite fix [\#3214](https://github.com/pypeclub/OpenPype/pull/3214)
 - Ftrack: Push hierarchical attributes action works [\#3210](https://github.com/pypeclub/OpenPype/pull/3210)
 - Standalone Publisher: Always create new representation for thumbnail [\#3203](https://github.com/pypeclub/OpenPype/pull/3203)
 - Photoshop: skip collector when automatic testing [\#3202](https://github.com/pypeclub/OpenPype/pull/3202)
 - Nuke: render/workfile version sync doesn't work on farm [\#3185](https://github.com/pypeclub/OpenPype/pull/3185)
 - Ftrack: Review image only if there are no mp4 reviews [\#3183](https://github.com/pypeclub/OpenPype/pull/3183)
-- Ftrack: Locations deepcopy issue [\#3177](https://github.com/pypeclub/OpenPype/pull/3177)
 - General: Avoid creating multiple thumbnails [\#3176](https://github.com/pypeclub/OpenPype/pull/3176)
 - General/Hiero: better clip duration calculation [\#3169](https://github.com/pypeclub/OpenPype/pull/3169)
 - General: Oiio conversion for ffmpeg checks for invalid characters [\#3166](https://github.com/pypeclub/OpenPype/pull/3166)
@@ -52,11 +57,10 @@
 - TVPaint: Composite layers in reversed order [\#3135](https://github.com/pypeclub/OpenPype/pull/3135)
 - Nuke: fixing default settings for workfile builder loaders [\#3120](https://github.com/pypeclub/OpenPype/pull/3120)
 - Nuke: fix anatomy imageio regex default [\#3119](https://github.com/pypeclub/OpenPype/pull/3119)
-- General: Python 3 compatibility in queries [\#3112](https://github.com/pypeclub/OpenPype/pull/3112)
-- General: Collect loaded versions skips not existing representations [\#3095](https://github.com/pypeclub/OpenPype/pull/3095)
 
 **🔀 Refactored code**
 
+- Avalon repo removed from Jobs workflow [\#3193](https://github.com/pypeclub/OpenPype/pull/3193)
 - General: Remove remaining imports from avalon [\#3130](https://github.com/pypeclub/OpenPype/pull/3130)
 
 **Merged pull requests:**
@@ -72,6 +76,7 @@
 **🚀 Enhancements**
 
 - nuke: generate publishing nodes inside render group node  [\#3206](https://github.com/pypeclub/OpenPype/pull/3206)
+- Loader UI: Speed issues of loader with sync server [\#3200](https://github.com/pypeclub/OpenPype/pull/3200)
 - Backport of fix for attaching renders to subsets [\#3195](https://github.com/pypeclub/OpenPype/pull/3195)
 
 **🐛 Bug fixes**
@@ -79,6 +84,7 @@
 - Standalone Publisher: Always create new representation for thumbnail [\#3204](https://github.com/pypeclub/OpenPype/pull/3204)
 - Nuke: render/workfile version sync doesn't work on farm  [\#3184](https://github.com/pypeclub/OpenPype/pull/3184)
 - Ftrack: Review image only if there are no mp4 reviews [\#3182](https://github.com/pypeclub/OpenPype/pull/3182)
+- Ftrack: Locations deepcopy issue [\#3177](https://github.com/pypeclub/OpenPype/pull/3177)
 - Ftrack: Locations deepcopy issue [\#3175](https://github.com/pypeclub/OpenPype/pull/3175)
 - General: Avoid creating multiple thumbnails [\#3174](https://github.com/pypeclub/OpenPype/pull/3174)
 - General: TemplateResult can be copied [\#3170](https://github.com/pypeclub/OpenPype/pull/3170)
@@ -98,9 +104,7 @@
 **🚀 Enhancements**
 
 - Deadline output dir issue to 3.9x [\#3155](https://github.com/pypeclub/OpenPype/pull/3155)
-- Compressed bgeo publishing in SAP and Houdini loader [\#3153](https://github.com/pypeclub/OpenPype/pull/3153)
 - nuke: removing redundant code from startup [\#3142](https://github.com/pypeclub/OpenPype/pull/3142)
-- Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
 
 **🐛 Bug fixes**
 
@@ -136,11 +140,6 @@
 ## [3.9.5](https://github.com/pypeclub/OpenPype/tree/3.9.5) (2022-04-25)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.10.0-nightly.2...3.9.5)
-
-**🐛 Bug fixes**
-
-- Ftrack: Update Create Folders action [\#3092](https://github.com/pypeclub/OpenPype/pull/3092)
-- General: Extract review sequence is not converted with same names [\#3075](https://github.com/pypeclub/OpenPype/pull/3075)
 
 ## [3.9.4](https://github.com/pypeclub/OpenPype/tree/3.9.4) (2022-04-15)
 
