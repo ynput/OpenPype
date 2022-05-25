@@ -1,5 +1,5 @@
 import nuke
-
+import six
 import pyblish.api
 import openpype.api
 from openpype.pipeline import PublishXmlValidationError
@@ -64,7 +64,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
             knobs = {}
             for family in families:
                 for preset in cls.knobs[family]:
-                    knobs.update({preset: cls.knobs[family][preset]})
+                    knobs[preset] = cls.knobs[family][preset]
 
             # Get invalid knobs.
             nodes = []
@@ -73,8 +73,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
                 nodes.append(node)
                 if node.Class() == "Group":
                     node.begin()
-                    for i in nuke.allNodes():
-                        nodes.append(i)
+                    nodes.extend(iter(nuke.allNodes()))
                     node.end()
 
             for node in nodes:
@@ -101,7 +100,9 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         for data in invalid:
-            if isinstance(data["expected"], unicode):
+            # TODO: will need to improve type definitions
+            # with the new settings for knob types
+            if isinstance(data["expected"], six.text_type):
                 data["knob"].setValue(str(data["expected"]))
                 continue
 
