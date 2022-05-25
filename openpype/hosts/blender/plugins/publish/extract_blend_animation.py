@@ -26,32 +26,13 @@ class ExtractBlendAnimation(openpype.api.Extractor):
 
         data_blocks = set()
 
-        for obj in instance:
-            if (
-                isinstance(obj, bpy.types.Object) and
-                obj.type == 'ARMATURE' and
-                obj.animation_data and
-                obj.animation_data.action
-            ):
-                action = obj.animation_data.action
-                data_blocks.add(action)
-
-                if not action.get(AVALON_PROPERTY):
-                    action[AVALON_PROPERTY] = {
-                        "namespaces": set(),
-                        "users": set(),
-                        "family": "action",
-                        "objectName": action.name,
-                    }
-
-                action[AVALON_PROPERTY]["users"].add(obj.name)
-
-                for collection in obj.users_collection:
-                    metadata = collection.get(AVALON_PROPERTY)
-                    if metadata and metadata.get("namespace"):
-                        action[AVALON_PROPERTY]["namespaces"].add(
-                            metadata.get("namespace")
-                        )
+        for member in instance[:-1]:
+            if isinstance(member, bpy.types.Collection):
+                for obj in member.all_objects:
+                    if obj and obj.type == "ARMATURE":
+                        if obj.animation_data and obj.animation_data.action:
+                            data_blocks.add(obj.animation_data.action)
+                            data_blocks.add(obj)
 
         bpy.data.libraries.write(filepath, data_blocks)
 

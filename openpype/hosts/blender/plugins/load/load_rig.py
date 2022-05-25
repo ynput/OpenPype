@@ -2,7 +2,7 @@
 
 import contextlib
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import bpy
 
@@ -33,7 +33,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
     def _process(self, libpath, asset_group):
         # Load blend from from libpath library.
-        objects = self._load_blend(libpath, asset_group)
+        self._load_blend(libpath, asset_group)
 
         # Rename loaded collections with asset group name prefix.
         for child in set(asset_group.children_recursive):
@@ -44,19 +44,23 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Rename loaded objects and their dependencies with asset group name
         # as namespace prefix.
-        self._rename_objects_with_namespace(objects, asset_group.name)
-
-        return objects
+        self._rename_objects_with_namespace(
+            asset_group.all_objects, asset_group.name
+        )
 
     @staticmethod
-    def _assign_actions(objects, namespace):
+    def _assign_actions(asset_group, namespace):
         """Assign new action for all objects from linked rig."""
 
         task = legacy_io.Session.get("AVALON_TASK")
         asset = legacy_io.Session.get("AVALON_ASSET")
 
         # If rig contain only one armature.
-        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        armatures = [
+            obj
+            for obj in asset_group.all_objects
+            if obj.type == "ARMATURE"
+        ]
         if len(armatures) == 1:
             armature = armatures[0]
             if armature.animation_data is None:
@@ -78,7 +82,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # If rig contain no armature we generate actions for each object.
         else:
-            for obj in objects:
+            for obj in asset_group.all_objects:
                 if obj.animation_data is None:
                     obj.animation_data_create()
                 action_name = obj.name.replace(":", "_")
@@ -159,29 +163,25 @@ class BlendRigLoader(plugin.AssetLoader):
         name: str,
         namespace: Optional[str] = None,
         options: Optional[Dict] = None
-    ) -> List:
+    ) -> bpy.types.Collection:
         """Asset loading Process"""
-        asset_group, objects = super().process_asset(context, name, namespace)
+        asset_group = super().process_asset(context, name, namespace)
         asset_group.color_tag = self.color_tag
 
         namespace = asset_group[AVALON_PROPERTY]["namespace"]
-        self._assign_actions(objects, namespace)
+        self._assign_actions(asset_group, namespace)
 
         if options is not None:
             self._apply_options(asset_group, options, namespace)
 
-        return objects
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
-        self._update_process(container, representation)
+        asset_group = self._update_process(container, representation)
 
         # Ensure updated rig has action.
-        collection = bpy.data.collections.get(container["objectName"])
-        if collection:
-            self._assign_actions(
-                collection.all_objects, container["namespace"]
-            )
+        self._assign_actions(asset_group, container["namespace"])
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

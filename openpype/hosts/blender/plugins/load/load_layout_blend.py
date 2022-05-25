@@ -1,6 +1,6 @@
 """Load a layout in Blender."""
 
-from typing import Dict, List
+from typing import Dict
 
 import bpy
 
@@ -22,7 +22,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     color_tag = "COLOR_02"
 
     @staticmethod
-    def _make_local_actions(objects):
+    def _make_local_actions(asset_group):
         """Make local for all actions from objects."""
 
         task = legacy_io.Session.get("AVALON_TASK")
@@ -30,7 +30,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         local_actions = {}
 
-        for obj in objects:
+        for obj in asset_group.all_objects:
             if not obj.animation_data or not obj.animation_data.action:
                 continue
 
@@ -62,11 +62,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 'Creator plugin "CreateAnimation" was not found.'
             )
 
-        namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace")
-
         legacy_create(
             creator_plugin,
-            name=f"{namespace or asset_group.name}_animation",
+            name=f"{asset_group.name}_animation",
             asset=context["asset"]["name"],
             options={"useSelection": False, "asset_group": asset_group},
             data={"dependencies": str(context["representation"]["_id"])}
@@ -83,30 +81,29 @@ class BlendLayoutLoader(plugin.AssetLoader):
     def _process(self, libpath, asset_group):
         return self._load_blend(libpath, asset_group)
 
-    def process_asset(self, context, *args, **kwargs) -> List:
+    def process_asset(self, context, *args, **kwargs) -> bpy.types.Collection:
         """Asset loading Process"""
-        asset_group, objects = super().process_asset(context, *args, **kwargs)
+        asset_group = super().process_asset(context, *args, **kwargs)
         asset_group.color_tag = self.color_tag
 
-        self._make_local_actions(objects)
+        self._make_local_actions(asset_group)
 
         # Create animation collection subset for loaded rig asset group.
-        for child in asset_group.children_recursive:
-            if self._is_rig_container(child):
-                self._create_animation_collection(child, context)
+        if legacy_io.Session.get("AVALON_TASK") == "Animation":
+            for child in asset_group.children_recursive:
+                if self._is_rig_container(child):
+                    self._create_animation_collection(child, context)
 
-        return objects
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
-        self._update_process(container, representation)
+        asset_group = self._update_process(container, representation)
 
         # TODO : check animation collections.
 
         # Ensure all updated actions are local.
-        collection = bpy.data.collections.get(container["objectName"])
-        if collection:
-            self._make_local_actions(collection.all_objects)
+        self._make_local_actions(asset_group)
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""

@@ -1,6 +1,6 @@
 """Load a model asset in Blender."""
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import bpy
 
@@ -28,14 +28,13 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # If asset_group is a Collection, we proceed with usual load blend.
         if isinstance(asset_group, bpy.types.Collection):
-            return self._load_blend(libpath, asset_group)
+            self._load_blend(libpath, asset_group)
 
         # If asset_group is an Empty, set instance collection with container.
         elif isinstance(asset_group, bpy.types.Object):
             container = self._load_library_collection(libpath)
             asset_group.instance_collection = container
             asset_group.instance_type = 'COLLECTION'
-            return list(container.all_objects)
 
     @staticmethod
     def _apply_options(asset_group, options):
@@ -82,7 +81,7 @@ class BlendModelLoader(plugin.AssetLoader):
         name: str,
         namespace: Optional[str] = None,
         options: Optional[Dict] = None
-    ) -> List:
+    ) -> bpy.types.ID:
         """
         Arguments:
             name: Use pre-defined name
@@ -101,6 +100,7 @@ class BlendModelLoader(plugin.AssetLoader):
         # Create override library if current task needed it.
         if legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM:
             group_name = plugin.asset_name(asset, subset)
+            namespace = namespace or asset
             asset_group = bpy.data.collections.new(group_name)
             asset_group.color_tag = self.color_tag
             parent_collection.children.link(asset_group)
@@ -112,7 +112,7 @@ class BlendModelLoader(plugin.AssetLoader):
             asset_group.empty_display_type = 'SINGLE_ARROW'
             parent_collection.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group)
+        self._process(libpath, asset_group)
 
         if options is not None:
             self._apply_options(asset_group, options)
@@ -121,8 +121,9 @@ class BlendModelLoader(plugin.AssetLoader):
             asset_group, context, name, namespace, asset_name, libpath
         )
 
-        self[:] = objects
-        return objects
+        self[:] = plugin.get_container_objects(asset_group)
+
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""

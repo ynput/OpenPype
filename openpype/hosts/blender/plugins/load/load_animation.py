@@ -1,6 +1,6 @@
 """Load an animation in Blender."""
 
-from typing import Dict, List
+from typing import Dict
 
 import bpy
 
@@ -94,13 +94,11 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         plugin.orphans_purge()
 
-        return []
-
-    def process_asset(self, *args, **kwargs) -> List:
+    def process_asset(self, *args, **kwargs) -> bpy.types.Collection:
         """Asset loading Process"""
-        asset_group, objects = super().process_asset(*args, **kwargs)
+        asset_group = super().process_asset(*args, **kwargs)
         asset_group.color_tag = self.color_tag
-        return objects
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""

@@ -1,6 +1,6 @@
 """Load an asset in Blender from an Alembic file."""
 
-from typing import Dict, List, Optional
+from typing import Dict
 
 import bpy
 
@@ -50,11 +50,11 @@ class CacheModelLoader(plugin.AssetLoader):
         plugin.orphans_purge()
         plugin.deselect_all()
 
-        return objects
-
-    def process_asset(self, context: dict, *args, **kwargs) -> List:
+    def process_asset(
+        self, context: dict, *args, **kwargs
+    ) -> bpy.types.Collection:
         """Asset loading Process"""
-        asset_group, objects = super().process_asset(context, *args, **kwargs)
+        asset_group = super().process_asset(context, *args, **kwargs)
 
         if legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM:
             asset = context["asset"]["name"]
@@ -64,17 +64,20 @@ class CacheModelLoader(plugin.AssetLoader):
             asset_group[AVALON_PROPERTY]["namespace"] = asset
         else:
             namespace = asset_group[AVALON_PROPERTY]["namespace"]
-            self._rename_objects_with_namespace(objects, namespace)
+            self._rename_objects_with_namespace(
+                asset_group.all_objects, namespace
+            )
 
-        return objects
+        return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
-        objects = self._update_process(container, representation)
+        asset_group = self._update_process(container, representation)
 
         if legacy_io.Session.get("AVALON_TASK") not in MODEL_DOWNSTREAM:
             self._rename_objects_with_namespace(
-                objects, container["namespace"] or container["objectName"]
+                asset_group.all_objects,
+                container["namespace"] or container["objectName"],
             )
 
     def exec_remove(self, container) -> bool:

@@ -529,7 +529,7 @@ class AssetLoader(LoaderPlugin):
         name: str,
         namespace: Optional[str] = None,
         options: Optional[Dict] = None
-    ):
+    ) -> bpy.types.Collection:
         """
         Arguments:
             name: Use pre-defined name
@@ -547,7 +547,7 @@ class AssetLoader(LoaderPlugin):
         asset_group = bpy.data.collections.new(group_name)
         get_main_collection().children.link(asset_group)
 
-        objects = self._process(libpath, asset_group)
+        self._process(libpath, asset_group)
 
         self._update_metadata(
             asset_group,
@@ -558,8 +558,8 @@ class AssetLoader(LoaderPlugin):
             libpath
         )
 
-        self[:] = objects
-        return asset_group, objects
+        self[:] = list(asset_group.all_objects)
+        return asset_group
 
     def load(self,
              context: dict,
@@ -683,7 +683,9 @@ class AssetLoader(LoaderPlugin):
         )
         return normalized_group_libpath == normalized_libpath
 
-    def _update_process(self, container: Dict, representation: Dict):
+    def _update_process(
+        self, container: Dict, representation: Dict
+    ) -> bpy.types.ID:
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
@@ -730,15 +732,14 @@ class AssetLoader(LoaderPlugin):
 
             self._process(libpath, asset_group)
 
+        # With maintained contextmanager functions some datablocks could
+        # remain, so we do orphans purge one last time.
+        orphans_purge()
+
         # update override library operations from asset objects
-        objects = asset_group.all_objects
-        for obj in set(objects):
+        for obj in get_container_objects(container):
             if obj.override_library:
                 obj.override_library.operations_update()
-
-        # clear orphan datablocks and libraries
-        orphans_purge()
-        deselect_all()
 
         # update metadata
         metadata_update(
@@ -750,7 +751,7 @@ class AssetLoader(LoaderPlugin):
             }
         )
 
-        return objects
+        return asset_group
 
     def _update_metadata(
         self,
