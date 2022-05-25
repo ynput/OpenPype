@@ -6,7 +6,11 @@ import copy
 import pyblish.api
 
 import openpype
-from openpype.hosts.nuke.api.lib import maintained_selection
+from openpype.hosts.nuke.api import (
+    maintained_selection,
+    duplicate_node,
+    get_view_process_node
+)
 
 
 class ExtractSlateFrame(openpype.api.Extractor):
@@ -30,11 +34,20 @@ class ExtractSlateFrame(openpype.api.Extractor):
         "f_vfx_scope_of_work": [False, ""]
     }
 
+    # constants
+    SLATE_TO_SEQUENCE_DONE = None
+
     def process(self, instance):
-        if hasattr(self, "viewer_lut_raw"):
-            self.viewer_lut_raw = self.viewer_lut_raw
-        else:
-            self.viewer_lut_raw = False
+        self.fpath = instance.data["path"]
+        self.first_frame = instance.data["frameStartHandle"]
+        self.last_frame = instance.data["frameEndHandle"]
+
+        self.log.info("Creating staging dir...")
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        self._create_staging_dir(instance)
 
         with maintained_selection():
             self.log.debug("instance: {}".format(instance))
@@ -43,7 +56,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
             if instance.data.get("bakePresets"):
                 for o_name, o_data in instance.data["bakePresets"].items():
-                    self.log.info("_ o_name: {}, o_data: {}".format(o_name, pformat(o_data)))
+                    self.log.info("_ o_name: {}, o_data: {}".format(
+                        o_name, pformat(o_data)))
                     self.render_slate(instance, o_name, **o_data)
             else:
                 viewer_process_swithes = {
@@ -52,7 +66,21 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 }
                 self.render_slate(instance, None, **viewer_process_swithes)
 
+    def _create_staging_dir(self, instance):
+        staging_dir = os.path.normpath(
+            os.path.dirname(self.fpath))
+
+        instance.data["stagingDir"] = staging_dir
+
+        self.log.info(
+            "StagingDir `{0}`...".format(instance.data["stagingDir"]))
+
     def render_slate(self, instance, output_name=None, **kwargs):
+        slate_node = instance.data["slateNode"]
+
+        # fill slate node with comments
+        self.add_comment_slate_node(instance, slate_node)
+
         # solve output name if any is set
         _output_name = output_name or ""
         if _output_name:
@@ -62,31 +90,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
 
-        node_subset_name = instance.data.get("name", None)
-        node = instance[0]  # group node
-        self.log.info("Creating staging dir...")
+        slate_first_frame = self.first_frame - 1
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        staging_dir = os.path.normpath(
-            os.path.dirname(instance.data['path']))
-
-        instance.data["stagingDir"] = staging_dir
-
-        self.log.info(
-            "StagingDir `{0}`...".format(instance.data["stagingDir"]))
-
-        frame_start = instance.data["frameStart"]
-        frame_end = instance.data["frameEnd"]
-        handle_start = instance.data["handleStart"]
-        handle_end = instance.data["handleEnd"]
-
-        frame_length = int(
-            (frame_end - frame_start + 1) + (handle_start + handle_end)
-        )
-
-        temporary_nodes = []
         collection = instance.data.get("collection", None)
 
         if collection:
@@ -94,51 +99,61 @@ class ExtractSlateFrame(openpype.api.Extractor):
             fname = os.path.basename(collection.format(
                 "{head}{padding}{tail}"))
             fhead = collection.format("{head}")
-
-            collected_frames_len = len(collection.indexes)
-
-            # get first and last frame
-            first_frame = min(collection.indexes) - 1
-            self.log.info('frame_length: {}'.format(frame_length))
-            self.log.info(
-                'len(collection.indexes): {}'.format(collected_frames_len)
-            )
-            if ("slate" in instance.data["families"]) \
-                    and (frame_length != collected_frames_len):
-                first_frame += 1
-
-            last_frame = first_frame
         else:
-            fname = os.path.basename(instance.data.get("path", None))
+            fname = os.path.basename(self.fpath)
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("frameStartHandle", None) - 1
-            last_frame = first_frame
 
         if "#" in fhead:
             fhead = fhead.replace("#", "")[:-1]
 
-        previous_node = node
+        self.log.debug("__ self.first_frame: {}".format(self.first_frame))
+        self.log.debug("__ slate_first_frame: {}".format(slate_first_frame))
+
+        # Read node
+        r_node = nuke.createNode("Read")
+        r_node["file"].setValue(self.fpath)
+        r_node["first"].setValue(self.first_frame)
+        r_node["origfirst"].setValue(self.first_frame)
+        r_node["last"].setValue(self.last_frame)
+        r_node["origlast"].setValue(self.last_frame)
+        r_node["colorspace"].setValue(instance.data["colorspace"])
+        previous_node = r_node
+        temporary_nodes = [previous_node]
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # get input process and connect it to baking
-                ipn = self.get_view_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     ipn.setInput(0, previous_node)
                     previous_node = ipn
                     temporary_nodes.append(ipn)
 
-            if not self.viewer_lut_raw:
-                dag_node = nuke.createNode("OCIODisplay")
-                dag_node.setInput(0, previous_node)
-                previous_node = dag_node
-                temporary_nodes.append(dag_node)
+            # add duplicate slate node and connect to previous
+            duply_slate_node = duplicate_node(slate_node)
+            duply_slate_node.setInput(0, previous_node)
+            previous_node = duply_slate_node
+            temporary_nodes.append(duply_slate_node)
+
+            # add viewer display transformation node
+            dag_node = nuke.createNode("OCIODisplay")
+            dag_node.setInput(0, previous_node)
+            previous_node = dag_node
+            temporary_nodes.append(dag_node)
+
+        else:
+            # add duplicate slate node and connect to previous
+            duply_slate_node = duplicate_node(slate_node)
+            duply_slate_node.setInput(0, previous_node)
+            previous_node = duply_slate_node
+            temporary_nodes.append(duply_slate_node)
 
         # create write node
         write_node = nuke.createNode("Write")
         file = fhead[:-1] + _output_name + "_slate.png"
-        path = os.path.join(staging_dir, file).replace("\\", "/")
+        path = os.path.join(
+            instance.data["stagingDir"], file).replace("\\", "/")
 
         # add slate path to `slateFrames` instance data attr
         if not instance.data.get("slateFrames"):
@@ -153,47 +168,31 @@ class ExtractSlateFrame(openpype.api.Extractor):
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
 
-        # fill slate node with comments
-        self.add_comment_slate_node(instance)
-
         # Render frames
-        nuke.execute(write_node.name(), int(first_frame), int(last_frame))
-        # also render slate as sequence frame
-        nuke.execute(node_subset_name, int(first_frame), int(last_frame))
+        nuke.execute(
+            write_node.name(), int(slate_first_frame), int(slate_first_frame))
 
-        # Clean up
-        for node in temporary_nodes:
-            nuke.delete(node)
+        # also render image to sequence
+        self._render_slate_to_sequence(instance, slate_first_frame)
 
-    def get_view_process_node(self):
-        # Select only the target node
-        if nuke.selectedNodes():
-            [n.setSelected(False) for n in nuke.selectedNodes()]
+        # # Clean up
+        # for node in temporary_nodes:
+        #     nuke.delete(node)
 
-        ipn_orig = None
-        for v in [n for n in nuke.allNodes()
-                  if "Viewer" in n.Class()]:
-            ip = v['input_process'].getValue()
-            ipn = v['input_process_node'].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
+    def _render_slate_to_sequence(self, instance, slate_first_frame):
+        if not self.SLATE_TO_SEQUENCE_DONE:
+            node_subset_name = instance.data["name"]
+            # also render slate as sequence frame
+            nuke.execute(
+                node_subset_name,
+                int(slate_first_frame),
+                int(slate_first_frame)
+            )
 
-        if ipn_orig:
-            nuke.nodeCopy('%clipboard%')
+            # mark as done
+            self.SLATE_TO_SEQUENCE_DONE = True
 
-            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
-
-            nuke.nodePaste('%clipboard%')
-
-            ipn = nuke.selectedNode()
-
-            return ipn
-
-    def add_comment_slate_node(self, instance):
-        node = instance.data.get("slateNode")
-        if not node:
-            return
+    def add_comment_slate_node(self, instance, node):
 
         comment = instance.context.data.get("comment")
         intent = instance.context.data.get("intent")
