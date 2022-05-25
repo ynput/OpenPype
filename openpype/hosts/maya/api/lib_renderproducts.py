@@ -1093,6 +1093,11 @@ class RenderProductsRenderman(ARenderProducts):
             if not enabled:
                 continue
 
+            # Skip display types not producing any file output.
+            # Is there a better way to do it?
+            if not display_types.get(display["driverNode"]["type"]):
+                continue
+
             aov_name = name
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"

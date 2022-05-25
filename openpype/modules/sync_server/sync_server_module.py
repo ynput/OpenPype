@@ -921,11 +921,17 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if self.enabled:
             for project in self.connection.projects(projection={"name": 1}):
                 project_name = project["name"]
-                project_settings = self.get_sync_project_setting(project_name)
-                if project_settings and project_settings.get("enabled"):
+                if self.is_project_enabled(project_name):
                     enabled_projects.append(project_name)
 
         return enabled_projects
+
+    def is_project_enabled(self, project_name):
+        if self.enabled:
+            project_settings = self.get_sync_project_setting(project_name)
+            if project_settings and project_settings.get("enabled"):
+                return True
+        return False
 
     def handle_alternate_site(self, collection, representation, processed_site,
                               file_id, synced_file_id):
