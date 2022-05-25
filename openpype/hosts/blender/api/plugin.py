@@ -737,7 +737,7 @@ class AssetLoader(LoaderPlugin):
         orphans_purge()
 
         # update override library operations from asset objects
-        for obj in get_container_objects(container):
+        for obj in get_container_objects(asset_group):
             if obj.override_library:
                 obj.override_library.operations_update()
 
