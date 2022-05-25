@@ -1,10 +1,10 @@
-import os
 import pyblish.api
-import openpype.utils
+from openpype.api import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
     get_write_node_template_attr,
     get_node_path
 )
+from openpype.pipeline import PublishXmlValidationError
 
 
 @pyblish.api.log
@@ -14,7 +14,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-        instances = openpype.utils.filter_instances(context, plugin)
+        instances = get_errored_instances_from_context(context)
 
         for instance in instances:
             node = instance[1]
@@ -60,13 +60,17 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
         self.log.info(check)
 
-        msg = "Node's attribute `{0}` is not correct!\n" \
-              "\nCorrect: `{1}` \n\nWrong: `{2}` \n\n"
+        msg = "Write node's knobs values are not correct!\n"
+        msg_add = "Knob `{0}` Correct: `{1}` Wrong: `{2}` \n"
+        xml_msg = ""
 
         if check:
-            print_msg = ""
+            dbg_msg = msg
             for item in check:
-                print_msg += msg.format(item[0], item[1], item[2])
-            print_msg += "`RMB` click to the validator and `A` to fix!"
+                _msg_add = msg_add.format(item[0], item[1], item[2])
+                dbg_msg += _msg_add
+                xml_msg += _msg_add
 
-        assert not check, print_msg
+            raise PublishXmlValidationError(
+                self, dbg_msg, {"xml_msg": xml_msg}
+            )
