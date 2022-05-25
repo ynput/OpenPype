@@ -357,7 +357,7 @@ class AbstractPlaceholder:
         parent_in_hierachy:
     """
 
-    attributes = {'builder_type', 'op_family', 'op_representation',
+    attributes = {'builder_type', 'family', 'representation',
                   'order', 'loader', 'loader_args'}
     optional_attributes = {}
 
