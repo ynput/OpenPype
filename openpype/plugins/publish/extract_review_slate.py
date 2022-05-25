@@ -23,6 +23,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
     families = ["slate", "review"]
     match = pyblish.api.Subset
 
+    SUFFIX = "_slate"
+
     hosts = ["nuke", "shell"]
     optional = True
 
@@ -31,8 +33,15 @@ class ExtractReviewSlate(openpype.api.Extractor):
         if "representations" not in inst_data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        suffix = "_slate"
-        slates_data = inst_data["slateFrames"]
+        # get slates frame from upstream
+        slates_data = inst_data.get("slateFrames")
+        if not slates_data:
+            # make it backward compatible and open for slates generator
+            # premium plugin
+            slates_data = {
+                "*": inst_data["slateFrame"]
+            }
+
         self.log.info("_ slates_data: {}".format(pformat(slates_data)))
 
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
@@ -125,7 +134,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             _remove_at_end = []
 
             ext = os.path.splitext(input_file)[1]
-            output_file = input_file.replace(ext, "") + suffix + ext
+            output_file = input_file.replace(ext, "") + self.SUFFIX + ext
 
             _remove_at_end.append(input_path)
 
