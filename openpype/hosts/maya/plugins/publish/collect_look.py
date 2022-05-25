@@ -616,11 +616,15 @@ class CollectLook(pyblish.api.InstancePlugin):
         self.log.info("  - color space: {}".format(color_space))
 
         # Define the resource
-        return {"node": node,
-                "attribute": attribute,
-                "source": source,  # required for resources
-                "files": files,
-                "color_space": color_space}  # required for resources
+        return {
+            "node": node,
+            # here we are passing not only attribute, but with node again
+            # this should be simplified and changed extractor.
+            "attribute": "{}.{}".format(node, attribute),
+            "source": source,  # required for resources
+            "files": files,
+            "color_space": color_space
+        }  # required for resources
 
 
 class CollectModelRenderSets(CollectLook):
