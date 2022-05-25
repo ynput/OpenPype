@@ -707,6 +707,20 @@ def get_imageio_input_colorspace(filename):
     return preset_clrsp
 
 
+def get_view_process_node():
+    reset_selection()
+
+    ipn_orig = None
+    for v in nuke.allNodes(filter="Viewer"):
+        ipn = v['input_process_node'].getValue()
+        if "VIEWER_INPUT" not in ipn:
+            ipn_orig = nuke.toNode(ipn)
+            ipn_orig.setSelected(True)
+
+    if ipn_orig:
+        return duplicate_node(ipn_orig)
+
+
 def on_script_load():
     ''' Callback for ffmpeg support
     '''
@@ -2547,6 +2561,31 @@ class DirmapCache:
         if cls._sync_module is None:
             cls._sync_module = ModulesManager().modules_by_name["sync_server"]
         return cls._sync_module
+
+
+def duplicate_node(node):
+    reset_selection()
+
+    # select required node for duplication
+    node_orig = nuke.toNode(node.name())
+    node_orig.setSelected(True)
+
+    # copy selected to clipboard
+    nuke.nodeCopy("%clipboard%")
+
+    # reset selection
+    reset_selection()
+
+    # paste node and selection is on it only
+    nuke.nodePaste("%clipboard%")
+
+    # assign to variable
+    dupli_node = nuke.selectedNode()
+
+    # reset selection
+    reset_selection()
+
+    return dupli_node
 
 
 def dirmap_file_name_filter(file_name):
