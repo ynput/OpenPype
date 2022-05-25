@@ -157,8 +157,6 @@ class AbstractTemplateLoader:
         for prf in profiles:
             if prf['task_types'] and task_type not in prf['task_types']:
                 continue
-            if prf['task_names'] and task_name not in prf['task_names']:
-                continue
             path = prf['path']
             break
         else:  # IF no template were found (no break happened)
@@ -253,7 +251,7 @@ class AbstractTemplateLoader:
             linked_assets)
         # get representation by assets
         for db_filter in placeholder_db_filters:
-            placeholder_representations = list(avalon.io.find(db_filter))
+            placeholder_representations = list(legacy_io.find(db_filter))
             for representation in reduce(update_representations,
                                          placeholder_representations,
                                          dict()).values():
