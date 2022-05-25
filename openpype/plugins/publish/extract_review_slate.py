@@ -78,76 +78,26 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 input_path, self.log
             )
             # Get video metadata
-            for stream in streams:
-                input_timecode = ""
-                input_width = None
-                input_height = None
-                input_frame_rate = None
-                if "codec_type" in stream:
-                    if stream["codec_type"] == "video":
-                        self.log.debug("__Ffprobe Video: {}".format(stream))
-                        tags = stream.get("tags") or {}
-                        input_timecode = tags.get("timecode") or ""
-                        if "width" in stream and "height" in stream:
-                            input_width = int(stream.get("width"))
-                            input_height = int(stream.get("height"))
-                        if "r_frame_rate" in stream:
-                            # get frame rate in a form of
-                            # x/y, like 24000/1001 for 23.976
-                            input_frame_rate = stream.get("r_frame_rate")
-                        if (
-                            input_width
-                            and input_height
-                            and input_frame_rate
-                        ):
-                            input_frame_rate = str(input_frame_rate)
-                            break
+            (
+                input_width,
+                input_height,
+                input_timecode,
+                input_frame_rate
+            ) = self._get_video_metadata(streams)
+
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
                 raise AssertionError((
                     "FFprobe couldn't read resolution from input file: \"{}\""
                 ).format(input_path))
-            # Get audio metadata
-            for stream in streams:
-                audio_channels = None
-                audio_sample_rate = None
-                audio_channel_layout = None
-                input_audio = False
-                if stream["codec_type"] == "audio":
-                    self.log.debug("__Ffprobe Audio: {}".format(stream))
-                    if stream["channels"]:
-                        audio_channels = str(stream.get("channels"))
-                    if stream["sample_rate"]:
-                        audio_sample_rate = str(stream.get("sample_rate"))
-                    if stream["channel_layout"]:
-                        audio_channel_layout = str(
-                            stream.get("channel_layout"))
-                    if stream["codec_name"]:
-                        audio_codec = str(
-                            stream.get("codec_name"))
-                    if (
-                        audio_channels
-                        and audio_sample_rate
-                        and audio_channel_layout
-                        and audio_codec
-                    ):
-                        input_audio = str(input_audio)
-                        audio_sample_rate = str(audio_sample_rate)
-                        audio_channel_layout = str(audio_channel_layout)
-                        audio_codec = str(audio_codec)
-                        break
-            # Get duration of one frame in micro seconds
-            one_frame_duration = "40000us"
-            if input_frame_rate:
-                items = input_frame_rate.split("/")
-                if len(items) == 1:
-                    one_frame_duration = float(1.0) / float(items[0])
-                elif len(items) == 2:
-                    one_frame_duration = float(items[1]) / float(items[0])
-                one_frame_duration *= 1000000
-                one_frame_duration = str(int(one_frame_duration)) + "us"
-            self.log.debug(
-                "One frame duration is {}".format(one_frame_duration))
+
+            (
+                audio_codec,
+                audio_channels,
+                audio_sample_rate,
+                audio_channel_layout,
+                input_audio
+            ) = self._get_audio_metadata(streams)
 
             # values are set in ExtractReview
             if use_legacy_code:
@@ -205,14 +155,16 @@ class ExtractReviewSlate(openpype.api.Extractor):
             else:
                 input_args.extend(repre["outputDef"].get('input', []))
 
-            input_args.append("-loop 1 -i {}".format(
-                openpype.lib.path_to_subprocess_arg(slate_path)))
-            input_args.extend(["-r {}".format(input_frame_rate)])
-            input_args.extend(["-frames:v 1"])
+            input_args.extend([
+                "-loop", "1",
+                "-i", openpype.lib.path_to_subprocess_arg(slate_path),
+                "-r", str(input_frame_rate),
+                "-frames:v",  "1",
+            ])
+
             # add timecode from source to the slate, substract one frame
             offset_timecode = ""
             if input_timecode:
-                offset_timecode = str(input_timecode)
                 offset_timecode = self._tc_offset(
                     str(input_timecode),
                     framerate=fps,
@@ -221,7 +173,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 self.log.debug("Slate Timecode: `{}`".format(
                     offset_timecode
                 ))
-                input_args.extend(["-timecode {}".format(offset_timecode)])
+                input_args.extend(["-timecode", str(offset_timecode)])
+
             if use_legacy_code:
                 format_args = []
                 codec_args = repre["_profile"].get('codec', [])
@@ -236,10 +189,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             # make sure colors are correct
             output_args.extend([
-                "-vf scale=out_color_matrix=bt709",
-                "-color_primaries bt709",
-                "-color_trc bt709",
-                "-colorspace bt709"
+                "-vf", "scale=out_color_matrix=bt709",
+                "-color_primaries", "bt709",
+                "-color_trc", "bt709",
+                "-colorspace", "bt709",
             ])
 
             # scaling none square pixels and 1920 width
@@ -275,13 +228,20 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     "__ height_half_pad: `{}`".format(height_half_pad)
                 )
 
-                scaling_arg = ("scale={0}x{1}:flags=lanczos,"
-                               "pad={2}:{3}:{4}:{5}:black,setsar=1").format(
-                    width_scale, height_scale, to_width, to_height,
-                    width_half_pad, height_half_pad
+                scaling_arg = (
+                    "scale={0}x{1}:flags=lanczos"
+                    ",pad={2}:{3}:{4}:{5}:black"
+                    ",setsar=1"
+                    ",fps={6}"
+                ).format(
+                    width_scale,
+                    height_scale,
+                    to_width,
+                    to_height,
+                    width_half_pad,
+                    height_half_pad,
+                    input_frame_rate
                 )
-                # add output frame rate as a filter, just in case
-                scaling_arg += ",fps={}".format(input_frame_rate)
 
                 vf_back = self.add_video_filter_args(output_args, scaling_arg)
                 # add it to output_args
@@ -317,30 +277,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 slate_silent_path = "_silent".join(
                     os.path.splitext(slate_v_path))
                 _remove_at_end.append(slate_silent_path)
-
-                slate_silent_args = [
+                self._create_silent_slate(
                     ffmpeg_path,
-                    "-i", slate_v_path,
-                    "-f", "lavfi", "-i",
-                    "anullsrc=r={}:cl={}:d={}".format(
-                        audio_sample_rate,
-                        audio_channel_layout,
-                        one_frame_duration
-                    ),
-                    "-c:v", "copy",
-                    "-c:a", audio_codec,
-                    "-map", "0:v",
-                    "-map", "1:a",
-                    "-shortest",
-                    "-y",
-                    slate_silent_path
-                ]
-                # run slate generation subprocess
-                self.log.debug(
-                    "Silent Slate Executing: {}".format(
-                        " ".join(slate_silent_args)))
-                openpype.api.run_subprocess(
-                    slate_silent_args, logger=self.log
+                    slate_v_path,
+                    slate_silent_path,
+                    audio_codec,
+                    audio_channels,
+                    audio_sample_rate,
+                    audio_channel_layout,
                 )
 
                 # replace slate with silent slate for concat
@@ -425,6 +369,129 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 inst_data["representations"].remove(repre)
 
         self.log.debug(inst_data["representations"])
+
+    def _get_video_metadata(self, streams):
+        input_timecode = ""
+        input_width = None
+        input_height = None
+        input_frame_rate = None
+        for stream in streams:
+            if stream.get("codec_type") != "video":
+                continue
+            self.log.debug("FFprobe Video: {}".format(stream))
+
+            if "width" not in stream or "height" not in stream:
+                continue
+            width = int(stream["width"])
+            height = int(stream["height"])
+            if not width or not height:
+                continue
+
+            # Make sure that width and height are captured even if frame rate
+            #    is not available
+            input_width = width
+            input_height = height
+
+            tags = stream.get("tags") or {}
+            input_timecode = tags.get("timecode") or ""
+
+            input_frame_rate = stream.get("r_frame_rate")
+            if input_frame_rate is not None:
+                break
+        return (
+            input_width,
+            input_height,
+            input_timecode,
+            input_frame_rate
+        )
+
+    def _get_audio_metadata(self, streams):
+        # Get audio metadata
+        audio_codec = None
+        audio_channels = None
+        audio_sample_rate = None
+        audio_channel_layout = None
+        input_audio = False
+
+        for stream in streams:
+            if stream.get("codec_type") != "audio":
+                continue
+            self.log.debug("__Ffprobe Audio: {}".format(stream))
+
+            if all(
+                stream.get(key)
+                for key in (
+                    "codec_name",
+                    "channels",
+                    "sample_rate",
+                    "channel_layout",
+                )
+            ):
+                audio_codec = stream["codec_name"]
+                audio_channels = stream["channels"]
+                audio_sample_rate = stream["sample_rate"]
+                audio_channel_layout = stream["channel_layout"]
+                input_audio = True
+                break
+
+        return (
+            audio_codec,
+            audio_channels,
+            audio_sample_rate,
+            audio_channel_layout,
+            input_audio,
+        )
+
+    def _create_silent_slate(
+        self,
+        ffmpeg_path,
+        src_path,
+        dst_path,
+        audio_codec,
+        audio_channels,
+        audio_sample_rate,
+        audio_channel_layout,
+    ):
+        # Get duration of one frame in micro seconds
+        items = audio_sample_rate.split("/")
+        if len(items) == 1:
+            one_frame_duration = 1.0 / float(items[0])
+        elif len(items) == 2:
+            one_frame_duration = float(items[1]) / float(items[0])
+        else:
+            one_frame_duration = None
+
+        if one_frame_duration is None:
+            one_frame_duration = "40000us"
+        else:
+            one_frame_duration *= 1000000
+            one_frame_duration = str(int(one_frame_duration)) + "us"
+        self.log.debug("One frame duration is {}".format(one_frame_duration))
+
+        slate_silent_args = [
+            ffmpeg_path,
+            "-i", src_path,
+            "-f", "lavfi", "-i",
+            "anullsrc=r={}:cl={}:d={}".format(
+                audio_sample_rate,
+                audio_channel_layout,
+                one_frame_duration
+            ),
+            "-c:v", "copy",
+            "-c:a", audio_codec,
+            "-map", "0:v",
+            "-map", "1:a",
+            "-shortest",
+            "-y",
+            dst_path
+        ]
+        # run slate generation subprocess
+        self.log.debug("Silent Slate Executing: {}".format(
+            " ".join(slate_silent_args)
+        ))
+        openpype.api.run_subprocess(
+            slate_silent_args, logger=self.log
+        )
 
     def add_video_filter_args(self, args, inserting_arg):
         """
