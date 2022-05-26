@@ -165,6 +165,9 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "CollectFbxCamera": {
+            "enabled": false
+        },
         "ValidateInstanceInContext": {
             "enabled": true,
             "optional": true,
