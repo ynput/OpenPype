@@ -5,6 +5,7 @@
 import os
 
 import pyblish.api
+from openpype.pipeline import PublishValidationError
 
 
 class CollectDeadlinePublishableInstances(pyblish.api.InstancePlugin):
@@ -24,9 +25,9 @@ class CollectDeadlinePublishableInstances(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.debug("CollectDeadlinePublishableInstances")
         publish_inst = os.environ.get("OPENPYPE_PUBLISH_SUBSET", '')
-        assert (publish_inst,
-                "OPENPYPE_PUBLISH_SUBSET env var required for "
-                "remote publishing")
+        if not publish_inst:
+            raise PublishValidationError("OPENPYPE_PUBLISH_SUBSET env var "
+                                         "required for remote publishing")
 
         subset_name = instance.data["subset"]
         if subset_name == publish_inst:
