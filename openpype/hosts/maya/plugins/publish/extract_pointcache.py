@@ -26,12 +26,7 @@ class ExtractAlembic(openpype.api.Extractor):
 
     def process(self, instance):
         if instance.data.get("farm"):
-            path = os.path.join(
-                os.path.dirname(instance.context.data["currentFile"]),
-                "cache",
-                instance.data["name"] + ".abc"
-            )
-            instance.data["expectedFiles"] = [os.path.normpath(path)]
+            self.log.debug("Should be processed on farm, skipping.")
             return
 
         nodes = instance[:]
