@@ -34,21 +34,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "representation_add_range": False,
             "representation_tags": ["thumbnail"],
             "path_regex": ".*"
-        },
-        "ftrackpreview": {
-            "active": True,
-            "ext": "mov",
-            "xml_preset_file": "Apple iPad (1920x1080).xml",
-            "xml_preset_dir": "",
-            "export_type": "Movie",
-            "parsed_comment_attrs": False,
-            "colorspace_out": "Output - Rec.709",
-            "representation_add_range": True,
-            "representation_tags": [
-                "review",
-                "delete"
-            ],
-            "path_regex": ".*"
         }
     }
 
