@@ -20,6 +20,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
+from openpype.api import get_asset
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -87,7 +88,8 @@ class LayoutLoader(plugin.Loader):
 
         return None
 
-    def _get_data(self, asset_name):
+    @staticmethod
+    def _get_data(asset_name):
         asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": asset_name
@@ -95,8 +97,9 @@ class LayoutLoader(plugin.Loader):
 
         return asset_doc.get("data")
 
+    @staticmethod
     def _set_sequence_hierarchy(
-        self, seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
+        seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
     ):
         # Get existing sequencer tracks or create them if they don't exist
         tracks = seq_i.get_master_tracks()
@@ -165,8 +168,9 @@ class LayoutLoader(plugin.Loader):
             hid_section.set_row_index(index)
             hid_section.set_level_names(maps)
 
+    @staticmethod
     def _process_family(
-        self, assets, class_name, transform, sequence, inst_name=None
+        assets, class_name, transform, sequence, inst_name=None
     ):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -264,7 +268,7 @@ class LayoutLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'use_default_sample_rate', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', 25.0) # TODO: get from database
+            'custom_sample_rate', get_asset()["data"].get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
@@ -313,11 +317,8 @@ class LayoutLoader(plugin.Loader):
             for binding in bindings:
                 tracks = binding.get_tracks()
                 track = None
-                if not tracks:
-                    track = binding.add_track(
-                        unreal.MovieSceneSkeletalAnimationTrack)
-                else:
-                    track = tracks[0]
+                track = tracks[0] if tracks else binding.add_track(
+                    unreal.MovieSceneSkeletalAnimationTrack)
 
                 sections = track.get_sections()
                 section = None
@@ -337,11 +338,11 @@ class LayoutLoader(plugin.Loader):
                             curr_anim.get_path_name()).parent
                         ).replace('\\', '/')
 
-                        filter = unreal.ARFilter(
+                        _filter = unreal.ARFilter(
                             class_names=["AssetContainer"],
                             package_paths=[anim_path],
                             recursive_paths=False)
-                        containers = ar.get_assets(filter)
+                        containers = ar.get_assets(_filter)
 
                         if len(containers) > 0:
                             return
@@ -352,6 +353,7 @@ class LayoutLoader(plugin.Loader):
                 sec_params = section.get_editor_property('params')
                 sec_params.set_editor_property('animation', animation)
 
+    @staticmethod
     def _generate_sequence(self, h, h_dir):
         tools = unreal.AssetToolsHelpers().get_asset_tools()
 
@@ -585,10 +587,7 @@ class LayoutLoader(plugin.Loader):
             hierarchy_dir_list.append(hierarchy_dir)
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
+        asset_name = f"{asset}_{name}" if asset else asset_name = name
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
@@ -802,7 +801,7 @@ class LayoutLoader(plugin.Loader):
                 lc for lc in layout_containers
                 if asset in lc.get('loaded_assets')]
 
-            if len(layouts) == 0:
+            if not layouts:
                 EditorAssetLibrary.delete_directory(str(Path(asset).parent))
 
         # Remove the Level Sequence from the parent.
@@ -812,17 +811,17 @@ class LayoutLoader(plugin.Loader):
         namespace = container.get('namespace').replace(f"{root}/", "")
         ms_asset = namespace.split('/')[0]
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["LevelSequence"],
             package_paths=[f"{root}/{ms_asset}"],
             recursive_paths=False)
-        sequences = ar.get_assets(filter)
+        sequences = ar.get_assets(_filter)
         master_sequence = sequences[0].get_asset()
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["World"],
             package_paths=[f"{root}/{ms_asset}"],
             recursive_paths=False)
-        levels = ar.get_assets(filter)
+        levels = ar.get_assets(_filter)
         master_level = levels[0].get_editor_property('object_path')
 
         sequences = [master_sequence]
