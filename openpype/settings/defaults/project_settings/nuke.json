@@ -15,6 +15,18 @@
             "destination-path": []
         }
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
+                "tooltip": "Open the OpenPype Nuke user doc page"
+            }
+        ]
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",

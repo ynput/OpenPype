@@ -80,6 +80,10 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_scriptsmenu"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
