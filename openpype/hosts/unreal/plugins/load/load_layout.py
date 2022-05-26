@@ -587,7 +587,7 @@ class LayoutLoader(plugin.Loader):
             hierarchy_dir_list.append(hierarchy_dir)
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        asset_name = f"{asset}_{name}" if asset else asset_name = name
+        asset_name = f"{asset}_{name}" if asset else name
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
