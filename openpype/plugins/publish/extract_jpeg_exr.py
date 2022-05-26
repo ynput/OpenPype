@@ -91,38 +91,41 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
-            # If it's a movie file, use ffmpeg 
+           
+            
+            # Presumably the following is not needed since we are being
+            # explicit
+            # TODO: Test cases, cleanup.
+            # do_convert = should_convert_for_ffmpeg(full_input_path)
+            # # If result is None the requirement of conversion can't be
+            # #   determined
+            # if do_convert is None:
+            #     self.log.info((
+            #         "Can't determine if representation requires conversion." # noqa
+            #         " Skipped."
+            #     ))
+            #     continue
+            #
+            # # Do conversion if needed
+            # #   - change staging dir of source representation
+            # #   - must be set back after output definitions processing
+            # convert_dir = None
+            # if do_convert:
+            #     convert_dir = get_transcode_temp_directory()
+            #     filename = os.path.basename(full_input_path)
+            #     convert_input_paths_for_ffmpeg(
+            #         [full_input_path],
+            #         convert_dir,
+            #         self.log
+            #     )
+            #     full_input_path = os.path.join(convert_dir, filename)
+            filename = os.path.splitext(input_file)[0]
+            if not filename.endswith('.'):
+                filename += "."
+            jpeg_file = filename + "jpg"
+            full_output_path = os.path.join(stagingdir, jpeg_file)
+            # If it's a movie file, use ffmpeg
             if repre["ext"] == "mov":
-                do_convert = should_convert_for_ffmpeg(full_input_path)
-                # If result is None the requirement of conversion can't be
-                #   determined
-                if do_convert is None:
-                    self.log.info((
-                        "Can't determine if representation requires conversion."
-                        " Skipped."
-                    ))
-                    continue
-
-                # Do conversion if needed
-                #   - change staging dir of source representation
-                #   - must be set back after output definitions processing
-                convert_dir = None
-                if do_convert:
-                    convert_dir = get_transcode_temp_directory()
-                    filename = os.path.basename(full_input_path)
-                    convert_input_paths_for_ffmpeg(
-                        [full_input_path],
-                        convert_dir,
-                        self.log
-                    )
-                    full_input_path = os.path.join(convert_dir, filename)
-
-                filename = os.path.splitext(input_file)[0]
-                if not filename.endswith('.'):
-                    filename += "."
-                jpeg_file = filename + "jpg"
-                full_output_path = os.path.join(stagingdir, jpeg_file)
-
                 self.log.info("output {}".format(full_output_path))
 
                 ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
@@ -178,37 +181,49 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 # adding representation
                 self.log.debug("Adding: {}".format(new_repre))
                 instance.data["representations"].append(new_repre)
-
-                # Cleanup temp folder
-                if convert_dir is not None and os.path.exists(convert_dir):
-                    shutil.rmtree(convert_dir)
-
             elif repre["ext"] == "exr":
                 oiio_support = is_oiio_supported()
-
                 if oiio_support:
+                    # TODO: Add resolution checking, possibly check for other
+                    # places where things may break
                     oiio_tool_path = get_oiio_tools_path()
+                    full_output_path = os.path.join(stagingdir, jpeg_file)
                     args = [oiio_tool_path]
+                    oiio_cmd = [oiio_tool_path,
+                                full_input_path, "-o",
+                                full_output_path
+                                ]
+                    subprocess_exr = " ".join(oiio_cmd)
+                    self.log.info(f"running: {subprocess_exr}")
+                    run_subprocess(subprocess_exr, logger=self.log)
 
-                    ext = os.path.splitext(input_path)[1][1:]
-                    if ext in self.movie_extensions:
-                        args.extend(["--subimage", str(int(input_frame))])
-                    else:
-                        args.extend(["--frames", str(int(input_frame))])
-
-                    if ext == "exr":
-                        args.extend(["--powc", "0.45,0.45,0.45,1.0"])
-
-                    args.extend([input_path, "-o", output_path])
-                    output = openpype.api.run_subprocess(args)
-
+                    # raise error if there is no ouptput
+                    if not os.path.exists(full_input_path):
+                        self.log.error(
+                            ("File {} was not converted "
+                             "by oiio tool!").format(full_input_path))
+                        raise AssertionError("OIIO tool conversion failed")
                     failed_output = "oiiotool produced no output."
+                    output = run_subprocess(args)
                     if failed_output in output:
-                    raise ValueError(
-                        "oiiotool processing failed. Args: {}".format(args)
-                # Create only one representation with name 'thumbnail'
-                # TODO maybe handle way how to decide from which representation
-                #   will be thumbnail created
+                        raise ValueError(
+                            "oiiotool processing failed. Args: {}".format(args))
+
+                    new_repre = {
+                        "name": "thumbnail",
+                        "ext": "jpg",
+                        "files": jpeg_file,
+                        "stagingDir": stagingdir,
+                        "thumbnail": True,
+                        "tags": ["thumbnail"]
+                    }
+                    # adding representation
+                    self.log.debug("Adding: {}".format(new_repre))
+                    instance.data["representations"].append(new_repre)
+
+                    # Create only one representation with name 'thumbnail'
+                    # TODO maybe handle way how to decide from which repre
+                    # will be thumbnail created
                 break
 
     def _get_filtered_repres(self, instance):
