@@ -185,7 +185,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             elif repre["ext"] == "exr":
                 oiio_support = is_oiio_supported()
-                
+
                 if oiio_support:
                     oiio_tool_path = get_oiio_tools_path()
                     args = [oiio_tool_path]
