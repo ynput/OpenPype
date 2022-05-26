@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.10.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.8...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.8...3.10.0)
 
 **🆕 New features**
 
@@ -42,6 +42,7 @@
 - Maya: Fix support for multiple resolutions [\#3236](https://github.com/pypeclub/OpenPype/pull/3236)
 - TVPaint: Look for more groups than 12 [\#3228](https://github.com/pypeclub/OpenPype/pull/3228)
 - Hiero: debugging frame range and other 3.10 [\#3222](https://github.com/pypeclub/OpenPype/pull/3222)
+- Project Manager: Fix persistent editors on project change [\#3218](https://github.com/pypeclub/OpenPype/pull/3218)
 - Deadline: instance data overwrite fix [\#3214](https://github.com/pypeclub/OpenPype/pull/3214)
 - Ftrack: Push hierarchical attributes action works [\#3210](https://github.com/pypeclub/OpenPype/pull/3210)
 - Standalone Publisher: Always create new representation for thumbnail [\#3203](https://github.com/pypeclub/OpenPype/pull/3203)
@@ -50,7 +51,6 @@
 - Ftrack: Review image only if there are no mp4 reviews [\#3183](https://github.com/pypeclub/OpenPype/pull/3183)
 - Ftrack: Locations deepcopy issue [\#3177](https://github.com/pypeclub/OpenPype/pull/3177)
 - General: Avoid creating multiple thumbnails [\#3176](https://github.com/pypeclub/OpenPype/pull/3176)
-- General: Avoid creating multiple thumbnails [\#3174](https://github.com/pypeclub/OpenPype/pull/3174)
 - General/Hiero: better clip duration calculation [\#3169](https://github.com/pypeclub/OpenPype/pull/3169)
 - General: Oiio conversion for ffmpeg checks for invalid characters [\#3166](https://github.com/pypeclub/OpenPype/pull/3166)
 - Fix for attaching render to subset [\#3164](https://github.com/pypeclub/OpenPype/pull/3164)
@@ -64,13 +64,13 @@
 
 **🔀 Refactored code**
 
+- Avalon repo removed from Jobs workflow [\#3193](https://github.com/pypeclub/OpenPype/pull/3193)
 - General: Remove remaining imports from avalon [\#3130](https://github.com/pypeclub/OpenPype/pull/3130)
 
 **Merged pull requests:**
 
 - Harmony: message length in 21.1 [\#3257](https://github.com/pypeclub/OpenPype/pull/3257)
 - Harmony: 21.1 fix [\#3249](https://github.com/pypeclub/OpenPype/pull/3249)
-- Webpublish: remove publish highlight when creating subset name [\#3234](https://github.com/pypeclub/OpenPype/pull/3234)
 - Maya: added jpg to filter for Image Plane Loader [\#3223](https://github.com/pypeclub/OpenPype/pull/3223)
 - Webpublisher: replace space by underscore in subset names [\#3160](https://github.com/pypeclub/OpenPype/pull/3160)
 
@@ -90,11 +90,8 @@
 - Nuke: render/workfile version sync doesn't work on farm  [\#3184](https://github.com/pypeclub/OpenPype/pull/3184)
 - Ftrack: Review image only if there are no mp4 reviews [\#3182](https://github.com/pypeclub/OpenPype/pull/3182)
 - Ftrack: Locations deepcopy issue [\#3175](https://github.com/pypeclub/OpenPype/pull/3175)
+- General: Avoid creating multiple thumbnails [\#3174](https://github.com/pypeclub/OpenPype/pull/3174)
 - General: TemplateResult can be copied [\#3170](https://github.com/pypeclub/OpenPype/pull/3170)
-
-**🔀 Refactored code**
-
-- Avalon repo removed from Jobs workflow [\#3193](https://github.com/pypeclub/OpenPype/pull/3193)
 
 **Merged pull requests:**
 
