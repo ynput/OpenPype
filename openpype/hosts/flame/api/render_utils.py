@@ -1,6 +1,6 @@
 import os
 from xml.etree import ElementTree as ET
-import openpype.api import Logger
+from openpype.api import Logger
 
 log = Logger.get_logger(__name__)
 
