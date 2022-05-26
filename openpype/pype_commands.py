@@ -144,6 +144,7 @@ class PypeCommands:
             pyblish.api.register_target("farm")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         log.info("Running publish ...")
 
@@ -173,9 +174,11 @@ class PypeCommands:
                              user_email, targets=None):
         """Opens installed variant of 'host' and run remote publish there.
 
+        Eventually should be yanked out to Webpublisher cli.
+
         Currently implemented and tested for Photoshop where customer
         wants to process uploaded .psd file and publish collected layers
-        from there.
+        from there. Triggered by Webpublisher.
 
         Checks if no other batches are running (status =='in_progress). If
         so, it sleeps for SLEEP (this is separate process),
@@ -273,7 +276,8 @@ class PypeCommands:
     def remotepublish(project, batch_path, user_email, targets=None):
         """Start headless publishing.
 
-        Used to publish rendered assets, workfiles etc.
+        Used to publish rendered assets, workfiles etc via Webpublisher.
+        Eventually should be yanked out to Webpublisher cli.
 
         Publish use json from passed paths argument.
 
@@ -309,6 +313,7 @@ class PypeCommands:
         os.environ["AVALON_PROJECT"] = project
         os.environ["AVALON_APP"] = host_name
         os.environ["USER_EMAIL"] = user_email
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         pyblish.api.register_host(host_name)
 
@@ -331,9 +336,12 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def extractenvironments(
-        output_json_path, project, asset, task, app, env_group
-    ):
+    def extractenvironments(output_json_path, project, asset, task, app,
+                            env_group):
+        """Produces json file with environment based on project and app.
+
+        Called by Deadline plugin to propagate environment into render jobs.
+        """
         if all((project, asset, task, app)):
             from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(

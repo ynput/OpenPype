@@ -114,6 +114,8 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         environment["OPENPYPE_REMOTE_JOB"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_SUBSET"] = instance.data["subset"]
+        environment["HEADLESS_PUBLISH"] = "1"
+
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(

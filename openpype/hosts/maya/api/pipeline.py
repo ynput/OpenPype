@@ -72,7 +72,10 @@ def install():
         log.info(("Running in headless mode, skipping Maya "
                  "save/open/new callback installation.."))
 
-        # Register default "local" target
+        return
+
+    if os.environ.get("HEADLESS_PUBLISH"):
+        # Maya launched on farm, lib.IS_HEADLESS might be triggered locally too
         print("Registering pyblish target: remote")
         pyblish.api.register_target("remote")
         return
