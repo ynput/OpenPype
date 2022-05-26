@@ -373,7 +373,7 @@ def add_write_node_legacy(name, **kwarg):
     Returns:
         node (obj): nuke write node
     """
-    frame_range = kwarg.get("use_range_limit", None)
+    use_range_limit = kwarg.get("use_range_limit", None)
 
     w = nuke.createNode(
         "Write",
@@ -391,10 +391,10 @@ def add_write_node_legacy(name, **kwarg):
             log.debug(e)
             continue
 
-    if frame_range:
+    if use_range_limit:
         w["use_limit"].setValue(True)
-        w["first"].setValue(frame_range[0])
-        w["last"].setValue(frame_range[1])
+        w["first"].setValue(kwarg["frame_range"][0])
+        w["last"].setValue(kwarg["frame_range"][1])
 
     return w
 
@@ -409,7 +409,7 @@ def add_write_node(name, file_path, knobs, **kwarg):
     Returns:
         node (obj): nuke write node
     """
-    frame_range = kwarg.get("use_range_limit", None)
+    use_range_limit = kwarg.get("use_range_limit", None)
 
     w = nuke.createNode(
         "Write",
@@ -420,10 +420,10 @@ def add_write_node(name, file_path, knobs, **kwarg):
     # finally add knob overrides
     set_node_knobs_from_settings(w, knobs, **kwarg)
 
-    if frame_range:
+    if use_range_limit:
         w["use_limit"].setValue(True)
-        w["first"].setValue(frame_range[0])
-        w["last"].setValue(frame_range[1])
+        w["first"].setValue(kwarg["frame_range"][0])
+        w["last"].setValue(kwarg["frame_range"][1])
 
     return w
 
