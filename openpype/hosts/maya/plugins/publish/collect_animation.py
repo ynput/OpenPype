@@ -57,4 +57,4 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
         instance.data["out_hierarchy"] = hierarchy
 
         if instance.data.get("farm"):
-            instance.data["families"].append("deadline")
+            instance.data["families"].append("publish.farm")

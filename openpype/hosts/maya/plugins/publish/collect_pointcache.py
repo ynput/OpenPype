@@ -11,4 +11,4 @@ class CollectPointcache(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if instance.data.get("farm"):
-            instance.data["families"].append("deadline")
+            instance.data["families"].append("publish.farm")

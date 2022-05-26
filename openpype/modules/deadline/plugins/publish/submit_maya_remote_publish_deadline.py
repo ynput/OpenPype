@@ -29,7 +29,7 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
     label = "Submit Scene to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["deadline"]
+    families = ["publish.farm"]
 
     def process(self, instance):
         settings = get_project_settings(os.getenv("AVALON_PROJECT"))
