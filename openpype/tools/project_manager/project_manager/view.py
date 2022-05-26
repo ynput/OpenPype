@@ -139,6 +139,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self.setAlternatingRowColors(True)
         self.setSelectionMode(HierarchyView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.setEditTriggers(HierarchyView.AllEditTriggers)
 
         column_delegates = {}
         column_key_to_index = {}
@@ -301,16 +302,6 @@ class HierarchyView(QtWidgets.QTreeView):
     def rowsInserted(self, parent_index, start, end):
         super(HierarchyView, self).rowsInserted(parent_index, start, end)
 
-        for row in range(start, end + 1):
-            for key, column in self._column_key_to_index.items():
-                if key not in self.persistent_columns:
-                    continue
-                col_index = self._source_model.index(row, column, parent_index)
-                if bool(
-                    self._source_model.flags(col_index)
-                    & QtCore.Qt.ItemIsEditable
-                ):
-                    self.openPersistentEditor(col_index)
 
         # Expand parent on insert
         if not self.isExpanded(parent_index):
