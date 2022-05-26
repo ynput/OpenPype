@@ -94,7 +94,7 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 def _get_metadata(item):
     if hasattr(item, 'metadata'):
-        return dict(dict(item.metadata)) if item.metadata else {}
+        return dict(item.metadata) if item.metadata else {}
     return {}
 
 
