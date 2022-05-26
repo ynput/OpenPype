@@ -62,7 +62,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 "frameEnd": instance.data["frameEnd"],
                 "clipIn": instance.data["clipIn"],
                 "clipOut": instance.data["clipOut"],
-                'fps': instance.context.data["fps"],
+                "fps": instance.data["fps"],
                 "resolutionWidth": instance.data["resolutionWidth"],
                 "resolutionHeight": instance.data["resolutionHeight"],
                 "pixelAspect": instance.data["pixelAspect"]

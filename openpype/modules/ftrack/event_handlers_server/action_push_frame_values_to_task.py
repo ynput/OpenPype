@@ -356,7 +356,7 @@ class PushHierValuesToNonHier(ServerAction):
                 values_per_entity_id[entity_id][key] = None
 
         values = query_custom_attributes(
-            session, all_ids_with_parents, hier_attr_ids, True
+            session, hier_attr_ids, all_ids_with_parents, True
         )
         for item in values:
             entity_id = item["entity_id"]
