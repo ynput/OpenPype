@@ -4,10 +4,14 @@ import openpype.hosts
 
 def add_implementation_envs(env, _app):
     """Modify environments to contain all required for implementation."""
+    version = "UE4"
+    if _app.name[:1] == "5":
+        version = "UE5"
+
     # Set OPENPYPE_UNREAL_PLUGIN required for Unreal implementation
     unreal_plugin_path = os.path.join(
         os.path.dirname(os.path.abspath(openpype.hosts.__file__)),
-        "unreal", "integration"
+        "unreal", "integration", version
     )
     if not env.get("OPENPYPE_UNREAL_PLUGIN"):
         env["OPENPYPE_UNREAL_PLUGIN"] = unreal_plugin_path
