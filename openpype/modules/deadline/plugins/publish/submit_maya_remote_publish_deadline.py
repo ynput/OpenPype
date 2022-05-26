@@ -3,7 +3,7 @@ import requests
 
 from maya import cmds
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.settings import get_project_settings
 
 import pyblish.api
@@ -39,9 +39,9 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
                                      ["ProcessSubmittedJobOnFarm"])
 
         # Ensure no errors so far
-        assert (all(result["success"]
-                    for result in instance.context.data["results"]),
-                    ("Errors found, aborting integration.."))
+        if not (all(result["success"]
+                for result in instance.context.data["results"])):
+            raise PublishXmlValidationError("Publish process has errors")
 
         if not instance.data["publish"]:
             self.log.warning("No active instances found. "
