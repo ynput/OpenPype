@@ -35,7 +35,11 @@ function Client() {
     self.pack = function(num) {
         var ascii='';
         for (var i = 3; i >= 0; i--) {
-            ascii += String.fromCharCode((num >> (8 * i)) & 255);
+          var hex = ((num >> (8 * i)) & 255).toString(16);
+          if (hex.length < 2){
+            ascii += "0";
+          }
+          ascii += hex;
         }
         return ascii;
     };
@@ -279,12 +283,21 @@ function Client() {
     };
 
     self._send = function(message) {
-      var codec_name = new QByteArray().append("ISO-8859-1");
+      /** Harmony 21.1 doesn't have QDataStream anymore.
+
+      This means we aren't able to write bytes into QByteArray so we had
+      modify how content lenght is sent do the server.
+      Content lenght is sent as string of 8 char convertible into integer
+      (instead of 0x00000001[4 bytes] > "000000001"[8 bytes]) */
+      var codec_name = new QByteArray().append("UTF-8");
+
       var codec = QTextCodec.codecForName(codec_name);
       var msg = codec.fromUnicode(message);
       var l = msg.size();
-      var coded = new QByteArray().append('AH').append(self.pack(l)).append(msg);
-      self.socket.write(new QByteArray(coded));
+      var header = new QByteArray().append('AH').append(self.pack(l));
+      var coded = msg.prepend(header);
+
+      self.socket.write(coded);
       self.logDebug('Sent.');
     };
 
