@@ -1,8 +1,8 @@
 import os
 from xml.etree import ElementTree as ET
-import openpype.api as openpype
+import openpype.api import Logger
 
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def export_clip(export_path, clip, preset_path, **kwargs):
