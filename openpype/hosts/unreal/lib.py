@@ -301,8 +301,8 @@ def create_unreal_project(project_name: str,
         raise NotImplementedError("Unsupported platform")
     if not python_path.exists():
         raise RuntimeError(f"Unreal Python not found at {python_path}")
-    out = subprocess.check_call(
-        [python_path.as_posix(), "-m", "pip", "install", "--user", "pyside2"])
+    subprocess.check_call(
+        [python_path.as_posix(), "-m", "pip", "install", "pyside2"])
 
     if dev_mode or preset["dev_mode"]:
         _prepare_cpp_project(project_file, engine_path, ue_version)
