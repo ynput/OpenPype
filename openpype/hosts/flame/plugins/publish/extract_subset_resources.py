@@ -425,9 +425,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         Import clip from path
         """
         dir_path = os.path.dirname(path)
-        media_info = MediaInfoFile(path, **{
-            "logger": self.log
-        })
+        media_info = MediaInfoFile(path, logger=self.log)
         file_pattern = media_info.file_pattern
         self.log.debug("__ file_pattern: {}".format(file_pattern))
 
