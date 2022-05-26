@@ -60,7 +60,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        self._make_representation_data(instance)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
         # flame objects
         segment = instance.data["item"]
