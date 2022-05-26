@@ -51,7 +51,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "path_regex": ".*"
         }
     }
-    keep_original_representation = False
 
     # hide publisher during exporting
     hide_ui_on_process = True
@@ -328,14 +327,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
             and not re.search(filter_path_regex, clip_path)
         ):
             return True
-
-    def _make_representation_data(self, instance):
-        if (
-            self.keep_original_representation
-            and "representations" not in instance.data
-            or not self.keep_original_representation
-        ):
-            instance.data["representations"] = []
 
     def _unfolds_nested_folders(self, stage_dir, files_list, ext):
         """Unfolds nested folders
