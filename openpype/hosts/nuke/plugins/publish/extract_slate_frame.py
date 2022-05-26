@@ -75,7 +75,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
-    def render_slate(self, instance, output_name=None, **kwargs):
+    def render_slate(
+        self,
+        instance,
+        bake_viewer_process,
+        bake_viewer_input_process,
+        output_name=None
+    ):
         slate_node = instance.data["slateNode"]
 
         # fill slate node with comments
