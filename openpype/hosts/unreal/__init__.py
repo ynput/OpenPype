@@ -10,7 +10,7 @@ def add_implementation_envs(env: dict, _app: Application) -> None:
     engine_version = _app.name.split("/")[-1].replace("-", ".")
     major_version = int(engine_version.split(".")[0])
 
-    ue_plugin = "UE_4.7" if major_version == 4 else "UE_5.0"
+    ue_plugin = "UE_5.0" if _app.name[:1] == "5" else "UE_4.7"
     unreal_plugin_path = os.path.join(
         os.path.dirname(os.path.abspath(openpype.hosts.__file__)),
         "unreal", "integration", ue_plugin
