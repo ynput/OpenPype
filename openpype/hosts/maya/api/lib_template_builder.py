@@ -1,3 +1,4 @@
+import json
 from collections import OrderedDict
 import maya.cmds as cmds
 
@@ -30,17 +31,20 @@ def create_placeholder():
     if not args:
         return  # operation canceled, no locator created
 
-    selection = cmds.ls(selection=True)
-    placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
-    if selection:
-        cmds.parent(placeholder, selection[0])
     # custom arg parse to force empty data query
     # and still imprint them on placeholder
     # and getting items when arg is of type Enumerator
-    options = OrderedDict()
-    for arg in args:
-        if not type(arg) == qargparse.Separator:
-            options[str(arg)] = arg._data.get("items") or arg.read()
+    options = create_options(args)
+
+    # create placeholder name dynamically from args and options
+    placeholder_name = create_placeholder_name(args, options)
+
+    selection = cmds.ls(selection=True)
+    placeholder = cmds.spaceLocator(name=placeholder_name.capitalize())[0]
+
+    if selection:
+        cmds.parent(placeholder, selection[0])
+
     imprint(placeholder, options)
     # Some tweaks because imprint force enums to to default value so we get
     # back arg read and force them to attributes
@@ -49,11 +53,40 @@ def create_placeholder():
     # Add helper attributes to keep placeholder info
     cmds.addAttr(
         placeholder, longName="parent",
-        hidden=True, dataType="string")
+        hidden=False, dataType="string")
     cmds.addAttr(
         placeholder, longName="index",
-        hidden=True, attributeType="short",
+        hidden=False, attributeType="short",
         defaultValue=-1)
+
+
+def create_options(args):
+    options = OrderedDict()
+    for arg in args:
+        if not type(arg) == qargparse.Separator:
+            options[str(arg)] = arg._data.get("items") or arg.read()
+    return options
+
+
+def create_placeholder_name(args, options):
+    placeholder_builder_type = [
+        arg.read() for arg in args if 'builder_type' in str(arg)
+    ][0]
+    placeholder_family = options['family']
+    placeholder_name = placeholder_builder_type.split('_')
+    placeholder_name.insert(1, placeholder_family)
+
+    # add loader arguments if any
+    if options['loader_args']:
+        pos = 2
+        loader_args = options['loader_args'].replace('\'', '\"')
+        loader_args = json.loads(loader_args)
+        values = [v for v in loader_args.values()]
+        for i in range(len(values)):
+            placeholder_name.insert(i + pos, values[i])
+    placeholder_name = '_'.join(placeholder_name)
+
+    return placeholder_name
 
 
 def update_placeholder():
