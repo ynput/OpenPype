@@ -2,10 +2,7 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance
 )
-from openpype.lib import (
-    FileDef,
-    BoolDef,
-)
+from openpype.lib import FileDef
 
 from .pipeline import (
     list_instances,
@@ -17,6 +14,7 @@ from .pipeline import (
 
 class TrayPublishCreator(Creator):
     create_allow_context_change = True
+    host_name = "traypublisher"
 
     def collect_instances(self):
         for instance_data in list_instances():
@@ -43,7 +41,6 @@ class TrayPublishCreator(Creator):
 class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
 
-    enable_review = False
     extensions = []
 
     def collect_instances(self):
@@ -67,19 +64,15 @@ class SettingsCreator(TrayPublishCreator):
         self._add_instance_to_context(new_instance)
 
     def get_instance_attr_defs(self):
-        output = []
-
-        file_def = FileDef(
-            "filepath",
-            folders=False,
-            extensions=self.extensions,
-            allow_sequences=self.allow_sequences,
-            label="Filepath",
-        )
-        output.append(file_def)
-        if self.enable_review:
-            output.append(BoolDef("review", label="Review"))
-        return output
+        return [
+            FileDef(
+                "filepath",
+                folders=False,
+                extensions=self.extensions,
+                allow_sequences=self.allow_sequences,
+                label="Filepath",
+            )
+        ]
 
     @classmethod
     def from_settings(cls, item_data):
@@ -97,7 +90,6 @@ class SettingsCreator(TrayPublishCreator):
                 "icon": item_data["icon"],
                 "description": item_data["description"],
                 "detailed_description": item_data["detailed_description"],
-                "enable_review": item_data["enable_review"],
                 "extensions": item_data["extensions"],
                 "allow_sequences": item_data["allow_sequences"],
                 "default_variants": item_data["default_variants"]

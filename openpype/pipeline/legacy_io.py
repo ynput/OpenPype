@@ -25,7 +25,7 @@ def install():
 
     session = session_data_from_environment(context_keys=True)
 
-    session["schema"] = "openpype:session-2.0"
+    session["schema"] = "openpype:session-3.0"
     try:
         schema.validate(session)
     except schema.ValidationError as e:

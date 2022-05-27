@@ -1,4 +1,4 @@
-# OpenPype Unreal Integration plugin
+# OpenPype Unreal Integration plugin - UE 4.x
 
 This is plugin for Unreal Editor, creating menu for [OpenPype](https://github.com/getavalon) tools to run.
 

@@ -12,7 +12,7 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Load the model"""
+    """Reference file"""
 
     families = ["model",
                 "pointcache",

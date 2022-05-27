@@ -326,8 +326,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
-                "renderer": self.get_render_attribute("currentRenderer",
-                                                      layer=layer_name),
+                "renderer": self.get_render_attribute(
+                    "currentRenderer", layer=layer_name).lower(),
                 # instance subset
                 "family": "renderlayer",
                 "families": ["renderlayer"],
@@ -339,9 +339,15 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "source": filepath,
                 "expectedFiles": full_exp_files,
                 "publishRenderMetadataFolder": common_publish_meta_path,
-                "resolutionWidth": cmds.getAttr("defaultResolution.width"),
-                "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
+                "resolutionWidth": lib.get_attr_in_layer(
+                    "defaultResolution.height", layer=layer_name
+                ),
+                "resolutionHeight": lib.get_attr_in_layer(
+                    "defaultResolution.width", layer=layer_name
+                ),
+                "pixelAspect": lib.get_attr_in_layer(
+                    "defaultResolution.pixelAspect", layer=layer_name
+                ),
                 "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
                 "tilesX": render_instance.data.get("tilesX") or 2,
                 "tilesY": render_instance.data.get("tilesY") or 2,

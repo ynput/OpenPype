@@ -80,7 +80,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
         video_path = input_file_path
         frame_start = otio_range.start_time.value
         input_fps = otio_range.start_time.rate
-        frame_duration = (otio_range.duration.value + 1)
+        frame_duration = otio_range.duration.value - 1
         sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
         sec_duration = openpype.lib.frames_to_secons(frame_duration, input_fps)
 

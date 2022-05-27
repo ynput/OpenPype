@@ -272,29 +272,12 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "collapsible-wrap",
-                                        "label": "Knobs",
-                                        "collapsible": true,
-                                        "collapsed": true,
-                                        "children": [
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
                                             {
-                                                "key": "knobs",
-                                                "type": "list",
-                                                "object_type": {
-                                                    "type": "dict",
-                                                    "children": [
-                                                        {
-                                                            "type": "text",
-                                                            "key": "name",
-                                                            "label": "Name"
-                                                        },
-                                                        {
-                                                            "type": "text",
-                                                            "key": "value",
-                                                            "label": "Value"
-                                                        }
-                                                    ]
-                                                }
+                                                "label": "Knobs",
+                                                "key": "knobs"
                                             }
                                         ]
                                     }
@@ -333,29 +316,12 @@
                                         "object_type": "text"
                                     },
                                     {
-                                        "type": "collapsible-wrap",
-                                        "label": "Knobs overrides",
-                                        "collapsible": true,
-                                        "collapsed": true,
-                                        "children": [
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
                                             {
-                                                "key": "knobs",
-                                                "type": "list",
-                                                "object_type": {
-                                                    "type": "dict",
-                                                    "children": [
-                                                        {
-                                                            "type": "text",
-                                                            "key": "name",
-                                                            "label": "Name"
-                                                        },
-                                                        {
-                                                            "type": "text",
-                                                            "key": "value",
-                                                            "label": "Value"
-                                                        }
-                                                    ]
-                                                }
+                                                "label": "Knobs overrides",
+                                                "key": "knobs"
                                             }
                                         ]
                                     }
