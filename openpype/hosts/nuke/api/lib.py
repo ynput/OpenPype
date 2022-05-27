@@ -1528,26 +1528,33 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
         if not knob_value:
             continue
 
-        # first convert string types to string
-        # just to ditch unicode
-        if isinstance(knob_value, six.text_type):
-            knob_value = str(knob_value)
-
-        # set correctly knob types
-        if knob_type == "bool":
-            knob_value = bool(knob_value)
-        elif knob_type == "decimal_number":
-            knob_value = float(knob_value)
-        elif knob_type == "number":
-            knob_value = int(knob_value)
-        elif knob_type == "text":
-            knob_value = knob_value
-        elif knob_type == "color_gui":
-            knob_value = color_gui_to_int(knob_value)
-        elif knob_type in ["2d_vector", "3d_vector", "color"]:
-            knob_value = [float(v) for v in knob_value]
+        knob_value = convert_knob_value_to_correct_type(
+            knob_type, knob_value)
 
         node[knob_name].setValue(knob_value)
+
+
+def convert_knob_value_to_correct_type(knob_type, knob_value):
+    # first convert string types to string
+    # just to ditch unicode
+    if isinstance(knob_value, six.text_type):
+        knob_value = str(knob_value)
+
+    # set correctly knob types
+    if knob_type == "bool":
+        knob_value = bool(knob_value)
+    elif knob_type == "decimal_number":
+        knob_value = float(knob_value)
+    elif knob_type == "number":
+        knob_value = int(knob_value)
+    elif knob_type == "text":
+        knob_value = knob_value
+    elif knob_type == "color_gui":
+        knob_value = color_gui_to_int(knob_value)
+    elif knob_type in ["2d_vector", "3d_vector", "color"]:
+        knob_value = [float(v) for v in knob_value]
+
+    return knob_value
 
 
 def color_gui_to_int(color_gui):

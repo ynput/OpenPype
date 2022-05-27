@@ -26,7 +26,8 @@ from .pipeline import (
     update_container,
 )
 from .lib import (
-    maintained_selection
+    maintained_selection,
+    convert_knob_value_to_correct_type
 )
 
 from .utils import (
@@ -58,6 +59,7 @@ __all__ = (
     "update_container",
 
     "maintained_selection",
+    "convert_knob_value_to_correct_type",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"
