@@ -16,16 +16,17 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     @staticmethod
     def get_collections() -> Generator:
-        """Return all 'model' collections.
+        """Return all collections marked as OpenPype "instance".
 
-        Check if the family is 'model' and if it doesn't have the
-        representation set. If the representation is set, it is a loaded model
-        and we don't want to publish it.
+        The property `bpy.context.scene.openpype_instances` keeps
+        track of the collections created as OP instances for the current scene.
         """
-        for collection in bpy.context.scene.collection.children:
-            avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if avalon_prop.get('id') == 'pyblish.avalon.instance':
-                yield collection
+        instance_collections = {
+            bpy.data.collections.get(instance.collection_name)
+            for instance in bpy.context.scene.openpype_instances
+        }
+        for collection in instance_collections:
+            yield collection
 
     def process(self, context):
         """Collect the models from the current Blender scene."""

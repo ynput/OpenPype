@@ -1,9 +1,13 @@
+from importlib import import_module
 import os
 
 import bpy
+from bson.objectid import ObjectId
 
 import openpype.api
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import metadata_update
+from openpype.pipeline.constants import AVALON_CONTAINER_ID
 
 
 class ExtractBlend(openpype.api.Extractor):
@@ -22,9 +26,9 @@ class ExtractBlend(openpype.api.Extractor):
         for obj in objects:
             for mtl_slot in obj.material_slots:
                 if (
-                    mtl_slot.material and
-                    mtl_slot.material.use_nodes and
-                    mtl_slot.material.node_tree.type == 'SHADER'
+                    mtl_slot.material
+                    and mtl_slot.material.use_nodes
+                    and mtl_slot.material.node_tree.type == "SHADER"
                 ):
                     materials.add(mtl_slot.material)
         # Get ShaderNodeTexImage from material node_tree.
@@ -32,8 +36,8 @@ class ExtractBlend(openpype.api.Extractor):
         for material in materials:
             for node in material.node_tree.nodes:
                 if (
-                    isinstance(node, bpy.types.ShaderNodeTexImage) and
-                    node.image
+                    isinstance(node, bpy.types.ShaderNodeTexImage)
+                    and node.image
                 ):
                     shader_texture_nodes.add(node)
         # Pack ShaderNodeTexImage images.
@@ -48,7 +52,7 @@ class ExtractBlend(openpype.api.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.info("Performing extraction...")
 
         plugin.deselect_all()
 
@@ -66,6 +70,32 @@ class ExtractBlend(openpype.api.Extractor):
             if isinstance(member, bpy.types.Object):
                 objects.add(member)
 
+        # Create ID to allow blender import without using OP tools
+        repre_id = str(ObjectId())
+
+        # Add container metadata to collection
+        instance_family = instance.data["family"]
+        metadata_update(
+            instance[-1],
+            {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": instance.name,
+                "namespace": instance.data.get("namespace", ""),
+                "loader": getattr(
+                    import_module(
+                        f"openpype.hosts.blender.plugins.load.load_{instance_family}"
+                    ),
+                    f"Blend{instance_family.capitalize()}Loader",
+                ).__name__,
+                "representation": repre_id,
+                "libpath": filepath,
+                "asset_name": instance.name,
+                "parent": str(instance.data["assetEntity"]["parent"]),
+                "family": instance.data["family"],
+            },
+        )
+
         # Pack used images in the blend files.
         self._pack_images_from_objects(objects)
 
@@ -74,16 +104,17 @@ class ExtractBlend(openpype.api.Extractor):
 
         plugin.deselect_all()
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
+        # Create representation dict
         representation = {
-            'name': 'blend',
-            'ext': 'blend',
-            'files': filename,
+            "name": "blend",
+            "ext": "blend",
+            "files": filename,
             "stagingDir": stagingdir,
+            "id": repre_id,
         }
+        instance.data.setdefault("representations", [])
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            "Extracted instance '%s' to: %s", instance.name, representation
+        )
