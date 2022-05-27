@@ -836,29 +836,6 @@ def check_subsetname_exists(nodes, subset_name):
                  if subset_name in read_avalon_data(n).get("subset", "")),
                 False)
 
-
-def get_render_path(node):
-    ''' Generate Render path from presets regarding avalon knob data
-    '''
-    avalon_knob_data = read_avalon_data(node)
-    data = {'avalon': avalon_knob_data}
-
-    nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["family"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
-    )
-    host_name = os.environ.get("AVALON_APP")
-
-    data.update({
-        "app": host_name,
-        "nuke_imageio_writes": nuke_imageio_writes
-    })
-
-    anatomy_filled = format_anatomy(data)
-    return anatomy_filled["render"]["path"].replace("\\", "/")
-
-
 def format_anatomy(data):
     ''' Helping function for formatting of anatomy paths
 
@@ -2185,15 +2162,14 @@ def get_write_node_template_attr(node):
     avalon_knob_data = read_avalon_data(node)
     # get template data
     nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["family"],
+        node_class=avalon_knob_data["families"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
 
+
     # collecting correct data
-    correct_data = OrderedDict({
-        "file": get_render_path(node)
-    })
+    correct_data = OrderedDict()
 
     # adding imageio knob presets
     for k, v in nuke_imageio_writes.items():
