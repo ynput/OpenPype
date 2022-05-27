@@ -55,13 +55,13 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
             "frameStart": frame_start,
             "frameEnd": frame_end,
             "clipIn": tl_start,
-            "clipOut": tl_end,
+            "clipOut": tl_end - 1,
             "clipInH": tl_start_h,
-            "clipOutH": tl_end_h,
+            "clipOutH": tl_end_h - 1,
             "sourceStart": src_starting_from + src_start,
-            "sourceEnd": src_starting_from + src_end,
+            "sourceEnd": src_starting_from + src_end - 1,
             "sourceStartH": src_starting_from + src_start_h,
-            "sourceEndH": src_starting_from + src_end_h,
+            "sourceEndH": src_starting_from + src_end_h - 1,
         }
         instance.data.update(data)
         self.log.debug(

@@ -113,7 +113,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip", "render.farm"]
+    exclude_families = ["render.farm"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"

@@ -22,17 +22,24 @@ class CreateRender(Creator):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
+        # The asset name is the the third element of the path which contains
+        # the map.
+        # The index of the split path is 3 because the first element is an
+        # empty string, as the path begins with "/Content".
+        a = unreal.EditorUtilityLibrary.get_selected_assets()[0]
+        asset_name = a.get_path_name().split("/")[3]
+
         # Get the master sequence and the master level.
         # There should be only one sequence and one level in the directory.
         filter = unreal.ARFilter(
             class_names=["LevelSequence"],
-            package_paths=[f"/Game/OpenPype/{self.data['asset']}"],
+            package_paths=[f"/Game/OpenPype/{asset_name}"],
             recursive_paths=False)
         sequences = ar.get_assets(filter)
         ms = sequences[0].get_editor_property('object_path')
         filter = unreal.ARFilter(
             class_names=["World"],
-            package_paths=[f"/Game/OpenPype/{self.data['asset']}"],
+            package_paths=[f"/Game/OpenPype/{asset_name}"],
             recursive_paths=False)
         levels = ar.get_assets(filter)
         ml = levels[0].get_editor_property('object_path')
