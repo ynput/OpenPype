@@ -1,5 +1,6 @@
 import pyblish
 import nuke
+from openpype.pipeline import PublishXmlValidationError
 
 
 class FixProxyMode(pyblish.api.Action):
@@ -7,7 +8,7 @@ class FixProxyMode(pyblish.api.Action):
     Togger off proxy switch OFF
     """
 
-    label = "Proxy toggle to OFF"
+    label = "Repair"
     icon = "wrench"
     on = "failed"
 
@@ -30,4 +31,7 @@ class ValidateProxyMode(pyblish.api.ContextPlugin):
         rootNode = nuke.root()
         isProxy = rootNode["proxy"].value()
 
-        assert not isProxy, "Proxy mode should be toggled OFF"
+        if not isProxy:
+            raise PublishXmlValidationError(
+                self, "Proxy mode should be toggled OFF"
+            )
