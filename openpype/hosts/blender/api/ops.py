@@ -26,7 +26,7 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # This seems like a good value to keep the Qt app responsive and doesn't slow
 # down Blender. At least on macOS I the interace of Blender gets very laggy if
 # you make it smaller.
-TIMER_INTERVAL: float = 0.01
+TIMER_INTERVAL: float = 0.01 if platform.system().lower() == "windows" else 0.1
 
 
 class BlenderApplication(QtWidgets.QApplication):
@@ -388,12 +388,6 @@ def draw_avalon_menu(self, context):
     self.layout.menu(TOPBAR_MT_avalon.bl_idname)
 
 
-class OpenpypeInstance(bpy.types.PropertyGroup):
-    collection_name: bpy.props.StringProperty(
-        name="Collection name used as instance"  # noqa
-    )
-
-
 classes = [
     LaunchCreator,
     LaunchLoader,
@@ -402,7 +396,6 @@ classes = [
     LaunchLibrary,
     LaunchWorkFiles,
     TOPBAR_MT_avalon,
-    OpenpypeInstance,
 ]
 
 
@@ -418,11 +411,6 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)
 
-    # Properties
-    bpy.types.Scene.openpype_instances = (
-        bpy.props.CollectionProperty(type=OpenpypeInstance)
-    )
-
 
 def unregister():
     """Unregister the operators and menu."""
@@ -432,5 +420,3 @@ def unregister():
     bpy.types.TOPBAR_MT_editor_menus.remove(draw_avalon_menu)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-
-    del bpy.types.Scene.openpype_instances

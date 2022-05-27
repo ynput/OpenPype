@@ -397,10 +397,6 @@ class Creator(LegacyCreator):
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
         imprint(container, self.data)
 
-        # Mark container collection as instance
-        op_instance = bpy.context.scene.openpype_instances.add()
-        op_instance.collection_name = container.name
-
         # Add selected objects to container if useSelection is True.
         if (self.options or {}).get("useSelection"):
             selected_objects = set(get_selection())
@@ -565,34 +561,35 @@ class AssetLoader(LoaderPlugin):
 
         return container
 
-    def _load_blend(self, libpath, asset_group, override_lib=True):
+    def _load_blend(self, libpath, asset_group):
         """Load blend process."""
         # Load collections from libpath library.
         library_collection = self._load_library_collection(libpath)
 
         # Create override library for container and elements.
-        if override_lib:
-            override = library_collection.override_hierarchy_create(
-                bpy.context.scene, bpy.context.view_layer
-            )
+        override = library_collection.override_hierarchy_create(
+            bpy.context.scene, bpy.context.view_layer
+        )
 
-            # Force override object data like meshes and curves.
-            overridden_data = set()
-            for obj in set(override.all_objects):
-                if obj.data and obj.data not in overridden_data:
-                    obj.data.override_create(remap_local_usages=True)
-                    overridden_data.add(obj.data)
+        # Force override object data like meshes and curves.
+        overridden_data = set()
+        for obj in set(override.all_objects):
+            if obj.data and obj.data not in overridden_data:
+                obj.data.override_create(remap_local_usages=True)
+                overridden_data.add(obj.data)
 
-            # Move objects and child collections from override to asset_group.
-            link_to_collection(override.objects, asset_group)
-            link_to_collection(override.children, asset_group)
+        # Move objects and child collections from override to asset_group.
+        link_to_collection(override.objects, asset_group)
+        link_to_collection(override.children, asset_group)
 
-            bpy.data.collections.remove(override)
+        # Clear and purge useless datablocks and selection.
+        bpy.data.collections.remove(override)
+        orphans_purge()
 
         # Clear selection.
         deselect_all()
 
-        return asset_group if override_lib else library_collection
+        return asset_group
 
     def _process(*args, **kwargs):
         """Must be implemented by a sub-class"""
@@ -632,9 +629,6 @@ class AssetLoader(LoaderPlugin):
             asset_name(asset, subset),
             libpath
         )
-
-        # Purge remaining data
-        orphans_purge()
 
         self[:] = list(asset_group.all_objects)
         return asset_group
@@ -780,22 +774,11 @@ class AssetLoader(LoaderPlugin):
             No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
-        # TODO we must discuss the naming of 'asset_group' which is obscure
         asset_group = (
             bpy.data.collections.get(object_name)
             or bpy.data.objects.get(object_name)
         )
         libpath = get_representation_path(representation)
-
-        # Get instance object containing collection
-        instance_obj = next(
-            (
-                obj
-                for obj in bpy.context.scene.objects
-                if obj.is_instancer and obj.instance_collection is asset_group
-            ),
-            None
-        )
 
         self.log.info(
             "Container: %s\nRepresentation: %s",
@@ -821,37 +804,30 @@ class AssetLoader(LoaderPlugin):
             stack.enter_context(self.maintained_drivers(asset_group))
             stack.enter_context(self.maintained_actions(asset_group))
 
-            remove_container(asset_group, content_only=not instance_obj)
+            remove_container(asset_group)
 
-            linked_collection = self._process(
-                libpath, asset_group, override_lib=not instance_obj
-            )
-
-        if instance_obj:
-            # Update instance collection of object.
-            instance_obj.instance_collection = linked_collection
-
-        else:
-            # Update override library operations from asset objects.
-            for obj in get_container_objects(asset_group):
-                if obj.override_library:
-                    obj.override_library.operations_update()
-
-            # update metadata
-            metadata_update(
-                asset_group,
-                {
-                    "libpath": libpath,
-                    "representation": str(representation["_id"]),
-                    "parent": str(representation["parent"]),
-                }
-            )
+            self._process(libpath, asset_group)
 
         # With maintained contextmanager functions some datablocks could
         # remain, so we do orphans purge one last time.
         orphans_purge()
 
-        return linked_collection or asset_group
+        # Update override library operations from asset objects.
+        for obj in get_container_objects(asset_group):
+            if obj.override_library:
+                obj.override_library.operations_update()
+
+        # update metadata
+        metadata_update(
+            asset_group,
+            {
+                "libpath": libpath,
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"]),
+            }
+        )
+
+        return asset_group
 
     def _update_metadata(
         self,

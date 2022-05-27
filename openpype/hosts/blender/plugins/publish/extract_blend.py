@@ -1,13 +1,19 @@
-from importlib import import_module
 import os
 
 import bpy
 from bson.objectid import ObjectId
 
 import openpype.api
+from openpype.pipeline import (
+    discover_loader_plugins,
+    loaders_from_repre_context,
+    AVALON_CONTAINER_ID,
+)
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import metadata_update
-from openpype.pipeline.constants import AVALON_CONTAINER_ID
+from openpype.hosts.blender.api.pipeline import (
+    metadata_update,
+    AVALON_PROPERTY,
+)
 
 
 class ExtractBlend(openpype.api.Extractor):
@@ -44,6 +50,21 @@ class ExtractBlend(openpype.api.Extractor):
         for node in shader_texture_nodes:
             node.image.pack()
 
+    @staticmethod
+    def _get_loader_from_instance(instance):
+        all_loaders = discover_loader_plugins()
+        print(all_loaders)
+        context = {
+            "subset": {
+                "schema": "openpype:container-2.0",
+                "data": {"families": [instance.data["family"]]}
+            },
+            "representation": {"name": "blend"},
+        }
+        loaders = loaders_from_repre_context(all_loaders, context)
+        if loaders:
+            return loaders[0]
+
     def process(self, instance):
         # Define extract output file path
 
@@ -52,7 +73,7 @@ class ExtractBlend(openpype.api.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction...")
+        self.log.info("Performing extraction..")
 
         plugin.deselect_all()
 
@@ -70,20 +91,23 @@ class ExtractBlend(openpype.api.Extractor):
             if isinstance(member, bpy.types.Object):
                 objects.add(member)
 
+        # Store instance metadata
+        instance_collection = instance[-1]
+        instance_metadata = instance_collection[AVALON_PROPERTY].copy()
+
         # Create ID to allow blender import without using OP tools
         repre_id = str(ObjectId())
 
         # Add container metadata to collection
-        instance_family = instance.data["family"]
-        loader_module = getattr(
-            import_module(
-                f"openpype.hosts.blender.plugins.load.load_{instance_family}"
-            ),
-            f"Blend{instance_family.capitalize()}Loader",
-            plugin.AssetLoader,
-        )
+        loader_module = self._get_loader_from_instance(instance)
+
+        if not loader_module:
+            raise RuntimeError(
+                f"Loader module not found for instance: {instance.name}"
+            )
+
         metadata_update(
-            instance[-1],
+            instance_collection,
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
@@ -103,6 +127,9 @@ class ExtractBlend(openpype.api.Extractor):
 
         bpy.ops.file.make_paths_absolute()
         bpy.data.libraries.write(filepath, data_blocks)
+
+        # restor instance metadata
+        instance_collection[AVALON_PROPERTY] = instance_metadata
 
         plugin.deselect_all()
 
