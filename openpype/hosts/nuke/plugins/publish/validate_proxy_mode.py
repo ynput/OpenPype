@@ -31,7 +31,7 @@ class ValidateProxyMode(pyblish.api.ContextPlugin):
         rootNode = nuke.root()
         isProxy = rootNode["proxy"].value()
 
-        if not isProxy:
+        if isProxy:
             raise PublishXmlValidationError(
                 self, "Proxy mode should be toggled OFF"
             )
