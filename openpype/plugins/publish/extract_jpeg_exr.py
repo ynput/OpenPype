@@ -1,8 +1,7 @@
 import os
-from urllib.parse import MAX_CACHE_SIZE
 
 import pyblish.api
-from openpype.pipeline import ( 
+from openpype.pipeline import (
     legacy_io,
     KnownPublishError
 )
@@ -14,13 +13,7 @@ from openpype.lib import (
     filter_profiles,
     run_subprocess,
     path_to_subprocess_arg,
-
-    get_transcode_temp_directory,
-    convert_input_paths_for_ffmpeg,
-    should_convert_for_ffmpeg
 )
-
-import shutil
 
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
@@ -91,8 +84,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
-           
-            
             # Presumably the following is not needed since we are being
             # explicit
             # TODO: Test cases, cleanup.
@@ -149,7 +140,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 jpeg_items.extend(ffmpeg_args.get("output") or [])
                 # we just want one frame from movie files
                 jpeg_items.append("-vframes 1")
-
                 # output file
                 jpeg_items.append(path_to_subprocess_arg(full_output_path))
                 subprocess_command = " ".join(jpeg_items)
@@ -207,8 +197,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     output = run_subprocess(args)
                     if failed_output in output:
                         raise ValueError(
-                            "oiiotool processing failed. Args: {}".format(args))
-
+                            "oiiotool processing failed. Args: {}".format(args)) # noqa
                     new_repre = {
                         "name": "thumbnail",
                         "ext": "jpg",
