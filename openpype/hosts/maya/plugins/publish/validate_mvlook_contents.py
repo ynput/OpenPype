@@ -3,7 +3,6 @@ import openpype.api
 import openpype.hosts.maya.api.action
 
 import os
-import pprint
 
 COLOUR_SPACES = ['sRGB']
 MIPMAP_EXTENSIONS = ['tdl']
