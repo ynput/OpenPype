@@ -571,7 +571,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.debug("  - got {}".format(cmds.nodeType(node)))
 
-        attribute = FILE_NODES.get(cmds.nodeType(node))
+        attribute = get_attributes(FILE_NODES, cmds.nodeType(node))
         source = cmds.getAttr("{}.{}".format(
             node,
             attribute
