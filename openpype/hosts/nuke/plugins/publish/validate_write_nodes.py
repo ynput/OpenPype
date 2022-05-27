@@ -1,8 +1,10 @@
 import pyblish.api
 from openpype.api import get_errored_instances_from_context
+import openpype.hosts.nuke.api.lib as nlib
 from openpype.hosts.nuke.api.lib import (
     get_write_node_template_attr,
-    get_node_path
+    set_node_knobs_from_settings
+
 )
 from openpype.pipeline import PublishXmlValidationError
 
@@ -17,10 +19,17 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
         instances = get_errored_instances_from_context(context)
 
         for instance in instances:
-            node = instance[1]
-            correct_data = get_write_node_template_attr(node)
-            for key, value in correct_data.items():
-                node[key].setValue(value)
+            write_group_node = instance[0]
+            # get write node from inside of group
+            write_node = None
+            for x in instance:
+                if x.Class() == "Write":
+                    write_node = x
+
+            correct_data = get_write_node_template_attr(write_group_node)
+
+            set_node_knobs_from_settings(write_node, correct_data["knobs"])
+
             self.log.info("Node attributes were fixed")
 
 
@@ -39,29 +48,41 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     hosts = ["nuke"]
 
     def process(self, instance):
-
-        node = instance[1]
         write_group_node = instance[0]
+
+        # get write node from inside of group
+        write_node = None
+        for x in instance:
+            if x.Class() == "Write":
+                write_node = x
+
+        if write_node is None:
+            return
+
         correct_data = get_write_node_template_attr(write_group_node)
 
-        check = []
-        for key, value in correct_data.items():
-            if key == 'file':
-                padding = len(value.split('#'))
-                ref_path = get_node_path(value, padding)
-                n_path = get_node_path(node[key].value(), padding)
-                is_not = False
-                for i, path in enumerate(ref_path):
-                    if (
-                        str(n_path[i]) != str(path)
-                        and not is_not
-                    ):
-                        is_not = True
-                if is_not:
-                    check.append([key, value, node[key].value()])
+        if correct_data:
+            check_knobs = correct_data["knobs"]
+        else:
+            return
 
-            elif str(node[key].value()) != str(value):
-                check.append([key, value, node[key].value()])
+        check = []
+        self.log.debug("__ write_node: {}".format(
+            write_node
+        ))
+
+        for knob_data in check_knobs:
+            key = knob_data["name"]
+            value = knob_data["value"]
+            self.log.debug("__ key: {} | value: {}".format(
+                key, value
+            ))
+            if (
+                str(write_node[key].value()) != str(value)
+                and key != "file"
+                and key != "tile_color"
+            ):
+                check.append([key, value, write_node[key].value()])
 
         self.log.info(check)
 
@@ -69,15 +90,16 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
             self._make_error(check)
 
     def _make_error(self, check):
-        msg = "Write node's knobs values are not correct!\n"
-        dbg_msg = msg
-        msg_add = "Knob `{0}` Correct: `{1}` Wrong: `{2}` \n"
-        xml_msg = ""
+        # sourcery skip: merge-assign-and-aug-assign, move-assign-in-block
+        dbg_msg = "Write node's knobs values are not correct!\n"
+        msg_add = "Knob '{0}' > Correct: `{1}` > Wrong: `{2}`"
 
-        for item in check:
-            _msg_add = msg_add.format(item[0], item[1], item[2])
-            dbg_msg += _msg_add
-            xml_msg += _msg_add
+        details = [
+            msg_add.format(item[0], item[1], item[2])
+            for item in check
+        ]
+        xml_msg = "<br/>".join(details)
+        dbg_msg += "\n\t".join(details)
 
         raise PublishXmlValidationError(
             self, dbg_msg, formatting_data={"xml_msg": xml_msg}
