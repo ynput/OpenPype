@@ -73,12 +73,12 @@ class BlendLayoutLoader(plugin.AssetLoader):
     @staticmethod
     def _is_rig_container(collection):
         return (
-            collection.get(AVALON_PROPERTY) and
-            collection[AVALON_PROPERTY].get("family") == "rig" and
-            collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+            collection.get(AVALON_PROPERTY)
+            and collection[AVALON_PROPERTY].get("family") == "rig"
+            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
-    def _process(self, libpath, asset_group):
+    def _process(self, libpath, asset_group, **kwargs):
         return self._load_blend(libpath, asset_group)
 
     def process_asset(self, context, *args, **kwargs) -> bpy.types.Collection:

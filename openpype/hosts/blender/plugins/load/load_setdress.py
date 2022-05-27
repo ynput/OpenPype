@@ -1,12 +1,10 @@
 """Load a Set Dress in Blender."""
 
-from openpype.hosts.blender.plugins.load.load_layout_blend import (
-    BlendLayoutLoader
-)
+from openpype.hosts.blender.plugins.load import load_layout_blend
 
 
-class BlendSetdressLoader(BlendLayoutLoader):
-    """Load Set Dress from a .blend file."""
+class BlendSetdressLoader(load_layout_blend.BlendLayoutLoader):
+    """Load SetDress from a .blend file."""
 
     families = ["setdress"]
     representations = ["blend"]

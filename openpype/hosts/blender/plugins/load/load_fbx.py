@@ -27,7 +27,7 @@ class FbxModelLoader(plugin.AssetLoader):
     color_tag = "COLOR_04"
 
     @staticmethod
-    def _process(libpath, asset_group):
+    def _process(libpath, asset_group, *args, **kwargs):
 
         current_objects = set(bpy.data.objects)
 

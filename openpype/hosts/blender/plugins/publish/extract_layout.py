@@ -129,9 +129,11 @@ class ExtractLayout(openpype.api.Extractor):
             member
             for member in members
             if (
-                not member.override_library and
-                member.get(AVALON_PROPERTY) and
-                member.get(AVALON_PROPERTY).get("id") == AVALON_CONTAINER_ID
+                not member.override_library
+                and member.get(AVALON_PROPERTY)
+                and member.get(AVALON_PROPERTY).get("id") == (
+                    AVALON_CONTAINER_ID
+                )
             )
         ]
 

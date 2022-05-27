@@ -24,7 +24,7 @@ class BlendCameraLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_05"
 
-    def _process(self, libpath, asset_group):
+    def _process(self, libpath, asset_group, *args, **kwargs):
         return self._load_blend(libpath, asset_group)
 
     def process_asset(

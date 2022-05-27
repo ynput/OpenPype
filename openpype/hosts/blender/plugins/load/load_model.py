@@ -24,11 +24,11 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_04"
 
-    def _process(self, libpath, asset_group, override_lib=True):
+    def _process(self, libpath, asset_group, *args, **kwargs):
 
         # If asset_group is a Collection, we proceed with usual load blend.
         if isinstance(asset_group, bpy.types.Collection):
-            asset_group = self._load_blend(libpath, asset_group, override_lib)
+            asset_group = self._load_blend(libpath, asset_group, **kwargs)
 
         # If asset_group is an Empty, set instance collection with container.
         elif isinstance(asset_group, bpy.types.Object):
@@ -69,12 +69,14 @@ class BlendModelLoader(plugin.AssetLoader):
                 plugin.link_to_collection(asset_group, parent)
 
         elif (
-            isinstance(asset_group, bpy.types.Collection) and
-            isinstance(parent, bpy.types.Collection)
+            isinstance(asset_group, bpy.types.Collection)
+            and isinstance(parent, bpy.types.Collection)
         ):
-            current_parent = plugin.get_parent_collection(asset_group)
-            if current_parent:
-                current_parent.children.unlink(asset_group)
+            # clear collection parenting
+            for collection in bpy.data.collections:
+                if asset_group in collection.children.values():
+                    collection.children.unlink(asset_group)
+            # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
     def process_asset(

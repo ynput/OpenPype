@@ -132,11 +132,11 @@ class ValidateContainerLibrary(pyblish.api.InstancePlugin):
 
         for obj in set(instance):
             if (
-                isinstance(obj, bpy.types.Collection) and
-                not obj.library and
-                not obj.override_library and
-                obj.get(AVALON_PROPERTY) and
-                obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+                isinstance(obj, bpy.types.Collection)
+                and not obj.library
+                and not obj.override_library
+                and obj.get(AVALON_PROPERTY)
+                and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
             ):
                 if not AssetLoader.is_updated(obj):
                     invalid.append(obj)
@@ -149,14 +149,14 @@ class ValidateContainerLibrary(pyblish.api.InstancePlugin):
 
         for obj in set(instance):
             if (
-                isinstance(obj, bpy.types.Collection) and
-                obj.get(AVALON_PROPERTY) and
-                obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+                isinstance(obj, bpy.types.Collection)
+                and obj.get(AVALON_PROPERTY)
+                and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
             ):
                 for o in obj.all_objects:
                     if (
-                        (not o.library and not o.override_library) or
-                        (not o.data.library and not o.data.override_library)
+                        (not o.library and not o.override_library)
+                        or (not o.data.library and not o.data.override_library)
                     ):
                         invalid.append(o)
         return invalid

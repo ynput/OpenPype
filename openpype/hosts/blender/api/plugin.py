@@ -4,7 +4,7 @@ from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
 from contextlib import contextmanager, ExitStack
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Iterator
 from collections.abc import Iterable
 from bson.objectid import ObjectId
 
@@ -17,6 +17,7 @@ from openpype.pipeline import (
     LoaderPlugin,
     get_representation_path,
     AVALON_CONTAINER_ID,
+    AVALON_INSTANCE_ID,
 )
 from .ops import (
     MainThreadItem,
@@ -98,14 +99,21 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
     raise Exception("Could not create a custom Blender context.")
 
 
-def create_container(name, color_tag=None):
+def create_container(
+    name: str,
+    color_tag: Optional[str] = None
+) -> Optional[bpy.types.Collection]:
     """
-    Create the container with the given name
+    Create the collection container with the given name.
+
+    Args:
+        name (str): The name of the collection.
+        color_tag (str, optional): The display color in the outliner.
+
+    Returns:
+        bpy.types.Collection: The collection if successed, None otherwise.
     """
-    # search in the container already exists
-    container = bpy.data.collections.get(name)
-    # if container doesn't exist create them
-    if container is None:
+    if bpy.data.collections.get(name) is None:
         container = bpy.data.collections.new(name)
         if color_tag:
             container.color_tag = color_tag
@@ -114,16 +122,17 @@ def create_container(name, color_tag=None):
 
 
 def remove_container(
-    container: bpy.types.ID,
+    container: Union[bpy.types.Collection, bpy.types.Object],
     content_only: Optional[bool] = False
 ):
     """
     Remove the container with all this objects and child collections.
 
-    Arguments:
-        container (bpy.data.ID): The collection container to be removed.
-        content_only (bool): Remove all the container content but keep the
-            container collection. Optional, default to False.
+    Args:
+        container (Union[bpy.types.Collection, bpy.types.Object]):
+            The collection or empty container to be removed.
+        content_only (bool, optional): Remove all the container content but
+            keep the container collection or empty. Default to False.
 
     Note:
         This rename all removed elements with .removed suffix to prevent
@@ -192,8 +201,21 @@ def remove_container(
             bpy.data.materials.remove(mtl)
 
 
-def get_container_objects(container):
-    """Get the parent of the input collection"""
+def get_container_objects(
+    container: Union[bpy.types.Collection, bpy.types.Object]
+) -> List[bpy.types.Object]:
+    """
+    Get recursively all the child objects for the given container collection
+    or object empty.
+
+    Args:
+        container (Union[bpy.types.Collection, bpy.types.Object]):
+            The parent container.
+
+    Returns:
+        List[bpy.types.Object]: All the child objects of the container.
+
+    """
     if isinstance(container, bpy.types.Collection):
         objects = list(container.all_objects)
     else:
@@ -205,7 +227,6 @@ def get_container_objects(container):
 def get_parent_collection(collection):
     """Get the parent of the input collection"""
     check_list = [bpy.context.scene.collection]
-
     for c in check_list:
         if collection.name in c.children.keys():
             return c
@@ -214,11 +235,15 @@ def get_parent_collection(collection):
     return None
 
 
-def get_main_collection():
-    """Get main collection.
-        - the scene root collection if has no children.
-        - the first collection if only child of root collection.
-        - the only avalon instance collection child of root collection.
+def get_main_collection() -> bpy.types.Collection:
+    """
+    Get the main collection from scene.
+    - the scene root collection if has no children.
+    - the first collection if only child of root collection.
+    - the only avalon instance collection child of root collection.
+
+    Returns:
+        bpy.types.Collection: The main collection.
     """
     main_collection = bpy.context.scene.collection
     if len(main_collection.children) == 1:
@@ -228,8 +253,8 @@ def get_main_collection():
             child
             for child in main_collection.children
             if (
-                child.get(AVALON_PROPERTY) and
-                child[AVALON_PROPERTY].get("id") == "pyblish.avalon.instance"
+                child.get(AVALON_PROPERTY)
+                and child[AVALON_PROPERTY].get("id") == AVALON_INSTANCE_ID
             )
         ]
         if len(instance_collections) > 1:
@@ -253,8 +278,24 @@ def get_local_collection_with_name(name):
     return None
 
 
-def get_collections_by_objects(objects, collections=None):
-    """Get collection from a collections list by objects."""
+def get_collections_by_objects(
+    objects: List[bpy.types.Object],
+    collections: Optional[List[bpy.types.Collection]] = None
+) -> Iterator[bpy.types.Collection]:
+    """
+    Get collections who contain the compete given list of objects from all
+    scene collections or given list of collections.
+
+    Args:
+        objects (List[bpy.types.Object]): The list of objects who need to be
+            contained in the returned collections.
+        collections (List[bpy.types.Collection], optional): The list of
+            collections used to get requested collections. If not defined,
+            we use all the childrens from scene collection.
+
+    yields:
+        bpy.types.Collection: The next requested collection.
+    """
     if collections is None:
         collections = list(bpy.context.scene.collection.children)
     for collection in collections:
@@ -266,24 +307,35 @@ def get_collections_by_objects(objects, collections=None):
             yield from get_collections_by_objects(objects, collection.children)
 
 
-def link_to_collection(entity, collection):
-    """link a entity to a collection. recursively if entity is iterable"""
+def link_to_collection(
+    entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
+    collection: List[bpy.types.Collection]
+):
+    """
+    link an entity to a collection (Recursive function if entity is iterable).
+
+    Args:
+        entity (Union[bpy.types.Collection, bpy.types.Object, Iterator]):
+            The collection, object or list of valid entities who need to be
+            parenting with the given collection.
+        collection (bpy.types.Collection): The collection used for parenting.
+    """
     # Entity is Iterable, execute function recursively.
     if isinstance(entity, Iterable):
         for i in entity:
             link_to_collection(i, collection)
     # Entity is a Collection.
     elif (
-        isinstance(entity, bpy.types.Collection) and
-        entity not in collection.children.values() and
-        collection not in entity.children.values() and
-        entity is not collection
+        isinstance(entity, bpy.types.Collection)
+        and entity not in collection.children.values()
+        and collection not in entity.children.values()
+        and entity is not collection
     ):
         collection.children.link(entity)
     # Entity is an Object.
     elif (
-        isinstance(entity, bpy.types.Object) and
-        entity not in collection.objects.values()
+        isinstance(entity, bpy.types.Object)
+        and entity not in collection.objects.values()
     ):
         collection.objects.link(entity)
 
@@ -344,7 +396,7 @@ class Creator(LegacyCreator):
         # Add custom property on the instance container with the data.
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
         imprint(container, self.data)
-        
+
         # Mark container collection as instance
         op_instance = bpy.context.scene.openpype_instances.add()
         op_instance.collection_name = container.name
@@ -396,18 +448,28 @@ class AssetLoader(LoaderPlugin):
     """
 
     @staticmethod
-    def _get_instance_empty(instance_name: str, nodes: List) -> Optional[bpy.types.Object]:
+    def _get_instance_empty(
+        instance_name: str,
+        nodes: List
+    ) -> Optional[bpy.types.Object]:
         """Get the 'instance empty' that holds the collection instance."""
         for node in nodes:
             if not isinstance(node, bpy.types.Object):
                 continue
-            if (node.type == 'EMPTY' and node.instance_type == 'COLLECTION'
-                    and node.instance_collection and node.name == instance_name):
+            if (
+                node.type == 'EMPTY'
+                and node.instance_type == 'COLLECTION'
+                and node.instance_collection
+                and node.name == instance_name
+            ):
                 return node
         return None
 
     @staticmethod
-    def _get_instance_collection(instance_name: str, nodes: List) -> Optional[bpy.types.Collection]:
+    def _get_instance_collection(
+        instance_name: str,
+        nodes: List
+    ) -> Optional[bpy.types.Collection]:
         """Get the 'instance collection' (container) for this asset."""
         for node in nodes:
             if not isinstance(node, bpy.types.Collection):
@@ -417,7 +479,9 @@ class AssetLoader(LoaderPlugin):
         return None
 
     @staticmethod
-    def _get_library_from_container(container: bpy.types.Collection) -> bpy.types.Library:
+    def _get_library_from_container(
+        container: bpy.types.Collection
+    ) -> bpy.types.Library:
         """Find the library file from the container.
 
         It traverses the objects from this collection, checks if there is only
@@ -433,8 +497,9 @@ class AssetLoader(LoaderPlugin):
             assert obj.library, f"'{obj.name}' is not linked."
             libraries.add(obj.library)
 
-        assert len(
-            libraries) == 1, "'{container.name}' contains objects from more then 1 library."
+        assert len(libraries) == 1, (
+            f"'{container.name}' contains objects from more then 1 library."
+        )
 
         return list(libraries)[0]
 
@@ -447,13 +512,16 @@ class AssetLoader(LoaderPlugin):
         for collection in collections:
             metadata = collection.get(AVALON_PROPERTY)
             if (
-                metadata and
-                (not famillies or metadata.get("family") in famillies)
+                metadata
+                and (not famillies or metadata.get("family") in famillies)
             ):
                 return collection
 
     @staticmethod
-    def _rename_objects_with_namespace(objects, namespace):
+    def _rename_objects_with_namespace(
+        objects: List[bpy.types.Object],
+        namespace: str
+    ):
         """Rename objects and their dependencies and with namespace prefix."""
         materials = set()
         objects_data = set()
@@ -481,7 +549,8 @@ class AssetLoader(LoaderPlugin):
         for material in materials:
             material.name = f"{namespace}:{material.name}"
 
-    def _load_library_collection(self, libpath):
+    def _load_library_collection(self, libpath: str) -> bpy.types.Collection:
+        """Load library from libpath and return the valid collection."""
         # Load collections from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
@@ -497,6 +566,7 @@ class AssetLoader(LoaderPlugin):
         return container
 
     def _load_blend(self, libpath, asset_group, override_lib=True):
+        """Load blend process."""
         # Load collections from libpath library.
         library_collection = self._load_library_collection(libpath)
 
@@ -518,13 +588,13 @@ class AssetLoader(LoaderPlugin):
             link_to_collection(override.children, asset_group)
 
             bpy.data.collections.remove(override)
-        
+
         # Clear selection.
         deselect_all()
 
-        return library_collection
+        return asset_group if override_lib else library_collection
 
-    def _process(*args, **kwargs) -> Union[bpy.types.Collection, bpy.types.Object]:
+    def _process(*args, **kwargs):
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
 
@@ -569,12 +639,14 @@ class AssetLoader(LoaderPlugin):
         self[:] = list(asset_group.all_objects)
         return asset_group
 
-    def load(self,
-             context: dict,
-             name: Optional[str] = None,
-             namespace: Optional[str] = None,
-             options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
-        """ Run the loader on Blender main thread"""
+    def load(
+        self,
+        context: dict,
+        name: Optional[str] = None,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None
+    ) -> Optional[bpy.types.Collection]:
+        """Run the loader on Blender main thread"""
         mti = MainThreadItem(self._load, context, name, namespace, options)
         execute_in_main_thread(mti)
 
@@ -618,7 +690,7 @@ class AssetLoader(LoaderPlugin):
         if not nodes:
             return None
 
-        # Only containerise if it's not already a collection from a .blend file.
+        # Only containerise if it's not already a collection from a .blend file
         # representation = context["representation"]["name"]
         # if representation != "blend":
         #     from openpype.hosts.blender.api.pipeline import containerise
@@ -692,8 +764,10 @@ class AssetLoader(LoaderPlugin):
         return normalized_group_libpath == normalized_libpath
 
     def _update_process(
-        self, container: Dict, representation: Dict
-    ) -> bpy.types.ID:
+        self,
+        container: Dict,
+        representation: Dict
+    ) -> Union[bpy.types.Collection, bpy.types.Object]:
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
@@ -706,14 +780,22 @@ class AssetLoader(LoaderPlugin):
             No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
-        asset_group = (  # TODO we must discuss the naming of 'asset_group' which is obscure
-            bpy.data.collections.get(object_name) or
-            bpy.data.objects.get(object_name)
+        # TODO we must discuss the naming of 'asset_group' which is obscure
+        asset_group = (
+            bpy.data.collections.get(object_name)
+            or bpy.data.objects.get(object_name)
         )
         libpath = get_representation_path(representation)
 
         # Get instance object containing collection
-        instance_obj = next((obj for obj in bpy.context.scene.objects if obj.is_instancer and obj.instance_collection is asset_group), None)
+        instance_obj = next(
+            (
+                obj
+                for obj in bpy.context.scene.objects
+                if obj.is_instancer and obj.instance_collection is asset_group
+            ),
+            None
+        )
 
         self.log.info(
             "Container: %s\nRepresentation: %s",
@@ -741,32 +823,35 @@ class AssetLoader(LoaderPlugin):
 
             remove_container(asset_group, content_only=not instance_obj)
 
-            linked_collection = self._process(libpath, asset_group, override_lib=not instance_obj)
-            
-            # Update instance collection of object
-            if instance_obj:
-                instance_obj.instance_collection = linked_collection
+            linked_collection = self._process(
+                libpath, asset_group, override_lib=not instance_obj
+            )
 
-        # update override library operations from asset objects
-        for obj in get_container_objects(asset_group):
-            if obj.override_library:
-                obj.override_library.operations_update()
+        if instance_obj:
+            # Update instance collection of object.
+            instance_obj.instance_collection = linked_collection
 
-        # update metadata
-        metadata_update(
-            asset_group,
-            {
-                "libpath": libpath,
-                "representation": str(representation["_id"]),
-                "parent": str(representation["parent"]),
-            }
-        )
+        else:
+            # Update override library operations from asset objects.
+            for obj in get_container_objects(asset_group):
+                if obj.override_library:
+                    obj.override_library.operations_update()
+
+            # update metadata
+            metadata_update(
+                asset_group,
+                {
+                    "libpath": libpath,
+                    "representation": str(representation["_id"]),
+                    "parent": str(representation["parent"]),
+                }
+            )
 
         # With maintained contextmanager functions some datablocks could
         # remain, so we do orphans purge one last time.
         orphans_purge()
 
-        return asset_group
+        return linked_collection or asset_group
 
     def _update_metadata(
         self,
@@ -824,8 +909,8 @@ class AssetLoader(LoaderPlugin):
         """
         object_name = container["objectName"]
         asset_group = (
-            bpy.data.objects.get(object_name) or
-            bpy.data.collections.get(object_name)
+            bpy.data.objects.get(object_name)
+            or bpy.data.collections.get(object_name)
         )
 
         if not asset_group:
@@ -1076,9 +1161,9 @@ class AssetLoader(LoaderPlugin):
         if data_types:
             for obj in objects:
                 if (
-                    obj.type == "MESH" and
-                    not obj.data.library and
-                    not obj.data.override_library
+                    obj.type == "MESH"
+                    and not obj.data.library
+                    and not obj.data.override_library
                 ):
                     # TODO : check if obj.data has data_type
                     local_copy = obj.data.copy()
@@ -1142,6 +1227,9 @@ class AssetLoader(LoaderPlugin):
 
 
 class StructDescriptor:
+    """
+    Generic Descriptor to store and restor properties from blender struct.
+    """
 
     _invalid_property_names = [
         "__doc__",
@@ -1164,8 +1252,8 @@ class StructDescriptor:
     def restore_property(self, entity, prop_name):
         prop_value = self.properties.get(prop_name)
         if (
-            isinstance(prop_value, str) and
-            prop_value.startswith("bpy.types.object:")
+            isinstance(prop_value, str)
+            and prop_value.startswith("bpy.types.object:")
         ):
             prop_value = bpy.context.scene.objects.get(prop_value[17:])
         setattr(entity, prop_name, prop_value)
@@ -1180,27 +1268,25 @@ class StructDescriptor:
         for prop_name, prop_value in getmembers(bpy_struct):
             # filter the property
             if (
-                prop_name in self._invalid_property_names or
-                bpy_struct.is_property_readonly(prop_name)
+                prop_name in self._invalid_property_names
+                or bpy_struct.is_property_readonly(prop_name)
             ):
                 continue
             # store the property
             if (
-                not bpy_struct.is_override_data or
-                bpy_struct.is_property_overridable_library(prop_name)
+                not bpy_struct.is_override_data
+                or bpy_struct.is_property_overridable_library(prop_name)
             ):
                 self.store_property(prop_name, prop_value)
 
 
 class ModifierDescriptor(StructDescriptor):
-    """
-    Store the name, type, properties and object of a modifier.
-    """
+    """Store the name, type, properties and object of a modifier."""
 
     def restor(self):
         obj = (
-            bpy.context.scene.objects.get(self.object_name) or
-            bpy.data.objects.get(self.object_name)
+            bpy.context.scene.objects.get(self.object_name)
+            or bpy.data.objects.get(self.object_name)
         )
         if obj:
             modifier = obj.modifiers.get(self.name)
@@ -1215,14 +1301,12 @@ class ModifierDescriptor(StructDescriptor):
 
 
 class ConstraintDescriptor(StructDescriptor):
-    """
-    Store the name, type, properties and object of a constraint.
-    """
+    """Store the name, type, properties and object of a constraint."""
 
     def restor(self, bone_name=None):
         obj = (
-            bpy.context.scene.objects.get(self.object_name) or
-            bpy.data.objects.get(self.object_name)
+            bpy.context.scene.objects.get(self.object_name)
+            or bpy.data.objects.get(self.object_name)
         )
         if bone_name:
             if obj and obj.type == "ARMATURE":

@@ -40,7 +40,7 @@ AVALON_CONTAINERS = "AVALON_CONTAINERS"
 AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
 
-MODEL_DOWNSTREAM = ("Rigging", "Texture", "Lookdev")
+MODEL_DOWNSTREAM = ("Rigging", "Lookdev")
 
 log = Logger.get_logger(__name__)
 
@@ -388,11 +388,12 @@ def ls() -> Iterator:
         for obj in bpy.context.scene.objects
         if obj.is_instancer
     }
-    
+
     for container in collections:
         if (
-            container in scene_collections and not container.override_library
-        ) or container in instanced_collections:
+            (container in scene_collections and not container.override_library)
+            or container in instanced_collections
+        ):
             yield parse_container(container)
 
 

@@ -26,14 +26,14 @@ class BlendRigLoader(plugin.AssetLoader):
     @staticmethod
     def _is_model_container(collection):
         return (
-            collection.get(AVALON_PROPERTY) and
-            collection[AVALON_PROPERTY].get("family") == "model" and
-            collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+            collection.get(AVALON_PROPERTY)
+            and collection[AVALON_PROPERTY].get("family") == "model"
+            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
-    def _process(self, libpath, asset_group):
+    def _process(self, libpath, asset_group, *args, **kwargs):
         # Load blend from from libpath library.
-        self._load_blend(libpath, asset_group)
+        asset_group = self._load_blend(libpath, asset_group)
 
         # Rename loaded collections with asset group name prefix.
         for child in set(asset_group.children_recursive):
@@ -47,6 +47,8 @@ class BlendRigLoader(plugin.AssetLoader):
         self._rename_objects_with_namespace(
             asset_group.all_objects, asset_group.name
         )
+
+        return asset_group
 
     @staticmethod
     def _assign_actions(asset_group, namespace):
@@ -152,9 +154,11 @@ class BlendRigLoader(plugin.AssetLoader):
 
         parent = options.get('parent')
         if isinstance(parent, bpy.types.Collection):
-            current_parent = plugin.get_parent_collection(asset_group)
-            if current_parent:
-                current_parent.children.unlink(asset_group)
+            # clear collection parenting
+            for collection in bpy.data.collections:
+                if asset_group in collection.children.values():
+                    collection.children.unlink(asset_group)
+            # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
     def process_asset(
@@ -201,9 +205,9 @@ class BlendRigLoader(plugin.AssetLoader):
         ]
         # Store action from armature.
         if (
-            len(armatures) == 1 and
-            armatures[0].animation_data and
-            armatures[0].animation_data.action
+            len(armatures) == 1
+            and armatures[0].animation_data
+            and armatures[0].animation_data.action
         ):
             armature_action = armatures[0].animation_data.action
         else:

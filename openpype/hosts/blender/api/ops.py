@@ -389,7 +389,9 @@ def draw_avalon_menu(self, context):
 
 
 class OpenpypeInstance(bpy.types.PropertyGroup):
-    collection_name: bpy.props.StringProperty(name="Collection name used as instance")
+    collection_name: bpy.props.StringProperty(
+        name="Collection name used as instance"  # noqa
+    )
 
 
 classes = [
@@ -417,7 +419,9 @@ def register():
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)
 
     # Properties
-    bpy.types.Scene.openpype_instances = bpy.props.CollectionProperty(type=OpenpypeInstance)
+    bpy.types.Scene.openpype_instances = (
+        bpy.props.CollectionProperty(type=OpenpypeInstance)
+    )
 
 
 def unregister():

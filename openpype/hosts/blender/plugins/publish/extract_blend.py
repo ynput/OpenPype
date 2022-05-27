@@ -75,6 +75,13 @@ class ExtractBlend(openpype.api.Extractor):
 
         # Add container metadata to collection
         instance_family = instance.data["family"]
+        loader_module = getattr(
+            import_module(
+                f"openpype.hosts.blender.plugins.load.load_{instance_family}"
+            ),
+            f"Blend{instance_family.capitalize()}Loader",
+            plugin.AssetLoader,
+        )
         metadata_update(
             instance[-1],
             {
@@ -82,12 +89,7 @@ class ExtractBlend(openpype.api.Extractor):
                 "id": AVALON_CONTAINER_ID,
                 "name": instance.name,
                 "namespace": instance.data.get("namespace", ""),
-                "loader": getattr(
-                    import_module(
-                        f"openpype.hosts.blender.plugins.load.load_{instance_family}"
-                    ),
-                    f"Blend{instance_family.capitalize()}Loader",
-                ).__name__,
+                "loader": loader_module.__name__,
                 "representation": repre_id,
                 "libpath": filepath,
                 "asset_name": instance.name,
@@ -116,5 +118,5 @@ class ExtractBlend(openpype.api.Extractor):
         instance.data["representations"].append(representation)
 
         self.log.info(
-            "Extracted instance '%s' to: %s", instance.name, representation
+            f"Extracted instance '{instance.name}' to: {representation}"
         )
