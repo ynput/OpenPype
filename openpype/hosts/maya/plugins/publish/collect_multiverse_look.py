@@ -17,6 +17,9 @@ SHAPE_ATTRS = ["castsShadows",
                "opposite"]
 
 SHAPE_ATTRS = set(SHAPE_ATTRS)
+COLOUR_SPACES = ['sRGB']
+MIPMAP_EXTENSIONS = ['tdl']
+
 
 def get_look_attrs(node):
     """Returns attributes of a node that are important for the look.
@@ -103,7 +106,7 @@ def seq_to_glob(path):
         "<uvtile>": "<uvtile>",
         "#": "#",
         "u<u>_v<v>": "<u>|<v>",
-        "<frame0": "<frame0\d+>", #noqa - copied from collect_look.py
+        "<frame0": "<frame0\d+>",  # noqa - copied from collect_look.py
         "<f>": "<f>"
     }
 
@@ -189,6 +192,22 @@ def get_file_node_files(node):
         return []
 
 
+def get_mipmap(fname):
+    for colour_space in COLOUR_SPACES:
+        for mipmap_ext in MIPMAP_EXTENSIONS:
+            mipmap_fname = '.'.join([fname, colour_space, mipmap_ext])
+            if os.path.exists(mipmap_fname):
+                return mipmap_fname
+    return None
+
+
+def is_mipamp(fname):
+    ext = os.path.splitext(fname)[1][1:]
+    if ext in MIPMAP_EXTENSIONS:
+        return True
+    return False
+
+
 class CollectMultiverseLookData(pyblish.api.InstancePlugin):
     """Collect Multiverse Look
 
@@ -219,6 +238,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         files = []
         sets = {}
         instance.data["resources"] = []
+        expectMipMap = instance.data["expectMipMap"]
 
         for node in nodes:
             self.log.info("Getting resources for '{}'".format(node))
@@ -242,7 +262,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                     files = cmds.ls(history, type="file", long=True)
 
                     for f in files:
-                        resources = self.collect_resource(f)
+                        resources = self.collect_resource(f, expectMipMap)
                         instance.data["resources"].append(resources)
 
                 elif isinstance(matOver, multiverse.MaterialSourceUsdPath):
@@ -255,7 +275,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
             "relationships": sets
         }
 
-    def collect_resource(self, node):
+    def collect_resource(self, node, expectMipMap):
         """Collect the link to the file(s) used (resource)
         Args:
             node (str): name of the node
@@ -310,6 +330,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         source = source.replace("\\", "/")
 
         files = get_file_node_files(node)
+        files = self.handle_files(files, expectMipMap)
         if len(files) == 0:
             self.log.error("No valid files found from node `%s`" % node)
 
@@ -326,3 +347,26 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                 "source": source,  # required for resources
                 "files": files,
                 "color_space": color_space}  # required for resources
+
+    def handle_files(self, files, expectMipMap):
+        """This will go through all the files and make sure that they are
+        either already mipmapped or have a corresponding mipmap sidecar and
+        add that to the list."""
+        if not expectMipMap:
+            return files
+
+        extra_files = []
+        self.log.debug("Expecting MipMaps, going to look for them.")
+        for fname in files:
+            self.log.info("Checking '{}' for mipmaps".format(fname))
+            if is_mipamp(fname):
+                self.log.debug(" - file is already MipMap, skipping.")
+                continue
+
+            mipmap = get_mipmap(fname)
+            if mipmap:
+                self.log.info(" mipmap found for '{}'".format(fname))
+                extra_files.append(mipmap)
+            else:
+                self.log.warning(" no mipmap found for '{}'".format(fname))
+        return files + extra_files
