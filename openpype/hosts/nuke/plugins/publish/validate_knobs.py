@@ -31,10 +31,13 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
         invalid = self.get_invalid(context, compute=True)
         if invalid:
             invalid_items = [
-                ("Node __{node_name}__ with knob _{label}_ "
-                "expecting _{expected}_, "
-                "but is set to _{current}_").format(**i)
-                for i in invalid]
+                (
+                    "Node __{node_name}__ with knob _{label}_ "
+                    "expecting _{expected}_, "
+                    "but is set to _{current}_"
+                ).format(**i)
+                for i in invalid
+            ]
             raise PublishXmlValidationError(
                 self,
                 "Found knobs with invalid values:\n{}".format(invalid),

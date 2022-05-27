@@ -19,8 +19,8 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
         for instance in instances:
             node = instance[1]
             correct_data = get_write_node_template_attr(node)
-            for k, v in correct_data.items():
-                node[k].setValue(v)
+            for key, value in correct_data.items():
+                node[key].setValue(value)
             self.log.info("Node attributes were fixed")
 
 
@@ -41,40 +41,44 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         node = instance[1]
-        correct_data = get_write_node_template_attr(node)
+        write_group_node = instance[0]
+        correct_data = get_write_node_template_attr(write_group_node)
 
         check = []
-        for k, v in correct_data.items():
-            if k is 'file':
-                padding = len(v.split('#'))
-                ref_path = get_node_path(v, padding)
-                n_path = get_node_path(node[k].value(), padding)
-                isnt = False
-                for i, p in enumerate(ref_path):
-                    if str(n_path[i]) not in str(p):
-                        if not isnt:
-                            isnt = True
-                        else:
-                            continue
-                if isnt:
-                    check.append([k, v, node[k].value()])
-            else:
-                if str(node[k].value()) not in str(v):
-                    check.append([k, v, node[k].value()])
+        for key, value in correct_data.items():
+            if key == 'file':
+                padding = len(value.split('#'))
+                ref_path = get_node_path(value, padding)
+                n_path = get_node_path(node[key].value(), padding)
+                is_not = False
+                for i, path in enumerate(ref_path):
+                    if (
+                        str(n_path[i]) != str(path)
+                        and not is_not
+                    ):
+                        is_not = True
+                if is_not:
+                    check.append([key, value, node[key].value()])
+
+            elif str(node[key].value()) != str(value):
+                check.append([key, value, node[key].value()])
 
         self.log.info(check)
 
+        if check:
+            self._make_error(check)
+
+    def _make_error(self, check):
         msg = "Write node's knobs values are not correct!\n"
+        dbg_msg = msg
         msg_add = "Knob `{0}` Correct: `{1}` Wrong: `{2}` \n"
         xml_msg = ""
 
-        if check:
-            dbg_msg = msg
-            for item in check:
-                _msg_add = msg_add.format(item[0], item[1], item[2])
-                dbg_msg += _msg_add
-                xml_msg += _msg_add
+        for item in check:
+            _msg_add = msg_add.format(item[0], item[1], item[2])
+            dbg_msg += _msg_add
+            xml_msg += _msg_add
 
-            raise PublishXmlValidationError(
-                self, dbg_msg, formatting_data={"xml_msg": xml_msg}
-            )
+        raise PublishXmlValidationError(
+            self, dbg_msg, formatting_data={"xml_msg": xml_msg}
+        )
