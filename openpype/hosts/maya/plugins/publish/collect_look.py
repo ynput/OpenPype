@@ -590,10 +590,9 @@ class CollectLook(pyblish.api.InstancePlugin):
             except ValueError:
                 # node doesn't have colorspace attribute
                 color_space = "Raw"
-            # Compare with the computed file path, e.g. the one with the <UDIM>
-            # pattern in it, to generate some logging information about this
-            # difference
-            # computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+            # Compare with the computed file path, e.g. the one with
+            # the <UDIM> pattern in it, to generate some logging information
+            # about this difference
             computed_source = cmds.getAttr(computed_attribute)
             if source != computed_source:
                 self.log.debug("Detected computed file pattern difference "
