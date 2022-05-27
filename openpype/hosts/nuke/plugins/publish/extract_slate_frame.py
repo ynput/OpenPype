@@ -27,22 +27,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
     hosts = ["nuke"]
 
     # Settings values
-    # - can be extended by other attributes from node in the future
     key_value_mapping = {
         "f_submission_note": [True, "{comment}"],
         "f_submitting_for": [True, "{intent[value]}"],
         "f_vfx_scope_of_work": [False, ""]
     }
 
-    # constants
-    SLATE_TO_SEQUENCE_DONE = None
-
     def process(self, instance):
-        self.fpath = instance.data["path"]
-        self.first_frame = instance.data["frameStartHandle"]
-        self.last_frame = instance.data["frameEndHandle"]
-
-        self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -65,11 +56,18 @@ class ExtractSlateFrame(openpype.api.Extractor):
                         o_data["bake_viewer_input_process"]
                     )
             else:
+                # backward compatibility
                 self.render_slate(instance)
 
+            # also render image to sequence
+            self._render_slate_to_sequence(instance)
+
     def _create_staging_dir(self, instance):
+
+        self.log.info("Creating staging dir...")
+
         staging_dir = os.path.normpath(
-            os.path.dirname(self.fpath))
+            os.path.dirname(instance.data["path"]))
 
         instance.data["stagingDir"] = staging_dir
 
@@ -96,6 +94,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
         """
         slate_node = instance.data["slateNode"]
 
+        # rendering path from group write node
+        fpath = instance.data["path"]
+
+        # instance frame range with handles
+        first_frame = instance.data["frameStartHandle"]
+        last_frame = instance.data["frameEndHandle"]
+
         # fill slate node with comments
         self.add_comment_slate_node(instance, slate_node)
 
@@ -104,7 +109,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         if _output_name:
             _output_name = "_" + _output_name
 
-        slate_first_frame = self.first_frame - 1
+        slate_first_frame = first_frame - 1
 
         collection = instance.data.get("collection", None)
 
@@ -114,22 +119,22 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 "{head}{padding}{tail}"))
             fhead = collection.format("{head}")
         else:
-            fname = os.path.basename(self.fpath)
+            fname = os.path.basename(fpath)
             fhead = os.path.splitext(fname)[0] + "."
 
         if "#" in fhead:
             fhead = fhead.replace("#", "")[:-1]
 
-        self.log.debug("__ self.first_frame: {}".format(self.first_frame))
+        self.log.debug("__ first_frame: {}".format(first_frame))
         self.log.debug("__ slate_first_frame: {}".format(slate_first_frame))
 
         # Read node
         r_node = nuke.createNode("Read")
-        r_node["file"].setValue(self.fpath)
-        r_node["first"].setValue(self.first_frame)
-        r_node["origfirst"].setValue(self.first_frame)
-        r_node["last"].setValue(self.last_frame)
-        r_node["origlast"].setValue(self.last_frame)
+        r_node["file"].setValue(fpath)
+        r_node["first"].setValue(first_frame)
+        r_node["origfirst"].setValue(first_frame)
+        r_node["last"].setValue(last_frame)
+        r_node["origlast"].setValue(last_frame)
         r_node["colorspace"].setValue(instance.data["colorspace"])
         previous_node = r_node
         temporary_nodes = [previous_node]
@@ -186,25 +191,21 @@ class ExtractSlateFrame(openpype.api.Extractor):
         nuke.execute(
             write_node.name(), int(slate_first_frame), int(slate_first_frame))
 
-        # also render image to sequence
-        self._render_slate_to_sequence(instance, slate_first_frame)
+        # Clean up
+        for node in temporary_nodes:
+            nuke.delete(node)
 
-        # # Clean up
-        # for node in temporary_nodes:
-        #     nuke.delete(node)
+    def _render_slate_to_sequence(self, instance):
+        # set slate frame
+        first_frame = instance.data["frameStartHandle"]
+        slate_first_frame = first_frame - 1
 
-    def _render_slate_to_sequence(self, instance, slate_first_frame):
-        if not self.SLATE_TO_SEQUENCE_DONE:
-            node_subset_name = instance.data["name"]
-            # also render slate as sequence frame
-            nuke.execute(
-                node_subset_name,
-                int(slate_first_frame),
-                int(slate_first_frame)
-            )
-
-            # mark as done
-            self.SLATE_TO_SEQUENCE_DONE = True
+        # render slate as sequence frame
+        nuke.execute(
+            instance.data["name"],
+            int(slate_first_frame),
+            int(slate_first_frame)
+        )
 
     def add_comment_slate_node(self, instance, node):
 
@@ -225,8 +226,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
             "intent": intent
         })
 
-        for key, value in self.key_value_mapping.items():
-            enabled, template = value
+        for key, _values in self.key_value_mapping.items():
+            enabled, template = _values
             if not enabled:
                 self.log.debug("Key \"{}\" is disabled".format(key))
                 continue
