@@ -60,18 +60,12 @@ class ExtractSlateFrame(openpype.api.Extractor):
                         o_name, pformat(o_data)))
                     self.render_slate(
                         instance,
-                        bake_viewer_process=o_data[
-                            "bake_viewer_process"],
-                        bake_viewer_input_process=o_data[
-                            "bake_viewer_input_process"],
-                        output_name=o_name
+                        o_name,
+                        o_data["bake_viewer_process"],
+                        o_data["bake_viewer_input_process"]
                     )
             else:
-                self.render_slate(
-                    instance,
-                    bake_viewer_process=True,
-                    bake_viewer_input_process=True
-                )
+                self.render_slate(instance)
 
     def _create_staging_dir(self, instance):
         staging_dir = os.path.normpath(
@@ -85,10 +79,21 @@ class ExtractSlateFrame(openpype.api.Extractor):
     def render_slate(
         self,
         instance,
-        bake_viewer_process,
-        bake_viewer_input_process,
-        output_name=None
+        output_name=None,
+        bake_viewer_process=True,
+        bake_viewer_input_process=True
     ):
+        """Slate frame renderer
+
+        Args:
+            instance (PyblishInstance): Pyblish instance with subset data
+            output_name (str, optional):
+                Slate variation name. Defaults to None.
+            bake_viewer_process (bool, optional):
+                Switch for viewer profile baking. Defaults to True.
+            bake_viewer_input_process (bool, optional):
+                Switch for input process node baking. Defaults to True.
+        """
         slate_node = instance.data["slateNode"]
 
         # fill slate node with comments
