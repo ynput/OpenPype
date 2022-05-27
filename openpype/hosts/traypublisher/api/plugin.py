@@ -14,6 +14,7 @@ from .pipeline import (
 
 class TrayPublishCreator(Creator):
     create_allow_context_change = True
+    host_name = "traypublisher"
 
     def collect_instances(self):
         for instance_data in list_instances():

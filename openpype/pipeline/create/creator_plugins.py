@@ -63,6 +63,12 @@ class BaseCreator:
     #       `openpype.pipeline.attribute_definitions`
     instance_attr_defs = []
 
+    # Filtering by host name - can be used to be filtered by host name
+    # - used on all hosts when set to 'None' for Backwards compatibility
+    #   - was added afterwards
+    # QUESTION make this required?
+    host_name = None
+
     def __init__(
         self, create_context, system_settings, project_settings, headless=False
     ):
