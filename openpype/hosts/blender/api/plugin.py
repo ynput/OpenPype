@@ -804,7 +804,7 @@ class AssetLoader(LoaderPlugin):
             stack.enter_context(self.maintained_drivers(asset_group))
             stack.enter_context(self.maintained_actions(asset_group))
 
-            remove_container(asset_group)
+            remove_container(asset_group, content_only=True)
 
             self._process(libpath, asset_group)
 
