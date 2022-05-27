@@ -201,7 +201,7 @@ def get_mipmap(fname):
     return None
 
 
-def is_mipamp(fname):
+def is_mipmap(fname):
     ext = os.path.splitext(fname)[1][1:]
     if ext in MIPMAP_EXTENSIONS:
         return True
@@ -359,7 +359,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         self.log.debug("Expecting MipMaps, going to look for them.")
         for fname in files:
             self.log.info("Checking '{}' for mipmaps".format(fname))
-            if is_mipamp(fname):
+            if is_mipmap(fname):
                 self.log.debug(" - file is already MipMap, skipping.")
                 continue
 
