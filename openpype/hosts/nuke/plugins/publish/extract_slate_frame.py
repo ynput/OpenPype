@@ -58,13 +58,20 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 for o_name, o_data in instance.data["bakePresets"].items():
                     self.log.info("_ o_name: {}, o_data: {}".format(
                         o_name, pformat(o_data)))
-                    self.render_slate(instance, o_name, **o_data)
+                    self.render_slate(
+                        instance,
+                        bake_viewer_process=o_data[
+                            "bake_viewer_process"],
+                        bake_viewer_input_process=o_data[
+                            "bake_viewer_input_process"],
+                        output_name=o_name
+                    )
             else:
-                viewer_process_swithes = {
-                    "bake_viewer_process": True,
-                    "bake_viewer_input_process": True
-                }
-                self.render_slate(instance, None, **viewer_process_swithes)
+                self.render_slate(
+                    instance,
+                    bake_viewer_process=True,
+                    bake_viewer_input_process=True
+                )
 
     def _create_staging_dir(self, instance):
         staging_dir = os.path.normpath(
@@ -91,10 +98,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
         _output_name = output_name or ""
         if _output_name:
             _output_name = "_" + _output_name
-
-        bake_viewer_process = kwargs["bake_viewer_process"]
-        bake_viewer_input_process_node = kwargs[
-            "bake_viewer_input_process"]
 
         slate_first_frame = self.first_frame - 1
 
@@ -128,7 +131,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
-            if bake_viewer_input_process_node:
+            if bake_viewer_input_process:
                 # get input process and connect it to baking
                 ipn = get_view_process_node()
                 if ipn is not None:
