@@ -8,6 +8,7 @@ from openpype.pipeline import (
     legacy_create,
 )
 import openpype.hosts.maya.api.plugin
+from openpype.api import Anatomy
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
@@ -51,7 +52,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            nodes = cmds.file(self.fname,
+            anatomy = Anatomy(context["project"]["code"])
+            file_url = anatomy.replace_root_with_env_key(self.fname, '${{{}}}')
+            nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
                               reference=True,
