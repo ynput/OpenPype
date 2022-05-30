@@ -12,4 +12,4 @@ class CreateMultiverseLook(plugin.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateMultiverseLook, self).__init__(*args, **kwargs)
         self.data["fileFormat"] = ["usda", "usd"]
-        self.data["expectMipMap"] = True
+        self.data["publishMipMap"] = True

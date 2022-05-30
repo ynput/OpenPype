@@ -4,7 +4,7 @@ import openpype.hosts.maya.api.action
 
 import os
 
-COLOUR_SPACES = ['sRGB']
+COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']
 
 
@@ -24,7 +24,7 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         intent = instance.context.data['intent']['value']
-        expectMipMap = instance.data["expectMipMap"]
+        publishMipMap = instance.data["publishMipMap"]
         enforced = True
         if intent in self.enforced_intents:
             self.log.info("This validation will be enforced: '{}'"
@@ -55,7 +55,7 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
                                    .format(node, fname))
                     invalid.add(node)
 
-                if expectMipMap and not self.is_or_has_mipmap(fname, files):
+                if publishMipMap and not self.is_or_has_mipmap(fname, files):
                     msg = "File node '{}'/'{}' does not have a mipmap".format(
                         node, fname)
                     if enforced:

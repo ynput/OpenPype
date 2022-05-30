@@ -75,18 +75,15 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
 
         return options
 
-    def get_file_format(self, instance):
-        fileFormat = instance.data["fileFormat"]
-        if fileFormat in range(len(self.file_formats)):
-            self.scene_type = self.file_formats[fileFormat]
-
     def process(self, instance):
         # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
         # Define output file path
         staging_dir = self.staging_dir(instance)
-        self.get_file_format(instance)
+        file_format = instance.data.get("fileFormat", 0)
+        if file_format in range(len(self.file_formats)):
+            self.scene_type = self.file_formats[file_format]
         file_name = "{0}.{1}".format(instance.name, self.scene_type)
         file_path = os.path.join(staging_dir, file_name)
         file_path = file_path.replace('\\', '/')

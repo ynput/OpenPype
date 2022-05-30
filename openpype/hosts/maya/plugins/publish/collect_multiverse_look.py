@@ -17,7 +17,7 @@ SHAPE_ATTRS = ["castsShadows",
                "opposite"]
 
 SHAPE_ATTRS = set(SHAPE_ATTRS)
-COLOUR_SPACES = ['sRGB']
+COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']
 
 
@@ -238,7 +238,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         files = []
         sets = {}
         instance.data["resources"] = []
-        expectMipMap = instance.data["expectMipMap"]
+        publishMipMap = instance.data["publishMipMap"]
 
         for node in nodes:
             self.log.info("Getting resources for '{}'".format(node))
@@ -262,7 +262,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                     files = cmds.ls(history, type="file", long=True)
 
                     for f in files:
-                        resources = self.collect_resource(f, expectMipMap)
+                        resources = self.collect_resource(f, publishMipMap)
                         instance.data["resources"].append(resources)
 
                 elif isinstance(matOver, multiverse.MaterialSourceUsdPath):
@@ -275,7 +275,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
             "relationships": sets
         }
 
-    def collect_resource(self, node, expectMipMap):
+    def collect_resource(self, node, publishMipMap):
         """Collect the link to the file(s) used (resource)
         Args:
             node (str): name of the node
@@ -330,7 +330,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         source = source.replace("\\", "/")
 
         files = get_file_node_files(node)
-        files = self.handle_files(files, expectMipMap)
+        files = self.handle_files(files, publishMipMap)
         if len(files) == 0:
             self.log.error("No valid files found from node `%s`" % node)
 
@@ -348,11 +348,11 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                 "files": files,
                 "color_space": color_space}  # required for resources
 
-    def handle_files(self, files, expectMipMap):
+    def handle_files(self, files, publishMipMap):
         """This will go through all the files and make sure that they are
         either already mipmapped or have a corresponding mipmap sidecar and
         add that to the list."""
-        if not expectMipMap:
+        if not publishMipMap:
             return files
 
         extra_files = []
