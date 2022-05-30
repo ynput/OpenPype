@@ -69,14 +69,6 @@ def create_placeholder():
     cmds.setAttr(placeholder + '.parent', parents[0], type="string")
 
 
-def create_options(args):
-    options = OrderedDict()
-    for arg in args:
-        if not type(arg) == qargparse.Separator:
-            options[str(arg)] = arg._data.get("items") or arg.read()
-    return options
-
-
 def create_placeholder_name(args, options):
     placeholder_builder_type = [
         arg.read() for arg in args if 'builder_type' in str(arg)
@@ -112,12 +104,38 @@ def update_placeholder():
     if not args:
         return  # operation canceled
 
+    options = create_options(args)
+
+    imprint(placeholder, options)
+    imprint_enum(placeholder, args)
+
+    cmds.addAttr(
+        placeholder,
+        longName="parent",
+        hidden=False,
+        dataType="string"
+    )
+    cmds.addAttr(
+        placeholder,
+        longName="index",
+        hidden=False,
+        attributeType="short",
+        defaultValue=-1
+    )
+
+    selected = cmds.ls(selection=True, long=True)
+    selected = selected[0].split('|')[-2]
+    selected = cmds.ls(selected)
+    parents = cmds.ls(selected, long=True)
+    cmds.setAttr(placeholder + '.parent', parents[0], type="string")
+
+
+def create_options(args):
     options = OrderedDict()
     for arg in args:
         if not type(arg) == qargparse.Separator:
             options[str(arg)] = arg._data.get("items") or arg.read()
-    imprint(placeholder, options)
-    imprint_enum(placeholder, args)
+    return options
 
 
 def imprint_enum(placeholder, args):
