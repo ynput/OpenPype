@@ -10,8 +10,7 @@ import os
 import clique
 import opentimelineio as otio
 import pyblish.api
-import openpype
-from openpype.lib import editorial
+import openpype.lib as oplib
 
 
 class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
@@ -43,7 +42,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         available_duration = otio_avalable_range.duration.value
 
         # get available range trimmed with processed retimes
-        retimed_attributes = editorial.get_media_range_with_retimes(
+        retimed_attributes = oplib.get_media_range_with_retimes(
             otio_clip, handle_start, handle_end)
         self.log.debug(
             ">> retimed_attributes: {}".format(retimed_attributes))
@@ -65,7 +64,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         a_frame_end_h = media_out + handle_end
 
         # create trimmed otio time range
-        trimmed_media_range_h = editorial.range_from_frames(
+        trimmed_media_range_h = oplib.range_from_frames(
             a_frame_start_h, (a_frame_end_h - a_frame_start_h) + 1,
             media_fps
         )
@@ -145,7 +144,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
                 # in case it is file sequence but not new OTIO schema
                 # `ImageSequenceReference`
                 path = media_ref.target_url
-                collection_data = openpype.lib.make_sequence_collection(
+                collection_data = oplib.make_sequence_collection(
                     path, trimmed_media_range_h, metadata)
                 self.staging_dir, collection = collection_data
 

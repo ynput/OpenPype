@@ -16,7 +16,8 @@
             "vSyncOn": false,
             "workfileFrameStart": 1001,
             "handleStart": 5,
-            "handleEnd": 5
+            "handleEnd": 5,
+            "includeHandles": false
         }
     },
     "publish": {
