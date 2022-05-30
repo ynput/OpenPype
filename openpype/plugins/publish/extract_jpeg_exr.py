@@ -73,17 +73,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         filtered_repres = self._get_filtered_repres(instance)
 
         for repre in filtered_repres:
-            repre_files = repre["files"]
-            if not isinstance(repre_files, (list, tuple)):
-                input_file = repre_files
-            else:
-                file_index = int(float(len(repre_files)) * 0.5)
-                input_file = repre_files[file_index]
-
-            stagingdir = os.path.normpath(repre["stagingDir"])
-
-            full_input_path = os.path.join(stagingdir, input_file)
-            self.log.info("input {}".format(full_input_path))
             # Presumably the following is not needed since we are being
             # explicit
             # TODO: Test cases, cleanup.
@@ -110,6 +99,17 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             #         self.log
             #     )
             #     full_input_path = os.path.join(convert_dir, filename)
+            repre_files = repre["files"]
+            if not isinstance(repre_files, (list, tuple)):
+                input_file = repre_files
+            else:
+                file_index = int(float(len(repre_files)) * 0.5)
+                input_file = repre_files[file_index]
+
+            stagingdir = os.path.normpath(repre["stagingDir"])
+
+            full_input_path = os.path.join(stagingdir, input_file)
+            self.log.info("input {}".format(full_input_path))
             filename = os.path.splitext(input_file)[0]
             if not filename.endswith('.'):
                 filename += "."
@@ -178,42 +178,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     # places where things may break
                     oiio_tool_path = get_oiio_tools_path()
                     full_output_path = os.path.join(stagingdir, jpeg_file)
-                    args = [oiio_tool_path]
-                    oiio_cmd = [oiio_tool_path,
-                                full_input_path, "-o",
-                                full_output_path
-                                ]
-                    subprocess_exr = " ".join(oiio_cmd)
-                    self.log.info(f"running: {subprocess_exr}")
-                    run_subprocess(subprocess_exr, logger=self.log)
-
-                    # raise error if there is no ouptput
-                    if not os.path.exists(full_input_path):
-                        self.log.error(
-                            ("File {} was not converted "
-                             "by oiio tool!").format(full_input_path))
-                        raise AssertionError("OIIO tool conversion failed")
-                    failed_output = "oiiotool produced no output."
-                    output = run_subprocess(args)
-                    if failed_output in output:
-                        raise ValueError(
-                            "oiiotool processing failed. Args: {}".format(args)) # noqa
-                    new_repre = {
-                        "name": "thumbnail",
-                        "ext": "jpg",
-                        "files": jpeg_file,
-                        "stagingDir": stagingdir,
-                        "thumbnail": True,
-                        "tags": ["thumbnail"]
-                    }
-                    # adding representation
-                    self.log.debug("Adding: {}".format(new_repre))
-                    instance.data["representations"].append(new_repre)
-
-                    # Create only one representation with name 'thumbnail'
-                    # TODO maybe handle way how to decide from which repre
-                    # will be thumbnail created
-                break
+                    
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
@@ -233,3 +198,97 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             filtered_repres.append(repre)
         return filtered_repres
+
+
+    def create_thumbnail_oiio(self, src_path, dst_path):
+        args = [oiio_tool_path]
+        oiio_cmd = [oiio_tool_path,
+                    full_input_path, "-o",
+                    full_output_path
+                    ]
+        subprocess_exr = " ".join(oiio_cmd)
+        self.log.info(f"running: {subprocess_exr}")
+        run_subprocess(subprocess_exr, logger=self.log)
+
+        # raise error if there is no ouptput
+        if not os.path.exists(full_input_path):
+            self.log.error(
+                ("File {} was not converted "
+                    "by oiio tool!").format(full_input_path))
+            raise AssertionError("OIIO tool conversion failed")
+        failed_output = "oiiotool produced no output."
+        output = run_subprocess(args)
+        if failed_output in output:
+            raise ValueError(
+                "oiiotool processing failed. Args: {}".format(args)) # noqa
+        new_repre = {
+            "name": "thumbnail",
+            "ext": "jpg",
+            "files": jpeg_file,
+            "stagingDir": stagingdir,
+            "thumbnail": True,
+            "tags": ["thumbnail"]
+        }
+        # adding representation
+        self.log.debug("Adding: {}".format(new_repre))
+        instance.data["representations"].append(new_repre)
+
+        # Create only one representation with name 'thumbnail'
+        # TODO maybe handle way how to decide from which repre
+        # will be thumbnail created
+
+    def create_thumbnail_ffmpeg(self, src_path, dst_path):
+        self.log.info("output {}".format(full_output_path))
+
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_args = self.ffmpeg_args or {}
+
+        jpeg_items = []
+        jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
+        # override file if already exists
+        jpeg_items.append("-y")
+        # flag for large file sizes
+        max_int = 2147483647
+        jpeg_items.append("-analyzeduration {}".format(max_int))
+        jpeg_items.append("-probesize {}".format(max_int))
+        # use same input args like with mov
+        jpeg_items.extend(ffmpeg_args.get("input") or [])
+        # input file
+        jpeg_items.append("-i {}".format(
+            path_to_subprocess_arg(full_input_path)
+        ))
+        # output arguments from presets
+        jpeg_items.extend(ffmpeg_args.get("output") or [])
+        # we just want one frame from movie files
+        jpeg_items.append("-vframes 1")
+        # output file
+        jpeg_items.append(path_to_subprocess_arg(full_output_path))
+        subprocess_command = " ".join(jpeg_items)
+
+        # run subprocess
+        self.log.debug("{}".format(subprocess_command))
+        try:  # temporary until oiiotool is supported cross platform
+            run_subprocess(
+                subprocess_command, shell=True, logger=self.log
+            )
+        except RuntimeError as exp:
+            if "Compression" in str(exp):
+                self.log.debug(
+                    "Unsupported compression on input files. Skipping!"
+                )
+                return
+            self.log.warning("Conversion crashed", exc_info=True)
+            raise
+
+        new_repre = {
+            "name": "thumbnail",
+            "ext": "jpg",
+            "files": jpeg_file,
+            "stagingDir": stagingdir,
+            "thumbnail": True,
+            "tags": ["thumbnail"]
+        }
+
+        # adding representation
+        self.log.debug("Adding: {}".format(new_repre))
+        instance.data["representations"].append(new_repre)
