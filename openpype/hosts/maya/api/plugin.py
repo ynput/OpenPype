@@ -11,7 +11,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.api import Anatomy
-
+from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
 
@@ -133,7 +133,6 @@ class ReferenceLoader(Loader):
                  " imported representation ?"
         )
     ]
-    use_env_var_as_root = True
 
     def load(
         self,
@@ -192,25 +191,6 @@ class ReferenceLoader(Loader):
     def process_reference(self, context, name, namespace, data):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
-
-    def prepare_root_value(self, file_url, project_name):
-        """Replace root value with env var placeholder.
-
-        Use ${OPENPYPE_ROOT_WORK} (or any other root) instead of proper root
-        value when storing referenced url into a workfile.
-        Useful for remote workflows with SiteSync.
-
-        Args:
-            file_url (str)
-            project_name (dict)
-        Returns:
-            (str)
-        """
-        if self.use_env_var_as_root:
-            anatomy = Anatomy(project_name)
-            file_url = anatomy.replace_root_with_env_key(file_url, '${{{}}}')
-
-        return file_url
 
     def update(self, container, representation):
         from maya import cmds
@@ -343,6 +323,29 @@ class ReferenceLoader(Loader):
                            deleteNamespaceContent=True)
         except RuntimeError:
             pass
+
+    def prepare_root_value(self, file_url, project_name):
+        """Replace root value with env var placeholder.
+
+        Use ${OPENPYPE_ROOT_WORK} (or any other root) instead of proper root
+        value when storing referenced url into a workfile.
+        Useful for remote workflows with SiteSync.
+
+        Args:
+            file_url (str)
+            project_name (dict)
+        Returns:
+            (str)
+        """
+        settings = get_project_settings(project_name)
+        use_env_var_as_root = (settings["maya"]
+                                       ["maya-dirmap"]
+                                       ["use_env_var_as_root"])
+        if use_env_var_as_root:
+            anatomy = Anatomy(project_name)
+            file_url = anatomy.replace_root_with_env_key(file_url, '${{{}}}')
+
+        return file_url
 
     @staticmethod
     def _organize_containers(nodes, container):

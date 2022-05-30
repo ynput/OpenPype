@@ -24,6 +24,12 @@
             "children": [
                 {
                     "type": "boolean",
+                    "key": "use_env_var_as_root",
+                    "label": "Use env var placeholder in referenced url",
+                    "docstring": "Use ${} placeholder instead of physical value of root when storing into workfile metadata."
+                },
+                {
+                    "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
                 },
