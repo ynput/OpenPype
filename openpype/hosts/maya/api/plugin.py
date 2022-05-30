@@ -10,6 +10,7 @@ from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.api import Anatomy
 
 from .pipeline import containerise
 from . import lib
@@ -132,6 +133,7 @@ class ReferenceLoader(Loader):
                  " imported representation ?"
         )
     ]
+    use_env_var_as_root = True
 
     def load(
         self,
@@ -191,6 +193,25 @@ class ReferenceLoader(Loader):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
+    def prepare_root_value(self, file_url, project_name):
+        """Replace root value with env var placeholder.
+
+        Use ${OPENPYPE_ROOT_WORK} (or any other root) instead of proper root
+        value when storing referenced url into a workfile.
+        Useful for remote workflows with SiteSync.
+
+        Args:
+            file_url (str)
+            project_name (dict)
+        Returns:
+            (str)
+        """
+        if self.use_env_var_as_root:
+            anatomy = Anatomy(project_name)
+            file_url = anatomy.replace_root_with_env_key(file_url, '${{{}}}')
+
+        return file_url
+
     def update(self, container, representation):
         from maya import cmds
         from openpype.hosts.maya.api.lib import get_container_members
@@ -230,6 +251,10 @@ class ReferenceLoader(Loader):
                 self.log.debug("No alembic nodes found in {}".format(members))
 
         try:
+            path = self.prepare_root_value(path,
+                                           representation["context"]
+                                                         ["project"]
+                                                         ["code"])
             content = cmds.file(path,
                                 loadReference=reference_node,
                                 type=file_type,
