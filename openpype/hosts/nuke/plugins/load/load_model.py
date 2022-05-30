@@ -15,13 +15,13 @@ from openpype.hosts.nuke.api import (
 
 class AlembicModelLoader(load.LoaderPlugin):
     """
-    This will load alembic model into script.
+    This will load alembic model or anim into script.
     """
 
-    families = ["model"]
+    families = ["model", "pointcache", "animation"]
     representations = ["abc"]
 
-    label = "Load Alembic Model"
+    label = "Load Alembic"
     icon = "cube"
     color = "orange"
     node_color = "0x4ecd91ff"

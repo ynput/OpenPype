@@ -168,7 +168,7 @@ def make_sequence_collection(path, otio_range, metadata):
     first, last = otio_range_to_frame_range(otio_range)
     collection = clique.Collection(
         head=head, tail=tail, padding=metadata["padding"])
-    collection.indexes.update(list(range(first, last)))
+    collection.indexes.update([i for i in range(first, last)])
     return dir_path, collection
 
 
