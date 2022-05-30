@@ -52,12 +52,21 @@ def create_placeholder():
 
     # Add helper attributes to keep placeholder info
     cmds.addAttr(
-        placeholder, longName="parent",
-        hidden=False, dataType="string")
+        placeholder,
+        longName="parent",
+        hidden=False,
+        dataType="string"
+    )
     cmds.addAttr(
-        placeholder, longName="index",
-        hidden=False, attributeType="short",
-        defaultValue=-1)
+        placeholder,
+        longName="index",
+        hidden=False,
+        attributeType="short",
+        defaultValue=-1
+    )
+
+    parents = cmds.ls(selection[0], long=True)
+    cmds.setAttr(placeholder + '.parent', parents[0], type="string")
 
 
 def create_options(args):
