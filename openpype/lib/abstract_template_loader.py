@@ -5,11 +5,10 @@ import traceback
 
 import six
 
-import openpype
 from openpype.settings import get_project_settings
 from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name
 from openpype.api import PypeLogger as Logger
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, load
 
 from functools import reduce
 
@@ -271,9 +270,10 @@ class AbstractTemplateLoader:
         pass
 
     def load(self, placeholder, loaders_by_name, last_representation):
-        return openpype.pipeline.load(
+        repre = load.get_representation_context(last_representation)
+        return load.load_with_repre_context(
             loaders_by_name[placeholder.loader],
-            last_representation['_id'],
+            repre,
             options=parse_loader_args(placeholder.data['loader_args']))
 
     def load_succeed(self, placeholder, container):
