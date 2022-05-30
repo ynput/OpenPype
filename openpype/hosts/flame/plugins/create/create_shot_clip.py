@@ -268,6 +268,14 @@ class CreateShotClip(opfapi.Creator):
                         "target": "tag",
                         "toolTip": "Handle at end of clip",  # noqa
                         "order": 2
+                    },
+                    "includeHandles": {
+                        "value": False,
+                        "type": "QCheckBox",
+                        "label": "Include handles",
+                        "target": "tag",
+                        "toolTip": "By default handles are excluded",  # noqa
+                        "order": 3
                     }
                 }
             }

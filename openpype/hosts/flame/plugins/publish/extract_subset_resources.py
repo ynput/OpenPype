@@ -6,6 +6,7 @@ from copy import deepcopy
 import pyblish.api
 import openpype.api
 from openpype.hosts.flame import api as opfapi
+from openpype.hosts.flame.api import MediaInfoFile
 
 import flame
 
@@ -33,24 +34,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "representation_add_range": False,
             "representation_tags": ["thumbnail"],
             "path_regex": ".*"
-        },
-        "ftrackpreview": {
-            "active": True,
-            "ext": "mov",
-            "xml_preset_file": "Apple iPad (1920x1080).xml",
-            "xml_preset_dir": "",
-            "export_type": "Movie",
-            "parsed_comment_attrs": False,
-            "colorspace_out": "Output - Rec.709",
-            "representation_add_range": True,
-            "representation_tags": [
-                "review",
-                "delete"
-            ],
-            "path_regex": ".*"
         }
     }
-    keep_original_representation = False
 
     # hide publisher during exporting
     hide_ui_on_process = True
@@ -59,11 +44,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        if (
-            self.keep_original_representation
-            and "representations" not in instance.data
-            or not self.keep_original_representation
-        ):
+        if "representations" not in instance.data:
             instance.data["representations"] = []
 
         # flame objects
@@ -91,7 +72,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
         handles = max(handle_start, handle_end)
 
         # get media source range with handles
-        source_end_handles = instance.data["sourceEndH"]
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
 
@@ -108,27 +88,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         for unique_name, preset_config in export_presets.items():
             modify_xml_data = {}
 
-            # get activating attributes
-            activated_preset = preset_config["active"]
-            filter_path_regex = preset_config.get("filter_path_regex")
-
-            self.log.info(
-                "Preset `{}` is active `{}` with filter `{}`".format(
-                    unique_name, activated_preset, filter_path_regex
-                )
-            )
-            self.log.debug(
-                "__ clip_path: `{}`".format(clip_path))
-
-            # skip if not activated presete
-            if not activated_preset:
-                continue
-
-            # exclude by regex filter if any
-            if (
-                filter_path_regex
-                and not re.search(filter_path_regex, clip_path)
-            ):
+            if self._should_skip(preset_config, clip_path, unique_name):
                 continue
 
             # get all presets attributes
@@ -146,20 +106,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 )
             )
 
-            # get attribures related loading in integrate_batch_group
-            load_to_batch_group = preset_config.get(
-                "load_to_batch_group")
-            batch_group_loader_name = preset_config.get(
-                "batch_group_loader_name")
-
-            # convert to None if empty string
-            if batch_group_loader_name == "":
-                batch_group_loader_name = None
-
             # get frame range with handles for representation range
             frame_start_handle = frame_start - handle_start
+
+            # calculate duration with handles
             source_duration_handles = (
-                source_end_handles - source_start_handles) + 1
+                source_end_handles - source_start_handles)
 
             # define in/out marks
             in_mark = (source_start_handles - source_first_frame) + 1
@@ -180,14 +132,14 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 name_patern_xml = (
                     "<segment name>_<shot name>_{}.").format(
                         unique_name)
+
+                # change in/out marks to timeline in/out
+                in_mark = clip_in
+                out_mark = clip_out
             else:
                 exporting_clip = self.import_clip(clip_path)
                 exporting_clip.name.set_value("{}_{}".format(
                     asset_name, segment_name))
-
-            # change in/out marks to timeline in/out
-            in_mark = clip_in
-            out_mark = clip_out
 
             # add xml tags modifications
             modify_xml_data.update({
@@ -200,10 +152,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
             if parsed_comment_attrs:
                 # add any xml overrides collected form segment.comment
                 modify_xml_data.update(instance.data["xml_overrides"])
-
-                self.log.debug("__ modify_xml_data: {}".format(pformat(
-                    modify_xml_data
-                )))
 
             export_kwargs = {}
             # validate xml preset file is filled
@@ -231,18 +179,33 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 preset_dir, preset_file
             ))
 
-            preset_path = opfapi.modify_preset_file(
-                preset_orig_xml_path, staging_dir, modify_xml_data)
-
             # define kwargs based on preset type
             if "thumbnail" in unique_name:
-                export_kwargs["thumb_frame_number"] = int(in_mark + (
+                modify_xml_data.update({
+                    "video/posterFrame": True,
+                    "video/useFrameAsPoster": 1,
+                    "namePattern": "__thumbnail"
+                })
+                thumb_frame_number = int(in_mark + (
                     source_duration_handles / 2))
+
+                self.log.debug("__ in_mark: {}".format(in_mark))
+                self.log.debug("__ thumb_frame_number: {}".format(
+                    thumb_frame_number
+                ))
+
+                export_kwargs["thumb_frame_number"] = thumb_frame_number
             else:
                 export_kwargs.update({
                     "in_mark": in_mark,
                     "out_mark": out_mark
                 })
+
+            self.log.debug("__ modify_xml_data: {}".format(
+                pformat(modify_xml_data)
+            ))
+            preset_path = opfapi.modify_preset_file(
+                preset_orig_xml_path, staging_dir, modify_xml_data)
 
             # get and make export dir paths
             export_dir_path = str(os.path.join(
@@ -254,18 +217,24 @@ class ExtractSubsetResources(openpype.api.Extractor):
             opfapi.export_clip(
                 export_dir_path, exporting_clip, preset_path, **export_kwargs)
 
+            # make sure only first segment is used if underscore in name
+            # HACK: `ftrackreview_withLUT` will result only in `ftrackreview`
+            repr_name = unique_name.split("_")[0]
+
             # create representation data
             representation_data = {
-                "name": unique_name,
-                "outputName": unique_name,
+                "name": repr_name,
+                "outputName": repr_name,
                 "ext": extension,
                 "stagingDir": export_dir_path,
                 "tags": repre_tags,
                 "data": {
                     "colorspace": color_out
                 },
-                "load_to_batch_group": load_to_batch_group,
-                "batch_group_loader_name": batch_group_loader_name
+                "load_to_batch_group": preset_config.get(
+                    "load_to_batch_group"),
+                "batch_group_loader_name": preset_config.get(
+                    "batch_group_loader_name") or None
             }
 
             # collect all available content of export dir
@@ -319,6 +288,30 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
+
+    def _should_skip(self, preset_config, clip_path, unique_name):
+        # get activating attributes
+        activated_preset = preset_config["active"]
+        filter_path_regex = preset_config.get("filter_path_regex")
+
+        self.log.info(
+            "Preset `{}` is active `{}` with filter `{}`".format(
+                unique_name, activated_preset, filter_path_regex
+            )
+        )
+        self.log.debug(
+            "__ clip_path: `{}`".format(clip_path))
+
+        # skip if not activated presete
+        if not activated_preset:
+            return True
+
+        # exclude by regex filter if any
+        if (
+            filter_path_regex
+            and not re.search(filter_path_regex, clip_path)
+        ):
+            return True
 
     def _unfolds_nested_folders(self, stage_dir, files_list, ext):
         """Unfolds nested folders
@@ -408,8 +401,17 @@ class ExtractSubsetResources(openpype.api.Extractor):
         """
         Import clip from path
         """
-        clips = flame.import_clips(path)
+        dir_path = os.path.dirname(path)
+        media_info = MediaInfoFile(path, logger=self.log)
+        file_pattern = media_info.file_pattern
+        self.log.debug("__ file_pattern: {}".format(file_pattern))
+
+        # rejoin the pattern to dir path
+        new_path = os.path.join(dir_path, file_pattern)
+
+        clips = flame.import_clips(new_path)
         self.log.info("Clips [{}] imported from `{}`".format(clips, path))
+
         if not clips:
             self.log.warning("Path `{}` is not having any clips".format(path))
             return None
