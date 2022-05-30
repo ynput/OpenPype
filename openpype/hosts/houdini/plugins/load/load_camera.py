@@ -9,6 +9,22 @@ ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'
                       '.alembicGetCameraDict')
 
 
+def get_resolution_from_document(doc):
+    if not doc or "data" not in doc:
+        print("Entered document is not valid. \"{}\"".format(str(doc)))
+        return None
+
+    resolution_width = doc["data"].get("resolutionWidth")
+    resolution_height = doc["data"].get("resolutionHeight")
+
+    # Make sure both width and height are set
+    if resolution_width is None or resolution_height is None:
+        print("No resolution information found for \"{}\"".format(doc["name"]))
+        return None
+
+    return int(resolution_width), int(resolution_height)
+
+
 def transfer_non_default_values(src, dest, ignore=None):
     """Copy parm from src to dest.
 
@@ -120,6 +136,7 @@ class CameraLoader(load.LoaderPlugin):
 
         camera = self._get_camera(node)
         self._match_maya_render_mask(root=node, camera=camera)
+        self._set_asset_resolution(camera, asset=context["asset"])
 
         self[:] = nodes
 
@@ -225,3 +242,14 @@ return aperture
 
         camera.parm("aperture").setExpression(expression,
                                               language=hou.exprLanguage.Python)
+
+    def _set_asset_resolution(self, camera, asset):
+        """Apply resolution to camera from asset document of the publish"""
+
+        resolution = get_resolution_from_document(asset)
+        if resolution:
+            print("Setting camera resolution: {} -> {}x{}".format(
+                camera.name(), resolution[0], resolution[1]
+            ))
+            camera.parm("resx").set(resolution[0])
+            camera.parm("resy").set(resolution[1])
