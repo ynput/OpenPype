@@ -4,11 +4,8 @@ import bpy
 from bson.objectid import ObjectId
 
 import openpype.api
-from openpype.pipeline import (
-    discover_loader_plugins,
-    loaders_from_repre_context,
-    AVALON_CONTAINER_ID,
-)
+from openpype.pipeline import discover_loader_plugins, AVALON_CONTAINER_ID
+from openpype.pipeline.load.utils import loaders_from_repre_context
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
@@ -53,12 +50,9 @@ class ExtractBlend(openpype.api.Extractor):
     @staticmethod
     def _get_loader_from_instance(instance):
         all_loaders = discover_loader_plugins()
-        print(all_loaders)
         context = {
-            "subset": {
-                "schema": "openpype:container-2.0",
-                "data": {"families": [instance.data["family"]]}
-            },
+            "subset": {"schema": "openpype:container-2.0"},
+            "version": {"data": {"families": [instance.data["family"]]}},
             "representation": {"name": "blend"},
         }
         loaders = loaders_from_repre_context(all_loaders, context)
@@ -93,7 +87,7 @@ class ExtractBlend(openpype.api.Extractor):
 
         # Store instance metadata
         instance_collection = instance[-1]
-        instance_metadata = instance_collection[AVALON_PROPERTY].copy()
+        instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
 
         # Create ID to allow blender import without using OP tools
         repre_id = str(ObjectId())
