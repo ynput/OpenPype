@@ -1,8 +1,24 @@
 # Changelog
 
+## [3.10.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.10.0...HEAD)
+
+**🚀 Enhancements**
+
+- TVPaint: Init file for TVPaint worker also handle guideline images [\#3250](https://github.com/pypeclub/OpenPype/pull/3250)
+- Support for Unreal 5 [\#3122](https://github.com/pypeclub/OpenPype/pull/3122)
+
+**🐛 Bug fixes**
+
+- Unreal: Fix Camera Loading if Layout is missing [\#3255](https://github.com/pypeclub/OpenPype/pull/3255)
+- Unreal: Fixed Animation loading in UE5 [\#3240](https://github.com/pypeclub/OpenPype/pull/3240)
+- Unreal: Fixed Render creation in UE5 [\#3239](https://github.com/pypeclub/OpenPype/pull/3239)
+- Unreal: Fixed Camera loading in UE5 [\#3238](https://github.com/pypeclub/OpenPype/pull/3238)
+
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.8...3.10.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.10.0-nightly.6...3.10.0)
 
 **🆕 New features**
 
@@ -31,7 +47,6 @@
 - General: Simplified OP modules/addons import [\#3137](https://github.com/pypeclub/OpenPype/pull/3137)
 - Terminal: Tweak coloring of TrayModuleManager logging enabled states [\#3133](https://github.com/pypeclub/OpenPype/pull/3133)
 - General: Cleanup some Loader docstrings [\#3131](https://github.com/pypeclub/OpenPype/pull/3131)
-- Unreal: Layout and Camera update and remove functions reimplemented and improvements [\#3116](https://github.com/pypeclub/OpenPype/pull/3116)
 
 **🐛 Bug fixes**
 
@@ -130,10 +145,6 @@
 **🐛 Bug fixes**
 
 - TVPaint: Composite layers in reversed order [\#3134](https://github.com/pypeclub/OpenPype/pull/3134)
-
-**Merged pull requests:**
-
-- Ftrack: AssetVersion status on publish [\#3114](https://github.com/pypeclub/OpenPype/pull/3114)
 
 ## [3.9.5](https://github.com/pypeclub/OpenPype/tree/3.9.5) (2022-04-25)
 
