@@ -60,7 +60,7 @@ def start_webpublish_log(dbcon, batch_id, user):
     }).inserted_id
 
 
-def publish(log, close_plugin_name=None):
+def publish(log, close_plugin_name=None, raise_error=False):
     """Loops through all plugins, logs to console. Used for tests.
 
         Args:
@@ -79,10 +79,15 @@ def publish(log, close_plugin_name=None):
                 result["plugin"].label, record.msg))
 
         if result["error"]:
-            log.error(error_format.format(**result))
+            error_message = error_format.format(**result)
+            log.error(error_message)
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
+            if raise_error:
+                # Fatal Error is because of Deadline
+                error_message = "Fatal Error: " + error_format.format(**result)
+                raise RuntimeError(error_message)
 
 
 def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
