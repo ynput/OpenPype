@@ -21,7 +21,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
       instancers, pfx, MASH, lights, cameras, joints, connected materials,
       shading networks etc. including many of their attributes.
 
-    Upon publish a .usd (or .usdz) asset file will be typically written.  
+    Upon publish a .usd (or .usdz) asset file will be typically written.
     """
 
     label = "Extract Multiverse USD Asset"

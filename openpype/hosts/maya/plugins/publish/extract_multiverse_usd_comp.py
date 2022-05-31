@@ -20,7 +20,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
     - a single Compound node with more than one layer (in this case the "Write
       as Compound Layers" option should be set).
 
-    Upon publish a .usda composition file will be written.  
+    Upon publish a .usda composition file will be written.
     """
 
     label = "Extract Multiverse USD Composition"

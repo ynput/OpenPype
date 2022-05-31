@@ -18,7 +18,7 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
     - a single Multiverse Compound node with any number of overrides (typically
       set in MEOW)
 
-    Upon publish a .usda override file will be written.  
+    Upon publish a .usda override file will be written.
     """
 
     label = "Extract Multiverse USD Override"

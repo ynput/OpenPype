@@ -31,7 +31,6 @@ class ExtractMultiverseLook(openpype.api.Extractor):
     Note: when layering the material assignment override on a loaded Compound,
           remember to set a matching attribute override with the namespace of
           the loaded compound in order for the material assignment to resolve.
-
     """
 
     label = "Extract Multiverse USD Look"
