@@ -2567,8 +2567,7 @@ def duplicate_node(node):
     reset_selection()
 
     # select required node for duplication
-    node_orig = nuke.toNode(node.name())
-    node_orig.setSelected(True)
+    node.setSelected(True)
 
     # copy selected to clipboard
     nuke.nodeCopy("%clipboard%")
@@ -2577,10 +2576,7 @@ def duplicate_node(node):
     reset_selection()
 
     # paste node and selection is on it only
-    nuke.nodePaste("%clipboard%")
-
-    # assign to variable
-    dupli_node = nuke.selectedNode()
+    dupli_node = nuke.nodePaste("%clipboard%")
 
     # reset selection
     reset_selection()
