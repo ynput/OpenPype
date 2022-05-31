@@ -30,11 +30,11 @@ class BlendAnimationLoader(plugin.AssetLoader):
         """Restor action from override library reference animation data"""
         for obj in list(bpy.data.objects):
             if (
-                obj.animation_data and
-                obj.override_library and
-                obj.override_library.reference and
-                obj.override_library.reference.animation_data and
-                obj.override_library.reference.animation_data.action
+                obj.animation_data
+                and obj.override_library
+                and obj.override_library.reference
+                and obj.override_library.reference.animation_data
+                and obj.override_library.reference.animation_data.action
             ):
                 obj.animation_data.action = (
                     obj.override_library.reference.animation_data.action
@@ -43,9 +43,9 @@ class BlendAnimationLoader(plugin.AssetLoader):
     @staticmethod
     def _is_rig_container(collection):
         return (
-            collection.get(AVALON_PROPERTY) and
-            collection[AVALON_PROPERTY].get("family") == "rig" and
-            collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+            collection.get(AVALON_PROPERTY)
+            and collection[AVALON_PROPERTY].get("family") == "rig"
+            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
     def _process(self, libpath, asset_group):

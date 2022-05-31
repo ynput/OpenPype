@@ -5,9 +5,12 @@ import bpy
 from bson.objectid import ObjectId
 
 import openpype.api
+from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import metadata_update
-from openpype.pipeline.constants import AVALON_CONTAINER_ID
+from openpype.hosts.blender.api.pipeline import (
+    metadata_update,
+    AVALON_PROPERTY,
+)
 
 
 class ExtractBlend(openpype.api.Extractor):
@@ -56,6 +59,8 @@ class ExtractBlend(openpype.api.Extractor):
 
         plugin.deselect_all()
 
+        plugin.deselect_all()
+
         data_blocks = set()
         objects = set()
 
@@ -69,6 +74,10 @@ class ExtractBlend(openpype.api.Extractor):
             # Store objects to pack images from their materials.
             if isinstance(member, bpy.types.Object):
                 objects.add(member)
+
+        # Store instance metadata
+        instance_collection = instance[-1]
+        instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
 
         # Create ID to allow blender import without using OP tools
         repre_id = str(ObjectId())
@@ -102,6 +111,9 @@ class ExtractBlend(openpype.api.Extractor):
         bpy.ops.file.make_paths_absolute()
         bpy.data.libraries.write(filepath, data_blocks)
 
+        # restor instance metadata
+        instance_collection[AVALON_PROPERTY] = instance_metadata
+
         plugin.deselect_all()
 
         # Create representation dict
@@ -116,5 +128,5 @@ class ExtractBlend(openpype.api.Extractor):
         instance.data["representations"].append(representation)
 
         self.log.info(
-            "Extracted instance '%s' to: %s", instance.name, representation
+            f"Extracted instance '{instance.name}' to: {representation}"
         )

@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import traceback
-from typing import Callable, Dict, Iterator, List, Optional
+from typing import Callable, Dict, Iterator, List, Optional, Union
 
 import bpy
 
@@ -40,7 +40,7 @@ AVALON_CONTAINERS = "AVALON_CONTAINERS"
 AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
 
-MODEL_DOWNSTREAM = ("Rigging", "Texture", "Lookdev")
+MODEL_DOWNSTREAM = ("Rigging", "Lookdev")
 
 log = Logger.get_logger(__name__)
 
@@ -342,8 +342,10 @@ def containerise_existing(
     return container
 
 
-def parse_container(container: bpy.types.Collection,
-                    validate: bool = True) -> Dict:
+def parse_container(
+    container: Union[bpy.types.Collection, bpy.types.Object],
+    validate: bool = True
+) -> Dict:
     """Return the container node's full container data.
 
     Args:
@@ -355,7 +357,10 @@ def parse_container(container: bpy.types.Collection,
 
     """
 
-    data = lib.read(container)
+    if isinstance(container, bpy.types.Collection):
+        data = lib.read(container)
+    elif isinstance(container, bpy.types.Object):
+        data = lib.read(container.instance_collection)
 
     # Append transient data
     data["objectName"] = container.name
@@ -382,18 +387,13 @@ def ls() -> Iterator:
     collections = lib.lsattr("id", AVALON_CONTAINER_ID)
     scene_collections = bpy.context.scene.collection.children_recursive
 
-    # Get all instanced collections
-    instanced_collections = {
-        obj.instance_collection
-        for obj in bpy.context.scene.objects
-        if obj.is_instancer
-    }
-    
     for container in collections:
-        if (
-            container in scene_collections and not container.override_library
-        ) or container in instanced_collections:
+        if container in scene_collections and not container.override_library:
             yield parse_container(container)
+
+    for obj in bpy.context.scene.objects:
+        if obj.is_instancer and obj.instance_collection in collections:
+            yield parse_container(obj)
 
 
 def update_hierarchy(containers):

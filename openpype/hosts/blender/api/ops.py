@@ -26,7 +26,7 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # This seems like a good value to keep the Qt app responsive and doesn't slow
 # down Blender. At least on macOS I the interace of Blender gets very laggy if
 # you make it smaller.
-TIMER_INTERVAL: float = 0.01
+TIMER_INTERVAL: float = 0.01 if platform.system().lower() == "windows" else 0.1
 
 
 class BlenderApplication(QtWidgets.QApplication):

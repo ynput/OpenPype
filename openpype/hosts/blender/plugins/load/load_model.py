@@ -69,12 +69,14 @@ class BlendModelLoader(plugin.AssetLoader):
                 plugin.link_to_collection(asset_group, parent)
 
         elif (
-            isinstance(asset_group, bpy.types.Collection) and
-            isinstance(parent, bpy.types.Collection)
+            isinstance(asset_group, bpy.types.Collection)
+            and isinstance(parent, bpy.types.Collection)
         ):
-            current_parent = plugin.get_parent_collection(asset_group)
-            if current_parent:
-                current_parent.children.unlink(asset_group)
+            # clear collection parenting
+            for collection in bpy.data.collections:
+                if asset_group in collection.children.values():
+                    collection.children.unlink(asset_group)
+            # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
     def process_asset(
