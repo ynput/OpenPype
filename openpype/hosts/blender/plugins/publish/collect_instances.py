@@ -4,6 +4,7 @@ from typing import Generator
 import bpy
 
 import pyblish.api
+from openpype.pipeline import AVALON_INSTANCE_ID
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
@@ -19,7 +20,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         """Return all collections marked as OpenPype instance."""
         for collection in bpy.context.scene.collection.children:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if avalon_prop.get("id") == "pyblish.avalon.instance":
+            if avalon_prop.get("id") == AVALON_INSTANCE_ID:
                 yield collection
 
     def process(self, context):

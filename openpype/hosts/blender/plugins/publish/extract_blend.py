@@ -93,7 +93,8 @@ class ExtractBlend(openpype.api.Extractor):
                 "namespace": instance.data.get("namespace", ""),
                 "loader": getattr(
                     import_module(
-                        f"openpype.hosts.blender.plugins.load.load_{instance_family}"
+                        "openpype.hosts.blender.plugins"
+                        f".load.load_{instance_family}"
                     ),
                     f"Blend{instance_family.capitalize()}Loader",
                 ).__name__,
