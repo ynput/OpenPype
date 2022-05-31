@@ -3,6 +3,7 @@ import os
 import bpy
 
 import openpype.api
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractBlendAnimation(openpype.api.Extractor):

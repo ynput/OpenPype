@@ -42,7 +42,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
 
         return None
 
-    def _process(self, libpath, asset_group, context=None, **kwargs):
+    def _process(self, libpath, asset_group, context=None):
         plugin.deselect_all()
 
         with open(libpath, "r") as fp:

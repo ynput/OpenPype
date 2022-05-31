@@ -48,7 +48,7 @@ class BlendAnimationLoader(plugin.AssetLoader):
             and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
-    def _process(self, libpath, asset_group, *args, **kwargs):
+    def _process(self, libpath, asset_group):
         # Load actions from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False

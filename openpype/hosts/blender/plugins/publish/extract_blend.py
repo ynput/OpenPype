@@ -1,11 +1,11 @@
+from importlib import import_module
 import os
 
 import bpy
 from bson.objectid import ObjectId
 
 import openpype.api
-from openpype.pipeline import discover_loader_plugins, AVALON_CONTAINER_ID
-from openpype.pipeline.load.utils import loaders_from_repre_context
+from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
@@ -47,18 +47,6 @@ class ExtractBlend(openpype.api.Extractor):
         for node in shader_texture_nodes:
             node.image.pack()
 
-    @staticmethod
-    def _get_loader_from_instance(instance):
-        all_loaders = discover_loader_plugins()
-        context = {
-            "subset": {"schema": "openpype:container-2.0"},
-            "version": {"data": {"families": [instance.data["family"]]}},
-            "representation": {"name": "blend"},
-        }
-        loaders = loaders_from_repre_context(all_loaders, context)
-        if loaders:
-            return loaders[0]
-
     def process(self, instance):
         # Define extract output file path
 
@@ -67,7 +55,9 @@ class ExtractBlend(openpype.api.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.info("Performing extraction...")
+
+        plugin.deselect_all()
 
         plugin.deselect_all()
 
@@ -93,21 +83,20 @@ class ExtractBlend(openpype.api.Extractor):
         repre_id = str(ObjectId())
 
         # Add container metadata to collection
-        loader_module = self._get_loader_from_instance(instance)
-
-        if not loader_module:
-            raise RuntimeError(
-                f"Loader module not found for instance: {instance.name}"
-            )
-
+        instance_family = instance.data["family"]
         metadata_update(
-            instance_collection,
+            instance[-1],
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
                 "name": instance.name,
                 "namespace": instance.data.get("namespace", ""),
-                "loader": loader_module.__name__,
+                "loader": getattr(
+                    import_module(
+                        f"openpype.hosts.blender.plugins.load.load_{instance_family}"
+                    ),
+                    f"Blend{instance_family.capitalize()}Loader",
+                ).__name__,
                 "representation": repre_id,
                 "libpath": filepath,
                 "asset_name": instance.name,

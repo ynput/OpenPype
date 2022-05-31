@@ -31,7 +31,7 @@ class BlendRigLoader(plugin.AssetLoader):
             and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
-    def _process(self, libpath, asset_group, *args, **kwargs):
+    def _process(self, libpath, asset_group):
         # Load blend from from libpath library.
         asset_group = self._load_blend(libpath, asset_group)
 
