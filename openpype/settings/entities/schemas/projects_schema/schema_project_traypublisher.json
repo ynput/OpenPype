@@ -1,0 +1,83 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "traypublisher",
+    "label": "Tray Publisher",
+    "is_file": true,
+    "children": [
+        {
+            "type": "list",
+            "collapsible": true,
+            "key": "simple_creators",
+            "label": "Creator plugins",
+            "use_label_wrap": true,
+            "collapsible_key": true,
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "type": "text",
+                        "key": "family",
+                        "label": "Family"
+                    },
+                    {
+                        "type": "text",
+                        "key": "identifier",
+                        "label": "Identifier",
+                        "placeholder": "< Use 'Family' >",
+                        "tooltip": "All creators must have unique identifier.\nBy default is used 'family' but if you need to have more creators with same families\nyou have to set identifier too."
+                    },
+                    {
+                        "type": "text",
+                        "key": "label",
+                        "label": "Label"
+                    },
+                    {
+                        "type": "text",
+                        "key": "icon",
+                        "label": "Icon"
+                    },
+                    {
+                        "type": "list",
+                        "key": "default_variants",
+                        "label": "Default variants",
+                        "object_type": {
+                            "type": "text"
+                        }
+                    },
+                    {
+                        "type": "separator"
+                    },
+                    {
+                        "type": "text",
+                        "key": "description",
+                        "label": "Description"
+                    },
+                    {
+                        "type": "text",
+                        "key": "detailed_description",
+                        "label": "Detailed Description",
+                        "multiline": true
+                    },
+                    {
+                        "type": "separator"
+                    },
+                    {
+                        "key": "allow_sequences",
+                        "label": "Allow sequences",
+                        "type": "boolean"
+                    },
+                    {
+                        "type": "list",
+                        "key": "extensions",
+                        "label": "Extensions",
+                        "use_label_wrap": true,
+                        "collapsible_key": true,
+                        "collapsed": false,
+                        "object_type": "text"
+                    }
+                ]
+            }
+        }
+    ]
+}

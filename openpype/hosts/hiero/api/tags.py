@@ -10,16 +10,6 @@ log = Logger.get_logger(__name__)
 
 def tag_data():
     return {
-        # "Retiming": {
-        #     "editable": "1",
-        #     "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa
-        #     "icon": "retiming.png",
-        #     "metadata": {
-        #         "family": "retiming",
-        #         "marginIn": 1,
-        #         "marginOut": 1
-        #     }
-        # },
         "[Lenses]": {
             "Set lense here": {
                 "editable": "1",
@@ -47,6 +37,16 @@ def tag_data():
             "metadata": {
                 "family": "comment",
                 "subset": "main"
+            }
+        },
+        "FrameMain": {
+            "editable": "1",
+            "note": "Publishing a frame subset.",
+            "icon": "z_layer_main.png",
+            "metadata": {
+                "family": "frame",
+                "subset": "main",
+                "format": "png"
             }
         }
     }
@@ -86,7 +86,7 @@ def update_tag(tag, data):
 
     # due to hiero bug we have to make sure keys which are not existent in
     # data are cleared of value by `None`
-    for _mk in mtd.keys():
+    for _mk in mtd.dict().keys():
         if _mk.replace("tag.", "") not in data_mtd.keys():
             mtd.setValue(_mk, str(None))
 

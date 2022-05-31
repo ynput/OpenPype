@@ -17,7 +17,7 @@ def otio_range_to_frame_range(otio_range):
     start = _ot.to_frames(
         otio_range.start_time, otio_range.start_time.rate)
     end = start + _ot.to_frames(
-        otio_range.duration, otio_range.duration.rate) - 1
+        otio_range.duration, otio_range.duration.rate)
     return start, end
 
 
@@ -168,7 +168,7 @@ def make_sequence_collection(path, otio_range, metadata):
     first, last = otio_range_to_frame_range(otio_range)
     collection = clique.Collection(
         head=head, tail=tail, padding=metadata["padding"])
-    collection.indexes.update([i for i in range(first, (last + 1))])
+    collection.indexes.update([i for i in range(first, last)])
     return dir_path, collection
 
 
@@ -218,6 +218,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
                 "name": name
             }
             tw_node.update(metadata)
+            tw_node["lookup"] = list(lookup)
 
             # get first and last frame offsets
             offset_in += lookup[0]
@@ -269,16 +270,16 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
             "retime": True,
             "speed": time_scalar,
             "timewarps": time_warp_nodes,
-            "handleStart": handle_start,
-            "handleEnd": handle_end
+            "handleStart": round(handle_start),
+            "handleEnd": round(handle_end)
         }
     }
 
     returning_dict = {
         "mediaIn": media_in_trimmed,
         "mediaOut": media_out_trimmed,
-        "handleStart": handle_start,
-        "handleEnd": handle_end
+        "handleStart": round(handle_start),
+        "handleEnd": round(handle_end)
     }
 
     # add version data only if retime
