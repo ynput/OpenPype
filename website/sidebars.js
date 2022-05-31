@@ -19,7 +19,18 @@ module.exports = {
             items: [
                 "artist_hosts_hiero",
                 "artist_hosts_nuke_tut",
-                "artist_hosts_maya",
+                {
+                    type: "category",
+                    label: "Maya",
+                    items: [
+                        "artist_hosts_maya",
+                        "artist_hosts_maya_multiverse",
+                        "artist_hosts_maya_yeti",
+                        "artist_hosts_maya_xgen",
+                        "artist_hosts_maya_vray",
+                        "artist_hosts_maya_redshift",
+                    ],
+                },
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_houdini",

@@ -8,7 +8,21 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseUsd(openpype.api.Extractor):
-    """Extractor for Multiverse USD asset data."""
+    """Extractor for Multiverse USD Asset data.
+
+    This will extract settings for a Multiverse Write Asset operation:
+    they are visible in the Maya set node created by a Multiverse USD
+    Asset instance creator.
+
+    The input data contained in the set is:
+
+    - a single hierarchy of Maya nodes. Multiverse supports a variety of Maya
+      nodes such as transforms, mesh, curves, particles, instances, particle
+      instancers, pfx, MASH, lights, cameras, joints, connected materials,
+      shading networks etc. including many of their attributes.
+
+    Upon publish a .usd (or .usdz) asset file will be typically written.  
+    """
 
     label = "Extract Multiverse USD Asset"
     hosts = ["maya"]

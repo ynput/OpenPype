@@ -7,7 +7,19 @@ from maya import cmds
 
 
 class ExtractMultiverseUsdOverride(openpype.api.Extractor):
-    """Extractor for Multiverse USD Override."""
+    """Extractor for Multiverse USD Override data.
+
+    This will extract settings for a Multiverse Write Override operation:
+    they are visible in the Maya set node created by a Multiverse USD
+    Override instance creator.
+
+    The input data contained in the set is:
+
+    - a single Multiverse Compound node with any number of overrides (typically
+      set in MEOW)
+
+    Upon publish a .usda override file will be written.  
+    """
 
     label = "Extract Multiverse USD Override"
     hosts = ["maya"]
