@@ -14,7 +14,7 @@ import unreal  # noqa
 class SkeletalMeshFBXLoader(plugin.Loader):
     """Load Unreal SkeletalMesh from FBX."""
 
-    families = ["rig"]
+    families = ["rig", "skeletalMesh"]
     label = "Import FBX Skeletal Mesh"
     representations = ["fbx"]
     icon = "cube"
