@@ -396,7 +396,6 @@ def ls() -> Iterator:
 
     for obj in bpy.context.scene.objects:
         if obj.is_instancer and obj.instance_collection in collections:
-            print("obj :", obj)
             yield parse_container(obj)
 
 

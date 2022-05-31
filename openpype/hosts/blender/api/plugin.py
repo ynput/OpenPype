@@ -253,8 +253,8 @@ def get_main_collection() -> bpy.types.Collection:
             child
             for child in main_collection.children
             if (
-                child.get(AVALON_PROPERTY) and
-                child[AVALON_PROPERTY].get("id") == AVALON_INSTANCE_ID
+                child.get(AVALON_PROPERTY)
+                and child[AVALON_PROPERTY].get("id") == AVALON_INSTANCE_ID
             )
         ]
         if len(instance_collections) > 1:
@@ -581,7 +581,9 @@ class AssetLoader(LoaderPlugin):
         link_to_collection(override.objects, asset_group)
         link_to_collection(override.children, asset_group)
 
+        # Clear and purge useless datablocks and selection.
         bpy.data.collections.remove(override)
+        orphans_purge()
 
         # Clear selection.
         deselect_all()
@@ -624,9 +626,6 @@ class AssetLoader(LoaderPlugin):
             asset_name(asset, subset),
             libpath
         )
-
-        # Purge remaining data
-        orphans_purge()
 
         self[:] = list(asset_group.all_objects)
         return asset_group
@@ -783,8 +782,8 @@ class AssetLoader(LoaderPlugin):
         """
         object_name = container["objectName"]
         asset_group = (
-            bpy.data.collections.get(object_name) or
-            bpy.data.objects.get(object_name)
+            bpy.data.collections.get(object_name)
+            or bpy.data.objects.get(object_name)
         )
         libpath = get_representation_path(representation)
 
@@ -816,7 +815,11 @@ class AssetLoader(LoaderPlugin):
 
             self._process(libpath, asset_group)
 
-        # update override library operations from asset objects
+        # With maintained contextmanager functions some datablocks could
+        # remain, so we do orphans purge one last time.
+        orphans_purge()
+
+        # Update override library operations from asset objects.
         for obj in get_container_objects(asset_group):
             if obj.override_library:
                 obj.override_library.operations_update()
@@ -830,10 +833,6 @@ class AssetLoader(LoaderPlugin):
                 "parent": str(representation["parent"]),
             }
         )
-
-        # With maintained contextmanager functions some datablocks could
-        # remain, so we do orphans purge one last time.
-        orphans_purge()
 
         return asset_group
 
