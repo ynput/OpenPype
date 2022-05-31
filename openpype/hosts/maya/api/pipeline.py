@@ -66,18 +66,18 @@ def install():
     log.info("Installing callbacks ... ")
     register_event_callback("init", on_init)
 
-    # Callbacks below are not required for headless mode, the `init` however
-    # is important to load referenced Alembics correctly at rendertime.
+    if os.environ.get("HEADLESS_PUBLISH"):
+        # Maya launched on farm, lib.IS_HEADLESS might be triggered locally too
+        # target "farm" == rendering on farm, expects OPENPYPE_PUBLISH_DATA
+        # target "remote" == remote execution
+        print("Registering pyblish target: remote")
+        pyblish.api.register_target("remote")
+        return
+
     if lib.IS_HEADLESS:
         log.info(("Running in headless mode, skipping Maya "
                  "save/open/new callback installation.."))
 
-        return
-
-    if os.environ.get("HEADLESS_PUBLISH"):
-        # Maya launched on farm, lib.IS_HEADLESS might be triggered locally too
-        print("Registering pyblish target: remote")
-        pyblish.api.register_target("remote")
         return
 
     print("Registering pyblish target: local")
