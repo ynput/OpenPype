@@ -357,10 +357,13 @@ def parse_container(
 
     """
 
-    if isinstance(container, bpy.types.Collection):
-        data = lib.read(container)
-    elif isinstance(container, bpy.types.Object):
-        data = lib.read(container.instance_collection)
+    data = lib.read(container)
+    if (
+        isinstance(container, bpy.types.Object)
+        and container.is_instancer
+        and container.instance_collection
+    ):
+        data.update(lib.read(container.instance_collection))
 
     # Append transient data
     data["objectName"] = container.name
@@ -393,6 +396,7 @@ def ls() -> Iterator:
 
     for obj in bpy.context.scene.objects:
         if obj.is_instancer and obj.instance_collection in collections:
+            print("obj :", obj)
             yield parse_container(obj)
 
 

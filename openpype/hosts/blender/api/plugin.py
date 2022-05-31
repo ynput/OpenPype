@@ -741,7 +741,17 @@ class AssetLoader(LoaderPlugin):
             f"Unsupported library file: {libpath}"
         )
 
-        group_libpath = asset_group[AVALON_PROPERTY]["libpath"]
+        asset_metadata = asset_group.get(AVALON_PROPERTY, {})
+        if (
+            isinstance(asset_group, bpy.types.Object)
+            and asset_group.is_instancer
+            and asset_group.instance_collection
+        ):
+            asset_metadata.update(
+                asset_group.instance_collection.get(AVALON_PROPERTY, {})
+            )
+
+        group_libpath = asset_metadata.get("libpath", "")
 
         normalized_group_libpath = (
             Path(bpy.path.abspath(group_libpath)).resolve()

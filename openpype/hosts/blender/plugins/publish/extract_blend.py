@@ -78,6 +78,7 @@ class ExtractBlend(openpype.api.Extractor):
         # Store instance metadata
         instance_collection = instance[-1]
         instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
+        instance_collection[AVALON_PROPERTY] = dict()
 
         # Create ID to allow blender import without using OP tools
         repre_id = str(ObjectId())
@@ -85,7 +86,7 @@ class ExtractBlend(openpype.api.Extractor):
         # Add container metadata to collection
         instance_family = instance.data["family"]
         metadata_update(
-            instance[-1],
+            instance_collection,
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
