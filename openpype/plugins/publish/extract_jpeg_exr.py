@@ -46,13 +46,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         if not profile:
             return
 
-        oiio_path = get_oiio_tools_path()
+        
         # Raise an exception when oiiotool is not available
 
-        if not os.path.exists(oiio_path):
-            KnownPublishError(
-                "OpenImageIO tool is not available on this machine."
-            )
         self.log.info("subset {}".format(instance.data['subset']))
 
         # skip crypto passes.
@@ -167,18 +163,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     "thumbnail": True,
                     "tags": ["thumbnail"]
                 }
-
                 # adding representation
                 self.log.debug("Adding: {}".format(new_repre))
                 instance.data["representations"].append(new_repre)
-            elif repre["ext"] == "exr":
-                oiio_support = is_oiio_supported()
-                if oiio_support:
-                    # TODO: Add resolution checking, possibly check for other
-                    # places where things may break
-                    oiio_tool_path = get_oiio_tools_path()
-                    full_output_path = os.path.join(stagingdir, jpeg_file)
-                    
+            
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
@@ -199,22 +187,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filtered_repres.append(repre)
         return filtered_repres
 
-
-    def create_thumbnail_oiio(self, src_path, dst_path):
+    def create_thumbnail_oiio(self, instance, src_path, dst_path):
+        oiio_path = get_oiio_tools_path()
+        if not os.path.exists(oiio_path):
+            KnownPublishError(
+                "OpenImageIO tool is not available on this machine."
+            )
         args = [oiio_tool_path]
         oiio_cmd = [oiio_tool_path,
-                    full_input_path, "-o",
-                    full_output_path
+                    src_path, "-o",
+                    dst_path
                     ]
         subprocess_exr = " ".join(oiio_cmd)
         self.log.info(f"running: {subprocess_exr}")
         run_subprocess(subprocess_exr, logger=self.log)
 
         # raise error if there is no ouptput
-        if not os.path.exists(full_input_path):
+        if not os.path.exists(src_path):
             self.log.error(
                 ("File {} was not converted "
-                    "by oiio tool!").format(full_input_path))
+                    "by oiio tool!").format(src_path))
             raise AssertionError("OIIO tool conversion failed")
         failed_output = "oiiotool produced no output."
         output = run_subprocess(args)
