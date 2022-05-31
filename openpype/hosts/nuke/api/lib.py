@@ -2384,6 +2384,8 @@ def process_workfile_builder():
         env_value_to_bool,
         get_custom_workfile_template
     )
+    # to avoid looping of the callback, remove it!
+    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     # get state from settings
     workfile_builder = get_current_project_settings()["nuke"].get(
@@ -2438,9 +2440,6 @@ def process_workfile_builder():
     # skip opening of last version if it is not enabled
     if not openlv_on or not os.path.exists(last_workfile_path):
         return
-
-    # to avoid looping of the callback, remove it!
-    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     log.info("Opening last workfile...")
     # open workfile
