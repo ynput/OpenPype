@@ -34,7 +34,6 @@ class CollectDeadlinePublishableInstances(pyblish.api.InstancePlugin):
             self.log.debug("Publish {}".format(subset_name))
             instance.data["publish"] = True
             instance.data["farm"] = False
-            instance.data["families"].remove("deadline")
         else:
             self.log.debug("Skipping {}".format(subset_name))
             instance.data["publish"] = False
