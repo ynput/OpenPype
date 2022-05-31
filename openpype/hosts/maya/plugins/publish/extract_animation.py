@@ -95,4 +95,6 @@ class ExtractAnimation(openpype.api.Extractor):
         }
         instance.data["representations"].append(representation)
 
+        instance.context.data["cleanupFullPaths"].append(path)
+
         self.log.info("Extracted {} to {}".format(instance, dirname))
