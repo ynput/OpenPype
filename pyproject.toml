@@ -127,7 +127,7 @@ hash = "95f43568338c275f80dc0cab1e1836a2e2270f856f0e7b204440d881dd74fbdb"
 
 [openpype.thirdparty.oiio.windows]
 url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.3.10-windows.zip"
-hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
+hash = "b9950f5d2fa3720b52b8be55bacf5f56d33f9e029d38ee86534995f3d8d253d2"
 
 [openpype.thirdparty.oiio.linux]
 url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.12-linux.tgz"
