@@ -4,9 +4,10 @@ import json
 import requests
 
 from bson.objectid import ObjectId
+
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype.api import Anatomy
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 

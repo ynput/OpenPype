@@ -1,6 +1,6 @@
 import pyblish.api
 
-from avalon import io
+from openpype.pipeline import legacy_io
 import openpype.lib.usdlib as usdlib
 
 
@@ -50,7 +50,10 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         self.log.debug("Add bootstrap for: %s" % bootstrap)
 
-        asset = io.find_one({"name": instance.data["asset"], "type": "asset"})
+        asset = legacy_io.find_one({
+            "name": instance.data["asset"],
+            "type": "asset"
+        })
         assert asset, "Asset must exist: %s" % asset
 
         # Check which are not about to be created and don't exist yet
@@ -104,7 +107,8 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
         # Or, if they already exist in the database we can
         # skip them too.
         return bool(
-            io.find_one(
-                {"name": subset, "type": "subset", "parent": asset["_id"]}
+            legacy_io.find_one(
+                {"name": subset, "type": "subset", "parent": asset["_id"]},
+                {"_id": True}
             )
         )

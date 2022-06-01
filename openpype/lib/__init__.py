@@ -42,12 +42,12 @@ from .attribute_definitions import (
     EnumDef,
     BoolDef,
     FileDef,
+    FileDefItem,
 )
 
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
-    get_global_environments
 )
 
 from .terminal import Terminal
@@ -105,6 +105,7 @@ from .transcoding import (
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
@@ -202,6 +203,7 @@ from .editorial import (
     is_overlapping_otio_ranges,
     otio_range_to_frame_range,
     otio_range_with_handles,
+    get_media_range_with_retimes,
     convert_to_padded_path,
     trim_media_range,
     range_from_frames,
@@ -247,7 +249,6 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
-    "get_global_environments",
 
     "get_vendor_bin_path",
     "get_oiio_tools_path",
@@ -266,6 +267,7 @@ __all__ = [
     "EnumDef",
     "BoolDef",
     "FileDef",
+    "FileDefItem",
 
     "import_filepath",
     "modules_from_path",
@@ -276,6 +278,7 @@ __all__ = [
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
+    "convert_input_paths_for_ffmpeg",
     "get_ffprobe_data",
     "get_ffprobe_streams",
     "get_ffmpeg_codec_args",
@@ -380,6 +383,7 @@ __all__ = [
     "otio_range_with_handles",
     "convert_to_padded_path",
     "otio_range_to_frame_range",
+    "get_media_range_with_retimes",
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",

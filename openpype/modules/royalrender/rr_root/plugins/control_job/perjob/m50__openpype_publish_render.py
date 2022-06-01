@@ -119,7 +119,7 @@ class OpenPypeContextSelector:
         # app names and versions, but since app_name is not used
         # currently down the line (but it is required by OP publish command
         # right now).
-        self.context["app_name"] = "maya/2020"
+        # self.context["app_name"] = "maya/2022"
         return True
 
     @staticmethod
@@ -139,7 +139,8 @@ class OpenPypeContextSelector:
         env = {"AVALON_PROJECT": str(self.context.get("project")),
                "AVALON_ASSET": str(self.context.get("asset")),
                "AVALON_TASK": str(self.context.get("task")),
-               "AVALON_APP_NAME": str(self.context.get("app_name"))}
+               # "AVALON_APP_NAME": str(self.context.get("app_name"))
+               }
 
         print(">>> setting environment:")
         for k, v in env.items():
@@ -184,7 +185,7 @@ selector = OpenPypeContextSelector()
 selector.context["project"] = os.getenv("AVALON_PROJECT")
 selector.context["asset"] = os.getenv("AVALON_ASSET")
 selector.context["task"] = os.getenv("AVALON_TASK")
-selector.context["app_name"] = os.getenv("AVALON_APP_NAME")
+# selector.context["app_name"] = os.getenv("AVALON_APP_NAME")
 
 # if anything inside is None, scratch the whole thing and
 # ask user for context.

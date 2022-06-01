@@ -7,6 +7,7 @@ from openpype import (
 )
 from openpype.tools.utils import host_tools
 from openpype.tools.utils.lib import qt_app_context
+from openpype.hosts.unreal.api import rendering
 
 
 class ToolsBtnsWidget(QtWidgets.QWidget):
@@ -20,6 +21,7 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
         load_btn = QtWidgets.QPushButton("Load...", self)
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         manage_btn = QtWidgets.QPushButton("Manage...", self)
+        render_btn = QtWidgets.QPushButton("Render...", self)
         experimental_tools_btn = QtWidgets.QPushButton(
             "Experimental tools...", self
         )
@@ -30,6 +32,7 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
         layout.addWidget(load_btn, 0)
         layout.addWidget(publish_btn, 0)
         layout.addWidget(manage_btn, 0)
+        layout.addWidget(render_btn, 0)
         layout.addWidget(experimental_tools_btn, 0)
         layout.addStretch(1)
 
@@ -37,6 +40,7 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
         load_btn.clicked.connect(self._on_load)
         publish_btn.clicked.connect(self._on_publish)
         manage_btn.clicked.connect(self._on_manage)
+        render_btn.clicked.connect(self._on_render)
         experimental_tools_btn.clicked.connect(self._on_experimental)
 
     def _on_create(self):
@@ -50,6 +54,9 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
 
     def _on_manage(self):
         self.tool_required.emit("sceneinventory")
+
+    def _on_render(self):
+        rendering.start_rendering()
 
     def _on_experimental(self):
         self.tool_required.emit("experimental_tools")

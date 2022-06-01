@@ -2,8 +2,8 @@
 from __future__ import absolute_import
 
 import pyblish.api
-from avalon import io
 
+from openpype.pipeline import legacy_io
 from openpype.api import get_errored_instances_from_context
 
 
@@ -75,8 +75,10 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         from . import lib
 
         asset = instance.data['asset']
-        asset_id = io.find_one({"name": asset, "type": "asset"},
-                               projection={"_id": True})['_id']
+        asset_id = legacy_io.find_one(
+            {"name": asset, "type": "asset"},
+            projection={"_id": True}
+        )['_id']
         for node, _id in lib.generate_ids(nodes, asset_id=asset_id):
             lib.set_id(node, _id, overwrite=True)
 

@@ -1,4 +1,11 @@
 {
+    "create": {
+        "RenderCreator": {
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
     "publish": {
         "ValidateSceneSettings": {
             "enabled": true,

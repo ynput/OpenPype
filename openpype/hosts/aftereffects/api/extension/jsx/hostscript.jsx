@@ -417,7 +417,9 @@ function getRenderInfo(){
     var file_url = item.file.toString();
 
     return JSON.stringify({
-        "file_name": file_url            
+        "file_name": file_url,
+        "width": render_item.comp.width,
+	    "height": render_item.comp.height
     })
 }
 

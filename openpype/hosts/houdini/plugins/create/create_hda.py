@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hou
-from avalon import io
+
+from openpype.pipeline import legacy_io
 from openpype.hosts.houdini.api import lib
 from openpype.hosts.houdini.api import plugin
 
@@ -22,13 +23,16 @@ class CreateHDA(plugin.Creator):
         # type: (str) -> bool
         """Check if existing subset name versions already exists."""
         # Get all subsets of the current asset
-        asset_id = io.find_one({"name": self.data["asset"], "type": "asset"},
-                               projection={"_id": True})['_id']
-        subset_docs = io.find(
+        asset_id = legacy_io.find_one(
+            {"name": self.data["asset"], "type": "asset"},
+            projection={"_id": True}
+        )['_id']
+        subset_docs = legacy_io.find(
             {
                 "type": "subset",
                 "parent": asset_id
-            }, {"name": 1}
+            },
+            {"name": 1}
         )
         existing_subset_names = set(subset_docs.distinct("name"))
         existing_subset_names_low = {

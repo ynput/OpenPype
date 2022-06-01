@@ -3,7 +3,8 @@
 """
 import os
 import pyblish.api
-import avalon.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectFromCreateContext(pyblish.api.ContextPlugin):
@@ -25,12 +26,12 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         # Update global data to context
         context.data.update(create_context.context_data_to_store())
-
+        context.data["newPublishing"] = True
         # Update context data
         for key in ("AVALON_PROJECT", "AVALON_ASSET", "AVALON_TASK"):
             value = create_context.dbcon.Session.get(key)
             if value is not None:
-                avalon.api.Session[key] = value
+                legacy_io.Session[key] = value
                 os.environ[key] = value
 
     def create_instance(self, context, in_data):

@@ -1,8 +1,8 @@
 import json
 
-from avalon.api import AvalonMongoDB
 from openpype.api import ProjectSettings
 from openpype.lib import create_project
+from openpype.pipeline import AvalonMongoDB
 from openpype.settings import SaveWarningExc
 
 from openpype_modules.ftrack.lib import (

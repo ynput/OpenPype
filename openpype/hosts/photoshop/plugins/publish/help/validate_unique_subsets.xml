@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Subset not unique</title>
+<description>
+## Non unique subset name found
+
+    Non unique subset names: '{non_unique}'
+### How to repair?
+
+Remove offending instance, rename it to have unique name. Maybe layer name wasn't used for multiple instances?
+</description>
+</error>
+</root>

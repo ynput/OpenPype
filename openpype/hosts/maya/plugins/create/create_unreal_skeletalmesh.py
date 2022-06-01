@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator for Unreal Skeletal Meshes."""
 from openpype.hosts.maya.api import plugin, lib
-from avalon.api import Session
+from openpype.pipeline import legacy_io
 from maya import cmds  # noqa
 
 
@@ -26,7 +26,7 @@ class CreateUnrealSkeletalMesh(plugin.Creator):
         dynamic_data = super(CreateUnrealSkeletalMesh, cls).get_dynamic_data(
             variant, task_name, asset_id, project_name, host_name
         )
-        dynamic_data["asset"] = Session.get("AVALON_ASSET")
+        dynamic_data["asset"] = legacy_io.Session.get("AVALON_ASSET")
         return dynamic_data
 
     def process(self):

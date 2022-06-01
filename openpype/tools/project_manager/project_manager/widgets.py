@@ -10,11 +10,11 @@ from openpype.lib import (
     PROJECT_NAME_REGEX
 )
 from openpype.style import load_stylesheet
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import (
     PlaceholderLineEdit,
     get_warning_pixmap
 )
-from avalon.api import AvalonMongoDB
 
 from Qt import QtWidgets, QtCore, QtGui
 

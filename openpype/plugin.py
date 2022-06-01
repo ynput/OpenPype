@@ -1,7 +1,6 @@
 import tempfile
 import os
 import pyblish.api
-import avalon.api
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1

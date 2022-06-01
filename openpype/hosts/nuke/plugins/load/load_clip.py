@@ -1,8 +1,10 @@
 import nuke
 import qargparse
-from avalon import io
 
-from openpype.pipeline import get_representation_path
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace,
     maintained_selection
@@ -194,7 +196,7 @@ class LoadClip(plugin.NukeLoader):
 
         start_at_workfile = bool("start at" in read_node['frame_mode'].value())
 
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -264,7 +266,7 @@ class LoadClip(plugin.NukeLoader):
 
             # change color of read_node
             # get all versions in list
-            versions = io.find({
+            versions = legacy_io.find({
                 "type": "version",
                 "parent": version["parent"]
             }).distinct('name')

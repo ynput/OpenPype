@@ -34,11 +34,15 @@
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
-            "env_group_key": "global",
             "require_restart": true
         },
         {
             "type": "splitter"
+        },
+        {
+            "type": "boolean",
+            "key": "log_to_server",
+            "label": "Log to mongo"
         },
         {
             "type": "dict",

@@ -142,7 +142,8 @@ def legacy_create(Creator, name, asset, options=None, data=None):
         Name of instance
 
     """
-    from avalon.api import registered_host
+    from openpype.pipeline import registered_host
+
     host = registered_host()
     plugin = Creator(name, asset, options, data)
 

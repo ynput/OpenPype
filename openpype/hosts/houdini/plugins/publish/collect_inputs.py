@@ -1,5 +1,6 @@
-import avalon.api as api
 import pyblish.api
+
+from openpype.pipeline import registered_host
 
 
 def collect_input_containers(nodes):
@@ -18,7 +19,7 @@ def collect_input_containers(nodes):
     lookup = frozenset(nodes)
 
     containers = []
-    host = api.registered_host()
+    host = registered_host()
     for container in host.ls():
 
         node = container["node"]

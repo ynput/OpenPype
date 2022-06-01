@@ -2,8 +2,8 @@ import copy
 import json
 import pyblish.api
 
-from avalon import io
 from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline import legacy_io
 
 
 class CollectBulkMovInstances(pyblish.api.InstancePlugin):
@@ -26,7 +26,7 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
         context = instance.context
         asset_name = instance.data["asset"]
 
-        asset_doc = io.find_one({
+        asset_doc = legacy_io.find_one({
             "type": "asset",
             "name": asset_name
         })
@@ -52,7 +52,7 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
             self.subset_name_variant,
             task_name,
             asset_doc,
-            io.Session["AVALON_PROJECT"]
+            legacy_io.Session["AVALON_PROJECT"]
         )
         instance_name = f"{asset_name}_{subset_name}"
 

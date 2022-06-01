@@ -5,11 +5,10 @@ import logging
 from bson.objectid import ObjectId
 import pyblish.api
 
-from avalon import io
-
 from openpype import lib
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
@@ -111,7 +110,7 @@ def check_inventory():
     outdated_containers = []
     for container in ls():
         representation = container['representation']
-        representation_doc = io.find_one(
+        representation_doc = legacy_io.find_one(
             {
                 "_id": ObjectId(representation),
                 "type": "representation"

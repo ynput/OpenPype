@@ -3,8 +3,8 @@ import sys
 
 from Qt import QtWidgets, QtCore
 import qtawesome
-from avalon import io, api
 
+from openpype.pipeline import legacy_io
 from openpype import style
 from openpype.tools.utils.delegates import VersionDelegate
 from openpype.tools.utils.lib import (
@@ -72,7 +72,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout.addWidget(refresh_button)
 
         # endregion control
-        family_config_cache = FamilyConfigCache(io)
+        family_config_cache = FamilyConfigCache(legacy_io)
 
         model = InventoryModel(family_config_cache)
         proxy = FilterProxyModel()
@@ -91,7 +91,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.setColumnWidth(4, 100)  # namespace
 
         # apply delegates
-        version_delegate = VersionDelegate(io, self)
+        version_delegate = VersionDelegate(legacy_io, self)
         column = model.Columns.index("version")
         view.setItemDelegateForColumn(column, version_delegate)
 
@@ -191,17 +191,18 @@ def show(root=None, debug=False, parent=None, items=None):
         pass
 
     if debug is True:
-        io.install()
+        legacy_io.install()
 
         if not os.environ.get("AVALON_PROJECT"):
             any_project = next(
-                project for project in io.projects()
+                project for project in legacy_io.projects()
                 if project.get("active", True) is not False
             )
 
-            api.Session["AVALON_PROJECT"] = any_project["name"]
+            project_name = any_project["name"]
         else:
-            api.Session["AVALON_PROJECT"] = os.environ.get("AVALON_PROJECT")
+            project_name = os.environ.get("AVALON_PROJECT")
+        legacy_io.Session["AVALON_PROJECT"] = project_name
 
     with qt_app_context():
         window = SceneInventoryWindow(parent)

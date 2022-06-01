@@ -52,10 +52,39 @@
             "environment": {},
             "variants": {}
         },
+        "renderman": {
+            "environment": {},
+            "variants": {
+                "24-3-maya": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [
+                        "maya/2022"
+                    ],
+                    "environment": {
+                        "RFMTREE": {
+                            "windows": "C:\\Program Files\\Pixar\\RenderManForMaya-24.3",
+                            "darwin": "/Applications/Pixar/RenderManForMaya-24.3",
+                            "linux": "/opt/pixar/RenderManForMaya-24.3"
+                        },
+                        "RMANTREE": {
+                            "windows": "C:\\Program Files\\Pixar\\RenderManProServer-24.3",
+                            "darwin": "/Applications/Pixar/RenderManProServer-24.3",
+                            "linux": "/opt/pixar/RenderManProServer-24.3"
+                        }
+                    }
+                },
+                "__dynamic_keys_labels__": {
+                    "24-3-maya": "24.3 RFM"
+                }
+            }
+        },
         "__dynamic_keys_labels__": {
             "mtoa": "Autodesk Arnold",
             "vray": "Chaos Group Vray",
-            "yeti": "Pergrine Labs Yeti"
+            "yeti": "Peregrine Labs Yeti",
+            "renderman": "Pixar Renderman"
         }
     }
 }

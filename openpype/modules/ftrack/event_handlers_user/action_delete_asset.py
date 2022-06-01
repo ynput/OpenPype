@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime
 
 from bson.objectid import ObjectId
-from avalon.api import AvalonMongoDB
+
+from openpype.pipeline import AvalonMongoDB
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 

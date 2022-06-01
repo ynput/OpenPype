@@ -12,7 +12,7 @@ from .widgets import (
 from .widgets.constants import HOST_NAME
 from openpype import style
 from openpype.api import resources
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 from openpype.modules import ModulesManager
 
 

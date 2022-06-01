@@ -127,12 +127,6 @@ class BaseItemEntity(BaseEntity):
         # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
 
-        # Entity will save metadata about environments
-        #   - this is current possible only for RawJsonEnity
-        self.is_env_group = False
-        # Key of environment group key must be unique across system settings
-        self.env_group_key = None
-
         # Roles of an entity
         self.roles = None
 
@@ -284,16 +278,6 @@ class BaseItemEntity(BaseEntity):
                 " Change group hierarchy or remove dynamic"
                 " schema to be able work properly."
             ).format(self.group_item.path)
-            raise EntitySchemaError(self, reason)
-
-        # Validate that env group entities will be stored into file.
-        #   - env group entities must store metadata which is not possible if
-        #       metadata would be outside of file
-        if self.file_item is None and self.is_env_group:
-            reason = (
-                "Environment item is not inside file"
-                " item so can't store metadata for defaults."
-            )
             raise EntitySchemaError(self, reason)
 
         # Dynamic items must not have defined labels. (UI specific)
@@ -861,11 +845,6 @@ class ItemEntity(BaseItemEntity):
         # - key is defined by it's parent
         if self.is_dynamic_item:
             self.require_key = False
-
-        # If value should be stored to environments and uder which group key
-        # - the key may be dynamically changed by it's parent on save
-        self.env_group_key = self.schema_data.get("env_group_key")
-        self.is_env_group = bool(self.env_group_key is not None)
 
         # Root item reference
         self.root_item = self.parent.root_item

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """OpenPype script commands to be used directly in Maya."""
 from maya import cmds
-from avalon import api, io
+
+from openpype.pipeline import legacy_io
 
 
 class ToolWindows:
@@ -73,13 +74,13 @@ def reset_frame_range():
            59.94: '59.94fps',
            44100: '44100fps',
            48000: '48000fps'
-           }.get(float(api.Session.get("AVALON_FPS", 25)), "pal")
+           }.get(float(legacy_io.Session.get("AVALON_FPS", 25)), "pal")
 
     cmds.currentUnit(time=fps)
 
     # Set frame start/end
-    asset_name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = legacy_io.find_one({"name": asset_name, "type": "asset"})
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
@@ -144,8 +145,8 @@ def reset_resolution():
     resolution_height = 1080
 
     # Get resolution from asset
-    asset_name = api.Session["AVALON_ASSET"]
-    asset_doc = io.find_one({"name": asset_name, "type": "asset"})
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset_doc = legacy_io.find_one({"name": asset_name, "type": "asset"})
     resolution = _resolution_from_document(asset_doc)
     # Try get resolution from project
     if resolution is None:
@@ -154,7 +155,7 @@ def reset_resolution():
             "Asset \"{}\" does not have set resolution."
             " Trying to get resolution from project"
         ).format(asset_name))
-        project_doc = io.find_one({"type": "project"})
+        project_doc = legacy_io.find_one({"type": "project"})
         resolution = _resolution_from_document(project_doc)
 
     if resolution is None:
