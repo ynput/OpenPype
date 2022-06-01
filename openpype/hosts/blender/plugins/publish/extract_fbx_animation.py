@@ -6,6 +6,7 @@ import bpy_extras
 import bpy_extras.anim_utils
 
 from openpype import api
+from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -18,33 +19,8 @@ class ExtractAnimationFBX(api.Extractor):
     families = ["animation"]
     optional = True
 
-    def process(self, instance):
-        # Define extract output file path
-        stagingdir = self.staging_dir(instance)
-
-        # Perform extraction
-        self.log.info("Performing extraction..")
-
-        # The asset group collection should be only the last instance member.
-        asset_group = instance[-1]
-        members = instance[:-1]
-
-        armatures = [
-            obj for obj in members
-            if isinstance(obj, bpy.types.Object) and obj.type == "ARMATURE"
-        ]
-
-        if len(armatures) == 0:
-            raise RuntimeError(
-                f"No armature found for instance {asset_group.name}"
-            )
-        elif len(armatures) > 1:
-            raise RuntimeError(
-                "Multiple armatures found for instance"
-                f" {asset_group.name}: {armatures}"
-            )
-
-        armature = armatures[0]
+    @staticmethod
+    def _export_animation(armature, stagingdir, fbx_count):
 
         object_action_pairs = []
         original_actions = []
@@ -53,24 +29,13 @@ class ExtractAnimationFBX(api.Extractor):
         ending_frames = []
 
         # For each armature, we make a copy of the current action
-        curr_action = None
-        copy_action = None
+        curr_action = armature.animation_data.action
+        copy_action = curr_action.copy()
 
-        if armature.animation_data and armature.animation_data.action:
-            curr_action = armature.animation_data.action
-            copy_action = curr_action.copy()
+        curr_frame_range = curr_action.frame_range
 
-            curr_frame_range = curr_action.frame_range
-
-            starting_frames.append(curr_frame_range[0])
-            ending_frames.append(curr_frame_range[1])
-        else:
-            self.log.info("Object have no animation.")
-            return
-
-        armature_name = armature.name
-        original_name = armature_name.split(":")[-1]
-        armature.name = original_name
+        starting_frames.append(curr_frame_range[0])
+        ending_frames.append(curr_frame_range[1])
 
         object_action_pairs.append((armature, copy_action))
         original_actions.append(curr_action)
@@ -87,11 +52,10 @@ class ExtractAnimationFBX(api.Extractor):
             do_clean=False
         )
 
-        for obj in bpy.data.objects:
-            obj.select_set(False)
+        plugin.deselect_all()
 
         armature.select_set(True)
-        fbx_filename = f"{instance.name}_{armature.name}.fbx"
+        fbx_filename = f"{fbx_count:03d}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
         bpy.ops.export_scene.fbx(
@@ -108,7 +72,6 @@ class ExtractAnimationFBX(api.Extractor):
             armature_nodetype="ROOT",
             object_types={"EMPTY", "ARMATURE"}
         )
-        armature.name = armature_name
         armature.select_set(False)
 
         # We delete the baked action and set the original one back
@@ -123,23 +86,71 @@ class ExtractAnimationFBX(api.Extractor):
                 pair[1].user_clear()
                 bpy.data.actions.remove(pair[1])
 
+        return fbx_filename
+
+    @staticmethod
+    def _is_rig_container(obj):
+        return (
+            isinstance(obj, bpy.types.Collection)
+            and obj.get(AVALON_PROPERTY)
+            and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+            and obj[AVALON_PROPERTY].get("family") == "rig"
+        )
+
+    def process(self, instance):
+        # Define extract output file path
+        stagingdir = self.staging_dir(instance)
+
+        # Perform extraction
+        self.log.info("Performing extraction..")
+
+        collections = [
+            obj
+            for obj in set(instance[:-1])
+            if self._is_rig_container(obj)
+        ]
+
+        json_data = []
+        fbx_files = []
+
+        for collection in collections:
+            metadata = collection.get(AVALON_PROPERTY)
+            armatures = [
+                obj
+                for obj in collection.all_objects
+                if obj.type == "ARMATURE"
+            ]
+            for armature in armatures:
+                if armature.animation_data and armature.animation_data.action:
+                    fbx_filename = self._export_animation(
+                        armature, stagingdir, len(fbx_files)
+                    )
+                    json_data.append({
+                        "instance_name": instance.name,
+                        "namespace": metadata.get("namespace"),
+                        "asset_name": metadata.get("asset_name"),
+                        "family": metadata.get("family"),
+                        "libpath": metadata.get("libpath"),
+                        "objectName": collection.name,
+                        "armatureName": armature.name,
+                        "fbx_filename": fbx_filename,
+                    })
+                    fbx_files.append(fbx_filename)
+                else:
+                    self.log.info(f"No animation for: {armature.name}")
+
         json_filename = f"{instance.name}.json"
         json_path = os.path.join(stagingdir, json_filename)
 
-        json_dict = {
-            "instance_name": asset_group[AVALON_PROPERTY].get("objectName")
-        }
+        with open(json_path, "w+") as f:
+            json.dump(json_data, fp=f, indent=2)
 
-        with open(json_path, "w+") as file:
-            json.dump(json_dict, fp=file, indent=2)
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+        instance.data.setdefault("representations", [])
 
         fbx_representation = {
             "name": "fbx",
-            "ext": "fbx",
-            "files": fbx_filename,
+            "ext": "000.fbx" if len(fbx_files) == 1 else "fbx",
+            "files": fbx_files[0] if len(fbx_files) == 1 else fbx_files,
             "stagingDir": stagingdir,
         }
         json_representation = {

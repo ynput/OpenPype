@@ -116,10 +116,14 @@ class _InterfacesClass(_ModuleClass):
     - this is because interfaces must be available even if are missing
         implementation
     """
+
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__", "__file__"):
                 return None
+
+            if attr_name == "__addon_enabled__":
+                return False
 
             raise ImportError((
                 "cannot import name '{}' from 'openpype_interfaces'"

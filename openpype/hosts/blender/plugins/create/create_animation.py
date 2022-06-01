@@ -16,7 +16,8 @@ class CreateAnimation(plugin.Creator):
         # Get Instance Container
         container = super()._process()
 
-        if (self.options or {}).get("asset_group"):
-            container.children.link(self.options["asset_group"])
+        if (self.options or {}).get("asset_groups"):
+            for asset_group in self.options["asset_groups"]:
+                container.children.link(asset_group)
 
         return container

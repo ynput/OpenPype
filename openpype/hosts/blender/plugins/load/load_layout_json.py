@@ -7,7 +7,6 @@ from typing import Dict, Optional
 import bpy
 
 from openpype.pipeline import (
-    legacy_io,
     discover_loader_plugins,
     load_container,
     loaders_from_representation,
@@ -49,7 +48,6 @@ class JsonLayoutLoader(plugin.AssetLoader):
             data = json.load(fp)
 
         all_loaders = discover_loader_plugins()
-        task = legacy_io.Session.get("AVALON_TASK")
 
         for element in data:
             reference = element.get("reference")
@@ -64,8 +62,6 @@ class JsonLayoutLoader(plugin.AssetLoader):
             options = {
                 "parent": asset_group,
                 "transform": element.get("transform"),
-                "create_animation": (task == "Animation" and family == "rig"),
-                "create_context": context,
             }
 
             if element.get("animation"):

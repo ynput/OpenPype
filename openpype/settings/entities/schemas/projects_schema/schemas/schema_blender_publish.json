@@ -1,0 +1,180 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "publish",
+    "label": "Publish plugins",
+    "children": [
+        {
+            "type": "label",
+            "label": "Extractors"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractBlend",
+            "label": "Extract Blend",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractBlendAnimation",
+            "label": "Extract Blend Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractCamera",
+            "label": "Extract Camera as FBX",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractFBX",
+            "label": "Extract FBX (model and rig)",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractAnimationFBX",
+            "label": "Extract Animation FBX",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractABC",
+            "label": "Extract ABC (model and pointcache)",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractLayout",
+            "label": "Extract Layout as JSON",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        }
+    ]
+}

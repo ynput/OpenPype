@@ -55,7 +55,15 @@ class BlendLayoutLoader(plugin.AssetLoader):
             obj.animation_data.action = local_action
 
     @staticmethod
-    def _create_animation_collection(asset_group, context):
+    def _is_rig_container(collection):
+        return (
+            collection.get(AVALON_PROPERTY)
+            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
+            and collection[AVALON_PROPERTY].get("family") == "rig"
+        )
+
+    @staticmethod
+    def _create_animation_collection(asset_groups, context):
         creator_plugin = lib.get_creator_by_name("CreateAnimation")
         if not creator_plugin:
             raise ValueError(
@@ -64,18 +72,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         legacy_create(
             creator_plugin,
-            name=f"{asset_group.name}_animation",
+            name="animationMain",
             asset=context["asset"]["name"],
-            options={"useSelection": False, "asset_group": asset_group},
+            options={"useSelection": False, "asset_groups": asset_groups},
             data={"dependencies": str(context["representation"]["_id"])}
-        )
-
-    @staticmethod
-    def _is_rig_container(collection):
-        return (
-            collection.get(AVALON_PROPERTY)
-            and collection[AVALON_PROPERTY].get("family") == "rig"
-            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
     def _process(self, libpath, asset_group):
@@ -86,21 +86,26 @@ class BlendLayoutLoader(plugin.AssetLoader):
         asset_group = super().process_asset(context, *args, **kwargs)
         asset_group.color_tag = self.color_tag
 
-        self._make_local_actions(asset_group)
-
-        # Create animation collection subset for loaded rig asset group.
+        # Create animation collection subset for loaded rig asset groups.
         if legacy_io.Session.get("AVALON_TASK") == "Animation":
-            for child in asset_group.children_recursive:
-                if self._is_rig_container(child):
-                    self._create_animation_collection(child, context)
+            rig_assets = [
+                child
+                for child in asset_group.children_recursive
+                if self._is_rig_container(child)
+            ]
+            self._create_animation_collection(rig_assets, context)
+
+        # Make local action only if task not Lighting.
+        if legacy_io.Session.get("AVALON_TASK") != "Lighting":
+            self._make_local_actions(asset_group)
+
+        plugin.orphans_purge()
 
         return asset_group
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
         asset_group = self._update_process(container, representation)
-
-        # TODO : check animation collections.
 
         # Ensure all updated actions are local.
         self._make_local_actions(asset_group)

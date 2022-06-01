@@ -76,10 +76,8 @@ class ExtractLayout(openpype.api.Extractor):
             fbx_filename = f"{n:03d}.fbx"
             filepath = os.path.join(stagingdir, fbx_filename)
 
-            override = plugin.create_blender_context(
-                active=obj, selected=[obj])
             bpy.ops.export_scene.fbx(
-                override,
+                plugin.create_blender_context(active=obj, selected=[obj]),
                 filepath=filepath,
                 use_active_collection=False,
                 use_selection=True,
@@ -114,9 +112,6 @@ class ExtractLayout(openpype.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction..")
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
 
         json_data = []
         fbx_files = []
@@ -238,32 +233,26 @@ class ExtractLayout(openpype.api.Extractor):
         with open(json_path, "w+") as file:
             json.dump(json_data, fp=file, indent=2)
 
+        instance.data.setdefault("representations", [])
+
         json_representation = {
-            'name': 'json',
-            'ext': 'json',
-            'files': json_filename,
+            "name": "json",
+            "ext": "json",
+            "files": json_filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(json_representation)
 
         self.log.debug(fbx_files)
 
-        if len(fbx_files) == 1:
-            fbx_representation = {
-                'name': 'fbx',
-                'ext': '000.fbx',
-                'files': fbx_files[0],
-                "stagingDir": stagingdir,
-            }
-            instance.data["representations"].append(fbx_representation)
-        elif len(fbx_files) > 1:
-            fbx_representation = {
-                'name': 'fbx',
-                'ext': 'fbx',
-                'files': fbx_files,
-                "stagingDir": stagingdir,
-            }
-            instance.data["representations"].append(fbx_representation)
+        fbx_representation = {
+            "name": "fbx",
+            "ext": "000.fbx" if len(fbx_files) == 1 else "fbx",
+            "files": fbx_files[0] if len(fbx_files) == 1 else fbx_files,
+            "stagingDir": stagingdir,
+        }
+        instance.data["representations"].append(fbx_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, json_representation)
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {json_representation}"
+        )

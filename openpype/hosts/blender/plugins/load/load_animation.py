@@ -4,9 +4,7 @@ from typing import Dict
 
 import bpy
 
-from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendAnimationLoader(plugin.AssetLoader):
@@ -26,9 +24,9 @@ class BlendAnimationLoader(plugin.AssetLoader):
     color_tag = "COLOR_01"
 
     @staticmethod
-    def _restor_actions_from_library():
+    def _restor_actions_from_library(objects):
         """Restor action from override library reference animation data"""
-        for obj in list(bpy.data.objects):
+        for obj in objects:
             if (
                 obj.animation_data
                 and obj.override_library
@@ -40,13 +38,35 @@ class BlendAnimationLoader(plugin.AssetLoader):
                     obj.override_library.reference.animation_data.action
                 )
 
-    @staticmethod
-    def _is_rig_container(collection):
-        return (
-            collection.get(AVALON_PROPERTY)
-            and collection[AVALON_PROPERTY].get("family") == "rig"
-            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-        )
+    @classmethod
+    def _remove_container(cls, container: Dict) -> bool:
+        """Remove an existing container from a Blender scene.
+
+        Arguments:
+            container: Container to remove.
+
+        Returns:
+            bool: Whether the container was deleted.
+        """
+        object_name = container["objectName"]
+        asset_group = bpy.data.collections.get(object_name)
+
+        if not asset_group:
+            return False
+
+        # Restor action from override library reference animation data.
+        cls._restor_actions_from_library(asset_group.all_objects)
+
+        # Unlink all child objects and collections.
+        for obj in asset_group.objects:
+            asset_group.objects.unlink(obj)
+        for child in asset_group.children:
+            asset_group.children.unlink(child)
+
+        plugin.remove_container(asset_group)
+        plugin.orphans_purge()
+
+        return True
 
     def _process(self, libpath, asset_group):
         # Load actions from libpath library.
@@ -57,40 +77,31 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         assert data_to.actions, "No actions found"
 
-        actions_by_namespace = {}
-        orphans_actions = []
+        scene_collections = bpy.context.scene.collection.children_recursive
 
-        # Collection action by namespace or in orphans_actions list.
+        # Try to assign linked actions with parsing their name.
         for action in data_to.actions:
-            namespaces = action[AVALON_PROPERTY].get("namespaces")
-            if namespaces:
-                for namespace in namespaces:
-                    actions_by_namespace[namespace] = action
-            else:
-                orphans_actions.append(action)
 
-        # Try to assign linked actions by collection using namespace metadata.
-        for collection in bpy.data.collections:
-            if self._is_rig_container(collection):
-                metadata = collection[AVALON_PROPERTY]
-                if metadata.get("namespace") in actions_by_namespace:
-                    action = actions_by_namespace.get(metadata["namespace"])
-                    for obj in collection.all_objects:
-                        if obj.name in action[AVALON_PROPERTY]["users"]:
-                            if not obj.animation_data:
-                                obj.animation_data_create()
-                            obj.animation_data.action = action
-                    plugin.link_to_collection(collection, asset_group)
+            collection_name = action.get("collection", "NONE")
+            armature_name = action.get("armature", "NONE")
 
-        # Try to assign linked actions by user names.
-        for action in orphans_actions:
-            for user_name in action[AVALON_PROPERTY]["users"]:
-                obj = bpy.data.objects.get(user_name)
-                if obj:
-                    if not obj.animation_data:
-                        obj.animation_data_create()
-                    obj.animation_data.action = action
-                    plugin.link_to_collection(obj, asset_group)
+            collection = next(
+                (c for c in scene_collections if c.name == collection_name),
+                None
+            )
+            assert collection, (
+                f"invalid collection name for action: {action.name}"
+            )
+            armature = collection.all_objects.get(armature_name)
+            assert armature, (
+                f"invalid armature name for action: {armature.name}"
+            )
+
+            if not armature.animation_data:
+                armature.animation_data_create()
+            armature.animation_data.action = action
+
+            plugin.link_to_collection(collection, asset_group)
 
         plugin.orphans_purge()
 
@@ -106,7 +117,4 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
     def exec_remove(self, container) -> bool:
         """Remove the existing container from Blender scene"""
-        # Restor action from override library reference animation data.
-        self._restor_actions_from_library()
-
         return self._remove_container(container)

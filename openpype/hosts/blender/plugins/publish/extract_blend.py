@@ -55,9 +55,7 @@ class ExtractBlend(openpype.api.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction...")
-
-        plugin.deselect_all()
+        self.log.info("Performing extraction..")
 
         plugin.deselect_all()
 

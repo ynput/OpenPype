@@ -239,34 +239,27 @@ def get_main_collection() -> bpy.types.Collection:
     """
     Get the main collection from scene.
     - the scene root collection if has no children.
-    - the first collection if only child of root collection.
-    - the only avalon instance collection child of root collection.
+    - or the first avalon instance collection child of root collection,
+        but no family 'camera', 'action' and 'pointcache'.
 
     Returns:
         bpy.types.Collection: The main collection.
     """
+    _invalid_family = ("camera", "action", "pointcache")
+
     main_collection = bpy.context.scene.collection
-    if len(main_collection.children) == 1:
-        main_collection = main_collection.children[0]
-    elif len(main_collection.children) > 1:
-        instance_collections = [
-            child
-            for child in main_collection.children
-            if (
-                child.get(AVALON_PROPERTY)
-                and child[AVALON_PROPERTY].get("id") == AVALON_INSTANCE_ID
-            )
-        ]
-        if len(instance_collections) > 1:
-            instance_collections = [
-                collection
-                for collection in instance_collections
-                if collection[AVALON_PROPERTY].get("family") not in (
-                    "camera", "action", "pointcache"
-                )
-            ]
-        if len(instance_collections) == 1:
-            main_collection = instance_collections[0]
+
+    instance_collections = [
+        child
+        for child in main_collection.children
+        if (
+            child.get(AVALON_PROPERTY)
+            and child[AVALON_PROPERTY].get("id") == AVALON_INSTANCE_ID
+            and child[AVALON_PROPERTY].get("family") not in _invalid_family
+        )
+    ]
+    if len(instance_collections) == 1:
+        main_collection = instance_collections[0]
 
     return main_collection
 
@@ -309,7 +302,7 @@ def get_collections_by_objects(
 
 def link_to_collection(
     entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
-    collection: List[bpy.types.Collection]
+    collection: bpy.types.Collection
 ):
     """
     link an entity to a collection (Recursive function if entity is iterable).
@@ -336,6 +329,8 @@ def link_to_collection(
     elif (
         isinstance(entity, bpy.types.Object)
         and entity not in collection.objects.values()
+        and entity.instance_collection is not collection
+        and entity.instance_collection not in collection.children_recursive
     ):
         collection.objects.link(entity)
 
