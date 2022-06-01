@@ -27,7 +27,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     # presetable attribute
     ffmpeg_args = None
-    oiio_args = None
 
     def process(self, instance):
         self.log.info("subset {}".format(instance.data['subset']))
