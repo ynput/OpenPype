@@ -26,11 +26,6 @@ class GizmoMenu():
 
                 command = str(config['command'])
 
-                if command.find('{pipe_path}') > -1:
-                    command = command.format(
-                        pipe_path=os.environ['QUAD_PLUGIN_PATH']
-                    )
-
                 icon = config.get('icon', None)
                 if icon:
                     try:
