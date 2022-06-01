@@ -31,25 +31,6 @@ class BlendRigLoader(plugin.AssetLoader):
             and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
         )
 
-    def _process(self, libpath, asset_group):
-        # Load blend from from libpath library.
-        asset_group = self._load_blend(libpath, asset_group)
-
-        # Rename loaded collections with asset group name prefix.
-        for child in set(asset_group.children_recursive):
-            child.name = f"{asset_group.name}:{child.name}"
-            # Disable selection for modeling container.
-            if self._is_model_container:
-                child.hide_select = True
-
-        # Rename loaded objects and their dependencies with asset group name
-        # as namespace prefix.
-        self._rename_objects_with_namespace(
-            asset_group.all_objects, asset_group.name
-        )
-
-        return asset_group
-
     @staticmethod
     def _assign_actions(asset_group, namespace):
         """Assign new action for all objects from linked rig."""
@@ -161,6 +142,25 @@ class BlendRigLoader(plugin.AssetLoader):
             # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
+    def _process(self, libpath, asset_group):
+        # Load blend from from libpath library.
+        asset_group = self._load_blend(libpath, asset_group)
+
+        # Rename loaded collections with asset group name prefix.
+        for child in set(asset_group.children_recursive):
+            child.name = f"{asset_group.name}:{child.name}"
+            # Disable selection for modeling container.
+            if self._is_model_container:
+                child.hide_select = True
+
+        # Rename loaded objects and their dependencies with asset group name
+        # as namespace prefix.
+        self._rename_objects_with_namespace(
+            asset_group.all_objects, asset_group.name
+        )
+
+        return asset_group
+
     def process_asset(
         self,
         context: dict,
@@ -186,10 +186,6 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Ensure updated rig has action.
         self._assign_actions(asset_group, container["namespace"])
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)
 
     @contextlib.contextmanager
     def maintained_actions(self, asset_group):

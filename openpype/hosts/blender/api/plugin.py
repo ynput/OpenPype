@@ -555,6 +555,24 @@ class AssetLoader(LoaderPlugin):
 
         return container
 
+    @staticmethod
+    def _load_fbx(libpath, asset_group):
+
+        current_objects = set(bpy.data.objects)
+
+        bpy.ops.import_scene.fbx(filepath=libpath)
+
+        objects = set(bpy.data.objects) - current_objects
+
+        for obj in objects:
+            for collection in obj.users_collection:
+                collection.objects.unlink(obj)
+
+        link_to_collection(objects, asset_group)
+
+        orphans_purge()
+        deselect_all()
+
     def _load_blend(self, libpath, asset_group):
         """Load blend process."""
         # Load collections from libpath library.
@@ -605,19 +623,29 @@ class AssetLoader(LoaderPlugin):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        unique_number = get_unique_number(asset, subset)
-        group_name = asset_name(asset, subset, unique_number)
+        if legacy_io.Session.get("AVALON_ASSET") == asset:
+            group_name = asset_name(asset, subset)
+        else:
+            unique_number = get_unique_number(asset, subset)
+            group_name = asset_name(asset, subset, unique_number)
+            namespace = namespace or f"{asset}_{unique_number}"
 
         asset_group = bpy.data.collections.new(group_name)
+        asset_group.color_tag = self.color_tag
         get_main_collection().children.link(asset_group)
 
         self._process(libpath, asset_group)
+
+        if namespace:
+            self._rename_objects_with_namespace(
+                asset_group.all_objects, namespace
+            )
 
         self._update_metadata(
             asset_group,
             context,
             name,
-            namespace or f"{asset}_{unique_number}",
+            namespace,
             asset_name(asset, subset),
             libpath
         )
@@ -846,7 +874,7 @@ class AssetLoader(LoaderPlugin):
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
                 "name": name,
-                "namespace": namespace or '',
+                "namespace": namespace or "",
                 "loader": str(self.__class__.__name__),
                 "representation": str(context["representation"]["_id"]),
                 "libpath": libpath,
@@ -858,17 +886,17 @@ class AssetLoader(LoaderPlugin):
         )
 
     def exec_update(self, container: Dict, representation: Dict):
-        """Must be implemented by a sub-class"""
-        raise NotImplementedError("Must be implemented by a sub-class")
+        """Update the loaded asset"""
+        self._update_process(container, representation)
 
     def update(self, container: Dict, representation: Dict):
-        """ Run the update on Blender main thread"""
+        """Run the update on Blender main thread"""
         mti = MainThreadItem(self.exec_update, container, representation)
         execute_in_main_thread(mti)
 
     def exec_remove(self, container: Dict) -> bool:
-        """Must be implemented by a sub-class"""
-        raise NotImplementedError("Must be implemented by a sub-class")
+        """Remove the existing container from Blender scene"""
+        return self._remove_container(container)
 
     def remove(self, container: Dict) -> bool:
         """Run the remove on Blender main thread"""

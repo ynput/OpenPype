@@ -1,9 +1,6 @@
 """Load a camera asset in Blender."""
 
-from typing import Dict
 from contextlib import contextmanager
-
-import bpy
 
 from openpype.hosts.blender.api import plugin
 
@@ -26,22 +23,6 @@ class BlendCameraLoader(plugin.AssetLoader):
 
     def _process(self, libpath, asset_group):
         return self._load_blend(libpath, asset_group)
-
-    def process_asset(
-        self, context: dict, *args, **kwargs
-    ) -> bpy.types.Collection:
-        """Asset loading Process"""
-        asset_group = super().process_asset(context, *args, **kwargs)
-        asset_group.color_tag = self.color_tag
-        return asset_group
-
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        self._update_process(container, representation)
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)
 
     @contextmanager
     def maintained_actions(self, container):

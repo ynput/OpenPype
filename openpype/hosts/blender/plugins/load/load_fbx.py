@@ -1,15 +1,6 @@
 """Load an asset in Blender from an Alembic file."""
 
-from typing import Dict
-
-import bpy
-
-from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_PROPERTY,
-    MODEL_DOWNSTREAM,
-)
 
 
 class FbxModelLoader(plugin.AssetLoader):
@@ -26,54 +17,5 @@ class FbxModelLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_04"
 
-    @staticmethod
-    def _process(libpath, asset_group):
-
-        current_objects = set(bpy.data.objects)
-
-        bpy.ops.import_scene.fbx(filepath=libpath)
-
-        objects = set(bpy.data.objects) - current_objects
-
-        for obj in objects:
-            for collection in obj.users_collection:
-                collection.objects.unlink(obj)
-
-        plugin.link_to_collection(objects, asset_group)
-
-        plugin.orphans_purge()
-        plugin.deselect_all()
-
-    def process_asset(
-        self, context: dict, *args, **kwargs
-    ) -> bpy.types.Collection:
-        """Asset loading Process"""
-        asset_group = super().process_asset(context, *args, **kwargs)
-
-        if legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM:
-            asset = context["asset"]["name"]
-            subset = context["subset"]["name"]
-            group_name = plugin.asset_name(asset, subset)
-            asset_group.name = group_name
-            asset_group[AVALON_PROPERTY]["namespace"] = asset
-        else:
-            namespace = asset_group[AVALON_PROPERTY]["namespace"]
-            self._rename_objects_with_namespace(
-                asset_group.all_objects, namespace
-            )
-
-        return asset_group
-
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        asset_group = self._update_process(container, representation)
-
-        if legacy_io.Session.get("AVALON_TASK") not in MODEL_DOWNSTREAM:
-            self._rename_objects_with_namespace(
-                asset_group.all_objects,
-                container["namespace"] or container["objectName"],
-            )
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)
+    def _process(self, libpath, asset_group):
+        self._load_fbx(libpath, asset_group)

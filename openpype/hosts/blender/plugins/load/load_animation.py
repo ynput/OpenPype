@@ -104,17 +104,3 @@ class BlendAnimationLoader(plugin.AssetLoader):
             plugin.link_to_collection(collection, asset_group)
 
         plugin.orphans_purge()
-
-    def process_asset(self, *args, **kwargs) -> bpy.types.Collection:
-        """Asset loading Process"""
-        asset_group = super().process_asset(*args, **kwargs)
-        asset_group.color_tag = self.color_tag
-        return asset_group
-
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        self._update_process(container, representation)
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)

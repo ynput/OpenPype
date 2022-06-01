@@ -1,7 +1,5 @@
 """Load a layout in Blender."""
 
-from typing import Dict
-
 import bpy
 
 from openpype import lib
@@ -79,7 +77,11 @@ class BlendLayoutLoader(plugin.AssetLoader):
         )
 
     def _process(self, libpath, asset_group):
-        return self._load_blend(libpath, asset_group)
+        self._load_blend(libpath, asset_group)
+
+        # Make local action only if task not Lighting.
+        if legacy_io.Session.get("AVALON_TASK") != "Lighting":
+            self._make_local_actions(asset_group)
 
     def process_asset(self, context, *args, **kwargs) -> bpy.types.Collection:
         """Asset loading Process"""
@@ -95,21 +97,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
             ]
             self._create_animation_collection(rig_assets, context)
 
-        # Make local action only if task not Lighting.
-        if legacy_io.Session.get("AVALON_TASK") != "Lighting":
-            self._make_local_actions(asset_group)
-
         plugin.orphans_purge()
 
         return asset_group
-
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        asset_group = self._update_process(container, representation)
-
-        # Ensure all updated actions are local.
-        self._make_local_actions(asset_group)
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)

@@ -1,6 +1,6 @@
 """Load a model asset in Blender."""
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import bpy
 
@@ -24,30 +24,18 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_04"
 
-    def _process(self, libpath, asset_group):
-
-        # If asset_group is a Collection, we proceed with usual load blend.
-        if isinstance(asset_group, bpy.types.Collection):
-            self._load_blend(libpath, asset_group)
-
-        # If asset_group is an Empty, set instance collection with container.
-        elif isinstance(asset_group, bpy.types.Object):
-            container = self._load_library_collection(libpath)
-            asset_group.instance_collection = container
-            asset_group.instance_type = 'COLLECTION'
-
     @staticmethod
     def _apply_options(asset_group, options):
         """Apply load options fro asset_group."""
 
-        transform = options.get('transform')
-        parent = options.get('parent')
+        transform = options.get("transform")
+        parent = options.get("parent")
 
         if isinstance(asset_group, bpy.types.Object):
             if transform:
-                location = transform.get('translation')
-                rotation = transform.get('rotation')
-                scale = transform.get('scale')
+                location = transform.get("translation")
+                rotation = transform.get("rotation")
+                scale = transform.get("scale")
 
                 asset_group.location = [location[n] for n in "xyz"]
                 asset_group.rotation_euler = [rotation[n] for n in "xyz"]
@@ -77,13 +65,25 @@ class BlendModelLoader(plugin.AssetLoader):
             # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
+    def _process(self, libpath, asset_group):
+
+        # If asset_group is a Collection, we proceed with usual load blend.
+        if isinstance(asset_group, bpy.types.Collection):
+            self._load_blend(libpath, asset_group)
+
+        # If asset_group is an Empty, set instance collection with container.
+        elif isinstance(asset_group, bpy.types.Object):
+            container = self._load_library_collection(libpath)
+            asset_group.instance_collection = container
+            asset_group.instance_type = "COLLECTION"
+
     def process_asset(
         self,
         context: dict,
         name: str,
         namespace: Optional[str] = None,
         options: Optional[Dict] = None
-    ) -> bpy.types.ID:
+    ) -> Union[bpy.types.Object, bpy.types.Collection]:
         """
         Arguments:
             name: Use pre-defined name
@@ -111,7 +111,7 @@ class BlendModelLoader(plugin.AssetLoader):
             group_name = plugin.asset_name(asset, subset, unique_number)
             namespace = namespace or f"{asset}_{unique_number}"
             asset_group = bpy.data.objects.new(group_name, object_data=None)
-            asset_group.empty_display_type = 'SINGLE_ARROW'
+            asset_group.empty_display_type = "SINGLE_ARROW"
             parent_collection.objects.link(asset_group)
 
         self._process(libpath, asset_group)
@@ -126,11 +126,3 @@ class BlendModelLoader(plugin.AssetLoader):
         self[:] = plugin.get_container_objects(asset_group)
 
         return asset_group
-
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        self._update_process(container, representation)
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)

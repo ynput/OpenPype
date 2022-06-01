@@ -2,9 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
-
-import bpy
 
 from openpype.pipeline import (
     discover_loader_plugins,
@@ -25,11 +22,12 @@ class JsonLayoutLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_02"
 
-    def _get_loader(self, loaders, family):
+    @staticmethod
+    def _get_loader(loaders, family):
         name = ""
-        if family == 'rig':
+        if family == "rig":
             name = "BlendRigLoader"
-        elif family == 'model':
+        elif family == "model":
             name = "BlendModelLoader"
 
         if name == "":
@@ -41,7 +39,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
 
         return None
 
-    def _process(self, libpath, asset_group, context=None):
+    def _process(self, libpath, asset_group):
         plugin.deselect_all()
 
         with open(libpath, "r") as fp:
@@ -98,45 +96,3 @@ class JsonLayoutLoader(plugin.AssetLoader):
         #     options={"useSelection": False}
         #     # data={"dependencies": str(context["representation"]["_id"])}
         # )
-
-    def process_asset(
-        self,
-        context: dict,
-        name: str,
-        namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> bpy.types.Collection:
-        """Asset loading Process"""
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-
-        unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
-        namespace = namespace or asset
-
-        asset_group = bpy.data.collections.new(group_name)
-        asset_group.color_tag = self.color_tag
-        plugin.get_main_collection().children.link(asset_group)
-
-        self._process(libpath, asset_group, context)
-
-        self._update_metadata(
-            asset_group,
-            context,
-            name,
-            namespace or f"{asset}_{unique_number}",
-            plugin.asset_name(asset, subset),
-            libpath
-        )
-
-        self[:] = list(asset_group.all_objects)
-        return asset_group
-
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        self._update_process(container, representation)
-
-    def exec_remove(self, container) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)
