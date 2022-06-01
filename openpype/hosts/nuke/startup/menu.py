@@ -95,15 +95,21 @@ def add_scripts_gizmo():
                 "This environment variable doesn't exist: {}".format(e)
             )
 
+        existing_gizmo_path = []
         for gizmo in gizmo_path:
             try:
                 gizmo = gizmo.format(**os.environ)
-                gizmo_path.append(gizmo)
-                gizmo_path.pop(0)
             except KeyError as e:
                 log.warning(
                     "This environment variable doesn't exist: {}".format(e)
                 )
+                continue
+            if not os.path.exists(gizmo):
+                log.warning(
+                    "The source of gizmo `{}` does not exists".format(gizmo)
+                )
+                continue
+            existing_gizmo_path.append(gizmo)
 
         nuke_toolbar = nuke.menu("Nodes")
         toolbar = nuke_toolbar.addMenu(toolbar_name, icon=icon)
@@ -117,7 +123,7 @@ def add_scripts_gizmo():
         )
 
         # apply configuration
-        studio_menu.add_gizmo_path(gizmo_path)
+        studio_menu.add_gizmo_path(existing_gizmo_path)
         studio_menu.build_from_configuration(toolbar, config)
 
 
