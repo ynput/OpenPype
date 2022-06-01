@@ -1,20 +1,28 @@
 # Changelog
 
-## [3.10.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.10.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.10.0...HEAD)
 
 **🚀 Enhancements**
 
+- General: Updated windows oiio tool [\#3268](https://github.com/pypeclub/OpenPype/pull/3268)
 - TVPaint: Init file for TVPaint worker also handle guideline images [\#3250](https://github.com/pypeclub/OpenPype/pull/3250)
-- Support for Unreal 5 [\#3122](https://github.com/pypeclub/OpenPype/pull/3122)
+- Nuke: Change default icon path in settings [\#3247](https://github.com/pypeclub/OpenPype/pull/3247)
 
 **🐛 Bug fixes**
 
+- Nuke: bake reformat was failing on string type [\#3261](https://github.com/pypeclub/OpenPype/pull/3261)
+- Maya: hotfix Pxr multitexture in looks [\#3260](https://github.com/pypeclub/OpenPype/pull/3260)
 - Unreal: Fix Camera Loading if Layout is missing [\#3255](https://github.com/pypeclub/OpenPype/pull/3255)
 - Unreal: Fixed Animation loading in UE5 [\#3240](https://github.com/pypeclub/OpenPype/pull/3240)
 - Unreal: Fixed Render creation in UE5 [\#3239](https://github.com/pypeclub/OpenPype/pull/3239)
 - Unreal: Fixed Camera loading in UE5 [\#3238](https://github.com/pypeclub/OpenPype/pull/3238)
+- Flame: debugging [\#3224](https://github.com/pypeclub/OpenPype/pull/3224)
+
+**Merged pull requests:**
+
+- Nuke: add pointcache and animation to loader [\#3186](https://github.com/pypeclub/OpenPype/pull/3186)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
@@ -25,7 +33,6 @@
 - General: OpenPype modules publish plugins are registered in host [\#3180](https://github.com/pypeclub/OpenPype/pull/3180)
 - General: Creator plugins from addons can be registered [\#3179](https://github.com/pypeclub/OpenPype/pull/3179)
 - Ftrack: Single image reviewable [\#3157](https://github.com/pypeclub/OpenPype/pull/3157)
-- Nuke: Expose write attributes to settings [\#3123](https://github.com/pypeclub/OpenPype/pull/3123)
 
 **🚀 Enhancements**
 
@@ -45,8 +52,6 @@
 - Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
 - Publisher: UI Modifications and fixes [\#3139](https://github.com/pypeclub/OpenPype/pull/3139)
 - General: Simplified OP modules/addons import [\#3137](https://github.com/pypeclub/OpenPype/pull/3137)
-- Terminal: Tweak coloring of TrayModuleManager logging enabled states [\#3133](https://github.com/pypeclub/OpenPype/pull/3133)
-- General: Cleanup some Loader docstrings [\#3131](https://github.com/pypeclub/OpenPype/pull/3131)
 
 **🐛 Bug fixes**
 
@@ -70,17 +75,18 @@
 - General: Oiio conversion for ffmpeg checks for invalid characters [\#3166](https://github.com/pypeclub/OpenPype/pull/3166)
 - Fix for attaching render to subset [\#3164](https://github.com/pypeclub/OpenPype/pull/3164)
 - Harmony: fixed missing task name in render instance [\#3163](https://github.com/pypeclub/OpenPype/pull/3163)
+- add silent audio to slate [\#3162](https://github.com/pypeclub/OpenPype/pull/3162)
 - Ftrack: Action delete old versions formatting works [\#3152](https://github.com/pypeclub/OpenPype/pull/3152)
+- nuke: adding extract thumbnail settings [\#3148](https://github.com/pypeclub/OpenPype/pull/3148)
 - Deadline: fix the output directory [\#3144](https://github.com/pypeclub/OpenPype/pull/3144)
 - General: New Session schema [\#3141](https://github.com/pypeclub/OpenPype/pull/3141)
 - General: Missing version on headless mode crash properly [\#3136](https://github.com/pypeclub/OpenPype/pull/3136)
 - TVPaint: Composite layers in reversed order [\#3135](https://github.com/pypeclub/OpenPype/pull/3135)
-- Nuke: fix anatomy imageio regex default [\#3119](https://github.com/pypeclub/OpenPype/pull/3119)
+- TVPaint: Composite layers in reversed order [\#3134](https://github.com/pypeclub/OpenPype/pull/3134)
 
 **🔀 Refactored code**
 
 - Avalon repo removed from Jobs workflow [\#3193](https://github.com/pypeclub/OpenPype/pull/3193)
-- General: Remove remaining imports from avalon [\#3130](https://github.com/pypeclub/OpenPype/pull/3130)
 
 **Merged pull requests:**
 
@@ -128,7 +134,6 @@
 **🐛 Bug fixes**
 
 - Ftrack: Action delete old versions formatting works [\#3154](https://github.com/pypeclub/OpenPype/pull/3154)
-- nuke: adding extract thumbnail settings [\#3148](https://github.com/pypeclub/OpenPype/pull/3148)
 
 **Merged pull requests:**
 
@@ -137,14 +142,6 @@
 ## [3.9.6](https://github.com/pypeclub/OpenPype/tree/3.9.6) (2022-05-03)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.5...3.9.6)
-
-**🆕 New features**
-
-- Nuke: render instance with subset name filtered overrides \(3.9.x\) [\#3125](https://github.com/pypeclub/OpenPype/pull/3125)
-
-**🐛 Bug fixes**
-
-- TVPaint: Composite layers in reversed order [\#3134](https://github.com/pypeclub/OpenPype/pull/3134)
 
 ## [3.9.5](https://github.com/pypeclub/OpenPype/tree/3.9.5) (2022-04-25)
 
