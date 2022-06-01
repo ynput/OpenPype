@@ -115,19 +115,20 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # Try to use FFMPEG if OIIO is not supported (for cases when oiiotool 
         # isn't available)
         if not is_oiio_supported():
-            thumbnail_created = self.create_thumbnail_ffmpeg(src_path, dst_path)
+            thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path)
         else:
             # Check if the file can be read by OIIO
             args = [
-                oiiotool_path, "--info", "-i", src_path
+                oiio_tool_path, "--info", "-i", full_output_path
             ]
             returncode = execute(args, silent=True)
-            # If the input can read by OIIO then use OIIO method for conversion otherwise use ffmpeg
+            # If the input can read by OIIO then use OIIO method for
+            # conversion otherwise use ffmpeg
             if returncode == 0:
                 
-                thumbnail_created = self.create_thumbnail_oiio(src_path, dst_path)  
+                thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
             else:
-                thumbnail_created = self.create_thumbnail_ffmpeg(src_path, dst_path)
+                thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
 
         # Skip the rest of the process if the thumbnail wasn't created
         if not thumbnail_created:
@@ -166,7 +167,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filtered_repres.append(repre)
         return filtered_repres
 
-    def create_thumbnail_oiio(self, instance, src_path, dst_path):
+    def create_thumbnail_oiio(self, src_path, dst_path):
         oiio_tool_path = get_oiio_tools_path()
         args = [oiio_tool_path]
         oiio_cmd = [oiio_tool_path,
@@ -183,21 +184,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         if failed_output in output:
             raise ValueError(
                 "oiiotool processing failed. Args: {}".format(args)) # noqa
-        new_repre = {
-            "name": "thumbnail",
-            "ext": "jpg",
-            "files": jpeg_file,
-            "stagingDir": stagingdir,
-            "thumbnail": True,
-            "tags": ["thumbnail"]
-        }
-        # adding representation
-        self.log.debug("Adding: {}".format(new_repre))
-        instance.data["representations"].append(new_repre)
-
-        # Create only one representation with name 'thumbnail'
-        # TODO maybe handle way how to decide from which repre
-        # will be thumbnail created
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.info("output {}".format(dst_path))
@@ -217,14 +203,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         jpeg_items.extend(ffmpeg_args.get("input") or [])
         # input file
         jpeg_items.append("-i {}".format(
-            path_to_subprocess_arg(full_input_path)
+            path_to_subprocess_arg(src_path)
         ))
         # output arguments from presets
         jpeg_items.extend(ffmpeg_args.get("output") or [])
         # we just want one frame from movie files
         jpeg_items.append("-vframes 1")
         # output file
-        jpeg_items.append(path_to_subprocess_arg(full_output_path))
+        jpeg_items.append(path_to_subprocess_arg(src_path))
         subprocess_command = " ".join(jpeg_items)
 
         # run subprocess
