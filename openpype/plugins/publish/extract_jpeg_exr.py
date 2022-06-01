@@ -13,6 +13,8 @@ from openpype.lib import (
     filter_profiles,
     run_subprocess,
     path_to_subprocess_arg,
+
+    execute,
 )
 
 
@@ -46,9 +48,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         if not profile:
             return
 
-        
-        # Raise an exception when oiiotool is not available
-
         self.log.info("subset {}".format(instance.data['subset']))
 
         # skip crypto passes.
@@ -67,7 +66,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             return
 
         filtered_repres = self._get_filtered_repres(instance)
-
         for repre in filtered_repres:
             # Presumably the following is not needed since we are being
             # explicit
@@ -112,61 +110,42 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             jpeg_file = filename + "jpg"
             full_output_path = os.path.join(stagingdir, jpeg_file)
             # If it's a movie file, use ffmpeg
-            if repre["ext"] == "mov":
-                self.log.info("output {}".format(full_output_path))
 
-                ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-                ffmpeg_args = self.ffmpeg_args or {}
+        thumbnail_created = False
+        # Try to use FFMPEG if OIIO is not supported (for cases when oiiotool 
+        # isn't available)
+        if not is_oiio_supported():
+            thumbnail_created = self.create_thumbnail_ffmpeg(src_path, dst_path)
+        else:
+            # Check if the file can be read by OIIO
+            args = [
+                oiiotool_path, "--info", "-i", src_path
+            ]
+            returncode = execute(args, silent=True)
+            # If the input can read by OIIO then use OIIO method for conversion otherwise use ffmpeg
+            if returncode == 0:
+                
+                thumbnail_created = self.create_thumbnail_oiio(src_path, dst_path)  
+            else:
+                thumbnail_created = self.create_thumbnail_ffmpeg(src_path, dst_path)
 
-                jpeg_items = []
-                jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
-                # override file if already exists
-                jpeg_items.append("-y")
-                # flag for large file sizes
-                max_int = 2147483647
-                jpeg_items.append("-analyzeduration {}".format(max_int))
-                jpeg_items.append("-probesize {}".format(max_int))
-                # use same input args like with mov
-                jpeg_items.extend(ffmpeg_args.get("input") or [])
-                # input file
-                jpeg_items.append("-i {}".format(
-                    path_to_subprocess_arg(full_input_path)
-                ))
-                # output arguments from presets
-                jpeg_items.extend(ffmpeg_args.get("output") or [])
-                # we just want one frame from movie files
-                jpeg_items.append("-vframes 1")
-                # output file
-                jpeg_items.append(path_to_subprocess_arg(full_output_path))
-                subprocess_command = " ".join(jpeg_items)
+        # Skip the rest of the process if the thumbnail wasn't created
+        if not thumbnail_created:
 
-                # run subprocess
-                self.log.debug("{}".format(subprocess_command))
-                try:  # temporary until oiiotool is supported cross platform
-                    run_subprocess(
-                        subprocess_command, shell=True, logger=self.log
-                    )
-                except RuntimeError as exp:
-                    if "Compression" in str(exp):
-                        self.log.debug(
-                            "Unsupported compression on input files. Skipping!"
-                        )
-                        return
-                    self.log.warning("Conversion crashed", exc_info=True)
-                    raise
+            return
 
-                new_repre = {
-                    "name": "thumbnail",
-                    "ext": "jpg",
-                    "files": jpeg_file,
-                    "stagingDir": stagingdir,
-                    "thumbnail": True,
-                    "tags": ["thumbnail"]
-                }
-                # adding representation
-                self.log.debug("Adding: {}".format(new_repre))
-                instance.data["representations"].append(new_repre)
-            
+        new_repre = {
+                "name": "thumbnail",
+                "ext": "jpg",
+                "files": jpeg_file,
+                "stagingDir": stagingdir,
+                "thumbnail": True,
+                "tags": ["thumbnail"]
+            }
+
+        # adding representation
+        self.log.debug("Adding: {}".format(new_repre))
+        instance.data["representations"].append(new_repre)
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
@@ -188,11 +167,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def create_thumbnail_oiio(self, instance, src_path, dst_path):
-        oiio_path = get_oiio_tools_path()
-        if not os.path.exists(oiio_path):
-            KnownPublishError(
-                "OpenImageIO tool is not available on this machine."
-            )
+        oiio_tool_path = get_oiio_tools_path()
         args = [oiio_tool_path]
         oiio_cmd = [oiio_tool_path,
                     src_path, "-o",
@@ -202,12 +177,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         self.log.info(f"running: {subprocess_exr}")
         run_subprocess(subprocess_exr, logger=self.log)
 
-        # raise error if there is no ouptput
-        if not os.path.exists(src_path):
-            self.log.error(
-                ("File {} was not converted "
-                    "by oiio tool!").format(src_path))
-            raise AssertionError("OIIO tool conversion failed")
+        # raise an error if there's no output
         failed_output = "oiiotool produced no output."
         output = run_subprocess(args)
         if failed_output in output:
@@ -230,7 +200,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # will be thumbnail created
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
-        self.log.info("output {}".format(full_output_path))
+        self.log.info("output {}".format(dst_path))
 
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
