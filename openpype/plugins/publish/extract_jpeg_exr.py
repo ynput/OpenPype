@@ -3,7 +3,6 @@ import os
 import pyblish.api
 from openpype.pipeline import (
     legacy_io,
-    KnownPublishError
 )
 from openpype.lib import (
     get_ffmpeg_tool_path,
@@ -83,15 +82,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 filename += "."
             jpeg_file = filename + "jpg"
             full_output_path = os.path.join(stagingdir, jpeg_file)
-            # If it's a movie file, use ffmpeg
 
             thumbnail_created = False
             # Try to use FFMPEG if OIIO is not supported (for cases when
             # oiiotool isn't available)
             if not is_oiio_supported():
-                thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path)
+                thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
             else:
                 # Check if the file can be read by OIIO
+                oiio_tool_path = get_oiio_tools_path()
                 args = [
                     oiio_tool_path, "--info", "-i", full_output_path
                 ]
@@ -99,9 +98,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
                 if returncode == 0:
-                    
+                    self.log.info("Input can be read by OIIO, converting with oiiotool now.")
                     thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
                 else:
+                    self.log.info("converting with")
                     thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
 
             # Skip the rest of the process if the thumbnail wasn't created
@@ -142,6 +142,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def create_thumbnail_oiio(self, src_path, dst_path):
+        self.log.info("outputting {}".format(dst_path))
         oiio_tool_path = get_oiio_tools_path()
         oiio_cmd = [oiio_tool_path,
                     src_path, "-o",
@@ -152,7 +153,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         run_subprocess(subprocess_exr, logger=self.log)
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
-        self.log.info("output {}".format(dst_path))
+        self.log.info("outputting {}".format(dst_path))
 
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
