@@ -24,7 +24,7 @@ class GizmoMenu():
                 config = {key: value for key, value in
                           item.items() if key != "type"}
 
-                command = config['command']
+                command = str(config['command'])
 
                 if command.find('{pipe_path}') > -1:
                     command = command.format(

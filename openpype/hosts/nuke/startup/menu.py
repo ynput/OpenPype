@@ -71,6 +71,9 @@ def add_scripts_gizmo():
         )
         return
 
+    # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+
     for gizmo in project_settings["nuke"]["gizmo"]:
         config = gizmo["gizmo_definition"]
         toolbar_name = gizmo["toolbar_menu_name"]
@@ -88,7 +91,9 @@ def add_scripts_gizmo():
         try:
             icon = icon.format(**os.environ)
         except KeyError as e:
-            log.warning(f"This environment variable doesn't exist: {e}")
+            log.warning(
+                "This environment variable doesn't exist: {}".format(e)
+            )
 
         for gizmo in gizmo_path:
             try:
@@ -96,7 +101,9 @@ def add_scripts_gizmo():
                 gizmo_path.append(gizmo)
                 gizmo_path.pop(0)
             except KeyError as e:
-                log.warning(f"This environment variable doesn't exist: {e}")
+                log.warning(
+                    "This environment variable doesn't exist: {}".format(e)
+                )
 
         nuke_toolbar = nuke.menu("Nodes")
         toolbar = nuke_toolbar.addMenu(toolbar_name, icon=icon)
