@@ -292,7 +292,7 @@
     "nukex": {
         "enabled": true,
         "label": "Nuke X",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukex.png",
         "host_name": "nuke",
         "environment": {
             "NUKE_PATH": [
@@ -431,7 +431,7 @@
     "nukestudio": {
         "enabled": true,
         "label": "Nuke Studio",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukestudio.png",
         "host_name": "hiero",
         "environment": {
             "WORKFILES_STARTUP": "0",
