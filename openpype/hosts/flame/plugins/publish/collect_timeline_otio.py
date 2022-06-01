@@ -39,7 +39,8 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
                 "name": subset_name,
                 "asset": asset_doc["name"],
                 "subset": subset_name,
-                "family": "workfile"
+                "family": "workfile",
+                "families": []
             }
 
             # create instance with workfile
