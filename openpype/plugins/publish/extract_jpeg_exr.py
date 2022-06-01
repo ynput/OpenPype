@@ -1,15 +1,11 @@
 import os
 
 import pyblish.api
-from openpype.pipeline import (
-    legacy_io,
-)
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_oiio_tools_path,
     is_oiio_supported,
 
-    filter_profiles,
     run_subprocess,
     path_to_subprocess_arg,
 
@@ -34,19 +30,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     oiio_args = None
 
     def process(self, instance):
-        task_name = instance.data.get("task", legacy_io.Session["AVALON_TASK"])
-        host_name = legacy_io.Session["AVALON_APP"]
-        family = instance.data["family"]
-        filtering_criteria = {
-            "hosts": host_name,
-            "families": family,
-            "tasks": task_name
-        }
-        profile = filter_profiles(self.profiles, filtering_criteria,
-                                  logger=self.log)
-        if not profile:
-            return
-
         self.log.info("subset {}".format(instance.data['subset']))
 
         # skip crypto passes.

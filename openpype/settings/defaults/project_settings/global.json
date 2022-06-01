@@ -40,17 +40,7 @@
                     "-apply_trc gamma22"
                 ],
                 "output": []
-            },
-            "thumbnail_extraction_profiles": [
-                {
-                    "families": [
-                        ""
-                    ],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": []
-                }
-            ]
+            }
         },
         "ExtractReview": {
             "enabled": true,
