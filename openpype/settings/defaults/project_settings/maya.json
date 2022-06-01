@@ -8,6 +8,7 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
+        "use_env_var_as_root": true,
         "enabled": false,
         "paths": {
             "source-path": [],
