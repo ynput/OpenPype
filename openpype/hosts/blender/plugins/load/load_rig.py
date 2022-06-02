@@ -144,7 +144,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
     def _process(self, libpath, asset_group):
         # Load blend from from libpath library.
-        asset_group = self._load_blend(libpath, asset_group)
+        self._load_blend(libpath, asset_group)
 
         # Rename loaded collections with asset group name prefix.
         for child in set(asset_group.children_recursive):

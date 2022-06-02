@@ -20,6 +20,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
     label = "Link Action"
     icon = "code-fork"
     color = "orange"
+    color_tag = "COLOR_01"
 
     @staticmethod
     def _get_action(asset_group: bpy.types.Collection):

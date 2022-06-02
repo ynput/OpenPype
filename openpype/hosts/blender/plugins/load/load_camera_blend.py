@@ -22,7 +22,7 @@ class BlendCameraLoader(plugin.AssetLoader):
     color_tag = "COLOR_05"
 
     def _process(self, libpath, asset_group):
-        return self._load_blend(libpath, asset_group)
+        self._load_blend(libpath, asset_group)
 
     @contextmanager
     def maintained_actions(self, container):

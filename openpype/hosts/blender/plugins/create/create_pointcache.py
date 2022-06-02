@@ -10,3 +10,4 @@ class CreatePointcache(plugin.Creator):
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
+    color_tag = "COLOR_04"

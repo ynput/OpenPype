@@ -13,6 +13,7 @@ class CreateAction(plugin.Creator):
     label = "Action"
     family = "action"
     icon = "male"
+    color_tag = "COLOR_01"
 
     def process(self):
 
@@ -31,6 +32,7 @@ class CreateAction(plugin.Creator):
                     empty = bpy.data.objects.new(
                         name=container.name, object_data=None
                     )
+                    empty.hide_viewport = True
                     empty.animation_data_create()
                     empty.animation_data.action = obj.animation_data.action
                     empty.animation_data.action.name = container.name
