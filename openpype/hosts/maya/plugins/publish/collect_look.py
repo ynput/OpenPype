@@ -601,6 +601,9 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                      source,
                                                      computed_source))
 
+            if not source:
+                self.log.info("source is empty, skipping...")
+                continue
             # We replace backslashes with forward slashes because V-Ray
             # can't handle the UDIM files with the backslashes in the
             # paths as the computed patterns
