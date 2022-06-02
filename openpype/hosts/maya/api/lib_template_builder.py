@@ -40,33 +40,37 @@ def create_placeholder():
     placeholder_name = create_placeholder_name(args, options)
 
     selection = cmds.ls(selection=True)
-    placeholder = cmds.spaceLocator(name=placeholder_name.capitalize())[0]
+    placeholder = cmds.spaceLocator(name=placeholder_name)[0]
+
+    # get the long name of the placeholder (with the groups)
+    placeholder_full_name = cmds.ls(selection[0], long=True)[0] + '|' + placeholder.replace('|', '')
 
     if selection:
         cmds.parent(placeholder, selection[0])
 
-    imprint(placeholder, options)
+    imprint(placeholder_full_name, options)
+
     # Some tweaks because imprint force enums to to default value so we get
     # back arg read and force them to attributes
-    imprint_enum(placeholder, args)
+    imprint_enum(placeholder_full_name, args)
 
     # Add helper attributes to keep placeholder info
     cmds.addAttr(
-        placeholder,
+        placeholder_full_name,
         longName="parent",
-        hidden=False,
+        hidden=True,
         dataType="string"
     )
     cmds.addAttr(
-        placeholder,
+        placeholder_full_name,
         longName="index",
-        hidden=False,
+        hidden=True,
         attributeType="short",
         defaultValue=-1
     )
 
     parents = cmds.ls(selection[0], long=True)
-    cmds.setAttr(placeholder + '.parent', parents[0], type="string")
+    cmds.setAttr(placeholder_full_name + '.parent', parents[0], type="string")
 
 
 def create_placeholder_name(args, options):
@@ -75,7 +79,10 @@ def create_placeholder_name(args, options):
     ][0]
     placeholder_family = options['family']
     placeholder_name = placeholder_builder_type.split('_')
-    placeholder_name.insert(1, placeholder_family)
+
+    # add famlily in any
+    if placeholder_family:
+        placeholder_name.insert(1, placeholder_family)
 
     # add loader arguments if any
     if options['loader_args']:
@@ -85,9 +92,10 @@ def create_placeholder_name(args, options):
         values = [v for v in loader_args.values()]
         for i in range(len(values)):
             placeholder_name.insert(i + pos, values[i])
+
     placeholder_name = '_'.join(placeholder_name)
 
-    return placeholder_name
+    return placeholder_name.capitalize()
 
 
 def update_placeholder():
@@ -112,13 +120,13 @@ def update_placeholder():
     cmds.addAttr(
         placeholder,
         longName="parent",
-        hidden=False,
+        hidden=True,
         dataType="string"
     )
     cmds.addAttr(
         placeholder,
         longName="index",
-        hidden=False,
+        hidden=True,
         attributeType="short",
         defaultValue=-1
     )
