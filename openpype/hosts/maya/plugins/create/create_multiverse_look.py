@@ -1,4 +1,4 @@
-from openpype.hosts.maya.api import plugin, lib
+from openpype.hosts.maya.api import plugin
 
 
 class CreateMultiverseLook(plugin.Creator):
