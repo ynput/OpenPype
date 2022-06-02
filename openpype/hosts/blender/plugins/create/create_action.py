@@ -2,12 +2,11 @@
 
 import bpy
 
-from openpype.pipeline import legacy_io
-import openpype.hosts.blender.api.plugin
-from openpype.hosts.blender.api import lib
+from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.lib import get_selection
 
 
-class CreateAction(openpype.hosts.blender.api.plugin.Creator):
+class CreateAction(plugin.Creator):
     """Action output for character rigs"""
 
     name = "actionMain"
@@ -17,24 +16,24 @@ class CreateAction(openpype.hosts.blender.api.plugin.Creator):
 
     def process(self):
 
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = openpype.hosts.blender.api.plugin.asset_name(asset, subset)
-        collection = bpy.data.collections.new(name=name)
-        bpy.context.scene.collection.children.link(collection)
-        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
-        lib.imprint(collection, self.data)
+        use_selection = False
+        if self.options:
+            use_selection = self.options.pop("useSelection", False)
 
-        if (self.options or {}).get("useSelection"):
-            for obj in lib.get_selection():
-                if (obj.animation_data is not None
-                        and obj.animation_data.action is not None):
+        container = super()._process()
 
-                    empty_obj = bpy.data.objects.new(name=name,
-                                                     object_data=None)
-                    empty_obj.animation_data_create()
-                    empty_obj.animation_data.action = obj.animation_data.action
-                    empty_obj.animation_data.action.name = name
-                    collection.objects.link(empty_obj)
+        if use_selection:
+            for obj in get_selection():
+                if (
+                    obj.animation_data is not None
+                    and obj.animation_data.action is not None
+                ):
+                    empty = bpy.data.objects.new(
+                        name=container.name, object_data=None
+                    )
+                    empty.animation_data_create()
+                    empty.animation_data.action = obj.animation_data.action
+                    empty.animation_data.action.name = container.name
+                    container.objects.link(empty)
 
-        return collection
+        return container

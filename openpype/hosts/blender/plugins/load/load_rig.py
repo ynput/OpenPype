@@ -170,7 +170,6 @@ class BlendRigLoader(plugin.AssetLoader):
     ) -> bpy.types.Collection:
         """Asset loading Process"""
         asset_group = super().process_asset(context, name, namespace)
-        asset_group.color_tag = self.color_tag
 
         namespace = asset_group[AVALON_PROPERTY]["namespace"]
         self._assign_actions(asset_group, namespace)

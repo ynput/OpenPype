@@ -86,7 +86,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
     def process_asset(self, context, *args, **kwargs) -> bpy.types.Collection:
         """Asset loading Process"""
         asset_group = super().process_asset(context, *args, **kwargs)
-        asset_group.color_tag = self.color_tag
 
         # Create animation collection subset for loaded rig asset groups.
         if legacy_io.Session.get("AVALON_TASK") == "Animation":
