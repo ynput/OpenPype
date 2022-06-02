@@ -1,5 +1,6 @@
 import os
 import re
+import tempfile
 from pprint import pformat
 from copy import deepcopy
 
@@ -420,3 +421,28 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 "Path `{}` is containing more that one clip".format(path)
             )
         return clips[0]
+
+    def staging_dir(self, instance):
+        """Provide a temporary directory in which to store extracted files
+
+        Upon calling this method the staging directory is stored inside
+        the instance.data['stagingDir']
+        """
+        staging_dir = instance.data.get('stagingDir', None)
+        openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
+
+        if not staging_dir:
+            if openpype_temp_dir and os.path.exists(openpype_temp_dir):
+                staging_dir = os.path.normpath(
+                    tempfile.mkdtemp(
+                        prefix="pyblish_tmp_",
+                        dir=openpype_temp_dir
+                    )
+                )
+            else:
+                staging_dir = os.path.normpath(
+                    tempfile.mkdtemp(prefix="pyblish_tmp_")
+                )
+            instance.data['stagingDir'] = staging_dir
+
+        return staging_dir
