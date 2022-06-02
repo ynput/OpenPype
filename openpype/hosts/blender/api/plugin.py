@@ -508,15 +508,17 @@ class AssetLoader(LoaderPlugin):
                 return collection
 
     @staticmethod
-    def _rename_objects_with_namespace(
-        objects: List[bpy.types.Object],
+    def _rename_with_namespace(
+        asset_group: bpy.types.Collection,
         namespace: str
     ):
-        """Rename objects and their dependencies and with namespace prefix."""
+        """Rename all objects and child collections from asset_group and
+        their dependencies with namespace prefix.
+        """
         materials = set()
         objects_data = set()
 
-        for obj in objects:
+        for obj in asset_group.all_objects:
             obj.name = f"{namespace}:{obj.name}"
             if obj.data:
                 objects_data.add(obj.data)
@@ -538,6 +540,9 @@ class AssetLoader(LoaderPlugin):
 
         for material in materials:
             material.name = f"{namespace}:{material.name}"
+
+        for child in asset_group.children_recursive:
+            child.name = f"{namespace}:{child.name}"
 
     def _load_library_collection(self, libpath: str) -> bpy.types.Collection:
         """Load library from libpath and return the valid collection."""
@@ -625,6 +630,7 @@ class AssetLoader(LoaderPlugin):
 
         if legacy_io.Session.get("AVALON_ASSET") == asset:
             group_name = asset_name(asset, subset)
+            namespace = ""
         else:
             unique_number = get_unique_number(asset, subset)
             group_name = asset_name(asset, subset, unique_number)
@@ -637,9 +643,7 @@ class AssetLoader(LoaderPlugin):
         self._process(libpath, asset_group)
 
         if namespace:
-            self._rename_objects_with_namespace(
-                asset_group.all_objects, namespace
-            )
+            self._rename_with_namespace(asset_group, namespace)
 
         self._update_metadata(
             asset_group,

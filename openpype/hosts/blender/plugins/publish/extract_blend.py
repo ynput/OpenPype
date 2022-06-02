@@ -1,11 +1,11 @@
-from importlib import import_module
 import os
 
 import bpy
 from bson.objectid import ObjectId
 
 import openpype.api
-from openpype.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import discover_loader_plugins, AVALON_CONTAINER_ID
+from openpype.pipeline.load.utils import loaders_from_repre_context
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
@@ -20,6 +20,20 @@ class ExtractBlend(openpype.api.Extractor):
     hosts = ["blender"]
     families = ["model", "camera", "rig", "action", "layout", "setdress"]
     optional = True
+
+    @staticmethod
+    def _get_loader_from_instance(instance):
+        all_loaders = discover_loader_plugins()
+        context = {
+            "subset": {"schema": "openpype:container-2.0"},
+            "version": {"data": {"families": [instance.data["family"]]}},
+            "representation": {"name": "blend"},
+        }
+        loaders = loaders_from_repre_context(all_loaders, context)
+
+        assert loaders, f"No loader modules found for {instance.name}"
+
+        return loaders[0]
 
     @staticmethod
     def _pack_images_from_objects(objects):
@@ -81,8 +95,10 @@ class ExtractBlend(openpype.api.Extractor):
         # Create ID to allow blender import without using OP tools
         repre_id = str(ObjectId())
 
+        # Get Loader module from instance
+        loader_module = self._get_loader_from_instance(instance)
+
         # Add container metadata to collection
-        instance_family = instance.data["family"]
         metadata_update(
             instance_collection,
             {
@@ -90,13 +106,7 @@ class ExtractBlend(openpype.api.Extractor):
                 "id": AVALON_CONTAINER_ID,
                 "name": instance.name,
                 "namespace": instance.data.get("namespace", ""),
-                "loader": getattr(
-                    import_module(
-                        "openpype.hosts.blender.plugins"
-                        f".load.load_{instance_family}"
-                    ),
-                    f"Blend{instance_family.capitalize()}Loader",
-                ).__name__,
+                "loader": loader_module.__name__,
                 "representation": repre_id,
                 "libpath": filepath,
                 "asset_name": instance.name,

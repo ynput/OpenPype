@@ -146,18 +146,10 @@ class BlendRigLoader(plugin.AssetLoader):
         # Load blend from from libpath library.
         self._load_blend(libpath, asset_group)
 
-        # Rename loaded collections with asset group name prefix.
+        # Disable selection for modeling container.
         for child in set(asset_group.children_recursive):
-            child.name = f"{asset_group.name}:{child.name}"
-            # Disable selection for modeling container.
             if self._is_model_container:
                 child.hide_select = True
-
-        # Rename loaded objects and their dependencies with asset group name
-        # as namespace prefix.
-        self._rename_objects_with_namespace(
-            asset_group.all_objects, asset_group.name
-        )
 
         return asset_group
 
