@@ -166,12 +166,12 @@ def install():
         cmds.menuItem(
             "Build Workfile from template",
             parent=builder_menu,
-            command=lambda *args: build_workfile_template()
+            command=build_workfile_template
         )
         cmds.menuItem(
             "Update Workfile from template",
             parent=builder_menu,
-            command=lambda *args: update_workfile_template()
+            command=update_workfile_template
         )
 
         cmds.setParent(MENU_NAME, menu=True)
