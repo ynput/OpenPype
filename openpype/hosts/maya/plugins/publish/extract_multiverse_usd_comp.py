@@ -7,7 +7,21 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseUsdComposition(openpype.api.Extractor):
-    """Extractor of Multiverse USD Composition."""
+    """Extractor of Multiverse USD Composition data.
+
+    This will extract settings for a Multiverse Write Composition operation:
+    they are visible in the Maya set node created by a Multiverse USD
+    Composition instance creator.
+
+    The input data contained in the set is either:
+
+    - a single hierarchy consisting of several Multiverse Compound nodes, with
+      any number of layers, and Maya transform nodes
+    - a single Compound node with more than one layer (in this case the "Write
+      as Compound Layers" option should be set).
+
+    Upon publish a .usda composition file will be written.
+    """
 
     label = "Extract Multiverse USD Composition"
     hosts = ["maya"]

@@ -7,7 +7,31 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseLook(openpype.api.Extractor):
-    """Extractor for Multiverse USD look data into a Maya Scene."""
+    """Extractor for Multiverse USD look data.
+
+    This will extract:
+
+    - the shading networks that are assigned in MEOW as Maya material overrides
+      to a Multiverse Compound
+    - settings for a Multiverse Write Override operation.
+
+    Relevant settings are visible in the Maya set node created by a Multiverse
+    USD Look instance creator.
+
+    The input data contained in the set is:
+
+    - a single Multiverse Compound node with any number of Maya material
+      overrides (typically set in MEOW)
+
+    Upon publish two files will be written:
+
+    - a .usda override file containing material assignment information
+    - a .ma file containing shading networks
+
+    Note: when layering the material assignment override on a loaded Compound,
+          remember to set a matching attribute override with the namespace of
+          the loaded compound in order for the material assignment to resolve.
+    """
 
     label = "Extract Multiverse USD Look"
     hosts = ["maya"]
