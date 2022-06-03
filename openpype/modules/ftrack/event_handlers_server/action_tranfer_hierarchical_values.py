@@ -153,12 +153,17 @@ class TransferHierarchicalValues(ServerAction):
         delete_dst_values = values["delete_dst_attr_first"]
 
         if not src_attr_id or not dst_attr_id:
+            self.log.info("Attributes were not filled. Nothing to do.")
             return {
                 "success": True,
                 "message": "Nothing to do"
             }
 
         if src_attr_id == dst_attr_id:
+            self.log.info((
+                "Same attributes were selected {}, {}."
+                " Showing interface again."
+            ).format(src_attr_id, dst_attr_id))
             return self._selection_interface(session, values)
 
         # Query custom attrbutes
@@ -188,6 +193,10 @@ class TransferHierarchicalValues(ServerAction):
                 valid = True
 
             if not valid:
+                self.log.info((
+                    "Don't know how to properly convert"
+                    " custom attribute types {} > {}"
+                ).format(src_type_name, dst_type_name))
                 return {
                     "message": (
                         "Don't know how to properly convert"
@@ -205,20 +214,26 @@ class TransferHierarchicalValues(ServerAction):
             ).format(src_attr_id)
         ).all()
 
-        value_by_id = {}
+        self.log.debug("Queried source values.")
         failed_entity_ids = []
-        for attr_value in src_attr_values:
-            entity_id = attr_value["entity_id"]
-            value = attr_value["value"]
-            if value is not None:
-                try:
-                    if dst_type is not None:
-                        value = dst_type(value)
-                    value_by_id[entity_id] = value
-                except Exception:
-                    failed_entity_ids.append(entity_id)
+        if dst_type is not None:
+            self.log.debug("Converting source values to desctination type")
+            value_by_id = {}
+            for attr_value in src_attr_values:
+                entity_id = attr_value["entity_id"]
+                value = attr_value["value"]
+                if value is not None:
+                    try:
+                        if dst_type is not None:
+                            value = dst_type(value)
+                        value_by_id[entity_id] = value
+                    except Exception:
+                        failed_entity_ids.append(entity_id)
 
         if failed_entity_ids:
+            self.log.info(
+                "Couldn't convert some values to destination attribute"
+            )
             return {
                 "success": False,
                 "message": (
@@ -232,6 +247,7 @@ class TransferHierarchicalValues(ServerAction):
             self.log.info("Deleting destination custom attribute values first")
             self._delete_custom_attribute_values(session, dst_attr_id)
 
+        self.log.info("Applying source values on destination custom attribute")
         self._apply_values(session, value_by_id, dst_attr_id)
         return True
 
