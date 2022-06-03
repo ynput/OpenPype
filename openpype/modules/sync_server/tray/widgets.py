@@ -580,8 +580,6 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
     )
 
     def __init__(self, sync_server, project=None, parent=None):
-        import time
-        log.info("SyncRepresentationSummaryWidget start")
         super(SyncRepresentationSummaryWidget, self).__init__(parent)
 
         self.sync_server = sync_server
@@ -603,11 +601,8 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
-        start_time = time.time()
         model = SyncRepresentationSummaryModel(sync_server, headers, project,
                                                parent=self)
-        log.info("SyncRepresentationSummaryModel:: {}".format(time.time() - start_time))
-        start_time = time.time()
         table_view.setModel(model)
         table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         table_view.setSelectionMode(
@@ -631,8 +626,6 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         column = table_view.model().get_header_index("priority")
         priority_delegate = delegates.PriorityDelegate(self)
         table_view.setItemDelegateForColumn(column, priority_delegate)
-        log.info("SyncRepresentationSummaryWidget.2:: {}".format(time.time() - start_time))
-        start_time = time.time()
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_bar_layout)
@@ -640,35 +633,22 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
 
         self.table_view = table_view
         self.model = model
-        log.info("SyncRepresentationSummaryWidget.3:: {}".format(time.time() - start_time))
-        start_time = time.time()
         horizontal_header = HorizontalHeader(self)
-        log.info("SyncRepresentationSummaryWidget.4:: {}".format(time.time() - start_time))
-        start_time = time.time()
         table_view.setHorizontalHeader(horizontal_header)
-        log.info("SyncRepresentationSummaryWidget.4.1:: {}".format(time.time() - start_time))
-        start_time = time.time()
         table_view.setSortingEnabled(True)
-        log.info("SyncRepresentationSummaryWidget.5:: {}".format(time.time() - start_time))
-        start_time = time.time()
         for column_name, width in self.default_widths:
             idx = model.get_header_index(column_name)
             table_view.setColumnWidth(idx, width)
-        log.info("SyncRepresentationSummaryWidget.6:: {}".format(time.time() - start_time))
-        start_time = time.time()
         table_view.doubleClicked.connect(self._double_clicked)
         self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
             self.txt_filter.text()))
         table_view.customContextMenuRequested.connect(self._on_context_menu)
-        log.info("SyncRepresentationSummaryWidget.7:: {}".format(time.time() - start_time))
-        start_time = time.time()
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
 
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
-        log.info("SyncRepresentationSummaryWidget.end:: {}".format(time.time() - start_time))
 
     def _prepare_menu(self, local_progress, remote_progress,
                       is_multi, can_edit, status=None):
