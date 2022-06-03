@@ -22,7 +22,8 @@
         "ExtractFBX": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": true,
+            "scale_length": 0
         },
         "ExtractAnimationFBX": {
             "enabled": true,

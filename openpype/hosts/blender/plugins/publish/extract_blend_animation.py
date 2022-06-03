@@ -3,8 +3,7 @@ import os
 import bpy
 
 import openpype.api
-from openpype.pipeline import AVALON_CONTAINER_ID
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api import plugin
 
 
 class ExtractBlendAnimation(openpype.api.Extractor):
@@ -29,12 +28,7 @@ class ExtractBlendAnimation(openpype.api.Extractor):
         collections = set()
 
         for obj in instance:
-            if (
-                isinstance(obj, bpy.types.Collection)
-                and obj.get(AVALON_PROPERTY)
-                and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-                and obj[AVALON_PROPERTY].get("family") == "rig"
-            ):
+            if plugin.is_container(obj, family="rig"):
                 collections.add(obj)
 
         for collection in collections:

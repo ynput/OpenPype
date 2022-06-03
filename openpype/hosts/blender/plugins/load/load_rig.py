@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import bpy
 
 from openpype import lib
-from openpype.pipeline import legacy_io, legacy_create, AVALON_CONTAINER_ID
+from openpype.pipeline import legacy_io, legacy_create
 from openpype.hosts.blender.api import plugin, get_selection
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -24,19 +24,12 @@ class BlendRigLoader(plugin.AssetLoader):
     color_tag = "COLOR_03"
 
     @staticmethod
-    def _is_model_container(collection):
-        return (
-            collection.get(AVALON_PROPERTY)
-            and collection[AVALON_PROPERTY].get("family") == "model"
-            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-        )
-
-    @staticmethod
-    def _assign_actions(asset_group, namespace):
+    def _assign_actions(asset_group):
         """Assign new action for all objects from linked rig."""
 
         task = legacy_io.Session.get("AVALON_TASK")
         asset = legacy_io.Session.get("AVALON_ASSET")
+        namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace", "")
 
         # If rig contain only one armature.
         armatures = [
@@ -48,9 +41,9 @@ class BlendRigLoader(plugin.AssetLoader):
             armature = armatures[0]
             if armature.animation_data is None:
                 armature.animation_data_create()
-            armature.animation_data.action = bpy.data.actions.new(
-                f"{asset}_{task}:{namespace}_action"
-            )
+                armature.animation_data.action = bpy.data.actions.new(
+                    f"{asset}_{task}:{namespace}_action"
+                )
 
         # If rig contain multiple armatures, we generate actions for
         # each armature.
@@ -58,20 +51,20 @@ class BlendRigLoader(plugin.AssetLoader):
             for armature in armatures:
                 if armature.animation_data is None:
                     armature.animation_data_create()
-                action_name = armature.name.replace(":", "_")
-                armature.animation_data.action = bpy.data.actions.new(
-                    f"{asset}_{task}:{action_name}_action"
-                )
+                    action_name = armature.name.replace(":", "_")
+                    armature.animation_data.action = bpy.data.actions.new(
+                        f"{asset}_{task}:{namespace}_{action_name}_action"
+                    )
 
         # If rig contain no armature we generate actions for each object.
         else:
             for obj in asset_group.all_objects:
                 if obj.animation_data is None:
                     obj.animation_data_create()
-                action_name = obj.name.replace(":", "_")
-                obj.animation_data.action = bpy.data.actions.new(
-                    f"{asset}_{task}:{action_name}_action"
-                )
+                    action_name = obj.name.replace(":", "_")
+                    obj.animation_data.action = bpy.data.actions.new(
+                        f"{asset}_{task}:{namespace}_{action_name}_action"
+                    )
         plugin.orphans_purge()
 
     @staticmethod
@@ -148,7 +141,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Disable selection for modeling container.
         for child in set(asset_group.children_recursive):
-            if self._is_model_container:
+            if plugin.is_container(child, family="model"):
                 child.hide_select = True
 
         return asset_group
@@ -163,8 +156,7 @@ class BlendRigLoader(plugin.AssetLoader):
         """Asset loading Process"""
         asset_group = super().process_asset(context, name, namespace)
 
-        namespace = asset_group[AVALON_PROPERTY]["namespace"]
-        self._assign_actions(asset_group, namespace)
+        self._assign_actions(asset_group)
 
         if options is not None:
             self._apply_options(asset_group, options, namespace)
@@ -176,7 +168,7 @@ class BlendRigLoader(plugin.AssetLoader):
         asset_group = self._update_process(container, representation)
 
         # Ensure updated rig has action.
-        self._assign_actions(asset_group, container["namespace"])
+        self._assign_actions(asset_group)
 
     @contextlib.contextmanager
     def maintained_actions(self, asset_group):

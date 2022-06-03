@@ -3,6 +3,7 @@ import os
 import bpy
 
 from openpype import api
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
 
 
@@ -19,6 +20,18 @@ class ExtractFBX(api.Extractor):
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
+
+        # Get project settings
+        project_settings = api.get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"]
+        )
+        scale_length = (
+            project_settings
+            ["blender"]
+            ["publish"]
+            ["ExtractFBX"]
+            ["scale_length"]
+        )
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -46,10 +59,9 @@ class ExtractFBX(api.Extractor):
             active=selected[-1], selected=selected
         )
 
-        # NOTE : Not sure this scale_length parameter should be apply for any
-        # situations and productions.
-        scale_length = bpy.context.scene.unit_settings.scale_length
-        bpy.context.scene.unit_settings.scale_length = 0.01
+        kept_scale_length = bpy.context.scene.unit_settings.scale_length
+        if scale_length > 0:
+            bpy.context.scene.unit_settings.scale_length = scale_length
 
         # We export the fbx
         bpy.ops.export_scene.fbx(
@@ -61,7 +73,7 @@ class ExtractFBX(api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.context.scene.unit_settings.scale_length = scale_length
+        bpy.context.scene.unit_settings.scale_length = kept_scale_length
 
         plugin.deselect_all()
 

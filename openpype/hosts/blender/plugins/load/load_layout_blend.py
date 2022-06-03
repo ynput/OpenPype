@@ -3,9 +3,8 @@
 import bpy
 
 from openpype import lib
-from openpype.pipeline import legacy_io, legacy_create, AVALON_CONTAINER_ID
+from openpype.pipeline import legacy_io, legacy_create
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendLayoutLoader(plugin.AssetLoader):
@@ -53,14 +52,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
             obj.animation_data.action = local_action
 
     @staticmethod
-    def _is_rig_container(collection):
-        return (
-            collection.get(AVALON_PROPERTY)
-            and collection[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-            and collection[AVALON_PROPERTY].get("family") == "rig"
-        )
-
-    @staticmethod
     def _create_animation_collection(asset_groups, context):
         creator_plugin = lib.get_creator_by_name("CreateAnimation")
         if not creator_plugin:
@@ -92,7 +83,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             rig_assets = [
                 child
                 for child in asset_group.children_recursive
-                if self._is_rig_container(child)
+                if plugin.is_container(child, family="rig")
             ]
             self._create_animation_collection(rig_assets, context)
 

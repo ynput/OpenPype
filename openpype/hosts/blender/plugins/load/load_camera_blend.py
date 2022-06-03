@@ -16,7 +16,7 @@ class BlendCameraLoader(plugin.AssetLoader):
     families = ["camera"]
     representations = ["blend"]
 
-    label = "Link Camera (Blend)"
+    label = "Link Camera"
     icon = "code-fork"
     color = "orange"
     color_tag = "COLOR_05"
@@ -24,8 +24,9 @@ class BlendCameraLoader(plugin.AssetLoader):
     def _process(self, libpath, asset_group):
         self._load_blend(libpath, asset_group)
 
+    @staticmethod
     @contextmanager
-    def maintained_actions(self, container):
+    def maintained_actions(container):
         """Maintain action during context."""
         # We always want the action from linked camera blend file.
         # So this overload do maintain nothing to force current action to be

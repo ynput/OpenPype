@@ -6,7 +6,6 @@ import bpy_extras
 import bpy_extras.anim_utils
 
 from openpype import api
-from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -88,15 +87,6 @@ class ExtractAnimationFBX(api.Extractor):
 
         return fbx_filename
 
-    @staticmethod
-    def _is_rig_container(obj):
-        return (
-            isinstance(obj, bpy.types.Collection)
-            and obj.get(AVALON_PROPERTY)
-            and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-            and obj[AVALON_PROPERTY].get("family") == "rig"
-        )
-
     def process(self, instance):
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
@@ -107,7 +97,7 @@ class ExtractAnimationFBX(api.Extractor):
         collections = [
             obj
             for obj in set(instance[:-1])
-            if self._is_rig_container(obj)
+            if plugin.is_container(obj, family="rig")
         ]
 
         json_data = []

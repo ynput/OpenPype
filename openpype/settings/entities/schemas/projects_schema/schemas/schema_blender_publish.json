@@ -101,6 +101,14 @@
                     "type": "boolean",
                     "key": "active",
                     "label": "Active"
+                },
+                {
+                    "type": "number",
+                    "key": "scale_length",
+                    "label": "Scale length",
+                    "decimal": 3,
+                    "minimum": 0,
+                    "maximum": 1000
                 }
             ]
         },

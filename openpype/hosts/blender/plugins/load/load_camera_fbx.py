@@ -12,7 +12,7 @@ class FbxCameraLoader(plugin.AssetLoader):
     families = ["camera"]
     representations = ["fbx"]
 
-    label = "Load Camera (FBX)"
+    label = "Load Camera"
     icon = "code-fork"
     color = "orange"
     color_tag = "COLOR_05"

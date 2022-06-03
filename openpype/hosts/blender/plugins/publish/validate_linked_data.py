@@ -1,5 +1,4 @@
 import os
-import platform
 import subprocess
 from typing import List
 from bson.objectid import ObjectId
@@ -7,47 +6,15 @@ from bson.objectid import ObjectId
 import bpy
 import pyblish.api
 
-from openpype.pipeline import (
-    legacy_io,
-    update_container,
-    AVALON_CONTAINER_ID,
-)
-from openpype.hosts.blender.api.plugin import AssetLoader
+from openpype.pipeline import legacy_io, update_container
+from openpype.hosts.blender.api.plugin import is_container
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api.action import SelectInvalidAction
-from openpype.hosts.blender.utility_scripts import update_workfile_data
+from openpype.hosts.blender.scripts import update_workfile_data
 
 
-SYSTEM = platform.system().lower()
 BLENDER_BIN_PATH = bpy.app.binary_path
 UPDATE_SCRIPT_PATH = os.path.abspath(update_workfile_data.__file__)
-
-
-class UpdateContainer(pyblish.api.Action):
-    """Select invalid objects in Blender when a publish plug-in failed."""
-
-    label = "Update With Last Representations"
-    on = "failed"
-    icon = "refresh"
-
-    def process(self, context, plugin):
-
-        data_type = []
-        if legacy_io.Session.get("AVALON_TASK") == "Rigging":
-            data_type = ["VGROUP_WEIGHTS"]
-
-        out_to_date_collections = set()
-        for result in context.data["results"]:
-            if result["error"]:
-                instance = result["instance"]
-                out_to_date_collections.update(
-                    instance.data.get("out_to_date_collections", [])
-                )
-
-        for collection in out_to_date_collections:
-            self.log.info(f"Updating {collection.name} ..")
-            with AssetLoader.maintained_local_data(collection, data_type):
-                update_container(collection[AVALON_PROPERTY], -1)
 
 
 class ExtractAndPublishNotLinked(pyblish.api.Action):
@@ -115,75 +82,38 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
             update_container(container, -1)
 
 
-class ValidateContainerLibrary(pyblish.api.InstancePlugin):
+class ValidateLinkedData(pyblish.api.InstancePlugin):
     """Validate that containers are linked with valid library."""
 
     order = pyblish.api.ValidatorOrder - 0.01
     hosts = ["blender"]
     families = ["rig"]
     category = "geometry"
-    label = "Validate Container Library"
-    actions = [SelectInvalidAction]
+    label = "Validate Linked Data"
+    actions = [SelectInvalidAction, ExtractAndPublishNotLinked]
     optional = False
 
     @staticmethod
-    def get_out_to_date(instance) -> List:
+    def get_invalid(instance) -> List:
         invalid = []
 
-        for obj in set(instance):
-            if (
-                isinstance(obj, bpy.types.Collection)
-                and not obj.library
-                and not obj.override_library
-                and obj.get(AVALON_PROPERTY)
-                and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-            ):
-                if not AssetLoader.is_updated(obj):
-                    invalid.append(obj)
-
-        return invalid
-
-    @staticmethod
-    def get_local_data(instance) -> List:
-        invalid = []
-
-        for obj in set(instance):
-            if (
-                isinstance(obj, bpy.types.Collection)
-                and obj.get(AVALON_PROPERTY)
-                and obj[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
-            ):
-                for o in obj.all_objects:
+        for member in set(instance):
+            if is_container(member):
+                for obj in member.all_objects:
                     if (
-                        (not o.library and not o.override_library)
-                        or (not o.data.library and not o.data.override_library)
+                        not obj.library
+                        and not obj.override_library
+                    ) or (
+                        not obj.data.library
+                        and not obj.data.override_library
                     ):
-                        invalid.append(o)
-        return invalid
-
-    @classmethod
-    def get_invalid(cls, instance) -> List:
-        invalid = []
-
-        invalid += cls.get_out_to_date(instance)
-        invalid += cls.get_local_data(instance)
+                        invalid.append(member)
 
         return invalid
 
     def process(self, instance):
-        invalid = self.get_out_to_date(instance)
+        invalid = self.get_invalid(instance)
         if invalid:
-            instance.data["out_to_date_collections"] = invalid
-            self.actions.append(UpdateContainer)
-            raise RuntimeError(
-                f"Containers are out to date: {invalid} "
-                f"See Action of this Validate"
-            )
-
-        invalid = self.get_local_data(instance)
-        if invalid:
-            instance.data["local_collections"] = invalid
-            self.actions.append(ExtractAndPublishNotLinked)
             raise RuntimeError(
                 f"Containers have local data: {invalid} "
                 f"See Action of this Validate"
