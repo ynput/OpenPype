@@ -274,6 +274,31 @@ def _validate_all_atrributes(
     ])
 
 
+def get_track_item_tags(track_item):
+    """
+    Get track item tags excluded openpype tag
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    returning_tag_data = []
+    # get all tags from track item
+    _tags = track_item.tags()
+    if not _tags:
+        return []
+
+    # collect all tags which are not openpype tag
+    returning_tag_data.extend(
+        tag for tag in _tags
+        if tag.name() != self.pype_tag_name
+    )
+
+    return returning_tag_data
+
+
 def get_track_item_pype_tag(track_item):
     """
     Get pype track item tag created by creator or loader plugin.
