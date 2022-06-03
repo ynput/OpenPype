@@ -173,7 +173,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 self.log.debug("Slate Timecode: `{}`".format(
                     offset_timecode
                 ))
-                input_args.extend(["-timecode", str(offset_timecode)])
 
             if use_legacy_code:
                 format_args = []
