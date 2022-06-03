@@ -1026,9 +1026,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         self.server_init()
 
-        from .tray.app import SyncServerWindow
-        self.widget = SyncServerWindow(self)
-
     def server_init(self):
         """Actual initialization of Sync Server."""
         # import only in tray or Python3, because of Python2 hosts
