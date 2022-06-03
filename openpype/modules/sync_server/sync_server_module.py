@@ -1029,15 +1029,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     def server_init(self):
         """Actual initialization of Sync Server."""
         # import only in tray or Python3, because of Python2 hosts
-        from .sync_server import SyncServerThread
-
         if not self.enabled:
             return
 
-        enabled_projects = self.get_enabled_projects()
-        if not enabled_projects:
-            self.enabled = False
-            return
+        from .sync_server import SyncServerThread
 
         self.lock = threading.Lock()
 
@@ -1057,7 +1052,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.server_start()
 
     def server_start(self):
-        if self.sync_project_settings and self.enabled:
+        if self.enabled:
             self.sync_server_thread.start()
         else:
             log.info("No presets or active providers. " +
@@ -1848,6 +1843,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (int): in seconds
         """
+        if not project_name:
+            return 60
+
         ld = self.sync_project_settings[project_name]["config"]["loop_delay"]
         return int(ld)
 

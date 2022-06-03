@@ -280,13 +280,13 @@ class SyncServerThread(threading.Thread):
         while self.is_running and not self.module.is_paused():
             try:
                 import time
-                start_time = None
+                start_time = time.time()
                 self.module.set_sync_project_settings()  # clean cache
+                collection = None
                 enabled_projects = self.module.get_enabled_projects()
                 for collection in enabled_projects:
-                    preset = self.module.sync_project_settings["collection"]
+                    preset = self.module.sync_project_settings[collection]
 
-                    start_time = time.time()
                     local_site, remote_site = self._working_sites(collection)
                     if not all([local_site, remote_site]):
                         continue
