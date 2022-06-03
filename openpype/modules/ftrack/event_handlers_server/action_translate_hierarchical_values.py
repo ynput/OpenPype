@@ -11,7 +11,7 @@ from openpype_modules.ftrack.lib import (
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 
 
-class TranslateHierarchicalValues(ServerAction):
+class TransferHierarchicalValues(ServerAction):
     """Transfer values across hierarhcical attributes.
 
     Aalso gives ability to convert types meanwhile. That is limited to
@@ -20,9 +20,9 @@ class TranslateHierarchicalValues(ServerAction):
     - in, float -> string
     """
 
-    identifier = "translate.hierarchical.values"
+    identifier = "transfer.hierarchical.values"
     label = "OpenPype Admin"
-    variant = "- Translate values between 2 custom attributes"
+    variant = "- Transfer values between 2 custom attributes"
     description = (
         "Move values from a hierarchical attribute to"
         " second hierarchical attribute."
@@ -37,7 +37,7 @@ class TranslateHierarchicalValues(ServerAction):
         "select value, entity_id from CustomAttributeValue"
         " where entity_id in ({}) and configuration_id is \"{}\""
     )
-    settings_key = "clean_hierarchical_attr"
+    settings_key = "transfer_values_of_hierarchical_attributes"
 
     def discover(self, session, entities, event):
         """Show anywhere."""
@@ -45,7 +45,7 @@ class TranslateHierarchicalValues(ServerAction):
         return self.valid_roles(session, entities, event)
 
     def _selection_interface(self, session, event_values=None):
-        title = "Translate hierarchical values"
+        title = "Transfer hierarchical values"
 
         attr_confs = session.query(
             (
@@ -67,7 +67,7 @@ class TranslateHierarchicalValues(ServerAction):
                     "type": "label",
                     "value": (
                         "Didn't found custom attributes"
-                        " that can be translated."
+                        " that can be transfered."
                     )
                 }]
             }
@@ -328,4 +328,4 @@ class TranslateHierarchicalValues(ServerAction):
 def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    TranslateHierarchicalValues(session).register()
+    TransferHierarchicalValues(session).register()
