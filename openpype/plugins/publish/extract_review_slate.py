@@ -189,7 +189,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             # make sure colors are correct
             output_args.extend([
-                "-vf", "scale=out_color_matrix=bt709",
                 "-color_primaries", "bt709",
                 "-color_trc", "bt709",
                 "-colorspace", "bt709",
@@ -230,6 +229,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
                 scaling_arg = (
                     "scale={0}x{1}:flags=lanczos"
+                    ":out_color_matrix=bt709"
                     ",pad={2}:{3}:{4}:{5}:black"
                     ",setsar=1"
                     ",fps={6}"
