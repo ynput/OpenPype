@@ -356,9 +356,10 @@ class SubsetWidget(QtWidgets.QWidget):
         enabled = False
         if project_name:
             self.model.reset_sync_server(project_name)
-            if self.model.sync_server:
-                enabled_proj = self.model.sync_server.get_enabled_projects()
-                enabled = project_name in enabled_proj
+            sync_server = self.model.sync_server
+            if sync_server:
+                enabled = sync_server.is_project_enabled(project_name,
+                                                         single=True)
 
         lib.change_visibility(self.model, self.view, "repre_info", enabled)
 
@@ -1228,9 +1229,10 @@ class RepresentationWidget(QtWidgets.QWidget):
         enabled = False
         if project_name:
             self.model.reset_sync_server(project_name)
-            if self.model.sync_server:
-                enabled_proj = self.model.sync_server.get_enabled_projects()
-                enabled = project_name in enabled_proj
+            sync_server = self.model.sync_server
+            if sync_server:
+                enabled = sync_server.is_project_enabled(project_name,
+                                                         single=True)
 
         self.sync_server_enabled = enabled
         lib.change_visibility(self.model, self.tree_view,

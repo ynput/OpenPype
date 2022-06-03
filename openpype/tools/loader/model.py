@@ -89,7 +89,7 @@ class BaseRepresentationModel(object):
             self._last_manager_cache = now_time
 
         sync_server = self._modules_manager.modules_by_name["sync_server"]
-        if sync_server.is_project_enabled(project_name):
+        if sync_server.is_project_enabled(project_name, single=True):
             active_site = sync_server.get_active_site(project_name)
             active_provider = sync_server.get_provider_for_site(
                 project_name, active_site)

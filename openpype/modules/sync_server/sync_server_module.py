@@ -926,9 +926,22 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return enabled_projects
 
-    def is_project_enabled(self, project_name):
+    def is_project_enabled(self, project_name, single=False):
+        """Checks if 'project_name' is enabled for syncing.
+        'get_sync_project_setting' is potentially expensive operation (pulls
+        settings for all projects if cached version is not available), using
+        project_settings for specific project should be faster.
+        Args:
+            project_name (str)
+            single (bool): use 'get_project_settings' method
+        """
         if self.enabled:
-            project_settings = self.get_sync_project_setting(project_name)
+            if single:
+                project_settings = get_project_settings(project_name)
+                project_settings = \
+                    self._parse_sync_settings_from_settings(project_settings)
+            else:
+                project_settings = self.get_sync_project_setting(project_name)
             if project_settings and project_settings.get("enabled"):
                 return True
         return False
