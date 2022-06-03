@@ -31,10 +31,6 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
             shot_data = {}
             family = instance.data.get("family")
 
-            # filter out all unepropriate instances
-            if not instance.data["publish"]:
-                continue
-
             # exclude other families then self.families with intersection
             if not set(self.families).intersection([family]):
                 continue
