@@ -378,7 +378,6 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
-        self.sync_server.set_sync_project_settings()
         # project might have been deactivated in the meantime
         if not self.sync_server.get_sync_project_setting(project):
             return
