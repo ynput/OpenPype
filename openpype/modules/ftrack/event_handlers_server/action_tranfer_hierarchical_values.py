@@ -241,7 +241,6 @@ class TransferHierarchicalValues(ServerAction):
                 )
             }
 
-
         # Delete destination custom attributes first
         if delete_dst_values:
             self.log.info("Deleting destination custom attribute values first")
