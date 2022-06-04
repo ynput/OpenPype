@@ -4,6 +4,7 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
+from openpype.client import get_last_version_for_subset
 from openpype import style
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.lib import qt_app_context
@@ -211,6 +212,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         selection = self.assign_selected.isChecked()
         asset_nodes = self.asset_outliner.get_nodes(selection=selection)
 
+        project_name = legacy_io.active_project()
         start = time.time()
         for i, (asset, item) in enumerate(asset_nodes.items()):
 
@@ -222,23 +224,20 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
             assign_look = next((subset for subset in item["looks"]
                                 if subset["name"] in looks), None)
             if not assign_look:
-                self.echo("{} No matching selected "
-                          "look for {}".format(prefix, asset))
+                self.echo(
+                    "{} No matching selected look for {}".format(prefix, asset)
+                )
                 continue
 
             # Get the latest version of this asset's look subset
-            version = legacy_io.find_one(
-                {
-                    "type": "version",
-                    "parent": assign_look["_id"]
-                },
-                sort=[("name", -1)]
+            version = get_last_version_for_subset(
+                project_name, subset_id=assign_look["_id"], fields=["_id"]
             )
 
             subset_name = assign_look["name"]
-            self.echo("{} Assigning {} to {}\t".format(prefix,
-                                                       subset_name,
-                                                       asset))
+            self.echo("{} Assigning {} to {}\t".format(
+                prefix, subset_name, asset
+            ))
             nodes = item["nodes"]
 
             if cmds.pluginInfo('vrayformaya', query=True, loaded=True):

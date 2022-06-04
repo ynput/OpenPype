@@ -9,6 +9,8 @@ try:
 except Exception:
     commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
+
+from openpype.client import get_asset, get_subsets
 from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import (
     CreatorError,
@@ -647,21 +649,19 @@ class CreateDialog(QtWidgets.QDialog):
         if asset_name is None:
             return
 
-        asset_doc = self.dbcon.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
+        project_name = self.dbcon.active_project()
+        asset_doc = get_asset(project_name, asset_name=asset_name)
         self._asset_doc = asset_doc
 
         if asset_doc:
-            subset_docs = self.dbcon.find(
-                {
-                    "type": "subset",
-                    "parent": asset_doc["_id"]
-                },
-                {"name": 1}
+            asset_id = asset_doc["_id"]
+            subset_docs = get_subsets(
+                project_name, asset_ids=[asset_id], fields=["name"]
             )
-            self._subset_names = set(subset_docs.distinct("name"))
+            self._subset_names = {
+                subset_doc["name"]
+                for subset_doc in subset_docs
+            }
 
         if not asset_doc:
             self.subset_name_input.setText("< Asset is not set >")

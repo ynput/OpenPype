@@ -7,6 +7,15 @@ from uuid import uuid4
 from Qt import QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_assets,
+    get_subsets,
+    get_last_versions,
+    get_versions,
+    get_hero_versions,
+    get_version_by_name,
+    get_representations
+)
 from openpype.pipeline import (
     HeroVersionType,
     schema,
@@ -56,7 +65,7 @@ class BaseRepresentationModel(object):
         remote_site = remote_provider = None
 
         if not project_name:
-            project_name = self.dbcon.Session.get("AVALON_PROJECT")
+            project_name = self.dbcon.active_project()
         else:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
 
@@ -254,56 +263,60 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         # because it also updates the information in other columns
         if index.column() == self.columns_index["version"]:
             item = index.internalPointer()
-            parent = item["_id"]
+            subset_id = item["_id"]
             if isinstance(value, HeroVersionType):
-                versions = list(self.dbcon.find({
-                    "type": {"$in": ["version", "hero_version"]},
-                    "parent": parent
-                }, sort=[("name", -1)]))
-
-                version = None
-                last_version = None
-                for __version in versions:
-                    if __version["type"] == "hero_version":
-                        version = __version
-                    elif last_version is None:
-                        last_version = __version
-
-                    if version is not None and last_version is not None:
-                        break
-
-                _version = None
-                for __version in versions:
-                    if __version["_id"] == version["version_id"]:
-                        _version = __version
-                        break
-
-                version["data"] = _version["data"]
-                version["name"] = _version["name"]
-                version["is_from_latest"] = (
-                    last_version["_id"] == _version["_id"]
-                )
+                version_doc = self._get_hero_version(subset_id)
 
             else:
-                version = self.dbcon.find_one({
-                    "name": value,
-                    "type": "version",
-                    "parent": parent
-                })
+                project_name = self.dbcon.active_project()
+                version_doc = get_version_by_name(
+                    project_name, subset_id, value
+                )
 
                 # update availability on active site when version changes
-                if self.sync_server.enabled and version:
-                    query = self._repre_per_version_pipeline([version["_id"]],
-                                                             self.active_site,
-                                                             self.remote_site)
+                if self.sync_server.enabled and version_doc:
+                    query = self._repre_per_version_pipeline(
+                        [version_doc["_id"]],
+                        self.active_site,
+                        self.remote_site
+                    )
                     docs = list(self.dbcon.aggregate(query))
                     if docs:
                         repre = docs.pop()
-                        version["data"].update(self._get_repre_dict(repre))
+                        version_doc["data"].update(self._get_repre_dict(repre))
 
-            self.set_version(index, version)
+            self.set_version(index, version_doc)
 
         return super(SubsetsModel, self).setData(index, value, role)
+
+    def _get_hero_version(self, subset_id):
+        project_name = self.dbcon.active_project()
+        version_docs = get_versions(
+            project_name, subset_ids=[subset_id], hero=True
+        )
+        standard_versions = []
+        hero_version_doc = None
+        for version_doc in version_docs:
+            if version_doc["type"] == "hero_version":
+                hero_version_doc = version_doc
+                continue
+            standard_versions.append(version_doc)
+
+        src_version_id = hero_version_doc["version_id"]
+        src_version = None
+        is_from_latest = True
+        for version_doc in reversed(sorted(
+            standard_versions, key=lambda item: item["name"]
+        )):
+            if version_doc["_id"] == src_version_id:
+                src_version = version_doc
+                break
+            is_from_latest = False
+
+        hero_version_doc["data"] = src_version["data"]
+        hero_version_doc["name"] = src_version["name"]
+        hero_version_doc["is_from_latest"] = is_from_latest
+        return hero_version_doc
 
     def set_version(self, index, version):
         """Update the version data of the given index.
@@ -391,26 +404,25 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             item["repre_info"] = repre_info
 
     def _fetch(self):
-        asset_docs = self.dbcon.find(
-            {
-                "type": "asset",
-                "_id": {"$in": self._asset_ids}
-            },
-            self.asset_doc_projection
+        project_name = self.dbcon.active_project()
+        asset_docs = get_assets(
+            project_name,
+            asset_ids=self._asset_ids,
+            fields=self.asset_doc_projection.keys()
         )
+
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
             for asset_doc in asset_docs
         }
 
         subset_docs_by_id = {}
-        subset_docs = self.dbcon.find(
-            {
-                "type": "subset",
-                "parent": {"$in": self._asset_ids}
-            },
-            self.subset_doc_projection
+        subset_docs = get_subsets(
+            project_name,
+            asset_ids=self._asset_ids,
+            fields=self.subset_doc_projection.keys()
         )
+
         subset_families = set()
         for subset_doc in subset_docs:
             if self._doc_fetching_stop:
@@ -423,37 +435,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             subset_docs_by_id[subset_doc["_id"]] = subset_doc
 
         subset_ids = list(subset_docs_by_id.keys())
-        _pipeline = [
-            # Find all versions of those subsets
-            {"$match": {
-                "type": "version",
-                "parent": {"$in": subset_ids}
-            }},
-            # Sorting versions all together
-            {"$sort": {"name": 1}},
-            # Group them by "parent", but only take the last
-            {"$group": {
-                "_id": "$parent",
-                "_version_id": {"$last": "$_id"},
-                "name": {"$last": "$name"},
-                "type": {"$last": "$type"},
-                "data": {"$last": "$data"},
-                "locations": {"$last": "$locations"},
-                "schema": {"$last": "$schema"}
-            }}
-        ]
-        last_versions_by_subset_id = dict()
-        for doc in self.dbcon.aggregate(_pipeline):
-            if self._doc_fetching_stop:
-                return
-            doc["parent"] = doc["_id"]
-            doc["_id"] = doc.pop("_version_id")
-            last_versions_by_subset_id[doc["parent"]] = doc
+        last_versions_by_subset_id = get_last_versions(
+            project_name,
+            subset_ids,
+            fields=["_id", "parent", "name", "type", "data", "schema"]
+        )
 
-        hero_versions = self.dbcon.find({
-            "type": "hero_version",
-            "parent": {"$in": subset_ids}
-        })
+        hero_versions = get_hero_versions(project_name, subset_ids=subset_ids)
         missing_versions = []
         for hero_version in hero_versions:
             version_id = hero_version["version_id"]
@@ -462,10 +450,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
         missing_versions_by_id = {}
         if missing_versions:
-            missing_version_docs = self.dbcon.find({
-                "type": "version",
-                "_id": {"$in": missing_versions}
-            })
+            missing_version_docs = get_versions(
+                project_name, version_ids=missing_versions
+            )
             missing_versions_by_id = {
                 missing_version_doc["_id"]: missing_version_doc
                 for missing_version_doc in missing_version_docs
@@ -488,23 +475,16 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
             last_versions_by_subset_id[subset_id] = hero_version
 
-        self._doc_payload = {
-            "asset_docs_by_id": asset_docs_by_id,
-            "subset_docs_by_id": subset_docs_by_id,
-            "subset_families": subset_families,
-            "last_versions_by_subset_id": last_versions_by_subset_id
-        }
-
+        repre_info = {}
         if self.sync_server.enabled:
             version_ids = set()
             for _subset_id, doc in last_versions_by_subset_id.items():
                 version_ids.add(doc["_id"])
 
-            query = self._repre_per_version_pipeline(list(version_ids),
-                                                     self.active_site,
-                                                     self.remote_site)
+            query = self._repre_per_version_pipeline(
+                list(version_ids), self.active_site, self.remote_site
+            )
 
-            repre_info = {}
             for doc in self.dbcon.aggregate(query):
                 if self._doc_fetching_stop:
                     return
@@ -512,7 +492,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 doc["remote_provider"] = self.remote_provider
                 repre_info[doc["_id"]] = doc
 
-            self._doc_payload["repre_info_by_version_id"] = repre_info
+        self._doc_payload = {
+            "asset_docs_by_id": asset_docs_by_id,
+            "subset_docs_by_id": subset_docs_by_id,
+            "subset_families": subset_families,
+            "last_versions_by_subset_id": last_versions_by_subset_id,
+            "repre_info_by_version_id": repre_info
+        }
 
         self.doc_fetched.emit()
 
@@ -1062,6 +1048,16 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         "remote_site": "Remote"
     }
 
+    repre_projection = {
+        "_id": 1,
+        "name": 1,
+        "context.subset": 1,
+        "context.asset": 1,
+        "context.version": 1,
+        "context.representation": 1,
+        'files.sites': 1
+    }
+
     def __init__(self, dbcon, header, version_ids):
         super(RepresentationModel, self).__init__()
         self.dbcon = dbcon
@@ -1073,22 +1069,22 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         sync_server = active_site = remote_site = None
         active_provider = remote_provider = None
 
-        project = dbcon.Session["AVALON_PROJECT"]
-        if project:
+        project_name = dbcon.current_project()
+        if project_name:
             sync_server = manager.modules_by_name["sync_server"]
-            active_site = sync_server.get_active_site(project)
-            remote_site = sync_server.get_remote_site(project)
+            active_site = sync_server.get_active_site(project_name)
+            remote_site = sync_server.get_remote_site(project_name)
 
             # TODO refactor
-            active_provider = \
-                sync_server.get_provider_for_site(project,
-                                                  active_site)
+            active_provider = sync_server.get_provider_for_site(
+                project_name, active_site
+            )
             if active_site == 'studio':
                 active_provider = 'studio'
 
-            remote_provider = \
-                sync_server.get_provider_for_site(project,
-                                                  remote_site)
+            remote_provider = sync_server.get_provider_for_site(
+                project_name, remote_site
+            )
 
             if remote_site == 'studio':
                 remote_provider = 'studio'
@@ -1127,8 +1123,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             if index.column() == self.Columns.index("name"):
                 if item.get("isMerged"):
                     return item["icon"]
-                else:
-                    return self._icons["repre"]
+                return self._icons["repre"]
 
         active_index = self.Columns.index("active_site")
         remote_index = self.Columns.index("remote_site")
@@ -1144,12 +1139,12 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                 # site added, sync in progress
                 progress_str = "not avail."
                 if progress >= 0:
-                    # progress == 0 for isMerged is unavailable
                     if progress == 0 and item.get("isMerged"):
                         progress_str = "not avail."
                     else:
-                        progress_str = "{}% {}".format(int(progress * 100),
-                                                       label)
+                        progress_str = "{}% {}".format(
+                            int(progress * 100), label
+                        )
 
                 return progress_str
 
@@ -1192,7 +1187,6 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             if len(self.version_ids) > 1:
                 group = repre_groups.get(doc["name"])
                 if not group:
-
                     group_item = Item()
                     item_id = str(uuid4())
                     group_item.update({
@@ -1213,9 +1207,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                     repre_groups_items[doc["name"]] = 0
                     group = group_item
 
-            progress = lib.get_progress_for_repre(doc,
-                                                  self.active_site,
-                                                  self.remote_site)
+            progress = lib.get_progress_for_repre(
+                doc, self.active_site, self.remote_site
+            )
 
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)
@@ -1248,9 +1242,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                 'remote_site_progress': progress[self.remote_site]
             }
             if group:
-                group = self._sum_group_progress(doc["name"], group,
-                                                 current_progress,
-                                                 repre_groups_items)
+                group = self._sum_group_progress(
+                    doc["name"], group, current_progress, repre_groups_items
+                )
 
             self.add_child(item, group)
 
@@ -1269,47 +1263,40 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         return self._items_by_id.get(item_id)
 
     def refresh(self):
-        docs = []
-        session_project = self.dbcon.Session['AVALON_PROJECT']
-        if not session_project:
+        project_name = self.dbcon.current_project()
+        if not project_name:
             return
 
+        repre_docs = []
         if self.version_ids:
             # Simple find here for now, expected to receive lower number of
             # representations and logic could be in Python
-            docs = list(self.dbcon.find(
-                {"type": "representation", "parent": {"$in": self.version_ids},
-                 "files.sites.name": {"$exists": 1}}, self.projection()))
-        self._docs = docs
+            repre_docs = list(get_representations(
+                project_name,
+                version_ids=self.version_ids,
+                check_site_name=True,
+                fields=self.repre_projection.keys()
+            ))
+
+        self._docs = repre_docs
 
         self.doc_fetched.emit()
 
-    @classmethod
-    def projection(cls):
-        return {
-            "_id": 1,
-            "name": 1,
-            "context.subset": 1,
-            "context.asset": 1,
-            "context.version": 1,
-            "context.representation": 1,
-            'files.sites': 1
-        }
+    def _sum_group_progress(
+        self, repre_name, group, current_item_progress, repre_groups_items
+    ):
+        """Update final group progress
 
-    def _sum_group_progress(self, repre_name, group, current_item_progress,
-                            repre_groups_items):
-        """
-            Update final group progress
-            Called after every item in group is added
+        Called after every item in group is added
 
-            Args:
-                repre_name(string)
-                group(dict): info about group of selected items
-                current_item_progress(dict): {'active_site_progress': XX,
-                                              'remote_site_progress': YY}
-                repre_groups_items(dict)
-            Returns:
-                (dict): updated group info
+        Args:
+            repre_name(string)
+            group(dict): info about group of selected items
+            current_item_progress(dict): {'active_site_progress': XX,
+                                          'remote_site_progress': YY}
+            repre_groups_items(dict)
+        Returns:
+            (dict): updated group info
         """
         repre_groups_items[repre_name] += 1
 

@@ -6,6 +6,8 @@ import signal
 from bson.objectid import ObjectId
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.client import get_asset
+
 from .widgets import (
     AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 )
@@ -126,17 +128,6 @@ class Window(QtWidgets.QDialog):
         if event:
             super().resizeEvent(event)
 
-    def get_avalon_parent(self, entity):
-        ''' Avalon DB entities helper - get all parents (exclude project).
-        '''
-        parent_id = entity['data']['visualParent']
-        parents = []
-        if parent_id is not None:
-            parent = self.db.find_one({'_id': parent_id})
-            parents.extend(self.get_avalon_parent(parent))
-            parents.append(parent['name'])
-        return parents
-
     def on_project_change(self, project_name):
         self.widget_family.refresh()
 
@@ -152,7 +143,10 @@ class Window(QtWidgets.QDialog):
         ]
         if len(selected) == 1:
             self.valid_parent = True
-            asset = self.db.find_one({"_id": selected[0], "type": "asset"})
+            project_name = self.db.active_project()
+            asset = get_asset(
+                project_name, asset_id=selected[0], fields=["name"]
+            )
             self.widget_family.change_asset(asset['name'])
         else:
             self.valid_parent = False

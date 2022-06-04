@@ -9,6 +9,10 @@ import appdirs
 from Qt import QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_assets,
+)
 from openpype.lib import JSONSettingRegistry
 from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
@@ -81,13 +85,11 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def get_application_actions(self):
         actions = []
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
+        if not self.dbcon.current_project():
             return actions
 
-        project_doc = self.dbcon.find_one(
-            {"type": "project"},
-            {"config.apps": True}
-        )
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name, fields=["config.apps"])
         if not project_doc:
             return actions
 
@@ -448,7 +450,7 @@ class LauncherModel(QtCore.QObject):
     @property
     def project_name(self):
         """Current project name."""
-        return self._dbcon.Session.get("AVALON_PROJECT")
+        return self._dbcon.current_project()
 
     @property
     def refreshing_assets(self):
@@ -649,10 +651,9 @@ class LauncherModel(QtCore.QObject):
             self._asset_refresh_thread = None
 
     def _refresh_assets(self):
-        asset_docs = list(self._dbcon.find(
-            {"type": "asset"},
-            self._asset_projection
-        ))
+        asset_docs = get_assets(
+            self._last_project_name, fields=list(self._asset_projection.keys())
+        )
         if not self._refreshing_assets:
             return
         self._refreshing_assets = False

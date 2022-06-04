@@ -6,6 +6,13 @@ from Qt import QtWidgets, QtCore
 import qtawesome
 from bson.objectid import ObjectId
 
+from openpype.client import (
+    get_version,
+    get_versions,
+    get_hero_versions,
+    get_representation,
+    get_representations,
+)
 from openpype import style
 from openpype.pipeline import (
     legacy_io,
@@ -83,12 +90,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if item_id not in repre_ids:
                 repre_ids.append(item_id)
 
-        repre_docs = legacy_io.find(
-            {
-                "type": "representation",
-                "_id": {"$in": repre_ids}
-            },
-            {"parent": 1}
+        project_name = legacy_io.active_project()
+        repre_docs = get_representations(
+            project_name, representaion_ids=repre_ids, fields=["parent"]
         )
 
         version_ids = []
@@ -97,10 +101,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if version_id not in version_ids:
                 version_ids.append(version_id)
 
-        loaded_versions = legacy_io.find({
-            "_id": {"$in": version_ids},
-            "type": {"$in": ["version", "hero_version"]}
-        })
+        loaded_versions = get_versions(
+            project_name, version_ids=version_ids, hero=True
+        )
 
         loaded_hero_versions = []
         versions_by_parent_id = collections.defaultdict(list)
@@ -114,10 +117,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 if parent_id not in version_parents:
                     version_parents.append(parent_id)
 
-        all_versions = legacy_io.find({
-            "type": {"$in": ["hero_version", "version"]},
-            "parent": {"$in": version_parents}
-        })
+        all_versions = get_versions(
+            project_name, subset_ids=version_parents, hero=True
+        )
         hero_versions = []
         versions = []
         for version in all_versions:
@@ -150,12 +152,10 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     if item_id not in repre_ids:
                         repre_ids.append(item_id)
 
-                repre_docs = legacy_io.find(
-                    {
-                        "type": "representation",
-                        "_id": {"$in": repre_ids}
-                    },
-                    {"parent": 1}
+                repre_docs = get_representations(
+                    project_name,
+                    representation_ids=repre_ids,
+                    fields=["parent"]
                 )
 
                 version_ids = []
@@ -165,13 +165,13 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     version_id_by_repre_id[repre_doc["_id"]] = version_id
                     if version_id not in version_ids:
                         version_ids.append(version_id)
-                hero_versions = legacy_io.find(
-                    {
-                        "_id": {"$in": version_ids},
-                        "type": "hero_version"
-                    },
-                    {"version_id": 1}
+
+                hero_versions = get_hero_versions(
+                    project_name,
+                    version_ids=version_ids,
+                    fields=["version_id"]
                 )
+
                 version_ids = set()
                 for hero_version in hero_versions:
                     version_id = hero_version["version_id"]
@@ -183,12 +183,10 @@ class SceneInventoryView(QtWidgets.QTreeView):
                         if current_version_id == hero_version_id:
                             version_id_by_repre_id[_repre_id] = version_id
 
-                version_docs = legacy_io.find(
-                    {
-                        "_id": {"$in": list(version_ids)},
-                        "type": "version"
-                    },
-                    {"name": 1}
+                version_docs = get_versions(
+                    project_name,
+                    version_ids=version_ids,
+                    fields=["name"]
                 )
                 version_name_by_id = {}
                 for version_doc in version_docs:
@@ -370,10 +368,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
         active_site = self.sync_server.get_active_site(project_name)
         remote_site = self.sync_server.get_remote_site(project_name)
 
-        repre_docs = legacy_io.find({
-            "type": "representation",
-            "_id": {"$in": repre_ids}
-        })
+        repre_docs = get_representations(
+            project_name, representation_ids=repre_ids
+        )
         repre_docs_by_id = {
             repre_doc["_id"]: repre_doc
             for repre_doc in repre_docs
@@ -658,25 +655,37 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         active = items[-1]
 
+        project_name = legacy_io.active_project()
         # Get available versions for active representation
         representation_id = ObjectId(active["representation"])
-        representation = legacy_io.find_one({"_id": representation_id})
-        version = legacy_io.find_one({
-            "_id": representation["parent"]
-        })
 
-        versions = list(legacy_io.find(
-            {
-                "parent": version["parent"],
-                "type": "version"
-            },
-            sort=[("name", 1)]
+        repre_doc = get_representation(
+            project_name,
+            representation_id=representation_id,
+            fields=["parent"]
+        )
+
+        repre_version_doc = get_version(
+            project_name,
+            version_id=repre_doc["parent"],
+            fields=["parent"]
+        )
+
+        version_docs = get_versions(
+            project_name,
+            subset_ids=[repre_version_doc["parent"]],
+            hero=True
+        )
+        hero_version = None
+        standard_versions = []
+        for version_doc in version_docs:
+            if version_doc["type"] == "hero_version":
+                hero_version = version_doc
+            else:
+                standard_versions.append(version_doc)
+        versions = list(reversed(
+            sorted(standard_versions, key=lambda item: item["name"])
         ))
-
-        hero_version = legacy_io.find_one({
-            "parent": version["parent"],
-            "type": "hero_version"
-        })
         if hero_version:
             _version_id = hero_version["version_id"]
             for _version in versions:
@@ -703,7 +712,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         all_versions = []
         if hero_version:
             all_versions.append(hero_version)
-        all_versions.extend(reversed(versions))
+        all_versions.extend(versions)
 
         if current_item:
             index = all_versions.index(current_item)

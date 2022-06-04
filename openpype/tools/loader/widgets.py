@@ -7,6 +7,16 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.client import (
+    get_subset_families,
+    get_subset,
+    get_subsets,
+    get_version,
+    get_versions,
+    get_representations,
+    get_thumbnail_id_from_source,
+    get_thumbnail,
+)
 from openpype.api import Anatomy
 from openpype.pipeline import HeroVersionType
 from openpype.pipeline.thumbnail import get_thumbnail_binary
@@ -237,8 +247,7 @@ class SubsetWidget(QtWidgets.QWidget):
         self.model = model
         self.view = view
 
-        actual_project = dbcon.Session["AVALON_PROJECT"]
-        self.on_project_change(actual_project)
+        self.on_project_change(dbcon.current_project())
 
         view.customContextMenuRequested.connect(self.on_context_menu)
 
@@ -302,33 +311,23 @@ class SubsetWidget(QtWidgets.QWidget):
                 item["version_document"]
             )
 
-        subset_docs = list(self.dbcon.find(
-            {
-                "_id": {"$in": list(version_docs_by_subset_id.keys())},
-                "type": "subset"
-            },
-            {
-                "schema": 1,
-                "data.families": 1
-            }
+        project_name = self.dbcon.active_project()
+        subset_docs = list(get_subsets(
+            project_name,
+            subset_ids=version_docs_by_subset_id.keys(),
+            fields=["schema", "data.families"]
         ))
         subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
             for subset_doc in subset_docs
         }
         version_ids = list(version_docs_by_id.keys())
-        repre_docs = self.dbcon.find(
-            # Query all representations for selected versions at once
-            {
-                "type": "representation",
-                "parent": {"$in": version_ids}
-            },
-            # Query only name and parent from representation
-            {
-                "name": 1,
-                "parent": 1
-            }
+        repre_docs = get_representations(
+            project_name,
+            version_ids=version_ids,
+            fields=["name", "parent"]
         )
+
         repre_docs_by_version_id = {
             version_id: []
             for version_id in version_ids
@@ -566,28 +565,42 @@ class SubsetWidget(QtWidgets.QWidget):
             # same representation available
 
             # Trigger
-            repre_ids = []
+            project_name = self.dbcon.active_project()
+            subset_names_by_version_id = collections.defaultdict(set)
             for item in items:
-                representation = self.dbcon.find_one(
-                    {
-                        "type": "representation",
-                        "name": representation_name,
-                        "parent": item["version_document"]["_id"]
-                    },
-                    {"_id": 1}
-                )
-                if not representation:
-                    self.echo("Subset '{}' has no representation '{}'".format(
-                        item["subset"], representation_name
-                    ))
-                    continue
-                repre_ids.append(representation["_id"])
+                version_id = item["version_document"]["_id"]
+                subset_names_by_version_id[version_id].add(item["subset"])
+
+            version_ids = set(subset_names_by_version_id.keys())
+            repre_docs = get_representations(
+                project_name,
+                representation_names=[representation_name],
+                version_ids=version_ids,
+                fields=["_id", "parent"]
+            )
+
+            repre_ids = []
+            for repre_doc in repre_docs:
+                repre_ids.append(repre_doc["_id"])
+
+                version_id = repre_doc["parent"]
+                if version_id not in version_ids:
+                    version_ids.remove(version_id)
+
+            for version_id in version_ids:
+                joined_subset_names = ", ".join([
+                    '"{}"'.format(subset)
+                    for subset in subset_names_by_version_id[version_id]
+                ])
+                self.echo("Subsets {} don't have representation '{}'".format(
+                    joined_subset_names, representation_name
+                ))
 
             # get contexts only for selected menu option
             repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
-            options = lib.get_options(action, loader, self,
-                                      list(repre_contexts.values()))
-
+            options = lib.get_options(
+                action, loader, self, list(repre_contexts.values())
+            )
             error_info = _load_representations_by_loader(
                 loader, repre_contexts, options=options
             )
@@ -661,27 +674,21 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
         print("Querying..")
 
+        project_name = self.dbcon.active_project()
         if not version_doc:
-            version_doc = self.dbcon.find_one({
-                "_id": version_id,
-                "type": {"$in": ["version", "hero_version"]}
-            })
+            version_doc = get_version(project_name, version_id=version_id)
             assert version_doc, "Not a valid version id"
 
         if version_doc["type"] == "hero_version":
-            _version_doc = self.dbcon.find_one({
-                "_id": version_doc["version_id"],
-                "type": "version"
-            })
+            _version_doc = get_version(
+                project_name, version_id=version_doc["version_id"]
+            )
             version_doc["data"] = _version_doc["data"]
             version_doc["name"] = HeroVersionType(
                 _version_doc["name"]
             )
 
-        subset = self.dbcon.find_one({
-            "_id": version_doc["parent"],
-            "type": "subset"
-        })
+        subset = get_subset(project_name, subset_id=version_doc["parent"])
         assert subset, "No valid subset parent for version"
 
         # Define readable creation timestamp
@@ -752,7 +759,7 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         if not source:
             return
 
-        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        project_name = self.dbcon.current_project()
         if self._anatomy is None or self._anatomy.project_name != project_name:
             self._anatomy = Anatomy(project_name)
 
@@ -833,24 +840,19 @@ class ThumbnailWidget(QtWidgets.QLabel):
             QtCore.Qt.SmoothTransformation
         )
 
-    def set_thumbnail(self, doc_id=None):
-        if not doc_id:
+    def set_thumbnail(self, src_type, doc_ids):
+        if not doc_ids:
             self.set_pixmap()
             return
 
-        if isinstance(doc_id, (list, tuple)):
-            if len(doc_id) < 1:
-                self.set_pixmap()
-                return
-            doc_id = doc_id[0]
+        src_id = doc_ids[0]
 
-        doc = self.dbcon.find_one(
-            {"_id": doc_id},
-            {"data.thumbnail_id"}
+        project_name = self.dbcon.active_project()
+        thumbnail_id = get_thumbnail_id_from_source(
+            project_name,
+            src_type,
+            src_id,
         )
-        thumbnail_id = None
-        if doc:
-            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()
@@ -861,9 +863,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
             self.set_pixmap()
             return
 
-        thumbnail_ent = self.dbcon.find_one(
-            {"type": "thumbnail", "_id": thumbnail_id}
-        )
+        thumbnail_ent = get_thumbnail(project_name, thumbnail_id)
         if not thumbnail_ent:
             return
 
@@ -917,21 +917,9 @@ class FamilyModel(QtGui.QStandardItemModel):
 
     def refresh(self):
         families = set()
-        if self.dbcon.Session.get("AVALON_PROJECT"):
-            result = list(self.dbcon.aggregate([
-                {"$match": {
-                    "type": "subset"
-                }},
-                {"$project": {
-                    "family": {"$arrayElemAt": ["$data.families", 0]}
-                }},
-                {"$group": {
-                    "_id": "family_group",
-                    "families": {"$addToSet": "$family"}
-                }}
-            ]))
-            if result:
-                families = set(result[0]["families"])
+        project_name = self.dbcon.current_project()
+        if project_name:
+            families = get_subset_families(project_name)
 
         root_item = self.invisibleRootItem()
 
@@ -1213,8 +1201,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         self.proxy_model = proxy_model
 
         self.sync_server_enabled = False
-        actual_project = dbcon.Session["AVALON_PROJECT"]
-        self.on_project_change(actual_project)
+
+        self.on_project_change(dbcon.current_project())
 
         self.model.refresh()
 
@@ -1243,23 +1231,18 @@ class RepresentationWidget(QtWidgets.QWidget):
         for item in items:
             repre_ids.append(item["_id"])
 
-        repre_docs = list(self.dbcon.find(
-            {
-                "type": "representation",
-                "_id": {"$in": repre_ids}
-            },
-            {
-                "name": 1,
-                "parent": 1
-            }
-        ))
+        project_name = self.dbcon.actual_project()
+        repre_docs = get_representations(
+            project_name,
+            representation_ids=repre_ids,
+            fields=["name", "parent"]
+        )
+
         version_ids = [
             repre_doc["parent"]
             for repre_doc in repre_docs
         ]
-        version_docs = self.dbcon.find({
-            "_id": {"$in": version_ids}
-        })
+        version_docs = get_versions(project_name, version_ids=version_ids)
 
         version_docs_by_id = {}
         version_docs_by_subset_id = collections.defaultdict(list)
@@ -1269,15 +1252,10 @@ class RepresentationWidget(QtWidgets.QWidget):
             version_docs_by_id[version_id] = version_doc
             version_docs_by_subset_id[subset_id].append(version_doc)
 
-        subset_docs = list(self.dbcon.find(
-            {
-                "_id": {"$in": list(version_docs_by_subset_id.keys())},
-                "type": "subset"
-            },
-            {
-                "schema": 1,
-                "data.families": 1
-            }
+        subset_docs = list(get_subsets(
+            project_name,
+            subset_ids=version_docs_by_subset_id.keys(),
+            fields=["schema", "data.families"]
         ))
         subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
@@ -1446,13 +1424,12 @@ class RepresentationWidget(QtWidgets.QWidget):
         self._process_action(items, menu, point)
 
     def _process_action(self, items, menu, point):
-        """
-            Show the context action menu and process selected
+        """Show the context action menu and process selected
 
-            Args:
-                items(dict): menu items
-                menu(OptionalMenu)
-                point(PointIndex)
+        Args:
+            items(dict): menu items
+            menu(OptionalMenu)
+            point(PointIndex)
         """
         global_point = self.tree_view.mapToGlobal(point)
         action = menu.exec_(global_point)
@@ -1468,21 +1445,23 @@ class RepresentationWidget(QtWidgets.QWidget):
         data_by_repre_id = {}
         selected_side = action_representation.get("selected_side")
 
+        is_sync_loader = tools_lib.is_sync_loader(loader)
         for item in items:
-            if tools_lib.is_sync_loader(loader):
-                site_name = "{}_site_name".format(selected_side)
-                data = {
-                    "_id": item.get("_id"),
-                    "site_name": item.get(site_name),
-                    "project_name": self.dbcon.Session["AVALON_PROJECT"]
-                }
+            item_id = item.get("_id")
+            repre_ids.append(item_id)
+            if not is_sync_loader:
+                continue
 
-                if not data["site_name"]:
-                    continue
+            site_name = "{}_site_name".format(selected_side)
+            data_site_name = item.get(site_name)
+            if not data_site_name:
+                continue
 
-                data_by_repre_id[data["_id"]] = data
-
-            repre_ids.append(item.get("_id"))
+            data_by_repre_id[item_id] = {
+                "_id": item_id,
+                "site_name": data_site_name,
+                "project_name": self.dbcon.active_project()
+            }
 
         repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
         options = lib.get_options(action, loader, self,

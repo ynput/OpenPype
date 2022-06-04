@@ -2,6 +2,10 @@ import contextlib
 from Qt import QtWidgets, QtCore
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_asset,
+)
 from openpype.tools.utils import PlaceholderLineEdit
 
 from openpype.style import get_default_tools_icon_color
@@ -218,7 +222,8 @@ class AssetWidget(QtWidgets.QWidget):
         self.view = view
 
     def collect_data(self):
-        project = self.dbcon.find_one({'type': 'project'})
+        project_name = self.dbcon.active_project()
+        project = get_project(project_name, fields=["name"])
         asset = self.get_active_asset()
 
         try:
@@ -241,9 +246,16 @@ class AssetWidget(QtWidgets.QWidget):
             return ent_parents
 
         output = []
-        if entity.get('data', {}).get('visualParent', None) is None:
+        parent_asset_id = entity.get('data', {}).get('visualParent', None)
+        if parent_asset_id is None:
             return output
-        parent = self.dbcon.find_one({'_id': entity['data']['visualParent']})
+
+        project_name = self.dbcon.active_project()
+        parent = get_asset(
+            project_name,
+            asset_id=parent_asset_id,
+            fields=["name", "data.visualParent"]
+        )
         output.append(parent['name'])
         output.extend(self.get_parents(parent))
         return output
@@ -349,9 +361,10 @@ class AssetWidget(QtWidgets.QWidget):
         tasks = []
         selected = self.get_selected_assets()
         if len(selected) == 1:
-            asset = self.dbcon.find_one({
-                "_id": selected[0], "type": "asset"
-            })
+            project_name = self.dbcon.active_project()
+            asset = get_asset(
+                project_name, asset_id=selected[0], fields=["data.tasks"]
+            )
             if asset:
                 tasks = asset.get('data', {}).get('tasks', [])
         self.task_model.set_tasks(tasks)
@@ -400,7 +413,7 @@ class AssetWidget(QtWidgets.QWidget):
 
         # Select
         mode = selection_model.Select | selection_model.Rows
-        for index in lib.iter_model_rows(
+        for index in _iter_model_rows(
             self.proxy, column=0, include_root=False
         ):
             # stop iteration if there are no assets to process

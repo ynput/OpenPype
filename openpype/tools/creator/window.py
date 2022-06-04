@@ -4,6 +4,7 @@ import re
 
 from Qt import QtWidgets, QtCore
 
+from openpype.client import get_asset, get_subsets
 from openpype import style
 from openpype.api import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
@@ -215,12 +216,12 @@ class CreatorWindow(QtWidgets.QDialog):
             self._set_valid_state(False)
             return
 
+        project_name = legacy_io.active_project()
         asset_doc = None
         if creator_plugin:
             # Get the asset from the database which match with the name
-            asset_doc = legacy_io.find_one(
-                {"name": asset_name, "type": "asset"},
-                projection={"_id": 1}
+            asset_doc = get_asset(
+                project_name, asset_name=asset_name, fields=["_id"]
             )
 
         # Get plugin
@@ -235,7 +236,6 @@ class CreatorWindow(QtWidgets.QDialog):
             self._set_valid_state(False)
             return
 
-        project_name = legacy_io.Session["AVALON_PROJECT"]
         asset_id = asset_doc["_id"]
         task_name = legacy_io.Session["AVALON_TASK"]
 
@@ -269,14 +269,13 @@ class CreatorWindow(QtWidgets.QDialog):
         self._subset_name_input.setText(subset_name)
 
         # Get all subsets of the current asset
-        subset_docs = legacy_io.find(
-            {
-                "type": "subset",
-                "parent": asset_id
-            },
-            {"name": 1}
+        subset_docs = get_subsets(
+            project_name, asset_ids=[asset_id], fields=["name"]
         )
-        existing_subset_names = set(subset_docs.distinct("name"))
+        existing_subset_names = {
+            subset_doc["name"]
+            for subset_doc in subset_docs
+        }
         existing_subset_names_low = set(
             _name.lower()
             for _name in existing_subset_names

@@ -1,6 +1,10 @@
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_asset,
+)
 from openpype.style import get_disabled_entity_icon_color
 from openpype.tools.utils.lib import get_task_icon
 
@@ -47,7 +51,8 @@ class TasksModel(QtGui.QStandardItemModel):
         # Get the project configured icons from database
         project_doc = {}
         if self._context_is_valid():
-            project_doc = self.dbcon.find_one({"type": "project"})
+            project_name = self.dbcon.active_project()
+            project_doc = get_project(project_name)
 
         self._loaded_project_name = self._get_current_project()
         self._project_doc = project_doc
@@ -71,9 +76,9 @@ class TasksModel(QtGui.QStandardItemModel):
     def set_asset_id(self, asset_id):
         asset_doc = None
         if self._context_is_valid():
-            asset_doc = self.dbcon.find_one(
-                {"_id": asset_id},
-                {"data.tasks": True}
+            project_name = self._get_current_project()
+            asset_doc = get_asset(
+                project_name, asset_id=asset_id, fields=["data.tasks"]
             )
         self._set_asset(asset_doc)
 

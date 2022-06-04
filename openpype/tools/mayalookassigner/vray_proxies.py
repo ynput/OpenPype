@@ -6,11 +6,14 @@ import logging
 import json
 
 import six
-from bson.objectid import ObjectId
 
 import alembic.Abc
 from maya import cmds
 
+from openpype.client import (
+    get_representation_by_name,
+    get_last_version_for_subset,
+)
 from openpype.pipeline import (
     legacy_io,
     load_container,
@@ -155,13 +158,12 @@ def get_look_relationships(version_id):
 
     Returns:
         dict: Dictionary of relations.
-
     """
-    json_representation = legacy_io.find_one({
-        "type": "representation",
-        "parent": version_id,
-        "name": "json"
-    })
+
+    project_name = legacy_io.active_project()
+    json_representation = get_representation_by_name(
+        project_name, representation_name="json", version_id=version_id
+    )
 
     # Load relationships
     shader_relation = get_representation_path(json_representation)
@@ -184,12 +186,12 @@ def load_look(version_id):
         list of shader nodes.
 
     """
+
+    project_name = legacy_io.active_project()
     # Get representations of shader file and relationships
-    look_representation = legacy_io.find_one({
-        "type": "representation",
-        "parent": version_id,
-        "name": "ma"
-    })
+    look_representation = get_representation_by_name(
+        project_name, representation_name="ma", version_id=version_id
+    )
 
     # See if representation is already loaded, if so reuse it.
     host = registered_host()
@@ -220,42 +222,6 @@ def load_look(version_id):
     return shader_nodes
 
 
-def get_latest_version(asset_id, subset):
-    # type: (str, str) -> dict
-    """Get latest version of subset.
-
-    Args:
-        asset_id (str): Asset ID
-        subset (str): Subset name.
-
-    Returns:
-        Latest version
-
-    Throws:
-        RuntimeError: When subset or version doesn't exist.
-
-    """
-    subset = legacy_io.find_one({
-        "name": subset,
-        "parent": ObjectId(asset_id),
-        "type": "subset"
-    })
-    if not subset:
-        raise RuntimeError("Subset does not exist: %s" % subset)
-
-    version = legacy_io.find_one(
-        {
-            "type": "version",
-            "parent": subset["_id"]
-        },
-        sort=[("name", -1)]
-    )
-    if not version:
-        raise RuntimeError("Version does not exist.")
-
-    return version
-
-
 def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
     # type: (str, str) -> None
     """Assign look to vray proxy.
@@ -281,13 +247,20 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
         asset_id = node_id.split(":", 1)[0]
         node_ids_by_asset_id[asset_id].add(node_id)
 
+    project_name = legacy_io.active_project()
     for asset_id, node_ids in node_ids_by_asset_id.items():
 
         # Get latest look version
-        try:
-            version = get_latest_version(asset_id, subset=subset)
-        except RuntimeError as exc:
-            print(exc)
+        version = get_last_version_for_subset(
+            project_name,
+            subset_name=subset,
+            asset_id=asset_id,
+            fields=["_id"]
+        )
+        if not version:
+            print("Didn't find last version for subset name {}".format(
+                subset
+            ))
             continue
 
         relationships = get_look_relationships(version["_id"])

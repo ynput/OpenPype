@@ -1,13 +1,20 @@
 import re
 
 from Qt import QtWidgets, QtCore
-from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
-from . import FamilyDescriptionWidget
 
+from openpype.client import (
+    get_asset,
+    get_subset,
+    get_subsets,
+    get_last_version_for_subset,
+)
 from openpype.api import get_project_settings
 from openpype.pipeline import LegacyCreator
 from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+
+from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
+from . import FamilyDescriptionWidget
 
 
 class FamilyWidget(QtWidgets.QWidget):
@@ -180,12 +187,9 @@ class FamilyWidget(QtWidgets.QWidget):
         asset_doc = None
         if asset_name != self.NOT_SELECTED:
             # Get the assets from the database which match with the name
-            asset_doc = self.dbcon.find_one(
-                {
-                    "type": "asset",
-                    "name": asset_name
-                },
-                {"_id": 1}
+            project_name = self.dbcon.active_project()
+            asset_doc = get_asset(
+                project_name, asset_name=asset_name, fields=["_id"]
             )
 
         # Get plugin and family
@@ -200,14 +204,13 @@ class FamilyWidget(QtWidgets.QWidget):
             return
 
         # Get the asset from the database which match with the name
-        asset_doc = self.dbcon.find_one(
-            {"name": asset_name, "type": "asset"},
-            projection={"_id": 1}
+        project_name = self.dbcon.active_project()
+        asset_doc = get_asset(
+            project_name, asset_name=asset_name, fields=["_id"]
         )
         # Get plugin
         plugin = item.data(PluginRole)
         if asset_doc and plugin:
-            project_name = self.dbcon.Session["AVALON_PROJECT"]
             asset_id = asset_doc["_id"]
             task_name = self.dbcon.Session["AVALON_TASK"]
 
@@ -231,14 +234,14 @@ class FamilyWidget(QtWidgets.QWidget):
                 self.input_result.setText("Select task please")
 
             # Get all subsets of the current asset
-            subset_docs = self.dbcon.find(
-                {
-                    "type": "subset",
-                    "parent": asset_id
-                },
-                {"name": 1}
+            subset_docs = get_subsets(
+                project_name, asset_ids=[asset_id], fields=["name"]
             )
-            existing_subset_names = set(subset_docs.distinct("name"))
+
+            existing_subset_names = {
+                subset_doc["name"]
+                for subset_doc in subset_docs
+            }
 
             # Defaults to dropdown
             defaults = []
@@ -296,47 +299,37 @@ class FamilyWidget(QtWidgets.QWidget):
         if not auto_version:
             return
 
+        project_name = self.dbcon.active_project()
         asset_name = self.asset_name
         subset_name = self.input_result.text()
         version = 1
 
         asset_doc = None
         subset_doc = None
-        versions = None
         if (
             asset_name != self.NOT_SELECTED and
             subset_name.strip() != ''
         ):
-            asset_doc = self.dbcon.find_one(
-                {
-                    'type': 'asset',
-                    'name': asset_name
-                },
-                {"_id": 1}
+            asset_doc = get_asset(
+                project_name, asset_name=asset_name, fields=["_id"]
             )
 
         if asset_doc:
-            subset_doc = self.dbcon.find_one(
-                {
-                    'type': 'subset',
-                    'parent': asset_doc['_id'],
-                    'name': subset_name
-                },
-                {"_id": 1}
+            subset_doc = get_subset(
+                project_name,
+                subset_name=subset_name,
+                asset_id=asset_doc['_id'],
+                fields=["_id"]
             )
 
         if subset_doc:
-            versions = self.dbcon.find(
-                {
-                    'type': 'version',
-                    'parent': subset_doc['_id']
-                },
-                {"name": 1}
-            ).distinct("name")
-
-        if versions:
-            versions = sorted(versions)
-            version = int(versions[-1]) + 1
+            last_version = get_last_version_for_subset(
+                project_name,
+                subset_id=subset_doc["_id"],
+                fields=["name"]
+            )
+            if last_version:
+                version = last_version["name"] + 1
 
         self.version_spinbox.setValue(version)
 
