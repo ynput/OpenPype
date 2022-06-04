@@ -24,6 +24,12 @@
             "children": [
                 {
                     "type": "boolean",
+                    "key": "use_env_var_as_root",
+                    "label": "Use env var placeholder in referenced paths",
+                    "docstring": "Use ${} placeholder instead of absolute value of a root in referenced filepaths."
+                },
+                {
+                    "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
                 },
