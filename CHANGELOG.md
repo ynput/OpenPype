@@ -1,17 +1,19 @@
 # Changelog
 
-## [3.10.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.10.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.10.0...HEAD)
 
 **🚀 Enhancements**
 
 - General: Updated windows oiio tool [\#3268](https://github.com/pypeclub/OpenPype/pull/3268)
+- Maya: reference loaders could store placeholder in referenced url [\#3264](https://github.com/pypeclub/OpenPype/pull/3264)
 - TVPaint: Init file for TVPaint worker also handle guideline images [\#3250](https://github.com/pypeclub/OpenPype/pull/3250)
 - Nuke: Change default icon path in settings [\#3247](https://github.com/pypeclub/OpenPype/pull/3247)
 
 **🐛 Bug fixes**
 
+- Webpublisher: return only active projects in ProjectsEndpoint [\#3281](https://github.com/pypeclub/OpenPype/pull/3281)
 - Nuke: bake reformat was failing on string type [\#3261](https://github.com/pypeclub/OpenPype/pull/3261)
 - Maya: hotfix Pxr multitexture in looks [\#3260](https://github.com/pypeclub/OpenPype/pull/3260)
 - Unreal: Fix Camera Loading if Layout is missing [\#3255](https://github.com/pypeclub/OpenPype/pull/3255)
@@ -19,9 +21,12 @@
 - Unreal: Fixed Render creation in UE5 [\#3239](https://github.com/pypeclub/OpenPype/pull/3239)
 - Unreal: Fixed Camera loading in UE5 [\#3238](https://github.com/pypeclub/OpenPype/pull/3238)
 - Flame: debugging [\#3224](https://github.com/pypeclub/OpenPype/pull/3224)
+- Ftrack: Push hierarchical attributes action works [\#3210](https://github.com/pypeclub/OpenPype/pull/3210)
+- add silent audio to slate [\#3162](https://github.com/pypeclub/OpenPype/pull/3162)
 
 **Merged pull requests:**
 
+- Maya: better handling of legacy review subsets names [\#3269](https://github.com/pypeclub/OpenPype/pull/3269)
 - Nuke: add pointcache and animation to loader [\#3186](https://github.com/pypeclub/OpenPype/pull/3186)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
@@ -49,9 +54,6 @@
 - General: Add 'dataclasses' to required python modules [\#3149](https://github.com/pypeclub/OpenPype/pull/3149)
 - Hooks: Tweak logging grammar [\#3147](https://github.com/pypeclub/OpenPype/pull/3147)
 - Nuke: settings for reformat node in CreateWriteRender node [\#3143](https://github.com/pypeclub/OpenPype/pull/3143)
-- Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
-- Publisher: UI Modifications and fixes [\#3139](https://github.com/pypeclub/OpenPype/pull/3139)
-- General: Simplified OP modules/addons import [\#3137](https://github.com/pypeclub/OpenPype/pull/3137)
 
 **🐛 Bug fixes**
 
@@ -64,7 +66,6 @@
 - Hiero: debugging frame range and other 3.10 [\#3222](https://github.com/pypeclub/OpenPype/pull/3222)
 - Project Manager: Fix persistent editors on project change [\#3218](https://github.com/pypeclub/OpenPype/pull/3218)
 - Deadline: instance data overwrite fix [\#3214](https://github.com/pypeclub/OpenPype/pull/3214)
-- Ftrack: Push hierarchical attributes action works [\#3210](https://github.com/pypeclub/OpenPype/pull/3210)
 - Standalone Publisher: Always create new representation for thumbnail [\#3203](https://github.com/pypeclub/OpenPype/pull/3203)
 - Photoshop: skip collector when automatic testing [\#3202](https://github.com/pypeclub/OpenPype/pull/3202)
 - Nuke: render/workfile version sync doesn't work on farm [\#3185](https://github.com/pypeclub/OpenPype/pull/3185)
@@ -75,14 +76,9 @@
 - General: Oiio conversion for ffmpeg checks for invalid characters [\#3166](https://github.com/pypeclub/OpenPype/pull/3166)
 - Fix for attaching render to subset [\#3164](https://github.com/pypeclub/OpenPype/pull/3164)
 - Harmony: fixed missing task name in render instance [\#3163](https://github.com/pypeclub/OpenPype/pull/3163)
-- add silent audio to slate [\#3162](https://github.com/pypeclub/OpenPype/pull/3162)
 - Ftrack: Action delete old versions formatting works [\#3152](https://github.com/pypeclub/OpenPype/pull/3152)
-- nuke: adding extract thumbnail settings [\#3148](https://github.com/pypeclub/OpenPype/pull/3148)
 - Deadline: fix the output directory [\#3144](https://github.com/pypeclub/OpenPype/pull/3144)
 - General: New Session schema [\#3141](https://github.com/pypeclub/OpenPype/pull/3141)
-- General: Missing version on headless mode crash properly [\#3136](https://github.com/pypeclub/OpenPype/pull/3136)
-- TVPaint: Composite layers in reversed order [\#3135](https://github.com/pypeclub/OpenPype/pull/3135)
-- TVPaint: Composite layers in reversed order [\#3134](https://github.com/pypeclub/OpenPype/pull/3134)
 
 **🔀 Refactored code**
 
@@ -93,6 +89,7 @@
 - Harmony: message length in 21.1 [\#3257](https://github.com/pypeclub/OpenPype/pull/3257)
 - Harmony: 21.1 fix [\#3249](https://github.com/pypeclub/OpenPype/pull/3249)
 - Maya: added jpg to filter for Image Plane Loader [\#3223](https://github.com/pypeclub/OpenPype/pull/3223)
+- Maya: added jpg to filter for Image Plane Loader [\#3221](https://github.com/pypeclub/OpenPype/pull/3221)
 - Webpublisher: replace space by underscore in subset names [\#3160](https://github.com/pypeclub/OpenPype/pull/3160)
 
 ## [3.9.8](https://github.com/pypeclub/OpenPype/tree/3.9.8) (2022-05-19)
@@ -134,6 +131,7 @@
 **🐛 Bug fixes**
 
 - Ftrack: Action delete old versions formatting works [\#3154](https://github.com/pypeclub/OpenPype/pull/3154)
+- nuke: adding extract thumbnail settings [\#3148](https://github.com/pypeclub/OpenPype/pull/3148)
 
 **Merged pull requests:**
 
