@@ -2500,50 +2500,77 @@ def recreate_instance(origin_node, avalon_data=None):
     return new_node
 
 
-def find_scripts_gizmo(title, parent):
-    """
-    Check if the menu exists with the given title in the parent
-
-    Args:
-        title (str): the title name of the scripts menu
-
-        parent (QtWidgets.QMenuBar): the menubar to check
-
-    Returns:
-        QtWidgets.QMenu or None
-
-    """
-
-    menu = None
-    search = [i for i in parent.items() if
-              isinstance(i, gizmo_menu.GizmoMenu)
-              and i.title() == title]
-
-    if search:
-        assert len(search) < 2, ("Multiple instances of menu '{}' "
-                                 "in toolbar".format(title))
-        menu = search[0]
-
-    return menu
-
-
-def gizmo_creation(title="Gizmos", parent=None, objectName=None, icon=None):
+def add_scripts_gizmo():
     try:
-        toolbar = find_scripts_gizmo(title, parent)
-        if not toolbar:
-            log.info("Attempting to build toolbar...")
-            object_name = objectName or title.lower()
-            toolbar = gizmo_menu.GizmoMenu(
-                title=title,
-                parent=parent,
-                objectName=object_name,
-                icon=icon
-            )
-    except Exception as e:
-        log.error(e)
+        from openpype.hosts.nuke.api import lib
+    except ImportError:
+        log.warning(
+            "Skipping studio.gizmo install, because "
+            "'scriptsgizmo' module seems unavailable."
+        )
         return
 
-    return toolbar
+    # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    platform_name = platform.system().lower()
+
+    for gizmo_settings in project_settings["nuke"]["gizmo"]:
+        gizmo_list_definition = gizmo_settings["gizmo_definition"]
+        print(1, gizmo_list_definition)
+        toolbar_name = gizmo_settings["toolbar_menu_name"]
+        # gizmo_toolbar_path = gizmo_settings["gizmo_toolbar_path"]
+        gizmo_source_dir = gizmo_settings.get(
+            "gizmo_source_dir", {}).get(platform_name)
+        toolbar_icon_path = gizmo_settings.get(
+            "toolbar_icon_path", {}).get(platform_name)
+
+        if not gizmo_source_dir:
+            log.debug("Skipping studio gizmo `{}`, no gizmo path found.".format(
+                toolbar_name
+            ))
+            return
+
+        if not gizmo_list_definition:
+            log.debug("Skipping studio gizmo `{}`, no definition found.".format(
+                toolbar_name
+            ))
+            return
+
+        if toolbar_icon_path:
+            try:
+                toolbar_icon_path = toolbar_icon_path.format(**os.environ)
+            except KeyError as e:
+                log.error(
+                    "This environment variable doesn't exist: {}".format(e)
+                )
+
+        existing_gizmo_path = []
+        for source_dir in gizmo_source_dir:
+            try:
+                resolve_source_dir = source_dir.format(**os.environ)
+            except KeyError as e:
+                log.error(
+                    "This environment variable doesn't exist: {}".format(e)
+                )
+                continue
+            if not os.path.exists(resolve_source_dir):
+                log.warning(
+                    "The source of gizmo `{}` does not exists".format(
+                        resolve_source_dir
+                    )
+                )
+                continue
+            existing_gizmo_path.append(resolve_source_dir)
+
+        # run the launcher for Nuke toolbar
+        toolbar_menu = gizmo_menu.GizmoMenu(
+            title=toolbar_name,
+            icon=toolbar_icon_path
+        )
+
+        # apply configuration
+        toolbar_menu.add_gizmo_path(existing_gizmo_path)
+        toolbar_menu.build_from_configuration(gizmo_list_definition)
 
 
 class NukeDirmap(HostDirmap):

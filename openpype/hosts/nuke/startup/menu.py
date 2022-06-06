@@ -8,7 +8,8 @@ from openpype.hosts.nuke.api.lib import (
     on_script_load,
     check_inventory_versions,
     WorkfileSettings,
-    dirmap_file_name_filter
+    dirmap_file_name_filter,
+    add_scripts_gizmo
 )
 from openpype.settings import get_project_settings
 
@@ -59,72 +60,5 @@ def add_scripts_menu():
 
 
 add_scripts_menu()
-
-
-def add_scripts_gizmo():
-    try:
-        from openpype.hosts.nuke.api import lib
-    except ImportError:
-        log.warning(
-            "Skipping studio.gizmo install, because "
-            "'scriptsgizmo' module seems unavailable."
-        )
-        return
-
-    # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-
-    for gizmo in project_settings["nuke"]["gizmo"]:
-        config = gizmo["gizmo_definition"]
-        toolbar_name = gizmo["toolbar_menu_name"]
-        gizmo_path = gizmo["gizmo_path"]
-        icon = gizmo['toolbar_icon_path']
-
-        if not any(gizmo_path):
-            log.warning("Skipping studio gizmo, no gizmo path found.")
-            return
-
-        if not config:
-            log.warning("Skipping studio gizmo, no definition found.")
-            return
-
-        try:
-            icon = icon.format(**os.environ)
-        except KeyError as e:
-            log.warning(
-                "This environment variable doesn't exist: {}".format(e)
-            )
-
-        existing_gizmo_path = []
-        for gizmo in gizmo_path:
-            try:
-                gizmo = gizmo.format(**os.environ)
-            except KeyError as e:
-                log.warning(
-                    "This environment variable doesn't exist: {}".format(e)
-                )
-                continue
-            if not os.path.exists(gizmo):
-                log.warning(
-                    "The source of gizmo `{}` does not exists".format(gizmo)
-                )
-                continue
-            existing_gizmo_path.append(gizmo)
-
-        nuke_toolbar = nuke.menu("Nodes")
-        toolbar = nuke_toolbar.addMenu(toolbar_name, icon=icon)
-
-        # run the launcher for Nuke toolbar
-        studio_menu = lib.gizmo_creation(
-            title=toolbar_name,
-            parent=toolbar,
-            objectName=toolbar_name.lower().replace(" ", "_"),
-            icon=icon
-        )
-
-        # apply configuration
-        studio_menu.add_gizmo_path(existing_gizmo_path)
-        studio_menu.build_from_configuration(toolbar, config)
-
 
 add_scripts_gizmo()

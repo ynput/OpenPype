@@ -293,8 +293,12 @@
     "gizmo": [
         {
             "toolbar_menu_name": "OpenPype Gizmo",
-            "toolbar_icon_path": "path/to/nuke/icon.png",
-            "gizmo_path": ["path/to/nuke/gizmo"],
+            "gizmo_path": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "toolbar_icon_path": {},
             "gizmo_definition": [
                 {
                     "type": "action",
