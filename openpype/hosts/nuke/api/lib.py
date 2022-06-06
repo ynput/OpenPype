@@ -2516,7 +2516,6 @@ def add_scripts_gizmo():
 
     for gizmo_settings in project_settings["nuke"]["gizmo"]:
         gizmo_list_definition = gizmo_settings["gizmo_definition"]
-        print(1, gizmo_list_definition)
         toolbar_name = gizmo_settings["toolbar_menu_name"]
         # gizmo_toolbar_path = gizmo_settings["gizmo_toolbar_path"]
         gizmo_source_dir = gizmo_settings.get(

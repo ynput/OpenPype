@@ -301,10 +301,15 @@
             "toolbar_icon_path": {},
             "gizmo_definition": [
                 {
-                    "type": "action",
-                    "sourcetype": "python",
-                    "title": "Gizmo Note",
-                    "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')"
+                    "gizmo_toolbar_path": "/path/to/menu",
+                    "sub_gizmo_list": [
+                        {
+                            "sourcetype": "python",
+                            "title": "Gizmo Note",
+                            "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "shortcut": ""
+                        }
+                    ]
                 }
             ]
         }

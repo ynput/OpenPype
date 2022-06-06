@@ -38,38 +38,42 @@ class GizmoMenu():
         return parent
 
     def build_from_configuration(self, configuration):
-        for item in configuration:
-            assert isinstance(item, dict), "Configuration is wrong!"
-
+        for menu in configuration:
             # Construct parent path else parent is toolbar
             parent = self.toolbar
-            gizmo_toolbar_path = item.get("gizmo_toolbar_path")
+            gizmo_toolbar_path = menu.get("gizmo_toolbar_path")
             if gizmo_toolbar_path:
                 parent = self._make_menu_path(gizmo_toolbar_path)
 
-            item_type = item.get("sourcetype")
+            for item in menu["sub_gizmo_list"]:
+                assert isinstance(item, dict), "Configuration is wrong!"
 
-            if item_type == ("python" or "file"):
-                parent.addCommand(
-                    item['title'],
-                    command=str(item["command"]),
-                    icon=item.get("icon"),
-                    shortcut=item.get('hotkey')
-                )
+                if not item.get("title"):
+                    continue
 
-            # add separator
-            # Special behavior for separators
-            elif item_type == "separator":
-                parent.addSeparator()
+                item_type = item.get("sourcetype")
 
-            # add submenu
-            # items should hold a collection of submenu items (dict)
-            elif item_type == "menu":
-                # assert "items" in item, "Menu is missing 'items' key"
-                parent.addMenu(
-                    item['title'],
-                    icon=item.get('icon')
-                )
+                if item_type == ("python" or "file"):
+                    parent.addCommand(
+                        item["title"],
+                        command=str(item["command"]),
+                        icon=item.get("icon"),
+                        shortcut=item.get("hotkey")
+                    )
+
+                # add separator
+                # Special behavior for separators
+                elif item_type == "separator":
+                    parent.addSeparator()
+
+                # add submenu
+                # items should hold a collection of submenu items (dict)
+                elif item_type == "menu":
+                    # assert "items" in item, "Menu is missing 'items' key"
+                    parent.addMenu(
+                        item['title'],
+                        icon=item.get('icon')
+                    )
 
     def add_gizmo_path(self, gizmo_paths):
         for gizmo_path in gizmo_paths:
