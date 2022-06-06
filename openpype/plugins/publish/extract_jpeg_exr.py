@@ -159,9 +159,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # we just want one frame from movie files
         jpeg_items.append("-vframes 1")
         # output file
-        jpeg_items.append(path_to_subprocess_arg(src_path))
+        jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)
-
         run_subprocess(
                 subprocess_command, shell=True, logger=self.log
             )
