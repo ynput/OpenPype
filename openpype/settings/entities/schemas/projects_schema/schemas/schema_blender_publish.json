@@ -6,6 +6,61 @@
     "children": [
         {
             "type": "label",
+            "label": "Validators"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateLinkedVersion",
+            "label": "Validate Linked Version",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateLinkedData",
+            "label": "Validate Linked Data",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
             "label": "Extractors"
         },
         {

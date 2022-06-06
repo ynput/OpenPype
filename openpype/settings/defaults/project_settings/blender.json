@@ -4,6 +4,16 @@
         "custom_templates": []
     },
     "publish": {
+        "ValidateLinkedVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateLinkedData": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ExtractBlend": {
             "enabled": true,
             "optional": true,

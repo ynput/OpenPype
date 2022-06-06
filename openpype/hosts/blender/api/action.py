@@ -5,8 +5,8 @@ import pyblish.api
 from openpype.pipeline import legacy_io, update_container
 from openpype.api import get_errored_instances_from_context
 
-from .pipline import AVALON_PROPERTY
-from .plugin import maintained_local_data
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.plugin import maintained_local_data
 
 from contextlib import ExitStack
 
@@ -18,7 +18,7 @@ def _get_invalid_nodes(context, plugin):
     invalid_nodes = list()
     for instance in instances:
         invalid = plugin.get_invalid(instance)
-        if isinstance(invalid_nodes, (list, tuple)):
+        if isinstance(invalid, (list, tuple)):
             invalid_nodes.extend(invalid)
         else:
             invalid_nodes.append(invalid)

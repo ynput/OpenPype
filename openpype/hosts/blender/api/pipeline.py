@@ -32,11 +32,10 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+SCRIPTS_PATH = os.path.join(HOST_DIR, "scripts")
 
 ORIGINAL_EXCEPTHOOK = sys.excepthook
 
-AVALON_INSTANCES = "AVALON_INSTANCES"
-AVALON_CONTAINERS = "AVALON_CONTAINERS"
 AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
 
@@ -220,28 +219,6 @@ def _discover_gui() -> Optional[Callable]:
     return None
 
 
-def add_to_avalon_container(container: bpy.types.Collection):
-    """Add the container to the Avalon container."""
-
-    avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-    if not avalon_container:
-        avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
-
-        # Link the container to the scene so it's easily visible to the artist
-        # and can be managed easily. Otherwise it's only found in "Blender
-        # File" view and it will be removed by Blenders garbage collection,
-        # unless you set a 'fake user'.
-        bpy.context.scene.collection.children.link(avalon_container)
-
-    avalon_container.children.link(container)
-
-    # Disable Avalon containers for the view layers.
-    for view_layer in bpy.context.scene.view_layers:
-        for child in view_layer.layer_collection.children:
-            if child.collection == avalon_container:
-                child.exclude = True
-
-
 def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     """Imprint the node with metadata.
 
@@ -298,7 +275,6 @@ def containerise(name: str,
     }
 
     metadata_update(container, data)
-    add_to_avalon_container(container)
 
     return container
 
@@ -337,7 +313,6 @@ def containerise_existing(
     }
 
     metadata_update(container, data)
-    add_to_avalon_container(container)
 
     return container
 

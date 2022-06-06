@@ -7,14 +7,14 @@ import bpy
 import pyblish.api
 
 from openpype.pipeline import legacy_io, update_container
+from openpype.api import ValidateContentsOrder
+from openpype.hosts.blender.api.pipeline import SCRIPTS_PATH, AVALON_PROPERTY
 from openpype.hosts.blender.api.plugin import is_container
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api.action import SelectInvalidAction
-from openpype.hosts.blender.scripts import update_workfile_data
 
 
 BLENDER_BIN_PATH = bpy.app.binary_path
-UPDATE_SCRIPT_PATH = os.path.abspath(update_workfile_data.__file__)
+UPDATE_SCRIPT_PATH = os.path.join(SCRIPTS_PATH, "update_workfile_data.py")
 
 
 class ExtractAndPublishNotLinked(pyblish.api.Action):
@@ -85,20 +85,23 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
 class ValidateLinkedData(pyblish.api.InstancePlugin):
     """Validate that containers are linked with valid library."""
 
-    order = pyblish.api.ValidatorOrder - 0.01
+    order = ValidateContentsOrder - 0.01
     hosts = ["blender"]
     families = ["rig"]
     category = "geometry"
     label = "Validate Linked Data"
     actions = [SelectInvalidAction, ExtractAndPublishNotLinked]
-    optional = False
+    optional = True
 
     @staticmethod
     def get_invalid(instance) -> List:
         invalid = []
 
         for member in set(instance):
-            if is_container(member):
+            if (
+                is_container(member, "model")
+                and isinstance(member, bpy.types.Collection)
+            ):
                 for obj in member.all_objects:
                     if (
                         not obj.library
@@ -114,7 +117,8 @@ class ValidateLinkedData(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
+            instance.data["local_collections"] = invalid
             raise RuntimeError(
                 f"Containers have local data: {invalid} "
-                f"See Action of this Validate"
+                "See Action of this Validate"
             )

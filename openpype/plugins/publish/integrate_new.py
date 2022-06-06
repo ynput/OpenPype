@@ -604,13 +604,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if repre_name_low == _repre["name"]:
                     repre_id = _repre["orig_id"]
                     break
-            # NOTE the above loop could be simplified like this:
-            # repre_id = next((_repre["orig_id"] for _repre in existing_repres if repre_name_low == _repre["name"]), repre_id)
 
             # Create new id if existing representations does not match
             if repre_id is None:
                 repre_id = ObjectId()
-                # NOTE this could be set as default value for repre_id
 
             data = repre.get("data") or {}
             data.update({'path': dst, 'template': template})

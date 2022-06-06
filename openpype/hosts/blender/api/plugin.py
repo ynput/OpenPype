@@ -27,7 +27,7 @@ from .lib import (
     imprint,
     get_selection
 )
-from .pipeline import parse_container, metadata_update, AVALON_PROPERTY
+from .pipeline import metadata_update, AVALON_PROPERTY, MODEL_DOWNSTREAM
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -45,7 +45,7 @@ def asset_name(
 
 
 def get_unique_number(
-    asset: str, subset: str
+    asset: str, subset: str, start_number: Optional[int] = None
 ) -> str:
     """Return a unique number based on the asset name."""
     container_names = [c.name for c in bpy.data.collections]
@@ -54,22 +54,12 @@ def get_unique_number(
         for obj in bpy.data.objects
         if obj.instance_collection and obj.instance_type == 'COLLECTION'
     ]
-    count = 1
+    count = start_number or 1
     name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
         count += 1
         name = f"{asset}_{count:0>2}_{subset}"
     return f"{count:0>2}"
-
-
-def prepare_data(data, container_name=None):
-    name = data.name
-    local_data = data.make_local()
-    if container_name:
-        local_data.name = f"{container_name}:{name}"
-    else:
-        local_data.name = f"{name}"
-    return local_data
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
@@ -350,13 +340,6 @@ def get_main_collection() -> bpy.types.Collection:
     return main_collection
 
 
-def get_local_collection_with_name(name):
-    for collection in bpy.data.collections:
-        if collection.name == name and collection.library is None:
-            return collection
-    return None
-
-
 def get_collections_by_objects(
     objects: List[bpy.types.Object],
     collections: Optional[List[bpy.types.Collection]] = None
@@ -605,7 +588,10 @@ class AssetLoader(LoaderPlugin):
         objects_data = set()
 
         for obj in get_container_objects(asset_group):
-            obj.name = f"{namespace}:{obj.name}"
+
+            if obj is not asset_group:
+                obj.name = f"{namespace}:{obj.name}"
+
             if obj.data:
                 objects_data.add(obj.data)
 
@@ -776,13 +762,9 @@ class AssetLoader(LoaderPlugin):
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        unique_number = get_unique_number(
-            asset, subset
-        )
+        unique_number = get_unique_number(asset, subset)
         namespace = namespace or f"{asset}_{unique_number}"
-        name = name or asset_name(
-            asset, subset, unique_number
-        )
+        name = name or asset_name(asset, subset, unique_number)
 
         nodes = self.process_asset(
             context=context,
@@ -824,14 +806,6 @@ class AssetLoader(LoaderPlugin):
         )
 
         asset_metadata = asset_group.get(AVALON_PROPERTY, {})
-        if (
-            isinstance(asset_group, bpy.types.Object)
-            and asset_group.is_instancer
-            and asset_group.instance_collection
-        ):
-            asset_metadata.update(
-                asset_group.instance_collection.get(AVALON_PROPERTY, {})
-            )
 
         group_libpath = asset_metadata.get("libpath", "")
 
@@ -847,6 +821,83 @@ class AssetLoader(LoaderPlugin):
         )
         return normalized_group_libpath == normalized_libpath
 
+    @staticmethod
+    def _update_namespace(
+        asset_group: Union[bpy.types.Collection, bpy.types.Object]
+    ):
+        """Update namespace from asset group name."""
+        # Clear default blender numbering.
+        split_name = asset_group.name.replace(".", "_").split("_")
+        asset_number = next((int(spl) for spl in split_name if spl.isdigit()))
+        split_name = [spl for spl in split_name if not spl.isdigit()]
+        # Get asset and subset name from splited asset group name.
+        if len(split_name) > 1:
+            asset = "_".join(split_name[:-1])
+            subset = split_name[-1]
+        else:
+            asset = split_name[0]
+            subset = "Unknown"
+        # Generate unique numbered namespace and asset group name.
+        unique_number = get_unique_number(asset, subset, asset_number)
+        namespace = f"{asset}_{unique_number}"
+        asset_group_name = asset_name(asset, subset, unique_number)
+        # update asset group name and metadate
+        asset_group.name = asset_group_name
+        asset_group[AVALON_PROPERTY]["namespace"] = namespace
+        asset_group[AVALON_PROPERTY]["objectName"] = asset_group_name
+
+    def _update_instancer(
+        self, asset_group: bpy.types.Object
+    ) -> Union[bpy.types.Collection, bpy.types.Object]:
+        """Update instancer depending the context to match with the loader
+        asset process.
+
+        Args:
+            asset_group (bpy.types.Object): the instancer object.
+
+        Returns:
+            Union[bpy.types.Collection, bpy.types.Object]: The updated object
+                instancer or converted collection.
+        """
+        # Get instance collection and this metadata
+        instance_collection = asset_group.instance_collection
+        instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
+        # Get current session task name and asset name
+        session_task_name = legacy_io.Session.get("AVALON_TASK")
+        session_asset_name = legacy_io.Session.get("AVALON_ASSET")
+
+        # If instance collection is a model container and current session task
+        # is not a downstream task of model task, we juste need to update the
+        # instancer metadata and namespace because model loader can manage
+        # instancers.
+        if (
+            is_container(instance_collection, "model")
+            and session_task_name not in MODEL_DOWNSTREAM
+        ):
+            asset_group[AVALON_PROPERTY] = instance_metadata
+            self._update_namespace(asset_group)
+
+        # else if instance collection is container we need to convert instancer
+        # object to a valid linked collection.
+        elif is_container(instance_collection):
+            # Deleting instancer.
+            parent_collection = get_parent_collection(asset_group)
+            asset_group.name = f"{asset_group.name}.removed"
+            bpy.data.objects.remove(asset_group)
+            # Creating collection for asset group.
+            asset_group = bpy.data.collections.new(asset_group.name)
+            asset_group.color_tag = self.color_tag
+            asset_group[AVALON_PROPERTY] = instance_metadata
+            asset_group[AVALON_PROPERTY]["libpath"] = ""  # force update
+            # Link the asset group collection.
+            parent_collection = parent_collection or get_main_collection()
+            parent_collection.children.link(asset_group)
+            # Update namespace if needed.
+            if session_asset_name != instance_metadata.get("asset_name"):
+                self._update_namespace(asset_group)
+
+        return asset_group
+
     def _update_process(
         self,
         container: Dict,
@@ -859,13 +910,10 @@ class AssetLoader(LoaderPlugin):
         If the objects of the collection are used in another collection they
         will not be removed, only unlinked. Normally this should not be the
         case though.
-
-        Warning:
-            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = (
-            bpy.data.objects.get(object_name)
+            bpy.context.scene.objects.get(object_name)
             or bpy.data.collections.get(object_name)
         )
         libpath = get_representation_path(representation)
@@ -876,25 +924,26 @@ class AssetLoader(LoaderPlugin):
             pformat(representation, indent=2),
         )
 
-        if (
-            isinstance(asset_group, bpy.types.Object)
-            and asset_group.is_instancer
-            and is_container(asset_group.instance_collection, "rig")
-        ):
-            bpy.data.objects.remove(asset_group)
-            asset_group = bpy.data.collections.new(object_name)
-            asset_group.color_tag = self.color_tag
-            get_main_collection().children.link(asset_group)
-
         assert asset_group, f"The asset is not loaded: {object_name}"
         assert libpath, (
             f"No library file found for representation: {representation}"
         )
 
+        # This part fix the update process with linked collections without the
+        # OpenPYPE loader tool or api, as the Asset Browser from Blender 3.2
+        if (
+            isinstance(asset_group, bpy.types.Object)
+            and asset_group.is_instancer
+            and asset_group.instance_collection
+        ):
+            asset_group = self._update_instancer(asset_group)
+
+        # check if asset group is updated with libpath, abort otherwise.
         if self._is_updated(asset_group, libpath):
             self.log.info("Asset already up to date, not updating...")
             return
 
+        # Update the asset group with maintained contexts.
         with ExitStack() as stack:
             stack.enter_context(maintained_parent(asset_group))
             stack.enter_context(maintained_transforms(asset_group))
@@ -908,6 +957,8 @@ class AssetLoader(LoaderPlugin):
 
             self._process(libpath, asset_group)
 
+            # If asset had namespace, all this object will be renamed with
+            # namespace as prefix.
             namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace")
             if namespace:
                 self._rename_with_namespace(asset_group, namespace)
@@ -935,13 +986,16 @@ class AssetLoader(LoaderPlugin):
 
     def _update_metadata(
         self,
-        asset_group: bpy.types.ID,
+        asset_group: Union[bpy.types.Collection, bpy.types.Object],
         context: dict,
         name: str,
         namespace: str,
         asset_name: str,
         libpath: str
     ):
+        """Update the asset group metadata with the given arguments and some
+        default values.
+        """
         metadata_update(
             asset_group,
             {
@@ -989,7 +1043,8 @@ class AssetLoader(LoaderPlugin):
         """
         object_name = container["objectName"]
         asset_group = (
-            bpy.data.objects.get(object_name)
+            bpy.context.scene.objects.get(object_name)
+            or bpy.data.objects.get(object_name)
             or bpy.data.collections.get(object_name)
         )
 
@@ -1068,7 +1123,7 @@ def maintained_transforms(container):
     # Store transforms for all bones from armatures in container.
     bones_transforms = {
         obj.name: {
-            bone.name: bone.matrix.copy()
+            bone.name: bone.matrix_basis.copy()
             for bone in obj.pose.bones
         }
         for obj in objects
@@ -1085,7 +1140,7 @@ def maintained_transforms(container):
             if obj.type == "ARMATURE" and obj.name in bones_transforms:
                 for bone in obj.pose.bones:
                     if bone.name in bones_transforms[obj.name]:
-                        bone.matrix = (
+                        bone.matrix_basis = (
                             bones_transforms[obj.name][bone.name]
                         )
 

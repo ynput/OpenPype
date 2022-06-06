@@ -102,7 +102,7 @@ class BlendModelLoader(plugin.AssetLoader):
         # Create override library if current task needed it.
         if legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM:
             group_name = plugin.asset_name(asset, subset)
-            namespace = namespace or asset
+            namespace = None
             asset_group = bpy.data.collections.new(group_name)
             asset_group.color_tag = self.color_tag
             parent_collection.children.link(asset_group)
@@ -111,7 +111,6 @@ class BlendModelLoader(plugin.AssetLoader):
             group_name = plugin.asset_name(asset, subset, unique_number)
             namespace = namespace or f"{asset}_{unique_number}"
             asset_group = bpy.data.objects.new(group_name, object_data=None)
-            asset_group.empty_display_type = "SINGLE_ARROW"
             parent_collection.objects.link(asset_group)
 
         self._process(libpath, asset_group)

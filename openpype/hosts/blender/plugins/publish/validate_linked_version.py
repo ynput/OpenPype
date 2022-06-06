@@ -3,6 +3,7 @@ from typing import List
 
 import pyblish.api
 
+from openpype.api import ValidateContentsOrder
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.action import UpdateContainer
 
@@ -10,7 +11,7 @@ from openpype.hosts.blender.api.action import UpdateContainer
 class ValidateLinkedVersion(pyblish.api.InstancePlugin):
     """Validate that containers are up to date."""
 
-    order = pyblish.api.ValidatorOrder - 0.01
+    order = ValidateContentsOrder - 0.011
     hosts = ["blender"]
     families = ["model", "rig", "layout", "animation", "setdress"]
     category = "geometry"
@@ -39,5 +40,5 @@ class ValidateLinkedVersion(pyblish.api.InstancePlugin):
             instance.data["out_to_date_collections"] = invalid
             raise RuntimeError(
                 f"Containers are out to date: {invalid} "
-                f"See Action of this Validate"
+                "See Action of this Validate"
             )
