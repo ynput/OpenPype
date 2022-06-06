@@ -106,7 +106,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
                 # clip's effect
                 "clipEffectItems": subtracks,
-                "clipAnnotations": annotations
+                "clipAnnotations": annotations,
+
+                # add all additional tags
+                "tags": phiero.get_track_item_tags(track_item)
             })
 
             # otio clip data
