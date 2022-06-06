@@ -26,7 +26,7 @@ class GizmoMenu():
 
     def _make_menu_path(self, path, icon=None):
         parent = self.toolbar
-        for folder in re.split(r"/|\\",path):
+        for folder in re.split(r"/|\\", path):
             if not folder:
                 continue
             existing_menu = parent.findItem(folder)

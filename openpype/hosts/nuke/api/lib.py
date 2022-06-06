@@ -2501,14 +2501,6 @@ def recreate_instance(origin_node, avalon_data=None):
 
 
 def add_scripts_gizmo():
-    try:
-        from openpype.hosts.nuke.api import lib
-    except ImportError:
-        log.warning(
-            "Skipping studio.gizmo install, because "
-            "'scriptsgizmo' module seems unavailable."
-        )
-        return
 
     # load configuration of custom menu
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
@@ -2524,15 +2516,15 @@ def add_scripts_gizmo():
             "toolbar_icon_path", {}).get(platform_name)
 
         if not gizmo_source_dir:
-            log.debug("Skipping studio gizmo `{}`, no gizmo path found.".format(
-                toolbar_name
-            ))
+            log.debug("Skipping studio gizmo `{}`, "
+                      "no gizmo path found.".format(toolbar_name)
+                      )
             return
 
         if not gizmo_list_definition:
-            log.debug("Skipping studio gizmo `{}`, no definition found.".format(
-                toolbar_name
-            ))
+            log.debug("Skipping studio gizmo `{}`, "
+                      "no definition found.".format(toolbar_name)
+                      )
             return
 
         if toolbar_icon_path:
