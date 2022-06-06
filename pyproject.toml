@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.10.1-nightly.2" # OpenPype
+version = "3.10.1-nightly.3" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
