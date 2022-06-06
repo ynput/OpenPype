@@ -127,7 +127,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
             if self.sync_server.is_paused() or \
                self.sync_server.is_project_paused(project_name):
                 icon = self._get_icon("paused")
-            elif not sync_settings["enabled"]:
+            elif not sync_settings[project_name]["enabled"]:
                 icon = self._get_icon("disabled")
             else:
                 icon = self._get_icon("synced")
