@@ -1,7 +1,7 @@
 import logging
 
 import scriptsmenu
-from .api.Qt import QtWidgets
+from .openpype.vendor.python.common.scriptsmenu.vendor.Qt import QtWidgets
 
 log = logging.getLogger(__name__)
 
