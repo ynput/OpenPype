@@ -13,6 +13,8 @@ Provides:
 """
 
 import json
+import os
+
 import pyblish.api
 
 from openpype.lib import (
@@ -93,4 +95,6 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             })
 
         self.log.info("Global anatomy Data collected")
-        self.log.debug(json.dumps(context_data, indent=4))
+
+        if os.environ.get("OPENPYPE_DEBUG") == "1":
+            self.log.debug(json.dumps(context_data, indent=4))

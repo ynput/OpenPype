@@ -1,3 +1,5 @@
+import os
+
 from maya import cmds
 
 import pyblish.api
@@ -157,8 +159,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.debug(
-                "DATA: {} ".format(json.dumps(instance.data, indent=4)))
+
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.debug(
+                    "DATA: {} ".format(json.dumps(instance.data,
+                                                  indent=4,
+                                                  sort_keys=True)))
 
         def sort_by_family(instance):
             """Sort by family"""
