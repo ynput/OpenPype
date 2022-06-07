@@ -47,6 +47,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
     message_generated = QtCore.Signal(str)
 
     refresh_msec = 10000
+    show_only_enabled = True
 
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
@@ -128,6 +129,8 @@ class SyncProjectListWidget(QtWidgets.QWidget):
                self.sync_server.is_project_paused(project_name):
                 icon = self._get_icon("paused")
             elif not sync_settings[project_name]["enabled"]:
+                if self.show_only_enabled:
+                    continue
                 icon = self._get_icon("disabled")
             else:
                 icon = self._get_icon("synced")

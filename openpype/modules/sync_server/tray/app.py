@@ -46,6 +46,14 @@ class SyncServerWindow(QtWidgets.QDialog):
 
         left_column_layout.addWidget(self.pause_btn)
 
+        checkbox = QtWidgets.QCheckBox("Show only enabled", self)
+        checkbox.setStyleSheet("QCheckBox{spacing: 5px;"
+                               "padding:5px 5px 5px 5px;}")
+        checkbox.setChecked(True)
+        self.show_only_enabled_chk = checkbox
+
+        left_column_layout.addWidget(self.show_only_enabled_chk)
+
         repres = SyncRepresentationSummaryWidget(
             sync_server,
             project=self.projects.current_project,
@@ -86,7 +94,22 @@ class SyncServerWindow(QtWidgets.QDialog):
         repres.message_generated.connect(self._update_message)
         self.projects.message_generated.connect(self._update_message)
 
+        self.show_only_enabled_chk.stateChanged.connect(
+            self._on_enabled_change
+        )
+
         self.representationWidget = repres
+
+    def showEvent(self, event):
+        self.representationWidget.model.set_project(
+            self.projects.current_project)
+        self.projects.refresh()
+        self._set_running(True)
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        self._set_running(False)
+        super().closeEvent(event)
 
     def _on_project_change(self):
         if self.projects.current_project is None:
@@ -103,16 +126,11 @@ class SyncServerWindow(QtWidgets.QDialog):
             self.projects.refresh()
             return
 
-    def showEvent(self, event):
-        self.representationWidget.model.set_project(
-            self.projects.current_project)
+    def _on_enabled_change(self):
+        """Called when enabled projects only checkbox is toggled."""
+        self.projects.show_only_enabled = \
+            self.show_only_enabled_chk.isChecked()
         self.projects.refresh()
-        self._set_running(True)
-        super().showEvent(event)
-
-    def closeEvent(self, event):
-        self._set_running(False)
-        super().closeEvent(event)
 
     def _set_running(self, running):
         self.representationWidget.model.is_running = running
