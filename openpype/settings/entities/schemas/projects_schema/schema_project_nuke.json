@@ -84,6 +84,10 @@
             "name": "schema_scriptsmenu"
         },
         {
+            "type": "schema",
+            "name": "schema_nuke_scriptsgizmo"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",

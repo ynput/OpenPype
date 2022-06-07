@@ -28,7 +28,7 @@ SHAPE_ATTRS = set(SHAPE_ATTRS)
 def get_pxr_multitexture_file_attrs(node):
     attrs = []
     for i in range(9):
-        if cmds.attributeQuery("filename{}".format(i), node):
+        if cmds.attributeQuery("filename{}".format(i), node=node, ex=True):
             file = cmds.getAttr("{}.filename{}".format(node, i))
             if file:
                 attrs.append("filename{}".format(i))
@@ -50,10 +50,10 @@ FILE_NODES = {
 }
 
 
-def get_attributes(dictionary, attr):
-    # type: (dict, str) -> list
+def get_attributes(dictionary, attr, node=None):
+    # type: (dict, str, str) -> list
     if callable(dictionary[attr]):
-        val = dictionary[attr]()
+        val = dictionary[attr](node)
     else:
         val = dictionary.get(attr, [])
 
@@ -109,16 +109,18 @@ def node_uses_image_sequence(node, node_path):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    # The following tokens imply a sequence
-    patterns = ["<udim>", "<tile>", "<uvtile>",
-                "u<u>_v<v>", "<frame0", "<f4>"]
     try:
         use_frame_extension = cmds.getAttr('%s.useFrameExtension' % node)
     except ValueError:
         use_frame_extension = False
+    if use_frame_extension:
+        return True
 
-    return (use_frame_extension or
-            any(pattern in node_path for pattern in patterns))
+    # The following tokens imply a sequence
+    patterns = ["<udim>", "<tile>", "<uvtile>",
+                "u<u>_v<v>", "<frame0", "<f4>"]
+    node_path_lowered = node_path.lower()
+    return any(pattern in node_path_lowered for pattern in patterns)
 
 
 def seq_to_glob(path):
@@ -205,7 +207,8 @@ def get_file_node_paths(node):
             return [texture_pattern]
 
     try:
-        file_attributes = get_attributes(FILE_NODES, cmds.nodeType(node))
+        file_attributes = get_attributes(
+            FILE_NODES, cmds.nodeType(node), node)
     except AttributeError:
         file_attributes = "fileTextureName"
 
@@ -434,7 +437,8 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Collect textures if any file nodes are found
         instance.data["resources"] = []
         for n in files:
-            instance.data["resources"].append(self.collect_resource(n))
+            for res in self.collect_resources(n):
+                instance.data["resources"].append(res)
 
         self.log.info("Collected resources: {}".format(instance.data["resources"]))
 
@@ -554,7 +558,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         return attributes
 
-    def collect_resource(self, node):
+    def collect_resources(self, node):
         """Collect the link to the file(s) used (resource)
         Args:
             node (str): name of the node
@@ -571,60 +575,60 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.debug("  - got {}".format(cmds.nodeType(node)))
 
-        attribute = FILE_NODES.get(cmds.nodeType(node))
-        source = cmds.getAttr("{}.{}".format(
-            node,
-            attribute
-        ))
-        computed_attribute = "{}.{}".format(node, attribute)
-        if attribute == "fileTextureName":
-            computed_attribute = node + ".computedFileTextureNamePattern"
+        attributes = get_attributes(FILE_NODES, cmds.nodeType(node), node)
+        for attribute in attributes:
+            source = cmds.getAttr("{}.{}".format(
+                node,
+                attribute
+            ))
+            computed_attribute = "{}.{}".format(node, attribute)
+            if attribute == "fileTextureName":
+                computed_attribute = node + ".computedFileTextureNamePattern"
 
-        self.log.info("  - file source: {}".format(source))
-        color_space_attr = "{}.colorSpace".format(node)
-        try:
-            color_space = cmds.getAttr(color_space_attr)
-        except ValueError:
-            # node doesn't have colorspace attribute
-            color_space = "Raw"
-        # Compare with the computed file path, e.g. the one with the <UDIM>
-        # pattern in it, to generate some logging information about this
-        # difference
-        # computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        computed_source = cmds.getAttr(computed_attribute)
-        if source != computed_source:
-            self.log.debug("Detected computed file pattern difference "
-                           "from original pattern: {0} "
-                           "({1} -> {2})".format(node,
-                                                 source,
-                                                 computed_source))
+            self.log.info("  - file source: {}".format(source))
+            color_space_attr = "{}.colorSpace".format(node)
+            try:
+                color_space = cmds.getAttr(color_space_attr)
+            except ValueError:
+                # node doesn't have colorspace attribute
+                color_space = "Raw"
+            # Compare with the computed file path, e.g. the one with
+            # the <UDIM> pattern in it, to generate some logging information
+            # about this difference
+            computed_source = cmds.getAttr(computed_attribute)
+            if source != computed_source:
+                self.log.debug("Detected computed file pattern difference "
+                               "from original pattern: {0} "
+                               "({1} -> {2})".format(node,
+                                                     source,
+                                                     computed_source))
 
-        # We replace backslashes with forward slashes because V-Ray
-        # can't handle the UDIM files with the backslashes in the
-        # paths as the computed patterns
-        source = source.replace("\\", "/")
+            # We replace backslashes with forward slashes because V-Ray
+            # can't handle the UDIM files with the backslashes in the
+            # paths as the computed patterns
+            source = source.replace("\\", "/")
 
-        files = get_file_node_files(node)
-        if len(files) == 0:
-            self.log.error("No valid files found from node `%s`" % node)
+            files = get_file_node_files(node)
+            if len(files) == 0:
+                self.log.error("No valid files found from node `%s`" % node)
 
-        self.log.info("collection of resource done:")
-        self.log.info("  - node: {}".format(node))
-        self.log.info("  - attribute: {}".format(attribute))
-        self.log.info("  - source: {}".format(source))
-        self.log.info("  - file: {}".format(files))
-        self.log.info("  - color space: {}".format(color_space))
+            self.log.info("collection of resource done:")
+            self.log.info("  - node: {}".format(node))
+            self.log.info("  - attribute: {}".format(attribute))
+            self.log.info("  - source: {}".format(source))
+            self.log.info("  - file: {}".format(files))
+            self.log.info("  - color space: {}".format(color_space))
 
-        # Define the resource
-        return {
-            "node": node,
-            # here we are passing not only attribute, but with node again
-            # this should be simplified and changed extractor.
-            "attribute": "{}.{}".format(node, attribute),
-            "source": source,  # required for resources
-            "files": files,
-            "color_space": color_space
-        }  # required for resources
+            # Define the resource
+            yield {
+                "node": node,
+                # here we are passing not only attribute, but with node again
+                # this should be simplified and changed extractor.
+                "attribute": "{}.{}".format(node, attribute),
+                "source": source,  # required for resources
+                "files": files,
+                "color_space": color_space
+            }  # required for resources
 
 
 class CollectModelRenderSets(CollectLook):

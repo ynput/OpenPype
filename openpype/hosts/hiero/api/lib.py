@@ -274,6 +274,31 @@ def _validate_all_atrributes(
     ])
 
 
+def get_track_item_tags(track_item):
+    """
+    Get track item tags excluded openpype tag
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    returning_tag_data = []
+    # get all tags from track item
+    _tags = track_item.tags()
+    if not _tags:
+        return []
+
+    # collect all tags which are not openpype tag
+    returning_tag_data.extend(
+        tag for tag in _tags
+        if tag.name() != self.pype_tag_name
+    )
+
+    return returning_tag_data
+
+
 def get_track_item_pype_tag(track_item):
     """
     Get pype track item tag created by creator or loader plugin.
@@ -942,6 +967,10 @@ def is_overlapping(ti_test, ti_original, strict=False):
         (ti_test.timelineIn() <= ti_original.timelineIn())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
     )
+
+    if strict:
+        return covering_exp
+
     inside_exp = (
         (ti_test.timelineIn() >= ti_original.timelineIn())
         and (ti_test.timelineOut() <= ti_original.timelineOut())
@@ -955,15 +984,12 @@ def is_overlapping(ti_test, ti_original, strict=False):
         and (ti_test.timelineIn() <= ti_original.timelineIn())
     )
 
-    if strict:
-        return covering_exp
-    else:
-        return any((
-            covering_exp,
-            inside_exp,
-            overlaying_right_exp,
-            overlaying_left_exp
-        ))
+    return any((
+        covering_exp,
+        inside_exp,
+        overlaying_right_exp,
+        overlaying_left_exp
+    ))
 
 
 def get_sequence_pattern_and_padding(file):

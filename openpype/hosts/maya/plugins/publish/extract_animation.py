@@ -16,13 +16,19 @@ class ExtractAnimation(openpype.api.Extractor):
     Positions and normals, uvs, creases are preserved, but nothing more,
     for plain and predictable point caches.
 
+    Plugin can run locally or remotely (on a farm - if instance is marked with
+    "farm" it will be skipped in local processing, but processed on farm)
     """
 
     label = "Extract Animation"
     hosts = ["maya"]
     families = ["animation"]
+    targets = ["local", "remote"]
 
     def process(self, instance):
+        if instance.data.get("farm"):
+            self.log.debug("Should be processed on farm, skipping.")
+            return
 
         # Collect the out set nodes
         out_sets = [node for node in instance if node.endswith("out_SET")]
@@ -88,5 +94,7 @@ class ExtractAnimation(openpype.api.Extractor):
             "stagingDir": dirname,
         }
         instance.data["representations"].append(representation)
+
+        instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

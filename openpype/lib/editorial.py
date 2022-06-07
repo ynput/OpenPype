@@ -270,16 +270,16 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
             "retime": True,
             "speed": time_scalar,
             "timewarps": time_warp_nodes,
-            "handleStart": handle_start,
-            "handleEnd": handle_end
+            "handleStart": round(handle_start),
+            "handleEnd": round(handle_end)
         }
     }
 
     returning_dict = {
         "mediaIn": media_in_trimmed,
         "mediaOut": media_out_trimmed,
-        "handleStart": handle_start,
-        "handleEnd": handle_end
+        "handleStart": round(handle_start),
+        "handleEnd": round(handle_end)
     }
 
     # add version data only if retime
