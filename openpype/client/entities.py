@@ -1045,12 +1045,12 @@ openpype/tools/assetlinks/widgets.py
     - get_versions
     - get_subsets
     - get_assets
-    - get_version_links
+    - get_output_link_versions
 
 openpype/tools/creator/window.py
 - CreatorWindow
     Query:
-    - get_asset
+    - get_asset_by_name
     - get_subsets
 
 openpype/tools/launcher/models.py
@@ -1093,12 +1093,14 @@ openpype/tools/loader/widgets.py
     - get_subset_families
 - VersionTextEdit
     Query:
-    - get_subset
-    - get_version
+    - get_subset_by_id
+    - get_version_by_id
 - SubsetWidget
     Query:
     - get_subsets
     - get_representations
+    Update:
+    - Subset groups (combination of asset id and subset names)
 - RepresentationWidget
     Query:
     - get_subsets
@@ -1112,12 +1114,12 @@ openpype/tools/loader/widgets.py
 openpype/tools/mayalookassigner/app.py
 - MayaLookAssignerWindow
     Query:
-    - get_last_version_for_subset
+    - get_last_version_by_subset_id
 
 openpype/tools/mayalookassigner/commands.py
 - create_items_from_nodes
     Query:
-    - get_asset
+    - get_asset_by_id
 
 openpype/tools/mayalookassigner/vray_proxies.py
 - get_look_relationships
@@ -1128,7 +1130,7 @@ openpype/tools/mayalookassigner/vray_proxies.py
     - get_representation_by_name
 - vrayproxy_assign_look
     Query:
-    - get_last_version_for_subset
+    - get_last_version_by_subset_name
 
 openpype/tools/project_manager/project_manager/model.py
 - HierarchyModel
@@ -1150,7 +1152,7 @@ openpype/tools/project_manager/project_manager/widgets.py
 openpype/tools/publisher/widgets/create_dialog.py
 - CreateDialog
     Query:
-    - get_asset
+    - get_asset_by_name
     - get_subsets
 
 openpype/tools/publisher/control.py
@@ -1161,18 +1163,18 @@ openpype/tools/publisher/control.py
 openpype/tools/sceneinventory/model.py
 - InventoryModel
     Query:
-    - get_asset
-    - get_subset
-    - get_version
-    - get_last_version_for_subset
+    - get_asset_by_id
+    - get_subset_by_id
+    - get_version_by_id
+    - get_last_version_by_subset_id
     - get_representation
 
 openpype/tools/sceneinventory/switch_dialog.py
 - SwitchAssetDialog
     Query:
-    - get_asset
+    - get_asset_by_name
     - get_assets
-    - get_subset
+    - get_subset_by_name
     - get_subsets
     - get_versions
     - get_hero_versions
@@ -1182,10 +1184,10 @@ openpype/tools/sceneinventory/switch_dialog.py
 openpype/tools/sceneinventory/view.py
 - SceneInventoryView
     Query:
-    - get_version
+    - get_version_by_id
     - get_versions
     - get_hero_versions
-    - get_representation
+    - get_representation_by_id
     - get_representations
 
 openpype/tools/standalonepublish/widgets/model_asset.py
@@ -1197,31 +1199,31 @@ openpype/tools/standalonepublish/widgets/widget_asset.py
 - AssetWidget
     Query:
     - get_project
-    - get_asset
+    - get_asset_by_id
 
 openpype/tools/standalonepublish/widgets/widget_family.py
 - FamilyWidget
     Query:
-    - get_asset
-    - get_subset
+    - get_asset_by_name
+    - get_subset_by_name
     - get_subsets
-    - get_last_version_for_subset
+    - get_last_version_by_subset_id
 
 openpype/tools/standalonepublish/app.py
 - Window
     Query:
-    - get_asset
+    - get_asset_by_id
 
 openpype/tools/texture_copy/app.py
 - TextureCopy
     Query:
     - get_project
-    - get_asset
+    - get_asset_by_name
 
 openpype/tools/workfiles/files_widget.py
 - FilesWidget
     Query:
-    - get_asset
+    - get_asset_by_id
 
 openpype/tools/workfiles/model.py
 - PublishFilesModel
@@ -1234,12 +1236,13 @@ openpype/tools/workfiles/save_as_dialog.py
 - build_workfile_data
     Query:
     - get_project
-    - get_asset
+    - get_asset_by_name
 
 openpype/tools/workfiles/window.py
 - Window
     Query:
-    - get_asset
+    - get_asset_by_id
+    - get_asset_by_name
 
 openpype/tools/utils/assets_widget.py
 - AssetModel
@@ -1259,11 +1262,11 @@ openpype/tools/utils/lib.py
     - get_project
 - FamilyConfigCache
     Query:
-    - get_asset
+    - get_asset_by_name
 
 openpype/tools/utils/tasks_widget.py
 - TasksModel
     Query:
     - get_project
-    - get_asset
+    - get_asset_by_id
 """
