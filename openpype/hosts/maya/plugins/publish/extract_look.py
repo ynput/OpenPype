@@ -46,7 +46,7 @@ def find_paths_by_hash(texture_hash):
 
 class TextureProcessor(metaclass=ABC.ABCMeta):
     def __init__(self):
-    #TODO: Figure out design for predetermined objects to be initialized.
+    # TODO: Figure out design for predetermined objects to be initialized.
 
     @abstractmethod
     def process(self, filepath):
