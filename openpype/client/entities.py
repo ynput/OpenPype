@@ -147,7 +147,7 @@ def get_assets(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_ids (list[str, ObjectId]): Asset ids that should be found.
+        asset_ids (list[str|ObjectId]): Asset ids that should be found.
         asset_names (list[str]): Name assets that should be found.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -291,11 +291,11 @@ def get_subsets(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_ids (list[str, ObjectId]): Subset ids that should be queried.
+        subset_ids (list[str|ObjectId]): Subset ids that should be queried.
             Filter ignored if 'None' is passed.
         subset_names (list[str]): Subset names that should be queried.
             Filter ignored if 'None' is passed.
-        asset_ids (list[str, ObjectId]): Asset ids under which should look for
+        asset_ids (list[str|ObjectId]): Asset ids under which should look for
             the subsets. Filter ignored if 'None' is passed.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -339,7 +339,7 @@ def get_subset_families(project_name, subset_ids=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_ids (list[str, ObjectId]): Subset ids that should be queried.
+        subset_ids (list[str|ObjectId]): Subset ids that should be queried.
             All subsets from project are used if 'None' is passed.
 
     Returns:
@@ -476,7 +476,7 @@ def get_versions(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version_ids (list[str, ObjectId]): Version ids that will be queried.
+        version_ids (list[str|ObjectId]): Version ids that will be queried.
             Filter ignored if 'None' is passed.
         subset_ids (list[str]): Subset ids that will be queried.
             Filter ignored if 'None' is passed.
@@ -789,6 +789,32 @@ def get_representations(
     archived=False,
     fields=None
 ):
+    """Representaion entities data from one project filtered by filters.
+
+    Filters are additive (all conditions must pass to return subset).
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representation_ids (list[str|ObjectId]): Representation ids used as
+            filter. Filter ignored if 'None' is passed.
+        representation_names (list[str]): Representations names used as filter.
+            Filter ignored if 'None' is passed.
+        version_ids (list[str]): Subset ids used as parent filter. Filter
+            ignored if 'None' is passed.
+        extensions (list[str]): Filter by extension of main representation
+            file (without dot).
+        names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
+            using version ids and list of names under the version.
+        check_site_name (bool): Filter only representation that have existing
+            site name.
+        archived (bool): Output will also contain archived representations.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Iterable cursor yielding all matching representations.
+    """
+
     repre_types = ["representation"]
     if archived:
         repre_types.append("archived_representations")
