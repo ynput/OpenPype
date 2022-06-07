@@ -309,7 +309,18 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Tilix4",
+      "name": "Félix David",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22875539?v=4",
+      "profile": "http://felixdavid.com/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
-  "contributorsPerLine": 7
+  "contributorsPerLine": 7,
+  "skipCi": true
 }
