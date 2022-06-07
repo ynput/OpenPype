@@ -6,7 +6,7 @@ import signal
 from bson.objectid import ObjectId
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.client import get_asset
+from openpype.client import get_asset_by_id
 
 from .widgets import (
     AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
@@ -144,8 +144,8 @@ class Window(QtWidgets.QDialog):
         if len(selected) == 1:
             self.valid_parent = True
             project_name = self.db.active_project()
-            asset = get_asset(
-                project_name, asset_id=selected[0], fields=["name"]
+            asset = get_asset_by_id(
+                project_name, selected[0], fields=["name"]
             )
             self.widget_family.change_asset(asset['name'])
         else:

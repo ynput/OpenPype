@@ -5,7 +5,7 @@ import qtawesome
 from bson.objectid import ObjectId
 
 from openpype.client import (
-    get_asset,
+    get_asset_by_name,
     get_assets,
     get_subset,
     get_subsets,
@@ -484,9 +484,9 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # Prepare asset document if asset is selected
         asset_doc = None
         if selected_asset:
-            asset_doc = get_asset(
+            asset_doc = get_asset_by_name(
                 self.active_project(),
-                asset_name=selected_asset,
+                selected_asset,
                 fields=["_id"]
             )
             if not asset_doc:
@@ -768,8 +768,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         project_name = self.active_project()
         selected_asset = self._assets_box.get_valid_value()
         if selected_asset:
-            asset_doc = get_asset(
-                project_name, asset_name=selected_asset, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, selected_asset, fields=["_id"]
             )
             asset_ids = [asset_doc["_id"]]
         else:
@@ -832,8 +832,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [x] [?]
         if selected_asset and selected_subset:
-            asset_doc = get_asset(
-                project_name, asset_name=selected_asset, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, selected_asset, fields=["_id"]
             )
             subset_doc = get_subset(
                 project_name,
@@ -858,8 +858,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # [x] [ ] [?]
         # If asset only is selected
         if selected_asset:
-            asset_doc = get_asset(
-                project_name, asset_name=selected_asset, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, selected_asset, fields=["_id"]
             )
             if not asset_doc:
                 return list()
@@ -995,8 +995,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [ ] [?]
         project_name = self.active_project()
-        asset_doc = get_asset(
-            project_name, asset_name=selected_asset, fields=["_id"]
+        asset_doc = get_asset_by_name(
+            project_name, selected_asset, fields=["_id"]
         )
         subset_docs = get_subsets(
             project_name, asset_ids=[asset_doc["_id"]], fields=["name"]
@@ -1043,8 +1043,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # [x] [x] [ ]
         project_name = self.active_project()
         if selected_asset is not None and selected_subset is not None:
-            asset_doc = get_asset(
-                project_name, asset_name=selected_asset, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, selected_asset, fields=["_id"]
             )
             subset_doc = get_subset(
                 project_name,
@@ -1077,8 +1077,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [ ] [ ]
         if selected_asset is not None:
-            asset_doc = get_asset(
-                project_name, asset_name=selected_asset, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, selected_asset, fields=["_id"]
             )
             subset_docs = list(get_subsets(
                 project_name,
@@ -1189,7 +1189,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         project_name = self.active_project()
         if selected_asset:
-            asset_doc = get_asset(project_name, asset_name=selected_asset)
+            asset_doc = get_asset_by_name(project_name, selected_asset)
             asset_docs_by_id = {asset_doc["_id"]: asset_doc}
         else:
             asset_docs_by_id = self.content_assets

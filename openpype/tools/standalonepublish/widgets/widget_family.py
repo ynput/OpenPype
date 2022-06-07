@@ -3,7 +3,7 @@ import re
 from Qt import QtWidgets, QtCore
 
 from openpype.client import (
-    get_asset,
+    get_asset_by_name,
     get_subset,
     get_subsets,
     get_last_version_for_subset,
@@ -188,8 +188,8 @@ class FamilyWidget(QtWidgets.QWidget):
         if asset_name != self.NOT_SELECTED:
             # Get the assets from the database which match with the name
             project_name = self.dbcon.active_project()
-            asset_doc = get_asset(
-                project_name, asset_name=asset_name, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["_id"]
             )
 
         # Get plugin and family
@@ -205,8 +205,8 @@ class FamilyWidget(QtWidgets.QWidget):
 
         # Get the asset from the database which match with the name
         project_name = self.dbcon.active_project()
-        asset_doc = get_asset(
-            project_name, asset_name=asset_name, fields=["_id"]
+        asset_doc = get_asset_by_name(
+            project_name, asset_name, fields=["_id"]
         )
         # Get plugin
         plugin = item.data(PluginRole)
@@ -310,8 +310,8 @@ class FamilyWidget(QtWidgets.QWidget):
             asset_name != self.NOT_SELECTED and
             subset_name.strip() != ''
         ):
-            asset_doc = get_asset(
-                project_name, asset_name=asset_name, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["_id"]
             )
 
         if asset_doc:

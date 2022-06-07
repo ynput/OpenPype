@@ -3,7 +3,7 @@ import qtawesome
 
 from openpype.client import (
     get_project,
-    get_asset,
+    get_asset_by_id,
 )
 from openpype.style import get_disabled_entity_icon_color
 from openpype.tools.utils.lib import get_task_icon
@@ -77,8 +77,8 @@ class TasksModel(QtGui.QStandardItemModel):
         asset_doc = None
         if self._context_is_valid():
             project_name = self._get_current_project()
-            asset_doc = get_asset(
-                project_name, asset_id=asset_id, fields=["data.tasks"]
+            asset_doc = get_asset_by_id(
+                project_name, asset_id, fields=["data.tasks"]
             )
         self._set_asset(asset_doc)
 

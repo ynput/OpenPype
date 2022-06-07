@@ -4,7 +4,7 @@ import re
 
 from Qt import QtWidgets, QtCore
 
-from openpype.client import get_asset, get_subsets
+from openpype.client import get_asset_by_name, get_subsets
 from openpype import style
 from openpype.api import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
@@ -220,8 +220,8 @@ class CreatorWindow(QtWidgets.QDialog):
         asset_doc = None
         if creator_plugin:
             # Get the asset from the database which match with the name
-            asset_doc = get_asset(
-                project_name, asset_name=asset_name, fields=["_id"]
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["_id"]
             )
 
         # Get plugin

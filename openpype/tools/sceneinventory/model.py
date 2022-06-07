@@ -7,7 +7,7 @@ from Qt import QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
-    get_asset,
+    get_asset_by_id,
     get_subset,
     get_version,
     get_last_version_for_subset,
@@ -342,7 +342,7 @@ class InventoryModel(TreeModel):
                 not_found_ids.append(repre_id)
                 continue
 
-            asset = get_asset(project_name, asset_id=subset["parent"])
+            asset = get_asset_by_id(project_name, subset["parent"])
             if not asset:
                 not_found["asset"].append(group_items)
                 not_found_ids.append(repre_id)

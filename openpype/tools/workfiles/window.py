@@ -2,7 +2,7 @@ import os
 import datetime
 from Qt import QtCore, QtWidgets
 
-from openpype.client import get_asset
+from openpype.client import get_asset_by_id, get_asset_by_name
 from openpype import style
 from openpype.lib import (
     get_workfile_doc,
@@ -302,7 +302,7 @@ class Window(QtWidgets.QMainWindow):
             workdir, filename = os.path.split(filepath)
             asset_id = self.assets_widget.get_selected_asset_id()
             project_name = legacy_io.active_project()
-            asset_doc = get_asset(project_name, asset_id=asset_id)
+            asset_doc = get_asset_by_id(project_name, asset_id)
             task_name = self.tasks_widget.get_selected_task_name()
             create_workfile_doc(
                 asset_doc, task_name, filename, workdir, legacy_io
@@ -328,7 +328,7 @@ class Window(QtWidgets.QMainWindow):
 
         self._context_to_set, context = None, self._context_to_set
         if "asset" in context:
-            asset_doc = get_asset(
+            asset_doc = get_asset_by_name(
                 self.project_name, context["asset"], fields=["_id"]
             )
 

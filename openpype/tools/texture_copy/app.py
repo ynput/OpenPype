@@ -4,7 +4,7 @@ import click
 
 import speedcopy
 
-from openpype.client import get_project, get_asset
+from openpype.client import get_project, get_asset_by_name
 from openpype.lib import Terminal
 from openpype.api import Anatomy
 from openpype.pipeline import legacy_io
@@ -94,7 +94,7 @@ class TextureCopy:
             t.echo("!!! Project name [ {} ] not found.".format(project_name))
             exit(1)
 
-        asset = get_asset(project_name, asset_name=asset_name)
+        asset = get_asset_by_name(project_name, asset_name)
         if not asset:
             t.echo("!!! Asset [ {} ] not found in project".format(asset_name))
             exit(1)

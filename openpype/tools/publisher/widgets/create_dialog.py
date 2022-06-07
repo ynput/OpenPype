@@ -10,7 +10,7 @@ except Exception:
     commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.client import get_asset, get_subsets
+from openpype.client import get_asset_by_name, get_subsets
 from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import (
     CreatorError,
@@ -650,7 +650,7 @@ class CreateDialog(QtWidgets.QDialog):
             return
 
         project_name = self.dbcon.active_project()
-        asset_doc = get_asset(project_name, asset_name=asset_name)
+        asset_doc = get_asset_by_name(project_name, asset_name)
         self._asset_doc = asset_doc
 
         if asset_doc:

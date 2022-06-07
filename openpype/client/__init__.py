@@ -2,7 +2,8 @@ from .entities import (
     get_projects,
     get_project,
 
-    get_asset,
+    get_asset_by_id,
+    get_asset_by_name,
     get_assets,
     get_asset_ids_with_subsets,
 
@@ -33,7 +34,8 @@ __all__ = (
     "get_projects",
     "get_project",
 
-    "get_asset",
+    "get_asset_by_id",
+    "get_asset_by_name",
     "get_assets",
     "get_asset_ids_with_subsets",
 
@@ -56,6 +58,6 @@ __all__ = (
     "get_representation_parents",
     "get_representations_parents",
 
-    "get_thubmnail",
+    "get_thumbnail",
     "get_thumbnail_id_from_source",
 )

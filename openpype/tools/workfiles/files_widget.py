@@ -5,7 +5,7 @@ import shutil
 import Qt
 from Qt import QtWidgets, QtCore
 
-from openpype.client import get_asset
+from openpype.client import get_asset_by_id
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
@@ -386,7 +386,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         if self._asset_doc is None:
             project_name = legacy_io.active_project()
-            self._asset_doc = get_asset(project_name, asset_id=self._asset_id)
+            self._asset_doc = get_asset_by_id(project_name, self._asset_id)
 
         return self._asset_doc
 

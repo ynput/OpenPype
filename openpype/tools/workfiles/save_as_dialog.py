@@ -7,7 +7,7 @@ from Qt import QtWidgets, QtCore
 
 from openpype.client import (
     get_project,
-    get_asset,
+    get_asset_by_name,
 )
 from openpype.lib import (
     get_last_workfile_with_version,
@@ -33,9 +33,9 @@ def build_workfile_data(session):
     project_doc = get_project(
         project_name, fields=["name", "data.code", "config.tasks"]
     )
-    asset_doc = get_asset(
+    asset_doc = get_asset_by_name(
         project_name,
-        asset_name=asset_name,
+        asset_name,
         fields=["name", "data.tasks", "data.parents"]
     )
 

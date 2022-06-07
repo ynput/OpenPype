@@ -90,23 +90,44 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
-def get_asset(project_name, asset_name=None, asset_id=None, fields=None):
-    query_filter = {"type": "asset"}
-    has_filter = False
-    if asset_name:
-        has_filter = True
-        query_filter["name"] = asset_name
+def get_asset_by_id(project_name, asset_id, fields=None):
+    """Receive asset data by it's id.
 
-    if asset_id:
-        has_filter = True
-        query_filter["_id"] = _convert_id(asset_id)
+    Args:
+        project_name (str): Name of project where to look for subset.
+        asset_id (str|ObjectId): Asset's id.
 
-    # Avoid random asset quqery
-    if not has_filter:
+    Returns:
+        dict: Asset entity data.
+        None: Asset was not found by id.
+    """
+
+    asset_id = _convert_id(asset_id)
+    if not asset_id:
         return None
 
+    query_filter = {"type": "asset", "_id": asset_id}
     conn = _get_project_connection(project_name)
+    return conn.find_one(query_filter, _prepare_fields(fields))
 
+
+def get_asset_by_name(project_name, asset_name, fields=None):
+    """Receive asset data by it's name.
+
+    Args:
+        project_name (str): Name of project where to look for subset.
+        asset_name (str): Asset's name.
+
+    Returns:
+        dict: Asset entity data.
+        None: Asset was not found by name.
+    """
+
+    if not asset_name:
+        return None
+
+    query_filter = {"type": "asset", "name": asset_name}
+    conn = _get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 

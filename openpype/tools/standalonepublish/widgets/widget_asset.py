@@ -4,7 +4,7 @@ import qtawesome
 
 from openpype.client import (
     get_project,
-    get_asset,
+    get_asset_by_id,
 )
 from openpype.tools.utils import PlaceholderLineEdit
 
@@ -251,9 +251,9 @@ class AssetWidget(QtWidgets.QWidget):
             return output
 
         project_name = self.dbcon.active_project()
-        parent = get_asset(
+        parent = get_asset_by_id(
             project_name,
-            asset_id=parent_asset_id,
+            parent_asset_id,
             fields=["name", "data.visualParent"]
         )
         output.append(parent['name'])
@@ -362,8 +362,8 @@ class AssetWidget(QtWidgets.QWidget):
         selected = self.get_selected_assets()
         if len(selected) == 1:
             project_name = self.dbcon.active_project()
-            asset = get_asset(
-                project_name, asset_id=selected[0], fields=["data.tasks"]
+            asset = get_asset_by_id(
+                project_name, selected[0], fields=["data.tasks"]
             )
             if asset:
                 tasks = asset.get('data', {}).get('tasks', [])

@@ -8,7 +8,7 @@ import qtawesome
 
 from openpype.client import (
     get_project,
-    get_asset,
+    get_asset_by_name,
 )
 from openpype.style import (
     get_default_entity_icon_color,
@@ -434,8 +434,8 @@ class FamilyConfigCache:
             database = getattr(self.dbcon, "database", None)
             if database is None:
                 database = self.dbcon._database
-            asset_doc = get_asset(
-                project_name, asset_name=asset_name, fields=["data.tasks"]
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["data.tasks"]
             ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")

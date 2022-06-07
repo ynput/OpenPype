@@ -4,7 +4,7 @@ import os
 
 import maya.cmds as cmds
 
-from openpype.client import get_asset
+from openpype.client import get_asset_by_id
 from openpype.pipeline import (
     legacy_io,
     remove_container,
@@ -161,7 +161,7 @@ def create_items_from_nodes(nodes):
 
     project_name = legacy_io.active_project()
     for _id, id_nodes in id_hashes.items():
-        asset = get_asset(project_name, asset_id=_id, fields=["name"])
+        asset = get_asset_by_id(project_name, _id, fields=["name"])
 
         # Skip if asset id is not found
         if not asset:
