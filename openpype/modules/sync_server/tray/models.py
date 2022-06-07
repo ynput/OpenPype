@@ -52,7 +52,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
             All queries should go through this (because of collection).
         """
-        return self.sync_server.connection.database[self.project]
+        if self.project:
+            return self.sync_server.connection.database[self.project]
 
     @property
     def project(self):
@@ -150,6 +151,9 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     @property
     def can_edit(self):
         """Returns true if some site is user local site, eg. could edit"""
+        if not self.project:
+            return False
+
         return get_local_site_id() in (self.active_site, self.remote_site)
 
     def get_column(self, index):
@@ -190,7 +194,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                     actually queried (scrolled a couple of times to list more
                     than single page of records)
         """
-        if self.is_editing or not self.is_running:
+        if self.is_editing or not self.is_running or not self.project:
             return
         self.refresh_started.emit()
         self.beginResetModel()
@@ -232,6 +236,9 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             more records in DB than loaded.
         """
         log.debug("fetchMore")
+        if not self.dbcon:
+            return
+
         items_to_fetch = min(self._total_records - self._rec_loaded,
                              self.PAGE_SIZE)
         self.query = self.get_query(self._rec_loaded)
@@ -286,9 +293,10 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         #           replace('False', 'false').\
         #           replace('True', 'true').replace('None', 'null'))
 
-        representations = self.dbcon.aggregate(pipeline=self.query,
-                                               allowDiskUse=True)
-        self.refresh(representations)
+        if self.dbcon:
+            representations = self.dbcon.aggregate(pipeline=self.query,
+                                                   allowDiskUse=True)
+            self.refresh(representations)
 
     def set_word_filter(self, word_filter):
         """
@@ -380,6 +388,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._project = project
         # project might have been deactivated in the meantime
         if not self.sync_server.get_sync_project_setting(project):
+            self._data = {}
             return
 
         self.active_site = self.sync_server.get_active_site(self.project)
@@ -508,21 +517,23 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
         self._word_filter = None
 
-        if not self._project or self._project == lib.DUMMY_PROJECT:
-            return
-
         self.sync_server = sync_server
         # TODO think about admin mode
+        self.sort_criteria = self.DEFAULT_SORT
+
+        self.timer = QtCore.QTimer()
+        if not self._project or self._project == lib.DUMMY_PROJECT:
+            self.active_site = sync_server.DEFAULT_SITE
+            self.remote_site = sync_server.DEFAULT_SITE
+            return
+
         # this is for regular user, always only single local and single remote
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort_criteria = self.DEFAULT_SORT
-
         self.query = self.get_query()
         self.default_query = list(self.get_query())
 
-        self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(self.REFRESH_SEC)
 

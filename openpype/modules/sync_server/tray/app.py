@@ -131,6 +131,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.projects.show_only_enabled = \
             self.show_only_enabled_chk.isChecked()
         self.projects.refresh()
+        self.representationWidget.model.set_project(None)
 
     def _set_running(self, running):
         self.representationWidget.model.is_running = running

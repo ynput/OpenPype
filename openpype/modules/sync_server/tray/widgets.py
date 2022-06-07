@@ -144,11 +144,11 @@ class SyncProjectListWidget(QtWidgets.QWidget):
             if self.current_project == project_name:
                 selected_item = item
 
+        if model.item(0) is None:
+            return
+
         if selected_item:
             selected_index = model.indexFromItem(selected_item)
-
-        if len(self.sync_server.sync_project_settings.keys()) == 0:
-            model.appendRow(QtGui.QStandardItem(lib.DUMMY_PROJECT))
 
         if not self.current_project:
             self.current_project = model.item(0).data(QtCore.Qt.DisplayRole)
