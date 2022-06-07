@@ -1,14 +1,13 @@
 import logging
 
 import scriptsmenu
-from .vendor.Qt import QtWidgets
+from .api.Qt import QtWidgets
 
 log = logging.getLogger(__name__)
 
 
 def _hiero_main_window():
-    print("YEAAAAAAAAAAAAAAAAAAAH")
-    """Return Nuke's main window"""
+    """Return Hiero's main window"""
     for obj in QtWidgets.QApplication.topLevelWidgets():
         if (obj.inherits('QMainWindow') and
                 obj.metaObject().className() == 'Foundry::UI::DockMainWindow'):
@@ -17,7 +16,7 @@ def _hiero_main_window():
 
 
 def _hiero_main_menubar():
-    """Retrieve the main menubar of the Nuke window"""
+    """Retrieve the main menubar of the Hiero window"""
     hiero_window = _hiero_main_window()
     menubar = [i for i in hiero_window.children() if isinstance(
         i,
@@ -55,7 +54,7 @@ def find_scripts_menu(title, parent):
 
 
 def main(title="Scripts", parent=None, objectName=None):
-    """Build the main scripts menu in Maya
+    """Build the main scripts menu in Hiero
 
     Args:
         title (str): name of the menu in the application
