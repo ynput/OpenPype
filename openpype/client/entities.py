@@ -94,8 +94,10 @@ def get_asset_by_id(project_name, asset_id, fields=None):
     """Receive asset data by it's id.
 
     Args:
-        project_name (str): Name of project where to look for subset.
+        project_name (str): Name of project where to look for queried entities.
         asset_id (str|ObjectId): Asset's id.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
 
     Returns:
         dict: Asset entity data.
@@ -115,8 +117,10 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     """Receive asset data by it's name.
 
     Args:
-        project_name (str): Name of project where to look for subset.
+        project_name (str): Name of project where to look for queried entities.
         asset_name (str): Asset's name.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
 
     Returns:
         dict: Asset entity data.
@@ -134,6 +138,25 @@ def get_asset_by_name(project_name, asset_name, fields=None):
 def get_assets(
     project_name, asset_ids=None, asset_names=None, archived=False, fields=None
 ):
+    """Assets for specified project by passed filters.
+
+    Passed filters (ids and names) are always combined so all conditions must
+    match.
+
+    To receive all assets from project just keep filters empty.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        asset_ids (list[str, ObjectId]): Asset ids that should be found.
+        asset_names (list[str]): Name assets that should be found.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Query cursor as iterable which returns asset documents matching
+            passed filters.
+    """
+
     asset_types = ["asset"]
     if archived:
         asset_types.append("archived_asset")
@@ -160,6 +183,16 @@ def get_assets(
 
 
 def get_asset_ids_with_subsets(project_name, asset_ids=None):
+    """Find out which assets have existing subsets.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        asset_ids (list[str|ObjectId]): Look only for entered asset ids.
+
+    Returns:
+        List[ObjectId]: Asset ids that have existing subsets.
+    """
+
     subset_query = {
         "type": "subset"
     }
