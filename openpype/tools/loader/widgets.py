@@ -11,7 +11,7 @@ from openpype.client import (
     get_subset_families,
     get_subset_by_id,
     get_subsets,
-    get_version,
+    get_version_by_id,
     get_versions,
     get_representations,
     get_thumbnail_id_from_source,
@@ -676,12 +676,12 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
         project_name = self.dbcon.active_project()
         if not version_doc:
-            version_doc = get_version(project_name, version_id=version_id)
+            version_doc = get_version_by_id(project_name, version_id)
             assert version_doc, "Not a valid version id"
 
         if version_doc["type"] == "hero_version":
-            _version_doc = get_version(
-                project_name, version_id=version_doc["version_id"]
+            _version_doc = get_version_by_id(
+                project_name, version_doc["version_id"]
             )
             version_doc["data"] = _version_doc["data"]
             version_doc["name"] = HeroVersionType(

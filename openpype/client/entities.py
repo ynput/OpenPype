@@ -224,7 +224,7 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
 
 
 def get_subset_by_id(project_name, subset_id, fields=None):
-    """Single subset document by it's id.
+    """Single subset entity data by it's id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -247,7 +247,7 @@ def get_subset_by_id(project_name, subset_id, fields=None):
 
 
 def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
-    """Single subset document by subset name and it's version id.
+    """Single subset entity data by it's name and it's version id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -279,12 +279,31 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
 
 def get_subsets(
     project_name,
-    asset_ids=None,
     subset_ids=None,
     subset_names=None,
+    asset_ids=None,
     archived=False,
     fields=None
 ):
+    """Subset entities data from one project filtered by entered filters.
+
+    Filters are additive (all conditions must pass to return subset).
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_ids (list[str, ObjectId]): Subset ids that should be queried.
+            Filter ignored if 'None' is passed.
+        subset_names (list[str]): Subset names that should be queried.
+            Filter ignored if 'None' is passed.
+        asset_ids (list[str, ObjectId]): Asset ids under which should look for
+            the subsets. Filter ignored if 'None' is passed.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Iterable cursor yielding all matching subsets.
+    """
+
     subset_types = ["subset"]
     if archived:
         subset_types.append("archived_subset")
@@ -316,6 +335,17 @@ def get_subsets(
 
 
 def get_subset_families(project_name, subset_ids=None):
+    """Set of main families of subsets.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_ids (list[str, ObjectId]): Subset ids that should be queried.
+            All subsets from project are used if 'None' is passed.
+
+    Returns:
+         set[str]: Main families of matching subsets.
+    """
+
     subset_filter = {
         "type": "subset"
     }
@@ -340,23 +370,56 @@ def get_subset_families(project_name, subset_ids=None):
     return set()
 
 
-def get_version_by_name(project_name, subset_id, version, fields=None):
-    conn = _get_project_connection(project_name)
+def get_version_by_id(project_name, version_id, fields=None):
+    """Single version entity data by it's id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        version_id (ObjectId): Id of version which should be found.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If version with specified filters was not found.
+        Dict: Version document which can be reduced to specified 'fields'.
+    """
+
+    version_id = _convert_id(version_id)
+    if not version_id:
+        return None
+
     query_filter = {
-        "type": "version",
-        "parent": _convert_id(subset_id),
-        "name": version
+        "type": {"$in": ["version", "hero_version"]},
+        "_id": version_id
     }
+    conn = _get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
-def get_version(project_name, version_id, fields=None):
-    if not version_id:
+def get_version_by_name(project_name, version, subset_id, fields=None):
+    """Single version entity data by it's name and subset id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        version (int): name of version entity (it's version).
+        subset_id (ObjectId): Id of version which should be found.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If version with specified filters was not found.
+        Dict: Version document which can be reduced to specified 'fields'.
+    """
+
+    subset_id = _convert_id(subset_id)
+    if not subset_id:
         return None
+
     conn = _get_project_connection(project_name)
     query_filter = {
-        "type": {"$in": ["version", "hero_version"]},
-        "_id": _convert_id(version_id)
+        "type": "version",
+        "parent": subset_id,
+        "name": version
     }
     return conn.find_one(query_filter, _prepare_fields(fields))
 
@@ -402,11 +465,29 @@ def _get_versions(
 
 def get_versions(
     project_name,
-    subset_ids=None,
     version_ids=None,
+    subset_ids=None,
     hero=False,
     fields=None
 ):
+    """Version entities data from one project filtered by entered filters.
+
+    Filters are additive (all conditions must pass to return subset).
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        version_ids (list[str, ObjectId]): Version ids that will be queried.
+            Filter ignored if 'None' is passed.
+        subset_ids (list[str]): Subset ids that will be queried.
+            Filter ignored if 'None' is passed.
+        hero (bool): Look also for hero versions.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Iterable cursor yielding all matching versions.
+    """
+
     return _get_versions(
         project_name,
         subset_ids,

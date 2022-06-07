@@ -9,7 +9,7 @@ import qtawesome
 from openpype.client import (
     get_asset_by_id,
     get_subset_by_id,
-    get_version,
+    get_version_by_id,
     get_last_version_for_subset,
     get_representation,
 )
@@ -321,8 +321,8 @@ class InventoryModel(TreeModel):
                 not_found_ids.append(repre_id)
                 continue
 
-            version = get_version(
-                project_name, version_id=representation["parent"]
+            version = get_version_by_id(
+                project_name, representation["parent"]
             )
             if not version:
                 not_found["version"].append(group_items)
@@ -330,8 +330,8 @@ class InventoryModel(TreeModel):
                 continue
 
             elif version["type"] == "hero_version":
-                _version = get_version(
-                    project_name, version_id=version["version_id"]
+                _version = get_version_by_id(
+                    project_name, version["version_id"]
                 )
                 version["name"] = HeroVersionType(_version["name"])
                 version["data"] = _version["data"]

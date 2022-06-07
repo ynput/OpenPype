@@ -7,7 +7,7 @@ import qtawesome
 from bson.objectid import ObjectId
 
 from openpype.client import (
-    get_version,
+    get_version_by_id,
     get_versions,
     get_hero_versions,
     get_representation,
@@ -663,9 +663,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
             fields=["parent"]
         )
 
-        repre_version_doc = get_version(
+        repre_version_doc = get_version_by_id(
             project_name,
-            version_id=repre_doc["parent"],
+            repre_doc["parent"],
             fields=["parent"]
         )
 

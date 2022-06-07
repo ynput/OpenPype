@@ -12,8 +12,8 @@ from .entities import (
     get_subsets,
     get_subset_families,
 
+    get_version_by_id,
     get_version_by_name,
-    get_version,
     get_versions,
     get_last_versions,
     get_last_version_for_subset,
@@ -45,8 +45,8 @@ __all__ = (
     "get_subsets",
     "get_subset_families",
 
+    "get_version_by_id",
     "get_version_by_name",
-    "get_version",
     "get_versions",
     "get_last_versions",
     "get_last_version_for_subset",
