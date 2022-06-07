@@ -1779,17 +1779,6 @@ def get_related_sets(node):
 
     """
 
-    # Ignore specific suffices
-    ignore_suffices = ["out_SET", "controls_SET", "_INST", "_CON"]
-
-    # Default nodes to ignore
-    defaults = {"defaultLightSet", "defaultObjectSet"}
-
-    # Ids to ignore
-    ignored = {"pyblish.avalon.instance", "pyblish.avalon.container"}
-
-    view_sets = get_isolate_view_sets()
-
     sets = cmds.listSets(object=node, extendToShape=False)
     if not sets:
         return []
@@ -1800,7 +1789,16 @@ def get_related_sets(node):
     # returned by `cmds.listSets(allSets=True)`
     sets = cmds.ls(sets)
 
+    # Default nodes to ignore
+    defaults = {"defaultLightSet", "defaultObjectSet"}
+    sets = [s for s in sets if s not in defaults]
+
+    # Ignore specific suffixes
+    ignore_suffices = ["out_SET", "controls_SET", "_INST", "_CON"]
+    sets = [s for s in sets if not any(s.endswith(x) for x in ignore_suffices)]
+
     # Ignore `avalon.container`
+    ignored = {"pyblish.avalon.instance", "pyblish.avalon.container"}
     sets = [s for s in sets if
             not cmds.attributeQuery("id", node=s, exists=True) or
             not cmds.getAttr("%s.id" % s) in ignored]
@@ -1812,13 +1810,9 @@ def get_related_sets(node):
     deformer_sets = set(deformer_sets)  # optimize lookup
     sets = [s for s in sets if s not in deformer_sets]
 
-    # Ignore when the set has a specific suffix
-    sets = [s for s in sets if not any(s.endswith(x) for x in ignore_suffices)]
-
-    # Ignore viewport filter view sets (from isolate select and
-    # viewports)
+    # Ignore viewport filter view sets (from isolate select and viewports)
+    view_sets = get_isolate_view_sets()
     sets = [s for s in sets if s not in view_sets]
-    sets = [s for s in sets if s not in defaults]
 
     return sets
 
