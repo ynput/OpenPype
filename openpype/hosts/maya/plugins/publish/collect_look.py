@@ -601,8 +601,10 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                      source,
                                                      computed_source))
 
-            if not source:
-                self.log.info("source is empty, skipping...")
+            # renderman allows nodes to have filename attribute empty while
+            # you can have another incoming connection from different node.
+            if not source and cmds.nodeType(node).lower().startswith("pxr"):
+                self.log.info("Renderman: source is empty, skipping...")
                 continue
             # We replace backslashes with forward slashes because V-Ray
             # can't handle the UDIM files with the backslashes in the
