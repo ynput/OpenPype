@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 from openpype.client import (
     get_asset_by_name,
     get_assets,
-    get_subset,
+    get_subset_by_name,
     get_subsets,
     get_versions,
     get_hero_versions,
@@ -537,10 +537,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         self, asset_doc, selected_subset, selected_repre
     ):
         project_name = self.active_project()
-        subset_doc = get_subset(
+        subset_doc = get_subset_by_name(
             project_name,
-            subset_name=selected_subset,
-            asset_id=asset_doc["_id"],
+            selected_subset,
+            asset_doc["_id"],
             fields=["_id"]
         )
 
@@ -560,10 +560,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
     def _get_current_output_repre_ids_xxo(self, asset_doc, selected_subset):
         project_name = self.active_project()
-        subset_doc = get_subset(
+        subset_doc = get_subset_by_name(
             project_name,
-            asset_id=asset_doc["_id"],
-            subset_name=selected_subset,
+            selected_subset,
+            asset_doc["_id"],
             fields=["_id"]
         )
         if not subset_doc:
@@ -835,10 +835,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             asset_doc = get_asset_by_name(
                 project_name, selected_asset, fields=["_id"]
             )
-            subset_doc = get_subset(
+            subset_doc = get_subset_by_name(
                 project_name,
-                asset_id=asset_doc["_id"],
-                subset_name=selected_subset,
+                selected_subset,
+                asset_doc["_id"],
                 fields=["_id"]
             )
 
@@ -1046,10 +1046,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             asset_doc = get_asset_by_name(
                 project_name, selected_asset, fields=["_id"]
             )
-            subset_doc = get_subset(
+            subset_doc = get_subset_by_name(
                 project_name,
-                asset_id=asset_doc["_id"],
-                subset_name=selected_subset,
+                selected_subset,
+                asset_doc["_id"],
                 fields=["_id"]
             )
             subset_id = subset_doc["_id"]

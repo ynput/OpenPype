@@ -223,29 +223,13 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
     return asset_ids_with_subsets
 
 
-def get_subset(
-    project_name,
-    subset_id=None,
-    subset_name=None,
-    asset_id=None,
-    fields=None
-):
-    """Single subset document by subset id or name and parent id.
-
-    When subset id is defined it is not needed to add any other arguments but
-    subset name filter must be always combined with asset id (or subset id).
-
-    Question:
-        This could be split into more functions?
+def get_subset_by_id(project_name, subset_id, fields=None):
+    """Single subset document by it's id.
 
     Args:
-        project_name (str): Name of project where to look for subset.
+        project_name (str): Name of project where to look for queried entities.
         subset_id (ObjectId): Id of subset which should be found.
-        subset_name (str): Name of asset. Must be combined with 'asset_id' or
-            'subset_id' arguments otherwise result is 'None'.
-        asset_id (ObjectId): Id of parent asset. Must be combined with
-            'subset_name' or 'subset_id'.
-        fields (list<str>): Fields that should be returned. All fields are
+        fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -253,23 +237,42 @@ def get_subset(
         Dict: Subset document which can be reduced to specified 'fields'.
     """
 
-    query_filters = {"type": "subset"}
-    has_valid_filters = False
-    if subset_id is not None:
-        query_filters["_id"] = _convert_id(asset_id)
-        has_valid_filters = True
-
-    if subset_name is not None:
-        if asset_id is not None:
-            has_valid_filters = True
-        query_filters["name"] = subset_name
-
-    if asset_id is not None:
-        query_filters["parent"] = _convert_id(asset_id)
-
-    if not has_valid_filters:
+    subset_id = _convert_id(subset_id)
+    if not subset_id:
         return None
 
+    query_filters = {"type": "subset", "_id": subset_id}
+    conn = _get_project_connection(project_name)
+    return conn.find_one(query_filters, _prepare_fields(fields))
+
+
+def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
+    """Single subset document by subset name and it's version id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_name (str): Name of subset.
+        asset_id (str|ObjectId): Id of parent asset.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If subset with specified filters was not found.
+        Dict: Subset document which can be reduced to specified 'fields'.
+    """
+
+    if not subset_name:
+        return None
+
+    asset_id = _convert_id(asset_id)
+    if not asset_id:
+        return None
+
+    query_filters = {
+        "type": "subset",
+        "name": subset_name,
+        "parent": asset_id
+    }
     conn = _get_project_connection(project_name)
     return conn.find_one(query_filters, _prepare_fields(fields))
 

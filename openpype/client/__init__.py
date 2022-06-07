@@ -7,7 +7,8 @@ from .entities import (
     get_assets,
     get_asset_ids_with_subsets,
 
-    get_subset,
+    get_subset_by_id,
+    get_subset_by_name,
     get_subsets,
     get_subset_families,
 
@@ -39,7 +40,8 @@ __all__ = (
     "get_assets",
     "get_asset_ids_with_subsets",
 
-    "get_subset",
+    "get_subset_by_id",
+    "get_subset_by_name",
     "get_subsets",
     "get_subset_families",
 

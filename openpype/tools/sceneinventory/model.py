@@ -8,7 +8,7 @@ import qtawesome
 
 from openpype.client import (
     get_asset_by_id,
-    get_subset,
+    get_subset_by_id,
     get_version,
     get_last_version_for_subset,
     get_representation,
@@ -336,7 +336,7 @@ class InventoryModel(TreeModel):
                 version["name"] = HeroVersionType(_version["name"])
                 version["data"] = _version["data"]
 
-            subset = get_subset(project_name, subset_id=version["parent"])
+            subset = get_subset_by_id(project_name, version["parent"])
             if not subset:
                 not_found["subset"].append(group_items)
                 not_found_ids.append(repre_id)

@@ -9,7 +9,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.client import (
     get_subset_families,
-    get_subset,
+    get_subset_by_id,
     get_subsets,
     get_version,
     get_versions,
@@ -688,7 +688,7 @@ class VersionTextEdit(QtWidgets.QTextEdit):
                 _version_doc["name"]
             )
 
-        subset = get_subset(project_name, subset_id=version_doc["parent"])
+        subset = get_subset_by_id(project_name, version_doc["parent"])
         assert subset, "No valid subset parent for version"
 
         # Define readable creation timestamp

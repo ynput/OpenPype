@@ -4,7 +4,7 @@ from Qt import QtWidgets, QtCore
 
 from openpype.client import (
     get_asset_by_name,
-    get_subset,
+    get_subset_by_name,
     get_subsets,
     get_last_version_for_subset,
 )
@@ -315,10 +315,10 @@ class FamilyWidget(QtWidgets.QWidget):
             )
 
         if asset_doc:
-            subset_doc = get_subset(
+            subset_doc = get_subset_by_name(
                 project_name,
-                subset_name=subset_name,
-                asset_id=asset_doc['_id'],
+                subset_name,
+                asset_doc['_id'],
                 fields=["_id"]
             )
 
