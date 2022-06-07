@@ -544,12 +544,34 @@ def get_hero_versions(
     )
 
 
-def get_version_links(project_name, version_id, fields=None):
+def get_output_link_versions(project_name, version_id, fields=None):
+    """Versions where passed version was used as input.
+
+    Question:
+        Not 100% sure about the usage of the function so the name and docstring
+            maybe does not match what it does?
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        version_id (str|ObjectId): Version id which can be used as input link
+            for other versions.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor|list: Iterable cursor yielding versions that are used as input
+            links for passed version.
+    """
+
+    version_id = _convert_id(version_id)
+    if not version_id:
+        return []
+
     conn = _get_project_connection(project_name)
     # Does make sense to look for hero versions?
     query_filter = {
         "type": "version",
-        "data.inputLinks.input": _convert_id(version_id)
+        "data.inputLinks.input": version_id
     }
     return conn.find(query_filter, _prepare_fields(fields))
 

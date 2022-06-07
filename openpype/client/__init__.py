@@ -19,7 +19,7 @@ from .entities import (
     get_last_version_for_subset,
     get_hero_version,
     get_hero_versions,
-    get_version_links,
+    get_output_link_versions,
 
     get_representation,
     get_representation_by_name,
@@ -52,7 +52,7 @@ __all__ = (
     "get_last_version_for_subset",
     "get_hero_version",
     "get_hero_versions",
-    "get_version_links",
+    "get_output_link_versions",
 
     "get_representation",
     "get_representation_by_name",

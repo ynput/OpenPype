@@ -3,7 +3,7 @@ from openpype.client import (
     get_versions,
     get_subsets,
     get_assets,
-    get_version_links,
+    get_output_link_versions,
 )
 
 from Qt import QtWidgets
@@ -112,7 +112,7 @@ class SimpleLinkView(QtWidgets.QWidget):
                     ))
 
     def _fill_outputs(self, version_doc):
-        version_docs = list(get_version_links(
+        version_docs = list(get_output_link_versions(
             self.project_name,
             version_doc["_id"],
             fields=["name", "parent"]
