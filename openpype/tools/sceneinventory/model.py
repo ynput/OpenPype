@@ -10,7 +10,7 @@ from openpype.client import (
     get_asset_by_id,
     get_subset_by_id,
     get_version_by_id,
-    get_last_version_for_subset,
+    get_last_version_by_subset_id,
     get_representation,
 )
 from openpype.pipeline import (
@@ -403,8 +403,8 @@ class InventoryModel(TreeModel):
 
             # Store the highest available version so the model can know
             # whether current version is currently up-to-date.
-            highest_version = get_last_version_for_subset(
-                project_name, subset_id=version["parent"]
+            highest_version = get_last_version_by_subset_id(
+                project_name, version["parent"]
             )
 
             # create the group header

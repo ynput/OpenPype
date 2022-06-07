@@ -6,7 +6,7 @@ from openpype.client import (
     get_asset_by_name,
     get_subset_by_name,
     get_subsets,
-    get_last_version_for_subset,
+    get_last_version_by_subset_id,
 )
 from openpype.api import get_project_settings
 from openpype.pipeline import LegacyCreator
@@ -323,9 +323,9 @@ class FamilyWidget(QtWidgets.QWidget):
             )
 
         if subset_doc:
-            last_version = get_last_version_for_subset(
+            last_version = get_last_version_by_subset_id(
                 project_name,
-                subset_id=subset_doc["_id"],
+                subset_doc["_id"],
                 fields=["name"]
             )
             if last_version:

@@ -4,7 +4,7 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from openpype.client import get_last_version_for_subset
+from openpype.client import get_last_version_by_subset_id
 from openpype import style
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.lib import qt_app_context
@@ -230,8 +230,8 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
                 continue
 
             # Get the latest version of this asset's look subset
-            version = get_last_version_for_subset(
-                project_name, subset_id=assign_look["_id"], fields=["_id"]
+            version = get_last_version_by_subset_id(
+                project_name, assign_look["_id"], fields=["_id"]
             )
 
             subset_name = assign_look["name"]

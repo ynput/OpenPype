@@ -19,7 +19,8 @@ from .entities import (
     get_hero_version_by_subset_id,
     get_hero_versions,
     get_last_versions,
-    get_last_version_for_subset,
+    get_last_version_by_subset_id,
+    get_last_version_by_subset_name,
     get_output_link_versions,
 
     get_representation,
@@ -53,7 +54,8 @@ __all__ = (
     "get_hero_version_by_subset_id",
     "get_hero_versions",
     "get_last_versions",
-    "get_last_version_for_subset",
+    "get_last_version_by_subset_id",
+    "get_last_version_by_subset_name",
     "get_output_link_versions",
 
     "get_representation",

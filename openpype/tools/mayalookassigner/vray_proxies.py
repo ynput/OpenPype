@@ -12,7 +12,7 @@ from maya import cmds
 
 from openpype.client import (
     get_representation_by_name,
-    get_last_version_for_subset,
+    get_last_version_by_subset_name,
 )
 from openpype.pipeline import (
     legacy_io,
@@ -251,7 +251,7 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
     for asset_id, node_ids in node_ids_by_asset_id.items():
 
         # Get latest look version
-        version = get_last_version_for_subset(
+        version = get_last_version_by_subset_name(
             project_name,
             subset_name=subset,
             asset_id=asset_id,

@@ -228,7 +228,7 @@ def get_subset_by_id(project_name, subset_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_id (ObjectId): Id of subset which should be found.
+        subset_id (str|ObjectId): Id of subset which should be found.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -375,7 +375,7 @@ def get_version_by_id(project_name, version_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version_id (ObjectId): Id of version which should be found.
+        version_id (str|ObjectId): Id of version which should be found.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -402,7 +402,7 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
     Args:
         project_name (str): Name of project where to look for queried entities.
         version (int): name of version entity (it's version).
-        subset_id (ObjectId): Id of version which should be found.
+        subset_id (str|ObjectId): Id of version which should be found.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -622,13 +622,13 @@ def get_output_link_versions(project_name, version_id, fields=None):
 
 
 def get_last_versions(project_name, subset_ids, fields=None):
-    """Retrieve all latest versions for entered subset_ids.
+    """Latest versions for entered subset_ids.
 
     Args:
         subset_ids (list): List of subset ids.
 
     Returns:
-        dict: Key is subset id and value is last version name.
+        dict[ObjectId, int]: Key is subset id and value is last version name.
     """
 
     subset_ids = _convert_ids(subset_ids)
@@ -665,35 +665,60 @@ def get_last_versions(project_name, subset_ids, fields=None):
     }
 
 
-def get_last_version_for_subset(
-    project_name, subset_id=None, subset_name=None, asset_id=None, fields=None
-):
-    subset_doc = get_subset(
-        project_name,
-        subset_id=subset_id,
-        subset_name=subset_name,
-        asset_id=asset_id,
-        fields=["_id"]
-    )
-    if not subset_doc:
+def get_last_version_by_subset_id(project_name, subset_id, fields=None):
+    """Last version for passed subset id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_id (str|ObjectId): Id of version which should be found.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If version with specified filters was not found.
+        Dict: Version document which can be reduced to specified 'fields'.
+    """
+
+    subset_id = _convert_id(subset_id)
+    if not subset_id:
         return None
-    subset_id = subset_doc["_id"]
+
     last_versions = get_last_versions(
         project_name, subset_ids=[subset_id], fields=fields
     )
     return last_versions.get(subset_id)
 
 
-def get_representation(
-    project_name,
-    representation_id=None,
-    representation_name=None,
-    version_id=None,
-    fields=None
+def get_last_version_by_subset_name(
+    project_name, subset_name, asset_id, fields=None
 ):
+    """Last version for passed subset name under asset id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_name (str): Name of subset.
+        asset_id (str|ObjectId): Asset id which is parnt of passed subset name.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If version with specified filters was not found.
+        Dict: Version document which can be reduced to specified 'fields'.
+    """
+
+    subset_doc = get_subset_by_name(
+        project_name, subset_name, asset_id, fields=["_id"]
+    )
+    if not subset_doc:
+        return None
+    return get_last_version_by_subset_id(
+        project_name, subset_doc["_id"], fields=fields
+    )
+
+
+def get_representation(project_name, representation_id, fields=None):
     if not representation_id:
-        if not representation_name or not version_id:
-            return None
+        return None
 
     repre_types = ["representation", "archived_representations"]
     query_filter = {
@@ -701,12 +726,6 @@ def get_representation(
     }
     if representation_id is not None:
         query_filter["_id"] = _convert_id(representation_id)
-
-    if representation_name is not None:
-        query_filter["name"] = representation_name
-
-    if version_id is not None:
-        query_filter["parent"] = version_id
 
     conn = _get_project_connection(project_name)
 
