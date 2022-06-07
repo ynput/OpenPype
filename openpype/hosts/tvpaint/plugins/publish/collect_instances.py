@@ -45,6 +45,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
         for instance_data in filtered_instance_data:
             instance_data["fps"] = context.data["sceneFps"]
 
+            # Conversion from older instances
+            # - change 'render_layer' to 'renderlayer'
+            render_layer = instance_data.get("instance_data")
+            if not render_layer:
+                # Render Layer has only variant
+                if instance_data["family"] == "renderLayer":
+                    render_layer = instance_data.get("variant")
+
+                # Backwards compatibility for renderPasses
+                elif "render_layer" in instance_data:
+                    render_layer = instance_data["render_layer"]
+
+                if render_layer:
+                    instance_data["renderlayer"] = render_layer
+
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
             # Global instance data modifications
@@ -191,7 +206,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             "Creating render pass instance. \"{}\"".format(pass_name)
         )
         # Change label
-        render_layer = instance_data["render_layer"]
+        render_layer = instance_data["renderlayer"]
 
         # Backwards compatibility
         # - subset names were not stored as final subset names during creation

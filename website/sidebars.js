@@ -28,6 +28,7 @@ module.exports = {
                 "artist_hosts_photoshop",
                 "artist_hosts_tvpaint",
                 "artist_hosts_unreal",
+                "artist_kitsu",
                 {
                     type: "category",
                     label: "Ftrack",
@@ -75,6 +76,7 @@ module.exports = {
             label: "Modules",
             items: [
                 "module_ftrack",
+                "module_kitsu",
                 "module_site_sync",
                 "module_deadline",
                 "module_muster",
@@ -88,6 +90,7 @@ module.exports = {
             items: [
                 "admin_hosts_blender",
                 "admin_hosts_maya",
+                "admin_hosts_nuke",
                 "admin_hosts_resolve",
                 "admin_hosts_harmony",
                 "admin_hosts_aftereffects",

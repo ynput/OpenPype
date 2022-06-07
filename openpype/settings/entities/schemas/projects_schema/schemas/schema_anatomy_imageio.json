@@ -253,7 +253,7 @@
                         {
                             "key": "requiredNodes",
                             "type": "list",
-                            "label": "Required Nodes",
+                            "label": "Plugin required",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -272,35 +272,26 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "splitter"
-                                    },
-                                    {
-                                        "key": "knobs",
-                                        "label": "Knobs",
-                                        "type": "list",
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "type": "text",
-                                                    "key": "name",
-                                                    "label": "Name"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "value",
-                                                    "label": "Value"
-                                                }
-                                            ]
-                                        }
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
                                     }
+
                                 ]
                             }
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "list",
-                            "key": "customNodes",
-                            "label": "Custom Nodes",
+                            "key": "overrideNodes",
+                            "label": "Plugin's node overrides",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -319,27 +310,20 @@
                                         "label": "Nuke Node Class"
                                     },
                                     {
-                                        "type": "splitter"
+                                        "key": "subsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
                                     },
                                     {
-                                        "key": "knobs",
-                                        "label": "Knobs",
-                                        "type": "list",
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "type": "text",
-                                                    "key": "name",
-                                                    "label": "Name"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "value",
-                                                    "label": "Value"
-                                                }
-                                            ]
-                                        }
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Knobs overrides",
+                                                "key": "knobs"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -446,7 +430,7 @@
         {
             "key": "flame",
             "type": "dict",
-            "label": "Flame/Flair",
+            "label": "Flame & Flare",
             "children": [
                 {
                     "key": "project",

@@ -70,19 +70,22 @@ def get_engine_versions(env=None):
     return OrderedDict()
 
 
-def get_editor_executable_path(engine_path: Path) -> Path:
-    """Get UE4 Editor executable path."""
-    ue4_path = engine_path / "Engine/Binaries"
+def get_editor_executable_path(engine_path: Path, engine_version: str) -> Path:
+    """Get UE Editor executable path."""
+    ue_path = engine_path / "Engine/Binaries"
     if platform.system().lower() == "windows":
-        ue4_path /= "Win64/UE4Editor.exe"
+        if engine_version.split(".")[0] == "4":
+            ue_path /= "Win64/UE4Editor.exe"
+        elif engine_version.split(".")[0] == "5":
+            ue_path /= "Win64/UnrealEditor.exe"
 
     elif platform.system().lower() == "linux":
-        ue4_path /= "Linux/UE4Editor"
+        ue_path /= "Linux/UE4Editor"
 
     elif platform.system().lower() == "darwin":
-        ue4_path /= "Mac/UE4Editor"
+        ue_path /= "Mac/UE4Editor"
 
-    return ue4_path
+    return ue_path
 
 
 def _win_get_engine_versions():
@@ -208,22 +211,26 @@ def create_unreal_project(project_name: str,
     # created in different UE4 version. When user convert such project
     # to his UE4 version, Engine ID is replaced in uproject file. If some
     # other user tries to open it, it will present him with similar error.
-    ue4_modules = Path()
+    ue_modules = Path()
     if platform.system().lower() == "windows":
-        ue4_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
-                                        "Win64", "UE4Editor.modules"))
+        ue_modules_path = engine_path / "Engine/Binaries/Win64"
+        if ue_version.split(".")[0] == "4":
+            ue_modules_path /= "UE4Editor.modules"
+        elif ue_version.split(".")[0] == "5":
+            ue_modules_path /= "UnrealEditor.modules"
+        ue_modules = Path(ue_modules_path)
 
     if platform.system().lower() == "linux":
-        ue4_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+        ue_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
                                         "Linux", "UE4Editor.modules"))
 
     if platform.system().lower() == "darwin":
-        ue4_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+        ue_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
                                         "Mac", "UE4Editor.modules"))
 
-    if ue4_modules.exists():
+    if ue_modules.exists():
         print("--- Loading Engine ID from modules file ...")
-        with open(ue4_modules, "r") as mp:
+        with open(ue_modules, "r") as mp:
             loaded_modules = json.load(mp)
 
         if loaded_modules.get("BuildId"):
@@ -254,6 +261,7 @@ def create_unreal_project(project_name: str,
             {"Name": "PythonScriptPlugin", "Enabled": True},
             {"Name": "EditorScriptingUtilities", "Enabled": True},
             {"Name": "SequencerScripting", "Enabled": True},
+            {"Name": "MovieRenderPipeline", "Enabled": True},
             {"Name": "OpenPype", "Enabled": True}
         ]
     }
@@ -279,7 +287,7 @@ def create_unreal_project(project_name: str,
     python_path = None
     if platform.system().lower() == "windows":
         python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                     "Python3/Win64/pythonw.exe")
+                                     "Python3/Win64/python.exe")
 
     if platform.system().lower() == "linux":
         python_path = engine_path / ("Engine/Binaries/ThirdParty/"
@@ -293,14 +301,15 @@ def create_unreal_project(project_name: str,
         raise NotImplementedError("Unsupported platform")
     if not python_path.exists():
         raise RuntimeError(f"Unreal Python not found at {python_path}")
-    subprocess.run(
+    subprocess.check_call(
         [python_path.as_posix(), "-m", "pip", "install", "pyside2"])
 
     if dev_mode or preset["dev_mode"]:
-        _prepare_cpp_project(project_file, engine_path)
+        _prepare_cpp_project(project_file, engine_path, ue_version)
 
 
-def _prepare_cpp_project(project_file: Path, engine_path: Path) -> None:
+def _prepare_cpp_project(
+        project_file: Path, engine_path: Path, ue_version: str) -> None:
     """Prepare CPP Unreal Project.
 
     This function will add source files needed for project to be
@@ -419,8 +428,12 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
     with open(sources_dir / f"{project_name}GameModeBase.h", mode="w") as f:
         f.write(game_mode_h)
 
-    u_build_tool = Path(
-        engine_path / "Engine/Binaries/DotNET/UnrealBuildTool.exe")
+    u_build_tool_path = engine_path / "Engine/Binaries/DotNET"
+    if ue_version.split(".")[0] == "4":
+        u_build_tool_path /= "UnrealBuildTool.exe"
+    elif ue_version.split(".")[0] == "5":
+        u_build_tool_path /= "UnrealBuildTool/UnrealBuildTool.exe"
+    u_build_tool = Path(u_build_tool_path)
     u_header_tool = None
 
     arch = "Win64"

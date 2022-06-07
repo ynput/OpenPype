@@ -116,7 +116,10 @@ def get_oiio_tools_path(tool="oiiotool"):
         tool (string): Tool name (oiiotool, maketx, ...).
             Default is "oiiotool".
     """
+
     oiio_dir = get_vendor_bin_path("oiio")
+    if platform.system().lower() == "linux":
+        oiio_dir = os.path.join(oiio_dir, "bin")
     return find_executable(os.path.join(oiio_dir, tool))
 
 

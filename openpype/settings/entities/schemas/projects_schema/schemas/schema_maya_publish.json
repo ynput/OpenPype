@@ -22,6 +22,20 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectFbxCamera",
+            "label": "Collect Camera for FBX export",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {

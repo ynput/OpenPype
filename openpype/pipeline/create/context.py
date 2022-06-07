@@ -750,6 +750,10 @@ class CreateContext:
         return self._host_is_valid
 
     @property
+    def host_name(self):
+        return os.environ["AVALON_APP"]
+
+    @property
     def log(self):
         """Dynamic access to logger."""
         if self._log is None:
@@ -861,6 +865,17 @@ class CreateContext:
                     "Using first and skipping following"
                 ))
                 continue
+
+            # Filter by host name
+            if (
+                creator_class.host_name
+                and creator_class.host_name != self.host_name
+            ):
+                self.log.info((
+                    "Creator's host name is not supported for current host {}"
+                ).format(creator_class.host_name, self.host_name))
+                continue
+
             creator = creator_class(
                 self,
                 system_settings,

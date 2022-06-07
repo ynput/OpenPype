@@ -1,7 +1,8 @@
 import nuke
 
 from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import create_write_node
+from openpype.hosts.nuke.api.lib import (
+    create_write_node, create_write_node_legacy)
 
 
 class CreateWriteStill(plugin.AbstractWriteRender):
@@ -12,42 +13,69 @@ class CreateWriteStill(plugin.AbstractWriteRender):
     n_class = "Write"
     family = "still"
     icon = "image"
+
+    # settings
+    fpath_template = "{work}/render/nuke/{subset}/{subset}.{ext}"
     defaults = [
-        "ImageFrame{:0>4}".format(nuke.frame()),
-        "MPFrame{:0>4}".format(nuke.frame()),
-        "LayoutFrame{:0>4}".format(nuke.frame())
+        "ImageFrame",
+        "MPFrame",
+        "LayoutFrame"
     ]
+    prenodes = {
+        "FrameHold01": {
+            "nodeclass": "FrameHold",
+            "dependent": None,
+            "knobs": [
+                {
+                    "type": "formatable",
+                    "name": "first_frame",
+                    "template": "{frame}",
+                    "to_type": "number"
+                }
+            ]
+        }
+    }
 
     def __init__(self, *args, **kwargs):
         super(CreateWriteStill, self).__init__(*args, **kwargs)
 
     def _create_write_node(self, selected_node, inputs, outputs, write_data):
-        # explicitly reset template to 'renders', not same as other 2 writes
-        write_data.update({
-            "fpath_template": (
-                "{work}/renders/nuke/{subset}/{subset}.{ext}")})
+        # add fpath_template
+        write_data["fpath_template"] = self.fpath_template
 
-        _prenodes = [
-            {
-                "name": "FrameHold01",
-                "class": "FrameHold",
-                "knobs": [
-                    ("first_frame", nuke.frame())
-                ],
-                "dependent": None
-            }
-        ]
-
-        write_node = create_write_node(
-            self.name,
-            write_data,
-            input=selected_node,
-            review=False,
-            prenodes=_prenodes,
-            farm=False,
-            linked_knobs=["channels", "___", "first", "last", "use_limit"])
-
-        return write_node
+        if not self.is_legacy():
+            return create_write_node(
+                self.name,
+                write_data,
+                input=selected_node,
+                review=False,
+                prenodes=self.prenodes,
+                farm=False,
+                linked_knobs=["channels", "___", "first", "last", "use_limit"],
+                **{
+                    "frame": nuke.frame()
+                }
+            )
+        else:
+            _prenodes = [
+                {
+                    "name": "FrameHold01",
+                    "class": "FrameHold",
+                    "knobs": [
+                        ("first_frame", nuke.frame())
+                    ],
+                    "dependent": None
+                }
+            ]
+            return create_write_node_legacy(
+                self.name,
+                write_data,
+                input=selected_node,
+                review=False,
+                prenodes=_prenodes,
+                farm=False,
+                linked_knobs=["channels", "___", "first", "last", "use_limit"]
+            )
 
     def _modify_write_node(self, write_node):
         write_node.begin()

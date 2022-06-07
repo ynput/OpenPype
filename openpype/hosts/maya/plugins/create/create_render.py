@@ -76,16 +76,20 @@ class CreateRender(plugin.Creator):
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'renderman': 'rmanGlobals.imageFileFormat',
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
     }
 
     _image_prefixes = {
         'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
-        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
+        # this needs `imageOutputDir`
+        # (<ws>/renders/maya/<scene>) set separately
+        'renderman': '<layer>_<aov>.<f4>.<ext>',
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
     }
 
     _aov_chars = {
@@ -439,6 +443,10 @@ class CreateRender(plugin.Creator):
                 asset["data"].get("resolutionHeight"))
 
             self._set_global_output_settings()
+
+        if renderer == "renderman":
+            cmds.setAttr("rmanGlobals.imageOutputDir",
+                         "maya/<scene>/<layer>", type="string")
 
     def _set_vray_settings(self, asset):
         # type: (dict) -> None

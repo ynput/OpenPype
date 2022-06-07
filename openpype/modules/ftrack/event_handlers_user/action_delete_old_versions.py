@@ -569,7 +569,7 @@ class DeleteOldVersions(BaseAction):
                 context["frame"] = self.sequence_splitter
                 sequence_path = os.path.normpath(
                     StringTemplate.format_strict_template(
-                        context, template
+                        template, context
                     )
                 )
 

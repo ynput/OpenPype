@@ -8,6 +8,7 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
+        "use_env_var_as_root": false,
         "enabled": false,
         "paths": {
             "source-path": [],
@@ -164,6 +165,9 @@
     "publish": {
         "CollectMayaRender": {
             "sync_workfile_version": false
+        },
+        "CollectFbxCamera": {
+            "enabled": false
         },
         "ValidateInstanceInContext": {
             "enabled": true,
