@@ -23,7 +23,7 @@ from .entities import (
     get_last_version_by_subset_name,
     get_output_link_versions,
 
-    get_representation,
+    get_representation_by_id,
     get_representation_by_name,
     get_representations,
     get_representation_parents,
@@ -58,7 +58,7 @@ __all__ = (
     "get_last_version_by_subset_name",
     "get_output_link_versions",
 
-    "get_representation",
+    "get_representation_by_id",
     "get_representation_by_name",
     "get_representations",
     "get_representation_parents",

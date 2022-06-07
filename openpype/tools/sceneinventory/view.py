@@ -10,7 +10,7 @@ from openpype.client import (
     get_version_by_id,
     get_versions,
     get_hero_versions,
-    get_representation,
+    get_representation_by_id,
     get_representations,
 )
 from openpype import style
@@ -657,9 +657,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         project_name = legacy_io.active_project()
         # Get available versions for active representation
-        repre_doc = get_representation(
+        repre_doc = get_representation_by_id(
             project_name,
-            representation_id=active["representation"],
+            active["representation"],
             fields=["parent"]
         )
 

@@ -11,7 +11,7 @@ from openpype.client import (
     get_subset_by_id,
     get_version_by_id,
     get_last_version_by_subset_id,
-    get_representation,
+    get_representation_by_id,
 )
 from openpype.pipeline import (
     legacy_io,
@@ -313,8 +313,8 @@ class InventoryModel(TreeModel):
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
             # Get parenthood per group
-            representation = get_representation(
-                project_name, representation_id=repre_id
+            representation = get_representation_by_id(
+                project_name, repre_id
             )
             if not representation:
                 not_found["representation"].append(group_items)

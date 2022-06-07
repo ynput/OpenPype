@@ -716,7 +716,21 @@ def get_last_version_by_subset_name(
     )
 
 
-def get_representation(project_name, representation_id, fields=None):
+def get_representation_by_id(project_name, representation_id, fields=None):
+    """Representation entity data by it's id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representation_id (str|ObjectId): Representation id.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If representation with specified filters was not found.
+        Dict: Representation entity data which can be reduced
+            to specified 'fields'.
+    """
+
     if not representation_id:
         return None
 
@@ -735,17 +749,32 @@ def get_representation(project_name, representation_id, fields=None):
 def get_representation_by_name(
     project_name, representation_name, version_id, fields=None
 ):
+    """Representation entity data by it's name and it's version id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representation_name (str): Representation name.
+        version_id (str|ObjectId): Id of parent version entity.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If representation with specified filters was not found.
+        Dict: Representation entity data which can be reduced
+            to specified 'fields'.
+    """
+
+    version_id = _convert_id(version_id)
     if not version_id or not representation_name:
         return None
     repre_types = ["representation", "archived_representations"]
     query_filter = {
         "type": {"$in": repre_types},
         "name": representation_name,
-        "parent": _convert_id(version_id)
+        "parent": version_id
     }
 
     conn = _get_project_connection(project_name)
-
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
