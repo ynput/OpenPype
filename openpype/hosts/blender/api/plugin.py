@@ -828,7 +828,7 @@ class AssetLoader(LoaderPlugin):
         """Update namespace from asset group name."""
         # Clear default blender numbering.
         split_name = asset_group.name.replace(".", "_").split("_")
-        asset_number = next((int(spl) for spl in split_name if spl.isdigit()))
+        asset_number = next((int(spl) for spl in split_name if spl.isdigit()), 0)
         split_name = [spl for spl in split_name if not spl.isdigit()]
         # Get asset and subset name from splited asset group name.
         if len(split_name) > 1:
@@ -880,12 +880,15 @@ class AssetLoader(LoaderPlugin):
         # else if instance collection is container we need to convert instancer
         # object to a valid linked collection.
         elif is_container(instance_collection):
+            # Keep collection name
+            collection_name = asset_group.name
+
             # Deleting instancer.
             parent_collection = get_parent_collection(asset_group)
             asset_group.name = f"{asset_group.name}.removed"
             bpy.data.objects.remove(asset_group)
             # Creating collection for asset group.
-            asset_group = bpy.data.collections.new(asset_group.name)
+            asset_group = bpy.data.collections.new(collection_name)
             asset_group.color_tag = self.color_tag
             asset_group[AVALON_PROPERTY] = instance_metadata
             asset_group[AVALON_PROPERTY]["libpath"] = ""  # force update
