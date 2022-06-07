@@ -866,6 +866,20 @@ def get_representations(
 
 
 def get_representations_parents(project_name, representations):
+    """Prepare parents of representation entities.
+
+    Each item of returned dictionary contains version, subset, asset
+    and project in that order.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representations (list[dict]): Representation entities with at least
+            '_id' and 'parent' keys.
+
+    Returns:
+        dict[ObjectId, tuple]: Parents by representation id.
+    """
+
     repres_by_version_id = collections.defaultdict(list)
     versions_by_version_id = {}
     versions_by_subset_id = collections.defaultdict(list)
@@ -921,15 +935,43 @@ def get_representations_parents(project_name, representations):
 
 
 def get_representation_parents(project_name, representation):
+    """Prepare parents of representation entity.
+
+    Each item of returned dictionary contains version, subset, asset
+    and project in that order.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representation (dict): Representation entities with at least
+            '_id' and 'parent' keys.
+
+    Returns:
+        dict[ObjectId, tuple]: Parents by representation id.
+    """
+
     if not representation:
         return None
 
     repre_id = representation["_id"]
-    parents_by_repre_id = get_representations(project_name, [representation])
+    parents_by_repre_id = get_representations_parents(
+        project_name, [representation]
+    )
     return parents_by_repre_id.get(repre_id)
 
 
 def get_thumbnail_id_from_source(project_name, src_type, src_id):
+    """Receive thumbnail id from source entity.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        src_type (str): Type of source entity ('asset', 'version').
+        src_id (str|objectId): Id of source entity.
+
+    Returns:
+        ObjectId: Thumbnail id assigned to entity.
+        None: If Source entity does not have any thumbnail id assigned.
+    """
+
     if not src_type or not src_id:
         return None
 
@@ -942,12 +984,54 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
     return None
 
 
+def get_thumbnails(project_name, thumbnail_ids, fields=None):
+    """Receive thumbnails entity data.
+
+    Thumbnail entity can be used to receive binary content of thumbnail based
+    on it's content and ThumbnailResolvers.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        thumbnail_ids (list[str|ObjectId]): Ids of thumbnail entities.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        cursor: Cursor of queried documents.
+    """
+
+    if thumbnail_ids:
+        thumbnail_ids = _convert_ids(thumbnail_ids)
+
+    if not thumbnail_ids:
+        return []
+    query_filter = {
+        "type": "thumbnail",
+        "_id": {"$in": thumbnail_ids}
+    }
+    conn = _get_project_connection(project_name)
+    return conn.find(query_filter, _prepare_fields(fields))
+
+
 def get_thumbnail(project_name, thumbnail_id, fields=None):
+    """Receive thumbnail entity data.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        thumbnail_id (str|ObjectId): Id of thumbnail entity.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If thumbnail with specified id was not found.
+        Dict: Thumbnail entity data which can be reduced to specified 'fields'.
+    """
+
     if not thumbnail_id:
         return None
     query_filter = {"type": "thumbnail", "_id": _convert_id(thumbnail_id)}
     conn = _get_project_connection(project_name)
-    return conn.find(query_filter, _prepare_fields(fields))
+    return conn.find_one(query_filter, _prepare_fields(fields))
 
 
 """

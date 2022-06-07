@@ -30,6 +30,7 @@ from .entities import (
     get_representations_parents,
 
     get_thumbnail,
+    get_thumbnails,
     get_thumbnail_id_from_source,
 )
 
@@ -65,5 +66,6 @@ __all__ = (
     "get_representations_parents",
 
     "get_thumbnail",
+    "get_thumbnails",
     "get_thumbnail_id_from_source",
 )
