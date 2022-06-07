@@ -535,13 +535,13 @@ class CollectLook(pyblish.api.InstancePlugin):
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
 
-            self.log.info(
-                "Node \"{0}\" attributes: {1}".format(node, node_attrs)
-            )
-
             # Only include if there are any properties we care about
             if not node_attrs:
                 continue
+
+            self.log.info(
+                "Node \"{0}\" attributes: {1}".format(node, node_attrs)
+            )
 
             node_attributes = {}
             for attr in node_attrs:
