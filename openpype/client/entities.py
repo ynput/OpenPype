@@ -498,27 +498,57 @@ def get_versions(
     )
 
 
-def get_hero_version(
-    project_name,
-    subset_id=None,
-    version_id=None,
-    fields=None
-):
-    if not subset_id and not version_id:
+def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
+    """Hero version by subset id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_id (str|ObjectId): Subset id under which is hero version.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If hero version for passed subset id does not exists.
+        Dict: Hero version entity data.
+    """
+
+    subset_id = _convert_id(subset_id)
+    if not subset_id:
         return None
-
-    subset_ids = None
-    if subset_id is not None:
-        subset_ids = [subset_id]
-
-    version_ids = None
-    if version_id is not None:
-        version_ids = [version_id]
 
     versions = list(_get_versions(
         project_name,
-        subset_ids=subset_ids,
-        version_ids=version_ids,
+        subset_ids=[subset_id],
+        standard=False,
+        hero=True,
+        fields=fields
+    ))
+    if versions:
+        return versions[0]
+    return None
+
+
+def get_hero_version_by_id(project_name, version_id, fields=None):
+    """Hero version by it's id.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        version_id (str|ObjectId): Hero version id.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If hero version with passed id was not found.
+        Dict: Hero version entity data.
+    """
+
+    version_id = _convert_id(version_id)
+    if not version_id:
+        return None
+
+    versions = list(_get_versions(
+        project_name,
+        version_ids=[version_id],
         standard=False,
         hero=True,
         fields=fields
@@ -534,6 +564,21 @@ def get_hero_versions(
     version_ids=None,
     fields=None
 ):
+    """Hero version entities data from one project filtered by entered filters.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        subset_ids (list[str|ObjectId]): Subset ids for which should look for
+            hero versions. Filter ignored if 'None' is passed.
+        version_ids (list[str|ObjectId]): Hero version ids. Filter ignored if
+            'None' is passed.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor|list: Iterable yielding hero versions matching passed filters.
+    """
+
     return _get_versions(
         project_name,
         subset_ids,
