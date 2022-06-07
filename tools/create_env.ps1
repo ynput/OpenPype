@@ -169,14 +169,16 @@ if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
 } else {
     Write-Color -Text ">>> ", "Installing virtual environment from lock." -Color Green, Gray
 }
+$startTime = [int][double]::Parse((Get-Date -UFormat %s))
 & "$env:POETRY_HOME\bin\poetry" install --no-root $poetry_verbosity --ansi
 if ($LASTEXITCODE -ne 0) {
     Write-Color -Text "!!! ", "Poetry command failed." -Color Red, Yellow
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
+$endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
 
-New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Virtual environment created."
+New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Virtual environment created.", "All done in $($endTime - $startTime) secs."
 
 Write-Color -Text ">>> ", "Virtual environment created." -Color Green, White

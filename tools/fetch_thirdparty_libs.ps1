@@ -34,6 +34,8 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
 } else {
     Write-Color -Text "OK" -Color Green
 }
-
+$startTime = [int][double]::Parse((Get-Date -UFormat %s))
 & "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\fetch_thirdparty_libs.py"
+$endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
+New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Dependencies downloaded", "All done in $($endTime - $startTime) secs."
