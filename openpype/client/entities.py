@@ -641,6 +641,15 @@ def get_representations_parents(project_name, representations):
     return output
 
 
+def get_representation_parents(project_name, representation):
+    if not representation:
+        return None
+
+    repre_id = representation["_id"]
+    parents_by_repre_id = get_representations(project_name, [representation])
+    return parents_by_repre_id.get(repre_id)
+
+
 def get_thumbnail_id_from_source(project_name, src_type, src_id):
     if not src_type or not src_id:
         return None

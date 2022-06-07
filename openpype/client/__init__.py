@@ -22,6 +22,7 @@ from .entities import (
     get_representation,
     get_representation_by_name,
     get_representations,
+    get_representation_parents,
     get_representations_parents,
 
     get_thumbnail,
@@ -52,6 +53,7 @@ __all__ = (
     "get_representation",
     "get_representation_by_name",
     "get_representations",
+    "get_representation_parents",
     "get_representations_parents",
 
     "get_thubmnail",
