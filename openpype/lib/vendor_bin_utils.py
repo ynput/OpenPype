@@ -123,26 +123,6 @@ def get_oiio_tools_path(tool="oiiotool"):
     return find_executable(os.path.join(oiio_dir, tool))
 
 
-def get_redshift_tool(tool_name):
-    """Path to redshift texture processor.
-
-    On Windows it adds .exe extension if missing from tool argument.
-
-    Args:
-        tool (string): Tool name.
-
-    Returns:
-        str: Full path to redshift texture processor executable.
-    """
-    redshift_tool_path = os.path.join(
-        os.environ["REDSHIFT_COREDATAPATH"],
-        "bin",
-        tool_name
-    )
-
-    return find_executable(redshift_tool_path)
-
-
 def get_ffmpeg_tool_path(tool="ffmpeg"):
     """Path to vendorized FFmpeg executable.
 

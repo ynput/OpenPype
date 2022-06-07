@@ -8,7 +8,7 @@ import tempfile
 import platform
 import contextlib
 import subprocess
-from openpype.lib.vendor_bin_utils import get_redshift_tool
+from openpype.lib.vendor_bin_utils import find_executable
 from collections import OrderedDict
 
 from maya import cmds  # noqa
@@ -46,15 +46,13 @@ def find_paths_by_hash(texture_hash):
 
 class TextureProcessor(metaclass=ABC.ABCMeta):
     def __init__(self):
-        #TODO: Figure out design for predetermined objects to be initialized.
-    
+    #TODO: Figure out design for predetermined objects to be initialized.
+
     @abstractmethod
     def process(self, filepath):
 
-        
 
 class MakeRSTexBin(TextureProcessor):
-    
     def process(source, *args):
         """Make `.rstexbin` using `redshiftTextureProcessor`
         with some default settings.
@@ -98,6 +96,7 @@ class MakeRSTexBin(TextureProcessor):
             traceback.print_exc()
             raise
         return processed_filepath
+
 
 class MakeTX(TextureProcessor):
     def process(source, destination, *args):
@@ -603,3 +602,23 @@ class ExtractModelRenderSets(ExtractLook):
         self.scene_type = self.scene_type_prefix + self.scene_type
 
         return typ
+
+
+def get_redshift_tool(tool_name):
+    """Path to redshift texture processor.
+
+    On Windows it adds .exe extension if missing from tool argument.
+
+    Args:
+        tool (string): Tool name.
+
+    Returns:
+        str: Full path to redshift texture processor executable.
+    """
+    redshift_tool_path = os.path.join(
+        os.environ["REDSHIFT_COREDATAPATH"],
+        "bin",
+        tool_name
+    )
+
+    return find_executable(redshift_tool_path)
