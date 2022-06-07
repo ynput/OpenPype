@@ -615,8 +615,10 @@ def get_redshift_tool(tool_name):
     Returns:
         str: Full path to redshift texture processor executable.
     """
+    redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
+
     redshift_tool_path = os.path.join(
-        os.environ["REDSHIFT_COREDATAPATH"],
+        redshift_os_path,
         "bin",
         tool_name
     )
