@@ -905,6 +905,7 @@ class TrayModulesManager(ModulesManager):
     modules_menu_order = (
         "user",
         "ftrack",
+        "kitsu",
         "muster",
         "launcher_tool",
         "avalon",
