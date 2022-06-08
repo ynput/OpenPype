@@ -109,16 +109,18 @@ def node_uses_image_sequence(node, node_path):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    # The following tokens imply a sequence
-    patterns = ["<udim>", "<tile>", "<uvtile>",
-                "u<u>_v<v>", "<frame0", "<f4>"]
     try:
         use_frame_extension = cmds.getAttr('%s.useFrameExtension' % node)
     except ValueError:
         use_frame_extension = False
+    if use_frame_extension:
+        return True
 
-    return (use_frame_extension or
-            any(pattern in node_path for pattern in patterns))
+    # The following tokens imply a sequence
+    patterns = ["<udim>", "<tile>", "<uvtile>",
+                "u<u>_v<v>", "<frame0", "<f4>"]
+    node_path_lowered = node_path.lower()
+    return any(pattern in node_path_lowered for pattern in patterns)
 
 
 def seq_to_glob(path):

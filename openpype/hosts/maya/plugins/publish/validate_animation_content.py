@@ -30,6 +30,10 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
         assert 'out_hierarchy' in instance.data, "Missing `out_hierarchy` data"
 
+        out_sets = [node for node in instance if node.endswith("out_SET")]
+        msg = "Couldn't find exactly one out_SET: {0}".format(out_sets)
+        assert len(out_sets) == 1, msg
+
         # All nodes in the `out_hierarchy` must be among the nodes that are
         # in the instance. The nodes in the instance are found from the top
         # group, as such this tests whether all nodes are under that top group.
