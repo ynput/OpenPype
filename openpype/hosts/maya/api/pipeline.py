@@ -66,7 +66,7 @@ def install():
     log.info("Installing callbacks ... ")
     register_event_callback("init", on_init)
 
-    if os.environ.get("HEADLESS_PUBLISH"):
+    if os.environ.get("OPENPYPE_REMOTE_PUBLISH"):
         # Maya launched on farm, lib.IS_HEADLESS might be triggered locally too
         # target "farm" == rendering on farm, expects OPENPYPE_PUBLISH_DATA
         # target "remote" == remote execution
