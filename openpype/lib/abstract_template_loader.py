@@ -213,7 +213,13 @@ class AbstractTemplateLoader:
 
         ignored_ids = ignored_ids or []
         placeholders = self.get_placeholders()
+        self.log.debug("Placeholders found in template: {}".format(
+            [placeholder.data['node'] for placeholder in placeholders]
+        ))
         for placeholder in placeholders:
+            self.log.debug("Start to processing placeholder {}".format(
+                placeholder.data['node']
+            ))
             placeholder_representations = self.get_placeholder_representations(
                 placeholder,
                 current_asset,
