@@ -3,7 +3,6 @@ from pprint import pformat
 import re
 import six
 import platform
-import time
 import tempfile
 import contextlib
 from collections import OrderedDict
