@@ -44,12 +44,15 @@ def find_paths_by_hash(texture_hash):
     key = "data.sourceHashes.{0}".format(texture_hash)
     return legacy_io.distinct(key, {"type": "version"})
 
+
 class TextureProcessor(metaclass=ABC.ABCMeta):
     def __init__(self):
     # TODO: Figure out design for predetermined objects to be initialized.
 
     @abstractmethod
     def process(self, filepath):
+
+        return processed_texture_path
 
 
 class MakeRSTexBin(TextureProcessor):
@@ -373,15 +376,6 @@ class ExtractLook(openpype.api.Extractor):
         # might be included more than once amongst the resources as they could
         # be the input file to multiple nodes.
         resources = instance.data["resources"]
-        # Specify texture processing executables to activate
-        processors = []
-        do_maketx = instance.data.get("maketx", False)
-        if do_maketx:
-            processors.append(MakeTX)
-        # Option to convert textures to native redshift textures
-        do_rstex = instance.data.get("rstex", False)
-        if do_rstex:
-            processors.append(MakeRSTexBin)
         # Collect all unique files used in the resources
         files_metadata = {}
         for resource in resources:
@@ -420,8 +414,7 @@ class ExtractLook(openpype.api.Extractor):
 
             source, mode, texture_hash = self._process_texture(
                 filepath,
-                do_rstex,
-                do_maketx,
+                processors,
                 staging=staging_dir,
                 linearize=linearize,
                 force=force_copy
@@ -514,7 +507,7 @@ class ExtractLook(openpype.api.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, do_rstex, do_maketx, staging, linearize, force):
+    def _process_texture(self, filepath, processors, staging, linearize, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -546,7 +539,17 @@ class ExtractLook(openpype.api.Extractor):
                     ("Paths not found on disk, "
                      "skipping hardlink: %s") % (existing,)
                 )
-
+        texture_files = self.collect_text
+        # Specify texture processing executables to activate
+        processors = []
+        do_maketx = instance.data.get("maketx", False)
+        if do_maketx:
+            processors.append(MakeTX)
+        # Option to convert textures to native redshift textures
+        do_rstex = instance.data.get("rstex", False)
+        if do_rstex:
+            processors.append(MakeRSTexBin)
+            
         if do_maketx and ext != ".tx":
             # Produce .tx file in staging if source file is not .tx
             converted = os.path.join(staging, "resources", fname + ".tx")
