@@ -106,12 +106,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "effect",
                 "xgen",
                 "hda",
-                "mvLook",
                 "usd",
                 "staticMesh",
                 "skeletalMesh",
-                "usdComposition",
-                "usdOverride",
+                "mvLook",
+                "mvUsd",
+                "mvUsdComposition",
+                "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
     exclude_families = ["clip", "render.farm"]

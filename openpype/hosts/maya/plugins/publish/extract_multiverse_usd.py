@@ -26,7 +26,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
     label = "Extract Multiverse USD Asset"
     hosts = ["maya"]
-    families = ["usd"]
+    families = ["mvUsd"]
     scene_type = "usd"
     file_formats = ["usd", "usda", "usdz"]
 

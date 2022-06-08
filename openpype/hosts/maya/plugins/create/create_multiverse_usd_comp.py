@@ -4,9 +4,9 @@ from openpype.hosts.maya.api import plugin, lib
 class CreateMultiverseUsdComp(plugin.Creator):
     """Create Multiverse USD Composition"""
 
-    name = "usdCompositionMain"
+    name = "mvUsdCompositionMain"
     label = "Multiverse USD Composition"
-    family = "usdComposition"
+    family = "mvUsdComposition"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):

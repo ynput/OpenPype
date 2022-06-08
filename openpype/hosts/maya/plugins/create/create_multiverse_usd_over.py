@@ -4,9 +4,9 @@ from openpype.hosts.maya.api import plugin, lib
 class CreateMultiverseUsdOver(plugin.Creator):
     """Create Multiverse USD Override"""
 
-    name = "usdOverrideMain"
+    name = "mvUsdOverrideMain"
     label = "Multiverse USD Override"
-    family = "usdOverride"
+    family = "mvUsdOverride"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):
