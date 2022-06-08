@@ -65,7 +65,7 @@ class ExtractAlembic(openpype.api.Extractor):
             "writeColorSets": writeColorSets,
             "writeFaceSets": writeFaceSets,
             "uvWrite": True,
-            "selection": False,
+            "selection": True,
             "worldSpace": instance.data.get("worldSpace", True)
         }
 
@@ -80,10 +80,11 @@ class ExtractAlembic(openpype.api.Extractor):
             options["writeUVSets"] = True
 
         with suspended_refresh():
-            extract_alembic(file=path,
-                            startFrame=start,
-                            endFrame=end,
-                            **options)
+            with maintained_selection():
+                extract_alembic(file=path,
+                                startFrame=start,
+                                endFrame=end,
+                                **options)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
