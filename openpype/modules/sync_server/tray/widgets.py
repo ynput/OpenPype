@@ -253,6 +253,9 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     active_changed = QtCore.Signal()  # active index changed
     message_generated = QtCore.Signal(str)
 
+    def set_project(self, project):
+        self.model.set_project(project)
+
     def _selection_changed(self, _new_selected, _all_selected):
         idxs = self.selection_model.selectedRows()
         self._selected_ids = set()

@@ -101,8 +101,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.representationWidget = repres
 
     def showEvent(self, event):
-        self.representationWidget.model.set_project(
-            self.projects.current_project)
+        self.representationWidget.set_project(self.projects.current_project)
         self.projects.refresh()
         self._set_running(True)
         super().showEvent(event)
@@ -115,9 +114,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         if self.projects.current_project is None:
             return
 
-        self.representationWidget.table_view.model().set_project(
-            self.projects.current_project
-        )
+        self.representationWidget.set_project(self.projects.current_project)
 
         project_name = self.projects.current_project
         if not self.sync_server.get_sync_project_setting(project_name):
@@ -131,7 +128,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.projects.show_only_enabled = \
             self.show_only_enabled_chk.isChecked()
         self.projects.refresh()
-        self.representationWidget.model.set_project(None)
+        self.representationWidget.set_project(None)
 
     def _set_running(self, running):
         self.representationWidget.model.is_running = running
