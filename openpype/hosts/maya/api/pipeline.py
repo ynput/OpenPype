@@ -66,22 +66,11 @@ def install():
     log.info("Installing callbacks ... ")
     register_event_callback("init", on_init)
 
-    if os.environ.get("OPENPYPE_REMOTE_PUBLISH"):
-        # Maya launched on farm, lib.IS_HEADLESS might be triggered locally too
-        # target "farm" == rendering on farm, expects OPENPYPE_PUBLISH_DATA
-        # target "remote" == remote execution
-        print("Registering pyblish target: remote")
-        pyblish.api.register_target("remote")
-        return
-
     if lib.IS_HEADLESS:
         log.info(("Running in headless mode, skipping Maya "
                  "save/open/new callback installation.."))
 
         return
-
-    print("Registering pyblish target: local")
-    pyblish.api.register_target("local")
 
     _set_project()
     _register_callbacks()
