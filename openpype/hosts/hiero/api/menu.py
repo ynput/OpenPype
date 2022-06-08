@@ -144,8 +144,9 @@ def menu_install():
 
 def add_scripts_menu():
     try:
-        from scriptsmenu import launchforhiero
+        from . import launchforhiero
     except ImportError:
+
         log.warning(
             "Skipping studio.menu install, because "
             "'scriptsmenu' module seems unavailable."
