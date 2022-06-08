@@ -651,9 +651,9 @@ class LauncherModel(QtCore.QObject):
             self._asset_refresh_thread = None
 
     def _refresh_assets(self):
-        asset_docs = get_assets(
-            self._last_project_name, fields=list(self._asset_projection.keys())
-        )
+        asset_docs = list(get_assets(
+            self._last_project_name, fields=self._asset_projection.keys()
+        ))
         if not self._refreshing_assets:
             return
         self._refreshing_assets = False
