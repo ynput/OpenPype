@@ -3,6 +3,8 @@ from pprint import pformat
 import re
 import six
 import platform
+import time
+import tempfile
 import contextlib
 from collections import OrderedDict
 
@@ -2562,20 +2564,50 @@ class DirmapCache:
         return cls._sync_module
 
 
+@contextlib.contextmanager
+def _duplicate_node_temp():
+    """Create a temp file where node is pasted during duplication.
+
+    This is to avoid using clipboard for node duplication.
+    """
+
+    duplicate_node_temp_path = os.path.join(
+        tempfile.gettempdir(),
+        "openpype_nuke_duplicate_temp_{}".format(os.getpid())
+    )
+
+    # This can happen only if 'duplicate_node' would be
+    if os.path.exists(duplicate_node_temp_path):
+        log.warning((
+            "Temp file for node duplication already exists."
+            " Trying to remove {}"
+        ).format(duplicate_node_temp_path))
+        os.remove(duplicate_node_temp_path)
+
+    try:
+        # Yield the path where node can be copied
+        yield duplicate_node_temp_path
+
+    finally:
+        # Remove the file at the end
+        os.remove(duplicate_node_temp_path)
+
+
 def duplicate_node(node):
     reset_selection()
 
     # select required node for duplication
     node.setSelected(True)
 
-    # copy selected to clipboard
-    nuke.nodeCopy("%clipboard%")
+    with _duplicate_node_temp() as filepath:
+        # copy selected to temp filepath
+        nuke.nodeCopy(filepath)
 
-    # reset selection
-    reset_selection()
+        # reset selection
+        reset_selection()
 
-    # paste node and selection is on it only
-    dupli_node = nuke.nodePaste("%clipboard%")
+        # paste node and selection is on it only
+        dupli_node = nuke.nodePaste(filepath)
 
     # reset selection
     reset_selection()
