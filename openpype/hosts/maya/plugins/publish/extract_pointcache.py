@@ -81,6 +81,7 @@ class ExtractAlembic(openpype.api.Extractor):
 
         with suspended_refresh():
             with maintained_selection():
+                cmds.select(nodes, noExpand=True)
                 extract_alembic(file=path,
                                 startFrame=start,
                                 endFrame=end,
