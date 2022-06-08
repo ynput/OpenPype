@@ -571,6 +571,30 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateCameraContents",
+            "label": "Validate Camera Content",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_shapes",
+                    "label": "Validate presence of shapes"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {

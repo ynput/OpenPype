@@ -413,6 +413,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateCameraContents": {
+            "enabled": true,
+            "optional": true,
+            "validate_shapes": true
+        },
         "ExtractPlayblast": {
             "capture_preset": {
                 "Codec": {

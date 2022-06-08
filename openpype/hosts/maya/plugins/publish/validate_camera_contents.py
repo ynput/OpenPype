@@ -20,6 +20,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
     hosts = ['maya']
     label = 'Camera Contents'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    validate_shapes = True
 
     @classmethod
     def get_invalid(cls, instance):
@@ -49,6 +50,8 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
                 raise RuntimeError("No cameras found in empty instance.")
 
+        if not cls.validate_shapes:
+            return
         # non-camera shapes
         valid_shapes = cmds.ls(shapes, type=('camera', 'locator'), long=True)
         shapes = set(shapes) - set(valid_shapes)
