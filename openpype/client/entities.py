@@ -655,6 +655,10 @@ def get_last_versions(project_name, subset_ids, fields=None):
         doc["_version_id"]
         for doc in conn.aggregate(_pipeline)
     ]
+    fields = _prepare_fields(fields)
+    if fields and "parent" not in fields:
+        fields.append("parent")
+
     version_docs = get_versions(
         project_name, version_ids=version_ids, fields=fields
     )
