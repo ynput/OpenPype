@@ -19,6 +19,10 @@ from openpype.lib.build_template_exceptions import (
     TemplateNotFound
 )
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def update_representations(entities, entity):
     if entity['context']['subset'] not in entities:
@@ -215,8 +219,15 @@ class AbstractTemplateLoader:
                 current_asset,
                 linked_assets
             )
-            for representation in placeholder_representations:
 
+            if not placeholder_representations:
+                self.log.info(
+                    "There's no representation for this placeholder: "
+                    "{}".format(placeholder.data['node'])
+                )
+                continue
+
+            for representation in placeholder_representations:
                 self.preload(placeholder, loaders_by_name, representation)
 
                 if self.load_data_is_incorrect(
