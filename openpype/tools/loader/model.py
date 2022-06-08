@@ -206,9 +206,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         if subset_doc_projection:
             self.subset_doc_projection = subset_doc_projection
 
-        self.asset_doc_projection = asset_doc_projection
-        self.subset_doc_projection = subset_doc_projection
-
         self.repre_icons = {}
         self.sync_server = None
         self.active_site = self.active_provider = None
