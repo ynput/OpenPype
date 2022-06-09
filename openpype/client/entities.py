@@ -789,7 +789,6 @@ def get_representations(
     version_ids=None,
     extensions=None,
     names_by_version_ids=None,
-    check_site_name=False,
     archived=False,
     fields=None
 ):
@@ -809,8 +808,6 @@ def get_representations(
             file (without dot).
         names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
             using version ids and list of names under the version.
-        check_site_name (bool): Filter only representation that have existing
-            site name.
         archived (bool): Output will also contain archived representations.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -826,9 +823,6 @@ def get_representations(
         query_filter = {"type": repre_types[0]}
     else:
         query_filter = {"type": {"$in": repre_types}}
-
-    if check_site_name:
-        query_filter["files.site.name"] = {"$exists": True}
 
     if representation_ids is not None:
         representation_ids = _convert_ids(representation_ids)

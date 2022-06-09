@@ -1270,7 +1270,6 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             repre_docs = list(get_representations(
                 project_name,
                 version_ids=self._version_ids,
-                check_site_name=True,
                 fields=self.repre_projection.keys()
             ))
 
