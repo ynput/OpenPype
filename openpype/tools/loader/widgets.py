@@ -1232,11 +1232,11 @@ class RepresentationWidget(QtWidgets.QWidget):
             repre_ids.append(item["_id"])
 
         project_name = self.dbcon.active_project()
-        repre_docs = get_representations(
+        repre_docs = list(get_representations(
             project_name,
             representation_ids=repre_ids,
             fields=["name", "parent"]
-        )
+        ))
 
         version_ids = [
             repre_doc["parent"]
