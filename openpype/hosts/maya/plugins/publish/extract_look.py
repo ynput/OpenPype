@@ -568,7 +568,7 @@ class ExtractLook(openpype.api.Extractor):
                 )
         for processor in processors:
             processor().process(filepath)
-            self.log.info("Generating .rstexbin file for %s .." % filepath)
+            self.log.info("Generating texture file for %s .." % filepath)
         return filepath, COPY, texture_hash
 
 
