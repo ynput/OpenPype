@@ -944,7 +944,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         repre_docs = list(
             get_representations(
                 project_name,
-                subset_ids=subset_id_by_version_id.keys(),
+                version_ids=subset_id_by_version_id.keys(),
                 fields=["name", "parent"]
             )
         )
@@ -1102,7 +1102,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
             repre_docs = get_representations(
                 project_name,
-                subset_ids=subset_id_by_version_id.keys(),
+                version_ids=subset_id_by_version_id.keys(),
                 fields=["name", "parent"]
             )
             repres_by_subset_name = {}
