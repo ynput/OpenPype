@@ -92,7 +92,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         project_name = legacy_io.active_project()
         repre_docs = get_representations(
-            project_name, representaion_ids=repre_ids, fields=["parent"]
+            project_name, representation_ids=repre_ids, fields=["parent"]
         )
 
         version_ids = []
