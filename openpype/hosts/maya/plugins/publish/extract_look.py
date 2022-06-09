@@ -426,23 +426,20 @@ class ExtractLook(openpype.api.Extractor):
         for filepath in files_metadata:
 
             linearize = False
+
+            # Specify texture processing executables to activate
+            processors = []
+            do_maketx = instance.data.get("maketx", False)
+            do_rstex = instance.data.get("rstex", False)
+            if do_maketx:
+                processors.append(MakeTX)
+            # Option to convert textures to native redshift textures
+            if do_rstex:
+                processors.append(MakeRSTexBin)
             if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
                 linearize = True
                 # set its file node to 'raw' as tx will be linearized
                 files_metadata[filepath]["color_space"] = "Raw"
-
-            # if do_maketx:
-            #     color_space = "Raw"
-            # Specify texture processing executables to activate
-            processors = []
-            do_maketx = instance.data.get("maketx", False)
-            if do_maketx:
-                processors.append(MakeTX)
-            # Option to convert textures to native redshift textures
-            do_rstex = instance.data.get("rstex", False)
-            if do_rstex:
-                processors.append(MakeRSTexBin)
-
             source, mode, texture_hash = self._process_texture(
                 filepath,
                 processors,
