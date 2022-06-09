@@ -442,6 +442,7 @@ class ExtractLook(openpype.api.Extractor):
             do_rstex = instance.data.get("rstex", False)
             if do_rstex:
                 processors.append(MakeRSTexBin)
+
             source, mode, texture_hash = self._process_texture(
                 filepath,
                 processors,
@@ -567,12 +568,9 @@ class ExtractLook(openpype.api.Extractor):
                     ("Paths not found on disk, "
                      "skipping hardlink: %s") % (existing,)
                 )
-
-
-        self.log.info("Generating .rstexbin file for %s .." % filepath)
-        # Generates Redshift optimized textures using Redshift processor
-        if do_rstex:
-            rstex(filepath)
+        for processor in processors:
+            processor().process(filepath)
+            self.log.info("Generating .rstexbin file for %s .." % filepath)
         return filepath, COPY, texture_hash
 
 
