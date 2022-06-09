@@ -53,6 +53,7 @@ def install():
     sys.excepthook = pype_excepthook_handler
 
     pyblish.api.register_host("blender")
+    pyblish.api.register_target("local")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
     register_loader_plugin_path(str(LOAD_PATH))
@@ -107,15 +108,15 @@ def set_start_end_frames():
         return
 
     if data.get("frameStart"):
-        frameStart = data.get("frameStart")
+        frameStart = int(data.get("frameStart"))
     if data.get("frameEnd"):
-        frameEnd = data.get("frameEnd")
+        frameEnd = int(data.get("frameEnd"))
     if data.get("fps"):
-        fps = data.get("fps")
+        fps = float(data.get("fps"))
     if data.get("resolutionWidth"):
-        resolution_x = data.get("resolutionWidth")
+        resolution_x = int(data.get("resolutionWidth"))
     if data.get("resolutionHeight"):
-        resolution_y = data.get("resolutionHeight")
+        resolution_y = int(data.get("resolutionHeight"))
 
     scene.frame_start = frameStart
     scene.frame_end = frameEnd
