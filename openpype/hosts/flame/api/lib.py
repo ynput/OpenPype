@@ -3,6 +3,7 @@ import os
 import re
 import json
 import pickle
+import clique
 import tempfile
 import itertools
 import contextlib
@@ -560,7 +561,7 @@ def get_segment_attributes(segment):
         if not hasattr(segment, attr_name):
             continue
         attr = getattr(segment, attr_name)
-        segment_attrs_data[attr] = str(attr).replace("+", ":")
+        segment_attrs_data[attr_name] = str(attr).replace("+", ":")
 
         if attr_name in ["record_in", "record_out"]:
             clip_data[attr_name] = attr.relative_frame
@@ -762,6 +763,7 @@ class MediaInfoFile(object):
     _start_frame = None
     _fps = None
     _drop_mode = None
+    _file_pattern = None
 
     def __init__(self, path, **kwargs):
 
@@ -773,17 +775,28 @@ class MediaInfoFile(object):
         self._validate_media_script_path()
 
         # derivate other feed variables
-        self.feed_basename = os.path.basename(path)
-        self.feed_dir = os.path.dirname(path)
-        self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
+        feed_basename = os.path.basename(path)
+        feed_dir = os.path.dirname(path)
+        feed_ext = os.path.splitext(feed_basename)[1][1:].lower()
 
         with maintained_temp_file_path(".clip") as tmp_path:
             self.log.info("Temp File: {}".format(tmp_path))
-            self._generate_media_info_file(tmp_path)
+            self._generate_media_info_file(tmp_path, feed_ext, feed_dir)
+
+            # get collection containing feed_basename from path
+            self.file_pattern = self._get_collection(
+                feed_basename, feed_dir, feed_ext)
+
+            if (
+                not self.file_pattern
+                and os.path.exists(os.path.join(feed_dir, feed_basename))
+            ):
+                self.file_pattern = feed_basename
 
             # get clip data and make them single if there is multiple
             # clips data
-            xml_data = self._make_single_clip_media_info(tmp_path)
+            xml_data = self._make_single_clip_media_info(
+                tmp_path, feed_basename, self.file_pattern)
             self.log.debug("xml_data: {}".format(xml_data))
             self.log.debug("type: {}".format(type(xml_data)))
 
@@ -793,6 +806,123 @@ class MediaInfoFile(object):
             self.log.debug("fps: {}".format(self.fps))
             self.log.debug("drop frame: {}".format(self.drop_mode))
             self.clip_data = xml_data
+
+    def _get_collection(self, feed_basename, feed_dir, feed_ext):
+        """ Get collection string
+
+        Args:
+            feed_basename (str): file base name
+            feed_dir (str): file's directory
+            feed_ext (str): file extension
+
+        Raises:
+            AttributeError: feed_ext is not matching feed_basename
+
+        Returns:
+            str: collection basename with range of sequence
+        """
+        partialname = self._separate_file_head(feed_basename, feed_ext)
+        self.log.debug("__ partialname: {}".format(partialname))
+
+        # make sure partial input basename is having correct extensoon
+        if not partialname:
+            raise AttributeError(
+                "Wrong input attributes. Basename - {}, Ext - {}".format(
+                    feed_basename, feed_ext
+                )
+            )
+
+        # get all related files
+        files = [
+            f for f in os.listdir(feed_dir)
+            if partialname == self._separate_file_head(f, feed_ext)
+        ]
+
+        # ignore reminders as we dont need them
+        collections = clique.assemble(files)[0]
+
+        # in case no collection found return None
+        # it is probably just single file
+        if not collections:
+            return
+
+        # we expect only one collection
+        collection = collections[0]
+
+        self.log.debug("__ collection: {}".format(collection))
+
+        if collection.is_contiguous():
+            return self._format_collection(collection)
+
+        # add `[` in front to make sure it want capture
+        # shot name with the same number
+        number_from_path = self._separate_number(feed_basename, feed_ext)
+        search_number_pattern = "[" + number_from_path
+        # convert to multiple collections
+        _continues_colls = collection.separate()
+        for _coll in _continues_colls:
+            coll_to_text = self._format_collection(
+                _coll, len(number_from_path))
+            self.log.debug("__ coll_to_text: {}".format(coll_to_text))
+            if search_number_pattern in coll_to_text:
+                return coll_to_text
+
+    @staticmethod
+    def _format_collection(collection, padding=None):
+        padding = padding or collection.padding
+        # if no holes then return collection
+        head = collection.format("{head}")
+        tail = collection.format("{tail}")
+        range_template = "[{{:0{0}d}}-{{:0{0}d}}]".format(
+            padding)
+        ranges = range_template.format(
+            min(collection.indexes),
+            max(collection.indexes)
+        )
+        # if no holes then return collection
+        return "{}{}{}".format(head, ranges, tail)
+
+    def _separate_file_head(self, basename, extension):
+        """ Get only head with out sequence and extension
+
+        Args:
+            basename (str): file base name
+            extension (str): file extension
+
+        Returns:
+            str: file head
+        """
+        # in case sequence file
+        found = re.findall(
+            r"(.*)[._][\d]*(?=.{})".format(extension),
+            basename,
+        )
+        if found:
+            return found.pop()
+
+        # in case single file
+        name, ext = os.path.splitext(basename)
+
+        if extension == ext[1:]:
+            return name
+
+    def _separate_number(self, basename, extension):
+        """ Get only sequence number as string
+
+        Args:
+            basename (str): file base name
+            extension (str): file extension
+
+        Returns:
+            str: number with padding
+        """
+        # in case sequence file
+        found = re.findall(
+            r"[._]([\d]*)(?=.{})".format(extension),
+            basename,
+        )
+        if found:
+            return found.pop()
 
     @property
     def clip_data(self):
@@ -846,18 +976,41 @@ class MediaInfoFile(object):
     def drop_mode(self, text):
         self._drop_mode = str(text)
 
+    @property
+    def file_pattern(self):
+        """Clips file patter
+
+        Returns:
+            str: file pattern. ex. file.[1-2].exr
+        """
+        return self._file_pattern
+
+    @file_pattern.setter
+    def file_pattern(self, fpattern):
+        self._file_pattern = fpattern
+
     def _validate_media_script_path(self):
         if not os.path.isfile(self.MEDIA_SCRIPT_PATH):
             raise IOError("Media Scirpt does not exist: `{}`".format(
                 self.MEDIA_SCRIPT_PATH))
 
-    def _generate_media_info_file(self, fpath):
+    def _generate_media_info_file(self, fpath, feed_ext, feed_dir):
+        """ Generate media info xml .clip file
+
+        Args:
+            fpath (str): .clip file path
+            feed_ext (str): file extension to be filtered
+            feed_dir (str): look up directory
+
+        Raises:
+            TypeError: Type error if it fails
+        """
         # Create cmd arguments for gettig xml file info file
         cmd_args = [
             self.MEDIA_SCRIPT_PATH,
-            "-e", self.feed_ext,
+            "-e", feed_ext,
             "-o", fpath,
-            self.feed_dir
+            feed_dir
         ]
 
         try:
@@ -867,7 +1020,20 @@ class MediaInfoFile(object):
             raise TypeError(
                 "Error creating `{}` due: {}".format(fpath, error))
 
-    def _make_single_clip_media_info(self, fpath):
+    def _make_single_clip_media_info(self, fpath, feed_basename, path_pattern):
+        """ Separate only relative clip object form .clip file
+
+        Args:
+            fpath (str): clip file path
+            feed_basename (str): search basename
+            path_pattern (str): search file pattern (file.[1-2].exr)
+
+        Raises:
+            ET.ParseError: if nothing found
+
+        Returns:
+            ET.Element: xml element data of matching clip
+        """
         with open(fpath) as f:
             lines = f.readlines()
             _added_root = itertools.chain(
@@ -878,14 +1044,30 @@ class MediaInfoFile(object):
         xml_clips = new_root.findall("clip")
         matching_clip = None
         for xml_clip in xml_clips:
-            if xml_clip.find("name").text in self.feed_basename:
-                matching_clip = xml_clip
+            clip_name = xml_clip.find("name").text
+            self.log.debug("__ clip_name: `{}`".format(clip_name))
+            if clip_name not in feed_basename:
+                continue
+
+            # test path pattern
+            for out_track in xml_clip.iter("track"):
+                for out_feed in out_track.iter("feed"):
+                    for span in out_feed.iter("span"):
+                        # start frame
+                        span_path = span.find("path")
+                        self.log.debug(
+                            "__ span_path.text: {}, path_pattern: {}".format(
+                                span_path.text, path_pattern
+                            )
+                        )
+                        if path_pattern in span_path.text:
+                            matching_clip = xml_clip
 
         if matching_clip is None:
             # return warning there is missing clip
             raise ET.ParseError(
                 "Missing clip in `{}`. Available clips {}".format(
-                    self.feed_basename, [
+                    feed_basename, [
                         xml_clip.find("name").text
                         for xml_clip in xml_clips
                     ]
@@ -894,6 +1076,11 @@ class MediaInfoFile(object):
         return matching_clip
 
     def _get_time_info_from_origin(self, xml_data):
+        """Set time info to class attributes
+
+        Args:
+            xml_data (ET.Element): clip data
+        """
         try:
             for out_track in xml_data.iter('track'):
                 for out_feed in out_track.iter('feed'):
@@ -912,8 +1099,6 @@ class MediaInfoFile(object):
                         'startTimecode/dropMode')
                     self.drop_mode = out_feed_drop_mode_obj.text
                     break
-                else:
-                    continue
         except Exception as msg:
             self.log.warning(msg)
 

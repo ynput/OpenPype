@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.10.0-nightly.4" # OpenPype
+version = "3.11.0-nightly.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -40,6 +40,7 @@ clique = "1.6.*"
 Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"
+gazu = "^0.8.28"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
 jsonschema = "^2.6.0"
 keyring = "^22.0.1"
@@ -64,7 +65,7 @@ jinxed = [
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
 slack-sdk = "^3.6.0"
-requests = "2.25.1"
+requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 
@@ -126,8 +127,8 @@ url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-macos.tgz"
 hash = "95f43568338c275f80dc0cab1e1836a2e2270f856f0e7b204440d881dd74fbdb"
 
 [openpype.thirdparty.oiio.windows]
-url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
-hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.3.10-windows.zip"
+hash = "b9950f5d2fa3720b52b8be55bacf5f56d33f9e029d38ee86534995f3d8d253d2"
 
 [openpype.thirdparty.oiio.linux]
 url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.12-linux.tgz"

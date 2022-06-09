@@ -2,7 +2,7 @@ import sys
 import collections
 import six
 import pyblish.api
-
+from copy import deepcopy
 from openpype.pipeline import legacy_io
 
 # Copy of constant `openpype_modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
@@ -72,7 +72,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         if "hierarchyContext" not in self.context.data:
             return
 
-        hierarchy_context = self.context.data["hierarchyContext"]
+        hierarchy_context = self._get_active_assets(context)
+        self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
 
         self.session = self.context.data["ftrackSession"]
         project_name = self.context.data["projectEntity"]["name"]
@@ -86,15 +87,13 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         self.ft_project = None
 
-        input_data = hierarchy_context
-
         # disable termporarily ftrack project's autosyncing
         if auto_sync_state:
             self.auto_sync_off(project)
 
         try:
             # import ftrack hierarchy
-            self.import_to_ftrack(input_data)
+            self.import_to_ftrack(hierarchy_context)
         except Exception:
             raise
         finally:
@@ -355,3 +354,41 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             self.session.rollback()
             self.session._configure_locations()
             six.reraise(tp, value, tb)
+
+    def _get_active_assets(self, context):
+        """ Returns only asset dictionary.
+            Usually the last part of deep dictionary which
+            is not having any children
+        """
+        def get_pure_hierarchy_data(input_dict):
+            input_dict_copy = deepcopy(input_dict)
+            for key in input_dict.keys():
+                self.log.debug("__ key: {}".format(key))
+                # check if child key is available
+                if input_dict[key].get("childs"):
+                    # loop deeper
+                    input_dict_copy[
+                        key]["childs"] = get_pure_hierarchy_data(
+                            input_dict[key]["childs"])
+                elif key not in active_assets:
+                    input_dict_copy.pop(key, None)
+            return input_dict_copy
+
+        hierarchy_context = context.data["hierarchyContext"]
+
+        active_assets = []
+        # filter only the active publishing insatnces
+        for instance in context:
+            if instance.data.get("publish") is False:
+                continue
+
+            if not instance.data.get("asset"):
+                continue
+
+            active_assets.append(instance.data["asset"])
+
+        # remove duplicity in list
+        active_assets = list(set(active_assets))
+        self.log.debug("__ active_assets: {}".format(active_assets))
+
+        return get_pure_hierarchy_data(hierarchy_context)

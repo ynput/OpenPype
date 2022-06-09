@@ -67,6 +67,7 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `ext` | File extension |
 | `representation` | Representation name |
 | `frame` | Frame number for sequence files. |
+| `app` | Application Name |
 | `output` |  |
 | `comment` |  |
 
