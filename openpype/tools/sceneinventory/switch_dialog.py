@@ -165,11 +165,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             content_loaders.add(item["loader"])
 
         project_name = self.active_project()
-        repres = get_representations(
+        repres = list(get_representations(
             project_name,
             representation_ids=repre_ids,
             archived=True
-        )
+        ))
         repres_by_id = {repre["_id"]: repre for repre in repres}
 
         # stash context values, works only for single representation
