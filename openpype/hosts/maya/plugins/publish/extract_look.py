@@ -69,12 +69,12 @@ def find_paths_by_hash(texture_hash):
 
 class TextureProcessor(metaclass=ABC.ABCMeta):
     def __init__(self):
-    # TODO: Figure out design for predetermined objects to be initialized.
+        pass
 
     @abstractmethod
     def process(self, filepath):
 
-        return processed_texture_path
+        pass
 
 
 class MakeRSTexBin(TextureProcessor):
@@ -544,8 +544,7 @@ class ExtractLook(openpype.api.Extractor):
         fname, ext = os.path.splitext(os.path.basename(filepath))
 
         args = []
-        if do_maketx:
-            args.append("maketx")
+
         texture_hash = openpype.api.source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
@@ -571,7 +570,7 @@ class ExtractLook(openpype.api.Extractor):
         do_rstex = instance.data.get("rstex", False)
         if do_rstex:
             processors.append(MakeRSTexBin)
-            
+
         if do_maketx and ext != ".tx":
             # Produce .tx file in staging if source file is not .tx
             converted = os.path.join(staging, "resources", fname + ".tx")
