@@ -433,7 +433,15 @@ class ExtractLook(openpype.api.Extractor):
 
             # if do_maketx:
             #     color_space = "Raw"
-
+            # Specify texture processing executables to activate
+            processors = []
+            do_maketx = instance.data.get("maketx", False)
+            if do_maketx:
+                processors.append(MakeTX)
+            # Option to convert textures to native redshift textures
+            do_rstex = instance.data.get("rstex", False)
+            if do_rstex:
+                processors.append(MakeRSTexBin)
             source, mode, texture_hash = self._process_texture(
                 filepath,
                 processors,
@@ -559,16 +567,6 @@ class ExtractLook(openpype.api.Extractor):
                     ("Paths not found on disk, "
                      "skipping hardlink: %s") % (existing,)
                 )
-        texture_files = self.collect_text
-        # Specify texture processing executables to activate
-        processors = []
-        do_maketx = instance.data.get("maketx", False)
-        if do_maketx:
-            processors.append(MakeTX)
-        # Option to convert textures to native redshift textures
-        do_rstex = instance.data.get("rstex", False)
-        if do_rstex:
-            processors.append(MakeRSTexBin)
 
 
         self.log.info("Generating .rstexbin file for %s .." % filepath)
