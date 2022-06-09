@@ -544,7 +544,6 @@ class ExtractLook(openpype.api.Extractor):
         fname, ext = os.path.splitext(os.path.basename(filepath))
 
         args = []
-
         texture_hash = openpype.api.source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
@@ -571,32 +570,6 @@ class ExtractLook(openpype.api.Extractor):
         if do_rstex:
             processors.append(MakeRSTexBin)
 
-        if do_maketx and ext != ".tx":
-            # Produce .tx file in staging if source file is not .tx
-            converted = os.path.join(staging, "resources", fname + ".tx")
-
-            if linearize:
-                self.log.info("tx: converting sRGB -> linear")
-                colorconvert = "--colorconvert sRGB linear"
-            else:
-                colorconvert = ""
-
-            # Ensure folder exists
-            if not os.path.exists(os.path.dirname(converted)):
-                os.makedirs(os.path.dirname(converted))
-
-            self.log.info("Generating .tx file for %s .." % filepath)
-            maketx(
-                filepath,
-                converted,
-                # Include `source-hash` as string metadata
-                "-sattrib",
-                "sourceHash",
-                escape_space(texture_hash),
-                colorconvert,
-            )
-
-            return converted, COPY, texture_hash
 
         self.log.info("Generating .rstexbin file for %s .." % filepath)
         # Generates Redshift optimized textures using Redshift processor
