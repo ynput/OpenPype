@@ -69,8 +69,7 @@ def create_placeholder():
         defaultValue=-1
     )
 
-    parents = cmds.ls(selection[0], long=True)
-    cmds.setAttr(placeholder_full_name + '.parent', parents[0], type="string")
+    cmds.setAttr(placeholder_full_name + '.parent', "", type="string")
 
 
 def create_placeholder_name(args, options):
@@ -131,11 +130,11 @@ def update_placeholder():
         defaultValue=-1
     )
 
-    selected = cmds.ls(selection=True, long=True)
+    """selected = cmds.ls(selection=True, long=True)
     selected = selected[0].split('|')[-2]
     selected = cmds.ls(selected)
-    parents = cmds.ls(selected, long=True)
-    cmds.setAttr(placeholder + '.parent', parents[0], type="string")
+    parents = cmds.ls(selected, long=True)"""
+    cmds.setAttr(placeholder + '.parent', '', type="string")
 
 
 def create_options(args):
