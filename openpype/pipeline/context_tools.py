@@ -104,6 +104,14 @@ def install_host(host):
 
     MessageHandler.emit = modified_emit
 
+    if os.environ.get("OPENPYPE_REMOTE_PUBLISH"):
+        # target "farm" == rendering on farm, expects OPENPYPE_PUBLISH_DATA
+        # target "remote" == remote execution, installs host
+        print("Registering pyblish target: remote")
+        pyblish.api.register_target("remote")
+    else:
+        pyblish.api.register_target("local")
+
     install_openpype_plugins()
 
 
