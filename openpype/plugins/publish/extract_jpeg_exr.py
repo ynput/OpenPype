@@ -161,5 +161,5 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)
         run_subprocess(
-                subprocess_command, shell=True, logger=self.log
-            )
+            subprocess_command, shell=True, logger=self.log
+        )
