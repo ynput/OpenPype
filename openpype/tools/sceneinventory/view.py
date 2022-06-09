@@ -669,11 +669,11 @@ class SceneInventoryView(QtWidgets.QTreeView):
             fields=["parent"]
         )
 
-        version_docs = get_versions(
+        version_docs = list(get_versions(
             project_name,
             subset_ids=[repre_version_doc["parent"]],
             hero=True
-        )
+        ))
         hero_version = None
         standard_versions = []
         for version_doc in version_docs:
