@@ -74,13 +74,13 @@ class SimpleLinkView(QtWidgets.QWidget):
             fields=["name", "parent"]
         ))
 
-        subset_docs = []
         versions_by_subset_id = collections.defaultdict(list)
-        if versions_by_subset_id:
-            for version_doc in version_docs:
-                subset_id = version_doc["parent"]
-                versions_by_subset_id[subset_id].append(version_doc)
+        for version_doc in version_docs:
+            subset_id = version_doc["parent"]
+            versions_by_subset_id[subset_id].append(version_doc)
 
+        subset_docs = []
+        if versions_by_subset_id:
             subset_docs = list(get_subsets(
                 self.project_name,
                 subset_ids=versions_by_subset_id.keys(),
@@ -117,13 +117,13 @@ class SimpleLinkView(QtWidgets.QWidget):
             version_doc["_id"],
             fields=["name", "parent"]
         ))
-        subset_docs = []
         versions_by_subset_id = collections.defaultdict(list)
-        if versions_by_subset_id:
-            for version_doc in version_docs:
-                subset_id = version_doc["parent"]
-                versions_by_subset_id[subset_id].append(version_doc)
+        for version_doc in version_docs:
+            subset_id = version_doc["parent"]
+            versions_by_subset_id[subset_id].append(version_doc)
 
+        subset_docs = []
+        if versions_by_subset_id:
             subset_docs = list(get_subsets(
                 self.project_name,
                 subset_ids=versions_by_subset_id.keys(),
