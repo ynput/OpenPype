@@ -41,6 +41,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
+                "mvLook",
                 "yetiRig",
                 "yeticache",
                 "nukenodes",

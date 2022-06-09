@@ -45,6 +45,10 @@
             "name": "schema_ftrack"
         },
         {
+            "type": "schema",
+            "name": "schema_kitsu"
+        },
+        {
             "type": "dict",
             "key": "timers_manager",
             "label": "Timers Manager",

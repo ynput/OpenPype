@@ -1,0 +1,17 @@
+{
+    "entities_root": {
+        "assets": "Assets",
+        "shots": "Shots"
+    },
+    "entities_naming_pattern": {
+        "episode": "E##",
+        "sequence": "SQ##",
+        "shot": "SH##"
+    },
+    "publish": {
+        "IntegrateKitsuNote": {
+            "set_status_note": false,
+            "note_status_shortname": "wfa"
+        }
+    }
+}
