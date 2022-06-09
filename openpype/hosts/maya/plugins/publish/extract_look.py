@@ -436,6 +436,7 @@ class ExtractLook(openpype.api.Extractor):
             # Option to convert textures to native redshift textures
             if do_rstex:
                 processors.append(MakeRSTexBin)
+
             if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
                 linearize = True
                 # set its file node to 'raw' as tx will be linearized
