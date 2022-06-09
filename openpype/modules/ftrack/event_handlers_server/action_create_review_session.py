@@ -37,7 +37,9 @@ class CreateDailyReviewSessionServerAction(ServerAction):
     default_template = "{yy}{mm}{dd}"
 
     def __init__(self, *args, **kwargs):
-        super(CreateDailyReviewSessionServerAction, self).__init__(*args, **kwargs)
+        super(CreateDailyReviewSessionServerAction, self).__init__(
+            *args, **kwargs
+        )
 
         self._cycle_timer = None
         self._last_cyle_time = None
@@ -82,7 +84,9 @@ class CreateDailyReviewSessionServerAction(ServerAction):
     def register(self, *args, **kwargs):
         """Override register to be able trigger """
         # Register server action as would be normally
-        super(CreateDailyReviewSessionServerAction, self).register(*args, **kwargs)
+        super(CreateDailyReviewSessionServerAction, self).register(
+            *args, **kwargs
+        )
 
         # Create threading timer which will trigger creation of report
         #   at the 00:00:01 of next day
