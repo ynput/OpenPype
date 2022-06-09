@@ -267,7 +267,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             else:
                 project_name = self.dbcon.active_project()
                 version_doc = get_version_by_name(
-                    project_name, subset_id, value
+                    project_name, value, subset_id
                 )
 
                 # update availability on active site when version changes
