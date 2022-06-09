@@ -15,6 +15,20 @@
     "ftrack": {
         "enabled": false,
         "ftrack_server": "",
+        "ftrack_browser_path": {
+            "windows": [
+                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            ],
+            "darwin": [],
+            "linux": []
+        },
+        "ftrack_browser_arguments": {
+            "windows": [
+                "--app="
+            ],
+            "darwin": [],
+            "linux": []
+        },
         "ftrack_actions_path": {
             "windows": [],
             "darwin": [],

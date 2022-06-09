@@ -20,6 +20,43 @@
             "type": "splitter"
         },
         {
+            "type": "path",
+            "key": "ftrack_browser_path",
+            "label": "Browser Path",
+            "use_label_wrap": true,
+            "multipath": true,
+            "multiplatform": true
+        },
+        {
+            "type": "dict",
+            "key": "ftrack_browser_arguments",
+            "label": "Browser Arguments",
+            "use_label_wrap": true,
+            "children": [
+                {
+                    "key": "windows",
+                    "label": "Windows",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "key": "darwin",
+                    "label": "MacOS",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "key": "linux",
+                    "label": "Linux",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "type": "label",
             "label": "Additional Ftrack event handlers paths"
         },
