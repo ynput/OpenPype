@@ -1164,7 +1164,7 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         headers = [item[0] for item in self.default_widths]
 
-        model = RepresentationModel(self.dbcon, headers, [])
+        model = RepresentationModel(self.dbcon, headers)
 
         proxy_model = RepresentationSortProxyModel(self)
         proxy_model.setSourceModel(model)
@@ -1231,7 +1231,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         for item in items:
             repre_ids.append(item["_id"])
 
-        project_name = self.dbcon.actual_project()
+        project_name = self.dbcon.active_project()
         repre_docs = get_representations(
             project_name,
             representation_ids=repre_ids,

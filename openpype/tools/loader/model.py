@@ -231,7 +231,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._doc_fetching_stop = False
         self._doc_payload = {}
 
-        self.doc_fetched.connect(self.on_doc_fetched)
+        self.doc_fetched.connect(self._on_doc_fetched)
 
         self.refresh()
 
@@ -250,7 +250,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
     def set_grouping(self, state):
         self._grouping = state
-        self.on_doc_fetched()
+        self._on_doc_fetched()
 
     def get_subsets_families(self):
         return self._doc_payload.get("subset_families") or set()
@@ -528,7 +528,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
         self.fetch_subset_and_version()
 
-    def on_doc_fetched(self):
+    def _on_doc_fetched(self):
         self.clear()
         self._items_by_id = {}
         self.beginResetModel()
@@ -1019,7 +1019,6 @@ class RepresentationSortProxyModel(GroupMemberFilterProxyModel):
 
 
 class RepresentationModel(TreeModel, BaseRepresentationModel):
-
     doc_fetched = QtCore.Signal()
     refreshed = QtCore.Signal(bool)
 
@@ -1055,12 +1054,12 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         'files.sites': 1
     }
 
-    def __init__(self, dbcon, header, version_ids):
+    def __init__(self, dbcon, header):
         super(RepresentationModel, self).__init__()
         self.dbcon = dbcon
         self._data = []
         self._header = header
-        self.version_ids = version_ids
+        self._version_ids = []
 
         manager = ModulesManager()
         sync_server = active_site = remote_site = None
@@ -1092,7 +1091,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self.remote_site = remote_site
         self.remote_provider = remote_provider
 
-        self.doc_fetched.connect(self.on_doc_fetched)
+        self.doc_fetched.connect(self._on_doc_fetched)
 
         self._docs = {}
         self._icons = lib.get_repre_icons()
@@ -1103,7 +1102,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self._items_by_id = {}
 
     def set_version_ids(self, version_ids):
-        self.version_ids = version_ids
+        self._version_ids = version_ids
         self.refresh()
 
     def data(self, index, role):
@@ -1171,7 +1170,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
         return super(RepresentationModel, self).data(index, role)
 
-    def on_doc_fetched(self):
+    def _on_doc_fetched(self):
         self.clear()
         self.beginResetModel()
         subsets = set()
@@ -1181,7 +1180,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         group = None
         self._items_by_id = {}
         for doc in self._docs:
-            if len(self.version_ids) > 1:
+            if len(self._version_ids) > 1:
                 group = repre_groups.get(doc["name"])
                 if not group:
                     group_item = Item()
@@ -1265,12 +1264,12 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             return
 
         repre_docs = []
-        if self.version_ids:
+        if self._version_ids:
             # Simple find here for now, expected to receive lower number of
             # representations and logic could be in Python
             repre_docs = list(get_representations(
                 project_name,
-                version_ids=self.version_ids,
+                version_ids=self._version_ids,
                 check_site_name=True,
                 fields=self.repre_projection.keys()
             ))
