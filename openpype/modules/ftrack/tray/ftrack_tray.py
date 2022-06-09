@@ -2,6 +2,8 @@ import os
 import time
 import datetime
 import threading
+import platform
+from subprocess import Popen
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
@@ -12,6 +14,7 @@ from ..ftrack_module import FTRACK_MODULE_DIR
 from . import login_dialog
 
 from openpype.api import Logger, resources
+from openpype.settings import get_system_settings
 
 
 log = Logger().get_logger("FtrackModule")
@@ -42,11 +45,24 @@ class FtrackTrayWrapper:
         self.icon_not_logged = QtGui.QIcon(
             resources.get_resource("icons", "circle_orange.png")
         )
+        self.icon_ftrackapp = QtGui.QIcon(
+            resources.get_resource("icons", "inventory.png")
+        )
 
     def show_login_widget(self):
         self.widget_login.show()
         self.widget_login.activateWindow()
         self.widget_login.raise_()
+
+    def show_ftrack_browser(self):
+        am = get_system_settings()
+        browser_path = am["modules"]["ftrack"]["ftrack_browser_path"][platform.system().lower()][0]
+        browser_arg = am["modules"]["ftrack"]["ftrack_browser_arguments"][platform.system().lower()][0]
+        if "=" not in browser_arg:
+            browser_arg = '{:1}'.format(browser_arg)
+        cmd = f"{browser_path} {browser_arg}{self.module.ftrack_url}"
+        log.info(f"Opening Ftrack Browser: {cmd}")
+        Popen(cmd)
 
     def validate(self):
         validation = False
@@ -251,16 +267,12 @@ class FtrackTrayWrapper:
         # Menu for Tray App
         tray_menu = QtWidgets.QMenu("Ftrack", parent_menu)
 
-        # Actions - basic
-        action_credentials = QtWidgets.QAction("Credentials", tray_menu)
-        action_credentials.triggered.connect(self.show_login_widget)
-        if self.bool_logged:
-            icon = self.icon_logged
-        else:
-            icon = self.icon_not_logged
-        action_credentials.setIcon(icon)
-        tray_menu.addAction(action_credentials)
-        self.action_credentials = action_credentials
+        # Ftrack Browser
+        browser_open = QtWidgets.QAction("Open Ftrack...", tray_menu)
+        browser_open.triggered.connect(self.show_ftrack_browser)
+        browser_open.setIcon(self.icon_ftrackapp)
+        tray_menu.addAction(browser_open)
+        self.browser_open = browser_open
 
         # Actions - server
         tray_server_menu = tray_menu.addMenu("Action server")
@@ -284,6 +296,18 @@ class FtrackTrayWrapper:
         tray_server_menu.addAction(self.action_server_stop)
 
         self.tray_server_menu = tray_server_menu
+
+        # Actions - basic
+        action_credentials = QtWidgets.QAction("Credentials", tray_menu)
+        action_credentials.triggered.connect(self.show_login_widget)
+        if self.bool_logged:
+            icon = self.icon_logged
+        else:
+            icon = self.icon_not_logged
+        action_credentials.setIcon(icon)
+        tray_menu.addAction(action_credentials)
+        self.action_credentials = action_credentials
+
         self.bool_logged = False
         self.set_menu_visibility()
 
