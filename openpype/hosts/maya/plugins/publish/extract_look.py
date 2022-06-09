@@ -24,6 +24,28 @@ COPY = 1
 HARDLINK = 2
 
 
+def get_redshift_tool(tool_name):
+    """Path to redshift texture processor.
+
+    On Windows it adds .exe extension if missing from tool argument.
+
+    Args:
+        tool (string): Tool name.
+
+    Returns:
+        str: Full path to redshift texture processor executable.
+    """
+    redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
+
+    redshift_tool_path = os.path.join(
+        redshift_os_path,
+        "bin",
+        tool_name
+    )
+
+    return find_executable(redshift_tool_path)
+
+
 def escape_space(path):
     """Ensure path is enclosed by quotes to allow paths with spaces"""
     return '"{}"'.format(path) if " " in path else path
@@ -605,25 +627,3 @@ class ExtractModelRenderSets(ExtractLook):
         self.scene_type = self.scene_type_prefix + self.scene_type
 
         return typ
-
-
-def get_redshift_tool(tool_name):
-    """Path to redshift texture processor.
-
-    On Windows it adds .exe extension if missing from tool argument.
-
-    Args:
-        tool (string): Tool name.
-
-    Returns:
-        str: Full path to redshift texture processor executable.
-    """
-    redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
-
-    redshift_tool_path = os.path.join(
-        redshift_os_path,
-        "bin",
-        tool_name
-    )
-
-    return find_executable(redshift_tool_path)
