@@ -10,7 +10,6 @@ def get_all_children(nodes):
     Using maya.cmds.listRelatives(allDescendents=True) includes only the first
     instance. As such, this function acts as an optimal replacement with a
     focus on a fast query.
-    Borrowed from Colorbleed: https://tinyurl.com/bdht6fyh
 
     """
 
