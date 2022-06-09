@@ -8,11 +8,27 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseUsd(openpype.api.Extractor):
-    """Extractor for USD by Multiverse."""
+    """Extractor for Multiverse USD Asset data.
 
-    label = "Extract Multiverse USD"
+    This will extract settings for a Multiverse Write Asset operation:
+    they are visible in the Maya set node created by a Multiverse USD
+    Asset instance creator.
+
+    The input data contained in the set is:
+
+    - a single hierarchy of Maya nodes. Multiverse supports a variety of Maya
+      nodes such as transforms, mesh, curves, particles, instances, particle
+      instancers, pfx, MASH, lights, cameras, joints, connected materials,
+      shading networks etc. including many of their attributes.
+
+    Upon publish a .usd (or .usdz) asset file will be typically written.
+    """
+
+    label = "Extract Multiverse USD Asset"
     hosts = ["maya"]
-    families = ["usd"]
+    families = ["mvUsd"]
+    scene_type = "usd"
+    file_formats = ["usd", "usda", "usdz"]
 
     @property
     def options(self):
@@ -57,6 +73,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "writeShadingNetworks": bool,
             "writeTransformMatrix": bool,
             "writeUsdAttributes": bool,
+            "writeInstancesAsReferences": bool,
             "timeVaryingTopology": bool,
             "customMaterialNamespace": str,
             "numTimeSamples": int,
@@ -98,6 +115,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "writeShadingNetworks": False,
             "writeTransformMatrix": True,
             "writeUsdAttributes": False,
+            "writeInstancesAsReferences": False,
             "timeVaryingTopology": False,
             "customMaterialNamespace": str(),
             "numTimeSamples": 1,
@@ -130,12 +148,15 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
         return options
 
     def process(self, instance):
-        # Load plugin firstly
+        # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
         # Define output file path
         staging_dir = self.staging_dir(instance)
-        file_name = "{}.usd".format(instance.name)
+        file_format = instance.data.get("fileFormat", 0)
+        if file_format in range(len(self.file_formats)):
+            self.scene_type = self.file_formats[file_format]
+        file_name = "{0}.{1}".format(instance.name, self.scene_type)
         file_path = os.path.join(staging_dir, file_name)
         file_path = file_path.replace('\\', '/')
 
@@ -149,12 +170,6 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         with maintained_selection():
             members = instance.data("setMembers")
-            members = cmds.ls(members,
-                              dag=True,
-                              shapes=True,
-                              type=("mesh"),
-                              noIntermediate=True,
-                              long=True)
             self.log.info('Collected object {}'.format(members))
 
             import multiverse
@@ -199,10 +214,10 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'usd',
-            'ext': 'usd',
+            'name': self.scene_type,
+            'ext': self.scene_type,
             'files': file_name,
-            "stagingDir": staging_dir
+            'stagingDir': staging_dir
         }
         instance.data["representations"].append(representation)
 

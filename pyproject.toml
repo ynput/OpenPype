@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.10.1-nightly.3" # OpenPype
+version = "3.11.0-nightly.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -40,6 +40,7 @@ clique = "1.6.*"
 Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"
+gazu = "^0.8.28"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
 jsonschema = "^2.6.0"
 keyring = "^22.0.1"
@@ -64,7 +65,7 @@ jinxed = [
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
 slack-sdk = "^3.6.0"
-requests = "2.25.1"
+requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 

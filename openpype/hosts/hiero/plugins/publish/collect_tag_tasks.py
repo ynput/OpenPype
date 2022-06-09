@@ -4,16 +4,16 @@ from pyblish import api
 class CollectClipTagTasks(api.InstancePlugin):
     """Collect Tags from selected track items."""
 
-    order = api.CollectorOrder
+    order = api.CollectorOrder - 0.077
     label = "Collect Tag Tasks"
     hosts = ["hiero"]
-    families = ['clip']
+    families = ["shot"]
 
     def process(self, instance):
         # gets tags
         tags = instance.data["tags"]
 
-        tasks = dict()
+        tasks = {}
         for tag in tags:
             t_metadata = dict(tag.metadata())
             t_family = t_metadata.get("tag.family", "")
