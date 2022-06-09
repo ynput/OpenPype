@@ -23,7 +23,7 @@ class Integrator(InstancePlugin):
 
     Wraps pyblish instance plugin. Targets set to "local" which means all
     integrators should run on "local" publishes, by default.
-    "farm" targets could be used for integrators that should run on a farm.
+    "remote" targets could be used for integrators that should run externally.
     """
     targets = ["local"]
 
