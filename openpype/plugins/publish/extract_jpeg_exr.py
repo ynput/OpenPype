@@ -83,12 +83,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     self.log.info("Input can be read by OIIO, converting with oiiotool now.")
                     thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
                 else:
-                    self.log.info("converting with")
+                    self.log.info("Converting with FFMPEG because input can't be read by OIIO.")
                     thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
 
             # Skip the rest of the process if the thumbnail wasn't created
             if not thumbnail_created:
-
+                self.log.warning("Thumbanil has not been created.")
                 return
 
             new_repre = {
