@@ -130,10 +130,6 @@ def update_placeholder():
         defaultValue=-1
     )
 
-    """selected = cmds.ls(selection=True, long=True)
-    selected = selected[0].split('|')[-2]
-    selected = cmds.ls(selected)
-    parents = cmds.ls(selected, long=True)"""
     cmds.setAttr(placeholder + '.parent', '', type="string")
 
 
