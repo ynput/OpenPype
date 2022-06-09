@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+        <title>Review subsets not unique</title>
+        <description>
+            ## Non unique subset name found
+
+            Non unique subset names: '{non_unique}'
+            <detail>
+                ### __Detailed Info__ (optional)
+
+                This might happen if you already published for this asset
+                review subset with legacy name {task}Review.
+                This legacy name limits possibility of publishing of multiple
+                reviews from a single workfile. Proper review subset name should
+                now
+                contain variant also (as 'Main', 'Default' etc.). That would
+                result in completely new subset though, so this situation must
+                be handled manually.
+            </detail>
+            ### How to repair?
+
+            Legacy subsets must be removed from Openpype DB, please ask admin
+            to do that. Please provide them asset and subset names.
+
+        </description>
+    </error>
+</root>

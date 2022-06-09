@@ -109,8 +109,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usd",
                 "staticMesh",
                 "skeletalMesh",
-                "usdComposition",
-                "usdOverride",
+                "mvLook",
+                "mvUsd",
+                "mvUsdComposition",
+                "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
     exclude_families = ["render.farm"]
@@ -138,6 +140,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug("Excluded family '{}' in '{}' or {}".format(
                     ef, instance.data["family"], instance.data["families"]))
                 return
+
+        # instance should be published on a farm
+        if instance.data.get("farm"):
+            return
 
         self.integrated_file_sizes = {}
         try:

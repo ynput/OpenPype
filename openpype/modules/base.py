@@ -374,6 +374,7 @@ def _load_modules():
 
 class _OpenPypeInterfaceMeta(ABCMeta):
     """OpenPypeInterface meta class to print proper string."""
+
     def __str__(self):
         return "<'OpenPypeInterface.{}'>".format(self.__name__)
 
@@ -392,6 +393,7 @@ class OpenPypeInterface:
     OpenPype modules which means they have to have implemented methods defined
     in the interface. By default interface does not have any abstract parts.
     """
+
     pass
 
 
@@ -436,10 +438,12 @@ class OpenPypeModule:
         It is not recommended to override __init__ that's why specific method
         was implemented.
         """
+
         pass
 
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
+
         pass
 
     def get_global_environments(self):
@@ -447,7 +451,21 @@ class OpenPypeModule:
 
         Environment variables that can be get only from system settings.
         """
+
         return {}
+
+    def modify_application_launch_arguments(self, application, env):
+        """Give option to modify launch environments before application launch.
+
+        Implementation is optional. To change environments modify passed
+        dictionary of environments.
+
+        Args:
+            application (Application): Application that is launched.
+            env (dict): Current environemnt variables.
+        """
+
+        pass
 
     def cli(self, module_click_group):
         """Add commands to click group.
@@ -469,6 +487,7 @@ class OpenPypeModule:
         def mycommand():
             print("my_command")
         """
+
         pass
 
 
@@ -890,6 +909,7 @@ class TrayModulesManager(ModulesManager):
     modules_menu_order = (
         "user",
         "ftrack",
+        "kitsu",
         "muster",
         "launcher_tool",
         "avalon",
