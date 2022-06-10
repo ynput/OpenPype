@@ -64,7 +64,12 @@
                 },
                 {
                     "type": "schema",
+                },
+                {
                     "name": "schema_project_shotgrid"
+                },
+                {
+                    "name": "schema_project_kitsu"
                 },
                 {
                     "type": "schema",

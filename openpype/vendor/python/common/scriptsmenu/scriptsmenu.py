@@ -264,8 +264,7 @@ class ScriptsMenu(QtWidgets.QMenu):
                 action.setVisible(True)
         else:
             for action in self._script_actions:
-                if not action.has_tag(search.lower()):
-                    action.setVisible(False)
+                action.setVisible(action.has_tag(search.lower()))
 
         # Set visibility for all submenus
         for action in self.actions():

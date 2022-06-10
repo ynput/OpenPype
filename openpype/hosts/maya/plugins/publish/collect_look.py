@@ -22,8 +22,44 @@ RENDERER_NODE_TYPES = [
     # redshift
     "RedshiftMeshParameters"
 ]
-
 SHAPE_ATTRS = set(SHAPE_ATTRS)
+
+
+def get_pxr_multitexture_file_attrs(node):
+    attrs = []
+    for i in range(9):
+        if cmds.attributeQuery("filename{}".format(i), node=node, ex=True):
+            file = cmds.getAttr("{}.filename{}".format(node, i))
+            if file:
+                attrs.append("filename{}".format(i))
+    return attrs
+
+
+FILE_NODES = {
+    "file": "fileTextureName",
+
+    "aiImage": "filename",
+
+    "RedshiftNormalMap": "text0",
+
+    "PxrBump": "filename",
+    "PxrNormalMap": "filename",
+    "PxrMultiTexture": get_pxr_multitexture_file_attrs,
+    "PxrPtexture": "filename",
+    "PxrTexture": "filename"
+}
+
+
+def get_attributes(dictionary, attr, node=None):
+    # type: (dict, str, str) -> list
+    if callable(dictionary[attr]):
+        val = dictionary[attr](node)
+    else:
+        val = dictionary.get(attr, [])
+
+    if not isinstance(val, list):
+        return [val]
+    return val
 
 
 def get_look_attrs(node):
@@ -51,15 +87,14 @@ def get_look_attrs(node):
     if cmds.objectType(node, isAType="shape"):
         attrs = cmds.listAttr(node, changedSinceFileOpen=True) or []
         for attr in attrs:
-            if attr in SHAPE_ATTRS:
+            if attr in SHAPE_ATTRS or \
+                    attr not in SHAPE_ATTRS and attr.startswith('ai'):
                 result.append(attr)
-            elif attr.startswith('ai'):
-                result.append(attr)
-
     return result
 
 
-def node_uses_image_sequence(node):
+def node_uses_image_sequence(node, node_path):
+    # type: (str) -> bool
     """Return whether file node uses an image sequence or single image.
 
     Determine if a node uses an image sequence or just a single image,
@@ -74,13 +109,18 @@ def node_uses_image_sequence(node):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    node_path = get_file_node_path(node).lower()
+    try:
+        use_frame_extension = cmds.getAttr('%s.useFrameExtension' % node)
+    except ValueError:
+        use_frame_extension = False
+    if use_frame_extension:
+        return True
 
     # The following tokens imply a sequence
-    patterns = ["<udim>", "<tile>", "<uvtile>", "u<u>_v<v>", "<frame0"]
-
-    return (cmds.getAttr('%s.useFrameExtension' % node) or
-            any(pattern in node_path for pattern in patterns))
+    patterns = ["<udim>", "<tile>", "<uvtile>",
+                "u<u>_v<v>", "<frame0", "<f4>"]
+    node_path_lowered = node_path.lower()
+    return any(pattern in node_path_lowered for pattern in patterns)
 
 
 def seq_to_glob(path):
@@ -137,14 +177,15 @@ def seq_to_glob(path):
         return path
 
 
-def get_file_node_path(node):
+def get_file_node_paths(node):
+    # type: (str) -> list
     """Get the file path used by a Maya file node.
 
     Args:
         node (str): Name of the Maya file node
 
     Returns:
-        str: the file path in use
+        list: the file paths in use
 
     """
     # if the path appears to be sequence, use computedFileTextureNamePattern,
@@ -163,15 +204,20 @@ def get_file_node_path(node):
                     "<uvtile>"]
         lower = texture_pattern.lower()
         if any(pattern in lower for pattern in patterns):
-            return texture_pattern
+            return [texture_pattern]
 
-    if cmds.nodeType(node) == 'aiImage':
-        return cmds.getAttr('{0}.filename'.format(node))
-    if cmds.nodeType(node) == 'RedshiftNormalMap':
-        return cmds.getAttr('{}.tex0'.format(node))
+    try:
+        file_attributes = get_attributes(
+            FILE_NODES, cmds.nodeType(node), node)
+    except AttributeError:
+        file_attributes = "fileTextureName"
 
-    # otherwise use fileTextureName
-    return cmds.getAttr('{0}.fileTextureName'.format(node))
+    files = []
+    for file_attr in file_attributes:
+        if cmds.attributeQuery(file_attr, node=node, exists=True):
+            files.append(cmds.getAttr("{}.{}".format(node, file_attr)))
+
+    return files
 
 
 def get_file_node_files(node):
@@ -185,16 +231,21 @@ def get_file_node_files(node):
         list: List of full file paths.
 
     """
+    paths = get_file_node_paths(node)
+    sequences = []
+    replaces = []
+    for index, path in enumerate(paths):
+        if node_uses_image_sequence(node, path):
+            glob_pattern = seq_to_glob(path)
+            sequences.extend(glob.glob(glob_pattern))
+            replaces.append(index)
 
-    path = get_file_node_path(node)
-    path = cmds.workspace(expandName=path)
-    if node_uses_image_sequence(node):
-        glob_pattern = seq_to_glob(path)
-        return glob.glob(glob_pattern)
-    elif os.path.exists(path):
-        return [path]
-    else:
-        return []
+    for index in replaces:
+        paths.pop(index)
+
+    paths.extend(sequences)
+
+    return [p for p in paths if os.path.exists(p)]
 
 
 class CollectLook(pyblish.api.InstancePlugin):
@@ -238,13 +289,13 @@ class CollectLook(pyblish.api.InstancePlugin):
                       "for %s" % instance.data['name'])
 
         # Discover related object sets
-        self.log.info("Gathering sets..")
+        self.log.info("Gathering sets ...")
         sets = self.collect_sets(instance)
 
         # Lookup set (optimization)
         instance_lookup = set(cmds.ls(instance, long=True))
 
-        self.log.info("Gathering set relations..")
+        self.log.info("Gathering set relations ...")
         # Ensure iteration happen in a list so we can remove keys from the
         # dict within the loop
 
@@ -326,7 +377,10 @@ class CollectLook(pyblish.api.InstancePlugin):
             "volumeShader",
             "displacementShader",
             "aiSurfaceShader",
-            "aiVolumeShader"]
+            "aiVolumeShader",
+            "rman__surface",
+            "rman__displacement"
+        ]
         if look_sets:
             materials = []
 
@@ -374,15 +428,17 @@ class CollectLook(pyblish.api.InstancePlugin):
                     or []
                 )
 
-            files = cmds.ls(history, type="file", long=True)
-            files.extend(cmds.ls(history, type="aiImage", long=True))
-            files.extend(cmds.ls(history, type="RedshiftNormalMap", long=True))
+            all_supported_nodes = FILE_NODES.keys()
+            files = []
+            for node_type in all_supported_nodes:
+                files.extend(cmds.ls(history, type=node_type, long=True))
 
         self.log.info("Collected file nodes:\n{}".format(files))
         # Collect textures if any file nodes are found
         instance.data["resources"] = []
         for n in files:
-            instance.data["resources"].append(self.collect_resource(n))
+            for res in self.collect_resources(n):
+                instance.data["resources"].append(res)
 
         self.log.info("Collected resources: {}".format(instance.data["resources"]))
 
@@ -502,7 +558,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         return attributes
 
-    def collect_resource(self, node):
+    def collect_resources(self, node):
         """Collect the link to the file(s) used (resource)
         Args:
             node (str): name of the node
@@ -510,68 +566,69 @@ class CollectLook(pyblish.api.InstancePlugin):
         Returns:
             dict
         """
-
         self.log.debug("processing: {}".format(node))
-        if cmds.nodeType(node) not in ["file", "aiImage", "RedshiftNormalMap"]:
+        all_supported_nodes = FILE_NODES.keys()
+        if cmds.nodeType(node) not in all_supported_nodes:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
 
-        if cmds.nodeType(node) == 'file':
-            self.log.debug("  - file node")
-            attribute = "{}.fileTextureName".format(node)
-            computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        elif cmds.nodeType(node) == 'aiImage':
-            self.log.debug("aiImage node")
-            attribute = "{}.filename".format(node)
-            computed_attribute = attribute
-        elif cmds.nodeType(node) == 'RedshiftNormalMap':
-            self.log.debug("RedshiftNormalMap node")
-            attribute = "{}.tex0".format(node)
-            computed_attribute = attribute
+        self.log.debug("  - got {}".format(cmds.nodeType(node)))
 
-        source = cmds.getAttr(attribute)
-        self.log.info("  - file source: {}".format(source))
-        color_space_attr = "{}.colorSpace".format(node)
-        try:
-            color_space = cmds.getAttr(color_space_attr)
-        except ValueError:
-            # node doesn't have colorspace attribute
-            color_space = "Raw"
-        # Compare with the computed file path, e.g. the one with the <UDIM>
-        # pattern in it, to generate some logging information about this
-        # difference
-        # computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        computed_source = cmds.getAttr(computed_attribute)
-        if source != computed_source:
-            self.log.debug("Detected computed file pattern difference "
-                           "from original pattern: {0} "
-                           "({1} -> {2})".format(node,
-                                                 source,
-                                                 computed_source))
+        attributes = get_attributes(FILE_NODES, cmds.nodeType(node), node)
+        for attribute in attributes:
+            source = cmds.getAttr("{}.{}".format(
+                node,
+                attribute
+            ))
+            computed_attribute = "{}.{}".format(node, attribute)
+            if attribute == "fileTextureName":
+                computed_attribute = node + ".computedFileTextureNamePattern"
 
-        # We replace backslashes with forward slashes because V-Ray
-        # can't handle the UDIM files with the backslashes in the
-        # paths as the computed patterns
-        source = source.replace("\\", "/")
+            self.log.info("  - file source: {}".format(source))
+            color_space_attr = "{}.colorSpace".format(node)
+            try:
+                color_space = cmds.getAttr(color_space_attr)
+            except ValueError:
+                # node doesn't have colorspace attribute
+                color_space = "Raw"
+            # Compare with the computed file path, e.g. the one with
+            # the <UDIM> pattern in it, to generate some logging information
+            # about this difference
+            computed_source = cmds.getAttr(computed_attribute)
+            if source != computed_source:
+                self.log.debug("Detected computed file pattern difference "
+                               "from original pattern: {0} "
+                               "({1} -> {2})".format(node,
+                                                     source,
+                                                     computed_source))
 
-        files = get_file_node_files(node)
-        if len(files) == 0:
-            self.log.error("No valid files found from node `%s`" % node)
+            # We replace backslashes with forward slashes because V-Ray
+            # can't handle the UDIM files with the backslashes in the
+            # paths as the computed patterns
+            source = source.replace("\\", "/")
 
-        self.log.info("collection of resource done:")
-        self.log.info("  - node: {}".format(node))
-        self.log.info("  - attribute: {}".format(attribute))
-        self.log.info("  - source: {}".format(source))
-        self.log.info("  - file: {}".format(files))
-        self.log.info("  - color space: {}".format(color_space))
+            files = get_file_node_files(node)
+            if len(files) == 0:
+                self.log.error("No valid files found from node `%s`" % node)
 
-        # Define the resource
-        return {"node": node,
-                "attribute": attribute,
+            self.log.info("collection of resource done:")
+            self.log.info("  - node: {}".format(node))
+            self.log.info("  - attribute: {}".format(attribute))
+            self.log.info("  - source: {}".format(source))
+            self.log.info("  - file: {}".format(files))
+            self.log.info("  - color space: {}".format(color_space))
+
+            # Define the resource
+            yield {
+                "node": node,
+                # here we are passing not only attribute, but with node again
+                # this should be simplified and changed extractor.
+                "attribute": "{}.{}".format(node, attribute),
                 "source": source,  # required for resources
                 "files": files,
-                "color_space": color_space}  # required for resources
+                "color_space": color_space
+            }  # required for resources
 
 
 class CollectModelRenderSets(CollectLook):

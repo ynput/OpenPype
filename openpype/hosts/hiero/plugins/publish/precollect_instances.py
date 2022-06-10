@@ -19,9 +19,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.otio_timeline = context.data["otioTimeline"]
-
+        timeline_selection = phiero.get_timeline_selection()
         selected_timeline_items = phiero.get_track_items(
-            selected=True, check_tagged=True, check_enabled=True)
+            selection=timeline_selection,
+            check_tagged=True,
+            check_enabled=True
+        )
 
         # only return enabled track items
         if not selected_timeline_items:
@@ -103,7 +106,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
                 # clip's effect
                 "clipEffectItems": subtracks,
-                "clipAnnotations": annotations
+                "clipAnnotations": annotations,
+
+                # add all additional tags
+                "tags": phiero.get_track_item_tags(track_item)
             })
 
             # otio clip data
@@ -292,9 +298,9 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         for otio_clip in self.otio_timeline.each_clip():
             track_name = otio_clip.parent().name
             parent_range = otio_clip.range_in_parent()
-            if ti_track_name not in track_name:
+            if ti_track_name != track_name:
                 continue
-            if otio_clip.name not in track_item.name():
+            if otio_clip.name != track_item.name():
                 continue
             self.log.debug("__ parent_range: {}".format(parent_range))
             self.log.debug("__ timeline_range: {}".format(timeline_range))
@@ -314,7 +320,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         speed = track_item.playbackSpeed()
         timeline = phiero.get_current_sequence()
         frame_start = int(track_item.timelineIn())
-        frame_duration = int(track_item.sourceDuration() / speed)
+        frame_duration = int((track_item.duration() - 1) / speed)
         fps = timeline.framerate().toFloat()
 
         return hiero_export.create_otio_time_range(

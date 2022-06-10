@@ -144,6 +144,10 @@
         "leecher_backend_url": "http://127.0.0.1:8090",
         "shotgrid_settings": {}
     },
+    "kitsu": {
+        "enabled": false,
+        "server": ""
+    },
     "timers_manager": {
         "enabled": true,
         "auto_stop": true,

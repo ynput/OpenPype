@@ -15,6 +15,46 @@
             "destination-path": []
         }
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
+                "tooltip": "Open the OpenPype Nuke user doc page"
+            }
+        ]
+    },
+    "gizmo": [
+        {
+            "toolbar_menu_name": "OpenPype Gizmo",
+            "gizmo_source_dir": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "toolbar_icon_path": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "gizmo_definition": [
+                {
+                    "gizmo_toolbar_path": "/path/to/menu",
+                    "sub_gizmo_list": [
+                        {
+                            "sourcetype": "python",
+                            "title": "Gizmo Note",
+                            "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "shortcut": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
