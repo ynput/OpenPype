@@ -12,27 +12,70 @@ from openpype.tools.settings import CHILD_OFFSET
 
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
-from .constants import DEFAULT_PROJECT_LABEL
+from .constants import (
+    DEFAULT_PROJECT_LABEL,
+    SETTINGS_PATH_KEY,
+    ROOT_KEY,
+    VALUE_KEY,
+    SAVE_TIME_KEY,
+    PROJECT_NAME_KEY,
+)
 
 _MENU_SEPARATOR_REQ = object()
-SETTINGS_PATH_KEY = "__settings_path__"
-ROOT_KEY = "__root_key__"
-VALUE_KEY = "__value__"
-SAVE_TIME_KEY = "__extracted__"
-PROJECT_NAME_KEY = "__project_name__"
+
+
+class ExtractHelper:
+    _last_save_dir = os.path.expanduser("~")
+
+    @classmethod
+    def get_last_save_dir(cls):
+        return cls._last_save_dir
+
+    @classmethod
+    def set_last_save_dir(cls, save_dir):
+        cls._last_save_dir = save_dir
+
+    @classmethod
+    def ask_for_save_filepath(cls, parent):
+        dialog = QtWidgets.QFileDialog(
+            parent,
+            "Save settings values",
+            cls.get_last_save_dir(),
+            "Values (*.json)"
+        )
+        # dialog.setOption(dialog.DontUseNativeDialog)
+        dialog.setAcceptMode(dialog.AcceptSave)
+        if dialog.exec() != dialog.Accepted:
+            return
+
+        selected_urls = dialog.selectedUrls()
+        if not selected_urls:
+            return
+
+        filepath = selected_urls[0].toLocalFile()
+        if not filepath:
+            return
+
+        if not filepath.lower().endswith(".json"):
+            filepath += ".json"
+        return filepath
+
+    @classmethod
+    def extract_settings_to_json(cls, filepath, settings_data, project_name):
+        now = datetime.datetime.now()
+        settings_data[SAVE_TIME_KEY] = now.strftime("%Y-%m-%d %H:%M:%S")
+        if project_name != 0:
+            settings_data[PROJECT_NAME_KEY] = project_name
+
+        with open(filepath, "w") as stream:
+            json.dump(settings_data, stream, indent=4)
+
+        new_dir = os.path.dirname(filepath)
+        cls.set_last_save_dir(new_dir)
 
 
 class BaseWidget(QtWidgets.QWidget):
-    _last_save_dir = os.path.expanduser("~")
     allow_actions = True
-
-    @staticmethod
-    def get_last_save_dir():
-        return BaseWidget._last_save_dir
-
-    @staticmethod
-    def set_last_save_dir(save_dir):
-        BaseWidget._last_save_dir = save_dir
 
     def __init__(self, category_widget, entity, entity_widget):
         self.category_widget = category_widget
@@ -266,45 +309,24 @@ class BaseWidget(QtWidgets.QWidget):
         return [(action, copy_value)]
 
     def _extract_to_file(self):
-        dialog = QtWidgets.QFileDialog(
-            self,
-            "Save settings values",
-            self.get_last_save_dir(),
-            "Values (*.json)"
-        )
-        # dialog.setOption(dialog.DontUseNativeDialog)
-        dialog.setAcceptMode(dialog.AcceptSave)
-        if dialog.exec() != dialog.Accepted:
-            return
-
-        selected_urls = dialog.selectedUrls()
-        if not selected_urls:
-            return
-
-        filepath = selected_urls[0].toLocalFile()
+        filepath = ExtractHelper.ask_for_save_filepath(self)
         if not filepath:
             return
 
-        if not filepath.lower().endswith(".json"):
-            filepath += ".json"
-
         settings_data = self._get_mime_data_from_entity()
-        now = datetime.datetime.now()
-        settings_data[SAVE_TIME_KEY] = now.strftime("%Y-%m-%d %H:%M:%S")
+        project_name = 0
         if hasattr(self.category_widget, "project_name"):
-            settings_data[PROJECT_NAME_KEY] = self.category_widget.project_name
+            project_name = self.category_widget.project_name
 
-        with open(filepath, "w") as stream:
-            json.dump(settings_data, stream, indent=4)
-
-        new_dir = os.path.dirname(filepath)
-        self.set_last_save_dir(new_dir)
+        ExtractHelper.extract_settings_to_json(
+            filepath, settings_data, project_name
+        )
 
     def _extract_value_to_file_actions(self, menu):
-        save_action = QtWidgets.QAction("Extract to file", menu)
+        extract_action = QtWidgets.QAction("Extract to file", menu)
         return [
             _MENU_SEPARATOR_REQ,
-            (save_action, self._extract_to_file)
+            (extract_action, self._extract_to_file)
         ]
 
     def _parse_source_data_for_paste(self, data):
