@@ -284,7 +284,7 @@ class BaseWidget(QtWidgets.QWidget):
             )
 
             # Copy as json
-            value = settings_data["value"]
+            value = settings_data[VALUE_KEY]
             json_encoded_data = None
             if isinstance(value, (dict, list)):
                 json_encoded_data = QtCore.QByteArray()
