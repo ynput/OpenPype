@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import traceback
@@ -190,24 +191,29 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
+    def _get_mime_data_from_entity(self):
+        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+            entity_path = None
+        else:
+            entity_path = "/".join(
+                [self.entity.root_key, self.entity.path]
+            )
+
+        value = self.entity.value
+
+        # Copy for settings tool
+        return {
+            "value": value,
+            "__root_key__": self.entity.root_key,
+            "__settings_path__": entity_path
+        }
+
     def _copy_value_actions(self, menu):
         def copy_value():
             mime_data = QtCore.QMimeData()
 
-            if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
-                entity_path = None
-            else:
-                entity_path = "/".join(
-                    [self.entity.root_key, self.entity.path]
-                )
-
-            value = self.entity.value
             # Copy for settings tool
-            settings_data = {
-                "root_key": self.entity.root_key,
-                "value": value,
-                "path": entity_path
-            }
+            settings_data = self._get_mime_data_from_entity()
             settings_encoded_data = QtCore.QByteArray()
             settings_stream = QtCore.QDataStream(
                 settings_encoded_data, QtCore.QIODevice.WriteOnly
@@ -218,6 +224,7 @@ class BaseWidget(QtWidgets.QWidget):
             )
 
             # Copy as json
+            value = settings_data["value"]
             json_encoded_data = None
             if isinstance(value, (dict, list)):
                 json_encoded_data = QtCore.QByteArray()
@@ -241,25 +248,64 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Copy", menu)
         return [(action, copy_value)]
 
+    def _parse_source_data_for_paste(self, data):
+        settings_path = None
+        root_key = None
+        if isinstance(data, dict):
+            settings_path = data.pop("__settings_path__", settings_path)
+            root_key = data.pop("__root_key__", root_key)
+            data = data.pop("__value__", data)
+
+        return {
+            "value": data,
+            "__settings_path__": settings_path,
+            "__root_key__": root_key
+        }
+
+    def _get_value_from_clipboard(self):
+        clipboard = QtWidgets.QApplication.clipboard()
+        mime_data = clipboard.mimeData()
+        app_value = mime_data.data("application/copy_settings_value")
+        if app_value:
+            settings_stream = QtCore.QDataStream(
+                app_value, QtCore.QIODevice.ReadOnly
+            )
+            mime_data_value_str = settings_stream.readQString()
+            return json.loads(mime_data_value_str)
+
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                local_file = url.toLocalFile()
+                try:
+                    with open(local_file, "r") as stream:
+                        value = json.load(stream)
+                except Exception:
+                    continue
+                if value:
+                    return self._parse_source_data_for_paste(value)
+
+        if mime_data.hasText():
+            text = mime_data.text()
+            try:
+                value = json.loads(text)
+            except Exception:
+                try:
+                    value = self.entity.convert_to_valid_type(text)
+                except Exception:
+                    return None
+            return self._parse_source_data_for_paste(value)
+
     def _paste_value_actions(self, menu):
         output = []
         # Allow paste of value only if were copied from this UI
-        clipboard = QtWidgets.QApplication.clipboard()
-        mime_data = clipboard.mimeData()
-        mime_value = mime_data.data("application/copy_settings_value")
+        mime_data_value = self._get_value_from_clipboard()
         # Skip if there is nothing to do
-        if not mime_value:
+        if not mime_data_value:
             return output
 
-        settings_stream = QtCore.QDataStream(
-            mime_value, QtCore.QIODevice.ReadOnly
-        )
-        mime_data_value_str = settings_stream.readQString()
-        mime_data_value = json.loads(mime_data_value_str)
-
         value = mime_data_value["value"]
-        path = mime_data_value["path"]
-        root_key = mime_data_value["root_key"]
+        path = mime_data_value["__settings_path__"]
+        root_key = mime_data_value["__root_key__"]
 
         # Try to find matching entity to be able paste values to same spot
         # - entity can't by dynamic or in dynamic item
