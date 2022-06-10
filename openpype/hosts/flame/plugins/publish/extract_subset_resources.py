@@ -445,4 +445,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 )
             instance.data['stagingDir'] = staging_dir
 
+        instance.context.data["cleanupFullPaths"].append(staging_dir)
+
         return staging_dir
