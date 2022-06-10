@@ -3,7 +3,7 @@ import time
 import datetime
 import threading
 import platform
-from subprocess import Popen
+import subprocess
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
@@ -60,11 +60,18 @@ class FtrackTrayWrapper:
         for p in browser_paths:
             if os.path.exists(p):
                 path = p
+                log.debug(f"Found valid executable at path: {p}")
                 break
+            else:
+                log.warning(f"Path: {p} is not valid, please doublecheck your settings!")
+        if path == "":
+            log.warning("Found no valid executables to launch Ftrack with. Feature will not work as expected!")
+            return
         args = " ".join(str(item) for item in browser_args).replace("= ", "=")
+        log.debug(f"Computed arguments: {args}")
         cmd = f"{path} {args}"
-        log.info(f"Opening Ftrack Browser: {cmd}")
-        Popen(cmd)
+        log.debug(f"Opening Ftrack Browser...")
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def validate(self):
         validation = False
