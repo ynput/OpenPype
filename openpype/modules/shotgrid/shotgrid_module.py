@@ -1,5 +1,4 @@
 import os
-import threading
 
 from openpype_interfaces import (
     ITrayModule,
