@@ -34,6 +34,10 @@
             "use_label_wrap": true,
             "children": [
                 {
+                    "type": "label",
+                    "label": "Any arguent which is used to open Ftrack URL (as in \"app=\" for chrome) needs to be placed last in the list!"
+                },
+                {
                     "key": "windows",
                     "label": "Windows",
                     "type": "list",

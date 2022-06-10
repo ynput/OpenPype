@@ -52,12 +52,17 @@ class FtrackTrayWrapper:
         self.widget_login.raise_()
 
     def show_ftrack_browser(self):
-        am = get_system_settings()
-        browser_path = am["modules"]["ftrack"]["ftrack_browser_path"][platform.system().lower()][0]
-        browser_arg = am["modules"]["ftrack"]["ftrack_browser_arguments"][platform.system().lower()][0]
-        if "=" not in browser_arg:
-            browser_arg = '{:1}'.format(browser_arg)
-        cmd = f"{browser_path} {browser_arg}{self.module.ftrack_url}"
+        settings = get_system_settings()
+        browser_paths = settings["modules"]["ftrack"]["ftrack_browser_path"][platform.system().lower()]
+        browser_args = settings["modules"]["ftrack"]["ftrack_browser_arguments"][platform.system().lower()]
+        browser_args.append(self.module.ftrack_url)
+        path = ""
+        for p in browser_paths:
+            if os.path.exists(p):
+                path = p
+                break
+        args = " ".join(str(item) for item in browser_args).replace("= ", "=")
+        cmd = f"{path} {args}"
         log.info(f"Opening Ftrack Browser: {cmd}")
         Popen(cmd)
 
