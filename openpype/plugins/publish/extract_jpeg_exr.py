@@ -126,7 +126,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def create_thumbnail_oiio(self, src_path, dst_path):
         self.log.info("outputting {}".format(dst_path))
         oiio_tool_path = get_oiio_tools_path()
-        oiio_cmd = [oiio_tool_path,
+        oiio_cmd = [oiio_tool_path, "-a",
                     src_path, "-o",
                     dst_path
                     ]
