@@ -45,9 +45,6 @@ class FtrackTrayWrapper:
         self.icon_not_logged = QtGui.QIcon(
             resources.get_resource("icons", "circle_orange.png")
         )
-        self.icon_ftrackapp = QtGui.QIcon(
-            resources.get_resource("icons", "inventory.png")
-        )
 
     def show_login_widget(self):
         self.widget_login.show()
@@ -270,7 +267,6 @@ class FtrackTrayWrapper:
         # Ftrack Browser
         browser_open = QtWidgets.QAction("Open Ftrack...", tray_menu)
         browser_open.triggered.connect(self.show_ftrack_browser)
-        browser_open.setIcon(self.icon_ftrackapp)
         tray_menu.addAction(browser_open)
         self.browser_open = browser_open
 
