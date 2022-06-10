@@ -1,13 +1,7 @@
-import os
-import shutil
-
-from openpype.hosts import tvpaint
 from openpype.lib import (
     PreLaunchHook,
     get_openpype_execute_args
 )
-
-import avalon
 
 
 class TvpaintPrelaunchHook(PreLaunchHook):

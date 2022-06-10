@@ -1,10 +1,9 @@
 import pyblish.api
-from openpype.hosts import resolve
-from avalon import api as avalon
 from pprint import pformat
-
-# dev
 from importlib import reload
+
+from openpype.hosts import resolve
+from openpype.pipeline import legacy_io
 from openpype.hosts.resolve.otio import davinci_export
 reload(davinci_export)
 
@@ -17,7 +16,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        asset = avalon.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         subset = "workfile"
         project = resolve.get_current_project()
         fps = project.GetSetting("timelineFrameRate")

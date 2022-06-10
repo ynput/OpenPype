@@ -1,14 +1,17 @@
 import os
+import sys
 import glob
 import logging
 
 from Qt import QtWidgets, QtCore
 
-import avalon.api
-from avalon import io
 import qtawesome as qta
 
 from openpype import style
+from openpype.pipeline import (
+    install_host,
+    legacy_io,
+)
 from openpype.hosts.fusion import api
 from openpype.lib.avalon_context import get_workdir_from_session
 
@@ -163,7 +166,7 @@ class App(QtWidgets.QWidget):
         return items
 
     def collect_assets(self):
-        return list(io.find({"type": "asset"}, {"name": True}))
+        return list(legacy_io.find({"type": "asset"}, {"name": True}))
 
     def populate_comp_box(self, files):
         """Ensure we display the filename only but the path is stored as well
@@ -181,8 +184,7 @@ class App(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
-    avalon.api.install(api)
+    install_host(api)
 
     app = QtWidgets.QApplication(sys.argv)
     window = App()

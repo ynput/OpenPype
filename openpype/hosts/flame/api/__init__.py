@@ -11,10 +11,8 @@ from .constants import (
 from .lib import (
     CTX,
     FlameAppFramework,
-    get_project_manager,
     get_current_project,
     get_current_sequence,
-    create_bin,
     create_segment_data_marker,
     get_segment_data_marker,
     set_segment_data_marker,
@@ -29,7 +27,10 @@ from .lib import (
     get_frame_from_filename,
     get_padding_from_filename,
     maintained_object_duplication,
-    get_clip_segment
+    maintained_temp_file_path,
+    get_clip_segment,
+    get_batch_group_from_desktop,
+    MediaInfoFile
 )
 from .utils import (
     setup,
@@ -56,7 +57,6 @@ from .plugin import (
     PublishableClip,
     ClipLoader,
     OpenClipSolver
-
 )
 from .workio import (
     open_file,
@@ -71,6 +71,10 @@ from .render_utils import (
     get_preset_path_by_xml_name,
     modify_preset_file
 )
+from .batch_utils import (
+    create_batch_group,
+    create_batch_group_conent
+)
 
 __all__ = [
     # constants
@@ -83,10 +87,8 @@ __all__ = [
     # lib
     "CTX",
     "FlameAppFramework",
-    "get_project_manager",
     "get_current_project",
     "get_current_sequence",
-    "create_bin",
     "create_segment_data_marker",
     "get_segment_data_marker",
     "set_segment_data_marker",
@@ -101,7 +103,10 @@ __all__ = [
     "get_frame_from_filename",
     "get_padding_from_filename",
     "maintained_object_duplication",
+    "maintained_temp_file_path",
     "get_clip_segment",
+    "get_batch_group_from_desktop",
+    "MediaInfoFile",
 
     # pipeline
     "install",
@@ -142,5 +147,9 @@ __all__ = [
     # render utils
     "export_clip",
     "get_preset_path_by_xml_name",
-    "modify_preset_file"
+    "modify_preset_file",
+
+    # batch utils
+    "create_batch_group",
+    "create_batch_group_conent"
 ]

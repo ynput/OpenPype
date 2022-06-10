@@ -2,7 +2,7 @@ import uuid
 
 from Qt import QtCore, QtGui
 
-from avalon import api
+from openpype.pipeline import registered_host
 
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
 
@@ -21,7 +21,7 @@ class InstanceModel(QtGui.QStandardItemModel):
         self._instances_by_item_id = {}
 
         instances = None
-        host = api.registered_host()
+        host = registered_host()
         list_instances = getattr(host, "list_instances", None)
         if list_instances:
             instances = list_instances()

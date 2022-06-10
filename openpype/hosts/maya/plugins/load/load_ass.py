@@ -16,7 +16,7 @@ from openpype.hosts.maya.api.pipeline import containerise
 
 
 class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Load the Proxy"""
+    """Load Arnold Proxy as reference"""
 
     families = ["ass"]
     representations = ["ass"]

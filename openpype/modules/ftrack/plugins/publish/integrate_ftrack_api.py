@@ -12,6 +12,7 @@ Provides:
 
 import os
 import sys
+import collections
 import six
 import pyblish.api
 import clique
@@ -23,48 +24,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder+0.499
     label = "Integrate Ftrack Api"
     families = ["ftrack"]
-
-    def query(self, entitytype, data):
-        """ Generate a query expression from data supplied.
-
-        If a value is not a string, we'll add the id of the entity to the
-        query.
-
-        Args:
-            entitytype (str): The type of entity to query.
-            data (dict): The data to identify the entity.
-            exclusions (list): All keys to exclude from the query.
-
-        Returns:
-            str: String query to use with "session.query"
-        """
-        queries = []
-        if sys.version_info[0] < 3:
-            for key, value in data.iteritems():
-                if not isinstance(value, (basestring, int)):
-                    self.log.info("value: {}".format(value))
-                    if "id" in value.keys():
-                        queries.append(
-                            "{0}.id is \"{1}\"".format(key, value["id"])
-                        )
-                else:
-                    queries.append("{0} is \"{1}\"".format(key, value))
-        else:
-            for key, value in data.items():
-                if not isinstance(value, (str, int)):
-                    self.log.info("value: {}".format(value))
-                    if "id" in value.keys():
-                        queries.append(
-                            "{0}.id is \"{1}\"".format(key, value["id"])
-                        )
-                else:
-                    queries.append("{0} is \"{1}\"".format(key, value))
-
-        query = (
-            "select id from " + entitytype + " where " + " and ".join(queries)
-        )
-        self.log.debug(query)
-        return query
 
     def process(self, instance):
         session = instance.context.data["ftrackSession"]
@@ -108,12 +67,25 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             default_asset_name = parent_entity["name"]
 
         # Change status on task
-        self._set_task_status(instance, task_entity, session)
+        asset_version_status_ids_by_name = {}
+        project_entity = instance.context.data.get("ftrackProject")
+        if project_entity:
+            project_schema = project_entity["project_schema"]
+            asset_version_statuses = (
+                project_schema.get_statuses("AssetVersion")
+            )
+            asset_version_status_ids_by_name = {
+                status["name"].lower(): status["id"]
+                for status in asset_version_statuses
+            }
+
+        self._set_task_status(instance, project_entity, task_entity, session)
 
         # Prepare AssetTypes
         asset_types_by_short = self._ensure_asset_types_exists(
             session, component_list
         )
+        self._fill_component_locations(session, component_list)
 
         asset_versions_data_by_id = {}
         used_asset_versions = []
@@ -139,7 +111,11 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Asset Version
             asset_version_data = data.get("assetversion_data") or {}
             asset_version_entity = self._ensure_asset_version_exists(
-                session, asset_version_data, asset_entity["id"], task_entity
+                session,
+                asset_version_data,
+                asset_entity["id"],
+                task_entity,
+                asset_version_status_ids_by_name
             )
 
             # Component
@@ -174,8 +150,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             if asset_version not in instance.data[asset_versions_key]:
                 instance.data[asset_versions_key].append(asset_version)
 
-    def _set_task_status(self, instance, task_entity, session):
-        project_entity = instance.context.data.get("ftrackProject")
+    def _set_task_status(self, instance, project_entity, task_entity, session):
         if not project_entity:
             self.log.info("Task status won't be set, project is not known.")
             return
@@ -220,6 +195,70 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             session._configure_locations()
             six.reraise(tp, value, tb)
 
+    def _fill_component_locations(self, session, component_list):
+        components_by_location_name = collections.defaultdict(list)
+        components_by_location_id = collections.defaultdict(list)
+        for component_item in component_list:
+            # Location entity can be prefilled
+            # - this is not recommended as connection to ftrack server may
+            #   be lost and in that case the entity is not valid when gets
+            #   to this plugin
+            location = component_item.get("component_location")
+            if location is not None:
+                continue
+
+            # Collect location id
+            location_id = component_item.get("component_location_id")
+            if location_id:
+                components_by_location_id[location_id].append(
+                    component_item
+                )
+                continue
+
+            location_name = component_item.get("component_location_name")
+            if location_name:
+                components_by_location_name[location_name].append(
+                    component_item
+                )
+                continue
+
+        # Skip if there is nothing to do
+        if not components_by_location_name and not components_by_location_id:
+            return
+
+        # Query locations
+        query_filters = []
+        if components_by_location_id:
+            joined_location_ids = ",".join([
+                '"{}"'.format(location_id)
+                for location_id in components_by_location_id
+            ])
+            query_filters.append("id in ({})".format(joined_location_ids))
+
+        if components_by_location_name:
+            joined_location_names = ",".join([
+                '"{}"'.format(location_name)
+                for location_name in components_by_location_name
+            ])
+            query_filters.append("name in ({})".format(joined_location_names))
+
+        locations = session.query(
+            "select id, name from Location where {}".format(
+                " or ".join(query_filters)
+            )
+        ).all()
+        # Fill locations in components
+        for location in locations:
+            location_id = location["id"]
+            location_name = location["name"]
+            if location_id in components_by_location_id:
+                for component in components_by_location_id[location_id]:
+                    component["component_location"] = location
+
+            if location_name in components_by_location_name:
+                for component in components_by_location_name[location_name]:
+                    component["component_location"] = location
+
     def _ensure_asset_types_exists(self, session, component_list):
         """Make sure that all AssetType entities exists for integration.
 
@@ -263,7 +302,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             self.log.info("Creating asset types with short names: {}".format(
                 ", ".join(asset_type_names_by_missing_shorts.keys())
             ))
-            for missing_short, type_name in asset_type_names_by_missing_shorts:
+            for missing_short, type_name in (
+                asset_type_names_by_missing_shorts.items()
+            ):
                 # Use short for name if name is not defined
                 if not type_name:
                     type_name = missing_short
@@ -317,11 +358,18 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         ).first()
 
     def _ensure_asset_version_exists(
-        self, session, asset_version_data, asset_id, task_entity
+        self,
+        session,
+        asset_version_data,
+        asset_id,
+        task_entity,
+        status_ids_by_name
     ):
         task_id = None
         if task_entity:
             task_id = task_entity["id"]
+
+        status_name = asset_version_data.pop("status_name", None)
 
         # Try query asset version by criteria (asset id and version)
         version = asset_version_data.get("version") or 0
@@ -363,6 +411,18 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             asset_version_entity = self._query_asset_version(
                 session, version, asset_id
             )
+
+        if status_name:
+            status_id = status_ids_by_name.get(status_name.lower())
+            if not status_id:
+                self.log.info((
+                    "Ftrack status with name \"{}\""
+                    " for AssetVersion was not found."
+                ).format(status_name))
+
+            elif asset_version_entity["status_id"] != status_id:
+                asset_version_entity["status_id"] = status_id
+                session.commit()
 
         # Set custom attributes if there were any set
         custom_attrs = asset_version_data.get("custom_attributes") or {}

@@ -45,7 +45,8 @@ def install():
     This is where you install menus and register families, data
     and loaders into fusion.
 
-    It is called automatically when installing via `api.install(avalon.fusion)`
+    It is called automatically when installing via
+    `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
 
     See the Maya equivalent for inspiration on how to implement this.
 

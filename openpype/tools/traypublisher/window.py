@@ -8,8 +8,10 @@ publishing plugins.
 
 from Qt import QtWidgets, QtCore
 
-import avalon.api
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import (
+    install_host,
+    AvalonMongoDB,
+)
 from openpype.hosts.traypublisher import (
     api as traypublisher
 )
@@ -52,8 +54,11 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         )
 
         confirm_btn = QtWidgets.QPushButton("Confirm", content_widget)
+        cancel_btn = QtWidgets.QPushButton("Cancel", content_widget)
+        cancel_btn.setVisible(False)
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.addStretch(1)
+        btns_layout.addWidget(cancel_btn, 0)
         btns_layout.addWidget(confirm_btn, 0)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -75,15 +80,19 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
         projects_view.doubleClicked.connect(self._on_double_click)
         confirm_btn.clicked.connect(self._on_confirm_click)
+        cancel_btn.clicked.connect(self._on_cancel_click)
 
         self._projects_view = projects_view
         self._projects_model = projects_model
+        self._cancel_btn = cancel_btn
         self._confirm_btn = confirm_btn
 
         self._publisher_window = publisher_window
+        self._project_name = None
 
     def showEvent(self, event):
         self._projects_model.refresh()
+        self._cancel_btn.setVisible(self._project_name is not None)
         super(StandaloneOverlayWidget, self).showEvent(event)
 
     def _on_double_click(self):
@@ -92,13 +101,18 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
     def _on_confirm_click(self):
         self.set_selected_project()
 
+    def _on_cancel_click(self):
+        self._set_project(self._project_name)
+
     def set_selected_project(self):
         index = self._projects_view.currentIndex()
 
         project_name = index.data(PROJECT_NAME_ROLE)
-        if not project_name:
-            return
+        if project_name:
+            self._set_project(project_name)
 
+    def _set_project(self, project_name):
+        self._project_name = project_name
         traypublisher.set_project_name(project_name)
         self.setVisible(False)
         self.project_selected.emit(project_name)
@@ -107,6 +121,13 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 class TrayPublishWindow(PublisherWindow):
     def __init__(self, *args, **kwargs):
         super(TrayPublishWindow, self).__init__(reset_on_show=False)
+
+        flags = self.windowFlags()
+        # Disable always on top hint
+        if flags & QtCore.Qt.WindowStaysOnTopHint:
+            flags ^= QtCore.Qt.WindowStaysOnTopHint
+
+        self.setWindowFlags(flags)
 
         overlay_widget = StandaloneOverlayWidget(self)
 
@@ -133,6 +154,12 @@ class TrayPublishWindow(PublisherWindow):
 
         self._back_to_overlay_btn = back_to_overlay_btn
         self._overlay_widget = overlay_widget
+
+    def _set_publish_frame_visible(self, publish_frame_visible):
+        super(TrayPublishWindow, self)._set_publish_frame_visible(
+            publish_frame_visible
+        )
+        self._back_to_overlay_btn.setVisible(not publish_frame_visible)
 
     def _on_back_to_overlay(self):
         self._overlay_widget.setVisible(True)
@@ -163,7 +190,7 @@ class TrayPublishWindow(PublisherWindow):
 
 
 def main():
-    avalon.api.install(traypublisher)
+    install_host(traypublisher)
     app = QtWidgets.QApplication([])
     window = TrayPublishWindow()
     window.show()

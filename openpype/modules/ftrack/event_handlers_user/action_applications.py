@@ -1,5 +1,4 @@
 import os
-from uuid import uuid4
 
 from openpype_modules.ftrack.lib import BaseAction
 from openpype.lib.applications import (
@@ -8,7 +7,7 @@ from openpype.lib.applications import (
     ApplictionExecutableNotFound,
     CUSTOM_LAUNCH_APP_GROUPS
 )
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 
 class AppplicationsAction(BaseAction):

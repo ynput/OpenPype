@@ -1,8 +1,8 @@
 import nuke
 import six
-from avalon import io
 
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path,
 )
@@ -108,7 +108,7 @@ class LoadGizmoInputProcess(load.LoaderPlugin):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
+        version = legacy_io.find_one({
             "type": "version",
             "_id": representation["parent"]
         })
@@ -156,7 +156,7 @@ class LoadGizmoInputProcess(load.LoaderPlugin):
             GN["name"].setValue(object_name)
 
         # get all versions in list
-        versions = io.find({
+        versions = legacy_io.find({
             "type": "version",
             "parent": version["parent"]
         }).distinct('name')

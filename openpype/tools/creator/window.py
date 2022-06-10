@@ -4,16 +4,14 @@ import re
 
 from Qt import QtWidgets, QtCore
 
-from avalon import api, io
-
 from openpype import style
 from openpype.api import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
+from openpype.pipeline import legacy_io
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     legacy_create,
     CreatorError,
-    LegacyCreator,
 )
 
 from .model import CreatorsModel
@@ -220,7 +218,7 @@ class CreatorWindow(QtWidgets.QDialog):
         asset_doc = None
         if creator_plugin:
             # Get the asset from the database which match with the name
-            asset_doc = io.find_one(
+            asset_doc = legacy_io.find_one(
                 {"name": asset_name, "type": "asset"},
                 projection={"_id": 1}
             )
@@ -237,9 +235,9 @@ class CreatorWindow(QtWidgets.QDialog):
             self._set_valid_state(False)
             return
 
-        project_name = io.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
         asset_id = asset_doc["_id"]
-        task_name = io.Session["AVALON_TASK"]
+        task_name = legacy_io.Session["AVALON_TASK"]
 
         # Calculate subset name with Creator plugin
         subset_name = creator_plugin.get_subset_name(
@@ -271,7 +269,7 @@ class CreatorWindow(QtWidgets.QDialog):
         self._subset_name_input.setText(subset_name)
 
         # Get all subsets of the current asset
-        subset_docs = io.find(
+        subset_docs = legacy_io.find(
             {
                 "type": "subset",
                 "parent": asset_id
@@ -372,7 +370,7 @@ class CreatorWindow(QtWidgets.QDialog):
             self.setStyleSheet(style.load_stylesheet())
 
     def refresh(self):
-        self._asset_name_input.setText(io.Session["AVALON_ASSET"])
+        self._asset_name_input.setText(legacy_io.Session["AVALON_ASSET"])
 
         self._creators_model.reset()
 
@@ -385,7 +383,7 @@ class CreatorWindow(QtWidgets.QDialog):
         )
         current_index = None
         family = None
-        task_name = io.Session.get("AVALON_TASK", None)
+        task_name = legacy_io.Session.get("AVALON_TASK", None)
         lowered_task_name = task_name.lower()
         if task_name:
             for _family, _task_names in pype_project_setting.items():
@@ -471,7 +469,7 @@ class CreatorWindow(QtWidgets.QDialog):
         self._msg_timer.start()
 
 
-def show(debug=False, parent=None):
+def show(parent=None):
     """Display asset creator GUI
 
     Arguments:
@@ -487,24 +485,6 @@ def show(debug=False, parent=None):
         del(module.window)
     except (AttributeError, RuntimeError):
         pass
-
-    if debug:
-        from avalon import mock
-        for creator in mock.creators:
-            api.register_plugin(LegacyCreator, creator)
-
-        import traceback
-        sys.excepthook = lambda typ, val, tb: traceback.print_last()
-
-        io.install()
-
-        any_project = next(
-            project for project in io.projects()
-            if project.get("active", True) is not False
-        )
-
-        api.Session["AVALON_PROJECT"] = any_project["name"]
-        module.project = any_project["name"]
 
     with qt_app_context():
         window = CreatorWindow(parent)

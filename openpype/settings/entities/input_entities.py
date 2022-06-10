@@ -15,10 +15,7 @@ from .exceptions import (
     EntitySchemaError
 )
 
-from openpype.settings.constants import (
-    METADATA_KEYS,
-    M_ENVIRONMENT_KEY
-)
+from openpype.settings.constants import METADATA_KEYS
 
 
 class EndpointEntity(ItemEntity):
@@ -534,13 +531,7 @@ class RawJsonEntity(InputEntity):
 
     @property
     def metadata(self):
-        output = {}
-        if isinstance(self._current_value, dict) and self.is_env_group:
-            output[M_ENVIRONMENT_KEY] = {
-                self.env_group_key: list(self._current_value.keys())
-            }
-
-        return output
+        return {}
 
     @property
     def has_unsaved_changes(self):
@@ -548,15 +539,6 @@ class RawJsonEntity(InputEntity):
         if not result:
             result = self.metadata != self._metadata_for_current_state()
         return result
-
-    def schema_validations(self):
-        if self.store_as_string and self.is_env_group:
-            reason = (
-                "RawJson entity can't store environment group metadata"
-                " as string."
-            )
-            raise EntitySchemaError(self, reason)
-        super(RawJsonEntity, self).schema_validations()
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, STRING_TYPE):
@@ -583,9 +565,6 @@ class RawJsonEntity(InputEntity):
 
     def _settings_value(self):
         value = super(RawJsonEntity, self)._settings_value()
-        if self.is_env_group and isinstance(value, dict):
-            value.update(self.metadata)
-
         if self.store_as_string:
             return json.dumps(value)
         return value

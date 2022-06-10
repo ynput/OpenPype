@@ -153,7 +153,7 @@ class ModuleUnitTest(BaseTest):
 
             Database prepared from dumps with 'db_setup' fixture.
         """
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
         yield dbcon
@@ -273,8 +273,6 @@ class PublishTest(ModuleUnitTest):
         )
         os.environ["AVALON_SCHEMA"] = schema_path
 
-        import openpype
-        openpype.install()
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
         from openpype.lib import ApplicationManager
 

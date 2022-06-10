@@ -68,7 +68,7 @@ jobs:
 
     - name: 🔏 Push to protected main branch
       if: steps.version.outputs.release_tag != 'skip'
-      uses: CasperWA/push-protected@v2
+      uses: CasperWA/push-protected@v2.10.0
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
         branch: main

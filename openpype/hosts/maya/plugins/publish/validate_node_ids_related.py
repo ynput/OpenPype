@@ -1,9 +1,8 @@
 import pyblish.api
 import openpype.api
 
-from avalon import io
+from openpype.pipeline import legacy_io
 import openpype.hosts.maya.api.action
-
 from openpype.hosts.maya.api import lib
 
 
@@ -38,7 +37,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
         invalid = list()
 
         asset = instance.data['asset']
-        asset_data = io.find_one(
+        asset_data = legacy_io.find_one(
             {
                 "name": asset,
                 "type": "asset"

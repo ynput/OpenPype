@@ -10,7 +10,7 @@ from unreal import EditorLevelLibrary as ell
 from unreal import EditorAssetLibrary as eal
 
 import openpype.api
-from avalon import io
+from openpype.pipeline import legacy_io
 
 
 class ExtractLayout(openpype.api.Extractor):
@@ -61,7 +61,7 @@ class ExtractLayout(openpype.api.Extractor):
                 family = eal.get_metadata_tag(asset_container, "family")
 
                 self.log.info("Parent: {}".format(parent))
-                blend = io.find_one(
+                blend = legacy_io.find_one(
                     {
                         "type": "representation",
                         "parent": ObjectId(parent),

@@ -8,7 +8,7 @@ from openpype.lib import (
     path_to_subprocess_arg,
 
     get_transcode_temp_directory,
-    convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     should_convert_for_ffmpeg
 )
 
@@ -49,6 +49,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             return
 
         filtered_repres = self._get_filtered_repres(instance)
+
         for repre in filtered_repres:
             repre_files = repre["files"]
             if not isinstance(repre_files, (list, tuple)):
@@ -79,11 +80,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if do_convert:
                 convert_dir = get_transcode_temp_directory()
                 filename = os.path.basename(full_input_path)
-                convert_for_ffmpeg(
-                    full_input_path,
+                convert_input_paths_for_ffmpeg(
+                    [full_input_path],
                     convert_dir,
-                    None,
-                    None,
                     self.log
                 )
                 full_input_path = os.path.join(convert_dir, filename)
@@ -152,6 +151,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # Cleanup temp folder
             if convert_dir is not None and os.path.exists(convert_dir):
                 shutil.rmtree(convert_dir)
+
+            # Create only one representation with name 'thumbnail'
+            # TODO maybe handle way how to decide from which representation
+            #   will be thumbnail created
+            break
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []

@@ -1,10 +1,14 @@
-from avalon import api, io
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 from openpype.api import Logger
-log = Logger().get_logger(__name__)
+from openpype.pipeline import (
+    legacy_io,
+    LauncherAction,
+)
+
+log = Logger.get_logger(__name__)
 
 
-class ClockifySync(api.Action):
+class ClockifySync(LauncherAction):
 
     name = "sync_to_clockify"
     label = "Sync to Clockify"
@@ -22,10 +26,10 @@ class ClockifySync(api.Action):
 
         projects_to_sync = []
         if project_name.strip() == '' or project_name is None:
-            for project in io.projects():
+            for project in legacy_io.projects():
                 projects_to_sync.append(project)
         else:
-            project = io.find_one({'type': 'project'})
+            project = legacy_io.find_one({'type': 'project'})
             projects_to_sync.append(project)
 
         projects_info = {}

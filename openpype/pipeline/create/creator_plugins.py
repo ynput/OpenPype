@@ -63,6 +63,12 @@ class BaseCreator:
     #       `openpype.pipeline.attribute_definitions`
     instance_attr_defs = []
 
+    # Filtering by host name - can be used to be filtered by host name
+    # - used on all hosts when set to 'None' for Backwards compatibility
+    #   - was added afterwards
+    # QUESTION make this required?
+    host_name = None
+
     def __init__(
         self, create_context, system_settings, project_settings, headless=False
     ):
@@ -89,7 +95,9 @@ class BaseCreator:
     @property
     def log(self):
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            from openpype.api import Logger
+
+            self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def _add_instance_to_context(self, instance):

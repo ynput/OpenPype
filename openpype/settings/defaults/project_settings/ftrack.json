@@ -349,8 +349,24 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "photoshop"
+                    ],
+                    "families": [
+                        "review"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
+        },
+        "CollectFtrackCustomAttributeData": {
+            "enabled": false,
+            "custom_attribute_keys": []
         },
         "IntegrateFtrackNote": {
             "enabled": true,
@@ -402,7 +418,8 @@
                 "redshiftproxy": "cache",
                 "usd": "usd"
             },
-            "keep_first_subset_name_for_review": true
+            "keep_first_subset_name_for_review": true,
+            "asset_versions_status_profiles": []
         }
     }
 }

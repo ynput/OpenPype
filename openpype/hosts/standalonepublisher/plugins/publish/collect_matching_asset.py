@@ -2,8 +2,9 @@ import os
 import re
 import collections
 import pyblish.api
-from avalon import io
 from pprint import pformat
+
+from openpype.pipeline import legacy_io
 
 
 class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
@@ -119,7 +120,7 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     def _asset_docs_by_parent_id(self, instance):
         # Query all assets for project and store them by parent's id to list
         asset_docs_by_parent_id = collections.defaultdict(list)
-        for asset_doc in io.find({"type": "asset"}):
+        for asset_doc in legacy_io.find({"type": "asset"}):
             parent_id = asset_doc["data"]["visualParent"]
             asset_docs_by_parent_id[parent_id].append(asset_doc)
         return asset_docs_by_parent_id

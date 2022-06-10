@@ -1,5 +1,6 @@
 import os
 import json
+from openpype.pipeline import legacy_io
 
 
 class HostContext:
@@ -16,9 +17,7 @@ class HostContext:
         if not asset_name:
             return project_name
 
-        from avalon import io
-
-        asset_doc = io.find_one(
+        asset_doc = legacy_io.find_one(
             {"type": "asset", "name": asset_name},
             {"data.parents": 1}
         )

@@ -567,7 +567,9 @@ class GUIWidget(BaseWidget):
 
     def _create_label_ui(self):
         label = self.entity["label"]
+        word_wrap = self.entity.schema_data.get("word_wrap", False)
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setWordWrap(word_wrap)
         label_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         label_widget.setObjectName("SettingsLabel")
         label_widget.linkActivated.connect(self._on_link_activate)

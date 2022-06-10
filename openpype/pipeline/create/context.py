@@ -6,8 +6,13 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
+from openpype.pipeline import legacy_io
+from openpype.pipeline.mongodb import (
+    AvalonMongoDB,
+    session_data_from_environment,
+)
+
 from .creator_plugins import (
-    BaseCreator,
     Creator,
     AutoCreator,
     discover_creator_plugins,
@@ -356,7 +361,7 @@ class CreatedInstance:
             already existing instance.
         creator(BaseCreator): Creator responsible for instance.
         host(ModuleType): Host implementation loaded with
-            `avalon.api.registered_host`.
+            `openpype.pipeline.registered_host`.
         new(bool): Is instance new.
     """
     # Keys that can't be changed or removed from data after loading using
@@ -659,10 +664,8 @@ class CreateContext:
     ):
         # Create conncetion if is not passed
         if dbcon is None:
-            import avalon.api
-
-            session = avalon.api.session_data_from_environment(True)
-            dbcon = avalon.api.AvalonMongoDB(session)
+            session = session_data_from_environment(True)
+            dbcon = AvalonMongoDB(session)
             dbcon.install()
 
         self.dbcon = dbcon
@@ -747,6 +750,10 @@ class CreateContext:
         return self._host_is_valid
 
     @property
+    def host_name(self):
+        return os.environ["AVALON_APP"]
+
+    @property
     def log(self):
         """Dynamic access to logger."""
         if self._log is None:
@@ -770,12 +777,11 @@ class CreateContext:
         """Give ability to reset avalon context.
 
         Reset is based on optional host implementation of `get_current_context`
-        function or using `avalon.api.Session`.
+        function or using `legacy_io.Session`.
 
         Some hosts have ability to change context file without using workfiles
         tool but that change is not propagated to
         """
-        import avalon.api
 
         project_name = asset_name = task_name = None
         if hasattr(self.host, "get_current_context"):
@@ -786,11 +792,11 @@ class CreateContext:
                 task_name = host_context.get("task_name")
 
         if not project_name:
-            project_name = avalon.api.Session.get("AVALON_PROJECT")
+            project_name = legacy_io.Session.get("AVALON_PROJECT")
         if not asset_name:
-            asset_name = avalon.api.Session.get("AVALON_ASSET")
+            asset_name = legacy_io.Session.get("AVALON_ASSET")
         if not task_name:
-            task_name = avalon.api.Session.get("AVALON_TASK")
+            task_name = legacy_io.Session.get("AVALON_TASK")
 
         if project_name:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
@@ -805,7 +811,6 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
-        import avalon.api
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -860,6 +865,17 @@ class CreateContext:
                     "Using first and skipping following"
                 ))
                 continue
+
+            # Filter by host name
+            if (
+                creator_class.host_name
+                and creator_class.host_name != self.host_name
+            ):
+                self.log.info((
+                    "Creator's host name is not supported for current host {}"
+                ).format(creator_class.host_name, self.host_name))
+                continue
+
             creator = creator_class(
                 self,
                 system_settings,

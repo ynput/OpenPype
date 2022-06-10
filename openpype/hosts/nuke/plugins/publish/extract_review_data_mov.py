@@ -52,7 +52,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
             for o_name, o_data in self.outputs.items():
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
-                f_subsets = o_data["filter"]["sebsets"]
+                f_subsets = o_data["filter"]["subsets"]
 
                 self.log.debug(
                     "f_families `{}` > families: {}".format(

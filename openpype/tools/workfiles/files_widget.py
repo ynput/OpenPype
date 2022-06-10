@@ -4,7 +4,6 @@ import shutil
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import io, api
 
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -17,6 +16,10 @@ from openpype.lib import (
 from openpype.lib.avalon_context import (
     update_current_task,
     compute_session_changes
+)
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
 )
 from .model import (
     WorkAreaFilesModel,
@@ -86,14 +89,14 @@ class FilesWidget(QtWidgets.QWidget):
         self._task_type = None
 
         # Pype's anatomy object for current project
-        self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
+        self.anatomy = Anatomy(legacy_io.Session["AVALON_PROJECT"])
         # Template key used to get work template from anatomy templates
         self.template_key = "work"
 
         # This is not root but workfile directory
         self._workfiles_root = None
         self._workdir_path = None
-        self.host = api.registered_host()
+        self.host = registered_host()
 
         # Whether to automatically select the latest modified
         # file on a refresh of the files model.
@@ -146,7 +149,9 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_files_view.setColumnWidth(0, 330)
 
         # --- Publish files view ---
-        publish_files_model = PublishFilesModel(extensions, io, self.anatomy)
+        publish_files_model = PublishFilesModel(
+            extensions, legacy_io, self.anatomy
+        )
 
         publish_proxy_model = QtCore.QSortFilterProxyModel()
         publish_proxy_model.setSourceModel(publish_files_model)
@@ -379,13 +384,13 @@ class FilesWidget(QtWidgets.QWidget):
             return None
 
         if self._asset_doc is None:
-            self._asset_doc = io.find_one({"_id": self._asset_id})
+            self._asset_doc = legacy_io.find_one({"_id": self._asset_id})
         return self._asset_doc
 
     def _get_session(self):
         """Return a modified session for the current asset and task"""
 
-        session = api.Session.copy()
+        session = legacy_io.Session.copy()
         self.template_key = get_workfile_template_key(
             self._task_type,
             session["AVALON_APP"],
@@ -404,7 +409,7 @@ class FilesWidget(QtWidgets.QWidget):
     def _enter_session(self):
         """Enter the asset and task session currently selected"""
 
-        session = api.Session.copy()
+        session = legacy_io.Session.copy()
         changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
@@ -594,10 +599,10 @@ class FilesWidget(QtWidgets.QWidget):
         # Create extra folders
         create_workdir_extra_folders(
             self._workdir_path,
-            api.Session["AVALON_APP"],
+            legacy_io.Session["AVALON_APP"],
             self._task_type,
             self._task_name,
-            api.Session["AVALON_PROJECT"]
+            legacy_io.Session["AVALON_PROJECT"]
         )
         # Trigger after save events
         emit_event(

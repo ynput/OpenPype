@@ -1,8 +1,9 @@
 from maya import cmds, mel
-from avalon import io
+
 from openpype.pipeline import (
+    legacy_io,
     load,
-    get_representation_path
+    get_representation_path,
 )
 from openpype.hosts.maya.api.pipeline import containerise
 from openpype.hosts.maya.api.lib import unique_namespace
@@ -64,9 +65,9 @@ class AudioLoader(load.LoaderPlugin):
         )
 
         # Set frame range.
-        version = io.find_one({"_id": representation["parent"]})
-        subset = io.find_one({"_id": version["parent"]})
-        asset = io.find_one({"_id": subset["parent"]})
+        version = legacy_io.find_one({"_id": representation["parent"]})
+        subset = legacy_io.find_one({"_id": version["parent"]})
+        asset = legacy_io.find_one({"_id": subset["parent"]})
         audio_node.sourceStart.set(1 - asset["data"]["frameStart"])
         audio_node.sourceEnd.set(asset["data"]["frameEnd"])
 

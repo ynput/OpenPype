@@ -729,6 +729,31 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "CollectFtrackCustomAttributeData",
+                    "label": "Collect Custom Attribute Data",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Collect custom attributes from ftrack for ftrack entities that can be used in some templates during publishing."
+                        },
+                        {
+                            "type": "list",
+                            "key": "custom_attribute_keys",
+                            "label": "Custom attribute keys",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
                     "is_group": true,
@@ -833,6 +858,43 @@
                             "key": "keep_first_subset_name_for_review",
                             "label": "Make subset name as first asset name",
                             "default": true
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "asset_versions_status_profiles",
+                            "label": "AssetVersion status on publish",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "family",
+                                        "label": "Family",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }

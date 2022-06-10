@@ -7,13 +7,15 @@ import re
 from copy import copy, deepcopy
 import requests
 import clique
-import openpype.api
-
-from avalon import api, io
 
 import pyblish.api
 
-from openpype.pipeline import get_representation_path
+import openpype.api
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
+from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
 def get_resources(version, extension=None):
@@ -22,7 +24,7 @@ def get_resources(version, extension=None):
     if extension:
         query["name"] = extension
 
-    representation = io.find_one(query)
+    representation = legacy_io.find_one(query)
     assert representation, "This is a bug"
 
     directory = get_representation_path(representation)
@@ -107,7 +109,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": [r".*(?:[\._-])*([Bb]eauty)(?:[\.|_])*.*"],
+    aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
@@ -129,7 +131,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_PUBLISH_JOB"
     ]
 
-    # custom deadline atributes
+    # custom deadline attributes
     deadline_department = ""
     deadline_pool = ""
     deadline_pool_secondary = ""
@@ -221,9 +223,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._create_metadata_path(instance)
 
         environment = job["Props"].get("Env", {})
-        environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
-        environment["AVALON_ASSET"] = io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = io.Session["AVALON_TASK"]
+        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
+        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
+        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
@@ -259,8 +261,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Priority": priority,
 
                 "Group": self.deadline_group,
-                "Pool": self.deadline_pool,
-                "SecondaryPool": self.deadline_pool_secondary,
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
 
                 "OutputDirectory0": output_dir
             },
@@ -282,6 +284,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
+
+        if instance.data.get("suspend_publish"):
+            payload["JobInfo"]["InitialStatus"] = "Suspended"
 
         index = 0
         for key in environment:
@@ -449,16 +454,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             app = os.environ.get("AVALON_APP", "")
 
             preview = False
-            if app in self.aov_filter.keys():
-                for aov_pattern in self.aov_filter[app]:
-                    if re.match(aov_pattern, aov):
-                        preview = True
-                        break
 
+            if isinstance(col, list):
+                render_file_name = os.path.basename(col[0])
+            else:
+                render_file_name = os.path.basename(col)
+            aov_patterns = self.aov_filter
+            preview = match_aov_pattern(app, aov_patterns, render_file_name)
+
+            # toggle preview on if multipart is on
             if instance_data.get("multipartExr"):
                 preview = True
 
-            new_instance = copy(instance_data)
+            new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
             if preview:
@@ -520,6 +528,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         """
         representations = []
+        host_name = os.environ.get("AVALON_APP", "")
         collections, remainders = clique.assemble(exp_files)
 
         # create representation for every collected sequento ce
@@ -532,22 +541,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #   should be review made.
             # - "review" tag is never added when is set to 'False'
             if instance["useSequenceForReview"]:
-                # if filtered aov name is found in filename, toggle it for
-                # preview video rendering
-                for app in self.aov_filter.keys():
-                    if os.environ.get("AVALON_APP", "") == app:
-                        # iteratre all aov filters
-                        for aov in self.aov_filter[app]:
-                            if re.match(
-                                aov,
-                                list(collection)[0]
-                            ):
-                                preview = True
-                                break
-
                 # toggle preview on if multipart is on
                 if instance.get("multipartExr", False):
                     preview = True
+                else:
+                    render_file_name = list(collection)[0]
+                    # if filtered aov name is found in filename, toggle it for
+                    # preview video rendering
+                    preview = match_aov_pattern(
+                        host_name, self.aov_filter, render_file_name
+                    )
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -611,12 +614,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
             }
-            if "render" in instance.get("families"):
+
+            preview = match_aov_pattern(
+                host_name, self.aov_filter, remainder
+            )
+            if preview:
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review"]
                 })
-            self._solve_families(instance, True)
+            self._solve_families(instance, preview)
 
             already_there = False
             for repre in instance.get("representations", []):
@@ -663,7 +670,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if hasattr(instance, "_log"):
             data['_log'] = instance._log
 
-        asset = data.get("asset") or api.Session["AVALON_ASSET"]
+        asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 
         start = instance.data.get("frameStart")
@@ -876,8 +883,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i = copy(i)
                     new_i["version"] = at.get("version")
                     new_i["subset"] = at.get("subset")
+                    new_i["family"] = at.get("family")
                     new_i["append"] = True
-                    new_i["families"].append(at.get("family"))
+                    # don't set subsetGroup if we are attaching
+                    new_i.pop("subsetGroup")
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))
@@ -955,7 +964,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             "job": render_job or None,
-            "session": api.Session.copy(),
+            "session": legacy_io.Session.copy(),
             "instances": instances
         }
 
@@ -1063,7 +1072,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
+            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."

@@ -254,6 +254,7 @@ def create_unreal_project(project_name: str,
             {"Name": "PythonScriptPlugin", "Enabled": True},
             {"Name": "EditorScriptingUtilities", "Enabled": True},
             {"Name": "SequencerScripting", "Enabled": True},
+            {"Name": "MovieRenderPipeline", "Enabled": True},
             {"Name": "OpenPype", "Enabled": True}
         ]
     }

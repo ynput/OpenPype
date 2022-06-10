@@ -3,9 +3,12 @@ import re
 from pprint import pformat
 import nuke
 import pyblish.api
-from avalon import io
+
 import openpype.api as pype
-from openpype.pipeline import get_representation_path
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 
 
 @pyblish.api.log
@@ -180,7 +183,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         repre_doc = None
         if version_doc:
             # Try to find it's representation (Expected there is only one)
-            repre_doc = io.find_one(
+            repre_doc = legacy_io.find_one(
                 {"type": "representation", "parent": version_doc["_id"]}
             )
 

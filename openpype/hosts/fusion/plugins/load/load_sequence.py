@@ -1,10 +1,9 @@
 import os
 import contextlib
 
-from avalon import io
-
 from openpype.pipeline import (
     load,
+    legacy_io,
     get_representation_path,
 )
 from openpype.hosts.fusion.api import (
@@ -212,8 +211,10 @@ class FusionLoadSequence(load.LoaderPlugin):
         path = self._get_first_image(root)
 
         # Get start frame from version data
-        version = io.find_one({"type": "version",
-                               "_id": representation["parent"]})
+        version = legacy_io.find_one({
+            "type": "version",
+            "_id": representation["parent"]
+        })
         start = version["data"].get("frameStart")
         if start is None:
             self.log.warning("Missing start frame for updated version"

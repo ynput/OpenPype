@@ -13,11 +13,12 @@ Provides:
 """
 
 import json
+import pyblish.api
+
 from openpype.lib import (
     get_system_general_anatomy_data
 )
-from avalon import api
-import pyblish.api
+from openpype.pipeline import legacy_io
 
 
 class CollectAnatomyContextData(pyblish.api.ContextPlugin):
@@ -65,7 +66,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
 
         asset_entity = context.data.get("assetEntity")
         if asset_entity:
-            task_name = api.Session["AVALON_TASK"]
+            task_name = legacy_io.Session["AVALON_TASK"]
 
             asset_tasks = asset_entity["data"]["tasks"]
             task_type = asset_tasks.get(task_name, {}).get("type")

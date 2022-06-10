@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import os
 import sys
-import openpype
+
+from openpype.pipeline import install_host
 
 
 def main(env):
     import openpype.hosts.resolve as bmdvr
     # Registers openpype's Global pyblish plugins
-    openpype.install()
+    install_host(bmdvr)
     bmdvr.setup(env)
 
 

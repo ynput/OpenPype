@@ -11,10 +11,12 @@ try:
 except Exception:
     from openpype.lib.python_2_comp import WeakMethod
 
-import avalon.api
 import pyblish.api
 
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    registered_host,
+)
 from openpype.pipeline.create import CreateContext
 
 from Qt import QtCore
@@ -353,7 +355,7 @@ class PublisherController:
     """
     def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
-        self.host = avalon.api.registered_host()
+        self.host = registered_host()
         self.headless = headless
 
         self.create_context = CreateContext(

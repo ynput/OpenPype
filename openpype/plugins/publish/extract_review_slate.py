@@ -158,13 +158,15 @@ class ExtractReviewSlate(openpype.api.Extractor):
             ])
 
             if use_legacy_code:
+                format_args = []
                 codec_args = repre["_profile"].get('codec', [])
                 output_args.extend(codec_args)
                 # preset's output data
                 output_args.extend(repre["_profile"].get('output', []))
             else:
                 # Codecs are copied from source for whole input
-                codec_args = self._get_codec_args(repre)
+                format_args, codec_args = self._get_format_codec_args(repre)
+                output_args.extend(format_args)
                 output_args.extend(codec_args)
 
             # make sure colors are correct
@@ -266,8 +268,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "-safe", "0",
                 "-i", conc_text_path,
                 "-c", "copy",
-                output_path
             ]
+            # NOTE: Added because of OP Atom demuxers
+            # Add format arguments if there are any
+            # - keep format of output
+            if format_args:
+                concat_args.extend(format_args)
+            # Add final output path
+            concat_args.append(output_path)
 
             # ffmpeg concat subprocess
             self.log.debug(
@@ -338,7 +346,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return vf_back
 
-    def _get_codec_args(self, repre):
+    def _get_format_codec_args(self, repre):
         """Detect possible codec arguments from representation."""
         codec_args = []
 
@@ -361,13 +369,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
             return codec_args
 
         source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
-        codec_args.extend(
-            get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd)
-        )
-        codec_args.extend(
-            get_ffmpeg_codec_args(
-                ffprobe_data, source_ffmpeg_cmd, logger=self.log
-            )
+        format_args = get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd)
+        codec_args = get_ffmpeg_codec_args(
+            ffprobe_data, source_ffmpeg_cmd, logger=self.log
         )
 
-        return codec_args
+        return format_args, codec_args

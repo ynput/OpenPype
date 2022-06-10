@@ -296,6 +296,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 continue
             if otio_clip.name not in track_item.name():
                 continue
+            self.log.debug("__ parent_range: {}".format(parent_range))
+            self.log.debug("__ timeline_range: {}".format(timeline_range))
             if openpype.lib.is_overlapping_otio_ranges(
                     parent_range, timeline_range, strict=True):
 

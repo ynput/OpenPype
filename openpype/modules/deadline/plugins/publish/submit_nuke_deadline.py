@@ -4,10 +4,10 @@ import json
 import getpass
 
 import requests
-
-from avalon import api
 import pyblish.api
+
 import nuke
+from openpype.pipeline import legacy_io
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -28,8 +28,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     priority = 50
     chunk_size = 1
     concurrent_tasks = 1
-    primary_pool = ""
-    secondary_pool = ""
     group = ""
     department = ""
     limit_groups = {}
@@ -187,8 +185,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Department": self.department,
 
-                "Pool": self.primary_pool,
-                "SecondaryPool": self.secondary_pool,
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
 
                 "Plugin": "Nuke",
@@ -244,7 +242,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         keys = [
             "PYTHONPATH",
             "PATH",
-            "AVALON_SCHEMA",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
@@ -266,7 +263,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             keys += self.env_allowed_keys
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
 
         for _path in os.environ:
             if _path.lower().startswith('openpype_'):

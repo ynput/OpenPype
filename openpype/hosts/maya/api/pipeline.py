@@ -7,7 +7,6 @@ from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
 
 import pyblish.api
-import avalon.api
 
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
@@ -18,6 +17,7 @@ from openpype.lib import (
 )
 from openpype.lib.path_tools import HostDirmap
 from openpype.pipeline import (
+    legacy_io,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
@@ -93,7 +93,7 @@ def _set_project():
         None
 
     """
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
 
     try:
         os.makedirs(workdir)
@@ -448,7 +448,7 @@ def on_open():
             dialog.setWindowTitle("Maya scene has outdated content")
             dialog.setMessage("There are outdated containers in "
                               "your Maya scene.")
-            dialog.on_show.connect(_on_show_inventory)
+            dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
 
 
@@ -473,7 +473,7 @@ def on_task_changed():
     # Run
     menu.update_menu_task_label()
 
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
     if os.path.exists(workdir):
         log.info("Updating Maya workspace for task change to %s", workdir)
 
@@ -494,9 +494,9 @@ def on_task_changed():
         lib.update_content_on_context_change()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        avalon.api.Session["AVALON_PROJECT"],
-        avalon.api.Session["AVALON_ASSET"],
-        avalon.api.Session["AVALON_TASK"]
+        legacy_io.Session["AVALON_PROJECT"],
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
 
     lib.show_message(

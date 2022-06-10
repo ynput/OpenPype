@@ -1,8 +1,8 @@
 #! python3
 import os
 import sys
-import avalon.api as avalon
-import openpype
+
+from openpype.pipeline import install_host
 from openpype.hosts.resolve import TestGUI
 import openpype.hosts.resolve as bmdvr
 import clique
@@ -13,10 +13,8 @@ class ThisTestGUI(TestGUI):
 
     def __init__(self):
         super(ThisTestGUI, self).__init__()
-        # Registers openpype's Global pyblish plugins
-        openpype.install()
         # activate resolve from openpype
-        avalon.install(bmdvr)
+        install_host(bmdvr)
 
     def _open_dir_button_pressed(self, event):
         # selected_path = self.fu.RequestFile(os.path.expanduser("~"))

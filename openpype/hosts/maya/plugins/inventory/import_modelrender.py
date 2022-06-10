@@ -1,9 +1,10 @@
 import json
-from avalon import io
 from bson.objectid import ObjectId
+
 from openpype.pipeline import (
     InventoryAction,
     get_representation_context,
+    legacy_io,
 )
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
@@ -39,7 +40,7 @@ class ImportModelRender(InventoryAction):
                 else:
                     nodes.append(n)
 
-            repr_doc = io.find_one({
+            repr_doc = legacy_io.find_one({
                 "_id": ObjectId(container["representation"]),
             })
             version_id = repr_doc["parent"]
@@ -63,7 +64,7 @@ class ImportModelRender(InventoryAction):
         from maya import cmds
 
         # Get representations of shader file and relationships
-        look_repr = io.find_one({
+        look_repr = legacy_io.find_one({
             "type": "representation",
             "parent": version_id,
             "name": {"$regex": self.scene_type_regex},
@@ -72,7 +73,7 @@ class ImportModelRender(InventoryAction):
             print("No model render sets for this model version..")
             return
 
-        json_repr = io.find_one({
+        json_repr = legacy_io.find_one({
             "type": "representation",
             "parent": version_id,
             "name": self.look_data_type,
