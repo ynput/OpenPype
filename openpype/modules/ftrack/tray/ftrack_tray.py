@@ -52,11 +52,10 @@ class FtrackTrayWrapper:
         self.widget_login.raise_()
 
     def show_ftrack_browser(self):
-        settings = get_system_settings()
-        browser_paths = settings["modules"]["ftrack"]\
-            ["ftrack_browser_path"][platform.system().lower()]
-        browser_args = settings["modules"]["ftrack"]\
-            ["ftrack_browser_arguments"][platform.system().lower()]
+        cur_os = platform.system().lower()
+        settings = get_system_settings()["modules"]["ftrack"]
+        browser_paths = settings["ftrack_browser_path"][cur_os]
+        browser_args = settings["ftrack_browser_arguments"][cur_os]
         browser_args.append(self.module.ftrack_url)
         path = ""
         for p in browser_paths:
