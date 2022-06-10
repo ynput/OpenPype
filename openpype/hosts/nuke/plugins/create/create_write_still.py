@@ -9,6 +9,7 @@ from openpype.hosts.nuke.api.lib import (
 
 # HACK: just to disable still image on projects which
 # are not having anatomy imageio preset for CreateWriteStill
+# TODO: remove this code as soon as it will be obsolete
 imageio_writes = get_created_node_imageio_setting_legacy(
     "Write",
     "CreateWriteStill",
