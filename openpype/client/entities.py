@@ -1095,6 +1095,39 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     Query:
     - assets
 
+## Lib
+- openpype/lib/applications.py
+    Query:
+    - project
+    - asset
+- openpype/lib/avalon_context.py
+    Query:
+    - project
+    - asset
+    - linked assets (new function get_linked_assets?)
+    - subset
+    - subsets
+    - version
+    - versions
+    - last version
+    - representations
+    - linked representations (new function get_linked_ids_for_representations)
+    Update:
+    - workfile data
+- openpype/lib/plugin_tools.py
+    Query:
+    - asset
+- openpype/lib/project_backpack.py
+    Query:
+    - project
+    - everything from mongo
+    Update:
+    - project
+- openpype/lib/usdlib.py
+    Query:
+    - project
+    - asset
+
 ## Pipeline
 - openpype/pipeline/load/utils.py
     Query:
