@@ -129,7 +129,7 @@ Building a workfile using a template designed by users. Helping to assert homoge
 
 Make your template. Add families and everything needed for your tasks. Here is an example template for the modeling task using a placeholder to import a gauge.
 
-![Dirmap settings](assets/maya-workfile-outliner.png)
+![maya outliner](assets/maya-workfile-outliner.png)
 
 If needed, you can add placeholders when the template needs to load some assets. **OpenPype > Template Builder > Create Placeholder**
 
@@ -159,7 +159,8 @@ Fill in the necessary fields (the optional fields are regex filters)
 
 - **Go to Studio settings > Project > Your DCC > Templated Build Settings**
 - Add a profile for your task and enter path to your template
-![Dirmap settings](assets/settings/template_build_workfile.png)
+
+![build template](assets/settings/template_build_workfile.png)
 
 **3. Build your workfile**
 
