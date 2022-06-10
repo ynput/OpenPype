@@ -2,7 +2,19 @@ import nuke
 
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import (
-    create_write_node, create_write_node_legacy)
+    create_write_node,
+    create_write_node_legacy,
+    get_created_node_imageio_setting_legacy
+)
+
+# HACK: just to disable still image on projects which
+# are not having anatomy imageio preset for CreateWriteStill
+imageio_writes = get_created_node_imageio_setting_legacy(
+    "Write",
+    "CreateWriteStill",
+    "stillMain"
+)
+print(imageio_writes["knobs"])
 
 
 class CreateWriteStill(plugin.AbstractWriteRender):
