@@ -1064,6 +1064,7 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     Query:
     - assets
     - subsets
+    - last version
 - openpype/plugins/publish/collect_scene_loaded_versions.py
     Query:
     - representations
@@ -1093,6 +1094,23 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
 - openpype/plugins/publish/validate_editorial_asset_name.py
     Query:
     - assets
+
+## Pipeline
+- openpype/pipeline/load/utils.py
+    Query:
+    - project
+    - assets
+    - subsets
+    - version
+    - versions
+    - representation
+    - representations
+- openpype/pipeline/mongodb.py
+    Query:
+    - project
+- openpype/pipeline/thumbnail.py
+    Query:
+    - project
 
 ## Hosts
 ### Aftereffects
