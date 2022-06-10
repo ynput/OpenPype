@@ -160,7 +160,7 @@ Fill in the necessary fields (the optional fields are regex filters)
 - **Go to Studio settings > Project > Your DCC > Templated Build Settings**
 - Add a profile for your task and enter path to your template
 
-![build template](assets/settings/template_build_workfile.png)
+![setting build template](assets/settings/template_build_workfile.png)
 
 **3. Build your workfile**
 
@@ -168,6 +168,6 @@ Fill in the necessary fields (the optional fields are regex filters)
 
 - Build your workfile
 
-![Dirmap settings](assets/maya-build_workfile_from_template.png)
+![maya build template](assets/maya-build_workfile_from_template.png)
 
 
