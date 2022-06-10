@@ -205,3 +205,9 @@ class ToolsDelegate(QtWidgets.QStyledItemDelegate):
 
     def setModelData(self, editor, model, index):
         model.setData(index, editor.value(), QtCore.Qt.EditRole)
+
+    def displayText(self, value, locale):
+        if value:
+            return ", ".join(value)
+        else:
+            return
