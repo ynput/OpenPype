@@ -53,8 +53,10 @@ class FtrackTrayWrapper:
 
     def show_ftrack_browser(self):
         settings = get_system_settings()
-        browser_paths = settings["modules"]["ftrack"]["ftrack_browser_path"][platform.system().lower()]
-        browser_args = settings["modules"]["ftrack"]["ftrack_browser_arguments"][platform.system().lower()]
+        browser_paths = settings["modules"]["ftrack"]\
+            ["ftrack_browser_path"][platform.system().lower()]
+        browser_args = settings["modules"]["ftrack"]\
+            ["ftrack_browser_arguments"][platform.system().lower()]
         browser_args.append(self.module.ftrack_url)
         path = ""
         for p in browser_paths:
@@ -63,9 +65,11 @@ class FtrackTrayWrapper:
                 log.debug(f"Found valid executable at path: {p}")
                 break
             else:
-                log.warning(f"Path: {p} is not valid, please doublecheck your settings!")
+                log.warning(f"Path: {p} is not valid, please \
+                    doublecheck your settings!")
         if path == "":
-            log.warning("Found no valid executables to launch Ftrack with. Feature will not work as expected!")
+            log.warning("Found no valid executables to launch \
+                Ftrack with. Feature will not work as expected!")
             return
         args = " ".join(str(item) for item in browser_args).replace("= ", "=")
         log.debug(f"Computed arguments: {args}")
