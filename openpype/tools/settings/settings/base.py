@@ -3,6 +3,7 @@ import sys
 import json
 import traceback
 import functools
+import datetime
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -13,9 +14,25 @@ from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
 from .constants import DEFAULT_PROJECT_LABEL
 
+_MENU_SEPARATOR_REQ = object()
+SETTINGS_PATH_KEY = "__settings_path__"
+ROOT_KEY = "__root_key__"
+VALUE_KEY = "__value__"
+SAVE_TIME_KEY = "__extracted__"
+PROJECT_NAME_KEY = "__project_name__"
+
 
 class BaseWidget(QtWidgets.QWidget):
+    _last_save_dir = os.path.expanduser("~")
     allow_actions = True
+
+    @staticmethod
+    def get_last_save_dir():
+        return BaseWidget._last_save_dir
+
+    @staticmethod
+    def set_last_save_dir(save_dir):
+        BaseWidget._last_save_dir = save_dir
 
     def __init__(self, category_widget, entity, entity_widget):
         self.category_widget = category_widget
@@ -203,9 +220,9 @@ class BaseWidget(QtWidgets.QWidget):
 
         # Copy for settings tool
         return {
-            "value": value,
-            "__root_key__": self.entity.root_key,
-            "__settings_path__": entity_path
+            VALUE_KEY: value,
+            ROOT_KEY: self.entity.root_key,
+            SETTINGS_PATH_KEY: entity_path
         }
 
     def _copy_value_actions(self, menu):
@@ -248,18 +265,62 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Copy", menu)
         return [(action, copy_value)]
 
+    def _extract_to_file(self):
+        dialog = QtWidgets.QFileDialog(
+            self,
+            "Save settings values",
+            self.get_last_save_dir(),
+            "Values (*.json)"
+        )
+        # dialog.setOption(dialog.DontUseNativeDialog)
+        dialog.setAcceptMode(dialog.AcceptSave)
+        if dialog.exec() != dialog.Accepted:
+            return
+
+        selected_urls = dialog.selectedUrls()
+        if not selected_urls:
+            return
+
+        filepath = selected_urls[0].toLocalFile()
+        if not filepath:
+            return
+
+        if not filepath.lower().endswith(".json"):
+            filepath += ".json"
+
+        settings_data = self._get_mime_data_from_entity()
+        now = datetime.datetime.now()
+        settings_data[SAVE_TIME_KEY] = now.strftime("%Y-%m-%d %H:%M:%S")
+        if hasattr(self.category_widget, "project_name"):
+            settings_data[PROJECT_NAME_KEY] = self.category_widget.project_name
+
+        with open(filepath, "w") as stream:
+            json.dump(settings_data, stream, indent=4)
+
+        new_dir = os.path.dirname(filepath)
+        self.set_last_save_dir(new_dir)
+
+    def _extract_value_to_file_actions(self, menu):
+        save_action = QtWidgets.QAction("Extract to file", menu)
+        return [
+            _MENU_SEPARATOR_REQ,
+            (save_action, self._extract_to_file)
+        ]
+
     def _parse_source_data_for_paste(self, data):
         settings_path = None
         root_key = None
         if isinstance(data, dict):
-            settings_path = data.pop("__settings_path__", settings_path)
-            root_key = data.pop("__root_key__", root_key)
-            data = data.pop("__value__", data)
+            data.pop(SAVE_TIME_KEY, None)
+            data.pop(PROJECT_NAME_KEY, None)
+            settings_path = data.pop(SETTINGS_PATH_KEY, settings_path)
+            root_key = data.pop(ROOT_KEY, root_key)
+            data = data.pop(VALUE_KEY, data)
 
         return {
-            "value": data,
-            "__settings_path__": settings_path,
-            "__root_key__": root_key
+            VALUE_KEY: data,
+            SETTINGS_PATH_KEY: settings_path,
+            ROOT_KEY: root_key
         }
 
     def _get_value_from_clipboard(self):
@@ -303,9 +364,9 @@ class BaseWidget(QtWidgets.QWidget):
         if not mime_data_value:
             return output
 
-        value = mime_data_value["value"]
-        path = mime_data_value["__settings_path__"]
-        root_key = mime_data_value["__root_key__"]
+        value = mime_data_value[VALUE_KEY]
+        path = mime_data_value[SETTINGS_PATH_KEY]
+        root_key = mime_data_value[ROOT_KEY]
 
         # Try to find matching entity to be able paste values to same spot
         # - entity can't by dynamic or in dynamic item
@@ -437,10 +498,19 @@ class BaseWidget(QtWidgets.QWidget):
         ui_actions.extend(self._copy_value_actions(menu))
         ui_actions.extend(self._paste_value_actions(menu))
         if ui_actions:
-            menu.addSeparator()
-            for action, callback in ui_actions:
-                menu.addAction(action)
-                actions_mapping[action] = callback
+            ui_actions.insert(0, _MENU_SEPARATOR_REQ)
+
+        ui_actions.extend(self._extract_value_to_file_actions(menu))
+
+        for item in ui_actions:
+            if item is _MENU_SEPARATOR_REQ:
+                if len(menu.actions()) > 0:
+                    menu.addSeparator()
+                continue
+
+            action, callback = item
+            menu.addAction(action)
+            actions_mapping[action] = callback
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
