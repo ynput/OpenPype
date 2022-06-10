@@ -1737,8 +1737,11 @@ def apply_shaders(relationships, shadernodes, nodes):
             log.warning("No nodes found for shading engine "
                         "'{0}'".format(id_shading_engines[0]))
             continue
+        try:
+            cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
+        except RuntimeError as rte:
+            log.error("Error during shader assignment: {}".format(rte))
 
-        cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
     # endregion
 
     apply_attributes(attributes, nodes_by_id)

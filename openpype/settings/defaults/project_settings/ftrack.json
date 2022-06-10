@@ -109,6 +109,13 @@
                 "Omitted"
             ],
             "name_sorting": false
+        },
+        "transfer_values_of_hierarchical_attributes": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project manager"
+            ]
         }
     },
     "user_handlers": {

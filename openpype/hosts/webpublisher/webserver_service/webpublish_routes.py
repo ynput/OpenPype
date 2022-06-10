@@ -71,16 +71,12 @@ class ProjectsEndpoint(_RestApiEndpoint):
     """Returns list of dict with project info (id, name)."""
     async def get(self) -> Response:
         output = []
-        for project_name in self.dbcon.database.collection_names():
-            project_doc = self.dbcon.database[project_name].find_one({
-                "type": "project"
-            })
-            if project_doc:
-                ret_val = {
-                    "id": project_doc["_id"],
-                    "name": project_doc["name"]
-                }
-                output.append(ret_val)
+        for project_doc in self.dbcon.projects():
+            ret_val = {
+                "id": project_doc["_id"],
+                "name": project_doc["name"]
+            }
+            output.append(ret_val)
         return Response(
             status=200,
             body=self.resource.encode(output),

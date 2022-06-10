@@ -18,6 +18,16 @@ class InstancePlugin(pyblish.api.InstancePlugin):
         super(InstancePlugin, cls).process(cls, *args, **kwargs)
 
 
+class Integrator(InstancePlugin):
+    """Integrator base class.
+
+    Wraps pyblish instance plugin. Targets set to "local" which means all
+    integrators should run on "local" publishes, by default.
+    "remote" targets could be used for integrators that should run externally.
+    """
+    targets = ["local"]
+
+
 class Extractor(InstancePlugin):
     """Extractor base class.
 
@@ -27,6 +37,8 @@ class Extractor(InstancePlugin):
     This temporary directory is generated through `tempfile.mkdtemp()`
 
     """
+
+    targets = ["local"]
 
     order = 2.0
 

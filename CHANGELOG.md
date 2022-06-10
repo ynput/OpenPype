@@ -1,17 +1,28 @@
 # Changelog
 
-## [3.10.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.11.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.10.0...HEAD)
+
+### 📖 Documentation
+
+- doc: adding royal render and multiverse to the web site [\#3285](https://github.com/pypeclub/OpenPype/pull/3285)
 
 **🚀 Enhancements**
 
 - General: Updated windows oiio tool [\#3268](https://github.com/pypeclub/OpenPype/pull/3268)
+- Unreal: add support for skeletalMesh and staticMesh to loaders [\#3267](https://github.com/pypeclub/OpenPype/pull/3267)
+- Maya: reference loaders could store placeholder in referenced url [\#3264](https://github.com/pypeclub/OpenPype/pull/3264)
 - TVPaint: Init file for TVPaint worker also handle guideline images [\#3250](https://github.com/pypeclub/OpenPype/pull/3250)
 - Nuke: Change default icon path in settings [\#3247](https://github.com/pypeclub/OpenPype/pull/3247)
 
 **🐛 Bug fixes**
 
+- Global: extract review slate issues [\#3286](https://github.com/pypeclub/OpenPype/pull/3286)
+- Webpublisher: return only active projects in ProjectsEndpoint [\#3281](https://github.com/pypeclub/OpenPype/pull/3281)
+- Hiero: add support for task tags 3.10.x [\#3279](https://github.com/pypeclub/OpenPype/pull/3279)
+- General: Fix Oiio tool path resolving [\#3278](https://github.com/pypeclub/OpenPype/pull/3278)
+- Maya: Fix udim support for e.g. uppercase \<UDIM\> tag [\#3266](https://github.com/pypeclub/OpenPype/pull/3266)
 - Nuke: bake reformat was failing on string type [\#3261](https://github.com/pypeclub/OpenPype/pull/3261)
 - Maya: hotfix Pxr multitexture in looks [\#3260](https://github.com/pypeclub/OpenPype/pull/3260)
 - Unreal: Fix Camera Loading if Layout is missing [\#3255](https://github.com/pypeclub/OpenPype/pull/3255)
@@ -19,10 +30,14 @@
 - Unreal: Fixed Render creation in UE5 [\#3239](https://github.com/pypeclub/OpenPype/pull/3239)
 - Unreal: Fixed Camera loading in UE5 [\#3238](https://github.com/pypeclub/OpenPype/pull/3238)
 - Flame: debugging [\#3224](https://github.com/pypeclub/OpenPype/pull/3224)
+- add silent audio to slate [\#3162](https://github.com/pypeclub/OpenPype/pull/3162)
 
 **Merged pull requests:**
 
+- Maya: better handling of legacy review subsets names [\#3269](https://github.com/pypeclub/OpenPype/pull/3269)
+- Deadline: publishing of animation and pointcache on a farm [\#3225](https://github.com/pypeclub/OpenPype/pull/3225)
 - Nuke: add pointcache and animation to loader [\#3186](https://github.com/pypeclub/OpenPype/pull/3186)
+- Add a gizmo menu to nuke [\#3172](https://github.com/pypeclub/OpenPype/pull/3172)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
@@ -32,7 +47,6 @@
 
 - General: OpenPype modules publish plugins are registered in host [\#3180](https://github.com/pypeclub/OpenPype/pull/3180)
 - General: Creator plugins from addons can be registered [\#3179](https://github.com/pypeclub/OpenPype/pull/3179)
-- Ftrack: Single image reviewable [\#3157](https://github.com/pypeclub/OpenPype/pull/3157)
 
 **🚀 Enhancements**
 
@@ -45,13 +59,6 @@
 - Maya: added clean\_import option to Import loader [\#3181](https://github.com/pypeclub/OpenPype/pull/3181)
 - Add the scripts menu definition to nuke [\#3168](https://github.com/pypeclub/OpenPype/pull/3168)
 - Maya: add maya 2023 to default applications [\#3167](https://github.com/pypeclub/OpenPype/pull/3167)
-- Compressed bgeo publishing in SAP and Houdini loader [\#3153](https://github.com/pypeclub/OpenPype/pull/3153)
-- General: Add 'dataclasses' to required python modules [\#3149](https://github.com/pypeclub/OpenPype/pull/3149)
-- Hooks: Tweak logging grammar [\#3147](https://github.com/pypeclub/OpenPype/pull/3147)
-- Nuke: settings for reformat node in CreateWriteRender node [\#3143](https://github.com/pypeclub/OpenPype/pull/3143)
-- Houdini: Add loader for alembic through Alembic Archive node [\#3140](https://github.com/pypeclub/OpenPype/pull/3140)
-- Publisher: UI Modifications and fixes [\#3139](https://github.com/pypeclub/OpenPype/pull/3139)
-- General: Simplified OP modules/addons import [\#3137](https://github.com/pypeclub/OpenPype/pull/3137)
 
 **🐛 Bug fixes**
 
@@ -75,14 +82,6 @@
 - General: Oiio conversion for ffmpeg checks for invalid characters [\#3166](https://github.com/pypeclub/OpenPype/pull/3166)
 - Fix for attaching render to subset [\#3164](https://github.com/pypeclub/OpenPype/pull/3164)
 - Harmony: fixed missing task name in render instance [\#3163](https://github.com/pypeclub/OpenPype/pull/3163)
-- add silent audio to slate [\#3162](https://github.com/pypeclub/OpenPype/pull/3162)
-- Ftrack: Action delete old versions formatting works [\#3152](https://github.com/pypeclub/OpenPype/pull/3152)
-- nuke: adding extract thumbnail settings [\#3148](https://github.com/pypeclub/OpenPype/pull/3148)
-- Deadline: fix the output directory [\#3144](https://github.com/pypeclub/OpenPype/pull/3144)
-- General: New Session schema [\#3141](https://github.com/pypeclub/OpenPype/pull/3141)
-- General: Missing version on headless mode crash properly [\#3136](https://github.com/pypeclub/OpenPype/pull/3136)
-- TVPaint: Composite layers in reversed order [\#3135](https://github.com/pypeclub/OpenPype/pull/3135)
-- TVPaint: Composite layers in reversed order [\#3134](https://github.com/pypeclub/OpenPype/pull/3134)
 
 **🔀 Refactored code**
 
@@ -121,23 +120,6 @@
 ## [3.9.7](https://github.com/pypeclub/OpenPype/tree/3.9.7) (2022-05-11)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.6...3.9.7)
-
-**🆕 New features**
-
-- Ftrack: Single image reviewable [\#3158](https://github.com/pypeclub/OpenPype/pull/3158)
-
-**🚀 Enhancements**
-
-- Deadline output dir issue to 3.9x [\#3155](https://github.com/pypeclub/OpenPype/pull/3155)
-- nuke: removing redundant code from startup [\#3142](https://github.com/pypeclub/OpenPype/pull/3142)
-
-**🐛 Bug fixes**
-
-- Ftrack: Action delete old versions formatting works [\#3154](https://github.com/pypeclub/OpenPype/pull/3154)
-
-**Merged pull requests:**
-
-- Webpublisher: replace space by underscore in subset names [\#3159](https://github.com/pypeclub/OpenPype/pull/3159)
 
 ## [3.9.6](https://github.com/pypeclub/OpenPype/tree/3.9.6) (2022-05-03)
 
