@@ -46,10 +46,6 @@ class ShotgridModule(
 
     def tray_init(self):
         from .tray.shotgrid_tray import ShotgridTrayWrapper
-        from .aop.patch import patch_avalon_db
-
-        patch_avalon_db()
-        threading.Timer(10.0, patch_avalon_db).start()
 
         self.tray_wrapper = ShotgridTrayWrapper(self)
 
