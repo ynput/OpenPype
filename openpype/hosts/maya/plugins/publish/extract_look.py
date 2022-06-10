@@ -536,7 +536,7 @@ class ExtractLook(openpype.api.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, processors, staging, linearize, force):
+    def _process_texture(self, filepath, processors, staging, linearize, force): # noqa
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
