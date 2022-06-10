@@ -246,7 +246,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
     def _on_add_task(self):
         # Colorbleed edit: force the task to directly be in edit mode
-        self.hierarchy_view._add_task_and_edit()
+        self.hierarchy_view.add_task_and_edit()
 
     def _on_create_folders(self):
         project_name = self._current_project()
