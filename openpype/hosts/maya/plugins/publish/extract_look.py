@@ -567,9 +567,9 @@ class ExtractLook(openpype.api.Extractor):
                      "skipping hardlink: %s") % (existing,)
                 )
         for processor in processors:
-            processor().process(filepath)
+            processed_path = processor().process(filepath)
             self.log.info("Generating texture file for %s .." % filepath)
-        return filepath, COPY, texture_hash
+        return processed_path, COPY, texture_hash
 
 
 class ExtractModelRenderSets(ExtractLook):
