@@ -56,8 +56,6 @@ class CreateDailyReviewSessionServerAction(ServerAction):
             ):
                 valid_selection = True
                 break
-            else:
-                self.log.info(ent["entityType"])
 
         if not valid_selection:
             return False
