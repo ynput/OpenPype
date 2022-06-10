@@ -566,9 +566,13 @@ class ExtractLook(openpype.api.Extractor):
                     ("Paths not found on disk, "
                      "skipping hardlink: %s") % (existing,)
                 )
-        for processor in processors:
-            processed_path = processor().process(filepath)
-            self.log.info("Generating texture file for %s .." % filepath)
+
+        if bool(processors):
+            for processor in processors:
+                processed_path = processor().process(filepath)
+                self.log.info("Generating texture file for %s .." % filepath)
+                return processed_path
+
         return processed_path, COPY, texture_hash
 
 
