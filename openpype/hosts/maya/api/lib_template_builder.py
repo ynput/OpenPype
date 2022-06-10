@@ -43,7 +43,11 @@ def create_placeholder():
     placeholder = cmds.spaceLocator(name=placeholder_name)[0]
 
     # get the long name of the placeholder (with the groups)
-    placeholder_full_name = cmds.ls(selection[0], long=True)[0] + '|' + placeholder.replace('|', '')
+    placeholder_full_name = cmds.ls(
+        selection[0],
+        long=True)[0] + '|' + placeholder.replace('|',
+        ''
+    )
 
     if selection:
         cmds.parent(placeholder, selection[0])
