@@ -1046,6 +1046,54 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     - project
     - asset
 
+## Global load plugins
+- openpype/plugins/load/delete_old_versions.py
+    Query:
+    - versions
+    - representations
+- openpype/plugins/load/delivery.py
+    Query:
+    - representations
+
+## Global publish plugins
+- openpype/plugins/publish/collect_avalon_entities.py
+    Query:
+    - asset
+    - project
+- openpype/plugins/publish/collect_anatomy_instance_data.py
+    Query:
+    - assets
+    - subsets
+- openpype/plugins/publish/collect_scene_loaded_versions.py
+    Query:
+    - representations
+- openpype/plugins/publish/extract_hierarchy_avalon.py
+    Query:
+    - asset
+    - assets
+    - project
+    Create:
+    - asset
+    Update:
+    - asset
+- openpype/plugins/publish/integrate_hero_version.py
+    Query:
+    - version
+    - hero version
+    - representations
+- openpype/plugins/publish/integrate_new.py
+    Query:
+    - asset
+    - subset
+    - version
+    - representations
+- openpype/plugins/publish/integrate_thumbnail.py
+    Query:
+    - version
+- openpype/plugins/publish/validate_editorial_asset_name.py
+    Query:
+    - assets
+
 ## Hosts
 ### Aftereffects
 - openpype/hosts/aftereffects/plugins/create/workfile_creator.py
