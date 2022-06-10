@@ -132,7 +132,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     ]
         subprocess_exr = " ".join(oiio_cmd)
         self.log.info(f"running: {subprocess_exr}")
-        run_subprocess(oiio_cmd, logger=self.log)
+        try:
+            run_subprocess(oiio_cmd, logger=self.log)
+            return True
+        except Exception:
+            self.log.warning(
+                "Failed to create thubmnail using oiiotool",
+                exc_info=True
+            )
+            return False
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.info("outputting {}".format(dst_path))
