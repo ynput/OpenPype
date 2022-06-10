@@ -1033,10 +1033,302 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
 
 
 """
-Custom data storage:
+## Custom data storage:
 - Webpublisher - jobs
 - Ftrack - events
+- Maya - Shaders
+    - openpype/hosts/maya/api/shader_definition_editor.py
+    - openpype/hosts/maya/plugins/publish/validate_model_name.py
 
+## Global launch hooks
+- openpype/hooks/pre_global_host_data.py
+    Query:
+    - project
+    - asset
+
+## Hosts
+### Aftereffects
+- openpype/hosts/aftereffects/plugins/create/workfile_creator.py
+    Query:
+    - asset
+
+### Blender
+- openpype/hosts/blender/api/pipeline.py
+    Query:
+    - asset
+- openpype/hosts/blender/plugins/publish/extract_layout.py
+    Query:
+    - representation
+
+### Celaction
+- openpype/hosts/celaction/plugins/publish/collect_audio.py
+    Query:
+    - subsets
+    - last versions
+    - representations
+
+### Fusion
+- openpype/hosts/fusion/api/lib.py
+    Query:
+    - asset
+    - subset
+    - version
+    - representation
+- openpype/hosts/fusion/plugins/load/load_sequence.py
+    Query:
+    - version
+- openpype/hosts/fusion/scripts/fusion_switch_shot.py
+    Query:
+    - project
+    - asset
+    - versions
+- openpype/hosts/fusion/utility_scripts/switch_ui.py
+    Query:
+    - assets
+
+### Harmony
+- openpype/hosts/harmony/api/pipeline.py
+    Query:
+    - representation
+
+### Hiero
+- openpype/hosts/hiero/api/lib.py
+    Query:
+    - project
+    - version
+    - versions
+    - representation
+- openpype/hosts/hiero/api/tags.py
+    Query:
+    - task types
+    - assets
+- openpype/hosts/hiero/plugins/load/load_clip.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/hiero/plugins/publish_old_workflow/collect_assetbuilds.py
+    Query:
+    - assets
+
+### Houdini
+- openpype/hosts/houdini/api/lib.py
+    Query:
+    - asset
+- openpype/hosts/houdini/api/usd.py
+    Query:
+    - asset
+- openpype/hosts/houdini/plugins/create/create_hda.py
+    Query:
+    - asset
+    - subsets
+- openpype/hosts/houdini/plugins/publish/collect_usd_bootstrap.py
+    Query:
+    - asset
+    - subset
+- openpype/hosts/houdini/plugins/publish/extract_usd_layered.py
+    Query:
+    - asset
+    - subset
+    - version
+    - representation
+- openpype/hosts/houdini/plugins/publish/validate_usd_shade_model_exists.py
+    Query:
+    - asset
+    - subset
+- openpype/hosts/houdini/vendor/husdoutputprocessors/avalon_uri_processor.py
+    Query:
+    - project
+    - asset
+
+### Maya
+- openpype/hosts/maya/api/action.py
+    Query:
+    - asset
+- openpype/hosts/maya/api/commands.py
+    Query:
+    - asset
+    - project
+- openpype/hosts/maya/api/lib.py
+    Query:
+    - project
+    - asset
+    - subset
+    - subsets
+    - version
+    - representation
+- openpype/hosts/maya/api/setdress.py
+    Query:
+    - version
+    - representation
+- openpype/hosts/maya/plugins/inventory/import_modelrender.py
+    Query:
+    - representation
+- openpype/hosts/maya/plugins/load/load_audio.py
+    Query:
+    - asset
+    - subset
+    - version
+- openpype/hosts/maya/plugins/load/load_image_plane.py
+    Query:
+    - asset
+    - subset
+    - version
+- openpype/hosts/maya/plugins/load/load_look.py
+    Query:
+    - representation
+- openpype/hosts/maya/plugins/load/load_vrayproxy.py
+    Query:
+    - representation
+- openpype/hosts/maya/plugins/load/load_yeti_cache.py
+    Query:
+    - representation
+- openpype/hosts/maya/plugins/publish/collect_review.py
+    Query:
+    - subsets
+- openpype/hosts/maya/plugins/publish/validate_node_ids_in_database.py
+    Query:
+    - assets
+- openpype/hosts/maya/plugins/publish/validate_node_ids_related.py
+    Query:
+    - asset
+- openpype/hosts/maya/plugins/publish/validate_renderlayer_aovs.py
+    Query:
+    - asset
+    - subset
+
+### Nuke
+- openpype/hosts/nuke/api/command.py
+    Query:
+    - project
+    - asset
+- openpype/hosts/nuke/api/lib.py
+    Query:
+    - project
+    - asset
+    - version
+    - versions
+    - representation
+- openpype/hosts/nuke/plugins/load/load_backdrop.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_camera_abc.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_clip.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_effects_ip.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_effects.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_gizmo_ip.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_gizmo.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_image.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_model.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/load/load_script_precomp.py
+    Query:
+    - version
+    - versions
+- openpype/hosts/nuke/plugins/publish/collect_reads.py
+    Query:
+    - asset
+- openpype/hosts/nuke/plugins/publish/precollect_instances.py
+    Query:
+    - asset
+- openpype/hosts/nuke/plugins/publish/precollect_writes.py
+    Query:
+    - representation
+- openpype/hosts/nuke/plugins/publish/validate_script.py
+    Query:
+    - asset
+    - project
+
+### Photoshop
+- openpype/hosts/photoshop/plugins/create/workfile_creator.py
+    Query:
+    - asset
+
+### Resolve
+- openpype/hosts/resolve/plugins/load/load_clip.py
+    Query:
+    - version
+    - versions
+
+### Standalone publisher
+- openpype/hosts/standalonepublisher/plugins/publish/collect_bulk_mov_instances.py
+    Query:
+    - asset
+- openpype/hosts/standalonepublisher/plugins/publish/collect_matching_asset.py
+    Query:
+    - assets
+- openpype/hosts/standalonepublisher/plugins/publish/collect_hierarchy.py
+    Query:
+    - project
+    - asset
+- openpype/hosts/standalonepublisher/plugins/publish/validate_task_existence.py
+    Query:
+    - assets
+
+### TVPaint
+- openpype/hosts/tvpaint/api/pipeline.py
+    Query:
+    - project
+    - asset
+- openpype/hosts/tvpaint/plugins/load/load_workfile.py
+    Query:
+    - project
+    - asset
+- openpype/hosts/tvpaint/plugins/publish/collect_instances.py
+    Query:
+    - asset
+- openpype/hosts/tvpaint/plugins/publish/collect_scene_render.py
+    Query:
+    - asset
+- openpype/hosts/tvpaint/plugins/publish/collect_workfile.py
+    Query:
+    - asset
+
+### Unreal
+- openpype/hosts/unreal/plugins/load/load_camera.py
+    Query:
+    - asset
+    - assets
+- openpype/hosts/unreal/plugins/load/load_layout.py
+    Query:
+    - asset
+    - assets
+- openpype/hosts/unreal/plugins/publish/extract_layout.py
+    Query:
+    - representation
+
+### Webpublisher
+- openpype/hosts/webpublisher/webserver_service/webpublish_routes.py
+    Query:
+    - assets
+- openpype/hosts/webpublisher/plugins/publish/collect_published_files.py
+    Query:
+    - last versions
+
+## Tools
 openpype/tools/assetlinks/widgets.py
 - SimpleLinkView
     Query:
