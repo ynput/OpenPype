@@ -62,7 +62,9 @@ class AlembicModelLoader(load.LoaderPlugin):
             model_node.forceValidate()
 
             # workaround to load all geo nodes, not just top level ones
-            model_node.knob('scene_view').setAllItems(model_node.knob('scene_view').getAllItems(), True)
+            model_node.knob("scene_view").setAllItems(
+                model_node.knob("scene_view").getAllItems(), True
+            )
 
             model_node["frame_rate"].setValue(float(fps))
 
@@ -147,7 +149,9 @@ class AlembicModelLoader(load.LoaderPlugin):
             model_node["file"].setValue(file)
 
             # workaround to load all geo nodes, not just top level ones
-            model_node.knob('scene_view').setAllItems(model_node.knob('scene_view').getAllItems(), True)
+            model_node.knob("scene_view").setAllItems(
+                model_node.knob("scene_view").getAllItems(), True
+            )
 
             # workaround because nuke's bug is
             # not adding animation keys properly
