@@ -1,3 +1,4 @@
+import logging
 import contextlib
 from abc import ABCMeta, abstractproperty, abstractmethod
 import six
@@ -55,6 +56,8 @@ class HostImplementation(object):
         functionality and responsibility will be added.
     """
 
+    _log = None
+
     def __init__(self):
         """Initialization of host.
 
@@ -69,6 +72,12 @@ class HostImplementation(object):
         """
 
         pass
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger(self.__class__.__name__)
+        return self._log
 
     @abstractproperty
     def name(self):
