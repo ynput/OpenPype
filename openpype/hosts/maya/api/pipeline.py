@@ -8,6 +8,7 @@ import maya.api.OpenMaya as om
 
 import pyblish.api
 
+from openpype.settings import get_project_settings
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import (
@@ -46,8 +47,6 @@ self._events = {}
 
 
 def install():
-    from openpype.settings import get_project_settings
-
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     # process path mapping
     dirmap_processor = MayaDirmap("maya", project_settings)
