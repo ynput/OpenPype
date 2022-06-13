@@ -3,7 +3,7 @@ import re
 from copy import deepcopy
 import pyblish.api
 
-from openpype.client import get_asset_by_id, get_project
+from openpype.client import get_asset_by_id
 
 
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):
