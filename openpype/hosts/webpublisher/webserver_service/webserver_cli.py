@@ -69,16 +69,14 @@ def run_webserver(*args, **kwargs):
     )
 
     # triggers publish
-    webpublisher_task_publish_endpoint = \
-        BatchPublishEndpoint(resource)
+    webpublisher_task_publish_endpoint = BatchPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/batch",
         webpublisher_task_publish_endpoint.dispatch
     )
 
-    webpublisher_batch_publish_endpoint = \
-        TaskPublishEndpoint(resource)
+    webpublisher_batch_publish_endpoint = TaskPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/task",
