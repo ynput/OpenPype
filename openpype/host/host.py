@@ -1,3 +1,4 @@
+import contextlib
 from abc import ABCMeta, abstractproperty, abstractmethod
 import six
 
@@ -131,6 +132,19 @@ class HostImplementation(object):
         if items:
             return "/".join(items)
         return None
+
+    @contextlib.contextmanager
+    def maintained_selection(self):
+        """Some functionlity will happen but selection should stay same.
+
+        This is DCC specific. Some may not allow to implement this ability
+        that is reason why default implementation is empty context manager.
+        """
+
+        try:
+            yield
+        finally:
+            pass
 
 
 class ILoadHost:
