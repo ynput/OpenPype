@@ -103,4 +103,4 @@ website/.docusaurus
 .poetry/
 .python-version
 
-tools/run_eventserver.ps1
+tools/run_eventserver.*
