@@ -378,7 +378,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model.delete_indexes(indexes)
 
     def _on_ctrl_shift_enter_pressed(self):
-        self._add_task_and_edit()
+        self.add_task_and_edit()
 
     def add_asset(self, parent_index=None):
         if parent_index is None:
@@ -420,9 +420,9 @@ class HierarchyView(QtWidgets.QTreeView):
         self.edit(new_index)
 
     def _add_task_action(self):
-        self._add_task_and_edit()
+        self.add_task_and_edit()
 
-    def _add_task_and_edit(self):
+    def add_task_and_edit(self):
         new_index = self.add_task()
         if new_index is None:
             return
