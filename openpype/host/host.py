@@ -4,6 +4,17 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 import six
 
 
+class MissingMethodsError(ValueError):
+    def __init__(self, host, missing_methods):
+        joined_missing = ", ".join(
+            ['"{}"'.format(item) for item in missing_methods]
+        )
+        message = (
+            "Host \"{}\" miss methods {}".format(host.name, joined_missing)
+        )
+        super(MissingMethodsError, self).__init__(message)
+
+
 @six.add_metaclass(ABCMeta)
 class HostImplementation(object):
     """Base of host implementation class.
@@ -169,6 +180,36 @@ class ILoadHost:
         - do we need to know that?
     """
 
+    @staticmethod
+    def get_missing_load_methods(host):
+        """Look for missing methods on host implementation.
+
+        Method is used for validation of implemented functions related to
+        loading. Checks only existence of methods.
+
+        Args:
+            list[str]: Missing method implementations for loading workflow.
+        """
+
+        required = ["ls"]
+        missing = []
+        for name in required:
+            if not hasattr(host, name):
+                missing.append(name)
+        return missing
+
+    @staticmethod
+    def validate_load_methods(host):
+        """Validate implemented methods of host for load workflow.
+
+        Raises:
+            MissingMethodsError: If there are missing methods on host
+                implementation.
+        """
+        missing = ILoadHost.get_missing_load_methods(host)
+        if missing:
+            raise MissingMethodsError(host, missing)
+
     @abstractmethod
     def ls(self):
         """Retreive referenced containers from scene.
@@ -193,6 +234,43 @@ class IWorkfileHost:
     implementation to support workfiles workflow, but does not have necessarily
     to inherit from this interface.
     """
+
+    @staticmethod
+    def get_missing_workfile_methods(host):
+        """Look for missing methods on host implementation.
+
+        Method is used for validation of implemented functions related to
+        workfiles. Checks only existence of methods.
+
+        Returns:
+            list[str]: Missing method implementations for workfiles workflow.
+        """
+
+        required = [
+            "open_file",
+            "save_file",
+            "current_file",
+            "has_unsaved_changes",
+            "file_extensions",
+            "work_root",
+        ]
+        missing = []
+        for name in required:
+            if not hasattr(host, name):
+                missing.append(name)
+        return missing
+
+    @staticmethod
+    def validate_workfile_methods(host):
+        """Validate implemented methods of host for workfiles workflow.
+
+        Raises:
+            MissingMethodsError: If there are missing methods on host
+                implementation.
+        """
+        missing = IWorkfileHost.get_missing_workfile_methods(host)
+        if missing:
+            raise MissingMethodsError(host, missing)
 
     @abstractmethod
     def file_extensions(self):
@@ -294,6 +372,40 @@ class INewPublisher:
     HostImplementation does not have to inherit from this interface just have
     to imlement mentioned all listed methods.
     """
+
+    @staticmethod
+    def get_missing_publish_methods(host):
+        """Look for missing methods on host implementation.
+
+        Method is used for validation of implemented functions related to
+        new publish creation. Checks only existence of methods.
+
+        Args:
+            list[str]: Missing method implementations for new publsher
+                workflow.
+        """
+
+        required = [
+            "get_context_data",
+            "update_context_data",
+        ]
+        missing = []
+        for name in required:
+            if not hasattr(host, name):
+                missing.append(name)
+        return missing
+
+    @staticmethod
+    def validate_publish_methods(host):
+        """Validate implemented methods of host for create-publish workflow.
+
+        Raises:
+            MissingMethodsError: If there are missing methods on host
+                implementation.
+        """
+        missing = INewPublisher.get_missing_publish_methods(host)
+        if missing:
+            raise MissingMethodsError(host, missing)
 
     @abstractmethod
     def get_context_data(self):
