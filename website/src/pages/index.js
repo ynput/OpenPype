@@ -299,6 +299,11 @@ function Home() {
                   <img src="/img/app_maya.png" alt="" title=""></img>
                   <span className="caption">Maya</span>
                 </a>
+				
+                <a className="link" href="https://www.autodesk.com/products/flame">
+                  <img src="/img/app_flame.png" alt="" title=""></img>
+                  <span className="caption">Flame</span>
+                </a>
 
                 <a className="link" href="https://www.foundry.com/products/nuke-family/nuke">
                   <img src="/img/app_nuke.png" alt="" title=""></img>
@@ -306,7 +311,7 @@ function Home() {
                 </a>
 
                 <a className="link" href="https://www.foundry.com/products/nuke-family/nuke-studio">
-                  <img src="/img/app_nuke.png" alt="" title=""></img>
+                  <img src="/img/app_nukestudio.png" alt="" title=""></img>
                   <span className="caption">Nuke Studio</span>
                 </a>
 
@@ -374,10 +379,15 @@ function Home() {
                   <img src="/img/app_deadline.png" alt="" title=""></img>
                   <span className="caption">Deadline</span>
                 </a>
-
+				
                 <a className="link" href="https://www.vvertex.com">
                   <img src="/img/app_muster.png" alt="" title=""></img>
                   <span className="caption">Muster</span>
+                </a>
+
+				<a className="link" href="https://www.royalrender.de/index.php/startseite.html">
+                  <img src="/img/app_royalrender.png" alt="" title=""></img>
+                  <span className="caption">Royal Render</span>
                 </a>
 
                 <a className="link" href="https://www.slack.com">
@@ -390,10 +400,10 @@ function Home() {
               <p> <b>In development by us or OpenPype community.</b></p>
 
               <div className={classnames('showcase',)}>
-
-                <a className="link" href="https://www.autodesk.com/products/flame">
-                  <img src="/img/app_flame.png" alt="" title=""></img>
-                  <span className="caption">Flame</span>
+			  
+                <a className="link" href="https://j-cube.jp/solutions/multiverse/">
+                  <img src="/img/app_multiverse.png" alt="" title=""></img>
+                  <span className="caption">Multiverse</span>
                 </a>
 
                 <a className="link" href="https://www.shotgridsoftware.com/">
