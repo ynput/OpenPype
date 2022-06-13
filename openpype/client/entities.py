@@ -1034,6 +1034,8 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
 
 """
 ## Custom data storage:
+- Settings - OP settings overrides and local settings
+- Logging - logs from PypeLogger
 - Webpublisher - jobs
 - Ftrack - events
 - Maya - Shaders
