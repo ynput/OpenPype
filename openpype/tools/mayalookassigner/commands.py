@@ -10,7 +10,7 @@ from openpype.pipeline import (
     remove_container,
     registered_host,
 )
-from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib, pipeline
 
 from .vray_proxies import get_alembic_ids_cache
 
@@ -80,11 +80,13 @@ def get_all_asset_nodes():
     Returns:
         list: list of dictionaries
     """
-
     host = registered_host()
-
+    print('huh5')
+    print(pipeline.ls())
+    print('hyuh4')
     nodes = []
     for container in host.ls():
+        print(container)
         # We are not interested in looks but assets!
         if container["loader"] == "LookLoader":
             continue
@@ -94,6 +96,7 @@ def get_all_asset_nodes():
         nodes += lib.get_container_members(container_name)
 
     nodes = list(set(nodes))
+    print(nodes)
     return nodes
 
 
