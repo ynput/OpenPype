@@ -20,9 +20,7 @@ from openpype.pipeline import AvalonMongoDB
 from openpype.settings import get_project_settings
 from openpype_modules.webserver.base_routes import RestApiEndpoint
 
-
-
-log = PypeLogger.get_logger("WebServer")
+log = PypeLogger.get_logger("WebpublishRoutes")
 
 
 class ResourceRestApiEndpoint(RestApiEndpoint):
@@ -69,9 +67,10 @@ class RestApiResource:
         ).encode("utf-8")
 
 
-class OpenPypeRestApiResource(RestApiResource):
+class WebpublishRestApiResource:
     """Resource carrying OP DB connection for storing batch info into DB."""
-    def __init__(self, ):
+
+    def __init__(self):
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
         database_name = os.environ["OPENPYPE_DATABASE_NAME"]
         self.dbcon = mongo_client[database_name]["webpublishes"]
