@@ -1,7 +1,7 @@
 import os
 
 import pyblish.api
-from pymongo import MongoClient
+from openpype.lib.mongo import OpenPypeMongoConnection
 
 from openpype.modules.shotgrid.lib.settings import (
     get_shotgrid_project_settings,
@@ -63,8 +63,7 @@ class CollectShotgridEntities(pyblish.api.ContextPlugin):
 
 
 def _get_shotgrid_collection(project):
-    mongo_url = os.getenv("OPENPYPE_MONGO")
-    client = MongoClient(mongo_url)
+    client = OpenPypeMongoConnection.get_mongo_client()
     return client.get_database("shotgrid_openpype").get_collection(project)
 
 
