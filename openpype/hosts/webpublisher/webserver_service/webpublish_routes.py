@@ -17,12 +17,22 @@ from openpype.lib.remote_publish import (
     REPROCESS_STATUS
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
 from openpype.settings import get_project_settings
+from openpype_modules.webserver.base_routes import RestApiEndpoint
 
 
 
 log = PypeLogger.get_logger("WebServer")
+
+
+class ResourceRestApiEndpoint(RestApiEndpoint):
+    def __init__(self, resource):
+        self.resource = resource
+        super(ResourceRestApiEndpoint, self).__init__()
+
+    @property
+    def dbcon(self):
+        return self.resource.dbcon
 
 
 class RestApiResource:
@@ -67,7 +77,7 @@ class OpenPypeRestApiResource(RestApiResource):
         self.dbcon = mongo_client[database_name]["webpublishes"]
 
 
-class ProjectsEndpoint(_RestApiEndpoint):
+class ProjectsEndpoint(ResourceRestApiEndpoint):
     """Returns list of dict with project info (id, name)."""
     async def get(self) -> Response:
         output = []
@@ -84,7 +94,7 @@ class ProjectsEndpoint(_RestApiEndpoint):
         )
 
 
-class HiearchyEndpoint(_RestApiEndpoint):
+class HiearchyEndpoint(ResourceRestApiEndpoint):
     """Returns dictionary with context tree from assets."""
     async def get(self, project_name) -> Response:
         query_projection = {
@@ -183,7 +193,7 @@ class TaskNode(Node):
         self["attributes"] = {}
 
 
-class BatchPublishEndpoint(_RestApiEndpoint):
+class BatchPublishEndpoint(ResourceRestApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
         # Validate existence of openpype executable
@@ -288,7 +298,7 @@ class BatchPublishEndpoint(_RestApiEndpoint):
         )
 
 
-class TaskPublishEndpoint(_RestApiEndpoint):
+class TaskPublishEndpoint(ResourceRestApiEndpoint):
     """Prepared endpoint triggered after each task - for future development."""
     async def post(self, request) -> Response:
         return Response(
@@ -298,7 +308,7 @@ class TaskPublishEndpoint(_RestApiEndpoint):
         )
 
 
-class BatchStatusEndpoint(_RestApiEndpoint):
+class BatchStatusEndpoint(ResourceRestApiEndpoint):
     """Returns dict with info for batch_id."""
     async def get(self, batch_id) -> Response:
         output = self.dbcon.find_one({"batch_id": batch_id})
@@ -318,7 +328,7 @@ class BatchStatusEndpoint(_RestApiEndpoint):
         )
 
 
-class UserReportEndpoint(_RestApiEndpoint):
+class UserReportEndpoint(ResourceRestApiEndpoint):
     """Returns list of dict with batch info for user (email address)."""
     async def get(self, user) -> Response:
         output = list(self.dbcon.find({"user": user},
@@ -338,7 +348,7 @@ class UserReportEndpoint(_RestApiEndpoint):
         )
 
 
-class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
+class ConfiguredExtensionsEndpoint(ResourceRestApiEndpoint):
     """Returns dict of extensions which have mapping to family.
 
         Returns:
@@ -378,7 +388,7 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
         )
 
 
-class BatchReprocessEndpoint(_RestApiEndpoint):
+class BatchReprocessEndpoint(ResourceRestApiEndpoint):
     """Marks latest 'batch_id' for reprocessing, returns 404 if not found."""
     async def post(self, batch_id) -> Response:
         batches = self.dbcon.find({"batch_id": batch_id,
