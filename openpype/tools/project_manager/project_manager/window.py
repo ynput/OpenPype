@@ -245,7 +245,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.hierarchy_view.add_asset()
 
     def _on_add_task(self):
-        self.hierarchy_view.add_task()
+        self.hierarchy_view.add_task_and_edit()
 
     def _on_create_folders(self):
         project_name = self._current_project()
