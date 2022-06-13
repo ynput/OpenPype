@@ -18,9 +18,13 @@ _database = database = None
 log = logging.getLogger(__name__)
 
 
+def is_installed():
+    return module._is_installed
+
+
 def install():
     """Establish a persistent connection to the database"""
-    if module._is_installed:
+    if is_installed():
         return
 
     session = session_data_from_environment(context_keys=True)
@@ -55,7 +59,7 @@ def uninstall():
 def requires_install(func):
     @functools.wraps(func)
     def decorated(*args, **kwargs):
-        if not module._is_installed:
+        if not is_installed():
             install()
         return func(*args, **kwargs)
     return decorated
