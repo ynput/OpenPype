@@ -198,12 +198,12 @@ class InventoryModel(TreeModel):
         self.clear()
 
         if self._hierarchy_view and selected:
-
             if not hasattr(host.pipeline, "update_hierarchy"):
                 # If host doesn't support hierarchical containers, then
                 # cherry-pick only.
                 self.add_items((item for item in items
                                 if item["objectName"] in selected))
+                return
 
             # Update hierarchy info for all containers
             items_by_name = {item["objectName"]: item
