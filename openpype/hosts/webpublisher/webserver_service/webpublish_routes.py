@@ -2,11 +2,15 @@
 import os
 import json
 import datetime
-from bson.objectid import ObjectId
 import collections
-from aiohttp.web_response import Response
 import subprocess
+from bson.objectid import ObjectId
+from aiohttp.web_response import Response
 
+from openpype.client import (
+    get_projects,
+    get_assets,
+)
 from openpype.lib import (
     OpenPypeMongoConnection,
     PypeLogger,
@@ -80,7 +84,7 @@ class ProjectsEndpoint(ResourceRestApiEndpoint):
     """Returns list of dict with project info (id, name)."""
     async def get(self) -> Response:
         output = []
-        for project_doc in self.dbcon.projects():
+        for project_doc in get_projects():
             ret_val = {
                 "id": project_doc["_id"],
                 "name": project_doc["name"]
@@ -105,10 +109,7 @@ class HiearchyEndpoint(ResourceRestApiEndpoint):
             "type": 1,
         }
 
-        asset_docs = self.dbcon.database[project_name].find(
-            {"type": "asset"},
-            query_projection
-        )
+        asset_docs = get_assets(project_name, field=query_projection.keys())
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
             for asset_doc in asset_docs
