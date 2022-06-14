@@ -17,7 +17,8 @@
         "ExtractBlend": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": true,
+            "pack_images": true
         },
         "ExtractBlendAnimation": {
             "enabled": true,
