@@ -107,8 +107,7 @@ class CreateFolders(BaseAction):
         if with_interface:
             with_childrens = event["data"]["values"]["children_included"]
             restrict_folders = event["data"]["values"]["restrict_folders"]
-            from_local_template = event["data"]["values"]\
-                ["from_local_template"]
+            from_local_template = event["data"]["values"]["from_local_template"]
 
         filtered_entities = []
         for entity in entities:
@@ -239,7 +238,7 @@ class CreateFolders(BaseAction):
                     pass
                 # Invoking OpenPype API to create the project folders
                 create_project_folders(basic_paths, project_name,
-                    root_paths=[work_root])
+                                        root_paths=[work_root])
                 self.log.info("successfully created local template folders.")
             except Exception as exc:
                 self.log.warning(
