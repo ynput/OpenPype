@@ -90,6 +90,7 @@ class FtrackTrayWrapper:
                     webbrowser.open_new(self.module.ftrack_url)
             else:
                 webbrowser.open_new(self.module.ftrack_url)
+        return
 
     def validate(self):
         validation = False
