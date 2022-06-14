@@ -146,7 +146,7 @@ class ExtractLook(openpype.api.Extractor):
 
     label = "Extract Look (Maya Scene + JSON)"
     hosts = ["maya"]
-    families = ["look"]
+    families = ["look", "mvLook"]
     order = pyblish.api.ExtractorOrder + 0.2
     scene_type = "ma"
     look_data_type = "json"
@@ -372,10 +372,12 @@ class ExtractLook(openpype.api.Extractor):
 
             if mode == COPY:
                 transfers.append((source, destination))
-                self.log.info('copying')
+                self.log.info('file will be copied {} -> {}'.format(
+                    source, destination))
             elif mode == HARDLINK:
                 hardlinks.append((source, destination))
-                self.log.info('hardlinking')
+                self.log.info('file will be hardlinked {} -> {}'.format(
+                    source, destination))
 
             # Store the hashes from hash to destination to include in the
             # database

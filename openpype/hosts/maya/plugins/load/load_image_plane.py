@@ -83,7 +83,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
 
     families = ["image", "plate", "render"]
     label = "Load imagePlane"
-    representations = ["mov", "exr", "preview", "png"]
+    representations = ["mov", "exr", "preview", "png", "jpg"]
     icon = "image"
     color = "orange"
 

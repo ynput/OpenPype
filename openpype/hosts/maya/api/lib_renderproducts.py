@@ -77,6 +77,7 @@ IMAGE_PREFIXES = {
     "arnold": "defaultRenderGlobals.imageFilePrefix",
     "renderman": "rmanGlobals.imageFileFormat",
     "redshift": "defaultRenderGlobals.imageFilePrefix",
+    "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
 }
 
 RENDERMAN_IMAGE_DIR = "maya/<scene>/<layer>"
@@ -155,7 +156,8 @@ def get(layer, render_instance=None):
         "arnold": RenderProductsArnold,
         "vray": RenderProductsVray,
         "redshift": RenderProductsRedshift,
-        "renderman": RenderProductsRenderman
+        "renderman": RenderProductsRenderman,
+        "mayahardware2": RenderProductsMayaHardware
     }.get(renderer_name.lower(), None)
     if renderer is None:
         raise UnsupportedRendererException(
@@ -1091,6 +1093,11 @@ class RenderProductsRenderman(ARenderProducts):
             if not enabled:
                 continue
 
+            # Skip display types not producing any file output.
+            # Is there a better way to do it?
+            if not display_types.get(display["driverNode"]["type"]):
+                continue
+
             aov_name = name
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
@@ -1122,6 +1129,67 @@ class RenderProductsRenderman(ARenderProducts):
             new_files.append(new_file)
 
         return new_files
+
+
+class RenderProductsMayaHardware(ARenderProducts):
+    """Expected files for MayaHardware renderer."""
+
+    renderer = "mayahardware2"
+
+    extensions = [
+        {"label": "JPEG", "index": 8, "extension": "jpg"},
+        {"label": "PNG", "index": 32, "extension": "png"},
+        {"label": "EXR(exr)", "index": 40, "extension": "exr"}
+    ]
+
+    def _get_extension(self, value):
+        result = None
+        if isinstance(value, int):
+            extensions = {
+                extension["index"]: extension["extension"]
+                for extension in self.extensions
+            }
+            try:
+                result = extensions[value]
+            except KeyError:
+                raise NotImplementedError(
+                    "Could not find extension for {}".format(value)
+                )
+
+        if isinstance(value, six.string_types):
+            extensions = {
+                extension["label"]: extension["extension"]
+                for extension in self.extensions
+            }
+            try:
+                result = extensions[value]
+            except KeyError:
+                raise NotImplementedError(
+                    "Could not find extension for {}".format(value)
+                )
+
+        if not result:
+            raise NotImplementedError(
+                "Could not find extension for {}".format(value)
+            )
+
+        return result
+
+    def get_render_products(self):
+        """Get all AOVs.
+        See Also:
+            :func:`ARenderProducts.get_render_products()`
+        """
+        ext = self._get_extension(
+            self._get_attr("defaultRenderGlobals.imageFormat")
+        )
+
+        products = []
+        for cam in self.get_renderable_cameras():
+            product = RenderProduct(productName="beauty", ext=ext, camera=cam)
+            products.append(product)
+
+        return products
 
 
 class AOVError(Exception):

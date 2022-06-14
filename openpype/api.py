@@ -44,6 +44,7 @@ from . import resources
 
 from .plugin import (
     Extractor,
+    Integrator,
 
     ValidatePipelineOrder,
     ValidateContentsOrder,
@@ -86,6 +87,7 @@ __all__ = [
 
     # plugin classes
     "Extractor",
+    "Integrator",
     # ordering
     "ValidatePipelineOrder",
     "ValidateContentsOrder",

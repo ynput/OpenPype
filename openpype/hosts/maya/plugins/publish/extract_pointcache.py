@@ -16,6 +16,8 @@ class ExtractAlembic(openpype.api.Extractor):
     Positions and normals, uvs, creases are preserved, but nothing more,
     for plain and predictable point caches.
 
+    Plugin can run locally or remotely (on a farm - if instance is marked with
+    "farm" it will be skipped in local processing, but processed on farm)
     """
 
     label = "Extract Pointcache (Alembic)"
@@ -23,8 +25,12 @@ class ExtractAlembic(openpype.api.Extractor):
     families = ["pointcache",
                 "model",
                 "vrayproxy"]
+    targets = ["local", "remote"]
 
     def process(self, instance):
+        if instance.data.get("farm"):
+            self.log.debug("Should be processed on farm, skipping.")
+            return
 
         nodes = instance[:]
 
@@ -91,5 +97,7 @@ class ExtractAlembic(openpype.api.Extractor):
             "stagingDir": dirname
         }
         instance.data["representations"].append(representation)
+
+        instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

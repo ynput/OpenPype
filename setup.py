@@ -107,7 +107,8 @@ install_requires = [
     # Python defaults (cx_Freeze skip them by default)
     "dbm",
     "sqlite3",
-    "dataclasses"
+    "dataclasses",
+    "timeit"
 ]
 
 includes = []
