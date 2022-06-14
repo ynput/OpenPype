@@ -1,14 +1,12 @@
-from hashlib import new
-from operator import pos
 import os
 import time
 import datetime
 import threading
 import platform
-import subprocess
-import posixpath, ntpath
+import posixpath
+import ntpath
 import webbrowser
-import shutil
+
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
@@ -82,7 +80,7 @@ class FtrackTrayWrapper:
             else:
                 webbrowser.get(using="windows-default").open_new(
                     self.module.ftrack_url)
-        
+
         else:
             if self.module.ftrack_open_as_app:
                 try:
