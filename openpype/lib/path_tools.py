@@ -189,7 +189,7 @@ def compute_paths(basic_paths_items, project_root):
 
 
 def create_project_folders(basic_paths, project_name, root_paths=None):
-    if root_paths == None:
+    if root_paths is None:
         anatomy = Anatomy(project_name)
         if isinstance(anatomy.roots, dict):
             for root in anatomy.roots.values():
