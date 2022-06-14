@@ -9,7 +9,7 @@ import maya.api.OpenMaya as om
 import pyblish.api
 
 from openpype.settings import get_project_settings
-from openpype.host import HostImplementation
+from openpype.host import HostImplementation, IWorkfileHost, ILoadHost
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import (
@@ -51,12 +51,12 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class MayaHostImplementation(HostImplementation):
+class MayaHostImplementation(HostImplementation, IWorkfileHost, ILoadHost):
     name = "maya"
 
     def __init__(self):
         super(MayaHostImplementation, self).__init__()
-        self._events = {}
+        self._op_events = {}
 
     def install(self):
         project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
@@ -124,39 +124,39 @@ class MayaHostImplementation(HostImplementation):
             yield
 
     def _register_callbacks(self):
-        for handler, event in self._events.copy().items():
+        for handler, event in self._op_events.copy().items():
             if event is None:
                 continue
 
             try:
                 OpenMaya.MMessage.removeCallback(event)
-                self._events[handler] = None
+                self._op_events[handler] = None
             except RuntimeError as exc:
                 self.log.info(exc)
 
-        self._events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
+        self._op_events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
             OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
         )
 
-        self._events[_before_scene_save] = (
+        self._op_events[_before_scene_save] = (
             OpenMaya.MSceneMessage.addCheckCallback(
                 OpenMaya.MSceneMessage.kBeforeSaveCheck,
                 _before_scene_save
             )
         )
 
-        self._events[_on_scene_new] = OpenMaya.MSceneMessage.addCallback(
+        self._op_events[_on_scene_new] = OpenMaya.MSceneMessage.addCallback(
             OpenMaya.MSceneMessage.kAfterNew, _on_scene_new
         )
 
-        self._events[_on_maya_initialized] = (
+        self._op_events[_on_maya_initialized] = (
             OpenMaya.MSceneMessage.addCallback(
                 OpenMaya.MSceneMessage.kMayaInitialized,
                 _on_maya_initialized
             )
         )
 
-        self._events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
+        self._op_events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
             OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
         )
 
