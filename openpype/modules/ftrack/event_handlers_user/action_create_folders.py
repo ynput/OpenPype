@@ -1,7 +1,11 @@
 import os
 import collections
 import copy
-from openpype.api import Anatomy
+from openpype.api import (
+    Anatomy,
+    get_project_basic_paths,
+    create_project_folders
+)
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
@@ -51,10 +55,30 @@ class CreateFolders(BaseAction):
             },
             {
                 "type": "label",
-                "value": "With all chilren entities"
+                "value": "Create with all children entities"
             },
             {
                 "name": "children_included",
+                "type": "boolean",
+                "value": False
+            },
+            {
+                "type": "label",
+                "value": "Create publish and work folders \
+                    for <b>Shots</b> and <b>Asset Build</b> only"
+            },
+            {
+                "name": "restrict_folders",
+                "type": "boolean",
+                "value": False
+            },
+            {
+                "type": "label",
+                "value": "Create <b>Local Work</b> folders from OpenPype \
+                    template"
+            },
+            {
+                "name": "from_local_template",
                 "type": "boolean",
                 "value": False
             },
@@ -78,8 +102,12 @@ class CreateFolders(BaseAction):
 
         with_interface = event["data"]["values"]["with_interface"]
         with_childrens = True
+        restrict_folders = False
+        from_local_template = False
         if with_interface:
             with_childrens = event["data"]["values"]["children_included"]
+            restrict_folders = event["data"]["values"]["restrict_folders"]
+            from_local_template = event["data"]["values"]["from_local_template"]
 
         filtered_entities = []
         for entity in entities:
@@ -121,6 +149,10 @@ class CreateFolders(BaseAction):
         for key in work_keys:
             work_template = work_template[key]
 
+        work_root = self.compute_template(
+            anatomy, {}, work_keys
+        )
+
         publish_keys = ["publish", "folder"]
         publish_template = anatomy.templates
         for key in publish_keys:
@@ -154,7 +186,7 @@ class CreateFolders(BaseAction):
                 "parent": parent_name
             })
 
-            if not task_entities:
+            if not task_entities and not restrict_folders :
                 # create path for entity
                 collected_paths.append(self.compute_template(
                     anatomy, parent_data, work_keys
@@ -173,7 +205,7 @@ class CreateFolders(BaseAction):
                     "type": task_type_name
                 }
 
-                # Template wok
+                # Template work
                 collected_paths.append(self.compute_template(
                     anatomy, task_data, work_keys
                 ))
@@ -195,6 +227,23 @@ class CreateFolders(BaseAction):
             self.log.info(path)
             if not os.path.exists(path):
                 os.makedirs(path)
+
+        self.log.info("Creating local template folders...")
+
+        if from_local_template:
+            try:
+                # Get paths based on presets
+                basic_paths = get_project_basic_paths(project_name)
+                if not basic_paths:
+                    pass
+                # Invoking OpenPype API to create the project folders
+                create_project_folders(basic_paths, project_name, root_paths=[work_root])
+                self.log.info("successfully created local template folders.")
+            except Exception as exc:
+                self.log.warning(
+                    "Cannot create starting folders: {}".format(exc),
+                    exc_info=True
+                )
 
         return {
             "success": True,
