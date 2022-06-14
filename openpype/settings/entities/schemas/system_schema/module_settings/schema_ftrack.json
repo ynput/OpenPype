@@ -17,45 +17,9 @@
             "label": "Server"
         },
         {
-            "type": "splitter"
-        },
-        {
-            "type": "path",
-            "key": "ftrack_browser_path",
-            "label": "Browser Path",
-            "use_label_wrap": true,
-            "multipath": true,
-            "multiplatform": true
-        },
-        {
-            "type": "dict",
-            "key": "ftrack_browser_arguments",
-            "label": "Browser Arguments",
-            "use_label_wrap": true,
-            "children": [
-                {
-                    "type": "label",
-                    "label": "Any arguent which is used to open Ftrack URL (as in \"app=\" for chrome) needs to be placed last in the list!"
-                },
-                {
-                    "key": "windows",
-                    "label": "Windows",
-                    "type": "list",
-                    "object_type": "text"
-                },
-                {
-                    "key": "darwin",
-                    "label": "MacOS",
-                    "type": "list",
-                    "object_type": "text"
-                },
-                {
-                    "key": "linux",
-                    "label": "Linux",
-                    "type": "list",
-                    "object_type": "text"
-                }
-            ]
+            "type": "boolean",
+            "key": "ftrack_open_as_app",
+            "label": "Open in app mode"
         },
         {
             "type": "splitter"

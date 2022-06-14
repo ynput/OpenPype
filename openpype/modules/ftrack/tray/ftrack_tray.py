@@ -1,9 +1,14 @@
+from hashlib import new
+from operator import pos
 import os
 import time
 import datetime
 import threading
 import platform
 import subprocess
+import posixpath, ntpath
+import webbrowser
+import shutil
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
@@ -14,7 +19,6 @@ from ..ftrack_module import FTRACK_MODULE_DIR
 from . import login_dialog
 
 from openpype.api import Logger, resources
-from openpype.settings import get_system_settings
 
 
 log = Logger().get_logger("FtrackModule")
@@ -52,29 +56,42 @@ class FtrackTrayWrapper:
         self.widget_login.raise_()
 
     def show_ftrack_browser(self):
-        cur_os = platform.system().lower()
-        settings = get_system_settings()["modules"]["ftrack"]
-        browser_paths = settings["ftrack_browser_path"][cur_os]
-        browser_args = settings["ftrack_browser_arguments"][cur_os]
-        browser_args.append(self.module.ftrack_url)
-        path = ""
-        for p in browser_paths:
-            if os.path.exists(p):
-                path = p
-                log.debug(f"Found valid executable at path: {p}")
-                break
+        env_pf64 = os.environ['ProgramW6432'].replace(
+            ntpath.sep, posixpath.sep)
+        env_pf32 = os.environ['ProgramFiles(x86)'].replace(
+            ntpath.sep, posixpath.sep)
+        env_loc = os.environ['LocalAppData'].replace(
+            ntpath.sep, posixpath.sep)
+        chromium_paths_win = [
+            f"{env_pf64}/Google/Chrome/Application/chrome.exe",
+            f"{env_pf32}/Google/Chrome/Application/chrome.exe",
+            f"{env_loc}/Google/Chrome/Application/chrome.exe",
+            f"{env_pf32}/Microsoft/Edge/Application/msedge.exe"
+        ]
+        cur_os = cur_os = platform.system().lower()
+        if cur_os == "windows":
+            is_chromium = False
+            for p in chromium_paths_win:
+                if os.path.exists(p):
+                    is_chromium = True
+                    chromium_path = p
+                    break
+            if is_chromium and self.module.ftrack_open_as_app:
+                webbrowser.get(f"{chromium_path} %s").open_new(
+                    f"--app={self.module.ftrack_url}")
             else:
-                log.warning(f"Path: {p} is not valid, please \
-                    doublecheck your settings!")
-        if path == "":
-            log.warning("Found no valid executables to launch \
-                Ftrack with. Feature will not work as expected!")
-            return
-        args = " ".join(str(item) for item in browser_args).replace("= ", "=")
-        log.debug(f"Computed arguments: {args}")
-        cmd = f"{path} {args}"
-        log.debug(f"Opening Ftrack Browser...")
-        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                webbrowser.get(using="windows-default").open_new(
+                    self.module.ftrack_url)
+        
+        else:
+            if self.module.ftrack_open_as_app:
+                try:
+                    webbrowser.get(using='chrome').open_new(
+                        f"--app={self.module.ftrack_url}")
+                except webbrowser.Error:
+                    webbrowser.open_new(self.module.ftrack_url)
+            else:
+                webbrowser.open_new(self.module.ftrack_url)
 
     def validate(self):
         validation = False

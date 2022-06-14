@@ -42,6 +42,9 @@ class FtrackModule(
 
         self.ftrack_url = ftrack_url
 
+        ftrack_open_as_app = ftrack_settings["ftrack_open_as_app"]
+        self.ftrack_open_as_app = ftrack_open_as_app
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
         low_platform = platform.system().lower()
 
