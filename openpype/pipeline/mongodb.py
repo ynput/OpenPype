@@ -199,6 +199,10 @@ class AvalonMongoDB:
         """Return the name of the active project"""
         return self.Session["AVALON_PROJECT"]
 
+    def current_project(self):
+        """Currently set project in Session without triggering installation."""
+        return self.Session.get("AVALON_PROJECT")
+
     @requires_install
     @auto_reconnect
     def projects(self, projection=None, only_active=True):
