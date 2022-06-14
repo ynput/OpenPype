@@ -135,8 +135,16 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
-def get_assets(
-    project_name, asset_ids=None, asset_names=None, archived=False, fields=None
+# NOTE this could be just public function?
+# - any better variable name instead of 'standard'?
+# - same approach can be used for rest of types
+def _get_assets(
+    project_name,
+    asset_ids=None,
+    asset_names=None,
+    standard=True,
+    archived=False,
+    fields=None
 ):
     """Assets for specified project by passed filters.
 
@@ -149,6 +157,8 @@ def get_assets(
         project_name (str): Name of project where to look for queried entities.
         asset_ids (list[str|ObjectId]): Asset ids that should be found.
         asset_names (list[str]): Name assets that should be found.
+        standard (bool): Query standart assets (type 'asset').
+        archived (bool): Query archived assets (type 'archived_asset').
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -157,9 +167,14 @@ def get_assets(
             passed filters.
     """
 
-    asset_types = ["asset"]
+    asset_types = []
+    if standard:
+        asset_types.append("asset")
     if archived:
         asset_types.append("archived_asset")
+
+    if not asset_types:
+        return []
 
     if len(asset_types) == 1:
         query_filter = {"type": asset_types[0]}
@@ -180,6 +195,68 @@ def get_assets(
     conn = _get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
+
+
+def get_assets(
+    project_name,
+    asset_ids=None,
+    asset_names=None,
+    archived=False,
+    fields=None
+):
+    """Assets for specified project by passed filters.
+
+    Passed filters (ids and names) are always combined so all conditions must
+    match.
+
+    To receive all assets from project just keep filters empty.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        asset_ids (list[str|ObjectId]): Asset ids that should be found.
+        asset_names (list[str]): Name assets that should be found.
+        archived (bool): Add also archived assets.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Query cursor as iterable which returns asset documents matching
+            passed filters.
+    """
+
+    return _get_assets(
+        project_name, asset_ids, asset_names, True, archived, fields
+    )
+
+
+def get_archived_assets(
+    project_name,
+    asset_ids=None,
+    asset_names=None,
+    fields=None
+):
+    """Archived assets for specified project by passed filters.
+
+    Passed filters (ids and names) are always combined so all conditions must
+    match.
+
+    To receive all archived assets from project just keep filters empty.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        asset_ids (list[str|ObjectId]): Asset ids that should be found.
+        asset_names (list[str]): Name assets that should be found.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Query cursor as iterable which returns asset documents matching
+            passed filters.
+    """
+
+    return _get_assets(
+        project_name, asset_ids, asset_names, False, True, fields
+    )
 
 
 def get_asset_ids_with_subsets(project_name, asset_ids=None):
