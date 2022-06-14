@@ -290,49 +290,16 @@ def _load_modules():
 
     log = PypeLogger.get_logger("ModulesLoader")
 
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    processed_paths = set()
-    processed_paths.add(current_dir)
-    # Import default modules imported from 'openpype.modules'
-    for filename in os.listdir(current_dir):
-        # Ignore filenames
-        if (
-            filename in IGNORED_FILENAMES
-            or filename in IGNORED_DEFAULT_FILENAMES
-        ):
-            continue
-
-        fullpath = os.path.join(current_dir, filename)
-        basename, ext = os.path.splitext(filename)
-
-        if os.path.isdir(fullpath):
-            # Check existence of init fil
-            init_path = os.path.join(fullpath, "__init__.py")
-            if not os.path.exists(init_path):
-                log.debug((
-                    "Module directory does not contan __init__.py file {}"
-                ).format(fullpath))
-                continue
-
-        elif ext not in (".py", ):
-            continue
-
-        try:
-            import_str = "openpype.modules.{}".format(basename)
-            new_import_str = "{}.{}".format(modules_key, basename)
-            default_module = __import__(import_str, fromlist=("", ))
-            sys.modules[new_import_str] = default_module
-            setattr(openpype_modules, basename, default_module)
-
-        except Exception:
-            msg = (
-                "Failed to import default module '{}'."
-            ).format(basename)
-            log.error(msg, exc_info=True)
-
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
-    for dirpath in get_module_dirs():
+    module_dirs = get_module_dirs()
+    # Add current directory at first place
+    #   - has small differences in import logic
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    module_dirs.insert(0, current_dir)
+
+    processed_paths = set()
+    for dirpath in module_dirs:
         # Skip already processed paths
         if dirpath in processed_paths:
             continue
@@ -344,20 +311,29 @@ def _load_modules():
             ).format(dirpath))
             continue
 
+        is_in_current_dir = dirpath == current_dir
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
                 continue
 
+            if (
+                is_in_current_dir
+                and filename in IGNORED_DEFAULT_FILENAMES
+            ):
+                continue
+
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
 
+            # Validations
             if os.path.isdir(fullpath):
-                # Check existence of init fil
+                # Check existence of init file
                 init_path = os.path.join(fullpath, "__init__.py")
                 if not os.path.exists(init_path):
                     log.debug((
-                        "Module directory does not contan __init__.py file {}"
+                        "Module directory does not contain __init__.py"
+                        " file {}"
                     ).format(fullpath))
                     continue
 
@@ -367,31 +343,34 @@ def _load_modules():
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest
             try:
-                if os.path.isdir(fullpath):
-                    # Module without init file can't be used as OpenPype module
-                    #   because the module class could not be imported
-                    init_file = os.path.join(fullpath, "__init__.py")
-                    if not os.path.exists(init_file):
-                        log.info((
-                            "Skipping module directory because of"
-                            " missing \"__init__.py\" file. \"{}\""
-                        ).format(fullpath))
-                        continue
+                # Don't import dynamically current directory modules
+                if is_in_current_dir:
+                    import_str = "openpype.modules.{}".format(basename)
+                    new_import_str = "{}.{}".format(modules_key, basename)
+                    default_module = __import__(import_str, fromlist=("", ))
+                    sys.modules[new_import_str] = default_module
+                    setattr(openpype_modules, basename, default_module)
+
+                elif os.path.isdir(fullpath):
                     import_module_from_dirpath(dirpath, filename, modules_key)
 
-                elif ext in (".py", ):
+                else:
                     module = import_filepath(fullpath)
                     setattr(openpype_modules, basename, module)
 
             except Exception:
-                log.error(
-                    "Failed to import '{}'.".format(fullpath),
-                    exc_info=True
-                )
+                if is_in_current_dir:
+                    msg = "Failed to import default module '{}'.".format(
+                        basename
+                    )
+                else:
+                    msg = "Failed to import module '{}'.".format(fullpath)
+                log.error(msg, exc_info=True)
 
 
 class _OpenPypeInterfaceMeta(ABCMeta):
     """OpenPypeInterface meta class to print proper string."""
+
     def __str__(self):
         return "<'OpenPypeInterface.{}'>".format(self.__name__)
 
@@ -410,6 +389,7 @@ class OpenPypeInterface:
     OpenPype modules which means they have to have implemented methods defined
     in the interface. By default interface does not have any abstract parts.
     """
+
     pass
 
 
@@ -454,10 +434,12 @@ class OpenPypeModule:
         It is not recommended to override __init__ that's why specific method
         was implemented.
         """
+
         pass
 
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
+
         pass
 
     def get_global_environments(self):
@@ -465,7 +447,21 @@ class OpenPypeModule:
 
         Environment variables that can be get only from system settings.
         """
+
         return {}
+
+    def modify_application_launch_arguments(self, application, env):
+        """Give option to modify launch environments before application launch.
+
+        Implementation is optional. To change environments modify passed
+        dictionary of environments.
+
+        Args:
+            application (Application): Application that is launched.
+            env (dict): Current environemnt variables.
+        """
+
+        pass
 
     def cli(self, module_click_group):
         """Add commands to click group.
@@ -487,6 +483,7 @@ class OpenPypeModule:
         def mycommand():
             print("my_command")
         """
+
         pass
 
 
@@ -724,6 +721,32 @@ class ModulesManager:
             ).format(expected_keys, " | ".join(msg_items)))
         return output
 
+    def collect_creator_plugin_paths(self, host_name):
+        """Helper to collect creator plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are creators meants.
+
+        Returns:
+            list: List of creator plugin paths.
+        """
+        # Output structure
+        from openpype_interfaces import IPluginPaths
+
+        output = []
+        for module in self.get_enabled_modules():
+            # Skip module that do not inherit from `IPluginPaths`
+            if not isinstance(module, IPluginPaths):
+                continue
+
+            paths = module.get_creator_plugin_paths(host_name)
+            if paths:
+                # Convert to list if value is not list
+                if not isinstance(paths, (list, tuple, set)):
+                    paths = [paths]
+                output.extend(paths)
+        return output
+
     def collect_launch_hook_paths(self):
         """Helper to collect hooks from modules inherited ILaunchHookPaths.
 
@@ -882,6 +905,7 @@ class TrayModulesManager(ModulesManager):
     modules_menu_order = (
         "user",
         "ftrack",
+        "kitsu",
         "muster",
         "launcher_tool",
         "avalon",

@@ -1,8 +1,8 @@
 import re
 import pyblish
-import openpype
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
+import openpype.lib as oplib
 
 # # developer reload modules
 from pprint import pformat
@@ -26,18 +26,17 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
     add_tasks = []
 
     def process(self, context):
-        project = context.data["flameProject"]
         selected_segments = context.data["flameSelectedSegments"]
         self.log.debug("__ selected_segments: {}".format(selected_segments))
 
         self.otio_timeline = context.data["otioTimeline"]
-        self.clips_in_reels = opfapi.get_clips_in_reels(project)
         self.fps = context.data["fps"]
 
         # process all sellected
         for segment in selected_segments:
             # get openpype tag data
             marker_data = opfapi.get_segment_data_marker(segment)
+
             self.log.debug("__ marker_data: {}".format(
                 pformat(marker_data)))
 
@@ -60,26 +59,43 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             clip_name = clip_data["segment_name"]
             self.log.debug("clip_name: {}".format(clip_name))
 
+            # get otio clip data
+            otio_data = self._get_otio_clip_instance_data(clip_data) or {}
+            self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
+
             # get file path
             file_path = clip_data["fpath"]
 
-            # get source clip
-            source_clip = self._get_reel_clip(file_path)
-
             first_frame = opfapi.get_frame_from_filename(file_path) or 0
 
-            head, tail = self._get_head_tail(clip_data, first_frame)
+            head, tail = self._get_head_tail(
+                clip_data,
+                otio_data["otioClip"],
+                marker_data["handleStart"],
+                marker_data["handleEnd"]
+            )
+
+            # make sure value is absolute
+            if head != 0:
+                head = abs(head)
+            if tail != 0:
+                tail = abs(tail)
 
             # solve handles length
             marker_data["handleStart"] = min(
-                marker_data["handleStart"], abs(head))
+                marker_data["handleStart"], head)
             marker_data["handleEnd"] = min(
-                marker_data["handleEnd"], abs(tail))
+                marker_data["handleEnd"], tail)
+
+            workfile_start = self._set_workfile_start(marker_data)
 
             with_audio = bool(marker_data.pop("audio"))
 
             # add marker data to instance data
             inst_data = dict(marker_data.items())
+
+            # add ocio_data to instance data
+            inst_data.update(otio_data)
 
             asset = marker_data["asset"]
             subset = marker_data["subset"]
@@ -103,7 +119,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "families": families,
                 "publish": marker_data["publish"],
                 "fps": self.fps,
-                "flameSourceClip": source_clip,
+                "workfileFrameStart": workfile_start,
                 "sourceFirstFrame": int(first_frame),
                 "path": file_path,
                 "flameAddTasks": self.add_tasks,
@@ -111,13 +127,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                     task["name"]: {"type": task["type"]}
                     for task in self.add_tasks}
             })
-
-            # get otio clip data
-            otio_data = self._get_otio_clip_instance_data(clip_data) or {}
-            self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
-
-            # add to instance data
-            inst_data.update(otio_data)
             self.log.debug("__ inst_data: {}".format(pformat(inst_data)))
 
             # add resolution
@@ -150,6 +159,17 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             # if reviewTrack is on
             if marker_data.get("reviewTrack") is not None:
                 instance.data["reviewAudio"] = True
+
+    @staticmethod
+    def _set_workfile_start(data):
+        include_handles = data.get("includeHandles")
+        workfile_start = data["workfileFrameStart"]
+        handle_start = data["handleStart"]
+
+        if include_handles:
+            workfile_start += handle_start
+
+        return workfile_start
 
     def _get_comment_attributes(self, segment):
         comment = segment.comment.get_value()
@@ -242,29 +262,25 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         return split_comments
 
-    def _get_head_tail(self, clip_data, first_frame):
+    def _get_head_tail(self, clip_data, otio_clip, handle_start, handle_end):
         # calculate head and tail with forward compatibility
         head = clip_data.get("segment_head")
         tail = clip_data.get("segment_tail")
+        self.log.debug("__ head: `{}`".format(head))
+        self.log.debug("__ tail: `{}`".format(tail))
 
         # HACK: it is here to serve for versions bellow 2021.1
-        if not head:
-            head = int(clip_data["source_in"]) - int(first_frame)
-        if not tail:
-            tail = int(
-                clip_data["source_duration"] - (
-                    head + clip_data["record_duration"]
-                )
-            )
-        return head, tail
+        if not any([head, tail]):
+            retimed_attributes = oplib.get_media_range_with_retimes(
+                otio_clip, handle_start, handle_end)
+            self.log.debug(
+                ">> retimed_attributes: {}".format(retimed_attributes))
 
-    def _get_reel_clip(self, path):
-        match_reel_clip = [
-            clip for clip in self.clips_in_reels
-            if clip["fpath"] == path
-        ]
-        if match_reel_clip:
-            return match_reel_clip.pop()
+            # retimed head and tail
+            head = int(retimed_attributes["handleStart"])
+            tail = int(retimed_attributes["handleEnd"])
+
+        return head, tail
 
     def _get_resolution_to_data(self, data, context):
         assert data.get("otioClip"), "Missing `otioClip` data"
@@ -354,7 +370,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 continue
             if otio_clip.name not in segment.name.get_value():
                 continue
-            if openpype.lib.is_overlapping_otio_ranges(
+            if oplib.is_overlapping_otio_ranges(
                     parent_range, timeline_range, strict=True):
 
                 # add pypedata marker to otio_clip metadata

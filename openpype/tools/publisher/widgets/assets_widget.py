@@ -15,6 +15,7 @@ from openpype.tools.utils.assets_widget import (
 
 class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
     current_context_required = QtCore.Signal()
+    header_height_changed = QtCore.Signal(int)
 
     def __init__(self, controller, parent):
         self._controller = controller
@@ -26,6 +27,27 @@ class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
         self._current_asset_name = None
         self._last_selection = None
         self._enabled = None
+
+        self._last_filter_height = None
+
+    def _check_header_height(self):
+        """Catch header height changes.
+
+        Label on top of creaters should have same height so Creators view has
+        same offset.
+        """
+        height = self.header_widget.height()
+        if height != self._last_filter_height:
+            self._last_filter_height = height
+            self.header_height_changed.emit(height)
+
+    def resizeEvent(self, event):
+        super(CreateDialogAssetsWidget, self).resizeEvent(event)
+        self._check_header_height()
+
+    def showEvent(self, event):
+        super(CreateDialogAssetsWidget, self).showEvent(event)
+        self._check_header_height()
 
     def _on_current_asset_click(self):
         self.current_context_required.emit()
@@ -71,6 +93,7 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
     Uses controller to load asset hierarchy. All asset documents are stored by
     their parents.
     """
+
     def __init__(self, controller):
         super(AssetsHierarchyModel, self).__init__()
         self._controller = controller
@@ -143,6 +166,7 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
 
 class AssetsDialog(QtWidgets.QDialog):
     """Dialog to select asset for a context of instance."""
+
     def __init__(self, controller, parent):
         super(AssetsDialog, self).__init__(parent)
         self.setWindowTitle("Select asset")
@@ -196,9 +220,26 @@ class AssetsDialog(QtWidgets.QDialog):
         # - adds ability to call reset on multiple places without repeating
         self._soft_reset_enabled = True
 
+        self._first_show = True
+        self._default_height = 500
+
+    def _on_first_show(self):
+        center = self.rect().center()
+        size = self.size()
+        size.setHeight(self._default_height)
+
+        self.resize(size)
+        new_pos = self.mapToGlobal(center)
+        new_pos.setX(new_pos.x() - int(self.width() / 2))
+        new_pos.setY(new_pos.y() - int(self.height() / 2))
+        self.move(new_pos)
+
     def showEvent(self, event):
         """Refresh asset model on show."""
         super(AssetsDialog, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self._on_first_show()
         # Refresh on show
         self.reset(False)
 

@@ -38,7 +38,7 @@ class DropDataFrame(QtWidgets.QFrame):
     }
 
     sequence_types = [
-        ".bgeo", ".vdb"
+        ".bgeo", ".vdb", ".bgeosc", ".bgeogz"
     ]
 
     def __init__(self, parent):

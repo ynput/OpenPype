@@ -12,7 +12,7 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Load the model"""
+    """Reference file"""
 
     families = ["model",
                 "pointcache",
@@ -51,7 +51,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            nodes = cmds.file(self.fname,
+            file_url = self.prepare_root_value(self.fname,
+                                               context["project"]["code"])
+            nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
                               reference=True,
