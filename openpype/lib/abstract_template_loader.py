@@ -160,6 +160,8 @@ class AbstractTemplateLoader:
         for prf in profiles:
             if prf['task_types'] and task_type not in prf['task_types']:
                 continue
+            if prf['tasks'] and task_name not in prf['tasks']:
+                continue
             path = prf['path']
             break
         else:  # IF no template were found (no break happened)
