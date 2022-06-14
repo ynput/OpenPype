@@ -144,3 +144,12 @@ def parenthood(*args, **kwargs):
 @requires_install
 def bulk_write(*args, **kwargs):
     return _connection_object.bulk_write(*args, **kwargs)
+
+
+@requires_install
+def active_project(*args, **kwargs):
+    return _connection_object.active_project(*args, **kwargs)
+
+
+def current_project(*args, **kwargs):
+    return Session.get("AVALON_PROJECT")
