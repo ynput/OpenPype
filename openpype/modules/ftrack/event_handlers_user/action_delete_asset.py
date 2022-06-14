@@ -94,7 +94,7 @@ class DeleteAssetSubset(BaseAction):
             ftrack_id = entity.get("entityId")
             if ftrack_id:
                 ftrack_ids.append(ftrack_id)
-                
+
         if project_in_selection:
             msg = "It is not possible to use this action on project entity."
             self.show_message(event, msg, True)
@@ -149,7 +149,8 @@ class DeleteAssetSubset(BaseAction):
                 continue
 
             ent_path_items = [ent["name"] for ent in entity["link"]]
-            parents = ent_path_items[1:len(ent_path_items)-1:]
+            end_index = len(ent_path_items) - 1
+            parents = ent_path_items[1:end_index:]
             # TODO we should say to user that
             # few of them are missing in avalon
             for av_ent in av_ents_by_name:
