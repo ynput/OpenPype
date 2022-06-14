@@ -129,7 +129,7 @@ class ExtractLayout(openpype.api.Extractor):
 
         fbx_count = 0
 
-        project_name = instance.context["projectEntity"]["name"]
+        project_name = instance.context.data["projectEntity"]["name"]
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
 
