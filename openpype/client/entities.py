@@ -505,6 +505,7 @@ def _get_versions(
     project_name,
     subset_ids=None,
     version_ids=None,
+    versions=None,
     standard=True,
     hero=False,
     fields=None
@@ -535,6 +536,16 @@ def _get_versions(
             return []
         query_filter["_id"] = {"$in": version_ids}
 
+    if versions is not None:
+        versions = list(versions)
+        if not versions:
+            return []
+
+        if len(versions) == 1:
+            query_filter["name"] = versions[0]
+        else:
+            query_filter["name"] = {"$in": versions}
+
     conn = _get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
@@ -544,6 +555,7 @@ def get_versions(
     project_name,
     version_ids=None,
     subset_ids=None,
+    versions=None,
     hero=False,
     fields=None
 ):
@@ -557,6 +569,8 @@ def get_versions(
             Filter ignored if 'None' is passed.
         subset_ids (list[str]): Subset ids that will be queried.
             Filter ignored if 'None' is passed.
+        versions (list[int]): Version names (as integers).
+            Filter ignored if 'None' is passed.
         hero (bool): Look also for hero versions.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -569,6 +583,7 @@ def get_versions(
         project_name,
         subset_ids,
         version_ids,
+        versions,
         standard=True,
         hero=hero,
         fields=fields
