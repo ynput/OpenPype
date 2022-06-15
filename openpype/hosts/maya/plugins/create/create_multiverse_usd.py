@@ -16,7 +16,7 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data.update(lib.collect_animation_data(True))
 
         self.data["fileFormat"] = ["usd", "usda", "usdz"]
-        self.data["stripNamespaces"] = False
+        self.data["stripNamespaces"] = True
         self.data["mergeTransformAndShape"] = False
         self.data["writeAncestors"] = True
         self.data["flattenParentXforms"] = False
