@@ -22,6 +22,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
     hosts = ["flame"]
 
     # plugin defaults
+    keep_original_representation = False
+
     default_presets = {
         "thumbnail": {
             "active": True,
@@ -44,7 +46,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        if "representations" not in instance.data:
+
+        if not self.keep_original_representation:
+            # remove previeous representation if not needed
             instance.data["representations"] = []
 
         # flame objects
