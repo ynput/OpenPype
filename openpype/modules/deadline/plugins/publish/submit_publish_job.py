@@ -128,7 +128,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_MONGO"
     ]
 
     # custom deadline attributes
