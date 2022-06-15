@@ -54,9 +54,10 @@ The default locations are:
 ### Staging vs. Production
 You can have version of OpenPype with experimental features you want to try somewhere but you
 don't want to disrupt your production. You can tag version as **staging** simply by appending `+staging`
-to its name.
+to its name in `<Project_Root>/openpype/version.py`.
 
-So if you have OpenPype version like `OpenPype-v3.0.0.zip` just name it `OpenPype-v3.0.0+staging.zip`.
+So if you have OpenPype version like `3.0.0` just name it `3.0.0+staging`, thus generating the zip file named
+`OpenPype-v3.0.0+staging.zip`.
 When both these versions are present, production one will always take precedence over staging.
 
 You can run OpenPype with `--use-staging` argument to add use staging versions.
