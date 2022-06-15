@@ -125,6 +125,44 @@
 
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateMultiverseLook",
+            "label": "Create Multiverse Look",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "publish_mip_map",
+                    "label": "Publish Mip Maps"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateMultiverseUsd",
+            "label": "Create Multiverse USD",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "strip_namespaces",
+                    "label": "Strip Namespaces"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [

@@ -159,6 +159,14 @@
             "defaults": [
                 "Main"
             ]
+        },
+        "CreateMultiverseLook": {
+            "enabled": true,
+            "publish_mip_map": true
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "strip_namespaces": true
         }
     },
     "publish": {
