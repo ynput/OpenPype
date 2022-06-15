@@ -2,10 +2,6 @@ import os
 import time
 import datetime
 import threading
-import platform
-import posixpath
-import ntpath
-import webbrowser
 
 from Qt import QtCore, QtWidgets, QtGui
 
@@ -54,43 +50,7 @@ class FtrackTrayWrapper:
         self.widget_login.raise_()
 
     def show_ftrack_browser(self):
-        env_pf64 = os.environ['ProgramW6432'].replace(
-            ntpath.sep, posixpath.sep)
-        env_pf32 = os.environ['ProgramFiles(x86)'].replace(
-            ntpath.sep, posixpath.sep)
-        env_loc = os.environ['LocalAppData'].replace(
-            ntpath.sep, posixpath.sep)
-        chromium_paths_win = [
-            f"{env_pf64}/Google/Chrome/Application/chrome.exe",
-            f"{env_pf32}/Google/Chrome/Application/chrome.exe",
-            f"{env_loc}/Google/Chrome/Application/chrome.exe",
-            f"{env_pf32}/Microsoft/Edge/Application/msedge.exe"
-        ]
-        cur_os = cur_os = platform.system().lower()
-        if cur_os == "windows":
-            is_chromium = False
-            for p in chromium_paths_win:
-                if os.path.exists(p):
-                    is_chromium = True
-                    chromium_path = p
-                    break
-            if is_chromium and self.module.ftrack_open_as_app:
-                webbrowser.get(f"{chromium_path} %s").open_new(
-                    f"--app={self.module.ftrack_url}")
-            else:
-                webbrowser.get(using="windows-default").open_new(
-                    self.module.ftrack_url)
-
-        else:
-            if self.module.ftrack_open_as_app:
-                try:
-                    webbrowser.get(using='chrome').open_new(
-                        f"--app={self.module.ftrack_url}")
-                except webbrowser.Error:
-                    webbrowser.open_new(self.module.ftrack_url)
-            else:
-                webbrowser.open_new(self.module.ftrack_url)
-        return
+        QtGui.QDesktopServices.openUrl(self.module.ftrack_url)
 
     def validate(self):
         validation = False

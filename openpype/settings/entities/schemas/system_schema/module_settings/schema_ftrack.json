@@ -17,11 +17,6 @@
             "label": "Server"
         },
         {
-            "type": "boolean",
-            "key": "ftrack_open_as_app",
-            "label": "Open in app mode"
-        },
-        {
             "type": "splitter"
         },
         {

@@ -15,7 +15,6 @@
     "ftrack": {
         "enabled": false,
         "ftrack_server": "",
-        "ftrack_open_as_app": false,
         "ftrack_actions_path": {
             "windows": [],
             "darwin": [],
