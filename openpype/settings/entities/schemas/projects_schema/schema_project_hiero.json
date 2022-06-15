@@ -209,7 +209,7 @@
         },
         {
             "type": "schema",
-            "name": "schema_maya_scriptsmenu"
+            "name": "schema_scriptsmenu"
         }
     ]
 }
