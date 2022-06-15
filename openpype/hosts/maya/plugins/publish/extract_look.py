@@ -146,7 +146,7 @@ class ExtractLook(openpype.api.Extractor):
 
     label = "Extract Look (Maya Scene + JSON)"
     hosts = ["maya"]
-    families = ["look"]
+    families = ["look", "mvLook"]
     order = pyblish.api.ExtractorOrder + 0.2
     scene_type = "ma"
     look_data_type = "json"
