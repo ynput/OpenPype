@@ -238,6 +238,7 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
+    targets = ["local"]
 
     optional = True
     use_published = False
