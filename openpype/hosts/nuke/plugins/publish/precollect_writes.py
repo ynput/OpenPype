@@ -177,8 +177,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
             # make sure rendered sequence on farm will
             # be used for exctract review
-            if instance.data["review"]:
-                instance.data["useSequenceForReview"] = True
+            if not instance.data["review"]:
+                instance.data["useSequenceForReview"] = False
 
         # * Add audio to instance if exists.
         # Find latest versions document
