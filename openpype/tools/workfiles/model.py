@@ -4,6 +4,11 @@ import logging
 from Qt import QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_subsets,
+    get_versions,
+    get_representations,
+)
 from openpype.style import (
     get_default_entity_icon_color,
     get_disabled_entity_icon_color,
@@ -215,6 +220,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
 
         self._dbcon = dbcon
         self._anatomy = anatomy
+
         self._file_extensions = extensions
 
         self._invalid_context_item = None
@@ -233,6 +239,10 @@ class PublishFilesModel(QtGui.QStandardItemModel):
 
         self._asset_id = None
         self._task_name = None
+
+    @property
+    def project_name(self):
+        return self._dbcon.Session["AVALON_PROJECT"]
 
     def _set_item_invalid(self, item):
         item.setFlags(QtCore.Qt.NoItemFlags)
@@ -285,15 +295,11 @@ class PublishFilesModel(QtGui.QStandardItemModel):
     def _get_workfie_representations(self):
         output = []
         # Get subset docs of asset
-        subset_docs = self._dbcon.find(
-            {
-                "type": "subset",
-                "parent": self._asset_id
-            },
-            {
-                "_id": True,
-                "name": True
-            }
+        subset_docs = get_subsets(
+            self.project_name,
+            asset_ids=[self._asset_id],
+            fields=["_id", "name"]
+
         )
 
         subset_ids = [subset_doc["_id"] for subset_doc in subset_docs]
@@ -301,17 +307,12 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             return output
 
         # Get version docs of subsets with their families
-        version_docs = self._dbcon.find(
-            {
-                "type": "version",
-                "parent": {"$in": subset_ids}
-            },
-            {
-                "_id": True,
-                "data.families": True,
-                "parent": True
-            }
+        version_docs = get_versions(
+            self.project_name,
+            subset_ids=subset_ids,
+            fields=["_id", "parent", "data.families"]
         )
+
         # Filter versions if they contain 'workfile' family
         filtered_versions = []
         for version_doc in version_docs:
@@ -327,13 +328,10 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         # Query representations of filtered versions and add filter for
         #   extension
         extensions = [ext.replace(".", "") for ext in self._file_extensions]
-        repre_docs = self._dbcon.find(
-            {
-                "type": "representation",
-                "parent": {"$in": version_ids},
-                "context.ext": {"$in": extensions}
-            }
+        repre_docs = get_representations(
+            self.project_name, version_ids, extensions
         )
+
         # Filter queried representations by task name if task is set
         filtered_repre_docs = []
         for repre_doc in repre_docs:

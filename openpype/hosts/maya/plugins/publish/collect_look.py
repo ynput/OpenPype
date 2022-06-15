@@ -603,6 +603,18 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                      source,
                                                      computed_source))
 
+            # renderman allows nodes to have filename attribute empty while
+            # you can have another incoming connection from different node.
+            pxr_nodes = set()
+            if cmds.pluginInfo("RenderMan_for_Maya", query=True, loaded=True):
+                pxr_nodes = set(
+                    cmds.pluginInfo("RenderMan_for_Maya",
+                                    query=True,
+                                    dependNode=True)
+                )
+            if not source and cmds.nodeType(node) in pxr_nodes:
+                self.log.info("Renderman: source is empty, skipping...")
+                continue
             # We replace backslashes with forward slashes because V-Ray
             # can't handle the UDIM files with the backslashes in the
             # paths as the computed patterns
