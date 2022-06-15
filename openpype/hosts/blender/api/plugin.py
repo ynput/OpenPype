@@ -93,15 +93,14 @@ def create_container(
     name: str,
     color_tag: Optional[str] = None
 ) -> Optional[bpy.types.Collection]:
-    """
-    Create the collection container with the given name.
+    """Create the collection container with the given name.
 
     Arguments:
-        name (str): The name of the collection.
-        color_tag (str, optional): The display color in the outliner.
+        name:  The name of the collection.
+        color_tag: The display color in the outliner.
 
     Returns:
-        bpy.types.Collection: The collection if successed, None otherwise.
+        The collection if successed, None otherwise.
     """
     if bpy.data.collections.get(name) is None:
         container = bpy.data.collections.new(name)
@@ -115,14 +114,12 @@ def remove_container(
     container: Union[bpy.types.Collection, bpy.types.Object],
     content_only: Optional[bool] = False
 ):
-    """
-    Remove the container with all this objects and child collections.
+    """Remove the container with all this objects and child collections.
 
     Arguments:
-        container (Union[bpy.types.Collection, bpy.types.Object]):
-            The collection or empty container to be removed.
-        content_only (bool, optional): Remove all the container content but
-            keep the container collection or empty. Default to False.
+        container: The collection or empty container to be removed.
+        content_only: Remove all the container content but keep the container
+            collection or empty. Default to False.
 
     Note:
         This rename all removed elements with .removed suffix to prevent
@@ -192,22 +189,21 @@ def remove_container(
 
 
 def is_container(entity, family: Optional[str] = None) -> bool:
+    """Check if given entity is a valid container.
+
+    Arguments:
+        entity: The entity to check.
+        family: If is set and entity is container, this family must match
+            with the given family name.
+
+    Returns:
+        Return true if entity is a valid container.
+    """
     if (
         isinstance(entity, (bpy.types.Collection, bpy.types.Object))
         and entity.get(AVALON_PROPERTY)
         and entity[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
     ):
-        """
-        Check if given entity is a valid container.
-
-        Arguments:
-            entity: The entity to check.
-            family (str, optional): If is set and entity is container,
-                this family must match with the given family name.
-
-        Returns:
-            bool: Return true if entity is a valid container.
-        """
         if not family or entity[AVALON_PROPERTY].get("family") == family:
             return True
     return False
@@ -217,11 +213,12 @@ def is_container_up_to_date(
     container: Union[bpy.types.Collection, bpy.types.Object]
 ) -> bool:
     """Check if container is up to date.
+
     Arguments:
         container: The container to check.
 
     Returns:
-        bool: Return true if container is up to date.
+        Return true if container is up to date.
     """
 
     metadata = container.get(AVALON_PROPERTY, {})
@@ -248,14 +245,13 @@ def is_container_up_to_date(
 
 
 def get_last_representation(representation_id: str) -> Optional[Dict]:
-    """
-    Get last representation of the given representation id.
+    """Get last representation of the given representation id.
 
     Arguments:
-        representation_id (str): The representation id.
+        representation_id: The representation id.
 
     Returns:
-        dict: The last representation dict or None if not found.
+        The last representation dict or None if not found.
     """
     current_representation = legacy_io.find_one({
         "_id": ObjectId(representation_id)
@@ -279,13 +275,11 @@ def get_last_representation(representation_id: str) -> Optional[Dict]:
 def get_container_objects(
     container: Union[bpy.types.Collection, bpy.types.Object]
 ) -> List[bpy.types.Object]:
-    """
-    Get recursively all the child objects for the given container collection
+    """Get recursively all the child objects for the given container collection
     or object empty.
 
     Arguments:
-        container (Union[bpy.types.Collection, bpy.types.Object]):
-            The parent container.
+        container: The parent container.
 
     Returns:
         List[bpy.types.Object]: All the child objects of the container.
@@ -298,8 +292,10 @@ def get_container_objects(
     return objects
 
 
-def get_parent_collection(collection):
-    """Get the parent of the input collection"""
+def get_parent_collection(
+    collection: bpy.types.Collection
+) -> Optional[bpy.types.Collection]:
+    """Get the parent of the input collection."""
     check_list = [bpy.context.scene.collection]
     for c in check_list:
         if collection.name in c.children.keys():
@@ -310,14 +306,13 @@ def get_parent_collection(collection):
 
 
 def get_main_collection() -> bpy.types.Collection:
-    """
-    Get the main collection from scene.
+    """Get the main collection from scene.
     - the scene root collection if has no children.
     - or the first avalon instance collection child of root collection,
         but no family 'camera', 'action' and 'pointcache'.
 
     Returns:
-        bpy.types.Collection: The main collection.
+        The main collection.
     """
     _invalid_family = ("camera", "action", "pointcache")
 
@@ -342,19 +337,18 @@ def get_collections_by_objects(
     objects: List[bpy.types.Object],
     collections: Optional[List[bpy.types.Collection]] = None
 ) -> Iterator[bpy.types.Collection]:
-    """
-    Get collections who contain the compete given list of objects from all
+    """Get collections who contain the compete given list of objects from all
     scene collections or given list of collections.
 
     Arguments:
-        objects (List[bpy.types.Object]): The list of objects who need to be
-            contained in the returned collections.
-        collections (List[bpy.types.Collection], optional): The list of
-            collections used to get requested collections. If not defined,
-            we use all the childrens from scene collection.
+        objects: The list of objects who need to be contained in the
+            returned collections.
+        collections : The list of collections used to get requested
+            collections. If not defined, we use all the childrens from
+            scene collection.
 
     Yields:
-        bpy.types.Collection: The next requested collection.
+        The next requested collection.
     """
     if collections is None:
         collections = list(bpy.context.scene.collection.children)
@@ -371,14 +365,15 @@ def link_to_collection(
     entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
     collection: bpy.types.Collection
 ):
-    """
-    link an entity to a collection (Recursive function if entity is iterable).
+    """link an entity to a collection.
+
+    Note:
+        Recursive function if entity is iterable.
 
     Arguments:
-        entity (Union[bpy.types.Collection, bpy.types.Object, Iterator]):
-            The collection, object or list of valid entities who need to be
+        entity: The collection, object or list of valid entities who need to be
             parenting with the given collection.
-        collection (bpy.types.Collection): The collection used for parenting.
+        collection: The collection used for parenting.
     """
     # Entity is Iterable, execute function recursively.
     if isinstance(entity, Iterable):
@@ -481,7 +476,7 @@ class Creator(LegacyCreator):
         return container
 
     def process(self):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread."""
         mti = MainThreadItem(self._process)
         execute_in_main_thread(mti)
 
@@ -737,7 +732,7 @@ class AssetLoader(LoaderPlugin):
         )
 
     def _is_updated(self, asset_group, libpath):
-        """Check data before update. Return True if already updated"""
+        """Check data before update. Return True if already updated."""
 
         assert Path(libpath).is_file(), (
             f"The library file doesn't exist: {libpath}"
@@ -796,11 +791,10 @@ class AssetLoader(LoaderPlugin):
         asset process.
 
         Arguments:
-            asset_group (bpy.types.Object): the instancer object.
+            asset_group: the instancer object.
 
         Returns:
-            Union[bpy.types.Collection, bpy.types.Object]: The updated object
-                instancer or converted collection.
+            The updated object instancer or converted collection.
         """
         # Get instance collection and this metadata
         instance_collection = asset_group.instance_collection
@@ -978,7 +972,7 @@ class AssetLoader(LoaderPlugin):
             container: Container to remove.
 
         Returns:
-            bool: Whether the container was deleted.
+            Whether the container was deleted.
         """
         asset_group = self._get_asset_group_container(container)
 
