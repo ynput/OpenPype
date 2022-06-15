@@ -96,7 +96,7 @@ def create_container(
     """
     Create the collection container with the given name.
 
-    Args:
+    Arguments:
         name (str): The name of the collection.
         color_tag (str, optional): The display color in the outliner.
 
@@ -118,7 +118,7 @@ def remove_container(
     """
     Remove the container with all this objects and child collections.
 
-    Args:
+    Arguments:
         container (Union[bpy.types.Collection, bpy.types.Object]):
             The collection or empty container to be removed.
         content_only (bool, optional): Remove all the container content but
@@ -200,7 +200,7 @@ def is_container(entity, family: Optional[str] = None) -> bool:
         """
         Check if given entity is a valid container.
 
-        Args:
+        Arguments:
             entity: The entity to check.
             family (str, optional): If is set and entity is container,
                 this family must match with the given family name.
@@ -217,7 +217,7 @@ def is_container_up_to_date(
     container: Union[bpy.types.Collection, bpy.types.Object]
 ) -> bool:
     """Check if container is up to date.
-    Args:
+    Arguments:
         container: The container to check.
 
     Returns:
@@ -251,12 +251,11 @@ def get_last_representation(representation_id: str) -> Optional[Dict]:
     """
     Get last representation of the given representation id.
 
-    Args:
+    Arguments:
         representation_id (str): The representation id.
 
     Returns:
         dict: The last representation dict or None if not found.
-
     """
     current_representation = legacy_io.find_one({
         "_id": ObjectId(representation_id)
@@ -284,13 +283,12 @@ def get_container_objects(
     Get recursively all the child objects for the given container collection
     or object empty.
 
-    Args:
+    Arguments:
         container (Union[bpy.types.Collection, bpy.types.Object]):
             The parent container.
 
     Returns:
         List[bpy.types.Object]: All the child objects of the container.
-
     """
     if isinstance(container, bpy.types.Collection):
         objects = list(container.all_objects)
@@ -348,14 +346,14 @@ def get_collections_by_objects(
     Get collections who contain the compete given list of objects from all
     scene collections or given list of collections.
 
-    Args:
+    Arguments:
         objects (List[bpy.types.Object]): The list of objects who need to be
             contained in the returned collections.
         collections (List[bpy.types.Collection], optional): The list of
             collections used to get requested collections. If not defined,
             we use all the childrens from scene collection.
 
-    yields:
+    Yields:
         bpy.types.Collection: The next requested collection.
     """
     if collections is None:
@@ -376,7 +374,7 @@ def link_to_collection(
     """
     link an entity to a collection (Recursive function if entity is iterable).
 
-    Args:
+    Arguments:
         entity (Union[bpy.types.Collection, bpy.types.Object, Iterator]):
             The collection, object or list of valid entities who need to be
             parenting with the given collection.
@@ -507,62 +505,6 @@ class AssetLoader(LoaderPlugin):
     """
 
     @staticmethod
-    def _get_instance_empty(
-        instance_name: str,
-        nodes: List
-    ) -> Optional[bpy.types.Object]:
-        """Get the 'instance empty' that holds the collection instance."""
-        for node in nodes:
-            if not isinstance(node, bpy.types.Object):
-                continue
-            if (
-                node.type == 'EMPTY'
-                and node.instance_type == 'COLLECTION'
-                and node.instance_collection
-                and node.name == instance_name
-            ):
-                return node
-        return None
-
-    @staticmethod
-    def _get_instance_collection(
-        instance_name: str,
-        nodes: List
-    ) -> Optional[bpy.types.Collection]:
-        """Get the 'instance collection' (container) for this asset."""
-        for node in nodes:
-            if not isinstance(node, bpy.types.Collection):
-                continue
-            if node.name == instance_name:
-                return node
-        return None
-
-    @staticmethod
-    def _get_library_from_container(
-        container: bpy.types.Collection
-    ) -> bpy.types.Library:
-        """Find the library file from the container.
-
-        It traverses the objects from this collection, checks if there is only
-        1 library from which the objects come from and returns the library.
-
-        Warning:
-            No nested collections are supported at the moment!
-        """
-        assert not container.children, "Nested collections are not supported."
-        assert container.objects, "The collection doesn't contain any objects."
-        libraries = set()
-        for obj in container.objects:
-            assert obj.library, f"'{obj.name}' is not linked."
-            libraries.add(obj.library)
-
-        assert len(libraries) == 1, (
-            f"'{container.name}' contains objects from more then 1 library."
-        )
-
-        return list(libraries)[0]
-
-    @staticmethod
     def _get_container_from_collections(
         collections: List,
         famillies: Optional[List] = None
@@ -575,6 +517,28 @@ class AssetLoader(LoaderPlugin):
                 and (not famillies or metadata.get("family") in famillies)
             ):
                 return collection
+
+    @staticmethod
+    def _get_asset_group_container(
+        container: dict,
+    ) -> Optional[Union[bpy.types.Object, bpy.types.Collection]]:
+        """Get asset group from container dict."""
+        object_name = container["objectName"]
+        family = container.get("family")
+
+        asset_group = bpy.context.scene.objects.get(object_name)
+        if asset_group and is_container(asset_group, family):
+            return asset_group
+
+        for collection in bpy.context.scene.collection.children_recursive:
+            if collection.name == object_name:
+                asset_group = collection
+                break
+        else:
+            asset_group = bpy.data.collections.get(object_name)
+
+        if asset_group and is_container(asset_group, family):
+            return asset_group
 
     @staticmethod
     def _rename_with_namespace(
@@ -635,6 +599,7 @@ class AssetLoader(LoaderPlugin):
 
     @staticmethod
     def _load_fbx(libpath, asset_group):
+        """Load fbx process."""
 
         current_objects = set(bpy.data.objects)
 
@@ -756,8 +721,6 @@ class AssetLoader(LoaderPlugin):
             namespace: Use pre-defined namespace
             options: Additional settings dictionary
         """
-        # TODO (jasper): make it possible to add the asset several times by
-        # just re-using the collection
         assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
 
         asset = context["asset"]["name"]
@@ -766,34 +729,12 @@ class AssetLoader(LoaderPlugin):
         namespace = namespace or f"{asset}_{unique_number}"
         name = name or asset_name(asset, subset, unique_number)
 
-        nodes = self.process_asset(
+        return self.process_asset(
             context=context,
             name=name,
             namespace=namespace,
             options=options,
         )
-
-        # Only containerise if anything was loaded by the Loader.
-        if not nodes:
-            return None
-
-        # Only containerise if it's not already a collection from a .blend file
-        # representation = context["representation"]["name"]
-        # if representation != "blend":
-        #     from openpype.hosts.blender.api.pipeline import containerise
-        #     return containerise(
-        #         name=name,
-        #         namespace=namespace,
-        #         nodes=nodes,
-        #         context=context,
-        #         loader=self.__class__.__name__,
-        #     )
-
-        # asset = context["asset"]["name"]
-        # subset = context["subset"]["name"]
-        # instance_name = asset_name(asset, subset, unique_number) + '_CON'
-
-        # return self._get_instance_collection(instance_name, nodes)
 
     def _is_updated(self, asset_group, libpath):
         """Check data before update. Return True if already updated"""
@@ -828,7 +769,9 @@ class AssetLoader(LoaderPlugin):
         """Update namespace from asset group name."""
         # Clear default blender numbering.
         split_name = asset_group.name.replace(".", "_").split("_")
-        asset_number = next((int(spl) for spl in split_name if spl.isdigit()), 0)
+        asset_number = next(
+            (int(spl) for spl in split_name if spl.isdigit()), 0
+        )
         split_name = [spl for spl in split_name if not spl.isdigit()]
         # Get asset and subset name from splited asset group name.
         if len(split_name) > 1:
@@ -852,7 +795,7 @@ class AssetLoader(LoaderPlugin):
         """Update instancer depending the context to match with the loader
         asset process.
 
-        Args:
+        Arguments:
             asset_group (bpy.types.Object): the instancer object.
 
         Returns:
@@ -910,15 +853,9 @@ class AssetLoader(LoaderPlugin):
 
         This will remove all objects of the current collection, load the new
         ones and add them to the collection.
-        If the objects of the collection are used in another collection they
-        will not be removed, only unlinked. Normally this should not be the
-        case though.
         """
         object_name = container["objectName"]
-        asset_group = (
-            bpy.context.scene.objects.get(object_name)
-            or bpy.data.collections.get(object_name)
-        )
+        asset_group = self._get_asset_group_container(container)
         libpath = get_representation_path(representation)
 
         self.log.info(
@@ -1034,8 +971,7 @@ class AssetLoader(LoaderPlugin):
         mti = MainThreadItem(self.exec_remove, container)
         execute_in_main_thread(mti)
 
-    @staticmethod
-    def _remove_container(container: Dict) -> bool:
+    def _remove_container(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
         Arguments:
@@ -1044,12 +980,7 @@ class AssetLoader(LoaderPlugin):
         Returns:
             bool: Whether the container was deleted.
         """
-        object_name = container["objectName"]
-        asset_group = (
-            bpy.context.scene.objects.get(object_name)
-            or bpy.data.objects.get(object_name)
-            or bpy.data.collections.get(object_name)
-        )
+        asset_group = self._get_asset_group_container(container)
 
         if not asset_group:
             return False
@@ -1364,8 +1295,7 @@ def maintained_local_data(container, data_types):
 
 
 class StructDescriptor:
-    """
-    Generic Descriptor to store and restor properties from blender struct.
+    """Generic Descriptor to store and restor properties from blender struct.
     """
 
     _invalid_property_names = [
