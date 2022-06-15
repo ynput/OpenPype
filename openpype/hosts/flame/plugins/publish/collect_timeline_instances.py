@@ -125,7 +125,8 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "flameAddTasks": self.add_tasks,
                 "tasks": {
                     task["name"]: {"type": task["type"]}
-                    for task in self.add_tasks}
+                    for task in self.add_tasks},
+                "representations": []
             })
             self.log.debug("__ inst_data: {}".format(pformat(inst_data)))
 
