@@ -262,11 +262,12 @@ class CreateRender(plugin.Creator):
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
         self.data["useReferencedAovs"] = False
-        self.data["RenderSetupIncludeLights"] = (self.data["project_settings"].get(
-                "maya", {}).get(
-                "create", {}).get(
-                "CreateRender", {}).get(
-                "enable_all_lights", {})
+        self.data["RenderSetupIncludeLights"] = (
+            self.data["project_settings"].get(
+            "maya", {}).get(
+            "create", {}).get(
+            "CreateRender", {}).get(
+            "enable_all_lights", {})
         )
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
