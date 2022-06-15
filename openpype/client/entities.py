@@ -23,7 +23,7 @@ def _get_project_connection(project_name=None):
     return mongodb
 
 
-def _prepare_fields(fields, ensure_fields=None):
+def _prepare_fields(fields, required_fields=None):
     if not fields:
         return None
 
@@ -34,8 +34,8 @@ def _prepare_fields(fields, ensure_fields=None):
     if "_id" not in output:
         output["_id"] = True
 
-    if ensure_fields:
-        for key in ensure_fields:
+    if required_fields:
+        for key in required_fields:
             output[key] = True
     return output
 
