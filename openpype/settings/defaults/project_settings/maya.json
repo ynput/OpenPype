@@ -65,6 +65,14 @@
             "defaults": [],
             "joint_hints": "jnt_org"
         },
+        "CreateMultiverseLook": {
+            "enabled": true,
+            "publish_mip_map": true
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "strip_namespaces": true
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [
@@ -159,14 +167,6 @@
             "defaults": [
                 "Main"
             ]
-        },
-        "CreateMultiverseLook": {
-            "enabled": true,
-            "publish_mip_map": true
-        },
-        "CreateMultiverseUsd": {
-            "enabled": true,
-            "strip_namespaces": true
         }
     },
     "publish": {
@@ -382,6 +382,14 @@
             "enabled": false,
             "optional": true,
             "active": true
+        },
+        "ExtractAlembic": {
+            "enabled": true,
+            "families": [
+                "pointcache",
+                "model",
+                "vrayproxy"
+            ]
         },
         "ValidateRigContents": {
             "enabled": false,

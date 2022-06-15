@@ -490,6 +490,30 @@
                             "label": "ValidateUniqueNames"
                         }
                     ]
+                },
+                {
+                    "type": "label",
+                    "label": "Extractors"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractAlembic",
+                    "label": "Extract Alembic",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
                 }
             ]
         },
