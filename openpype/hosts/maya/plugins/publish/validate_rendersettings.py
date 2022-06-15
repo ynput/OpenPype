@@ -239,6 +239,15 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 "{}_render_attributes".format(renderer)) or []
         )
 
+        settings_lights_flag = instance.context.data["project_settings"].get(
+            "maya", {}).get(
+            "create", {}).get(
+            "CreateRender", {}).get(
+            "enable_all_lights", {})
+
+        instance_lights_flag = instance.data.get("RenderSetupIncludeLights")
+        if settings_lights_flag != instance_lights_flag:
+            cls.log.warning("Warning: render settings differ from instance") 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
         for attr, value in OrderedDict(validation_settings).items():
