@@ -175,6 +175,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "frameEndHandle": last_frame,
             })
 
+            # make sure rendered sequence on farm will
+            # be used for exctract review
+            if instance.data["review"]:
+                instance.data["useSequenceForReview"] = True
+
         # * Add audio to instance if exists.
         # Find latest versions document
         version_doc = pype.get_latest_version(
