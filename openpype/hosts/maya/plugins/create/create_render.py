@@ -263,7 +263,7 @@ class CreateRender(plugin.Creator):
         self.data["convertToScanline"] = False
         self.data["useReferencedAovs"] = False
         self.data["RenderSetupIncludeLights"] = (
-            self.data["project_settings"].get(
+            self._project_settings.get(
             "maya", {}).get(
             "create", {}).get(
             "CreateRender", {}).get(
