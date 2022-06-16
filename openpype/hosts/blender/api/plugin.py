@@ -381,7 +381,7 @@ def get_collections_by_armature(
     if collections is None:
         collections = list(bpy.context.scene.collection.children)
     for collection in collections:
-        if armature in collection.objects:
+        if armature in list(collection.objects):
             yield collection
         elif len(collection.children):
             yield from get_collections_by_armature(
