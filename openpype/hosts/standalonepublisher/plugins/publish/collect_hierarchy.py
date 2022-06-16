@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 import re
 from copy import deepcopy
 import pyblish.api
@@ -21,6 +22,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     families = ["shot"]
 
     # presets
+    shot_rename = True
     shot_rename_template = None
     shot_rename_search_patterns = None
     shot_add_hierarchy = None
@@ -46,7 +48,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         parent_name = instance.context.data["assetEntity"]["name"]
         clip = instance.data["item"]
         clip_name = os.path.splitext(clip.name)[0].lower()
-        if self.shot_rename_search_patterns:
+        if self.shot_rename_search_patterns and self.shot_rename:
             search_text += parent_name + clip_name
             instance.data["anatomyData"].update({"clip_name": clip_name})
             for type, pattern in self.shot_rename_search_patterns.items():
@@ -56,9 +58,9 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     continue
                 instance.data["anatomyData"][type] = match[-1]
 
-        # format to new shot name
-        instance.data["asset"] = self.shot_rename_template.format(
-            **instance.data["anatomyData"])
+            # format to new shot name
+            instance.data["asset"] = self.shot_rename_template.format(
+                **instance.data["anatomyData"])
 
     def create_hierarchy(self, instance):
         parents = list()
@@ -82,7 +84,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                 "entity_name": entity["name"]
             })
 
-        if self.shot_add_hierarchy:
+        if self.shot_add_hierarchy.get("enabled"):
             parent_template_patern = re.compile(r"\{([a-z]*?)\}")
             # fill the parents parts from presets
             shot_add_hierarchy = self.shot_add_hierarchy.copy()
@@ -126,8 +128,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         instance.data["parents"] = parents
 
         # print
-        self.log.debug(f"Hierarchy: {hierarchy}")
-        self.log.debug(f"parents: {parents}")
+        self.log.warning(f"Hierarchy: {hierarchy}")
+        self.log.info(f"parents: {parents}")
 
         if self.shot_add_tasks:
             tasks_to_add = dict()
@@ -161,6 +163,9 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         })
 
     def process(self, context):
+        self.log.info("self.shot_add_hierarchy: {}".format(
+            pformat(self.shot_add_hierarchy)
+        ))
         for instance in context:
             if instance.data["family"] in self.families:
                 self.processing_instance(instance)
