@@ -228,7 +228,6 @@ class CreateFolders(BaseAction):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-
         if from_local:
             self.log.info("Creating local template folders...") 
             try:
@@ -241,7 +240,9 @@ class CreateFolders(BaseAction):
                         project_name,
                         root_paths=[work_root]
                     )
-                    self.log.info("successfully created local template folders.")
+                    self.log.info(
+                        "successfully created local template folders."
+                    )
             except Exception as exc:
                 self.log.warning(
                     "Cannot create starting folders: {}".format(exc),
