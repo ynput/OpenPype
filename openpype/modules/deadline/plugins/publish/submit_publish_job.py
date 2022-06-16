@@ -642,9 +642,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
 
-        # test also instance data review attribute
-        preview = preview or instance.get("review")
-
         # if we have one representation with preview tag
         # flag whole instance for review and for ftrack
         if preview:
@@ -726,6 +723,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         families = ["render"]
 
+        # pass review to families if marked as review
+        if data.get("review"):
+            families.append("review")
+
         instance_skeleton_data = {
             "family": "render",
             "subset": subset,
@@ -753,10 +754,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance_skeleton_data.update({
                 "family": "prerender",
                 "families": []})
-
-        # also include review attribute if available
-        if "review" in data:
-            instance_skeleton_data["review"] = data["review"]
 
         # skip locking version if we are creating v01
         instance_version = instance.data.get("version")  # take this if exists
