@@ -282,7 +282,7 @@ def get_container_objects(
         container: The parent container.
 
     Returns:
-        List[bpy.types.Object]: All the child objects of the container.
+        All the child objects of the container.
     """
     if isinstance(container, bpy.types.Collection):
         objects = list(container.all_objects)
@@ -343,7 +343,7 @@ def get_collections_by_objects(
     Arguments:
         objects: The list of objects who need to be contained in the
             returned collections.
-        collections : The list of collections used to get requested
+        collections: The list of collections used to get requested
             collections. If not defined, we use all the childrens from
             scene collection.
 
@@ -359,6 +359,34 @@ def get_collections_by_objects(
             yield collection
         elif len(collection.children):
             yield from get_collections_by_objects(objects, collection.children)
+
+
+def get_collections_by_armature(
+    armature: bpy.types.Object,
+    collections: Optional[List[bpy.types.Collection]] = None
+) -> Iterator[bpy.types.Collection]:
+    """Get collections who contain the given armature from all
+    scene collections or given list of collections.
+
+    Arguments:
+        armature: The armature who need to be contained in the
+            returned collections.
+        collections: The list of collections used to get requested
+            collections. If not defined, we use all the childrens from
+            scene collection.
+
+    Yields:
+        The next requested collection.
+    """
+    if collections is None:
+        collections = list(bpy.context.scene.collection.children)
+    for collection in collections:
+        if armature in collection.objects:
+            yield collection
+        elif len(collection.children):
+            yield from get_collections_by_armature(
+                armature, collection.children
+            )
 
 
 def link_to_collection(
@@ -461,7 +489,17 @@ class Creator(LegacyCreator):
             for collection in get_collections_by_objects(selected_objects):
                 selected_collections.add(collection)
                 selected_objects -= set(collection.all_objects)
+            # Get collection from selected armature.
+            selected_armatures = [
+                obj
+                for obj in selected_objects if obj.type == "ARMATURE"
+            ]
+            for armature in selected_armatures:
+                for collection in get_collections_by_armature(armature):
+                    selected_collections.add(collection)
+                    selected_objects -= set(collection.all_objects)
 
+            # Link Selected
             link_to_collection(selected_objects, container)
             link_to_collection(selected_collections, container)
 
