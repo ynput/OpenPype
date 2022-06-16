@@ -228,21 +228,20 @@ class CreateFolders(BaseAction):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-        self.log.info("Creating local template folders...")
 
         if from_local:
+            self.log.info("Creating local template folders...") 
             try:
                 # Get paths based on presets
                 basic_paths = get_project_basic_paths(project_name)
-                if not basic_paths:
-                    pass
-                # Invoking OpenPype API to create the project folders
-                create_project_folders(
-                    basic_paths,
-                    project_name,
-                    root_paths=[work_root]
-                )
-                self.log.info("successfully created local template folders.")
+                if basic_paths:
+                    # Invoking OpenPype API to create the project folders
+                    create_project_folders(
+                        basic_paths,
+                        project_name,
+                        root_paths=[work_root]
+                    )
+                    self.log.info("successfully created local template folders.")
             except Exception as exc:
                 self.log.warning(
                     "Cannot create starting folders: {}".format(exc),
