@@ -659,6 +659,13 @@ class AssetLoader(LoaderPlugin):
             bpy.context.scene, bpy.context.view_layer
         )
 
+        # Since Blender 3.2 property is_system_override need to
+        # be False for editable override library.
+        if hasattr(override.override_library, "is_system_override"):
+            for obj in set(override.all_objects):
+                if obj.override_library:
+                    obj.override_library.is_system_override = False
+
         # Force override object data like meshes and curves.
         overridden_data = set()
         for obj in set(override.all_objects):
