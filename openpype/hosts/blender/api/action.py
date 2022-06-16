@@ -65,7 +65,7 @@ class SelectInvalidAction(pyblish.api.Action):
 class UpdateContainer(pyblish.api.Action):
     """Update Container with last representation."""
 
-    label = "Update With Last Representations"
+    label = "Update With Last Representation"
     on = "failed"
     icon = "refresh"
 

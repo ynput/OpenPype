@@ -119,6 +119,6 @@ class ValidateLinkedData(pyblish.api.InstancePlugin):
         if invalid:
             instance.data["local_collections"] = invalid
             raise RuntimeError(
-                f"Containers have local data: {invalid} "
+                f"following linked containers have local data: {invalid} "
                 "See Action of this Validate"
             )

@@ -15,7 +15,7 @@ class ValidateLinkedVersion(pyblish.api.InstancePlugin):
     hosts = ["blender"]
     families = ["model", "rig", "layout", "animation", "setdress"]
     category = "geometry"
-    label = "Validate Container Version"
+    label = "Validate Linked Version"
     actions = [UpdateContainer]
     optional = True
 
@@ -39,6 +39,6 @@ class ValidateLinkedVersion(pyblish.api.InstancePlugin):
         if invalid:
             instance.data["out_to_date_collections"] = invalid
             raise RuntimeError(
-                f"Containers are out to date: {invalid} "
+                f"following linked containers are out to date: {invalid} "
                 "See Action of this Validate"
             )
