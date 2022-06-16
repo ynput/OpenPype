@@ -33,6 +33,9 @@ from . import (
 _is_installed = False
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
+# Keep modules manager (and it's modules) in memory
+# - that gives option to register modules' callbacks
+_modules_manager = None
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +45,23 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+
+
+def _get_modules_manager():
+    """Get or create modules manager for host installation.
+
+    This is not meant for public usage. Reason is to keep modules
+    in memory of process to be able trigger their event callbacks if they
+    need any.
+
+    Returns:
+        ModulesManager: Manager wrapping discovered modules.
+    """
+
+    global _modules_manager
+    if _modules_manager is None:
+        _modules_manager = ModulesManager()
+    return _modules_manager
 
 
 def register_root(path):
@@ -70,10 +90,12 @@ def install_host(host):
             avalon host-interface.
     """
     global _is_installed
+    global _modules_manager
 
     _is_installed = True
 
     legacy_io.install()
+    modules_manager = _get_modules_manager()
 
     missing = list()
     for key in ("AVALON_PROJECT", "AVALON_ASSET"):
@@ -112,7 +134,14 @@ def install_host(host):
     else:
         pyblish.api.register_target("local")
 
-    install_openpype_plugins()
+    project_name = os.environ.get("AVALON_PROJECT")
+    host_name = os.environ.get("AVALON_APP")
+
+    # Give option to handle host installation
+    for module in modules_manager.get_enabled_modules():
+        module.on_host_install(host, host_name, project_name)
+
+    install_openpype_plugins(project_name, host_name)
 
 
 def install_openpype_plugins(project_name=None, host_name=None):
@@ -124,7 +153,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    modules_manager = ModulesManager()
+    modules_manager = _get_modules_manager()
     publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
     for path in publish_plugin_dirs:
         pyblish.api.register_plugin_path(path)
