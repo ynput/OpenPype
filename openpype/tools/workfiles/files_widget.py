@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import copy
 
 import Qt
 from Qt import QtWidgets, QtCore
@@ -434,6 +435,21 @@ class FilesWidget(QtWidgets.QWidget):
             template_key=self.template_key
         )
 
+    def _get_event_context_data(self):
+        asset_id = None
+        asset_name = None
+        asset_doc = self._get_asset_doc()
+        if asset_doc:
+            asset_id = asset_doc["_id"]
+            asset_name = asset_doc["name"]
+        return {
+            "project_name": self.project_name,
+            "asset_id": asset_id,
+            "asset_name": asset_name,
+            "task_name": self._task_name,
+            "host_name": self.host_name
+        }
+
     def open_file(self, filepath):
         host = self.host
         if host.has_unsaved_changes():
@@ -457,33 +473,19 @@ class FilesWidget(QtWidgets.QWidget):
                 # Save current scene, continue to open file
                 host.save_file(current_file)
 
-        asset_name = None
-        asset_doc = self._get_asset_doc()
-        if asset_doc:
-            asset_name = asset_doc["name"]
-
+        event_data_before = self._get_event_context_data()
+        event_data_before["filepath"] = filepath
+        event_data_after = copy.deepcopy(event_data_before)
         emit_event(
             "workfile.open.before",
-            {
-                "filepath": filepath,
-                "project_name": self.project_name,
-                "asset_name": asset_name,
-                "task_name": self._task_name,
-                "host_name": self.host_name
-            },
+            event_data_before,
             source="workfiles.tool"
         )
         self._enter_session()
         host.open_file(filepath)
         emit_event(
             "workfile.open.after",
-            {
-                "filepath": filepath,
-                "project_name": self.project_name,
-                "asset_name": asset_name,
-                "task_name": self._task_name,
-                "host_name": self.host_name
-            },
+            event_data_after,
             source="workfiles.tool"
         )
         self.file_opened.emit()
@@ -598,9 +600,14 @@ class FilesWidget(QtWidgets.QWidget):
         src_path = self._get_selected_filepath()
 
         # Trigger before save event
+        event_data_before = self._get_event_context_data()
+        event_data_before.update({
+            "filename": work_filename,
+            "workdir_path": self._workdir_path
+        })
         emit_event(
             "workfile.save.before",
-            {"filename": work_filename, "workdir_path": self._workdir_path},
+            event_data_before,
             source="workfiles.tool"
         )
 
@@ -638,10 +645,15 @@ class FilesWidget(QtWidgets.QWidget):
             self._task_name,
             self.project_name
         )
+        event_data_after = self._get_event_context_data()
+        event_data_after.update({
+            "filename": work_filename,
+            "workdir_path": self._workdir_path
+        })
         # Trigger after save events
         emit_event(
             "workfile.save.after",
-            {"filename": work_filename, "workdir_path": self._workdir_path},
+            event_data_after,
             source="workfiles.tool"
         )
 
