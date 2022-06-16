@@ -92,17 +92,19 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 return
 
             new_repre = {
-                    "name": "thumbnail",
-                    "ext": "jpg",
-                    "files": jpeg_file,
-                    "stagingDir": stagingdir,
-                    "thumbnail": True,
-                    "tags": ["thumbnail"]
-                }
+                "name": "thumbnail",
+                "ext": "jpg",
+                "files": jpeg_file,
+                "stagingDir": stagingdir,
+                "thumbnail": True,
+                "tags": ["thumbnail"]
+            }
 
-        # adding representation
-        self.log.debug("Adding: {}".format(new_repre))
-        instance.data["representations"].append(new_repre)
+            # adding representation
+            self.log.debug(
+                "Adding thumbnail representation: {}".format(new_repre)
+            )
+            instance.data["representations"].append(new_repre)
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
