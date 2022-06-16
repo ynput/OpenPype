@@ -16,9 +16,7 @@ from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 from openpype.lib import (
     Anatomy,
-    register_event_callback,
     filter_pyblish_plugins,
-    change_timer_to_current_context,
 )
 
 from . import (
@@ -117,8 +115,6 @@ def install_host(host):
 
     register_host(host)
 
-    register_event_callback("taskChanged", _on_task_change)
-
     def modified_emit(obj, record):
         """Method replacing `emit` in Pyblish's MessageHandler."""
         record.msg = record.getMessage()
@@ -195,10 +191,6 @@ def install_openpype_plugins(project_name=None, host_name=None):
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
             register_inventory_action(path)
-
-
-def _on_task_change():
-    change_timer_to_current_context()
 
 
 def uninstall_host():

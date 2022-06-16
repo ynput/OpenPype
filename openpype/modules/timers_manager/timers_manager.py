@@ -7,6 +7,7 @@ from openpype_interfaces import (
     ITrayService,
     ILaunchHookPaths
 )
+from openpype.lib.events import register_event_callback
 from openpype.pipeline import AvalonMongoDB
 
 from .exceptions import InvalidContextError
@@ -422,3 +423,20 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         }
 
         return requests.post(rest_api_url, json=data)
+
+    def on_host_install(self, host, host_name, project_name):
+        self.log.debug("Installing task changed callback")
+        register_event_callback("taskChanged", self._on_host_task_change)
+
+    def _on_host_task_change(self, event):
+        project_name = event["project_name"]
+        asset_name = event["asset_name"]
+        task_name = event["task_name"]
+        self.log.debug((
+            "Sending message that timer should change to"
+            " Project: {} Asset: {} Task: {}"
+        ).format(project_name, asset_name, task_name))
+
+        self.start_timer_with_webserver(
+            project_name, asset_name, task_name, self.log
+        )
