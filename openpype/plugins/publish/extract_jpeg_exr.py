@@ -105,6 +105,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 "Adding thumbnail representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
+            # There is no need to create more then one thumbnail
+            break
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
