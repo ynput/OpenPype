@@ -71,7 +71,21 @@
         },
         "CreateMultiverseUsd": {
             "enabled": true,
-            "strip_namespaces": true
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdComp": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdOver": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
         },
         "CreateAnimation": {
             "enabled": true,
