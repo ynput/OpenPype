@@ -103,6 +103,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     deadline_plugin = "OpenPype"
+    targets = ["local"]
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
