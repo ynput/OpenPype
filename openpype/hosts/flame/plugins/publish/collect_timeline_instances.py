@@ -2,7 +2,10 @@ import re
 import pyblish
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
-import openpype.lib as oplib
+from openpype.pipeline.editorial import (
+    is_overlapping_otio_ranges,
+    get_media_range_with_retimes
+)
 
 # # developer reload modules
 from pprint import pformat
@@ -271,7 +274,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         # HACK: it is here to serve for versions bellow 2021.1
         if not any([head, tail]):
-            retimed_attributes = oplib.get_media_range_with_retimes(
+            retimed_attributes = get_media_range_with_retimes(
                 otio_clip, handle_start, handle_end)
             self.log.debug(
                 ">> retimed_attributes: {}".format(retimed_attributes))
@@ -370,7 +373,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 continue
             if otio_clip.name not in segment.name.get_value():
                 continue
-            if oplib.is_overlapping_otio_ranges(
+            if is_overlapping_otio_ranges(
                     parent_range, timeline_range, strict=True):
 
                 # add pypedata marker to otio_clip metadata
