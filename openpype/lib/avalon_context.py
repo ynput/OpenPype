@@ -797,8 +797,14 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
         else:
             os.environ[key] = value
 
+    data = changes.copy()
+    # Convert env keys to human readable keys
+    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
+    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
+    data["task_name"] = legacy_io.Session["AVALON_TASK"]
+
     # Emit session change
-    emit_event("taskChanged", changes.copy())
+    emit_event("taskChanged", data)
 
     return changes
 
