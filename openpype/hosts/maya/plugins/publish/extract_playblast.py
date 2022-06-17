@@ -54,15 +54,17 @@ class ExtractPlayblast(openpype.api.Extractor):
         capture_presets = self.capture_preset
         width_preset = capture_presets["Resolution"]["width"]
         height_preset = capture_presets["Resolution"]["height"]
+        instance_width = instance.data.get("resolutionWidth")
+        instance_height = instance.data.get("resolutionHeight")
         preset['camera'] = camera
 
-        if width_preset == 0:
+        if instance_width != 0:
             preset['width'] = instance.data.get("resolutionWidth")
         else:
             preset["width"] = width_preset
 
-        if height_preset == 0:
-            preset['width'] = instance.data.get("resolutionHeight")
+        if instance_height != 0:
+            preset['height'] = instance.data.get("resolutionHeight")
         else:
             preset['height'] = height_preset
 
