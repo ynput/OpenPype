@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.11.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.11.0](https://github.com/pypeclub/OpenPype/tree/3.11.0) (2022-06-17)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.10.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.10.0...3.11.0)
 
 ### 📖 Documentation
 
@@ -22,6 +22,7 @@
 - General: Updated windows oiio tool [\#3268](https://github.com/pypeclub/OpenPype/pull/3268)
 - Unreal: add support for skeletalMesh and staticMesh to loaders [\#3267](https://github.com/pypeclub/OpenPype/pull/3267)
 - Maya: reference loaders could store placeholder in referenced url [\#3264](https://github.com/pypeclub/OpenPype/pull/3264)
+- TVPaint: Init file for TVPaint worker also handle guideline images [\#3250](https://github.com/pypeclub/OpenPype/pull/3250)
 - Nuke: Change default icon path in settings [\#3247](https://github.com/pypeclub/OpenPype/pull/3247)
 
 **🐛 Bug fixes**
@@ -39,10 +40,12 @@
 - Webpublisher: return only active projects in ProjectsEndpoint [\#3281](https://github.com/pypeclub/OpenPype/pull/3281)
 - Hiero: add support for task tags 3.10.x [\#3279](https://github.com/pypeclub/OpenPype/pull/3279)
 - General: Fix Oiio tool path resolving [\#3278](https://github.com/pypeclub/OpenPype/pull/3278)
+- Hiero: add support for task tags [\#3277](https://github.com/pypeclub/OpenPype/pull/3277)
 - Maya: Fix udim support for e.g. uppercase \<UDIM\> tag [\#3266](https://github.com/pypeclub/OpenPype/pull/3266)
 - Nuke: bake reformat was failing on string type [\#3261](https://github.com/pypeclub/OpenPype/pull/3261)
 - Maya: hotfix Pxr multitexture in looks [\#3260](https://github.com/pypeclub/OpenPype/pull/3260)
 - Unreal: Fix Camera Loading if Layout is missing [\#3255](https://github.com/pypeclub/OpenPype/pull/3255)
+- nuke: use framerange issue [\#3254](https://github.com/pypeclub/OpenPype/pull/3254)
 - Unreal: Fixed Animation loading in UE5 [\#3240](https://github.com/pypeclub/OpenPype/pull/3240)
 - Unreal: Fixed Render creation in UE5 [\#3239](https://github.com/pypeclub/OpenPype/pull/3239)
 - Unreal: Fixed Camera loading in UE5 [\#3238](https://github.com/pypeclub/OpenPype/pull/3238)
@@ -56,6 +59,7 @@
 
 - Maya: add pointcache family to gpu cache loader [\#3318](https://github.com/pypeclub/OpenPype/pull/3318)
 - Maya look: skip empty file attributes [\#3274](https://github.com/pypeclub/OpenPype/pull/3274)
+- Harmony: message length in 21.1 [\#3257](https://github.com/pypeclub/OpenPype/pull/3257)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
@@ -69,7 +73,6 @@
 
 **🐛 Bug fixes**
 
-- nuke: use framerange issue [\#3254](https://github.com/pypeclub/OpenPype/pull/3254)
 - Ftrack: Chunk sizes for queries has minimal condition [\#3244](https://github.com/pypeclub/OpenPype/pull/3244)
 - Maya: renderman displays needs to be filtered [\#3242](https://github.com/pypeclub/OpenPype/pull/3242)
 - Ftrack: Validate that the user exists on ftrack [\#3237](https://github.com/pypeclub/OpenPype/pull/3237)
@@ -78,7 +81,6 @@
 
 **Merged pull requests:**
 
-- Harmony: message length in 21.1 [\#3257](https://github.com/pypeclub/OpenPype/pull/3257)
 - Harmony: 21.1 fix [\#3249](https://github.com/pypeclub/OpenPype/pull/3249)
 
 ## [3.9.8](https://github.com/pypeclub/OpenPype/tree/3.9.8) (2022-05-19)
