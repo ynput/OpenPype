@@ -23,6 +23,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     hosts = ["nuke", "nukestudio"]
     families = ["render.farm", "prerender.farm"]
     optional = True
+    targets = ["local"]
 
     # presets
     priority = 50
