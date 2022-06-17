@@ -762,7 +762,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         start_frame = int(start_frame)
         end_frame = int(end_frame)
-        collections = clique.assemble(files, minimum_items=1)[0]
+        collections = clique.assemble(files)[0]
         msg = "Multiple collections {} found.".format(collections)
         assert len(collections) == 1, msg
         col = collections[0]
@@ -846,7 +846,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         dst_staging_dir = new_repre["stagingDir"]
 
         if temp_data["input_is_sequence"]:
-            collections = clique.assemble(repre["files"], minimum_items=1)[0]
+            collections = clique.assemble(repre["files"])[0]
             full_input_path = os.path.join(
                 src_staging_dir,
                 collections[0].format("{head}{padding}{tail}")
