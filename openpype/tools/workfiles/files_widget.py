@@ -44,7 +44,7 @@ class FilesView(QtWidgets.QTreeView):
         # between the columns
         header = self.header()
         header.setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeMode.ResizeToContents
+            QtWidgets.QHeaderView.ResizeToContents
         )
         header.setStretchLastSection(True)
         style = "QTreeView::item {  border: 0px;  padding: 0 3px; }"
