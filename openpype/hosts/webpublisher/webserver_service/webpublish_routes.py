@@ -38,18 +38,11 @@ class WebpublishApiEndpoint(ResourceRestApiEndpoint):
         return self.resource.dbcon
 
 
-class RestApiResource:
-    """Resource carrying needed info and Avalon DB connection for publish."""
-    def __init__(self, server_manager, executable, upload_dir,
-                 studio_task_queue=None):
-        self.server_manager = server_manager
-        self.upload_dir = upload_dir
-        self.executable = executable
+class JsonApiResource:
+    """Resource for json manipulation.
 
-        if studio_task_queue is None:
-            studio_task_queue = collections.deque().dequeu
-        self.studio_task_queue = studio_task_queue
-
+    All resources handling sending output to REST should inherit from
+    """
     @staticmethod
     def json_dump_handler(value):
         if isinstance(value, datetime.datetime):
@@ -69,7 +62,20 @@ class RestApiResource:
         ).encode("utf-8")
 
 
-class WebpublishRestApiResource:
+class RestApiResource(JsonApiResource):
+    """Resource carrying needed info and Avalon DB connection for publish."""
+    def __init__(self, server_manager, executable, upload_dir,
+                 studio_task_queue=None):
+        self.server_manager = server_manager
+        self.upload_dir = upload_dir
+        self.executable = executable
+
+        if studio_task_queue is None:
+            studio_task_queue = collections.deque().dequeu
+        self.studio_task_queue = studio_task_queue
+
+
+class WebpublishRestApiResource(JsonApiResource):
     """Resource carrying OP DB connection for storing batch info into DB."""
 
     def __init__(self):
