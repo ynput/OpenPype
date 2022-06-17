@@ -135,10 +135,15 @@ class ExtractPlayblast(openpype.api.Extractor):
         # Add camera node name to representation data
         camera_node_name = pm.ls(camera)[0].getTransform().name()
 
+        collected_files = list(frame_collection)
+        # single frame file shouldn't be in list, only as a string
+        if len(collected_files) == 1:
+            collected_files = collected_files[0]
+
         representation = {
             'name': 'png',
             'ext': 'png',
-            'files': list(frame_collection),
+            'files': collected_files,
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
