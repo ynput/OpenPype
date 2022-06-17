@@ -111,7 +111,8 @@ class ExtractPlayblast(openpype.api.Extractor):
         self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_files)
+        collections, remainder = clique.assemble(collected_files,
+                                                 minimum_items=1)
 
         self.log.debug("filename {}".format(filename))
         frame_collection = None
