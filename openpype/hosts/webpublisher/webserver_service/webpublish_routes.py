@@ -107,7 +107,7 @@ class HiearchyEndpoint(ResourceRestApiEndpoint):
             "type": 1,
         }
 
-        asset_docs = get_assets(project_name, field=query_projection.keys())
+        asset_docs = get_assets(project_name, fields=query_projection.keys())
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
             for asset_doc in asset_docs
