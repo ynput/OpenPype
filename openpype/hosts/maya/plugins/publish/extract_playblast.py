@@ -50,14 +50,20 @@ class ExtractPlayblast(openpype.api.Extractor):
                                ['override_viewport_options']
         )
         preset = lib.load_capture_preset(data=self.capture_preset)
-
+        # Grab capture presets from the project settings
         capture_presets = self.capture_preset
+        # Set resolution variables from capture presets
         width_preset = capture_presets["Resolution"]["width"]
         height_preset = capture_presets["Resolution"]["height"]
+        # Set resolution variables from instance values
         instance_width = instance.data.get("resolutionWidth")
         instance_height = instance.data.get("resolutionHeight")
         preset['camera'] = camera
 
+        # Tests if instance resolution width is set,
+        # if it is a value other than zero, that value is
+        # used, if not then the project settings resolution is
+        # used
         if instance_width != 0:
             preset['width'] = instance.data.get("resolutionWidth")
         else:
