@@ -51,7 +51,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         )
         preset = lib.load_capture_preset(data=self.capture_preset)
 
-        capture_presets = openpype.api.get_current_project_settings()["maya"]["publish"]["ExtractPlayblast"]["capture_preset"] # noqa
+        capture_presets = self.capture_preset
         width_preset = capture_presets["Resolution"]["width"]
         height_preset = capture_presets["Resolution"]["height"]
         preset['camera'] = camera
