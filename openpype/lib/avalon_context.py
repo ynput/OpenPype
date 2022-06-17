@@ -7,7 +7,6 @@ import platform
 import logging
 import collections
 import functools
-import getpass
 
 from bson.objectid import ObjectId
 
@@ -19,6 +18,7 @@ from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .events import emit_event
 from .path_templates import StringTemplate
+from .local_settings import get_openpype_username
 
 legacy_io = None
 
@@ -550,7 +550,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         "asset": asset_doc["name"],
         "parent": parent_name,
         "app": host_name,
-        "user": getpass.getuser(),
+        "user": get_openpype_username(),
         "hierarchy": hierarchy,
     }
 
