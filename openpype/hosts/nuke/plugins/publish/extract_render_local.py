@@ -7,7 +7,7 @@ import clique
 
 class NukeRenderLocal(openpype.api.Extractor):
     # TODO: rewrite docstring to nuke
-    """Render the current Fusion composition locally.
+    """Render the current Nuke composition locally.
 
     Extract the result of savers by starting a comp render
     This will run the local render of Fusion.

@@ -103,6 +103,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     deadline_plugin = "OpenPype"
+    targets = ["local"]
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
@@ -128,7 +129,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_MONGO"
     ]
 
     # custom deadline attributes
@@ -640,6 +642,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
+
+        # test also instance data review attribute
+        preview = preview or instance.get("review")
+
         # if we have one representation with preview tag
         # flag whole instance for review and for ftrack
         if preview:
@@ -748,6 +754,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance_skeleton_data.update({
                 "family": "prerender",
                 "families": []})
+
+        # also include review attribute if available
+        if "review" in data:
+            instance_skeleton_data["review"] = data["review"]
 
         # skip locking version if we are creating v01
         instance_version = instance.data.get("version")  # take this if exists
