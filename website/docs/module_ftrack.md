@@ -26,7 +26,7 @@ You can only use our Ftrack Actions and publish to Ftrack if each artist is logg
 ### Custom Attributes
 After successfully connecting OpenPype with you Ftrack, you can right click on any project in Ftrack and you should see a bunch of actions available. The most important one is called `OpenPype Admin` and contains multiple options inside.
 
-To prepare Ftrack for working with OpenPype you'll need to run [OpenPype Admin - Create/Update Avalon Attributes](manager_ftrack_actions.md#create-update-avalon-attributes), which creates and sets the Custom Attributes necessary for OpenPype to function. 
+To prepare Ftrack for working with OpenPype you'll need to run [OpenPype Admin - Create/Update Custom Attributes](manager_ftrack_actions.md#create-update-avalon-attributes), which creates and sets the Custom Attributes necessary for OpenPype to function. 
 
 
 

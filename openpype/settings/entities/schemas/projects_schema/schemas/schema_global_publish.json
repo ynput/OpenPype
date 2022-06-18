@@ -126,8 +126,8 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "ExtractJpegEXR",
-            "label": "ExtractJpegEXR",
+            "key": "ExtractThumbnail",
+            "label": "ExtractThumbnail",
             "is_group": true,
             "children": [
                 {
