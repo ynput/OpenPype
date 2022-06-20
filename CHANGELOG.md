@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.11.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.11.1](https://github.com/pypeclub/OpenPype/tree/3.11.1) (2022-06-20)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.0...3.11.1)
 
 **🆕 New features**
 
@@ -26,7 +26,6 @@
 - AE- fix validate\_scene\_settings and renderLocal [\#3358](https://github.com/pypeclub/OpenPype/pull/3358)
 - deadline: fixing misidentification of revieables [\#3356](https://github.com/pypeclub/OpenPype/pull/3356)
 - General: Create only one thumbnail per instance [\#3351](https://github.com/pypeclub/OpenPype/pull/3351)
-- nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 - Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
 - Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
@@ -91,6 +90,7 @@
 
 - Maya: add pointcache family to gpu cache loader [\#3318](https://github.com/pypeclub/OpenPype/pull/3318)
 - Maya look: skip empty file attributes [\#3274](https://github.com/pypeclub/OpenPype/pull/3274)
+- Harmony: 21.1 fix [\#3248](https://github.com/pypeclub/OpenPype/pull/3248)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
@@ -108,7 +108,6 @@
 - Maya: renderman displays needs to be filtered [\#3242](https://github.com/pypeclub/OpenPype/pull/3242)
 - Ftrack: Validate that the user exists on ftrack [\#3237](https://github.com/pypeclub/OpenPype/pull/3237)
 - Maya: Fix support for multiple resolutions [\#3236](https://github.com/pypeclub/OpenPype/pull/3236)
-- TVPaint: Look for more groups than 12 [\#3228](https://github.com/pypeclub/OpenPype/pull/3228)
 
 **Merged pull requests:**
 
