@@ -1,4 +1,5 @@
 import re
+from types import NoneType
 import pyblish
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
@@ -74,6 +75,12 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 marker_data["handleStart"],
                 marker_data["handleEnd"]
             )
+
+            # make sure there is not NoneType rather 0
+            if isinstance(head, NoneType):
+                head = 0
+            if isinstance(tail, NoneType):
+                tail = 0
 
             # make sure value is absolute
             if head != 0:
