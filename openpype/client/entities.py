@@ -23,7 +23,7 @@ def _get_project_connection(project_name=None):
     return mongodb
 
 
-def _prepare_fields(fields):
+def _prepare_fields(fields, required_fields=None):
     if not fields:
         return None
 
@@ -33,6 +33,10 @@ def _prepare_fields(fields):
     }
     if "_id" not in output:
         output["_id"] = True
+
+    if required_fields:
+        for key in required_fields:
+            output[key] = True
     return output
 
 
@@ -747,9 +751,8 @@ def get_last_versions(project_name, subset_ids, fields=None):
         doc["_version_id"]
         for doc in conn.aggregate(_pipeline)
     ]
-    fields = _prepare_fields(fields)
-    if fields and "parent" not in fields:
-        fields.append("parent")
+
+    fields = _prepare_fields(fields, ["parent"])
 
     version_docs = get_versions(
         project_name, version_ids=version_ids, fields=fields

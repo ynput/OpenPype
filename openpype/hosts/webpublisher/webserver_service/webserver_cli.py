@@ -10,7 +10,7 @@ from openpype.lib import PypeLogger
 
 from .webpublish_routes import (
     RestApiResource,
-    OpenPypeRestApiResource,
+    WebpublishRestApiResource,
     HiearchyEndpoint,
     ProjectsEndpoint,
     ConfiguredExtensionsEndpoint,
@@ -27,7 +27,7 @@ from openpype.lib.remote_publish import (
 )
 
 
-log = PypeLogger().get_logger("webserver_gui")
+log = PypeLogger.get_logger("webserver_gui")
 
 
 def run_webserver(*args, **kwargs):
@@ -69,16 +69,14 @@ def run_webserver(*args, **kwargs):
     )
 
     # triggers publish
-    webpublisher_task_publish_endpoint = \
-        BatchPublishEndpoint(resource)
+    webpublisher_task_publish_endpoint = BatchPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/batch",
         webpublisher_task_publish_endpoint.dispatch
     )
 
-    webpublisher_batch_publish_endpoint = \
-        TaskPublishEndpoint(resource)
+    webpublisher_batch_publish_endpoint = TaskPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/task",
@@ -86,27 +84,26 @@ def run_webserver(*args, **kwargs):
     )
 
     # reporting
-    openpype_resource = OpenPypeRestApiResource()
-    batch_status_endpoint = BatchStatusEndpoint(openpype_resource)
+    webpublish_resource = WebpublishRestApiResource()
+    batch_status_endpoint = BatchStatusEndpoint(webpublish_resource)
     server_manager.add_route(
         "GET",
         "/api/batch_status/{batch_id}",
         batch_status_endpoint.dispatch
     )
 
-    user_status_endpoint = UserReportEndpoint(openpype_resource)
+    user_status_endpoint = UserReportEndpoint(webpublish_resource)
     server_manager.add_route(
         "GET",
         "/api/publishes/{user}",
         user_status_endpoint.dispatch
     )
 
-    webpublisher_batch_reprocess_endpoint = \
-        BatchReprocessEndpoint(openpype_resource)
+    batch_reprocess_endpoint = BatchReprocessEndpoint(webpublish_resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/reprocess/{batch_id}",
-        webpublisher_batch_reprocess_endpoint.dispatch
+        batch_reprocess_endpoint.dispatch
     )
 
     server_manager.start_server()

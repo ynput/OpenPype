@@ -47,6 +47,6 @@ class ValidateAudio(pyblish.api.InstancePlugin):
         formatting_data = {
             "audio_url": audio_path
         }
-        if os.path.isfile(audio_path):
+        if not os.path.isfile(audio_path):
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
