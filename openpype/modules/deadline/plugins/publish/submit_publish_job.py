@@ -103,6 +103,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     deadline_plugin = "OpenPype"
+    targets = ["local"]
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
@@ -641,6 +642,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
+
         # if we have one representation with preview tag
         # flag whole instance for review and for ftrack
         if preview:
@@ -720,10 +722,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " This may cause issues."
             ).format(source))
 
-        families = ["render"]
+        family = "render"
+        if "prerender" in instance.data["families"]:
+            family = "prerender"
+        families = [family]
+
+        # pass review to families if marked as review
+        if data.get("review"):
+            families.append("review")
 
         instance_skeleton_data = {
-            "family": "render",
+            "family": family,
             "subset": subset,
             "families": families,
             "asset": asset,
@@ -744,11 +753,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True)
         }
-
-        if "prerender" in instance.data["families"]:
-            instance_skeleton_data.update({
-                "family": "prerender",
-                "families": []})
 
         # skip locking version if we are creating v01
         instance_version = instance.data.get("version")  # take this if exists

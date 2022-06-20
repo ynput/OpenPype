@@ -66,6 +66,28 @@
             "defaults": [],
             "joint_hints": "jnt_org"
         },
+        "CreateMultiverseLook": {
+            "enabled": true,
+            "publish_mip_map": true
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdComp": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdOver": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [
@@ -378,6 +400,14 @@
             "enabled": false,
             "optional": true,
             "active": true
+        },
+        "ExtractAlembic": {
+            "enabled": true,
+            "families": [
+                "pointcache",
+                "model",
+                "vrayproxy"
+            ]
         },
         "ValidateRigContents": {
             "enabled": false,
