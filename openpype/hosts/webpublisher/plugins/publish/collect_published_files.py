@@ -13,9 +13,13 @@ import tempfile
 import math
 
 import pyblish.api
+
+from openpype.client import (
+    get_asset_by_name,
+    get_last_version_by_subset_name
+)
 from openpype.lib import (
     prepare_template_data,
-    get_asset,
     get_ffprobe_streams,
     convert_ffprobe_fps_value,
 )
@@ -23,7 +27,6 @@ from openpype.lib.plugin_tools import (
     parse_json,
     get_subset_name_with_asset_doc
 )
-from openpype.pipeline import legacy_io
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -56,8 +59,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
         self.log.info("task_sub:: {}".format(task_subfolders))
 
+        project_name = context.data["project_name"]
         asset_name = context.data["asset"]
-        asset_doc = get_asset()
+        asset_doc = get_asset_by_name(project_name, asset_name)
         task_name = context.data["task"]
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
@@ -80,7 +84,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 family, variant, task_name, asset_doc,
                 project_name=project_name, host_name="webpublisher"
             )
-            version = self._get_last_version(asset_name, subset_name) + 1
+            version = self._get_next_version(
+                project_name, asset_doc, subset_name
+            )
 
             instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
@@ -219,55 +225,19 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 config["families"],
                 config["tags"])
 
-    def _get_last_version(self, asset_name, subset_name):
-        """Returns version number or 0 for 'asset' and 'subset'"""
-        query = [
-            {
-                "$match": {"type": "asset", "name": asset_name}
-            },
-            {
-                "$lookup":
-                    {
-                        "from": os.environ["AVALON_PROJECT"],
-                        "localField": "_id",
-                        "foreignField": "parent",
-                        "as": "subsets"
-                    }
-            },
-            {
-                "$unwind": "$subsets"
-            },
-            {
-                "$match": {"subsets.type": "subset",
-                           "subsets.name": subset_name}},
-            {
-                "$lookup":
-                    {
-                        "from": os.environ["AVALON_PROJECT"],
-                        "localField": "subsets._id",
-                        "foreignField": "parent",
-                        "as": "versions"
-                    }
-            },
-            {
-                "$unwind": "$versions"
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "asset_name": "$name",
-                        "subset_name": "$subsets.name"
-                    },
-                    'version': {'$max': "$versions.name"}
-                }
-            }
-        ]
-        version = list(legacy_io.aggregate(query))
+    def _get_next_version(self, project_name, asset_doc, subset_name):
+        """Returns version number or 1 for 'asset' and 'subset'"""
 
-        if version:
-            return version[0].get("version") or 0
-        else:
-            return 0
+        version_doc = get_last_version_by_subset_name(
+            project_name,
+            subset_name,
+            asset_doc["_id"],
+            fields=["name"]
+        )
+        version = 1
+        if version_doc:
+            version += int(version_doc["name"])
+        return version
 
     def _get_number_of_frames(self, file_url):
         """Return duration in frames"""
