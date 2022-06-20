@@ -30,6 +30,8 @@ from openpype.pipeline import (
     legacy_io,
 )
 
+from . import gizmo_menu
+
 from .workio import (
     save_file,
     open_file
@@ -537,7 +539,9 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 
     imageio_nodes = get_nuke_imageio_settings()["nodes"]
     required_nodes = imageio_nodes["requiredNodes"]
-    override_nodes = imageio_nodes["overrideNodes"]
+
+    # HACK: for backward compatibility this needs to be optional
+    override_nodes = imageio_nodes.get("overrideNodes", [])
 
     imageio_node = None
     for node in required_nodes:
@@ -2496,6 +2500,70 @@ def recreate_instance(origin_node, avalon_data=None):
             dn.setInput(0, new_node)
 
     return new_node
+
+
+def add_scripts_gizmo():
+
+    # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    platform_name = platform.system().lower()
+
+    for gizmo_settings in project_settings["nuke"]["gizmo"]:
+        gizmo_list_definition = gizmo_settings["gizmo_definition"]
+        toolbar_name = gizmo_settings["toolbar_menu_name"]
+        # gizmo_toolbar_path = gizmo_settings["gizmo_toolbar_path"]
+        gizmo_source_dir = gizmo_settings.get(
+            "gizmo_source_dir", {}).get(platform_name)
+        toolbar_icon_path = gizmo_settings.get(
+            "toolbar_icon_path", {}).get(platform_name)
+
+        if not gizmo_source_dir:
+            log.debug("Skipping studio gizmo `{}`, "
+                      "no gizmo path found.".format(toolbar_name)
+                      )
+            return
+
+        if not gizmo_list_definition:
+            log.debug("Skipping studio gizmo `{}`, "
+                      "no definition found.".format(toolbar_name)
+                      )
+            return
+
+        if toolbar_icon_path:
+            try:
+                toolbar_icon_path = toolbar_icon_path.format(**os.environ)
+            except KeyError as e:
+                log.error(
+                    "This environment variable doesn't exist: {}".format(e)
+                )
+
+        existing_gizmo_path = []
+        for source_dir in gizmo_source_dir:
+            try:
+                resolve_source_dir = source_dir.format(**os.environ)
+            except KeyError as e:
+                log.error(
+                    "This environment variable doesn't exist: {}".format(e)
+                )
+                continue
+            if not os.path.exists(resolve_source_dir):
+                log.warning(
+                    "The source of gizmo `{}` does not exists".format(
+                        resolve_source_dir
+                    )
+                )
+                continue
+            existing_gizmo_path.append(resolve_source_dir)
+
+        # run the launcher for Nuke toolbar
+        toolbar_menu = gizmo_menu.GizmoMenu(
+            title=toolbar_name,
+            icon=toolbar_icon_path
+        )
+
+        # apply configuration
+        toolbar_menu.add_gizmo_path(existing_gizmo_path)
+        toolbar_menu.build_from_configuration(gizmo_list_definition)
 
 
 class NukeDirmap(HostDirmap):

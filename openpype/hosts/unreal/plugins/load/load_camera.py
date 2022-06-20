@@ -5,6 +5,7 @@ from pathlib import Path
 import unreal
 from unreal import EditorAssetLibrary
 from unreal import EditorLevelLibrary
+from unreal import EditorLevelUtils
 
 from openpype.pipeline import (
     AVALON_CONTAINER_ID,
@@ -57,6 +58,33 @@ class CameraLoader(plugin.Loader):
                 min_frame_j,
                 max_frame_j + 1)
 
+    def _import_camera(
+        self, world, sequence, bindings, import_fbx_settings, import_filename
+    ):
+        ue_version = unreal.SystemLibrary.get_engine_version().split('.')
+        ue_major = int(ue_version[0])
+        ue_minor = int(ue_version[1])
+
+        if ue_major == 4 and ue_minor <= 26:
+            unreal.SequencerTools.import_fbx(
+                world,
+                sequence,
+                bindings,
+                import_fbx_settings,
+                import_filename
+            )
+        elif (ue_major == 4 and ue_minor >= 27) or ue_major == 5:
+            unreal.SequencerTools.import_level_sequence_fbx(
+                world,
+                sequence,
+                bindings,
+                import_fbx_settings,
+                import_filename
+            )
+        else:
+            raise NotImplementedError(
+                f"Unreal version {ue_major} not supported")
+
     def load(self, context, name, namespace, data):
         """
         Load and containerise representation into Content Browser.
@@ -84,10 +112,10 @@ class CameraLoader(plugin.Loader):
         hierarchy = context.get('asset').get('data').get('parents')
         root = "/Game/OpenPype"
         hierarchy_dir = root
-        hierarchy_list = []
+        hierarchy_dir_list = []
         for h in hierarchy:
             hierarchy_dir = f"{hierarchy_dir}/{h}"
-            hierarchy_list.append(hierarchy_dir)
+            hierarchy_dir_list.append(hierarchy_dir)
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -121,27 +149,40 @@ class CameraLoader(plugin.Loader):
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{hierarchy_dir}/{asset}/{name}_{unique_number:02d}", suffix="")
 
+        asset_path = Path(asset_dir)
+        asset_path_parent = str(asset_path.parent.as_posix())
+
         container_name += suffix
 
-        current_level = EditorLevelLibrary.get_editor_world().get_full_name()
+        EditorAssetLibrary.make_directory(asset_dir)
+
+        # Create map for the shot, and create hierarchy of map. If the maps
+        # already exist, we will use them.
+        h_dir = hierarchy_dir_list[0]
+        h_asset = hierarchy[0]
+        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+        if not EditorAssetLibrary.does_asset_exist(master_level):
+            EditorLevelLibrary.new_level(f"{h_dir}/{h_asset}_map")
+
+        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
+        if not EditorAssetLibrary.does_asset_exist(level):
+            EditorLevelLibrary.new_level(f"{asset_path_parent}/{asset}_map")
+
+            EditorLevelLibrary.load_level(master_level)
+            EditorLevelUtils.add_level_to_world(
+                EditorLevelLibrary.get_editor_world(),
+                level,
+                unreal.LevelStreamingDynamic
+            )
         EditorLevelLibrary.save_all_dirty_levels()
-
-        ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        filter = unreal.ARFilter(
-            class_names=["World"],
-            package_paths=[f"{hierarchy_dir}/{asset}/"],
-            recursive_paths=True)
-        maps = ar.get_assets(filter)
-
-        # There should be only one map in the list
-        EditorLevelLibrary.load_level(maps[0].get_full_name())
+        EditorLevelLibrary.load_level(level)
 
         # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
         sequences = []
         frame_ranges = []
         i = 0
-        for h in hierarchy_list:
+        for h in hierarchy_dir_list:
             root_content = EditorAssetLibrary.list_assets(
                 h, recursive=False, include_folder=False)
 
@@ -228,7 +269,7 @@ class CameraLoader(plugin.Loader):
         settings.set_editor_property('reduce_keys', False)
 
         if cam_seq:
-            unreal.SequencerTools.import_fbx(
+            self._import_camera(
                 EditorLevelLibrary.get_editor_world(),
                 cam_seq,
                 cam_seq.get_bindings(),
@@ -256,7 +297,7 @@ class CameraLoader(plugin.Loader):
             "{}/{}".format(asset_dir, container_name), data)
 
         EditorLevelLibrary.save_all_dirty_levels()
-        EditorLevelLibrary.load_level(current_level)
+        EditorLevelLibrary.load_level(master_level)
 
         asset_content = EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
@@ -388,7 +429,7 @@ class CameraLoader(plugin.Loader):
 
         sub_scene.set_sequence(new_sequence)
 
-        unreal.SequencerTools.import_fbx(
+        self._import_camera(
             EditorLevelLibrary.get_editor_world(),
             new_sequence,
             new_sequence.get_bindings(),

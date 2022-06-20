@@ -292,7 +292,7 @@
     "nukex": {
         "enabled": true,
         "label": "Nuke X",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukex.png",
         "host_name": "nuke",
         "environment": {
             "NUKE_PATH": [
@@ -431,7 +431,7 @@
     "nukestudio": {
         "enabled": true,
         "label": "Nuke Studio",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukestudio.png",
         "host_name": "hiero",
         "environment": {
             "WORKFILES_STARTUP": "0",
@@ -1243,9 +1243,19 @@
         "host_name": "unreal",
         "environment": {},
         "variants": {
-            "4-26": {
+            "4-27": {
                 "use_python_2": false,
                 "environment": {}
+            },
+            "5-0": {
+                "use_python_2": false,
+                "environment": {
+                    "UE_PYTHONPATH": "{PYTHONPATH}"
+                }
+            },
+            "__dynamic_keys_labels__": {
+                "4-27": "4.27",
+                "5-0": "5.0"
             }
         }
     },

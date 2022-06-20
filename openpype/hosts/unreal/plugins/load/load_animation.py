@@ -14,6 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+from openpype.api import get_asset
 
 
 class AnimationFBXLoader(plugin.Loader):
@@ -77,13 +78,15 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'import_meshes_in_bone_hierarchy', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', True)
+            'use_default_sample_rate', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'custom_sample_rate', get_asset()["data"].get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
             'import_bone_tracks', True)
         task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', True)
+            'remove_redundant_keys', False)
         task.options.anim_sequence_import_data.set_editor_property(
             'convert_scene', True)
 
@@ -139,22 +142,18 @@ class AnimationFBXLoader(plugin.Loader):
         root = "/Game/OpenPype"
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
-
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{root}/Animations/{asset}/{name}", suffix="")
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["World"],
             package_paths=[f"{root}/{hierarchy[0]}"],
             recursive_paths=False)
-        levels = ar.get_assets(filter)
+        levels = ar.get_assets(_filter)
         master_level = levels[0].get_editor_property('object_path')
 
         hierarchy_dir = root
@@ -162,11 +161,11 @@ class AnimationFBXLoader(plugin.Loader):
             hierarchy_dir = f"{hierarchy_dir}/{h}"
         hierarchy_dir = f"{hierarchy_dir}/{asset}"
 
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["World"],
             package_paths=[f"{hierarchy_dir}/"],
             recursive_paths=True)
-        levels = ar.get_assets(filter)
+        levels = ar.get_assets(_filter)
         level = levels[0].get_editor_property('object_path')
 
         unreal.EditorLevelLibrary.save_all_dirty_levels()
@@ -233,8 +232,7 @@ class AnimationFBXLoader(plugin.Loader):
             "parent": context["representation"]["parent"],
             "family": context["representation"]["context"]["family"]
         }
-        unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, container_name), data)
+        unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
 
         imported_content = EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=False)
@@ -279,13 +277,15 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'import_meshes_in_bone_hierarchy', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', True)
+            'use_default_sample_rate', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'custom_sample_rate', get_asset()["data"].get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
             'import_bone_tracks', True)
         task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', True)
+            'remove_redundant_keys', False)
         task.options.anim_sequence_import_data.set_editor_property(
             'convert_scene', True)
 
@@ -296,8 +296,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-        container_path = "{}/{}".format(container["namespace"],
-                                        container["objectName"])
+        container_path = f'{container["namespace"]}/{container["objectName"]}'
         # update metadata
         unreal_pipeline.imprint(
             container_path,

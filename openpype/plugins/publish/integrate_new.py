@@ -109,8 +109,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usd",
                 "staticMesh",
                 "skeletalMesh",
-                "usdComposition",
-                "usdOverride",
+                "mvLook",
+                "mvUsd",
+                "mvUsdComposition",
+                "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
     exclude_families = ["render.farm"]
@@ -138,6 +140,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug("Excluded family '{}' in '{}' or {}".format(
                     ef, instance.data["family"], instance.data["families"]))
                 return
+
+        # instance should be published on a farm
+        if instance.data.get("farm"):
+            return
 
         self.integrated_file_sizes = {}
         try:
@@ -934,9 +940,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         families += current_families
 
         # create relative source path for DB
-        if "source" in instance.data:
-            source = instance.data["source"]
-        else:
+        source = instance.data.get("source")
+        if not source:
             source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
             source = self.get_rootless_path(anatomy, source)
