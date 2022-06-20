@@ -228,7 +228,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
             # make sure only first segment is used if underscore in name
             # HACK: `ftrackreview_withLUT` will result only in `ftrackreview`
-            repr_name = unique_name.split("_")[0]
+            if (
+                "thumbnail" in unique_name
+                or "ftrackreview" in unique_name
+            ):
+                repr_name = unique_name.split("_")[0]
 
             # create representation data
             representation_data = {
@@ -267,7 +271,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     if os.path.splitext(f)[-1] == ".mov"
                 ]
                 # then try if thumbnail is not in unique name
-                or unique_name == "thumbnail"
+                or repr_name == "thumbnail"
             ):
                 representation_data["files"] = files.pop()
             else:
