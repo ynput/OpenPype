@@ -88,7 +88,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # are found in there
         _preset_keys = [k.split('_')[0] for k in self.export_presets_mapping]
         export_presets = {
-            k: v for k, v in deepcopy(self.default_presets)
+            k: v for k, v in deepcopy(self.default_presets).items()
             if k not in _preset_keys
         }
         export_presets.update(self.export_presets_mapping)
