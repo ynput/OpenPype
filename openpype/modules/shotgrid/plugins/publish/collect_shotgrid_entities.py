@@ -3,10 +3,6 @@ import os
 import pyblish.api
 from openpype.lib.mongo import OpenPypeMongoConnection
 
-from openpype.modules.shotgrid.lib.settings import (
-    get_shotgrid_project_settings,
-)
-
 
 class CollectShotgridEntities(pyblish.api.ContextPlugin):
     """Collect shotgrid entities according to the current context"""
