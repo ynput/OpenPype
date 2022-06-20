@@ -74,6 +74,30 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
+    def _check_frames_exists(self, instance):
+        # rendering path from group write node
+        fpath = instance.data["path"]
+
+        # instance frame range with handles
+        first = instance.data["frameStartHandle"]
+        last = instance.data["frameEndHandle"]
+
+        padding = fpath.count('#')
+
+        test_path_template = fpath
+        if padding:
+            repl_string = "#" * padding
+            test_path_template = fpath.replace(
+                repl_string, "%0{}d".format(padding))
+
+        for frame in range(first, last + 1):
+            test_file = test_path_template % frame
+            if not os.path.exists(test_file):
+                self.log.debug("__ test_file: `{}`".format(test_file))
+                return None
+
+        return True
+
     def render_slate(
         self,
         instance,
@@ -128,16 +152,21 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.debug("__ first_frame: {}".format(first_frame))
         self.log.debug("__ slate_first_frame: {}".format(slate_first_frame))
 
-        # Read node
-        r_node = nuke.createNode("Read")
-        r_node["file"].setValue(fpath)
-        r_node["first"].setValue(first_frame)
-        r_node["origfirst"].setValue(first_frame)
-        r_node["last"].setValue(last_frame)
-        r_node["origlast"].setValue(last_frame)
-        r_node["colorspace"].setValue(instance.data["colorspace"])
-        previous_node = r_node
-        temporary_nodes = [previous_node]
+        # fallback if files does not exists
+        if self._check_frames_exists(instance):
+            # Read node
+            r_node = nuke.createNode("Read")
+            r_node["file"].setValue(fpath)
+            r_node["first"].setValue(first_frame)
+            r_node["origfirst"].setValue(first_frame)
+            r_node["last"].setValue(last_frame)
+            r_node["origlast"].setValue(last_frame)
+            r_node["colorspace"].setValue(instance.data["colorspace"])
+            previous_node = r_node
+            temporary_nodes = [previous_node]
+        else:
+            previous_node = slate_node.dependencies().pop()
+            temporary_nodes = []
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
