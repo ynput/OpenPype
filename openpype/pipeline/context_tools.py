@@ -88,7 +88,6 @@ def install_host(host):
             avalon host-interface.
     """
     global _is_installed
-    global _modules_manager
 
     _is_installed = True
 
