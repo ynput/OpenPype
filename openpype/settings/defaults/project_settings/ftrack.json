@@ -116,6 +116,15 @@
                 "Administrator",
                 "Project manager"
             ]
+        },
+        "create_daily_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project Manager"
+            ],
+            "cycle_enabled": false,
+            "review_session_template": "{yy}{mm}{dd}"
         }
     },
     "user_handlers": {

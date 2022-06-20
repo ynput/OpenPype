@@ -33,7 +33,7 @@
             "enabled": false,
             "profiles": []
         },
-        "ExtractJpegEXR": {
+        "ExtractThumbnail": {
             "enabled": true,
             "ffmpeg_args": {
                 "input": [
