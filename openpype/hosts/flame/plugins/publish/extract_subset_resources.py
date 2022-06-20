@@ -86,7 +86,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # add default preset type for thumbnail and reviewable video
         # update them with settings and override in case the same
         # are found in there
-        export_presets = deepcopy(self.default_presets)
+        _preset_keys = [k.split('_')[0] for k in self.export_presets_mapping]
+        export_presets = {
+            k: v for k, v in deepcopy(self.default_presets)
+            if k not in _preset_keys
+        }
         export_presets.update(self.export_presets_mapping)
 
         # loop all preset names and
