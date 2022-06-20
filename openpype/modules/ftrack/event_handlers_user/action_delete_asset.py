@@ -134,7 +134,8 @@ class DeleteAssetSubset(BaseAction):
             ftrack_id = asset_doc["data"].get("ftrackId")
             if ftrack_id:
                 found_ftrack_ids.add(ftrack_id)
-                selected_av_entities.append(asset_doc)
+                if ftrack_id in entity_mapping:
+                    selected_av_entities.append(asset_doc)
 
             asset_name = asset_doc["name"]
             asset_docs_by_name[asset_name].append(asset_doc)
