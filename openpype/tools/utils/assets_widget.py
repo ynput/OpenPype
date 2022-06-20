@@ -5,6 +5,10 @@ import Qt
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_assets,
+)
 from openpype.style import (
     get_objected_colors,
     get_default_tools_icon_color,
@@ -525,21 +529,18 @@ class AssetModel(QtGui.QStandardItemModel):
         self._doc_fetched.emit()
 
     def _fetch_asset_docs(self):
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
+        project_name = self.dbcon.current_project()
+        if not project_name:
             return []
 
-        project_doc = self.dbcon.find_one(
-            {"type": "project"},
-            {"_id": True}
-        )
+        project_doc = get_project(project_name, fields=["_id"])
         if not project_doc:
             return []
 
         # Get all assets sorted by name
-        return list(self.dbcon.find(
-            {"type": "asset"},
-            self._asset_projection
-        ))
+        return list(
+            get_assets(project_name, fields=self._asset_projection.keys())
+        )
 
     def _stop_fetch_thread(self):
         self._refreshing = False

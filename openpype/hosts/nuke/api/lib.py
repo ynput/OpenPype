@@ -540,7 +540,9 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 
     imageio_nodes = get_nuke_imageio_settings()["nodes"]
     required_nodes = imageio_nodes["requiredNodes"]
-    override_nodes = imageio_nodes["overrideNodes"]
+
+    # HACK: for backward compatibility this needs to be optional
+    override_nodes = imageio_nodes.get("overrideNodes", [])
 
     imageio_node = None
     for node in required_nodes:

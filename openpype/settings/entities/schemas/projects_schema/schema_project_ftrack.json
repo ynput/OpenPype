@@ -388,6 +388,44 @@
                             "object_type": "text"
                         }
                     ]
+                },
+                {
+                    "key": "create_daily_review_session",
+                    "label": "Create daily review session",
+                    "type": "dict",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text",
+                            "use_label_wrap": true
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "cycle_enabled",
+                            "label": "Create daily review session"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "review_session_template",
+                            "label": "ReviewSession template",
+                            "placeholder": "Default: {yy}{mm}{dd}"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Possible formatting keys in template:<br/>- \"project_name\" - &lt;Name of project&gt;<br/>- \"d\" - &lt;Day of month number&gt; in shortest possible way.<br/>- \"dd\" - &lt;Day of month number&gt; with 2 digits.<br/>- \"ddd\" - &lt;Week day name&gt; shortened week day. e.g.: `Mon`, ...<br/>- \"dddd\" - &lt;Week day name&gt; full name of week day. e.g.: `Monday`, ...<br/>- \"m\" - &lt;Month number&gt; in shortest possible way. e.g.: `1` if January<br/>- \"mm\" - &lt;Month number&gt; with 2 digits.<br/>- \"mmm\" - &lt;Month name&gt; shortened month name. e.g.: `Jan`, ...<br/>- \"mmmm\" -&lt;Month name&gt; full month name. e.g.: `January`, ...<br/>- \"yy\" - &lt;Year number&gt; shortened year. e.g.: `19`, `20`, ...<br/>- \"yyyy\" - &lt;Year number&gt; full year. e.g.: `2019`, `2020`, ..."
+                        }
+                    ]
                 }
             ]
         },
