@@ -59,13 +59,11 @@
                 "applications": {
                     "write_security_roles": [
                         "API",
-                        "Administrator",
-                        "Pypeclub"
+                        "Administrator"
                     ],
                     "read_security_roles": [
                         "API",
-                        "Administrator",
-                        "Pypeclub"
+                        "Administrator"
                     ]
                 }
             },
@@ -73,25 +71,21 @@
                 "tools_env": {
                     "write_security_roles": [
                         "API",
-                        "Administrator",
-                        "Pypeclub"
+                        "Administrator"
                     ],
                     "read_security_roles": [
                         "API",
-                        "Administrator",
-                        "Pypeclub"
+                        "Administrator"
                     ]
                 },
                 "avalon_mongo_id": {
                     "write_security_roles": [
                         "API",
-                        "Administrator",
-                        "Pypeclub"
+                        "Administrator"
                     ],
                     "read_security_roles": [
                         "API",
-                        "Administrator",
-                        "Pypeclub"
+                        "Administrator"
                     ]
                 },
                 "fps": {
