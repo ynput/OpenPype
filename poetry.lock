@@ -1288,6 +1288,21 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "shotgun-api3"
+version = "3.3.3"
+description = "Shotgun Python API"
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/shotgunsoftware/python-api.git"
+reference = "v3.3.3"
+resolved_reference = "b9f066c0edbea6e0733242e18f32f75489064840"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
