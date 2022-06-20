@@ -226,6 +226,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             opfapi.export_clip(
                 export_dir_path, exporting_clip, preset_path, **export_kwargs)
 
+            repr_name = unique_name
             # make sure only first segment is used if underscore in name
             # HACK: `ftrackreview_withLUT` will result only in `ftrackreview`
             if (
