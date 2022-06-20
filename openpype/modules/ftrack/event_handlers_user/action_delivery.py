@@ -542,7 +542,9 @@ class Delivery(BaseAction):
                 os.makedirs(location_path)
 
         self.log.debug("Collecting representations to process.")
-        version_ids = self._get_interest_version_ids(session, entities)
+        version_ids = self._get_interest_version_ids(
+            project_name, session, entities
+        )
         repres_to_deliver = list(get_representations(
             project_name,
             representation_names=repre_names,
