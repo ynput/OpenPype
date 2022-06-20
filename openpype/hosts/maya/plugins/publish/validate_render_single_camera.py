@@ -39,7 +39,9 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
         if renderer.startswith('renderman'):
             renderer = 'renderman'
 
-        attr = RenderSettings.get_image_prefix_attr(renderer)
+        file_prefix = cmds.getAttr(
+            RenderSettings.get_image_prefix_attr(renderer)
+        )
         file_prefix = cmds.getAttr(attr)
 
         if len(cameras) > 1:
