@@ -24,7 +24,11 @@ class StaticMeshAlembicLoader(plugin.Loader):
         task = unreal.AssetImportTask()
         options = unreal.AbcImportSettings()
         sm_settings = unreal.AbcStaticMeshSettings()
-        conversion_settings = unreal.AbcConversionSettings()
+        conversion_settings = unreal.AbcConversionSettings(
+            preset=unreal.AbcConversionPreset.CUSTOM,
+            flip_u=False, flip_v=True,
+            rotation=[90.0, 0.0, 0.0],
+            scale=[1.0, -1.0, 1.0])
 
         task.set_editor_property('filename', filename)
         task.set_editor_property('destination_path', asset_dir)
@@ -39,13 +43,6 @@ class StaticMeshAlembicLoader(plugin.Loader):
             'import_type', unreal.AlembicImportType.STATIC_MESH)
 
         sm_settings.set_editor_property('merge_meshes', True)
-
-        conversion_settings.set_editor_property('flip_u', False)
-        conversion_settings.set_editor_property('flip_v', True)
-        conversion_settings.set_editor_property(
-            'scale', unreal.Vector(x=100.0, y=100.0, z=100.0))
-        conversion_settings.set_editor_property(
-            'rotation', unreal.Vector(x=-90.0, y=0.0, z=180.0))
 
         options.static_mesh_settings = sm_settings
         options.conversion_settings = conversion_settings

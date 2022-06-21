@@ -12,6 +12,8 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
+from bson.objectid import ObjectId
+
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
@@ -196,12 +198,12 @@ class LayoutLoader(plugin.Loader):
                     except Exception as e:
                         print(e)
                 actor.set_actor_rotation(unreal.Rotator(
-                    umath.radians_to_degrees(
+                    (
                         transform.get('rotation').get('x')),
-                    -umath.radians_to_degrees(
-                        transform.get('rotation').get('y')),
-                    umath.radians_to_degrees(
+                    (
                         transform.get('rotation').get('z')),
+                    -(
+                        transform.get('rotation').get('y')),
                 ), False)
                 actor.set_actor_scale3d(transform.get('scale'))
 
@@ -354,7 +356,7 @@ class LayoutLoader(plugin.Loader):
                 sec_params.set_editor_property('animation', animation)
 
     @staticmethod
-    def _generate_sequence(self, h, h_dir):
+    def _generate_sequence(h, h_dir):
         tools = unreal.AssetToolsHelpers().get_asset_tools()
 
         sequence = tools.create_asset(
@@ -406,7 +408,7 @@ class LayoutLoader(plugin.Loader):
 
         return sequence, (min_frame, max_frame)
 
-    def _process(self, lib_path, asset_dir, sequence, loaded=None):
+    def _process(self, lib_path, asset_dir, sequence, repr_loaded=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         with open(lib_path, "r") as fp:
@@ -414,8 +416,8 @@ class LayoutLoader(plugin.Loader):
 
         all_loaders = discover_loader_plugins()
 
-        if not loaded:
-            loaded = []
+        if not repr_loaded:
+            repr_loaded = []
 
         path = Path(lib_path)
 
@@ -426,36 +428,64 @@ class LayoutLoader(plugin.Loader):
         loaded_assets = []
 
         for element in data:
-            reference = None
-            if element.get('reference_fbx'):
-                reference = element.get('reference_fbx')
+            representation = None
+            repr_format = None
+            if element.get('representation'):
+                # representation = element.get('representation')
+
+                self.log.info(element.get("version"))
+
+                valid_formats = ['fbx', 'abc']
+
+                repr_data = legacy_io.find_one({
+                    "type": "representation",
+                    "parent": ObjectId(element.get("version")),
+                    "name": {"$in": valid_formats}
+                })
+                repr_format = repr_data.get('name')
+
+                if not repr_data:
+                    self.log.error(
+                        f"No valid representation found for version "
+                        f"{element.get('version')}")
+                    continue
+
+                representation = str(repr_data.get('_id'))
+                print(representation)
+            # This is to keep compatibility with old versions of the
+            # json format.
+            elif element.get('reference_fbx'):
+                representation = element.get('reference_fbx')
+                repr_format = 'fbx'
             elif element.get('reference_abc'):
-                reference = element.get('reference_abc')
+                representation = element.get('reference_abc')
+                repr_format = 'abc'
 
             # If reference is None, this element is skipped, as it cannot be
             # imported in Unreal
-            if not reference:
+            if not representation:
                 continue
 
             instance_name = element.get('instance_name')
 
             skeleton = None
 
-            if reference not in loaded:
-                loaded.append(reference)
+            if representation not in repr_loaded:
+                repr_loaded.append(representation)
 
                 family = element.get('family')
                 loaders = loaders_from_representation(
-                    all_loaders, reference)
+                    all_loaders, representation)
 
                 loader = None
 
-                if reference == element.get('reference_fbx'):
+                if repr_format == 'fbx':
                     loader = self._get_fbx_loader(loaders, family)
-                elif reference == element.get('reference_abc'):
+                elif repr_format == 'abc':
                     loader = self._get_abc_loader(loaders, family)
 
                 if not loader:
+                    self.log.error(f"No valid loader found for {representation}")
                     continue
 
                 options = {
@@ -464,7 +494,7 @@ class LayoutLoader(plugin.Loader):
 
                 assets = load_container(
                     loader,
-                    reference,
+                    representation,
                     namespace=instance_name,
                     options=options
                 )
@@ -482,8 +512,10 @@ class LayoutLoader(plugin.Loader):
 
                 instances = [
                     item for item in data
-                    if (item.get('reference_fbx') == reference or
-                        item.get('reference_abc') == reference)]
+                    if ((item.get('version') and 
+                        item.get('version') == element.get('version')) or
+                        item.get('reference_fbx') == representation or
+                        item.get('reference_abc') == representation)]
 
                 for instance in instances:
                     transform = instance.get('transform')
@@ -501,9 +533,9 @@ class LayoutLoader(plugin.Loader):
                         bindings_dict[inst] = bindings
 
                 if skeleton:
-                    skeleton_dict[reference] = skeleton
+                    skeleton_dict[representation] = skeleton
             else:
-                skeleton = skeleton_dict.get(reference)
+                skeleton = skeleton_dict.get(representation)
 
             animation_file = element.get('animation')
 
@@ -599,23 +631,26 @@ class LayoutLoader(plugin.Loader):
 
         # Create map for the shot, and create hierarchy of map. If the maps
         # already exist, we will use them.
-        h_dir = hierarchy_dir_list[0]
-        h_asset = hierarchy[0]
-        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
-        if not EditorAssetLibrary.does_asset_exist(master_level):
-            EditorLevelLibrary.new_level(f"{h_dir}/{h_asset}_map")
+        master_level = None
+        if hierarchy:
+            h_dir = hierarchy_dir_list[0]
+            h_asset = hierarchy[0]
+            master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+            if not EditorAssetLibrary.does_asset_exist(master_level):
+                EditorLevelLibrary.new_level(f"{h_dir}/{h_asset}_map")
 
         level = f"{asset_dir}/{asset}_map.{asset}_map"
         EditorLevelLibrary.new_level(f"{asset_dir}/{asset}_map")
 
-        EditorLevelLibrary.load_level(master_level)
-        EditorLevelUtils.add_level_to_world(
-            EditorLevelLibrary.get_editor_world(),
-            level,
-            unreal.LevelStreamingDynamic
-        )
-        EditorLevelLibrary.save_all_dirty_levels()
-        EditorLevelLibrary.load_level(level)
+        if master_level:
+            EditorLevelLibrary.load_level(master_level)
+            EditorLevelUtils.add_level_to_world(
+                EditorLevelLibrary.get_editor_world(),
+                level,
+                unreal.LevelStreamingDynamic
+            )
+            EditorLevelLibrary.save_all_dirty_levels()
+            EditorLevelLibrary.load_level(level)
 
         # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
@@ -664,11 +699,12 @@ class LayoutLoader(plugin.Loader):
             unreal.FrameRate(data.get("fps"), 1.0))
         shot.set_playback_start(0)
         shot.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
-        self._set_sequence_hierarchy(
-            sequences[-1], shot,
-            frame_ranges[-1][1],
-            data.get('clipIn'), data.get('clipOut'),
-            [level])
+        if sequences:
+            self._set_sequence_hierarchy(
+                sequences[-1], shot,
+                frame_ranges[-1][1],
+                data.get('clipIn'), data.get('clipOut'),
+                [level])
 
         EditorLevelLibrary.load_level(level)
 
@@ -705,7 +741,8 @@ class LayoutLoader(plugin.Loader):
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)
 
-        EditorLevelLibrary.load_level(master_level)
+        if master_level:
+            EditorLevelLibrary.load_level(master_level)
 
         return asset_content
 
