@@ -218,11 +218,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 default_prefix = re.sub(
                     cls.R_AOV_TOKEN, "", default_prefix)
                 # remove aov token from prefix to pass validation
-                # first resolve it and then remove if dangling
-                default_prefix = default_prefix.replace(
-                    "{aov_separator}", instance.data.get("aovSeparator", "_"))
-                default_prefix = default_prefix.rstrip(
-                    instance.data.get("aovSeparator", "_"))
+                default_prefix = default_prefix.split("{aov_separator}")[0]
             elif not re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
