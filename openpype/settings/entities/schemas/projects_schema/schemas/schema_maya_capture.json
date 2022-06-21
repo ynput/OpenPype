@@ -261,6 +261,16 @@
                             "label": "Enable Hardware Fog"
                         },
                         {
+                            "type": "enum",
+                            "key": "hwFogFalloff",
+                            "label": "Hardware Fog Falloff",
+                            "enum_items": [
+                                { "0": "Linear"},
+                                { "1": "Exponential"},
+                                { "2": "Exponential Squared"}
+                            ]
+                        },
+                        {
                             "type": "number",
                             "key": "hwFogStart",
                             "label": "Hardware Fog Start"
@@ -274,11 +284,6 @@
                             "type": "number",
                             "key": "hwFogAlpha",
                             "label": "Hardware Fog Alpha"
-                        },
-                        {
-                            "type": "number",
-                            "key": "hwFogFalloff",
-                            "label": "Hardware Fog Falloff"
                         },
                         {
                             "type": "number",
@@ -297,11 +302,6 @@
                             "type": "number",
                             "key": "motionBlurShutterOpenFraction",
                             "label": "Shutter Open Fraction"
-                        },
-                        {
-                            "type": "number",
-                            "key": "hwFogFalloff",
-                            "label": "Hardware Fog Falloff"
                         },
                         {
                             "type": "splitter"
