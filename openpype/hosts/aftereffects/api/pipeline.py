@@ -65,14 +65,14 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     instance[0].Visible = new_value
 
 
-def get_asset_settings():
+def get_asset_settings(asset_doc):
     """Get settings on current asset from database.
 
     Returns:
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
