@@ -166,6 +166,9 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "use_rendered": true,
+            "bake_viewer_process": true,
+            "bake_viewer_input_process": true,
             "nodes": {
                 "Reformat": [
                     [

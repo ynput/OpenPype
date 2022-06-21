@@ -68,6 +68,7 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `representation` | Representation name |
 | `frame` | Frame number for sequence files. |
 | `app` | Application Name |
+| `user` | User's login name (can be overridden in local settings) |
 | `output` |  |
 | `comment` |  |
 

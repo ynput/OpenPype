@@ -54,7 +54,6 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
             cls.log.info("not validating shapes in the content")
             return invalid
 
-
         # non-camera shapes
         valid_shapes = cmds.ls(shapes, type=('camera', 'locator'), long=True)
         shapes = set(shapes) - set(valid_shapes)

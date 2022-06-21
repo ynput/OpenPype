@@ -3,7 +3,8 @@ import collections
 import six
 import pyblish.api
 from copy import deepcopy
-from openpype.pipeline import legacy_io
+from openpype.client import get_asset_by_id
+
 
 # Copy of constant `openpype_modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
 CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
@@ -82,9 +83,6 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         auto_sync_state = project[
             "custom_attributes"][CUST_ATTR_AUTO_SYNC]
 
-        if not legacy_io.Session:
-            legacy_io.install()
-
         self.ft_project = None
 
         # disable termporarily ftrack project's autosyncing
@@ -93,14 +91,14 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         try:
             # import ftrack hierarchy
-            self.import_to_ftrack(hierarchy_context)
+            self.import_to_ftrack(project_name, hierarchy_context)
         except Exception:
             raise
         finally:
             if auto_sync_state:
                 self.auto_sync_on(project)
 
-    def import_to_ftrack(self, input_data, parent=None):
+    def import_to_ftrack(self, project_name, input_data, parent=None):
         # Prequery hiearchical custom attributes
         hier_custom_attributes = get_pype_attr(self.session)[1]
         hier_attr_by_key = {
@@ -222,7 +220,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     six.reraise(tp, value, tb)
 
             # Incoming links.
-            self.create_links(entity_data, entity)
+            self.create_links(project_name, entity_data, entity)
             try:
                 self.session.commit()
             except Exception:
@@ -255,9 +253,9 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             # Import children.
             if 'childs' in entity_data:
                 self.import_to_ftrack(
-                    entity_data['childs'], entity)
+                    project_name, entity_data['childs'], entity)
 
-    def create_links(self, entity_data, entity):
+    def create_links(self, project_name, entity_data, entity):
         # Clear existing links.
         for link in entity.get("incoming_links", []):
             self.session.delete(link)
@@ -270,9 +268,15 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 six.reraise(tp, value, tb)
 
         # Create new links.
-        for input in entity_data.get("inputs", []):
-            input_id = legacy_io.find_one({"_id": input})["data"]["ftrackId"]
-            assetbuild = self.session.get("AssetBuild", input_id)
+        for asset_id in entity_data.get("inputs", []):
+            asset_doc = get_asset_by_id(project_name, asset_id)
+            ftrack_id = None
+            if asset_doc:
+                ftrack_id = asset_doc["data"].get("ftrackId")
+            if not ftrack_id:
+                continue
+
+            assetbuild = self.session.get("AssetBuild", ftrack_id)
             self.log.debug(
                 "Creating link from {0} to {1}".format(
                     assetbuild["name"], entity["name"]

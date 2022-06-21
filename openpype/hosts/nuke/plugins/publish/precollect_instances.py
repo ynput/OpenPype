@@ -151,15 +151,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 "resolutionWidth": resolution_width,
                 "resolutionHeight": resolution_height,
                 "pixelAspect": pixel_aspect,
-                "review": review
+                "review": review,
+                "representations": []
 
             })
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)
 
-        # create instances in context data if not are created yet
-        if not context.data.get("instances"):
-            context.data["instances"] = list()
-
-        context.data["instances"].extend(instances)
         self.log.debug("context: {}".format(context))

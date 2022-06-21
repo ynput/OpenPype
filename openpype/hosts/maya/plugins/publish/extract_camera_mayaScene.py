@@ -172,6 +172,7 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
                                                       dag=True,
                                                       shapes=True,
                                                       long=True)
+
                     attrs = {"backgroundColorR": 0.0,
                              "backgroundColorG": 0.0,
                              "backgroundColorB": 0.0,
@@ -188,6 +189,7 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
                         plug = "{0}.{1}".format(cam, attr)
                         unlock(plug)
                         cmds.setAttr(plug, value)
+
 
                     self.log.info("Performing extraction..")
                     cmds.select(cmds.ls(members, dag=True,
