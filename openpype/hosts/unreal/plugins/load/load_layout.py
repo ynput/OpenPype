@@ -485,7 +485,8 @@ class LayoutLoader(plugin.Loader):
                     loader = self._get_abc_loader(loaders, family)
 
                 if not loader:
-                    self.log.error(f"No valid loader found for {representation}")
+                    self.log.error(
+                        f"No valid loader found for {representation}")
                     continue
 
                 options = {
@@ -512,7 +513,7 @@ class LayoutLoader(plugin.Loader):
 
                 instances = [
                     item for item in data
-                    if ((item.get('version') and 
+                    if ((item.get('version') and
                         item.get('version') == element.get('version')) or
                         item.get('reference_fbx') == representation or
                         item.get('reference_abc') == representation)]
