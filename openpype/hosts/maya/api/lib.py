@@ -2141,7 +2141,7 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.height" % control_node, height)
 
     deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
-    cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
+    cmds.setAttr("%s.aspectRatio" % control_node, deviceAspectRatio)
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
