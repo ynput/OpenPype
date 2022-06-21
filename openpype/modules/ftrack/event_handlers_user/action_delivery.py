@@ -3,8 +3,13 @@ import copy
 import json
 import collections
 
-from bson.objectid import ObjectId
-
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_subsets,
+    get_versions,
+    get_representations
+)
 from openpype.api import Anatomy, config
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
@@ -18,22 +23,15 @@ from openpype.lib.delivery import (
     process_single_file,
     process_sequence
 )
-from openpype.pipeline import AvalonMongoDB
 
 
 class Delivery(BaseAction):
-
     identifier = "delivery.action"
     label = "Delivery"
     description = "Deliver data to client"
     role_list = ["Pypeclub", "Administrator", "Project manager"]
     icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
     settings_key = "delivery_action"
-
-    def __init__(self, *args, **kwargs):
-        self.dbcon = AvalonMongoDB()
-
-        super(Delivery, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
         is_valid = False
@@ -57,9 +55,7 @@ class Delivery(BaseAction):
 
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
-        self.dbcon.install()
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-        project_doc = self.dbcon.find_one({"type": "project"}, {"name": True})
+        project_doc = get_project(project_name, fields=["name"])
         if not project_doc:
             return {
                 "success": False,
@@ -68,8 +64,7 @@ class Delivery(BaseAction):
                 ).format(project_name)
             }
 
-        repre_names = self._get_repre_names(session, entities)
-        self.dbcon.uninstall()
+        repre_names = self._get_repre_names(project_name, session, entities)
 
         items.append({
             "type": "hidden",
@@ -198,17 +193,21 @@ class Delivery(BaseAction):
             "title": title
         }
 
-    def _get_repre_names(self, session, entities):
-        version_ids = self._get_interest_version_ids(session, entities)
+    def _get_repre_names(self, project_name, session, entities):
+        version_ids = self._get_interest_version_ids(
+            project_name, session, entities
+        )
         if not version_ids:
             return []
-        repre_docs = self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        })
-        return list(sorted(repre_docs.distinct("name")))
+        repre_docs = get_representations(
+            project_name,
+            version_ids=version_ids,
+            fields=["name"]
+        )
+        repre_names = {repre_doc["name"] for repre_doc in repre_docs}
+        return list(sorted(repre_names))
 
-    def _get_interest_version_ids(self, session, entities):
+    def _get_interest_version_ids(self, project_name, session, entities):
         # Extract AssetVersion entities
         asset_versions = self._extract_asset_versions(session, entities)
         # Prepare Asset ids
@@ -235,14 +234,18 @@ class Delivery(BaseAction):
             subset_names.add(asset["name"])
             version_nums.add(asset_version["version"])
 
-        asset_docs_by_ftrack_id = self._get_asset_docs(session, parent_ids)
+        asset_docs_by_ftrack_id = self._get_asset_docs(
+            project_name, session, parent_ids
+        )
         subset_docs = self._get_subset_docs(
+            project_name,
             asset_docs_by_ftrack_id,
             subset_names,
             asset_versions,
             assets_by_id
         )
         version_docs = self._get_version_docs(
+            project_name,
             asset_docs_by_ftrack_id,
             subset_docs,
             version_nums,
@@ -290,6 +293,7 @@ class Delivery(BaseAction):
 
     def _get_version_docs(
         self,
+        project_name,
         asset_docs_by_ftrack_id,
         subset_docs,
         version_nums,
@@ -300,11 +304,11 @@ class Delivery(BaseAction):
             subset_doc["_id"]: subset_doc
             for subset_doc in subset_docs
         }
-        version_docs = list(self.dbcon.find({
-            "type": "version",
-            "parent": {"$in": list(subset_docs_by_id.keys())},
-            "name": {"$in": list(version_nums)}
-        }))
+        version_docs = list(get_versions(
+            project_name,
+            subset_ids=subset_docs_by_id.keys(),
+            versions=version_nums
+        ))
         version_docs_by_parent_id = collections.defaultdict(dict)
         for version_doc in version_docs:
             subset_doc = subset_docs_by_id[version_doc["parent"]]
@@ -345,6 +349,7 @@ class Delivery(BaseAction):
 
     def _get_subset_docs(
         self,
+        project_name,
         asset_docs_by_ftrack_id,
         subset_names,
         asset_versions,
@@ -354,11 +359,11 @@ class Delivery(BaseAction):
             asset_doc["_id"]
             for asset_doc in asset_docs_by_ftrack_id.values()
         ]
-        subset_docs = list(self.dbcon.find({
-            "type": "subset",
-            "parent": {"$in": asset_doc_ids},
-            "name": {"$in": list(subset_names)}
-        }))
+        subset_docs = list(get_subsets(
+            project_name,
+            asset_ids=asset_doc_ids,
+            subset_names=subset_names
+        ))
         subset_docs_by_parent_id = collections.defaultdict(dict)
         for subset_doc in subset_docs:
             asset_id = subset_doc["parent"]
@@ -385,15 +390,21 @@ class Delivery(BaseAction):
                 filtered_subsets.append(subset_doc)
         return filtered_subsets
 
-    def _get_asset_docs(self, session, parent_ids):
-        asset_docs = list(self.dbcon.find({
-            "type": "asset",
-            "data.ftrackId": {"$in": list(parent_ids)}
-        }))
+    def _get_asset_docs(self, project_name, session, parent_ids):
+        asset_docs = list(get_assets(
+            project_name, fields=["_id", "name", "data.ftrackId"]
+        ))
 
+        asset_docs_by_id = {}
+        asset_docs_by_name = {}
         asset_docs_by_ftrack_id = {}
         for asset_doc in asset_docs:
+            asset_id = str(asset_doc["_id"])
+            asset_name = asset_doc["name"]
             ftrack_id = asset_doc["data"].get("ftrackId")
+
+            asset_docs_by_id[asset_id] = asset_doc
+            asset_docs_by_name[asset_name] = asset_doc
             if ftrack_id:
                 asset_docs_by_ftrack_id[ftrack_id] = asset_doc
 
@@ -406,15 +417,15 @@ class Delivery(BaseAction):
         avalon_mongo_id_values = query_custom_attributes(
             session, [attr_def["id"]], parent_ids, True
         )
-        entity_ids_by_mongo_id = {
-            ObjectId(item["value"]): item["entity_id"]
-            for item in avalon_mongo_id_values
-            if item["value"]
-        }
-
         missing_ids = set(parent_ids)
-        for entity_id in set(entity_ids_by_mongo_id.values()):
-            if entity_id in missing_ids:
+        for item in avalon_mongo_id_values:
+            if not item["value"]:
+                continue
+            asset_id = item["value"]
+            entity_id = item["entity_id"]
+            asset_doc = asset_docs_by_id.get(asset_id)
+            if asset_doc:
+                asset_docs_by_ftrack_id[entity_id] = asset_doc
                 missing_ids.remove(entity_id)
 
         entity_ids_by_name = {}
@@ -427,36 +438,10 @@ class Delivery(BaseAction):
                 for entity in not_found_entities
             }
 
-        expressions = []
-        if entity_ids_by_mongo_id:
-            expression = {
-                "type": "asset",
-                "_id": {"$in": list(entity_ids_by_mongo_id.keys())}
-            }
-            expressions.append(expression)
-
-        if entity_ids_by_name:
-            expression = {
-                "type": "asset",
-                "name": {"$in": list(entity_ids_by_name.keys())}
-            }
-            expressions.append(expression)
-
-        if expressions:
-            if len(expressions) == 1:
-                filter = expressions[0]
-            else:
-                filter = {"$or": expressions}
-
-            asset_docs = self.dbcon.find(filter)
-            for asset_doc in asset_docs:
-                if asset_doc["_id"] in entity_ids_by_mongo_id:
-                    entity_id = entity_ids_by_mongo_id[asset_doc["_id"]]
-                    asset_docs_by_ftrack_id[entity_id] = asset_doc
-
-                elif asset_doc["name"] in entity_ids_by_name:
-                    entity_id = entity_ids_by_name[asset_doc["name"]]
-                    asset_docs_by_ftrack_id[entity_id] = asset_doc
+        for asset_name, entity_id in entity_ids_by_name.items():
+            asset_doc = asset_docs_by_name.get(asset_name)
+            if asset_doc:
+                asset_docs_by_ftrack_id[entity_id] = asset_doc
 
         return asset_docs_by_ftrack_id
 
@@ -490,7 +475,6 @@ class Delivery(BaseAction):
         session.commit()
 
         try:
-            self.dbcon.install()
             report = self.real_launch(session, entities, event)
 
         except Exception as exc:
@@ -516,7 +500,6 @@ class Delivery(BaseAction):
             else:
                 job["status"] = "failed"
             session.commit()
-            self.dbcon.uninstall()
 
         if not report["success"]:
             self.show_interface(
@@ -558,16 +541,15 @@ class Delivery(BaseAction):
             if not os.path.exists(location_path):
                 os.makedirs(location_path)
 
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-
         self.log.debug("Collecting representations to process.")
-        version_ids = self._get_interest_version_ids(session, entities)
-        repres_to_deliver = list(self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids},
-            "name": {"$in": repre_names}
-        }))
-
+        version_ids = self._get_interest_version_ids(
+            project_name, session, entities
+        )
+        repres_to_deliver = list(get_representations(
+            project_name,
+            representation_names=repre_names,
+            version_ids=version_ids
+        ))
         anatomy = Anatomy(project_name)
 
         format_dict = get_format_dict(anatomy, location_path)

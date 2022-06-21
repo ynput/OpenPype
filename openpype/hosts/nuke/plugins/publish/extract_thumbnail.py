@@ -65,48 +65,46 @@ class ExtractThumbnail(openpype.api.Extractor):
         temporary_nodes = []
 
         # try to connect already rendered images
-        if self.use_rendered:
-            collection = instance.data.get("collection", None)
-            self.log.debug("__ collection: `{}`".format(collection))
+        previous_node = node
+        collection = instance.data.get("collection", None)
+        self.log.debug("__ collection: `{}`".format(collection))
 
-            if collection:
-                # get path
-                fname = os.path.basename(collection.format(
-                    "{head}{padding}{tail}"))
-                fhead = collection.format("{head}")
+        if collection:
+            # get path
+            fname = os.path.basename(collection.format(
+                "{head}{padding}{tail}"))
+            fhead = collection.format("{head}")
 
-                thumb_fname = list(collection)[mid_frame]
-            else:
-                fname = thumb_fname = os.path.basename(
-                    instance.data.get("path", None))
-                fhead = os.path.splitext(fname)[0] + "."
+            thumb_fname = list(collection)[mid_frame]
+        else:
+            fname = thumb_fname = os.path.basename(
+                instance.data.get("path", None))
+            fhead = os.path.splitext(fname)[0] + "."
 
-            self.log.debug("__ fhead: `{}`".format(fhead))
+        self.log.debug("__ fhead: `{}`".format(fhead))
 
-            if "#" in fhead:
-                fhead = fhead.replace("#", "")[:-1]
+        if "#" in fhead:
+            fhead = fhead.replace("#", "")[:-1]
 
-            path_render = os.path.join(
-                staging_dir, thumb_fname).replace("\\", "/")
-            self.log.debug("__ path_render: `{}`".format(path_render))
+        path_render = os.path.join(
+            staging_dir, thumb_fname).replace("\\", "/")
+        self.log.debug("__ path_render: `{}`".format(path_render))
 
+        if self.use_rendered and os.path.isfile(path_render):
             # check if file exist otherwise connect to write node
-            if os.path.isfile(path_render):
-                rnode = nuke.createNode("Read")
+            rnode = nuke.createNode("Read")
 
-                rnode["file"].setValue(path_render)
+            rnode["file"].setValue(path_render)
 
-                # turn it raw if none of baking is ON
-                if all([
-                    not self.bake_viewer_input_process,
-                    not self.bake_viewer_process
-                ]):
-                    rnode["raw"].setValue(True)
+            # turn it raw if none of baking is ON
+            if all([
+                not self.bake_viewer_input_process,
+                not self.bake_viewer_process
+            ]):
+                rnode["raw"].setValue(True)
 
-                temporary_nodes.append(rnode)
-                previous_node = rnode
-            else:
-                previous_node = node
+            temporary_nodes.append(rnode)
+            previous_node = rnode
 
         # bake viewer input look node into thumbnail image
         if self.bake_viewer_input_process:

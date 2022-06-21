@@ -72,12 +72,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
-                representation = {
-                    'name': ext,
-                    'ext': ext,
-                    "stagingDir": output_dir,
-                    "tags": list()
-                }
+            representation = {
+                'name': ext,
+                'ext': ext,
+                "stagingDir": output_dir,
+                "tags": list()
+            }
 
             try:
                 collected_frames = [f for f in os.listdir(output_dir)
