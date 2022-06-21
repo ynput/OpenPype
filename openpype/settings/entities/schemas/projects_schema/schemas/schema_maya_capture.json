@@ -229,6 +229,34 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "ssaoEnable",
+                            "label": "Screen Space Ambient Occlusion"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoAmount",
+                            "label": "SSAO Amount"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoFilterRadius",
+                            "label": "SSAO Filter Radius"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoRadius",
+                            "label": "SSAO Radius"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoSamples",
+                            "label": "SSAO Samples"
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "hwFogEnable",
                             "label": "Enable Hardware Fog"
                         },
@@ -262,8 +290,18 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "ssaoEnable",
-                            "label": "Screen Space Ambient Occlusion"
+                            "key": "motionBlurEnable",
+                            "label": "Enable Motion Blur"
+                        },
+                        {
+                            "type": "number",
+                            "key": "motionBlurShutterOpenFraction",
+                            "label": "Shutter Open Fraction"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogFalloff",
+                            "label": "Hardware Fog Falloff"
                         },
                         {
                             "type": "splitter"
