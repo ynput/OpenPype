@@ -203,11 +203,9 @@ class InstallPySideToBlender(PreLaunchHook):
         """
         # Get pip list from blender's python executable
         args = [python_executable, "-m", "pip", "list"]
-        process = subprocess.Popen(
-            args, stdout=subprocess.PIPE, universal_newlines=True
-        )
+        process = subprocess.Popen(args, stdout=subprocess.PIPE)
         stdout, _ = process.communicate()
-        lines = stdout.split(os.linesep)
+        lines = stdout.decode().split(os.linesep)
         # Second line contain dashes that define maximum length of module name.
         #   Second column of dashes define maximum length of module version.
         package_dashes, *_ = lines[1].split(" ")
