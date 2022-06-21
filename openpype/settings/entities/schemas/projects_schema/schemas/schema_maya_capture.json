@@ -225,6 +225,42 @@
                             "label": "Two Sided Lighting"
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "hwFogEnable",
+                            "label": "Enable Hardware Fog"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogStart",
+                            "label": "Hardware Fog Start"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogEnd",
+                            "label": "Hardware Fog End"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogAlpha",
+                            "label": "Hardware Fog Alpha"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogFalloff",
+                            "label": "Hardware Fog Falloff"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogDensity",
+                            "label": "Hardware Fog Density"
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "boolean",
                             "key": "ssaoEnable",
                             "label": "Screen Space Ambient Occlusion"
