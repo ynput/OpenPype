@@ -61,10 +61,10 @@ class ExtractCameraAlembic(openpype.api.Extractor):
 
             if bake_to_worldspace:
                 job_str += ' -worldSpace'
-                for member in member_shapes:
-                    self.log.info(f"processing {member}")
+                for member in members:
                     transform = cmds.listRelatives(
-                        member, parent=True, fullPath=True)[0]
+                        member, parent=True, fullPath=True)
+                    transform = transform[0] if transform else member
                     job_str += ' -root {0}'.format(transform)
 
             job_str += ' -file "{0}"'.format(path)

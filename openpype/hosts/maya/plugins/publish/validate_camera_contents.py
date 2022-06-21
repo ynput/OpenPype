@@ -52,19 +52,8 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
         if not cls.validate_shapes:
             cls.log.info("not validating shapes in the content")
-
-            for member in members:
-                parents = cmds.ls(member, long=True)[0].split("|")[1:-1]
-                cls.log.info(parents)
-                parents_long_named = [
-                    "|".join(parents[:i]) for i in range(1, 1 + len(parents))
-                ]
-                cls.log.info(parents_long_named)
-                if cameras[0] in parents_long_named:
-                    cls.log.error(
-                        "{} is parented under camera {}".format(member, cameras[0]))
-                    invalid.extend(member)
             return invalid
+
 
         # non-camera shapes
         valid_shapes = cmds.ls(shapes, type=('camera', 'locator'), long=True)
