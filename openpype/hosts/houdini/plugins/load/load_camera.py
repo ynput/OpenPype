@@ -135,7 +135,7 @@ class CameraLoader(load.LoaderPlugin):
         nodes = [node]
 
         camera = self._get_camera(node)
-        self._match_maya_render_mask(root=node, camera=camera)
+        self._match_maya_render_mask(camera)
         self._set_asset_resolution(camera, asset=context["asset"])
 
         self[:] = nodes
@@ -177,7 +177,7 @@ class CameraLoader(load.LoaderPlugin):
                                     # "icon_scale" just skip that completely
                                     ignore={"scale"})
 
-        self._match_maya_render_mask(root=node, camera=new_camera)
+        self._match_maya_render_mask(new_camera)
 
         temp_camera.destroy()
 
@@ -215,33 +215,23 @@ class CameraLoader(load.LoaderPlugin):
         new_node.moveToGoodPosition()
         return new_node
 
-    def _match_maya_render_mask(self, root, camera):
+    def _match_maya_render_mask(self, camera):
         """Workaround to match Maya render mask in Houdini"""
         import hou
 
-        to_root = camera.relativePathTo(root)
-        to_camera = root.relativePathTo(camera)
-
-        expression = """
-# Get aperture from alembic
-node = hou.pwd()
-root = node.node('{to_root}')
-aperture =  __import__("_alembic_hom_extensions").alembicGetCameraDict(
-    root.hdaModule().GetFileName(root), 
-    "{to_camera}", 
-    root.evalParm("frame")/root.evalParm("fps")
-).get('aperture')
-
+        parm = camera.parm("aperture")
+        expression = parm.expression()
+        expression = expression.replace("return ", "aperture = ")
+        expression += """
 # Match maya render mask (logic from Houdini's own FBX importer)
+node = hou.pwd()
 resx = node.evalParm('resx')
 resy = node.evalParm('resy')
 aspect = node.evalParm('aspect')
 aperture *= min(1, (resx / resy * aspect) / 1.5)
 return aperture
-""".strip().format(to_root=to_root, to_camera=to_camera)
-
-        camera.parm("aperture").setExpression(expression,
-                                              language=hou.exprLanguage.Python)
+"""
+        parm.setExpression(expression, language=hou.exprLanguage.Python)
 
     def _set_asset_resolution(self, camera, asset):
         """Apply resolution to camera from asset document of the publish"""
