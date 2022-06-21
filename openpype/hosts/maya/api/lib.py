@@ -20,7 +20,6 @@ from openpype.client import (
     get_project,
     get_asset_by_name,
     get_subsets,
-    get_subset_by_name,
     get_last_versions,
     get_representation_by_name
 )
