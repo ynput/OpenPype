@@ -65,6 +65,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         load_btn = QtWidgets.QPushButton("Load...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
+        saver_manager_btn = QtWidgets.QPushButton("Saver Manager...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         set_framerange_btn = QtWidgets.QPushButton("Set Frame Range", self)
         set_resolution_btn = QtWidgets.QPushButton("Set Resolution", self)
@@ -94,6 +95,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
+        layout.addWidget(saver_manager_btn)
         layout.addWidget(set_framerange_btn)
         layout.addWidget(set_resolution_btn)
         layout.addWidget(rendermode_btn)
@@ -118,6 +120,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
             self.on_duplicate_with_inputs_clicked)
         set_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
         set_framerange_btn.clicked.connect(self.on_set_framerange_clicked)
+        saver_manager_btn.clicked.connect(self.on_saver_manager_clicked)
 
         self._callbacks = []
         self.register_callback("taskChanged", self.on_task_changed)
@@ -168,6 +171,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
     def on_libload_clicked(self):
         print("Clicked Library")
         host_tools.show_library_loader()
+
+    def on_saver_manager_clicked(self):
+        print("Clicked Saver Manager")
+        from .saver_manager import FusionSaverManager
+        manager = FusionSaverManager(parent=self)
+        manager.setStyleSheet(load_stylesheet())
+        manager.show()
 
     def on_rendermode_clicked(self):
         print("Clicked Set Render Mode")
