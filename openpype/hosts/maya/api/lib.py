@@ -2126,11 +2126,11 @@ def set_scene_resolution(width, height, pixelAspect):
 
     control_node = "defaultResolution"
     current_renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
-    aspect_ration_attr = "deviceAspectRatio"
+    aspect_ratio_attr = "deviceAspectRatio"
 
     # Give VRay a helping hand as it is slightly different from the rest
     if current_renderer == "vray":
-        aspect_ration_attr = "aspectRatio"
+        aspect_ratio_attr = "aspectRatio"
         vray_node = "vraySettings"
         if cmds.objExists(vray_node):
             control_node = vray_node
@@ -2144,7 +2144,7 @@ def set_scene_resolution(width, height, pixelAspect):
 
     deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
     cmds.setAttr(
-        "{}.{}".format(control_node, aspect_ration_attr), deviceAspectRatio)
+        "{}.{}".format(control_node, aspect_ratio_attr), deviceAspectRatio)
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
