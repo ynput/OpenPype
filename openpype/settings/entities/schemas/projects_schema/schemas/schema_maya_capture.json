@@ -202,12 +202,23 @@
                             "decimal": 0
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "lineAAEnable",
+                            "label": "Smooth Wireframe"
+                        },
+                        {
                             "type": "number",
                             "key": "multiSample",
                             "label": "Anti Aliasing Samples",
                             "decimal": 0,
                             "minimum": 0,
                             "maximum": 32
+                        },
+                        {
+                            "type": "splitter"
                         },
                         {
                             "type": "boolean",
@@ -302,6 +313,11 @@
                             "type": "number",
                             "key": "motionBlurShutterOpenFraction",
                             "label": "Shutter Open Fraction"
+                        },
+                        {
+                            "type": "number",
+                            "key": "motionBlurSampleCount",
+                            "label": "Sample Count"
                         },
                         {
                             "type": "splitter"
