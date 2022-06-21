@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "OpenPype",
+	"Description": "OpenPype Integration",
+	"Category": "OpenPype.Integration",
+	"CreatedBy": "Ondrej Samohel",
+	"CreatedByURL": "https://openpype.io",
+	"DocsURL": "https://openpype.io/docs/artist_hosts_unreal",
+	"MarketplaceURL": "",
+	"SupportURL": "https://pype.club/",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "OpenPype",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

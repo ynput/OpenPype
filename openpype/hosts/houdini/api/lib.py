@@ -130,6 +130,8 @@ def get_output_parameter(node):
     elif node_type == "arnold":
         if node.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
+    elif node_type == "Redshift_Proxy_Output":
+        return node.parm("RS_archive_file")
 
     raise TypeError("Node type '%s' not supported" % node_type)
 

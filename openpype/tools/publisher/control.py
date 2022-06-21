@@ -13,6 +13,7 @@ except Exception:
 
 import pyblish.api
 
+from openpype.client import get_assets
 from openpype.pipeline import (
     PublishValidationError,
     registered_host,
@@ -116,10 +117,10 @@ class AssetDocsCache:
 
     def _query(self):
         if self._asset_docs is None:
-            asset_docs = list(self.dbcon.find(
-                {"type": "asset"},
-                self.projection
-            ))
+            project_name = self.dbcon.active_project()
+            asset_docs = get_assets(
+                project_name, fields=self.projection.keys()
+            )
             task_names_by_asset_name = {}
             for asset_doc in asset_docs:
                 asset_name = asset_doc["name"]

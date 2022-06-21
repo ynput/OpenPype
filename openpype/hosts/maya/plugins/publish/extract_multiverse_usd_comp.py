@@ -7,11 +7,28 @@ from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseUsdComposition(openpype.api.Extractor):
-    """Extractor of Multiverse USD Composition."""
+    """Extractor of Multiverse USD Composition data.
+
+    This will extract settings for a Multiverse Write Composition operation:
+    they are visible in the Maya set node created by a Multiverse USD
+    Composition instance creator.
+
+    The input data contained in the set is either:
+
+    - a single hierarchy consisting of several Multiverse Compound nodes, with
+      any number of layers, and Maya transform nodes
+    - a single Compound node with more than one layer (in this case the "Write
+      as Compound Layers" option should be set).
+
+    Upon publish a .usda composition file will be written.
+    """
 
     label = "Extract Multiverse USD Composition"
     hosts = ["maya"]
-    families = ["usdComposition"]
+    families = ["mvUsdComposition"]
+    scene_type = "usd"
+    # Order of `fileFormat` must match create_multiverse_usd_comp.py
+    file_formats = ["usda", "usd"]
 
     @property
     def options(self):
@@ -29,6 +46,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             "stripNamespaces": bool,
             "mergeTransformAndShape": bool,
             "flattenContent": bool,
+            "writeAsCompoundLayers": bool,
             "writePendingOverrides": bool,
             "numTimeSamples": int,
             "timeSamplesSpan": float
@@ -42,6 +60,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             "stripNamespaces": True,
             "mergeTransformAndShape": False,
             "flattenContent": False,
+            "writeAsCompoundLayers": False,
             "writePendingOverrides": False,
             "numTimeSamples": 1,
             "timeSamplesSpan": 0.0
@@ -71,12 +90,15 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
         return options
 
     def process(self, instance):
-        # Load plugin firstly
+        # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
         # Define output file path
         staging_dir = self.staging_dir(instance)
-        file_name = "{}.usd".format(instance.name)
+        file_format = instance.data.get("fileFormat", 0)
+        if file_format in range(len(self.file_formats)):
+            self.scene_type = self.file_formats[file_format]
+        file_name = "{0}.{1}".format(instance.name, self.scene_type)
         file_path = os.path.join(staging_dir, file_name)
         file_path = file_path.replace('\\', '/')
 
@@ -90,12 +112,6 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
 
         with maintained_selection():
             members = instance.data("setMembers")
-            members = cmds.ls(members,
-                              dag=True,
-                              shapes=True,
-                              type="mvUsdCompoundShape",
-                              noIntermediate=True,
-                              long=True)
             self.log.info('Collected object {}'.format(members))
 
             import multiverse
@@ -119,6 +135,18 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
                 time_opts.framePerSecond = fps
 
             comp_write_opts = multiverse.CompositionWriteOptions()
+
+            """
+            OP tells MV to write to a staging directory, and then moves the
+            file to it's final publish directory. By default, MV write relative
+            paths, but these paths will break when the referencing file moves.
+            This option forces writes to absolute paths, which is ok within OP
+            because all published assets have static paths, and MV can only
+            reference published assets. When a proper UsdAssetResolver is used,
+            this won't be needed.
+            """
+            comp_write_opts.forceAbsolutePaths = True
+
             options_discard_keys = {
                 'numTimeSamples',
                 'timeSamplesSpan',
@@ -140,10 +168,10 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'usd',
-            'ext': 'usd',
+            'name': self.scene_type,
+            'ext': self.scene_type,
             'files': file_name,
-            "stagingDir": staging_dir
+            'stagingDir': staging_dir
         }
         instance.data["representations"].append(representation)
 

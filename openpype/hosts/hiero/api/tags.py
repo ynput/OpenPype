@@ -86,7 +86,7 @@ def update_tag(tag, data):
 
     # due to hiero bug we have to make sure keys which are not existent in
     # data are cleared of value by `None`
-    for _mk in mtd.keys():
+    for _mk in mtd.dict().keys():
         if _mk.replace("tag.", "") not in data_mtd.keys():
             mtd.setValue(_mk, str(None))
 

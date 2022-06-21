@@ -1737,8 +1737,11 @@ def apply_shaders(relationships, shadernodes, nodes):
             log.warning("No nodes found for shading engine "
                         "'{0}'".format(id_shading_engines[0]))
             continue
+        try:
+            cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
+        except RuntimeError as rte:
+            log.error("Error during shader assignment: {}".format(rte))
 
-        cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
     # endregion
 
     apply_attributes(attributes, nodes_by_id)
@@ -2123,9 +2126,11 @@ def set_scene_resolution(width, height, pixelAspect):
 
     control_node = "defaultResolution"
     current_renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
+    aspect_ratio_attr = "deviceAspectRatio"
 
     # Give VRay a helping hand as it is slightly different from the rest
     if current_renderer == "vray":
+        aspect_ratio_attr = "aspectRatio"
         vray_node = "vraySettings"
         if cmds.objExists(vray_node):
             control_node = vray_node
@@ -2138,7 +2143,8 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.height" % control_node, height)
 
     deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
-    cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
+    cmds.setAttr(
+        "{}.{}".format(control_node, aspect_ratio_attr), deviceAspectRatio)
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 

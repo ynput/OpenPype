@@ -385,7 +385,7 @@ def ls():
             if "objectName" not in item and "members" in item:
                 members = item["members"]
                 if isinstance(members, list):
-                    members = "|".join(members)
+                    members = "|".join([str(member) for member in members])
                 item["objectName"] = members
     return output
 

@@ -16,7 +16,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     label = "Precollect Workfile"
-    order = pyblish.api.CollectorOrder - 0.5
+    order = pyblish.api.CollectorOrder - 0.491
 
     def process(self, context):
 
@@ -84,6 +84,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "colorspace": self.get_colorspace(project),
             "fps": fps
         }
+        self.log.debug("__ context_data: {}".format(pformat(context_data)))
         context.data.update(context_data)
 
         self.log.info("Creating instance: {}".format(instance))

@@ -20,6 +20,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
     hosts = ['maya']
     label = 'Camera Contents'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    validate_shapes = True
 
     @classmethod
     def get_invalid(cls, instance):
@@ -32,7 +33,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
         invalid = []
         cameras = cmds.ls(shapes, type='camera', long=True)
         if len(cameras) != 1:
-            cls.log.warning("Camera instance must have a single camera. "
+            cls.log.error("Camera instance must have a single camera. "
                             "Found {0}: {1}".format(len(cameras), cameras))
             invalid.extend(cameras)
 
@@ -49,14 +50,31 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
                 raise RuntimeError("No cameras found in empty instance.")
 
+        if not cls.validate_shapes:
+            cls.log.info("Not validating shapes in the content.")
+
+            for member in members:
+                parents = cmds.ls(member, long=True)[0].split("|")[1:-1]
+                parents_long_named = [
+                    "|".join(parents[:i]) for i in range(1, 1 + len(parents))
+                ]
+                if cameras[0] in parents_long_named:
+                    cls.log.error(
+                        "{} is parented under camera {}".format(
+                            member, cameras[0]))
+                    invalid.extend(member)
+            return invalid
+
         # non-camera shapes
         valid_shapes = cmds.ls(shapes, type=('camera', 'locator'), long=True)
         shapes = set(shapes) - set(valid_shapes)
         if shapes:
             shapes = list(shapes)
-            cls.log.warning("Camera instance should only contain camera "
+            cls.log.error("Camera instance should only contain camera "
                             "shapes. Found: {0}".format(shapes))
             invalid.extend(shapes)
+
+
 
         invalid = list(set(invalid))
 

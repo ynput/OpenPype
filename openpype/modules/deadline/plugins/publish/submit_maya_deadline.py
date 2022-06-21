@@ -287,6 +287,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
+    targets = ["local"]
 
     use_published = True
     tile_assembler_plugin = "OpenPypeTileAssembler"
@@ -440,7 +441,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         output_filename_0 = filename_0
 
-        dirname = os.path.dirname(output_filename_0)
+        # this is needed because renderman handles directory and file
+        # prefixes separately
+        if self._instance.data["renderer"] == "renderman":
+            dirname = os.path.dirname(output_filename_0)
 
         # Create render folder ----------------------------------------------
         try:
