@@ -59,7 +59,7 @@ def get_look_attrs(node):
     return result
 
 
-def node_uses_image_sequence(node):
+def node_uses_image_sequence(node, node_path):
     """Return whether file node uses an image sequence or single image.
 
     Determine if a node uses an image sequence or just a single image,
@@ -74,13 +74,18 @@ def node_uses_image_sequence(node):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    node_path = get_file_node_path(node).lower()
+    try:
+        use_frame_extension = cmds.getAttr('%s.useFrameExtension' % node)
+    except ValueError:
+        use_frame_extension = False
+    if use_frame_extension:
+        return True
 
-    # The following tokens imply a sequence
-    patterns = ["<udim>", "<tile>", "<uvtile>", "u<u>_v<v>", "<frame0"]
-
-    return (cmds.getAttr('%s.useFrameExtension' % node) or
-            any(pattern in node_path for pattern in patterns))
+        # The following tokens imply a sequence
+    patterns = ["<udim>", "<tile>", "<uvtile>",
+                "u<u>_v<v>", "<frame0", "<f4>"]
+    node_path_lowered = node_path.lower()
+    return any(pattern in node_path_lowered for pattern in patterns)
 
 
 def seq_to_glob(path):
@@ -188,7 +193,7 @@ def get_file_node_files(node):
 
     path = get_file_node_path(node)
     path = cmds.workspace(expandName=path)
-    if node_uses_image_sequence(node):
+    if node_uses_image_sequence(node, path):
         glob_pattern = seq_to_glob(path)
         return glob.glob(glob_pattern)
     elif os.path.exists(path):
