@@ -268,7 +268,7 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "hwFogEnable",
+                            "key": "fogging",
                             "label": "Enable Hardware Fog"
                         },
                         {
@@ -305,19 +305,9 @@
                             "type": "splitter"
                         },
                         {
-                            "type": "boolean",
-                            "key": "motionBlurEnable",
-                            "label": "Enable Motion Blur"
-                        },
-                        {
                             "type": "number",
                             "key": "motionBlurShutterOpenFraction",
                             "label": "Shutter Open Fraction"
-                        },
-                        {
-                            "type": "number",
-                            "key": "motionBlurSampleCount",
-                            "label": "Sample Count"
                         },
                         {
                             "type": "splitter"
