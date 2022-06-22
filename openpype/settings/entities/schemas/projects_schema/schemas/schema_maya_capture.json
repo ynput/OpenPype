@@ -239,50 +239,12 @@
                             "label": "Screen Space Ambient Occlusion"
                         },
                         {
-                            "type": "number",
-                            "key": "ssaoFilterRadius",
-                            "label": "SSAO Filter Radius"
-                        },
-                        {
-                            "type": "number",
-                            "key": "ssaoSamples",
-                            "label": "SSAO Samples"
-                        },
-                        {
                             "type": "splitter"
                         },
                         {
                             "type": "boolean",
                             "key": "fogging",
                             "label": "Enable Hardware Fog"
-                        },
-                        {
-                            "type": "enum",
-                            "key": "hwFogFalloff",
-                            "label": "Hardware Fog Falloff",
-                            "enum_items": [
-                                { "0": "Linear"},
-                                { "1": "Exponential"},
-                                { "2": "Exponential Squared"}
-                            ]
-                        },
-                        {
-                            "type": "number",
-                            "key": "hwFogStart",
-                            "label": "Hardware Fog Start"
-                        },
-                        {
-                            "type": "number",
-                            "key": "hwFogEnd",
-                            "label": "Hardware Fog End"
-                        },
-                        {
-                            "type": "number",
-                            "key": "hwFogAlpha",
-                            "label": "Hardware Fog Alpha"
-                        },
-                        {
-                            "type": "splitter"
                         },
                         {
                             "type": "splitter"
