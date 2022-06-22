@@ -14,9 +14,6 @@
             "ftrackreview": "Add review to Ftrack"
         },
         {
-            "shotgridreview": "Add review to Shotgrid"
-        },
-        {
             "delete": "Delete output"
         },
         {

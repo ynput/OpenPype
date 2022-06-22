@@ -102,6 +102,3 @@ website/.docusaurus
 
 .poetry/
 .python-version
-.editorconfig
-.pre-commit-config.yaml
-mypy.ini
