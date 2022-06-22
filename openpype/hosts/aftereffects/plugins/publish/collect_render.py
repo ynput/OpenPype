@@ -21,7 +21,7 @@ class AERenderInstance(RenderInstance):
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
-    publish_attributes = attr.ib(default=None)
+    publish_attributes = attr.ib(default={})
     file_name = attr.ib(default=None)
 
 
@@ -90,7 +90,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
-                family=family,
+                family="render",
                 families=inst.data.get("families", []),
                 version=version,
                 time="",
@@ -116,7 +116,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 toBeRenderedOn='deadline',
                 fps=fps,
                 app_version=app_version,
-                publish_attributes=inst.data.get("publish_attributes"),
+                publish_attributes=inst.data.get("publish_attributes", {}),
                 file_name=render_q.file_name
             )
 

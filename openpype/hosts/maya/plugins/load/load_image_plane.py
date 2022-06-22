@@ -1,5 +1,10 @@
 from Qt import QtWidgets, QtCore
 
+from openpype.client import (
+    get_asset_by_id,
+    get_subset_by_id,
+    get_version_by_id,
+)
 from openpype.pipeline import (
     legacy_io,
     load,
@@ -216,9 +221,16 @@ class ImagePlaneLoader(load.LoaderPlugin):
         )
 
         # Set frame range.
-        version = legacy_io.find_one({"_id": representation["parent"]})
-        subset = legacy_io.find_one({"_id": version["parent"]})
-        asset = legacy_io.find_one({"_id": subset["parent"]})
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(
+            project_name, representation["parent"], fields=["parent"]
+        )
+        subset = get_subset_by_id(
+            project_name, version["parent"], fields=["parent"]
+        )
+        asset = get_asset_by_id(
+            project_name, subset["parent"], fields=["parent"]
+        )
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
         image_plane_shape.frameOffset.set(1 - start_frame)

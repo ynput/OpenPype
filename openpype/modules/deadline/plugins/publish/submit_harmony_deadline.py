@@ -238,6 +238,7 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
+    targets = ["local"]
 
     optional = True
     use_published = False
@@ -321,7 +322,9 @@ class HarmonySubmitDeadline(
         )
         unzip_dir = (published_scene.parent / published_scene.stem)
         with _ZipFile(published_scene, "r") as zip_ref:
-            zip_ref.extractall(unzip_dir.as_posix())
+            # UNC path (//?/) added to minimalize risk with extracting
+            # to large file paths
+            zip_ref.extractall("//?/" + str(unzip_dir.as_posix()))
 
         # find any xstage files in directory, prefer the one with the same name
         # as directory (plus extension)
