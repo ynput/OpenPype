@@ -1,5 +1,6 @@
 import pyblish.api
 
+from openpype.client import get_project, get_asset_by_id
 from openpype import lib
 from openpype.pipeline import legacy_io
 
@@ -19,6 +20,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
         asset_name = ctx_data["asset"]
         asset = lib.get_asset(asset_name)
         asset_data = asset["data"]
+        project_name = legacy_io.active_project()
 
         # These attributes will be checked
         attributes = [
@@ -48,12 +50,19 @@ class ValidateScript(pyblish.api.InstancePlugin):
                 asset_attributes[attr] = asset_data[attr]
 
             elif attr in hierarchical_attributes:
-                # Try to find fps on parent
-                parent = asset['parent']
-                if asset_data['visualParent'] is not None:
-                    parent = asset_data['visualParent']
+                # TODO this should be probably removed
+                #   Hierarchical attributes is not a thing since Pype 2?
 
-                value = self.check_parent_hierarchical(parent, attr)
+                # Try to find attribute on parent
+                parent_id = asset['parent']
+                parent_type = "project"
+                if asset_data['visualParent'] is not None:
+                    parent_type = "asset"
+                    parent_id = asset_data['visualParent']
+
+                value = self.check_parent_hierarchical(
+                    project_name, parent_type, parent_id, attr
+                )
                 if value is None:
                     missing_attributes.append(attr)
                 else:
@@ -113,12 +122,35 @@ class ValidateScript(pyblish.api.InstancePlugin):
             message = msg.format(", ".join(not_matching))
             raise ValueError(message)
 
-    def check_parent_hierarchical(self, entityId, attr):
-        if entityId is None:
+    def check_parent_hierarchical(
+        self, project_name, parent_type, parent_id, attr
+    ):
+        if parent_id is None:
             return None
-        entity = legacy_io.find_one({"_id": entityId})
-        if attr in entity['data']:
+
+        doc = None
+        if parent_type == "project":
+            doc = get_project(project_name)
+        elif parent_type == "asset":
+            doc = get_asset_by_id(project_name, parent_id)
+
+        if not doc:
+            return None
+
+        doc_data = doc["data"]
+        if attr in doc_data:
             self.log.info(attr)
-            return entity['data'][attr]
-        else:
-            return self.check_parent_hierarchical(entity['parent'], attr)
+            return doc_data[attr]
+
+        if parent_type == "project":
+            return None
+
+        parent_id = doc_data.get("visualParent")
+        new_parent_type = "asset"
+        if parent_id is None:
+            parent_id = doc["parent"]
+            new_parent_type = "project"
+
+        return self.check_parent_hierarchical(
+            project_name, new_parent_type, parent_id, attr
+        )
