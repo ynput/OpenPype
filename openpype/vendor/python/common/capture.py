@@ -361,6 +361,7 @@ Viewport2Options = {
     "floatingPointRTFormat": 1,
     "gammaCorrectionEnable": False,
     "gammaValue": 2.2,
+    "lineAAEnable": False,
     "maxHardwareLights": 8,
     "motionBlurEnable": False,
     "motionBlurSampleCount": 8,
@@ -380,10 +381,6 @@ Viewport2Options = {
     "transparencyQuality": 0.33,
     "useMaximumHardwareLights": True,
     "vertexAnimationCache": 0
-}
-
-Viewport2OAAoption = {
-    "lineAAenable": False,
 }
 
 
@@ -493,13 +490,6 @@ def parse_view(panel):
 
     viewport2_options = {}
     for key in Viewport2Options.keys():
-        attr = "hardwareRenderingGlobals.{0}".format(key)
-        try:
-            viewport2_options[key] = cmds.getAttr(attr)
-        except ValueError:
-            continue
-
-    for key in Viewport2OAAoption.keys():
         attr = "hardwareRenderingGlobals.{0}".format(key)
         try:
             viewport2_options[key] = cmds.getAttr(attr)
