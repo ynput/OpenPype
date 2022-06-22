@@ -12,7 +12,6 @@ import shutil
 import hiero
 
 from Qt import QtWidgets
-from bson.objectid import ObjectId
 
 from openpype.client import (
     get_project,
