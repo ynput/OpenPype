@@ -361,7 +361,7 @@ function Home() {
 
                 <a className="link" href="https://www.blackmagicdesign.com/products/davinciresolve">
                   <img src="/img/app_resolve.png" alt="" title=""></img>
-                  <span className="caption">DaVinci Resolve (Beta)</span>
+                  <span className="caption">Resolve (Beta)</span>
                 </a>
 
                 <a className="link" href="https://www.blackmagicdesign.com/products/fusion">
@@ -374,6 +374,16 @@ function Home() {
                   <span className="caption">Ftrack</span>
                 </a>
 
+                <a className="link" href="https://www.shotgridsoftware.com/">
+                  <img src="/img/app_shotgrid.png" alt="" title=""></img>
+                  <span className="caption">Shotgrid (Beta)</span>
+                </a>
+
+                <a className="link" href="https://www.cg-wire.com/en/kitsu.html">
+                  <img src="/img/app_kitsu.png" alt="" title=""></img>
+                  <span className="caption">Kitsu (Beta)</span>
+                </a>
+
                 <a className="link" href="https://clockify.me">
                   <img src="/img/app_clockify.png" alt="" title=""></img>
                   <span className="caption">Clockify</span>
@@ -384,12 +394,7 @@ function Home() {
                   <span className="caption">Deadline</span>
                 </a>
 				
-                <a className="link" href="https://www.vvertex.com">
-                  <img src="/img/app_muster.png" alt="" title=""></img>
-                  <span className="caption">Muster</span>
-                </a>
-
-				<a className="link" href="https://www.royalrender.de/index.php/startseite.html">
+				        <a className="link" href="https://www.royalrender.de/index.php/startseite.html">
                   <img src="/img/app_royalrender.png" alt="" title=""></img>
                   <span className="caption">Royal Render</span>
                 </a>
@@ -399,30 +404,30 @@ function Home() {
                   <span className="caption">Slack</span>
                 </a>
 
-              </div>
-
-              <p> <b>In development by us or OpenPype community.</b></p>
-
-              <div className={classnames('showcase',)}>
-			  
                 <a className="link" href="https://j-cube.jp/solutions/multiverse/">
                   <img src="/img/app_multiverse.png" alt="" title=""></img>
                   <span className="caption">Multiverse</span>
                 </a>
 
-                <a className="link" href="https://www.shotgridsoftware.com/">
-                  <img src="/img/app_shotgrid.png" alt="" title=""></img>
-                  <span className="caption">Shotgrid</span>
-                </a>
+              </div>
 
+              <p> <b>Planned or in development by us and OpenPype community.</b></p>
+
+              <div className={classnames('showcase',)}>
+			  
                 <a className="link" href="https://fatfi.sh/aquarium/en">
                   <img src="/img/app_aquarium.png" alt="" title=""></img>
                   <span className="caption">Aquarium</span>
                 </a>
 
-                <a className="link" href="https://www.cg-wire.com/en/kitsu.html">
-                  <img src="/img/app_kitsu.png" alt="" title=""></img>
-                  <span className="caption">Kitsu</span>
+                <a className="link" href="https://www.vvertex.com">
+                  <img src="/img/app_muster.png" alt="" title=""></img>
+                  <span className="caption">Muster</span>
+                </a>
+
+                <a className="link" href="https://www.hibob.com">
+                  <img src="/img/app_hibob.png" alt="Hi Bob" title="Hi Bob"></img>
+                  <span className="caption">Bob</span>
                 </a>
 
               </div>
