@@ -707,6 +707,9 @@ class BaseCommunicator:
         if exit_code is not None:
             self.exit_code = exit_code
 
+        if self.exit_code is None:
+            self.exit_code = 0
+
     def stop(self):
         """Stop communication and currently running python process."""
         log.info("Stopping communication")
