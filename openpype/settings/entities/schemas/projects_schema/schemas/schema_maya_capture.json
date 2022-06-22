@@ -205,11 +205,6 @@
                             "type": "splitter"
                         },
                         {
-                            "type": "boolean",
-                            "key": "lineAAEnable",
-                            "label": "Smooth Wireframe"
-                        },
-                        {
                             "type": "number",
                             "key": "multiSample",
                             "label": "Anti Aliasing Samples",
@@ -245,18 +240,8 @@
                         },
                         {
                             "type": "number",
-                            "key": "ssaoAmount",
-                            "label": "SSAO Amount"
-                        },
-                        {
-                            "type": "number",
                             "key": "ssaoFilterRadius",
                             "label": "SSAO Filter Radius"
-                        },
-                        {
-                            "type": "number",
-                            "key": "ssaoRadius",
-                            "label": "SSAO Radius"
                         },
                         {
                             "type": "number",
@@ -297,17 +282,7 @@
                             "label": "Hardware Fog Alpha"
                         },
                         {
-                            "type": "number",
-                            "key": "hwFogDensity",
-                            "label": "Hardware Fog Density"
-                        },
-                        {
                             "type": "splitter"
-                        },
-                        {
-                            "type": "number",
-                            "key": "motionBlurShutterOpenFraction",
-                            "label": "Shutter Open Fraction"
                         },
                         {
                             "type": "splitter"
