@@ -153,7 +153,32 @@ const studios = [
       title: "IGG Canada",
       image: "/img/igg-logo.png",
       infoLink: "https://www.igg.com/",
-  }
+  },
+  {
+      title: "Agora Studio",
+      image: "/img/agora_studio.png",
+      infoLink: "https://agora.studio/",
+  },
+  {
+      title: "Lucan Visuals",
+      image: "/img/lucan_Logo_On_White-HR.png",
+      infoLink: "https://www.lucan.tv/",
+  },
+  {
+      title: "No Ghost",
+      image: "/img/noghost.png",
+      infoLink: "https://www.noghost.co.uk/",
+  },
+  {
+    title: "Static VFX",
+    image: "/img/staticvfx.png",
+    infoLink: "http://www.staticvfx.com/",
+  },
+  {
+    title: "Method n Madness",
+    image: "/img/methodmadness.png",
+    infoLink: "https://www.methodnmadness.com/",
+}
 ];
 
 function Service({imageUrl, title, description}) {
