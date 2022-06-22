@@ -4,7 +4,10 @@ from pprint import pformat
 import nuke
 import pyblish.api
 
-import openpype.api as pype
+from openpype.client import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
 from openpype.pipeline import (
     legacy_io,
     get_representation_path,
@@ -180,17 +183,26 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             if not instance.data["review"]:
                 instance.data["useSequenceForReview"] = False
 
+        project_name = legacy_io.active_project()
+        asset_name = instance.data["asset"]
         # * Add audio to instance if exists.
         # Find latest versions document
-        version_doc = pype.get_latest_version(
-            instance.data["asset"], "audioMain"
+        last_version_doc = get_last_version_by_subset_name(
+            project_name, "audioMain", asset_name=asset_name, fields=["_id"]
         )
+
         repre_doc = None
-        if version_doc:
+        if last_version_doc:
             # Try to find it's representation (Expected there is only one)
-            repre_doc = legacy_io.find_one(
-                {"type": "representation", "parent": version_doc["_id"]}
-            )
+            repre_docs = list(get_representations(
+                project_name, version_ids=[last_version_doc["_id"]]
+            ))
+            if not repre_docs:
+                self.log.warning(
+                    "Version document does not contain any representations"
+                )
+            else:
+                repre_doc = repre_docs[0]
 
         # Add audio to instance if representation was found
         if repre_doc:
