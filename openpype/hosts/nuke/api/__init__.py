@@ -26,7 +26,11 @@ from .pipeline import (
     update_container,
 )
 from .lib import (
-    maintained_selection
+    maintained_selection,
+    reset_selection,
+    get_view_process_node,
+    duplicate_node
+
 )
 
 from .utils import (
@@ -58,6 +62,9 @@ __all__ = (
     "update_container",
 
     "maintained_selection",
+    "reset_selection",
+    "get_view_process_node",
+    "duplicate_node",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"
