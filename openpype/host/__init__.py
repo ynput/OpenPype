@@ -1,12 +1,12 @@
 from .host import (
-    HostImplementation,
+    HostBase,
     IWorkfileHost,
     ILoadHost,
     INewPublisher,
 )
 
 __all__ = (
-    "HostImplementation",
+    "HostBase",
     "IWorkfileHost",
     "ILoadHost",
     "INewPublisher",

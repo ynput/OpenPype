@@ -9,7 +9,7 @@ import maya.api.OpenMaya as om
 import pyblish.api
 
 from openpype.settings import get_project_settings
-from openpype.host import HostImplementation, IWorkfileHost, ILoadHost
+from openpype.host import HostBase, IWorkfileHost, ILoadHost
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import (
@@ -51,11 +51,11 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class MayaHostImplementation(HostImplementation, IWorkfileHost, ILoadHost):
+class MayaHost(HostBase, IWorkfileHost, ILoadHost):
     name = "maya"
 
     def __init__(self):
-        super(MayaHostImplementation, self).__init__()
+        super(MayaHost, self).__init__()
         self._op_events = {}
 
     def install(self):

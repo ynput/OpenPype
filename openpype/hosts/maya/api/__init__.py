@@ -9,7 +9,7 @@ from .pipeline import (
 
     ls,
     containerise,
-    MayaHostImplementation,
+    MayaHost,
 )
 from .plugin import (
     Creator,
@@ -44,7 +44,7 @@ __all__ = [
 
     "ls",
     "containerise",
-    "MayaHostImplementation",
+    "MayaHost",
 
     "Creator",
     "Loader",

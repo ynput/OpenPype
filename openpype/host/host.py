@@ -16,7 +16,7 @@ class MissingMethodsError(ValueError):
 
 
 @six.add_metaclass(ABCMeta)
-class HostImplementation(object):
+class HostBase(object):
     """Base of host implementation class.
 
     Host is pipeline implementation of DCC application. This class should help
@@ -175,7 +175,7 @@ class ILoadHost:
 
     QUESTIONS
     - Is list container dependency of host or load plugins?
-    - Should this be directly in HostImplementation?
+    - Should this be directly in HostBase?
         - how to find out if referencing is available?
         - do we need to know that?
     """
@@ -369,7 +369,7 @@ class INewPublisher:
     but also some global data. At this moment are data related only to context
     publish plugins but that can extend in future.
 
-    HostImplementation does not have to inherit from this interface just have
+    HostBase does not have to inherit from this interface just have
     to imlement mentioned all listed methods.
     """
 
