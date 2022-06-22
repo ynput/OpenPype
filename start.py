@@ -386,18 +386,6 @@ def set_modules_environments():
     modules_manager = ModulesManager()
 
     module_envs = modules_manager.collect_global_environments()
-    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
-
-    # Set pyblish plugins paths if any module want to register them
-    if publish_plugin_dirs:
-        publish_paths_str = os.environ.get("PYBLISHPLUGINPATH") or ""
-        publish_paths = publish_paths_str.split(os.pathsep)
-        _publish_paths = {
-            os.path.normpath(path) for path in publish_paths if path
-        }
-        for path in publish_plugin_dirs:
-            _publish_paths.add(os.path.normpath(path))
-        module_envs["PYBLISHPLUGINPATH"] = os.pathsep.join(_publish_paths)
 
     # Merge environments with current environments and update values
     if module_envs:

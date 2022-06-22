@@ -921,11 +921,30 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if self.enabled:
             for project in self.connection.projects(projection={"name": 1}):
                 project_name = project["name"]
-                project_settings = self.get_sync_project_setting(project_name)
-                if project_settings and project_settings.get("enabled"):
+                if self.is_project_enabled(project_name):
                     enabled_projects.append(project_name)
 
         return enabled_projects
+
+    def is_project_enabled(self, project_name, single=False):
+        """Checks if 'project_name' is enabled for syncing.
+        'get_sync_project_setting' is potentially expensive operation (pulls
+        settings for all projects if cached version is not available), using
+        project_settings for specific project should be faster.
+        Args:
+            project_name (str)
+            single (bool): use 'get_project_settings' method
+        """
+        if self.enabled:
+            if single:
+                project_settings = get_project_settings(project_name)
+                project_settings = \
+                    self._parse_sync_settings_from_settings(project_settings)
+            else:
+                project_settings = self.get_sync_project_setting(project_name)
+            if project_settings and project_settings.get("enabled"):
+                return True
+        return False
 
     def handle_alternate_site(self, collection, representation, processed_site,
                               file_id, synced_file_id):
@@ -1020,21 +1039,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         self.server_init()
 
-        from .tray.app import SyncServerWindow
-        self.widget = SyncServerWindow(self)
-
     def server_init(self):
         """Actual initialization of Sync Server."""
         # import only in tray or Python3, because of Python2 hosts
-        from .sync_server import SyncServerThread
-
         if not self.enabled:
             return
 
-        enabled_projects = self.get_enabled_projects()
-        if not enabled_projects:
-            self.enabled = False
-            return
+        from .sync_server import SyncServerThread
 
         self.lock = threading.Lock()
 
@@ -1054,7 +1065,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.server_start()
 
     def server_start(self):
-        if self.sync_project_settings and self.enabled:
+        if self.enabled:
             self.sync_server_thread.start()
         else:
             log.info("No presets or active providers. " +
@@ -1845,6 +1856,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (int): in seconds
         """
+        if not project_name:
+            return 60
+
         ld = self.sync_project_settings[project_name]["config"]["loop_delay"]
         return int(ld)
 

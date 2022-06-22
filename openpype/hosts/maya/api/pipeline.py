@@ -66,11 +66,10 @@ def install():
     log.info("Installing callbacks ... ")
     register_event_callback("init", on_init)
 
-    # Callbacks below are not required for headless mode, the `init` however
-    # is important to load referenced Alembics correctly at rendertime.
     if lib.IS_HEADLESS:
         log.info(("Running in headless mode, skipping Maya "
                  "save/open/new callback installation.."))
+
         return
 
     _set_project()

@@ -312,6 +312,10 @@ Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
 
+:::note Publish on farm
+If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
+Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+
 ### Loading Point Caches
 
 Loading point cache means creating reference to **abc** file with Go **OpenPype → Load...**.

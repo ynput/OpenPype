@@ -750,6 +750,10 @@ class CreateContext:
         return self._host_is_valid
 
     @property
+    def host_name(self):
+        return os.environ["AVALON_APP"]
+
+    @property
     def log(self):
         """Dynamic access to logger."""
         if self._log is None:
@@ -825,9 +829,10 @@ class CreateContext:
             discover_result = publish_plugins_discover()
             publish_plugins = discover_result.plugins
 
-            targets = pyblish.logic.registered_targets() or ["default"]
+            targets = set(pyblish.logic.registered_targets())
+            targets.add("default")
             plugins_by_targets = pyblish.logic.plugins_by_targets(
-                publish_plugins, targets
+                publish_plugins, list(targets)
             )
             # Collect plugins that can have attribute definitions
             for plugin in publish_plugins:
@@ -861,6 +866,17 @@ class CreateContext:
                     "Using first and skipping following"
                 ))
                 continue
+
+            # Filter by host name
+            if (
+                creator_class.host_name
+                and creator_class.host_name != self.host_name
+            ):
+                self.log.info((
+                    "Creator's host name is not supported for current host {}"
+                ).format(creator_class.host_name, self.host_name))
+                continue
+
             creator = creator_class(
                 self,
                 system_settings,

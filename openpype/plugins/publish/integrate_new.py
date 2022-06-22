@@ -115,7 +115,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip", "render.farm"]
+    exclude_families = ["render.farm"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
@@ -140,6 +140,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug("Excluded family '{}' in '{}' or {}".format(
                     ef, instance.data["family"], instance.data["families"]))
                 return
+
+        # instance should be published on a farm
+        if instance.data.get("farm"):
+            return
 
         self.integrated_file_sizes = {}
         try:
@@ -936,9 +940,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         families += current_families
 
         # create relative source path for DB
-        if "source" in instance.data:
-            source = instance.data["source"]
-        else:
+        source = instance.data.get("source")
+        if not source:
             source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
             source = self.get_rootless_path(anatomy, source)

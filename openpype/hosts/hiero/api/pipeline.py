@@ -143,6 +143,11 @@ def parse_container(track_item, validate=True):
     """
     # convert tag metadata to normal keys names
     data = lib.get_track_item_pype_data(track_item)
+    if (
+        not data
+        or data.get("id") != "pyblish.avalon.container"
+    ):
+        return
 
     if validate and data and data.get("schema"):
         schema.validate(data)

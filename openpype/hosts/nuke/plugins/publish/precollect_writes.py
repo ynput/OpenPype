@@ -72,12 +72,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
-                representation = {
-                    'name': ext,
-                    'ext': ext,
-                    "stagingDir": output_dir,
-                    "tags": list()
-                }
+            representation = {
+                'name': ext,
+                'ext': ext,
+                "stagingDir": output_dir,
+                "tags": list()
+            }
 
             try:
                 collected_frames = [f for f in os.listdir(output_dir)
@@ -174,6 +174,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "frameStartHandle": first_frame,
                 "frameEndHandle": last_frame,
             })
+
+            # make sure rendered sequence on farm will
+            # be used for exctract review
+            if not instance.data["review"]:
+                instance.data["useSequenceForReview"] = False
 
         # * Add audio to instance if exists.
         # Find latest versions document

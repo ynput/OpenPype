@@ -1,8 +1,8 @@
 import json
 
+from openpype.client import get_project
 from openpype.api import ProjectSettings
 from openpype.lib import create_project
-from openpype.pipeline import AvalonMongoDB
 from openpype.settings import SaveWarningExc
 
 from openpype_modules.ftrack.lib import (
@@ -363,12 +363,8 @@ class PrepareProjectServer(ServerAction):
         project_name = project_entity["full_name"]
 
         # Try to find project document
-        dbcon = AvalonMongoDB()
-        dbcon.install()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-        project_doc = dbcon.find_one({
-            "type": "project"
-        })
+        project_doc = get_project(project_name)
+
         # Create project if is not available
         # - creation is required to be able set project anatomy and attributes
         if not project_doc:
@@ -376,9 +372,7 @@ class PrepareProjectServer(ServerAction):
             self.log.info("Creating project \"{} [{}]\"".format(
                 project_name, project_code
             ))
-            create_project(project_name, project_code, dbcon=dbcon)
-
-        dbcon.uninstall()
+            create_project(project_name, project_code)
 
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]

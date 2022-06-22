@@ -50,15 +50,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
     }
 
     ImagePrefixTokens = {
-
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         'vray': 'maya/<Scene>/<Layer>/<Layer>',
-        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>'  # noqa
+        'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
     }
 
     _aov_chars = {
@@ -92,6 +94,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         invalid = False
+        multipart = False
 
         renderer = instance.data['renderer']
         layer = instance.data['setMembers']
@@ -111,6 +114,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
 
         required_prefix = "maya/<scene>"
+        default_prefix = cls.ImagePrefixTokens[renderer]
 
         if not anim_override:
             invalid = True
@@ -211,14 +215,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     cls.log.error("Wrong image prefix [ {} ] - "
                                   "You can't use '<renderpass>' token "
                                   "with merge AOVs turned on".format(prefix))
+                default_prefix = re.sub(
+                    cls.R_AOV_TOKEN, "", default_prefix)
+                # remove aov token from prefix to pass validation
+                default_prefix = default_prefix.split("{aov_separator}")[0]
             elif not re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
                               "doesn't have: '<renderpass>' or "
                               "token".format(prefix))
 
-        # prefix check
-        default_prefix = cls.ImagePrefixTokens[renderer]
         default_prefix = default_prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
         if prefix.lower() != default_prefix.lower():
@@ -234,7 +240,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # load validation definitions from settings
         validation_settings = (
             instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
-                "{}_render_attributes".format(renderer))
+                "{}_render_attributes".format(renderer)) or []
         )
 
         # go through definitions and test if such node.attribute exists.

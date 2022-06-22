@@ -1,5 +1,8 @@
 import os
 from xml.etree import ElementTree as ET
+from openpype.api import Logger
+
+log = Logger.get_logger(__name__)
 
 
 def export_clip(export_path, clip, preset_path, **kwargs):
@@ -143,10 +146,40 @@ def modify_preset_file(xml_path, staging_dir, data):
 
     # change xml following data keys
     with open(xml_path, "r") as datafile:
-        tree = ET.parse(datafile)
+        _root = ET.parse(datafile)
+
         for key, value in data.items():
-            for element in tree.findall(".//{}".format(key)):
-                element.text = str(value)
-        tree.write(temp_path)
+            try:
+                if "/" in key:
+                    if not key.startswith("./"):
+                        key = ".//" + key
+
+                    split_key_path = key.split("/")
+                    element_key = split_key_path[-1]
+                    parent_obj_path = "/".join(split_key_path[:-1])
+
+                    parent_obj = _root.find(parent_obj_path)
+                    element_obj = parent_obj.find(element_key)
+                    if not element_obj:
+                        append_element(parent_obj, element_key, value)
+                else:
+                    finds = _root.findall(".//{}".format(key))
+                    if not finds:
+                        raise AttributeError
+                    for element in finds:
+                        element.text = str(value)
+            except AttributeError:
+                log.warning(
+                    "Cannot create attribute: {}: {}. Skipping".format(
+                        key, value
+                    ))
+        _root.write(temp_path)
 
     return temp_path
+
+
+def append_element(root_element_obj, key, value):
+    new_element_obj = ET.Element(key)
+    log.debug("__ new_element_obj: {}".format(new_element_obj))
+    new_element_obj.text = str(value)
+    root_element_obj.insert(0, new_element_obj)

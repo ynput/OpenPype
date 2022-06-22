@@ -77,7 +77,8 @@ class CreateRender(plugin.Creator):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
     }
 
     _image_prefixes = {
@@ -87,7 +88,8 @@ class CreateRender(plugin.Creator):
         # this needs `imageOutputDir`
         # (<ws>/renders/maya/<scene>) set separately
         'renderman': '<layer>_<aov>.<f4>.<ext>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
     }
 
     _aov_chars = {

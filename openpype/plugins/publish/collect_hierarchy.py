@@ -33,10 +33,6 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
             family = instance.data["family"]
             families = instance.data["families"]
 
-            # filter out all unepropriate instances
-            if not instance.data["publish"]:
-                continue
-
             # exclude other families then self.families with intersection
             if not set(self.families).intersection(set(families + [family])):
                 continue
@@ -62,7 +58,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 "frameEnd": instance.data["frameEnd"],
                 "clipIn": instance.data["clipIn"],
                 "clipOut": instance.data["clipOut"],
-                'fps': instance.context.data["fps"],
+                "fps": instance.data["fps"],
                 "resolutionWidth": instance.data["resolutionWidth"],
                 "resolutionHeight": instance.data["resolutionHeight"],
                 "pixelAspect": instance.data["pixelAspect"]
