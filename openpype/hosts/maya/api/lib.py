@@ -2525,8 +2525,19 @@ def load_capture_preset(data=None):
         if key == 'ssaoEnable':
             if preset[id][key] is True:
                 temp_options2['ssaoEnable'] = True
+                temp_options2['ssaoSamples'] = preset[id][key]
             else:
                 temp_options2['ssaoEnable'] = False
+                temp_options2['ssaoSamples'] = preset[id][key]
+
+        if key == 'ssaoAmount':
+            temp_options2['ssaoAmount'] = preset[id][key]
+
+        if key == 'ssaoRadius':
+            temp_options2['ssaoRadius'] = preset[id][key]
+
+        if key == 'ssaoFilterRadius':
+            temp_options2['ssaoFilterRadius'] = preset[id][key]
 
         if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
@@ -2534,6 +2545,42 @@ def load_capture_preset(data=None):
 
         if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
+
+        if key == 'hwFogEnable':
+            if preset[id][key] is True:
+                temp_options2['hwFogEnable'] = True
+            else:
+                temp_options2['hwFogEnable'] = False
+
+        if key == 'hwFogStart':
+            temp_options2['hwFogStart'] = preset[id][key]
+
+        if key == 'hwFogEnd':
+            temp_options2['hwFogEnd'] = preset[id][key]
+
+        if key == 'hwFogAlpha':
+            temp_options2['hwFogAlpha'] = preset[id][key]
+
+        if key == 'hwFogFalloff':
+            temp_options2['hwFogFalloff'] = preset[id][key]
+
+        if key == 'motionBlurEnable':
+            if preset[id][key] is True:
+                temp_options2['motionBlurEnable'] = True
+            else:
+                temp_options2['motionBlurEnable'] = False
+
+        if key == 'motionBlurSampleCount':
+            temp_options2['motionBlurSampleCount'] = preset[id][key]
+
+        if key == 'motionBlurShutterOpenFraction':
+            temp_options2['motionBlurShutterOpenFraction'] = preset[id][key]
+
+        if key == 'lineAAEnable':
+            if preset[id][key] is True:
+                temp_options2['lineAAEnable'] = True
+            else:
+                temp_options2['lineAAEnable'] = False
 
         else:
             temp_options[str(key)] = preset[id][key]
@@ -2544,7 +2591,20 @@ def load_capture_preset(data=None):
                 'gpuCacheDisplayFilter',
                 'multiSample',
                 'ssaoEnable',
-                'textureMaxResolution'
+                'ssaoSamples',
+                'ssaoAmount',
+                'ssaoFilterRadius',
+                'ssaoRadius',
+                'hwFogEnable',
+                'hwFogStart',
+                'hwFogEnd',
+                'hwFogAlpha',
+                'hwFogFalloff',
+                'textureMaxResolution',
+                'motionBlurEnable',
+                'motionBlurSampleCount',
+                'motionBlurShutterOpenFraction',
+                'lineAAEnable',
                 ]:
         temp_options.pop(key, None)
 
