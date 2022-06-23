@@ -30,7 +30,7 @@ class ExtractCameraAlembic(openpype.api.Extractor):
 
         # get cameras
         members = instance.data['setMembers']
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
+        cameras = cmds.ls(members, leaf=True, long=True,
                           dag=True, type="camera")
 
         # validate required settings
@@ -62,7 +62,21 @@ class ExtractCameraAlembic(openpype.api.Extractor):
             if bake_to_worldspace:
                 job_str += ' -worldSpace'
 
+                # if baked, drop the camera hierarchy to maintain
+                # clean output and backwards compatibility
+                camera_root = cmds.listRelatives(
+                    camera, parent=True, fullPath=True)[0]
+                job_str += ' -root {0}'.format(camera_root)
+
                 for member in members:
+                    member_content = cmds.listRelatives(
+                        member, ad=True, fullPath=True) or []
+                    # skip hierarchy if it contains only camera
+                    # `member_content` will contain camera + its parents
+                    if camera in member_content \
+                            and len(member_content) == len(camera.split("|")) - 2:  # noqa
+                        continue
+
                     transform = cmds.listRelatives(
                         member, parent=True, fullPath=True)
                     transform = transform[0] if transform else member
