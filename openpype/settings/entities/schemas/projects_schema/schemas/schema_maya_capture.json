@@ -303,6 +303,11 @@
                             "label": "Enable Fog Alpha"
                         },
                         {
+                            "type": "color",
+                            "key": "hwFogColor",
+                            "label": "Fog Color"
+                        },
+                        {
                             "type": "splitter"
                         },
                         {
