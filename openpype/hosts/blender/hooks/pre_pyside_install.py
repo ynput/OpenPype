@@ -169,8 +169,7 @@ class InstallPySideToBlender(PreLaunchHook):
         except pywintypes.error:
             pass
 
-    @staticmethod
-    def install_pyside(python_executable):
+    def install_pyside(self, python_executable):
         """Install PySide2 python module to blender's python."""
         try:
             # Parameters
@@ -188,13 +187,16 @@ class InstallPySideToBlender(PreLaunchHook):
             process = subprocess.Popen(
                 args, stdout=subprocess.PIPE, universal_newlines=True
             )
-            stdout, _ = process.communicate()
+            process.communicate()
             return process.returncode == 0
+        except PermissionError:
+            self.log.warning("Permission denied with command: \"{}\".".format(" ".join(args)))
+        except OSError as error:
+            self.log.warning("OS error has occurred with command: \"{error}\".")
         except subprocess.SubprocessError:
             pass
 
-    @staticmethod
-    def is_pyside_installed(python_executable):
+    def is_pyside_installed(self, python_executable):
         """Check if PySide2 module is in blender's pip list.
 
         Check that PySide2 is installed directly in blender's site-packages.
