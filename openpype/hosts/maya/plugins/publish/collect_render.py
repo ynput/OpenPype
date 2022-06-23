@@ -293,10 +293,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if platform.system().lower() in ["linux", "darwin"]:
                 common_publish_meta_path = "/" + common_publish_meta_path
 
-            self.log.info(
-                "Publish meta path: {}".format(common_publish_meta_path))
-
             if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.info(
+                    "Publish meta path: {}".format(common_publish_meta_path))
                 self.log.info(full_exp_files)
 
             # Get layer specific settings, might be overrides
