@@ -123,6 +123,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             if family == "rig":
                 self._post_process_rig(name, namespace, context, options)
+            elif family == "camera":
+                self._post_process_camera(shapes)
             else:
                 if "translate" in options:
                     cmds.setAttr(group_name + ".t", *options["translate"])
@@ -132,7 +134,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self.update(container, representation)
 
     def _post_process_rig(self, name, namespace, context, options):
-
+        # Create animation publish instance for the loaded rig
         output = next((node for node in self if
                        node.endswith("out_SET")), None)
         controls = next((node for node in self if
@@ -161,3 +163,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 options={"useSelection": True},
                 data={"dependencies": dependency}
             )
+
+    def _post_process_camera(self, shapes):
+        # Lock the camera (lockTransform was added since Maya 2016.5 Ext 2)
+        version = int(cmds.about(version=True))
+        if version >= 2016:
+            cameras = cmds.ls(shapes, type="camera")
+            for camera in cameras:
+                cmds.camera(camera, edit=True, lockTransform=True)
