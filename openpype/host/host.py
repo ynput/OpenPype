@@ -5,6 +5,13 @@ import six
 
 
 class MissingMethodsError(ValueError):
+    """Exception when host miss some required methods for specific workflow.
+
+    Args:
+        host (HostBase): Host implementation where are missing methods.
+        missing_methods (list[str]): List of missing methods.
+    """
+
     def __init__(self, host, missing_methods):
         joined_missing = ", ".join(
             ['"{}"'.format(item) for item in missing_methods]
@@ -53,15 +60,15 @@ class HostBase(object):
     install_host(host)
     ```
 
-    # TODOs
-    - move content of 'install_host' as method of this class
-        - register host object
-        - install legacy_io
-        - install global plugin paths
-    - store registered plugin paths to this object
-    - handle current context (project, asset, task)
-        - this must be done in many separated steps
-    - have it's object of host tools instead of using globals
+    Todo:
+        - move content of 'install_host' as method of this class
+            - register host object
+            - install legacy_io
+            - install global plugin paths
+        - store registered plugin paths to this object
+        - handle current context (project, asset, task)
+            - this must be done in many separated steps
+        - have it's object of host tools instead of using globals
 
     This implementation will probably change over time when more
         functionality and responsibility will be added.
@@ -75,7 +82,7 @@ class HostBase(object):
         Register DCC callbacks, host specific plugin paths, targets etc.
         (Part of what 'install' did in 'avalon' concept.)
 
-        NOTE:
+        Note:
             At this moment global "installation" must happen before host
             installation. Because of this current limitation it is recommended
             to implement 'install' method which is triggered after global
@@ -127,10 +134,10 @@ class HostBase(object):
 
         Should return current context title if possible.
 
-        NOTE: This method is used only for UI purposes so it is possible to
-            return some logical title for contextless cases.
-
-        Is not meant for "Context menu" label.
+        Note:
+            This method is used only for UI purposes so it is possible to
+                return some logical title for contextless cases.
+            Is not meant for "Context menu" label.
 
         Returns:
             str: Context title.
@@ -159,6 +166,9 @@ class HostBase(object):
 
         This is DCC specific. Some may not allow to implement this ability
         that is reason why default implementation is empty context manager.
+
+        Yields:
+            None: Yield when is ready to restore selected at the end.
         """
 
         try:
@@ -173,11 +183,11 @@ class ILoadHost:
     The load plugins can do referencing even without implementation of methods
     here, but switch and removement of containers would not be possible.
 
-    QUESTIONS
-    - Is list container dependency of host or load plugins?
-    - Should this be directly in HostBase?
-        - how to find out if referencing is available?
-        - do we need to know that?
+    Questions:
+        - Is list container dependency of host or load plugins?
+        - Should this be directly in HostBase?
+            - how to find out if referencing is available?
+            - do we need to know that?
     """
 
     @staticmethod
@@ -188,6 +198,9 @@ class ILoadHost:
         loading. Checks only existence of methods.
 
         Args:
+            HostBase: Object of host where to look for required methods.
+
+        Returns:
             list[str]: Missing method implementations for loading workflow.
         """
 
@@ -201,6 +214,9 @@ class ILoadHost:
     @staticmethod
     def validate_load_methods(host):
         """Validate implemented methods of host for load workflow.
+
+        Args:
+            HostBase: Object of host to validate.
 
         Raises:
             MissingMethodsError: If there are missing methods on host
@@ -216,7 +232,7 @@ class ILoadHost:
 
         This can be implemented in hosts where referencing can be used.
 
-        TODO:
+        Todo:
             Rename function to something more self explanatory.
                 Suggestion: 'get_referenced_containers'
 
@@ -242,6 +258,9 @@ class IWorkfileHost:
         Method is used for validation of implemented functions related to
         workfiles. Checks only existence of methods.
 
+        Args:
+            HostBase: Object of host where to look for required methods.
+
         Returns:
             list[str]: Missing method implementations for workfiles workflow.
         """
@@ -264,6 +283,9 @@ class IWorkfileHost:
     def validate_workfile_methods(host):
         """Validate implemented methods of host for workfiles workflow.
 
+        Args:
+            HostBase: Object of host to validate.
+
         Raises:
             MissingMethodsError: If there are missing methods on host
                 implementation.
@@ -276,9 +298,10 @@ class IWorkfileHost:
     def file_extensions(self):
         """Extensions that can be used as save.
 
-        QUESTION: This could potentially use 'HostDefinition'.
+        Questions:
+            This could potentially use 'HostDefinition'.
 
-        TODO:
+        Todo:
             Rename to 'get_workfile_extensions'.
         """
 
@@ -288,7 +311,7 @@ class IWorkfileHost:
     def save_file(self, dst_path=None):
         """Save currently opened scene.
 
-        TODO:
+        Todo:
             Rename to 'save_current_workfile'.
 
         Args:
@@ -302,7 +325,7 @@ class IWorkfileHost:
     def open_file(self, filepath):
         """Open passed filepath in the host.
 
-        TODO:
+        Todo:
             Rename to 'open_workfile'.
 
         Args:
@@ -315,7 +338,7 @@ class IWorkfileHost:
     def current_file(self):
         """Retreive path to current opened file.
 
-        TODO:
+        Todo:
             Rename to 'get_current_workfile'.
 
         Returns:
@@ -342,15 +365,15 @@ class IWorkfileHost:
     def work_root(self, session):
         """Modify workdir per host.
 
-        WARNING:
-        We must handle this modification with more sofisticated way because
-        this can't be called out of DCC so opening of last workfile
-        (calculated before DCC is launched) is complicated. Also breaking
-        defined work template is not a good idea.
-        Only place where it's really used and can make sense is Maya. There
-        workspace.mel can modify subfolders where to look for maya files.
-
         Default implementation keeps workdir untouched.
+
+        Warnings:
+            We must handle this modification with more sofisticated way because
+            this can't be called out of DCC so opening of last workfile
+            (calculated before DCC is launched) is complicated. Also breaking
+            defined work template is not a good idea.
+            Only place where it's really used and can make sense is Maya. There
+            workspace.mel can modify subfolders where to look for maya files.
 
         Args:
             session (dict): Session context data.
@@ -381,6 +404,9 @@ class INewPublisher:
         new publish creation. Checks only existence of methods.
 
         Args:
+            HostBase: Object of host where to look for required methods.
+
+        Returns:
             list[str]: Missing method implementations for new publsher
                 workflow.
         """
@@ -398,6 +424,9 @@ class INewPublisher:
     @staticmethod
     def validate_publish_methods(host):
         """Validate implemented methods of host for create-publish workflow.
+
+        Args:
+            HostBase: Object of host to validate.
 
         Raises:
             MissingMethodsError: If there are missing methods on host
