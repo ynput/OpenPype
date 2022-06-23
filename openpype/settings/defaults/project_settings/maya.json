@@ -511,6 +511,12 @@
                     "hwFogStart": 0,
                     "hwFogEnd": 0,
                     "hwFogAlpha": 0,
+                    "hwFogColor": [
+                        158,
+                        53,
+                        53,
+                        255
+                    ],
                     "motionBlurEnable": true,
                     "motionBlurSampleCount": 8,
                     "motionBlurShutterOpenFraction": 0.01,
