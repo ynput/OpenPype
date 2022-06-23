@@ -400,11 +400,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         published_representations = {}
         for idx, repre in enumerate(repres):
-            # reset transfers for next representation
-            # instance.data['transfers'] is used as a global variable
-            # in current codebase
-            instance.data['transfers'] = list(orig_transfers)
-
             published_files = []
 
             # create template data for Anatomy
@@ -682,6 +677,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "published_files": published_files
             }
             self.log.debug("__ representations: {}".format(representations))
+            # reset transfers for next representation
+            # instance.data['transfers'] is used as a global variable
+            # in current codebase
+            instance.data['transfers'] = list(orig_transfers)
 
         # Remove old representations if there are any (before insertion of new)
         if existing_repres:
