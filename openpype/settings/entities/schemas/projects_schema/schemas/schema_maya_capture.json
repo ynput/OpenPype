@@ -235,6 +235,14 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "lineAAEnable",
+                            "label": "Enable Anti-Aliasing"
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "ssaoEnable",
                             "label": "Screen Space Ambient Occlusion"
                         },
@@ -313,7 +321,10 @@
                         {
                             "type": "number",
                             "key": "motionBlurShutterOpenFraction",
-                            "label": "Shutter Open Fraction"
+                            "label": "Shutter Open Fraction",
+                            "decimal": 3,
+                            "minimum": 0.01,
+                            "maximum": 32
                         },
                         {
                             "type": "splitter"
