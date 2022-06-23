@@ -211,10 +211,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             has_cameras = any(product.camera for product in render_products)
             assert has_cameras, "No render cameras found."
 
-            self.log.info("multipart: {}".format(
-                multipart))
             assert exp_files, "no file names were generated, this is bug"
-            self.log.info(exp_files)
+
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.info("multipart: {}".format(multipart))
+                self.log.info(exp_files)
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -295,9 +296,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(
                 "Publish meta path: {}".format(common_publish_meta_path))
 
-            self.log.info(full_exp_files)
-            self.log.info("collecting layer: {}".format(layer_name))
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.info(full_exp_files)
+
             # Get layer specific settings, might be overrides
+            self.log.info("collecting layer: {}".format(layer_name))
 
             try:
                 aov_separator = self._aov_chars[(
@@ -410,7 +413,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
             instance.data.update(data)
-            self.log.debug("data: {}".format(json.dumps(data, indent=4)))
+
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without.
