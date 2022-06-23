@@ -145,9 +145,43 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if instance.data.get("farm"):
             return
 
+        # Prepare repsentations that should be integrated
+        repres = instance.data.get("representations")
+        # Raise error if instance don't have any representations
+        if not repres:
+            raise ValueError(
+                "Instance {} has no files to transfer".format(
+                    instance.data["family"]
+                )
+            )
+
+        # Validate type of stored representations
+        if not isinstance(repres, (list, tuple)):
+            raise TypeError(
+                "Instance 'files' must be a list, got: {0} {1}".format(
+                    str(type(repres)), str(repres)
+                )
+            )
+
+        # Filter representations
+        filtered_repres = []
+        for repre in repres:
+            if "delete" in repre.get("tags", []):
+                continue
+            filtered_repres.append(repre)
+
+        # Skip instance if there are not representations to integrate
+        #   all representations should not be integrated
+        if not filtered_repres:
+            self.log.warning((
+                "Skipping, there are no representations"
+                " to integrate for instance {}"
+            ).format(instance.data["family"]))
+            return
+
         self.integrated_file_sizes = {}
         try:
-            self.register(instance)
+            self.register(instance, filtered_repres)
             self.log.info("Integrated Asset in to the database ...")
             self.log.info("instance.data: {}".format(instance.data))
             self.handle_destination_files(self.integrated_file_sizes,
@@ -158,7 +192,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.handle_destination_files(self.integrated_file_sizes, 'remove')
             six.reraise(*sys.exc_info())
 
-    def register(self, instance):
+    def register(self, instance, repres):
         # Required environment variables
         anatomy_data = instance.data["anatomyData"]
 
@@ -236,18 +270,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "Establishing staging directory @ {0}".format(stagingdir)
             )
 
-        # Ensure at least one file is set up for transfer in staging dir.
-        repres = instance.data.get("representations")
-        repres = instance.data.get("representations")
-        msg = "Instance {} has no files to transfer".format(
-            instance.data["family"])
-        assert repres, msg
-        assert isinstance(repres, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0} {1}".format(
-                str(type(repres)), str(repres)
-            )
-        )
-
         subset = self.get_subset(asset_entity, instance)
         instance.data["subsetEntity"] = subset
 
@@ -270,7 +292,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         self.log.debug("Creating version ...")
 
-        new_repre_names_low = [_repre["name"].lower() for _repre in repres]
+        new_repre_names_low = [
+            _repre["name"].lower()
+            for _repre in repres
+        ]
 
         existing_version = legacy_io.find_one({
             'type': 'version',
@@ -373,18 +398,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if profile:
             template_name = profile["template_name"]
 
-
-
         published_representations = {}
-        for idx, repre in enumerate(instance.data["representations"]):
-            # reset transfers for next representation
-            # instance.data['transfers'] is used as a global variable
-            # in current codebase
-            instance.data['transfers'] = list(orig_transfers)
-
-            if "delete" in repre.get("tags", []):
-                continue
-
+        for idx, repre in enumerate(repres):
             published_files = []
 
             # create template data for Anatomy
@@ -662,6 +677,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "published_files": published_files
             }
             self.log.debug("__ representations: {}".format(representations))
+            # reset transfers for next representation
+            # instance.data['transfers'] is used as a global variable
+            # in current codebase
+            instance.data['transfers'] = list(orig_transfers)
 
         # Remove old representations if there are any (before insertion of new)
         if existing_repres:
