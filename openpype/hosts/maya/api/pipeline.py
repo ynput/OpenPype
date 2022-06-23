@@ -97,25 +97,25 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("taskChanged", on_task_changed)
         register_event_callback("workfile.save.before", before_workfile_save)
 
-    def open_file(self, filepath):
+    def open_workfile(self, filepath):
         return open_file(filepath)
 
-    def save_file(self, filepath=None):
+    def save_current_workfile(self, filepath=None):
         return save_file(filepath)
 
     def work_root(self, session):
         return work_root(session)
 
-    def current_file(self):
+    def get_current_workfile(self):
         return current_file()
 
-    def has_unsaved_changes(self):
+    def workfile_has_unsaved_changes(self):
         return has_unsaved_changes()
 
-    def file_extensions(self):
+    def get_workfile_extensions(self):
         return file_extensions()
 
-    def ls(self):
+    def get_referenced_containers(self):
         return ls()
 
     @contextlib.contextmanager
