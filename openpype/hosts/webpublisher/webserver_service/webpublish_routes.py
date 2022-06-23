@@ -8,13 +8,13 @@ from bson.objectid import ObjectId
 from aiohttp.web_response import Response
 
 from openpype.client import (
-    get_projects,
-    get_assets,
+    get_projects
 )
 from openpype.lib import (
     OpenPypeMongoConnection,
     PypeLogger,
 )
+from openpype.lib.avalon_context import get_asset_hierarchy_tree
 from openpype.lib.remote_publish import (
     get_task_data,
     ERROR_STATUS,
@@ -104,97 +104,14 @@ class ProjectsEndpoint(ResourceRestApiEndpoint):
 class HiearchyEndpoint(ResourceRestApiEndpoint):
     """Returns dictionary with context tree from assets."""
     async def get(self, project_name) -> Response:
-        query_projection = {
-            "_id": 1,
-            "data.tasks": 1,
-            "data.visualParent": 1,
-            "data.entityType": 1,
-            "name": 1,
-            "type": 1,
-        }
 
-        asset_docs = get_assets(project_name, fields=query_projection.keys())
-        asset_docs_by_id = {
-            asset_doc["_id"]: asset_doc
-            for asset_doc in asset_docs
-        }
-
-        asset_docs_by_parent_id = collections.defaultdict(list)
-        for asset_doc in asset_docs_by_id.values():
-            parent_id = asset_doc["data"].get("visualParent")
-            asset_docs_by_parent_id[parent_id].append(asset_doc)
-
-        assets = collections.defaultdict(list)
-
-        for parent_id, children in asset_docs_by_parent_id.items():
-            for child in children:
-                node = assets.get(child["_id"])
-                if not node:
-                    node = Node(child["_id"],
-                                child["data"].get("entityType", "Folder"),
-                                child["name"])
-                    assets[child["_id"]] = node
-
-                    tasks = child["data"].get("tasks", {})
-                    for t_name, t_con in tasks.items():
-                        task_node = TaskNode("task", t_name)
-                        task_node["attributes"]["type"] = t_con.get("type")
-
-                        task_node.parent = node
-
-                parent_node = assets.get(parent_id)
-                if not parent_node:
-                    asset_doc = asset_docs_by_id.get(parent_id)
-                    if asset_doc:  # regular node
-                        parent_node = Node(parent_id,
-                                           asset_doc["data"].get("entityType",
-                                                                 "Folder"),
-                                           asset_doc["name"])
-                    else:  # root
-                        parent_node = Node(parent_id,
-                                           "project",
-                                           project_name)
-                    assets[parent_id] = parent_node
-                node.parent = parent_node
-
-        roots = [x for x in assets.values() if x.parent is None]
+        nodes = get_asset_hierarchy_tree(project_name)
 
         return Response(
             status=200,
-            body=self.resource.encode(roots[0]),
+            body=self.resource.encode(nodes[0]),
             content_type="application/json"
         )
-
-
-class Node(dict):
-    """Node element in context tree."""
-
-    def __init__(self, uid, node_type, name):
-        self._parent = None  # pointer to parent Node
-        self["type"] = node_type
-        self["name"] = name
-        self['id'] = uid  # keep reference to id #
-        self['children'] = []  # collection of pointers to child Nodes
-
-    @property
-    def parent(self):
-        return self._parent  # simply return the object at the _parent pointer
-
-    @parent.setter
-    def parent(self, node):
-        self._parent = node
-        # add this node to parent's list of children
-        node['children'].append(self)
-
-
-class TaskNode(Node):
-    """Special node type only for Tasks."""
-
-    def __init__(self, node_type, name):
-        self._parent = None
-        self["type"] = node_type
-        self["name"] = name
-        self["attributes"] = {}
 
 
 class BatchPublishEndpoint(WebpublishApiEndpoint):
