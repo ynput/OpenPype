@@ -133,8 +133,8 @@ url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.3.10-windows.zip"
 hash = "b9950f5d2fa3720b52b8be55bacf5f56d33f9e029d38ee86534995f3d8d253d2"
 
 [openpype.thirdparty.oiio.linux]
-url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.20-linux-centos7"
-hash = "BE1ABF8A50E9DA5913298447421AF0A17829D83ED6252AE1D40DA7FA36A78787"
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.20-linux-centos7.tgz"
+hash = "be1abf8a50e9da5913298447421af0a17829d83ed6252ae1d40da7fa36a78787"
 
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
