@@ -3,6 +3,7 @@ from pprint import pformat
 import re
 import six
 import platform
+import tempfile
 import contextlib
 from collections import OrderedDict
 
@@ -709,6 +710,20 @@ def get_imageio_input_colorspace(filename):
             preset_clrsp = str(regexInput["colorspace"])
 
     return preset_clrsp
+
+
+def get_view_process_node():
+    reset_selection()
+
+    ipn_orig = None
+    for v in nuke.allNodes(filter="Viewer"):
+        ipn = v['input_process_node'].getValue()
+        if "VIEWER_INPUT" not in ipn:
+            ipn_orig = nuke.toNode(ipn)
+            ipn_orig.setSelected(True)
+
+    if ipn_orig:
+        return duplicate_node(ipn_orig)
 
 
 def on_script_load():
@@ -2374,6 +2389,8 @@ def process_workfile_builder():
         env_value_to_bool,
         get_custom_workfile_template
     )
+    # to avoid looping of the callback, remove it!
+    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     # get state from settings
     workfile_builder = get_current_project_settings()["nuke"].get(
@@ -2428,9 +2445,6 @@ def process_workfile_builder():
     # skip opening of last version if it is not enabled
     if not openlv_on or not os.path.exists(last_workfile_path):
         return
-
-    # to avoid looping of the callback, remove it!
-    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     log.info("Opening last workfile...")
     # open workfile
@@ -2615,6 +2629,57 @@ class DirmapCache:
         if cls._sync_module is None:
             cls._sync_module = ModulesManager().modules_by_name["sync_server"]
         return cls._sync_module
+
+
+@contextlib.contextmanager
+def _duplicate_node_temp():
+    """Create a temp file where node is pasted during duplication.
+
+    This is to avoid using clipboard for node duplication.
+    """
+
+    duplicate_node_temp_path = os.path.join(
+        tempfile.gettempdir(),
+        "openpype_nuke_duplicate_temp_{}".format(os.getpid())
+    )
+
+    # This can happen only if 'duplicate_node' would be
+    if os.path.exists(duplicate_node_temp_path):
+        log.warning((
+            "Temp file for node duplication already exists."
+            " Trying to remove {}"
+        ).format(duplicate_node_temp_path))
+        os.remove(duplicate_node_temp_path)
+
+    try:
+        # Yield the path where node can be copied
+        yield duplicate_node_temp_path
+
+    finally:
+        # Remove the file at the end
+        os.remove(duplicate_node_temp_path)
+
+
+def duplicate_node(node):
+    reset_selection()
+
+    # select required node for duplication
+    node.setSelected(True)
+
+    with _duplicate_node_temp() as filepath:
+        # copy selected to temp filepath
+        nuke.nodeCopy(filepath)
+
+        # reset selection
+        reset_selection()
+
+        # paste node and selection is on it only
+        dupli_node = nuke.nodePaste(filepath)
+
+    # reset selection
+    reset_selection()
+
+    return dupli_node
 
 
 def dirmap_file_name_filter(file_name):

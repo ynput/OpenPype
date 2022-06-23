@@ -763,7 +763,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         start_frame = int(start_frame)
         end_frame = int(end_frame)
         collections = clique.assemble(files)[0]
-        assert len(collections) == 1, "Multiple collections found."
+        msg = "Multiple collections {} found.".format(collections)
+        assert len(collections) == 1, msg
         col = collections[0]
 
         # do nothing if no gap is found in input range
