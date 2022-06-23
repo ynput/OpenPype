@@ -6,6 +6,7 @@ import copy
 import Qt
 from Qt import QtWidgets, QtCore
 
+from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -125,7 +126,7 @@ class FilesWidget(QtWidgets.QWidget):
         filter_layout.addWidget(published_checkbox, 0)
 
         # Create the Files models
-        extensions = set(self.host.file_extensions())
+        extensions = set(self.self._get_host_extensions())
 
         views_widget = QtWidgets.QWidget(self)
         # --- Workarea view ---
@@ -452,7 +453,12 @@ class FilesWidget(QtWidgets.QWidget):
 
     def open_file(self, filepath):
         host = self.host
-        if host.has_unsaved_changes():
+        if isinstance(host, IWorkfileHost):
+            has_unsaved_changes = host.workfile_has_unsaved_changes()
+        else:
+            has_unsaved_changes = host.has_unsaved_changes()
+
+        if has_unsaved_changes:
             result = self.save_changes_prompt()
             if result is None:
                 # Cancel operation
@@ -460,7 +466,10 @@ class FilesWidget(QtWidgets.QWidget):
 
             # Save first if has changes
             if result:
-                current_file = host.current_file()
+                if isinstance(host, IWorkfileHost):
+                    current_file = host.get_current_workfile()
+                else:
+                    current_file = host.current_file()
                 if not current_file:
                     # If the user requested to save the current scene
                     # we can't actually automatically do so if the current
@@ -471,7 +480,10 @@ class FilesWidget(QtWidgets.QWidget):
                     return
 
                 # Save current scene, continue to open file
-                host.save_file(current_file)
+                if isinstance(host, IWorkfileHost):
+                    host.save_current_workfile(current_file)
+                else:
+                    host.save_file(current_file)
 
         event_data_before = self._get_event_context_data()
         event_data_before["filepath"] = filepath
@@ -482,7 +494,10 @@ class FilesWidget(QtWidgets.QWidget):
             source="workfiles.tool"
         )
         self._enter_session()
-        host.open_file(filepath)
+        if isinstance(host, IWorkfileHost):
+            host.open_workfile(filepath)
+        else:
+            host.open_file(filepath)
         emit_event(
             "workfile.open.after",
             event_data_after,
@@ -524,7 +539,7 @@ class FilesWidget(QtWidgets.QWidget):
             filepath = self._get_selected_filepath()
             extensions = [os.path.splitext(filepath)[1]]
         else:
-            extensions = self.host.file_extensions()
+            extensions = self._get_host_extensions()
 
         window = SaveAsDialog(
             parent=self,
@@ -572,9 +587,14 @@ class FilesWidget(QtWidgets.QWidget):
 
         self.open_file(path)
 
+    def _get_host_extensions(self):
+        if isinstance(self.host, IWorkfileHost):
+            return self.host.get_workfile_extensions()
+        return self.host.file_extensions()
+
     def on_browse_pressed(self):
         ext_filter = "Work File (*{0})".format(
-            " *".join(self.host.file_extensions())
+            " *".join(self._get_host_extensions())
         )
         kwargs = {
             "caption": "Work Files",
@@ -632,10 +652,16 @@ class FilesWidget(QtWidgets.QWidget):
         self._enter_session()
 
         if not self.published_enabled:
-            self.host.save_file(filepath)
+            if isinstance(self.host, IWorkfileHost):
+                self.host.save_current_workfile(filepath)
+            else:
+                self.host.save_file(filepath)
         else:
             shutil.copy(src_path, filepath)
-            self.host.open_file(filepath)
+            if isinstance(self.host, IWorkfileHost):
+                self.host.open_workfile(filepath)
+            else:
+                self.host.open_file(filepath)
 
         # Create extra folders
         create_workdir_extra_folders(

@@ -6,6 +6,7 @@ from collections import defaultdict
 from Qt import QtCore, QtGui
 import qtawesome
 
+from openpype.host import ILoadHost
 from openpype.client import (
     get_asset_by_id,
     get_subset_by_id,
@@ -193,7 +194,10 @@ class InventoryModel(TreeModel):
 
         host = registered_host()
         if not items:  # for debugging or testing, injecting items from outside
-            items = host.ls()
+            if isinstance(host, ILoadHost):
+                items = host.get_referenced_containers()
+            else:
+                items = host.ls()
 
         self.clear()
 
