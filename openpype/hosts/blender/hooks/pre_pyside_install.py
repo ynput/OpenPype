@@ -190,9 +190,12 @@ class InstallPySideToBlender(PreLaunchHook):
             process.communicate()
             return process.returncode == 0
         except PermissionError:
-            self.log.warning("Permission denied with command: \"{}\".".format(" ".join(args)))
+            self.log.warning(
+                "Permission denied with command:"
+                "\"{}\".".format(" ".join(args))
+            )
         except OSError as error:
-            self.log.warning("OS error has occurred with command: \"{error}\".")
+            self.log.warning(f"OS error has occurred: \"{error}\".")
         except subprocess.SubprocessError:
             pass
 
