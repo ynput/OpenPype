@@ -89,6 +89,11 @@ class MultiverseUsdLoader(load.LoaderPlugin):
         # Delete container and its contents
         if cmds.objExists(container['objectName']):
             members = cmds.sets(container['objectName'], query=True) or []
+
+            shapes = cmds.ls(members, type="mvUsdCompoundShape")
+            for shape in shapes:
+                cmds.lockNode(shape, lock=False)
+
             cmds.delete([container['objectName']] + members)
 
         # Remove the namespace, if empty
