@@ -3,6 +3,9 @@ import contextlib
 from abc import ABCMeta, abstractproperty, abstractmethod
 import six
 
+# NOTE can't import 'typing' because of issues in Maya 2020
+#   - shiboken crashes on 'typing' module import
+
 
 class MissingMethodsError(ValueError):
     """Exception when host miss some required methods for specific workflow.
@@ -77,6 +80,7 @@ class HostBase(object):
     _log = None
 
     def __init__(self):
+        # type: () -> None
         """Initialization of host.
 
         Register DCC callbacks, host specific plugin paths, targets etc.
@@ -93,17 +97,20 @@ class HostBase(object):
 
     @property
     def log(self):
+        # type: () -> logging.Logger
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @abstractproperty
     def name(self):
+        # type: () -> str
         """Host implementation name."""
 
         pass
 
     def get_current_context(self):
+        # type: () -> Mapping[str, Union[str, None]]
         """Get current context information.
 
         This method should be used to get current context of host. Usage of
@@ -130,6 +137,7 @@ class HostBase(object):
         }
 
     def get_context_title(self):
+        # type: () -> Union[str, None]
         """Context title shown for UI purposes.
 
         Should return current context title if possible.
@@ -162,6 +170,7 @@ class HostBase(object):
 
     @contextlib.contextmanager
     def maintained_selection(self):
+        # type: () ->  None
         """Some functionlity will happen but selection should stay same.
 
         This is DCC specific. Some may not allow to implement this ability
@@ -192,6 +201,7 @@ class ILoadHost:
 
     @staticmethod
     def get_missing_load_methods(host):
+        # type: (HostBase) ->  List[str]
         """Look for missing methods on host implementation.
 
         Method is used for validation of implemented functions related to
@@ -213,6 +223,7 @@ class ILoadHost:
 
     @staticmethod
     def validate_load_methods(host):
+        # type: (HostBase) ->  None
         """Validate implemented methods of host for load workflow.
 
         Args:
@@ -228,6 +239,7 @@ class ILoadHost:
 
     @abstractmethod
     def ls(self):
+        # type: (HostBase) ->  List[Mapping[str, Any]]
         """Retreive referenced containers from scene.
 
         This can be implemented in hosts where referencing can be used.
@@ -253,6 +265,7 @@ class IWorkfileHost:
 
     @staticmethod
     def get_missing_workfile_methods(host):
+        # type: (HostBase) ->  List[str]
         """Look for missing methods on host implementation.
 
         Method is used for validation of implemented functions related to
@@ -281,6 +294,7 @@ class IWorkfileHost:
 
     @staticmethod
     def validate_workfile_methods(host):
+        # type: (HostBase) ->  None
         """Validate implemented methods of host for workfiles workflow.
 
         Args:
@@ -296,6 +310,7 @@ class IWorkfileHost:
 
     @abstractmethod
     def file_extensions(self):
+        # type: () ->  List[str]
         """Extensions that can be used as save.
 
         Questions:
@@ -309,6 +324,7 @@ class IWorkfileHost:
 
     @abstractmethod
     def save_file(self, dst_path=None):
+        # type: (Optional[str]) ->  None
         """Save currently opened scene.
 
         Todo:
@@ -323,6 +339,7 @@ class IWorkfileHost:
 
     @abstractmethod
     def open_file(self, filepath):
+        # type: (str) ->  None
         """Open passed filepath in the host.
 
         Todo:
@@ -336,6 +353,7 @@ class IWorkfileHost:
 
     @abstractmethod
     def current_file(self):
+        # type: () ->  Union[str, None]
         """Retreive path to current opened file.
 
         Todo:
@@ -349,6 +367,7 @@ class IWorkfileHost:
         return None
 
     def has_unsaved_changes(self):
+        # type: () ->  Union[bool, None]
         """Currently opened scene is saved.
 
         Not all hosts can know if current scene is saved because the API of
@@ -363,6 +382,7 @@ class IWorkfileHost:
         return None
 
     def work_root(self, session):
+        # type: (Mapping[str, str]) ->  str
         """Modify workdir per host.
 
         Default implementation keeps workdir untouched.
@@ -398,6 +418,7 @@ class INewPublisher:
 
     @staticmethod
     def get_missing_publish_methods(host):
+        # type: (HostBase) ->  List[str]
         """Look for missing methods on host implementation.
 
         Method is used for validation of implemented functions related to
@@ -423,6 +444,7 @@ class INewPublisher:
 
     @staticmethod
     def validate_publish_methods(host):
+        # type: (HostBase) ->  None
         """Validate implemented methods of host for create-publish workflow.
 
         Args:
@@ -438,6 +460,7 @@ class INewPublisher:
 
     @abstractmethod
     def get_context_data(self):
+        # type: () ->  Mapping[str, Any]
         """Get global data related to creation-publishing from workfile.
 
         These data are not related to any created instance but to whole
@@ -455,6 +478,7 @@ class INewPublisher:
 
     @abstractmethod
     def update_context_data(self, data, changes):
+        # type: (Mapping[str, Any], Mapping[str, Any]) ->  None
         """Store global context data to workfile.
 
         Called when some values in context data has changed.
