@@ -126,7 +126,7 @@ class FilesWidget(QtWidgets.QWidget):
         filter_layout.addWidget(published_checkbox, 0)
 
         # Create the Files models
-        extensions = set(self.self._get_host_extensions())
+        extensions = set(self._get_host_extensions())
 
         views_widget = QtWidgets.QWidget(self)
         # --- Workarea view ---
