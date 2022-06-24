@@ -68,8 +68,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             os.path.basename(filepath)
             for filepath in expected_paths
         ]
-
-        output_dir = os.path.dirname(expected_paths[0])
+        path = nuke.filename(node)
+        output_dir = os.path.dirname(path)
 
         self.log.debug('output dir: {}'.format(output_dir))
 
