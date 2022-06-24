@@ -433,7 +433,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             for node_type in all_supported_nodes:
                 files.extend(cmds.ls(history, type=node_type, long=True))
 
-        self.log.info("Collected file nodes:\n{}".format(files))
+        self.log.info("Collected file nodes: {}".format(files))
         # Collect textures if any file nodes are found
         instance.data["resources"] = []
         for n in files:
