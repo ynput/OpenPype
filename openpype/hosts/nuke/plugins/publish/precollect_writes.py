@@ -56,9 +56,21 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             first_frame = int(node["first"].getValue())
             last_frame = int(node["last"].getValue())
 
-        # get path
+        # Prepare expected output paths by evaluating each frame of write node
+        #   - paths are first collected to set to avoid duplicated paths, then
+        #       sorted and converted to list
+        node_file = node["file"]
+        expected_paths = list(sorted({
+            node_file.evaluate(frame)
+            for frame in range(first_frame, last_frame + 1)
+        }))
+        expected_filenames = [
+            os.path.basename(filepath)
+            for filepath in expected_paths
+        ]
         path = nuke.filename(node)
         output_dir = os.path.dirname(path)
+
         self.log.debug('output dir: {}'.format(output_dir))
 
         # create label
@@ -83,8 +95,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             }
 
             try:
-                collected_frames = [f for f in os.listdir(output_dir)
-                                    if ext in f]
+                collected_frames = [
+                    filename
+                    for filename in os.listdir(output_dir)
+                    if filename in expected_filenames
+                ]
                 if collected_frames:
                     collected_frames_len = len(collected_frames)
                     frame_start_str = "%0{}d".format(
