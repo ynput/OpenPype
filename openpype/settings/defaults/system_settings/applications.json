@@ -1151,7 +1151,7 @@
             "2020": {
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\Photoshop.exe"
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\AfterFX.exe"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1166,7 +1166,7 @@
             "2021": {
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\Photoshop.exe"
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1181,7 +1181,7 @@
             "2022": {
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\Photoshop.exe"
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\AfterFX.exe"
                     ],
                     "darwin": [],
                     "linux": []
