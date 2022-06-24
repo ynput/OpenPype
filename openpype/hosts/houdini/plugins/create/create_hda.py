@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import hou
 
-from openpye.client import (
+from openpype.client import (
     get_asset_by_name,
     get_subsets,
 )
