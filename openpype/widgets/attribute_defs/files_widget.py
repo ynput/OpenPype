@@ -38,20 +38,8 @@ class DropEmpty(QtWidgets.QWidget):
 
         drop_label_widget = QtWidgets.QLabel("Drag & Drop files here", self)
 
-        detail_widget = QtWidgets.QWidget(self)
-        items_label_widget = SupportLabel(detail_widget)
-        extensions_label_widget = SupportLabel(detail_widget)
-        extensions_label_widget.setWordWrap(True)
-
-        detail_layout = QtWidgets.QVBoxLayout(detail_widget)
-        detail_layout.setContentsMargins(0, 0, 0, 0)
-        detail_layout.addStretch(1)
-        detail_layout.addWidget(
-            items_label_widget, 0, alignment=QtCore.Qt.AlignCenter
-        )
-        detail_layout.addWidget(
-            extensions_label_widget, 0, alignment=QtCore.Qt.AlignCenter
-        )
+        items_label_widget = SupportLabel(self)
+        items_label_widget.setWordWrap(True)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -59,17 +47,17 @@ class DropEmpty(QtWidgets.QWidget):
         layout.addWidget(
             drop_label_widget, 0, alignment=QtCore.Qt.AlignCenter
         )
-        layout.addWidget(detail_widget, 1)
+        layout.addStretch(1)
+        layout.addWidget(
+            items_label_widget, 0, alignment=QtCore.Qt.AlignCenter
+        )
         layout.addSpacing(10)
 
         for widget in (
-            detail_widget,
             drop_label_widget,
             items_label_widget,
-            extensions_label_widget,
         ):
-            if isinstance(widget, QtWidgets.QLabel):
-                widget.setAlignment(QtCore.Qt.AlignCenter)
+            widget.setAlignment(QtCore.Qt.AlignCenter)
             widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self._single_item = single_item
@@ -79,7 +67,6 @@ class DropEmpty(QtWidgets.QWidget):
 
         self._drop_label_widget = drop_label_widget
         self._items_label_widget = items_label_widget
-        self._extensions_label_widget = extensions_label_widget
 
         self.set_allow_folders(False)
 
@@ -103,27 +90,29 @@ class DropEmpty(QtWidgets.QWidget):
         self._update_items_label()
 
     def _update_items_label(self):
-        extensions_label = ""
-        if self._allowed_extensions:
-            extensions_label = ", ".join(sorted(self._allowed_extensions))
-
         allowed_items = []
         if self._allow_folders:
             allowed_items.append("folder")
 
-        if extensions_label:
+        if self._allowed_extensions:
             allowed_items.append("file")
             if self._allow_sequences:
                 allowed_items.append("sequence")
 
-        num_label = "Single"
         if not self._single_item:
-            num_label = "Multiple"
             allowed_items = [item + "s" for item in allowed_items]
 
         if not allowed_items:
-            allowed_items_label = ""
-        elif len(allowed_items) == 1:
+            self._items_label_widget.setText(
+                "It is not allowed to add anything here!"
+            )
+            return
+
+        items_label = "Multiple "
+        if self._single_item:
+            items_label = "Single "
+
+        if len(allowed_items) == 1:
             allowed_items_label = allowed_items[0]
         elif len(allowed_items) == 2:
             allowed_items_label = " or ".join(allowed_items)
@@ -133,15 +122,13 @@ class DropEmpty(QtWidgets.QWidget):
             allowed_items.append(new_last_item)
             allowed_items_label = ", ".join(allowed_items)
 
-        if allowed_items_label:
-            items_label = "{} {}".format(num_label, allowed_items_label)
-            if extensions_label:
-                items_label += " of"
-        else:
-            items_label = "It is not allowed to add anything here!"
+        items_label += allowed_items_label
+        if self._allowed_extensions:
+            items_label += " of\n{}".format(
+                ", ".join(sorted(self._allowed_extensions))
+            )
 
         self._items_label_widget.setText(items_label)
-        self._extensions_label_widget.setText(extensions_label)
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
