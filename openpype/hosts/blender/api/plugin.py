@@ -466,6 +466,35 @@ class Creator(LegacyCreator):
     defaults = ['Main']
     color_tag = "NONE"
 
+    def _use_selection(self, container):
+        selected_objects = set(get_selection())
+        # Get collection from selected objects.
+        selected_collections = set()
+        for collection in get_collections_by_objects(selected_objects):
+            selected_collections.add(collection)
+            selected_objects -= set(collection.all_objects)
+        # Get collection from selected armature.
+        selected_armatures = [
+            obj
+            for obj in selected_objects if obj.type == "ARMATURE"
+        ]
+        for armature in selected_armatures:
+            for collection in get_collections_by_armature(armature):
+                selected_collections.add(collection)
+                selected_objects -= set(collection.all_objects)
+
+        # Link Selected
+        link_to_collection(selected_objects, container)
+        link_to_collection(selected_collections, container)
+
+        # Unlink from scene collection root if needed
+        for obj in selected_objects:
+            if obj in set(bpy.context.scene.collection.objects):
+                bpy.context.scene.collection.objects.unlink(obj)
+        for collection in selected_collections:
+            if collection in set(bpy.context.scene.collection.children):
+                bpy.context.scene.collection.children.unlink(collection)
+
     def _process(self):
         # Get info from data and create name value.
         asset = self.data["asset"]
@@ -483,33 +512,7 @@ class Creator(LegacyCreator):
 
         # Add selected objects to container if useSelection is True.
         if (self.options or {}).get("useSelection"):
-            selected_objects = set(get_selection())
-            # Get collection from selected objects.
-            selected_collections = set()
-            for collection in get_collections_by_objects(selected_objects):
-                selected_collections.add(collection)
-                selected_objects -= set(collection.all_objects)
-            # Get collection from selected armature.
-            selected_armatures = [
-                obj
-                for obj in selected_objects if obj.type == "ARMATURE"
-            ]
-            for armature in selected_armatures:
-                for collection in get_collections_by_armature(armature):
-                    selected_collections.add(collection)
-                    selected_objects -= set(collection.all_objects)
-
-            # Link Selected
-            link_to_collection(selected_objects, container)
-            link_to_collection(selected_collections, container)
-
-            # Unlink from scene collection root if needed
-            for obj in selected_objects:
-                if obj in set(bpy.context.scene.collection.objects):
-                    bpy.context.scene.collection.objects.unlink(obj)
-            for collection in selected_collections:
-                if collection in set(bpy.context.scene.collection.children):
-                    bpy.context.scene.collection.children.unlink(collection)
+            self._use_selection(container)
 
         return container
 
