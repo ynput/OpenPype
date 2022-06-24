@@ -3,6 +3,7 @@
 import bpy
 
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.lib import get_selection
 
 
 class CreateCamera(plugin.Creator):
@@ -13,6 +14,10 @@ class CreateCamera(plugin.Creator):
     family = "camera"
     icon = "video-camera"
     color_tag = "COLOR_05"
+
+    def _use_selection(self, container):
+        cameras = [obj for obj in get_selection() if obj.type == "CAMERA"]
+        plugin.link_to_collection(cameras, container)
 
     def _process(self):
         # Get Instance Container
