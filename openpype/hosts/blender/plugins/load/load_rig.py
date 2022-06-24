@@ -23,8 +23,7 @@ class BlendRigLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_03"
 
-    @staticmethod
-    def _assign_actions(asset_group):
+    def _assign_actions(self, asset_group):
         """Assign new action for all objects from linked rig."""
 
         task = legacy_io.Session.get("AVALON_TASK")
@@ -67,8 +66,7 @@ class BlendRigLoader(plugin.AssetLoader):
                     )
         plugin.orphans_purge()
 
-    @staticmethod
-    def _apply_options(asset_group, options, namespace):
+    def _apply_options(self, asset_group, options, namespace):
         """Apply load options fro asset_group."""
 
         task = legacy_io.Session.get("AVALON_TASK")

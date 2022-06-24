@@ -21,8 +21,7 @@ class AudioLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_02"
 
-    @staticmethod
-    def _remove_audio(audio):
+    def _remove_audio(self, audio):
         # Blender needs the Sequence Editor in the current window, to be able
         # to remove the audio. We take one of the areas in the window, save its
         # type, and switch to the Sequence Editor. After removing the audio,

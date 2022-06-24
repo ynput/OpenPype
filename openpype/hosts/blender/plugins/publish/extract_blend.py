@@ -25,8 +25,7 @@ class ExtractBlend(openpype.api.Extractor):
     families = ["model", "camera", "rig", "action", "layout", "setdress"]
     optional = True
 
-    @staticmethod
-    def _get_loader_from_instance(instance):
+    def _get_loader_from_instance(self, instance):
         all_loaders = discover_loader_plugins()
         context = {
             "subset": {"schema": "openpype:container-2.0"},
@@ -39,8 +38,7 @@ class ExtractBlend(openpype.api.Extractor):
 
         return loaders[0]
 
-    @staticmethod
-    def _pack_images_from_objects(objects):
+    def _pack_images_from_objects(self, objects):
         """Pack images from mesh objects materials."""
         # Get all objects materials using node tree shader.
         materials = set()

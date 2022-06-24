@@ -22,8 +22,9 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_01"
 
-    @staticmethod
-    def _get_action(asset_group: bpy.types.Collection):
+    def _get_action(
+        self, asset_group: bpy.types.Collection
+    ) -> bpy.types.Action:
         for obj in asset_group.objects:
             if obj.animation_data and obj.animation_data.action:
                 return obj.animation_data.action

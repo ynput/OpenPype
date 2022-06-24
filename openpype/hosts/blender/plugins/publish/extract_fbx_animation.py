@@ -18,8 +18,7 @@ class ExtractAnimationFBX(api.Extractor):
     families = ["animation"]
     optional = True
 
-    @staticmethod
-    def _export_animation(armature, stagingdir, fbx_count):
+    def _export_animation(self, armature, stagingdir, fbx_count):
 
         object_action_pairs = []
         original_actions = []

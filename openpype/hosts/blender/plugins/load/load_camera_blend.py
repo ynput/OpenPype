@@ -24,9 +24,8 @@ class BlendCameraLoader(plugin.AssetLoader):
     def _process(self, libpath, asset_group):
         self._load_blend(libpath, asset_group)
 
-    @staticmethod
     @contextmanager
-    def maintained_actions(container):
+    def maintained_actions(self, container):
         """Maintain action during context."""
         # We always want the action from linked camera blend file.
         # So this overload do maintain nothing to force current action to be

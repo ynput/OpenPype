@@ -18,8 +18,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_02"
 
-    @staticmethod
-    def _make_local_actions(asset_group):
+    def _make_local_actions(self, asset_group):
         """Make local for all actions from objects."""
 
         task = legacy_io.Session.get("AVALON_TASK")
@@ -51,8 +50,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             # Assign local action.
             obj.animation_data.action = local_action
 
-    @staticmethod
-    def _create_animation_collection(asset_groups, context):
+    def _create_animation_collection(self, asset_groups, context):
         creator_plugin = lib.get_creator_by_name("CreateAnimation")
         if not creator_plugin:
             raise ValueError(

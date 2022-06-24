@@ -23,8 +23,7 @@ class BlendAnimationLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_01"
 
-    @staticmethod
-    def _restor_actions_from_library(objects):
+    def _restor_actions_from_library(self, objects):
         """Restor action from override library reference animation data"""
         for obj in objects:
             if (
@@ -38,8 +37,7 @@ class BlendAnimationLoader(plugin.AssetLoader):
                     obj.override_library.reference.animation_data.action
                 )
 
-    @classmethod
-    def _remove_container(cls, container: Dict) -> bool:
+    def _remove_container(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
         Arguments:
@@ -55,7 +53,7 @@ class BlendAnimationLoader(plugin.AssetLoader):
             return False
 
         # Restor action from override library reference animation data.
-        cls._restor_actions_from_library(asset_group.all_objects)
+        self._restor_actions_from_library(asset_group.all_objects)
 
         # Unlink all child objects and collections.
         for obj in asset_group.objects:

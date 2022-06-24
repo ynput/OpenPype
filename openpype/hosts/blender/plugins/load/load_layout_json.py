@@ -22,8 +22,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_02"
 
-    @staticmethod
-    def _get_loader(loaders, family):
+    def _get_loader(self, loaders, family):
         name = ""
         if family == "rig":
             name = "BlendRigLoader"

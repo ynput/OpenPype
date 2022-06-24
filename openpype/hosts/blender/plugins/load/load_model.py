@@ -24,8 +24,7 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_04"
 
-    @staticmethod
-    def _apply_options(asset_group, options):
+    def _apply_options(self, asset_group, options):
         """Apply load options fro asset_group."""
 
         transform = options.get("transform")

@@ -540,10 +540,8 @@ class AssetLoader(LoaderPlugin):
     etc.).
     """
 
-    @staticmethod
     def _get_container_from_collections(
-        collections: List,
-        famillies: Optional[List] = None
+        self, collections: List, famillies: Optional[List] = None
     ) -> Optional[bpy.types.Collection]:
         """Get valid container from loaded collections."""
         for collection in collections:
@@ -554,9 +552,8 @@ class AssetLoader(LoaderPlugin):
             ):
                 return collection
 
-    @staticmethod
     def _get_asset_group_container(
-        container: dict,
+        self, container: dict
     ) -> Optional[Union[bpy.types.Object, bpy.types.Collection]]:
         """Get asset group from container dict."""
         object_name = container["objectName"]
@@ -576,8 +573,8 @@ class AssetLoader(LoaderPlugin):
         if asset_group and is_container(asset_group, family):
             return asset_group
 
-    @staticmethod
     def _rename_with_namespace(
+        self,
         asset_group: Union[bpy.types.Object, bpy.types.Collection],
         namespace: str
     ):
@@ -633,8 +630,7 @@ class AssetLoader(LoaderPlugin):
 
         return container
 
-    @staticmethod
-    def _load_fbx(libpath, asset_group):
+    def _load_fbx(self, libpath, asset_group):
         """Load fbx process."""
 
         current_objects = set(bpy.data.objects)
@@ -805,9 +801,8 @@ class AssetLoader(LoaderPlugin):
         )
         return normalized_group_libpath == normalized_libpath
 
-    @staticmethod
     def _update_namespace(
-        asset_group: Union[bpy.types.Collection, bpy.types.Object]
+        self, asset_group: Union[bpy.types.Collection, bpy.types.Object]
     ):
         """Update namespace from asset group name."""
         # Clear default blender numbering.
@@ -1032,9 +1027,8 @@ class AssetLoader(LoaderPlugin):
 
         return True
 
-    @staticmethod
     @contextmanager
-    def maintained_actions(container):
+    def maintained_actions(self, container):
         """Maintain action during context."""
         objects = get_container_objects(container)
         actions = {}

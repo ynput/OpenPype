@@ -22,8 +22,7 @@ class CacheModelLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_04"
 
-    @staticmethod
-    def _process(libpath, asset_group):
+    def _process(self, libpath, asset_group):
 
         current_objects = set(bpy.data.objects)
 
