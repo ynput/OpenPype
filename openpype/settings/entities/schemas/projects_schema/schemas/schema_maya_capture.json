@@ -293,7 +293,10 @@
                         {
                             "type": "number",
                             "key": "hwFogDensity",
-                            "label": "Fog Density"
+                            "label": "Fog Density",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
                         },
                         {
                             "type": "number",
