@@ -26,26 +26,122 @@ IS_SEQUENCE_ROLE = QtCore.Qt.UserRole + 7
 EXT_ROLE = QtCore.Qt.UserRole + 8
 
 
+class SupportLabel(QtWidgets.QLabel):
+    pass
+
+
 class DropEmpty(QtWidgets.QWidget):
-    _drop_enabled_text = "Drag & Drop\n(drop files here)"
+    _empty_extensions = "Any file"
 
-    def __init__(self, parent):
+    def __init__(self, single_item, allow_sequences, parent):
         super(DropEmpty, self).__init__(parent)
-        label_widget = QtWidgets.QLabel(self._drop_enabled_text, self)
-        label_widget.setAlignment(QtCore.Qt.AlignCenter)
 
-        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        drop_label_widget = QtWidgets.QLabel("Drag & Drop files here", self)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        detail_widget = QtWidgets.QWidget(self)
+        items_label_widget = SupportLabel(detail_widget)
+        extensions_label_widget = SupportLabel(detail_widget)
+        extensions_label_widget.setWordWrap(True)
+
+        detail_layout = QtWidgets.QVBoxLayout(detail_widget)
+        detail_layout.setContentsMargins(0, 0, 0, 0)
+        detail_layout.addStretch(1)
+        detail_layout.addWidget(
+            items_label_widget, 0, alignment=QtCore.Qt.AlignCenter
+        )
+        detail_layout.addWidget(
+            extensions_label_widget, 0, alignment=QtCore.Qt.AlignCenter
+        )
+
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addSpacing(10)
         layout.addWidget(
-            label_widget,
-            alignment=QtCore.Qt.AlignCenter
+            drop_label_widget, 0, alignment=QtCore.Qt.AlignCenter
         )
+        layout.addWidget(detail_widget, 1)
         layout.addSpacing(10)
 
-        self._label_widget = label_widget
+        for widget in (
+            detail_widget,
+            drop_label_widget,
+            items_label_widget,
+            extensions_label_widget,
+        ):
+            if isinstance(widget, QtWidgets.QLabel):
+                widget.setAlignment(QtCore.Qt.AlignCenter)
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self._single_item = single_item
+        self._allow_sequences = allow_sequences
+        self._allowed_extensions = set()
+        self._allow_folders = None
+
+        self._drop_label_widget = drop_label_widget
+        self._items_label_widget = items_label_widget
+        self._extensions_label_widget = extensions_label_widget
+
+        self.set_allow_folders(False)
+
+    def set_extensions(self, extensions):
+        if extensions:
+            extensions = {
+                ext.replace(".", "")
+                for ext in extensions
+            }
+        if extensions == self._allowed_extensions:
+            return
+        self._allowed_extensions = extensions
+
+        self._update_items_label()
+
+    def set_allow_folders(self, allowed):
+        if self._allow_folders == allowed:
+            return
+
+        self._allow_folders = allowed
+        self._update_items_label()
+
+    def _update_items_label(self):
+        extensions_label = ""
+        if self._allowed_extensions:
+            extensions_label = ", ".join(sorted(self._allowed_extensions))
+
+        allowed_items = []
+        if self._allow_folders:
+            allowed_items.append("folder")
+
+        if extensions_label:
+            allowed_items.append("file")
+            if self._allow_sequences:
+                allowed_items.append("sequence")
+
+        num_label = "Single"
+        if not self._single_item:
+            num_label = "Multiple"
+            allowed_items = [item + "s" for item in allowed_items]
+
+        if not allowed_items:
+            allowed_items_label = ""
+        elif len(allowed_items) == 1:
+            allowed_items_label = allowed_items[0]
+        elif len(allowed_items) == 2:
+            allowed_items_label = " or ".join(allowed_items)
+        else:
+            last_item = allowed_items.pop(-1)
+            new_last_item = " or ".join(last_item, allowed_items.pop(-1))
+            allowed_items.append(new_last_item)
+            allowed_items_label = ", ".join(allowed_items)
+
+        if allowed_items_label:
+            items_label = "{} {}".format(num_label, allowed_items_label)
+            if extensions_label:
+                items_label += " of"
+        else:
+            items_label = "It is not allowed to add anything here!"
+
+        self._items_label_widget.setText(items_label)
+        self._extensions_label_widget.setText(extensions_label)
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
@@ -188,7 +284,12 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 
     def set_allowed_extensions(self, extensions=None):
         if extensions is not None:
-            extensions = set(extensions)
+            _extensions = set()
+            for ext in set(extensions):
+                if not ext.startswith("."):
+                    ext = ".{}".format(ext)
+                _extensions.add(ext.lower())
+            extensions = _extensions
 
         if self._allowed_extensions != extensions:
             self._allowed_extensions = extensions
@@ -444,7 +545,7 @@ class FilesWidget(QtWidgets.QFrame):
         super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
-        empty_widget = DropEmpty(self)
+        empty_widget = DropEmpty(single_item, allow_sequences, self)
 
         files_model = FilesModel(single_item, allow_sequences)
         files_proxy_model = FilesProxyModel()
@@ -519,6 +620,8 @@ class FilesWidget(QtWidgets.QFrame):
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)
         self._files_proxy_model.set_allowed_extensions(exts_filter)
+        self._empty_widget.set_extensions(exts_filter)
+        self._empty_widget.set_allow_folders(folders_allowed)
 
     def _on_rows_inserted(self, parent_index, start_row, end_row):
         for row in range(start_row, end_row + 1):
