@@ -259,7 +259,10 @@
                         {
                             "type": "number",
                             "key": "ssaoFilterRadius",
-                            "label": "SSAO Filter Radius"
+                            "label": "SSAO Filter Radius",
+                            "decimal": 0,
+                            "minimum": 1,
+                            "maximum": 32
                         },
                         {
                             "type": "number",
