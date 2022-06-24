@@ -2566,8 +2566,14 @@ def load_capture_preset(data=None):
         if key == 'hwFogFalloff':
             temp_options2['hwFogFalloff'] = int(preset[id][key])
 
-        if key == 'hwFogColor':
-            temp_options2['hwFogColor'] = preset[id][key]
+        if key == 'hwFogColorR':
+            temp_options2['hwFogColorR'] = preset[id][key]
+
+        if key == 'hwFogColorG':
+            temp_options2['hwFogColorG'] = preset[id][key]
+
+        if key == 'hwFogColorB':
+            temp_options2['hwFogColorB'] = preset[id][key]
 
         if key == 'motionBlurEnable':
             if preset[id][key] is True:
@@ -2605,7 +2611,9 @@ def load_capture_preset(data=None):
                 'hwFogEnd',
                 'hwFogAlpha',
                 'hwFogFalloff',
-                'hwFogColor',
+                'hwFogColorR',
+                'hwFogColorG',
+                'hwFogColorB',
                 'textureMaxResolution',
                 'motionBlurEnable',
                 'motionBlurSampleCount',

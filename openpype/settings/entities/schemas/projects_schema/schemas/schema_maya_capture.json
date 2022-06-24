@@ -303,9 +303,28 @@
                             "label": "Enable Fog Alpha"
                         },
                         {
-                            "type": "color",
-                            "key": "hwFogColor",
-                            "label": "Fog Color"
+                            "type": "number",
+                            "key": "hwFogColorR",
+                            "label": "Fog Color R",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorG",
+                            "label": "Fog Color G",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorB",
+                            "label": "Fog Color B",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
                         },
                         {
                             "type": "splitter"
