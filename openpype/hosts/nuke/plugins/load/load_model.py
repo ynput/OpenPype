@@ -60,6 +60,12 @@ class AlembicModelLoader(load.LoaderPlugin):
                 inpanel=False
             )
             model_node.forceValidate()
+
+            # Ensure all items are imported and selected.
+            scene_view = model_node.knob('scene_view')
+            scene_view.setImportedItems(scene_view.getAllItems())
+            scene_view.setSelectedItems(scene_view.getAllItems())
+
             model_node["frame_rate"].setValue(float(fps))
 
             # workaround because nuke's bug is not adding
@@ -141,6 +147,11 @@ class AlembicModelLoader(load.LoaderPlugin):
 
             model_node["frame_rate"].setValue(float(fps))
             model_node["file"].setValue(file)
+
+            # Ensure all items are imported and selected.
+            scene_view = model_node.knob('scene_view')
+            scene_view.setImportedItems(scene_view.getAllItems())
+            scene_view.setSelectedItems(scene_view.getAllItems())
 
             # workaround because nuke's bug is
             # not adding animation keys properly
