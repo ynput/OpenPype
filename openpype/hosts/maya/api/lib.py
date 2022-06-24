@@ -2548,11 +2548,7 @@ def load_capture_preset(data=None):
             temp_options['headsUpDisplay'] = True
 
         if key == 'hwFogEnable':
-            if preset[id][key] is True:
-                temp_options2['hwFogEnable'] = True
-
-            else:
-                temp_options2['hwFogEnable'] = False
+            temp_options2['hwFogEnable'] = preset[id][key] or False
 
         if key == 'hwFogStart':
             temp_options2['hwFogStart'] = preset[id][key]
