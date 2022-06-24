@@ -70,7 +70,6 @@ class BgeoLoader(load.LoaderPlugin):
         # The path is either a single file or sequence in a folder.
         if not is_sequence:
             filename = path
-            print("single")
         else:
             filename = re.sub(r"(.*)\.(\d+)\.(bgeo.*)", "\\1.$F4.\\3", path)
 
@@ -94,9 +93,10 @@ class BgeoLoader(load.LoaderPlugin):
 
         # Update the file path
         file_path = get_representation_path(representation)
-        file_path = self.format_path(file_path)
+        is_sequence = bool(representation["context"].get("frame"))
+        file_path = self.format_path(file_path, is_sequence)
 
-        file_node.setParms({"fileName": file_path})
+        file_node.setParms({"file": file_path})
 
         # Update attribute
         node.setParms({"representation": str(representation["_id"])})
