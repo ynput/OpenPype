@@ -69,14 +69,19 @@ class ExtractCameraAlembic(openpype.api.Extractor):
                 job_str += ' -root {0}'.format(camera_root)
 
                 for member in members:
-                    member_content = cmds.listRelatives(
-                        member, ad=True, fullPath=True) or []
-                    # skip hierarchy if it contains only camera
-                    # `member_content` will contain camera + its parents
-                    if camera in member_content \
-                            and len(member_content) == len(camera.split("|")) - 2:  # noqa
-                        continue
-
+                    descendants = cmds.listRelatives(member,
+                                                     allDescendents=True,
+                                                     fullPath=True) or []
+                    shapes = cmds.ls(descendants, shapes=True,
+                                     noIntermediate=True, long=True)
+                    cameras = cmds.ls(shapes, type="camera", long=True)
+                    if cameras:
+                        if not set(shapes) - set(cameras):
+                            continue
+                        self.log.warning((
+                            "Camera hierarchy contains additional geometry. "
+                            "Extraction will fail.")
+                        )
                     transform = cmds.listRelatives(
                         member, parent=True, fullPath=True)
                     transform = transform[0] if transform else member
