@@ -508,6 +508,7 @@
                     "ssaoSamples": 16,
                     "hwFogEnable": true,
                     "hwFogFalloff": "0",
+                    "hwFogDensity": 0,
                     "hwFogStart": 0,
                     "hwFogEnd": 100,
                     "hwFogAlpha": 0,
