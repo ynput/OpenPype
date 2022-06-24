@@ -75,7 +75,8 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         assert data_to.actions, "No actions found"
 
-        scene_collections = bpy.context.scene.collection.children_recursive
+        scene = bpy.context.scene
+        scene_collections = plugin.get_children_recursive(scene.collection)
 
         # Try to assign linked actions with parsing their name.
         for action in data_to.actions:

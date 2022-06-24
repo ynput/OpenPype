@@ -138,14 +138,14 @@ def remove_container(
             if obj.original:
                 objects_to_remove.add(obj.original)
         # Append all child collections in container to be removed.
-        for child in set(container.children_recursive):
+        for child in set(get_children_recursive(container)):
             collections_to_remove.add(child)
         # Append the container collection if content_only is False.
         if not content_only:
             collections_to_remove.add(container)
     else:
         # Append all child objects in container object.
-        for obj in set(container.children_recursive):
+        for obj in set(get_children_recursive(container)):
             objects_to_remove.add(obj)
         # Append the container object if content_only is False.
         if not content_only:
@@ -287,7 +287,7 @@ def get_container_objects(
     if isinstance(container, bpy.types.Collection):
         objects = list(container.all_objects)
     else:
-        objects = list(container.children_recursive)
+        objects = list(get_children_recursive(container))
         objects.append(container)
     return objects
 
@@ -389,6 +389,27 @@ def get_collections_by_armature(
             )
 
 
+def get_children_recursive(
+    entity: Union[bpy.types.Collection, bpy.types.Object]
+) -> Iterator[Union[bpy.types.Collection, bpy.types.Object]]:
+    """Get childrens recursively from a object or a collection.
+
+    Arguments:
+        entity: The parent entity.
+
+    Yields:
+        The next childrens from parent entity.
+    """
+    # Since Blender 3.1.0 we can use "children_recursive" attribute.
+    if hasattr(entity, "children_recursive"):
+        for child in entity.children_recursive:
+            yield child
+    else:
+        for child in entity.children:
+            yield child
+            yield from get_children_recursive(child)
+
+
 def link_to_collection(
     entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
     collection: bpy.types.Collection
@@ -420,7 +441,9 @@ def link_to_collection(
         isinstance(entity, bpy.types.Object)
         and entity not in collection.objects.values()
         and entity.instance_collection is not collection
-        and entity.instance_collection not in collection.children_recursive
+        and entity.instance_collection not in set(
+            get_children_recursive(collection)
+        )
     ):
         collection.objects.link(entity)
 
@@ -559,11 +582,12 @@ class AssetLoader(LoaderPlugin):
         object_name = container["objectName"]
         family = container.get("family")
 
-        asset_group = bpy.context.scene.objects.get(object_name)
+        scene = bpy.context.scene
+        asset_group = scene.objects.get(object_name)
         if asset_group and is_container(asset_group, family):
             return asset_group
 
-        for collection in bpy.context.scene.collection.children_recursive:
+        for collection in get_children_recursive(scene.collection):
             if collection.name == object_name:
                 asset_group = collection
                 break
@@ -611,7 +635,7 @@ class AssetLoader(LoaderPlugin):
             material.name = f"{namespace}:{material.name}"
 
         if isinstance(asset_group, bpy.types.Collection):
-            for child in asset_group.children_recursive:
+            for child in set(get_children_recursive(asset_group)):
                 child.name = f"{namespace}:{child.name}"
 
     def _load_library_collection(self, libpath: str) -> bpy.types.Collection:

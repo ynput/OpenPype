@@ -364,7 +364,10 @@ def ls() -> Iterator:
     """
 
     collections = lib.lsattr("id", AVALON_CONTAINER_ID)
-    scene_collections = bpy.context.scene.collection.children_recursive
+    scene_collections = list(bpy.context.scene.collection.children)
+    for collection in scene_collections:
+        if len(collection.children):
+            scene_collections.extend(collection.children)
 
     for container in collections:
         if container in scene_collections and not container.override_library:

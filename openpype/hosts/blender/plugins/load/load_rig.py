@@ -138,7 +138,7 @@ class BlendRigLoader(plugin.AssetLoader):
         self._load_blend(libpath, asset_group)
 
         # Disable selection for modeling container.
-        for child in set(asset_group.children_recursive):
+        for child in set(plugin.get_children_recursive(asset_group)):
             if plugin.is_container(child, family="model"):
                 child.hide_select = True
 

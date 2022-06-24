@@ -80,7 +80,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         if legacy_io.Session.get("AVALON_TASK") == "Animation":
             rig_assets = [
                 child
-                for child in asset_group.children_recursive
+                for child in plugin.get_children_recursive(asset_group)
                 if plugin.is_container(child, family="rig")
             ]
             self._create_animation_collection(rig_assets, context)

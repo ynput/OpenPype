@@ -6,6 +6,7 @@ import bpy
 import pyblish.api
 from openpype.pipeline import AVALON_INSTANCE_ID
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.plugin import get_children_recursive
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -49,7 +50,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 objects.extend(list(obj.children))
                 members.add(obj)
             # append the collections to members and update intances list
-            members.update(set(collection.children_recursive))
+            members.update(set(get_children_recursive(collection)))
             members = list(members)
             members.append(collection)
             instance[:] = members
