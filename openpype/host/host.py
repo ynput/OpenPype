@@ -80,7 +80,6 @@ class HostBase(object):
     _log = None
 
     def __init__(self):
-        # type: () -> None
         """Initialization of host.
 
         Register DCC callbacks, host specific plugin paths, targets etc.
@@ -97,20 +96,17 @@ class HostBase(object):
 
     @property
     def log(self):
-        # type: () -> logging.Logger
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @abstractproperty
     def name(self):
-        # type: () -> str
         """Host name."""
 
         pass
 
     def get_current_context(self):
-        # type: () -> Mapping[str, Union[str, None]]
         """Get current context information.
 
         This method should be used to get current context of host. Usage of
@@ -137,7 +133,6 @@ class HostBase(object):
         }
 
     def get_context_title(self):
-        # type: () -> Union[str, None]
         """Context title shown for UI purposes.
 
         Should return current context title if possible.
@@ -170,7 +165,6 @@ class HostBase(object):
 
     @contextlib.contextmanager
     def maintained_selection(self):
-        # type: () ->  None
         """Some functionlity will happen but selection should stay same.
 
         This is DCC specific. Some may not allow to implement this ability
@@ -201,14 +195,14 @@ class ILoadHost:
 
     @staticmethod
     def get_missing_load_methods(host):
-        # type: (Union[ModuleType, HostBase]) ->  List[str]
         """Look for missing methods on "old type" host implementation.
 
         Method is used for validation of implemented functions related to
         loading. Checks only existence of methods.
 
         Args:
-            Union[ModuleType, HostBase]: Object of host where to look for required methods.
+            Union[ModuleType, HostBase]: Object of host where to look for
+                required methods.
 
         Returns:
             list[str]: Missing method implementations for loading workflow.
@@ -226,7 +220,6 @@ class ILoadHost:
 
     @staticmethod
     def validate_load_methods(host):
-        # type: (Union[ModuleType, HostBase]) ->  None
         """Validate implemented methods of "old type" host for load workflow.
 
         Args:
@@ -242,7 +235,6 @@ class ILoadHost:
 
     @abstractmethod
     def get_referenced_containers(self):
-        # type: () ->  List[Mapping[str, Any]]
         """Retreive referenced containers from scene.
 
         This can be implemented in hosts where referencing can be used.
@@ -274,14 +266,14 @@ class IWorkfileHost:
 
     @staticmethod
     def get_missing_workfile_methods(host):
-        # type: (Union[ModuleType, HostBase]) ->  List[str]
         """Look for missing methods on "old type" host implementation.
 
         Method is used for validation of implemented functions related to
         workfiles. Checks only existence of methods.
 
         Args:
-            Union[ModuleType, HostBase]: Object of host where to look for required methods.
+            Union[ModuleType, HostBase]: Object of host where to look for
+                required methods.
 
         Returns:
             list[str]: Missing method implementations for workfiles workflow.
@@ -306,7 +298,6 @@ class IWorkfileHost:
 
     @staticmethod
     def validate_workfile_methods(host):
-        # type: (Union[ModuleType, HostBase]) ->  None
         """Validate methods of "old type" host for workfiles workflow.
 
         Args:
@@ -323,7 +314,6 @@ class IWorkfileHost:
 
     @abstractmethod
     def get_workfile_extensions(self):
-        # type: () ->  List[str]
         """Extensions that can be used as save.
 
         Questions:
@@ -334,7 +324,6 @@ class IWorkfileHost:
 
     @abstractmethod
     def save_current_workfile(self, dst_path=None):
-        # type: (Optional[str]) ->  None
         """Save currently opened scene.
 
         Args:
@@ -346,7 +335,6 @@ class IWorkfileHost:
 
     @abstractmethod
     def open_workfile(self, filepath):
-        # type: (str) ->  None
         """Open passed filepath in the host.
 
         Args:
@@ -357,7 +345,6 @@ class IWorkfileHost:
 
     @abstractmethod
     def get_current_workfile(self):
-        # type: () ->  Union[str, None]
         """Retreive path to current opened file.
 
         Returns:
@@ -368,7 +355,6 @@ class IWorkfileHost:
         return None
 
     def workfile_has_unsaved_changes(self):
-        # type: () ->  Union[bool, None]
         """Currently opened scene is saved.
 
         Not all hosts can know if current scene is saved because the API of
@@ -383,7 +369,6 @@ class IWorkfileHost:
         return None
 
     def work_root(self, session):
-        # type: (Mapping[str, str]) ->  str
         """Modify workdir per host.
 
         Default implementation keeps workdir untouched.
@@ -461,14 +446,14 @@ class INewPublisher:
 
     @staticmethod
     def get_missing_publish_methods(host):
-        # type: (Union[ModuleType, HostBase]) ->  List[str]
         """Look for missing methods on "old type" host implementation.
 
         Method is used for validation of implemented functions related to
         new publish creation. Checks only existence of methods.
 
         Args:
-            Union[ModuleType, HostBase]: Host module where to look for required methods.
+            Union[ModuleType, HostBase]: Host module where to look for
+                required methods.
 
         Returns:
             list[str]: Missing method implementations for new publsher
@@ -490,7 +475,6 @@ class INewPublisher:
 
     @staticmethod
     def validate_publish_methods(host):
-        # type: (Union[ModuleType, HostBase]) ->  None
         """Validate implemented methods of "old type" host.
 
         Args:
@@ -506,7 +490,6 @@ class INewPublisher:
 
     @abstractmethod
     def get_context_data(self):
-        # type: () ->  Mapping[str, Any]
         """Get global data related to creation-publishing from workfile.
 
         These data are not related to any created instance but to whole
@@ -524,7 +507,6 @@ class INewPublisher:
 
     @abstractmethod
     def update_context_data(self, data, changes):
-        # type: (Mapping[str, Any], Mapping[str, Any]) ->  None
         """Store global context data to workfile.
 
         Called when some values in context data has changed.
