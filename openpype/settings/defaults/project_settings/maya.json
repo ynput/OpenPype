@@ -504,7 +504,7 @@
                     "ssaoEnable": true,
                     "ssaoAmount": 0,
                     "ssaoRadius": 0,
-                    "ssaoFilterRadius": 0,
+                    "ssaoFilterRadius": 1,
                     "ssaoSamples": 8,
                     "hwFogEnable": true,
                     "hwFogFalloff": "0",
