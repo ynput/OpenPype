@@ -292,6 +292,11 @@
                         },
                         {
                             "type": "number",
+                            "key": "hwFogDensity",
+                            "label": "Fog Density"
+                        },
+                        {
+                            "type": "number",
                             "key": "hwFogStart",
                             "label": "Fog Start"
                         },
@@ -303,7 +308,7 @@
                         {
                             "type": "number",
                             "key": "hwFogAlpha",
-                            "label": "Enable Fog Alpha"
+                            "label": "Fog Alpha"
                         },
                         {
                             "type": "number",
