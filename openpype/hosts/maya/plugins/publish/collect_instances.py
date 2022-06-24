@@ -30,18 +30,19 @@ def get_all_children(nodes):
         dag = sel.getDagPath(0)
 
         iterator.reset(dag)
-        next(iterator)  # ignore self
+        # ignore self
+        iterator.next()  # noqa: B305
         while not iterator.isDone():
 
             path = iterator.fullPathName()
 
             if path in traversed:
                 iterator.prune()
-                next(iterator)
+                iterator.next()  # noqa: B305
                 continue
 
             traversed.add(path)
-            next(iterator)
+            iterator.next()  # noqa: B305
 
     return list(traversed)
 
