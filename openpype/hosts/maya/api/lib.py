@@ -2537,6 +2537,9 @@ def load_capture_preset(data=None):
         if key == 'ssaoRadius':
             temp_options2['ssaoRadius'] = preset[id][key]
 
+        if key == 'hwFogDensity':
+            temp_options2['hwFogDensity'] = preset[id][key]
+
         if key == 'ssaoFilterRadius':
             temp_options2['ssaoFilterRadius'] = preset[id][key]
 
@@ -2610,6 +2613,7 @@ def load_capture_preset(data=None):
                 'hwFogColorR',
                 'hwFogColorG',
                 'hwFogColorB',
+                'hwFogDensity',
                 'textureMaxResolution',
                 'motionBlurEnable',
                 'motionBlurSampleCount',
