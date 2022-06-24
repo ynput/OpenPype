@@ -31,7 +31,6 @@ class VdbLoader(load.LoaderPlugin):
 
         # Create a new geo node
         container = obj.createNode("geo", node_name=node_name)
-        is_sequence = bool(context["representation"]["context"].get("frame"))
 
         # Remove the file node, it only loads static meshes
         # Houdini 17 has removed the file node from the geo node
@@ -41,7 +40,8 @@ class VdbLoader(load.LoaderPlugin):
 
         # Explicitly create a file node
         file_node = container.createNode("file", node_name=node_name)
-        file_node.setParms({"file": self.format_path(self.fname, is_sequence)})
+        file_node.setParms(
+            {"file": self.format_path(self.fname, context["representation"])})
 
         # Set display on last node
         file_node.setDisplayFlag(True)
@@ -59,11 +59,12 @@ class VdbLoader(load.LoaderPlugin):
         )
 
     @staticmethod
-    def format_path(path, is_sequence):
+    def format_path(path, representation):
         """Format file path correctly for single vdb or vdb sequence."""
         if not os.path.exists(path):
             raise RuntimeError("Path does not exist: %s" % path)
 
+        is_sequence = bool(representation["context"].get("frame"))
         # The path is either a single file or sequence in a folder.
         if not is_sequence:
             filename = path
@@ -90,8 +91,7 @@ class VdbLoader(load.LoaderPlugin):
 
         # Update the file path
         file_path = get_representation_path(representation)
-        is_sequence = bool(representation["context"].get("frame"))
-        file_path = self.format_path(file_path, is_sequence)
+        file_path = self.format_path(file_path, representation)
 
         file_node.setParms({"file": file_path})
 
