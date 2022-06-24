@@ -56,23 +56,23 @@ class ExtractPlayblast(openpype.api.Extractor):
         width_preset = capture_presets["Resolution"]["width"]
         height_preset = capture_presets["Resolution"]["height"]
         # Set resolution variables from instance values
-        instance_width = instance.data.get("resolutionWidth")
-        instance_height = instance.data.get("resolutionHeight")
+        instance_width = instance.context.data.get("resolutionWidth")
+        instance_height = instance.context.data.get("resolutionHeight")
         preset['camera'] = camera
 
         # Tests if instance resolution width is set,
         # if it is a value other than zero, that value is
         # used, if not then the project settings resolution is
         # used
-        if instance_width != 0:
-            preset['width'] = instance.data.get("resolutionWidth")
-        else:
+        if width_preset != 0:
             preset["width"] = width_preset
-
-        if instance_height != 0:
-            preset['height'] = instance.data.get("resolutionHeight")
         else:
+            preset['width'] = instance_width
+
+        if height_preset != 0:
             preset['height'] = height_preset
+        else:
+            preset['height'] = instance_height
 
         preset['start_frame'] = start
         preset['end_frame'] = end
