@@ -65,14 +65,14 @@ class ExtractPlayblast(openpype.api.Extractor):
         # used, if not then the asset resolution is
         # used
         if width_preset != 0:
-            preset["width"] = instance_width
+            preset["width"] = width_preset
         else:
-            preset['width'] = width_preset
+            preset['width'] = instance_width
 
         if height_preset != 0:
-            preset['height'] = instance_height
-        else:
             preset['height'] = height_preset
+        else:
+            preset['height'] = instance_height
 
         preset['start_frame'] = start
         preset['end_frame'] = end
