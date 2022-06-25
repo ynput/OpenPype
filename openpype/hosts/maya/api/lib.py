@@ -2550,8 +2550,8 @@ def load_capture_preset(data=None):
         if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
 
-        if key == 'hwFogEnable':
-            temp_options2['hwFogEnable'] = preset[id][key] or False
+        if key == 'fogging':
+            temp_options['fogging'] = preset[id][key] or False
 
         if key == 'hwFogStart':
             temp_options2['hwFogStart'] = preset[id][key]
@@ -2605,7 +2605,6 @@ def load_capture_preset(data=None):
                 'ssaoAmount',
                 'ssaoFilterRadius',
                 'ssaoRadius',
-                'hwFogEnable',
                 'hwFogStart',
                 'hwFogEnd',
                 'hwFogAlpha',

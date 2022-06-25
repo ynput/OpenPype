@@ -277,7 +277,7 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "hwFogEnable",
+                            "key": "fogging",
                             "label": "Enable Hardware Fog"
                         },
                         {
