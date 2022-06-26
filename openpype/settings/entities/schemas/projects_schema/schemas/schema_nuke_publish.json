@@ -323,6 +323,14 @@
                     "type": "separator"
                 },
                 {
+                    "type": "boolean",
+                    "key": "vwip_before_slate",
+                    "label": "Bake Viewer IP before Slate"
+                },
+                {
+                    "type": "separator"
+                },
+                {
                     "type": "label",
                     "label": "Fill specific slate node values with templates. Uncheck the checkbox to not change the value.",
                     "word_wrap": true

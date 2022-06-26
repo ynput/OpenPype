@@ -249,6 +249,7 @@
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false,
+            "vwip_before_slate": false,
             "key_value_mapping": {
                 "f_submission_note": [
                     true,

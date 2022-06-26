@@ -35,6 +35,11 @@ class ExtractSlateFrame(openpype.api.Extractor):
         else:
             self.viewer_lut_raw = False
 
+        if hasattr(self, "vwip_before_slate"):
+            self.vwip_before_slate = self.vwip_before_slate
+        else:
+            self.vwip_before_slate = False
+
         with maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
@@ -44,7 +49,12 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
     def render_slate(self, instance):
         node_subset_name = instance.data.get("name", None)
-        node = instance[0]  # group node
+        node = instance[0] # group node
+        # get the slate node
+        slate_node = instance.data.get("slateNode")
+        # get the last comp node before slate
+        last_comp_node = slate_node.input(0)
+ 
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
@@ -85,7 +95,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
             if ("slate" in instance.data["families"]) \
-                    and (frame_length != collected_frames_len):
+                    and (frame_length < collected_frames_len):
                 first_frame += 1
 
             last_frame = first_frame
@@ -98,18 +108,63 @@ class ExtractSlateFrame(openpype.api.Extractor):
         if "#" in fhead:
             fhead = fhead.replace("#", "")[:-1]
 
-        previous_node = node
+        # Create a text file in staging dir to use as a
+        # clipboard space. This fixes the erratic
+        # behaviour nuke has with system clipboard '%clipboard%'
+        # when used from openpype context.
+        instance.data["clipboard"] = os.path.join(instance.data["stagingDir"],
+            "{0}clipboard.txt".format(fhead))
+
+        # get the current viewer viewing lut, there seems to be
+        # no setting in op that is relevant to this.
+        # This is actually stored as an enum value, so it just works
+        # with the viewer profile enum. The good side effect is that
+        # ACES is quite inconsistent in nuke when presenting profile names,
+        # So this prevents parsing errors when dealing with strings.
+        viewer_lut = int(
+            nuke.activeViewer().node()["viewerProcess"].getValue())
+
+        # start from last comp node
+        if self.vwip_before_slate:
+            previous_node = last_comp_node
+        else:
+            previous_node = node
+
+        self.clear_selection()
 
         # get input process and connect it to baking
-        ipn = self.get_view_process_node()
+        ipn = self.get_view_process_node(instance)
         if ipn is not None:
             ipn.setInput(0, previous_node)
             previous_node = ipn
             temporary_nodes.append(ipn)
+        
+        # compensate source to not have a double viewer lut applied
+        # this is needed since baking viewer process happens now
+        # before the slate and not after. 
+        if not self.viewer_lut_raw and self.vwip_before_slate:
+            invlut_node = nuke.createNode("OCIODisplay")
+            invlut_node.setInput(0, previous_node)
+            invlut_node["view"].setValue(viewer_lut)
+            invlut_node["invert"].setValue(True)
+            previous_node = invlut_node
+            temporary_nodes.append(invlut_node)
+
+        # Copy the slate node after IPN because it does not make
+        # any sense to apply luts to the slate.
+        # It also helps to reformat the slate if it's set up
+        # to be relative to source resolution.
+        if self.vwip_before_slate:
+            slate = self.get_slate_node(instance)
+            if slate is not None:
+                slate.setInput(0, previous_node)
+                previous_node = slate
+                temporary_nodes.append(slate)
 
         if not self.viewer_lut_raw:
             dag_node = nuke.createNode("OCIODisplay")
             dag_node.setInput(0, previous_node)
+            dag_node["view"].setValue(viewer_lut)
             previous_node = dag_node
             temporary_nodes.append(dag_node)
 
@@ -127,6 +182,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
         # fill slate node with comments
         self.add_comment_slate_node(instance)
 
+        # Reconnect slate OP output to slate for safety
+
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
         # also render slate as sequence frame
@@ -135,15 +192,26 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.debug(
             "slate frame path: {}".format(instance.data["slateFrame"]))
 
-        # Clean up
-        for node in temporary_nodes:
-            nuke.delete(node)
+        # Clean up (renamed to avoid naming collisions
+        # with OP render node)
+        for tmpnode in temporary_nodes:
+            nuke.delete(tmpnode)
 
-    def get_view_process_node(self):
-        # Select only the target node
+        slate_node.setInput(0, last_comp_node)
+        node.setInput(0, slate_node)
+
+
+    # Commodity function to clear selections.
+    def clear_selection(self):
         if nuke.selectedNodes():
-            [n.setSelected(False) for n in nuke.selectedNodes()]
+            for n in nuke.selectedNodes():
+                n.setSelected(False)
 
+    def get_view_process_node(self, instance):
+        # get the clipboard temp file
+        clipboard = instance.data["clipboard"]
+        # Select only the target node
+        self.clear_selection()
         ipn_orig = None
         for v in [n for n in nuke.allNodes()
                   if "Viewer" in n.Class()]:
@@ -151,18 +219,30 @@ class ExtractSlateFrame(openpype.api.Extractor):
             ipn = v['input_process_node'].getValue()
             if "VIEWER_INPUT" not in ipn and ip:
                 ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
 
         if ipn_orig:
-            nuke.nodeCopy('%clipboard%')
-
-            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
-
-            nuke.nodePaste('%clipboard%')
-
+            ipn_orig.setSelected(True)
+            nuke.nodeCopy(clipboard)
+            self.clear_selection()
+            nuke.nodePaste(clipboard)
             ipn = nuke.selectedNode()
-
             return ipn
+
+    def get_slate_node(self, instance):
+        # get the clipboard temp file
+        clipboard = instance.data["clipboard"]
+        # Select only the target node
+        self.clear_selection()
+        slate_orig = None
+        slate_orig = instance.data.get("slateNode")
+
+        if slate_orig:
+            slate_orig.setSelected(True)
+            nuke.nodeCopy(clipboard)
+            self.clear_selection()
+            nuke.nodePaste(clipboard)
+            slate = nuke.selectedNode()
+            return slate
 
     def add_comment_slate_node(self, instance):
         node = instance.data.get("slateNode")
