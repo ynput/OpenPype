@@ -1,13 +1,12 @@
 import os
 import clique
 import pyblish.api
-from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class RescanAfterSlate(pyblish.api.InstancePlugin):
     """Rescans extracted representations after slate.
     Helps integration consistency if files were added
-    during the slate extraction step, since the 
+    during the slate extraction step, since the
     Representation file list and collection gets
     collected only once before it.
     """
@@ -34,7 +33,7 @@ class RescanAfterSlate(pyblish.api.InstancePlugin):
 
             if len(repre["files"]) < len(collected_frames):
                 self.log.debug(
-                    "Found more files in staging than in representation," + \
+                    "Found more files in staging than in representation," +
                     " updating with new files (slate frame)..."
                 )
                 repre["files"] = collected_frames
