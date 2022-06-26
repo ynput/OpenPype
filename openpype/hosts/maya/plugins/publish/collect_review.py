@@ -3,6 +3,7 @@ import pymel.core as pm
 
 import pyblish.api
 
+from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
 
 
@@ -80,11 +81,15 @@ class CollectReview(pyblish.api.InstancePlugin):
                 self.log.debug('isntance data {}'.format(instance.data))
         else:
             legacy_subset_name = task + 'Review'
-            asset_doc_id = instance.context.data['assetEntity']["_id"]
-            subsets = legacy_io.find({"type": "subset",
-                                      "name": legacy_subset_name,
-                                      "parent": asset_doc_id}).distinct("_id")
-            if len(list(subsets)) > 0:
+            asset_doc = instance.context.data['assetEntity']
+            project_name = legacy_io.active_project()
+            subset_doc = get_subset_by_name(
+                project_name,
+                legacy_subset_name,
+                asset_doc["_id"],
+                fields=["_id"]
+            )
+            if subset_doc:
                 self.log.debug("Existing subsets found, keep legacy name.")
                 instance.data['subset'] = legacy_subset_name
 
