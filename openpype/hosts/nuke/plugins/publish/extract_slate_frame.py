@@ -49,12 +49,12 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
     def render_slate(self, instance):
         node_subset_name = instance.data.get("name", None)
-        node = instance[0] # group node
+        node = instance[0]  # group node
         # get the slate node
         slate_node = instance.data.get("slateNode")
         # get the last comp node before slate
         last_comp_node = slate_node.input(0)
- 
+
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
@@ -112,8 +112,10 @@ class ExtractSlateFrame(openpype.api.Extractor):
         # clipboard space. This fixes the erratic
         # behaviour nuke has with system clipboard '%clipboard%'
         # when used from openpype context.
-        instance.data["clipboard"] = os.path.join(instance.data["stagingDir"],
-            "{0}clipboard.txt".format(fhead))
+        instance.data["clipboard"] = os.path.join(
+            instance.data["stagingDir"],
+            "{0}clipboard.txt".format(fhead)
+        )
 
         # get the current viewer viewing lut, there seems to be
         # no setting in op that is relevant to this.
@@ -138,10 +140,10 @@ class ExtractSlateFrame(openpype.api.Extractor):
             ipn.setInput(0, previous_node)
             previous_node = ipn
             temporary_nodes.append(ipn)
-        
+
         # compensate source to not have a double viewer lut applied
         # this is needed since baking viewer process happens now
-        # before the slate and not after. 
+        # before the slate and not after.
         if not self.viewer_lut_raw and self.vwip_before_slate:
             invlut_node = nuke.createNode("OCIODisplay")
             invlut_node.setInput(0, previous_node)
@@ -199,7 +201,6 @@ class ExtractSlateFrame(openpype.api.Extractor):
 
         slate_node.setInput(0, last_comp_node)
         node.setInput(0, slate_node)
-
 
     # Commodity function to clear selections.
     def clear_selection(self):
