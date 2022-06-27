@@ -47,6 +47,7 @@ class DropEmpty(QtWidgets.QWidget):
         layout.addWidget(
             drop_label_widget, 0, alignment=QtCore.Qt.AlignCenter
         )
+        layout.addSpacing(10)
         layout.addStretch(1)
         layout.addWidget(
             items_label_widget, 0, alignment=QtCore.Qt.AlignCenter
