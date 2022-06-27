@@ -214,7 +214,7 @@ $ brew install cmake
 3) Install [pyenv](https://github.com/pyenv/pyenv):
 ```shell
 $ brew install pyenv
-$ echo 'eval "$(pypenv init -)"' >> ~/.zshrc
+$ echo 'eval "$(pyenv init -)"' >> ~/.zshrc
 $ pyenv init
 $ exec "$SHELL"
 $ PATH=$(pyenv root)/shims:$PATH
