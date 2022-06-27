@@ -173,17 +173,15 @@ class CameraLoader(plugin.Loader):
         # TODO refactor
         #   - Creationg of hierarchy should be a function in unreal integration
         #       - it's used in multiple loaders but must not be loader's logic
+        #       - hard to say what is purpose of the loop
         #   - variables does not match their meaning
         #       - why scene is stored to sequences?
         #       - asset documents vs. elements
         #   - cleanup variable names in whole function
         #       - e.g. 'asset', 'asset_name', 'asset_data', 'asset_doc'
-        #   - this loop should be a method
         #   - really inefficient queries of asset documents
-        #       - it looks like the loader cares about much more then should?
         #   - existing asset in scene is considered as "with correct values"
-        #   - variable 'elements' is modified during it's loop?
-        #   - separate into more methods (spaghetti)
+        #   - variable 'elements' is modified during it's loop
         # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
         sequences = []
