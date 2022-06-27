@@ -18,6 +18,15 @@
         "create_first_version": false,
         "custom_templates": []
     },
+    "load": {
+        "LayoutLoader": {
+            "animation_instance_mode": "global",
+            "animation_instance_link": "collection"
+        },
+        "FbxModelLoader": {
+            "scale_length": 0
+        }
+    },
     "publish": {
         "ValidateCameraZeroKeyframe": {
             "enabled": true,
@@ -39,9 +48,9 @@
             "optional": false,
             "active": true
         },
-        "ValidateNoColonsInName": {
+        "ValidateAssetsVersion": {
             "enabled": true,
-            "optional": false,
+            "optional": true,
             "active": true
         },
         "ExtractBlend": {
@@ -53,7 +62,8 @@
                 "camera",
                 "rig",
                 "action",
-                "layout"
+                "layout",
+                "setdress"
             ]
         },
         "ExtractFBX": {
