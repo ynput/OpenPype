@@ -35,7 +35,7 @@
         "default_render_image_folder": "",
         "aov_separator": "underscore",
         "arnold_renderer": {
-            "image_prefix": "",
+            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
             "image_format": "exr",
             "multilayer_exr": true,
             "tiled": true,
