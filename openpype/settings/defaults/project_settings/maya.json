@@ -50,7 +50,7 @@
             "additional_options": {}
         },
         "redshift_renderer": {
-            "image_prefix": "",
+            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
             "primary_gi_engine": "0",
             "secondary_gi_engine": "0",
             "image_format": "iff",
