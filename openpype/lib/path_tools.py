@@ -188,16 +188,17 @@ def compute_paths(basic_paths_items, project_root):
     return output
 
 
-def create_project_folders(basic_paths, project_name):
-    anatomy = Anatomy(project_name)
-    roots_paths = []
-    if isinstance(anatomy.roots, dict):
-        for root in anatomy.roots.values():
-            roots_paths.append(root.value)
-    else:
-        roots_paths.append(anatomy.roots.value)
+def create_project_folders(basic_paths, project_name, root_paths=None):
+    if root_paths is None:
+        anatomy = Anatomy(project_name)
+        root_paths = []
+        if isinstance(anatomy.roots, dict):
+            for root in anatomy.roots.values():
+                root_paths.append(root.value)
+        else:
+            root_paths.append(anatomy.roots.value)
 
-    for root_path in roots_paths:
+    for root_path in root_paths:
         project_root = os.path.join(root_path, project_name)
         full_paths = compute_paths(basic_paths, project_root)
         # Create folders
