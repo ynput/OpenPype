@@ -27,8 +27,7 @@ it with few examples.
 ## Setting scene data
 
 Blender settings concerning framerate, resolution and frame range are handled
-by OpenPype. If set correctly in Ftrack, Blender will automatically set the 
-values for you.
+by OpenPype. If set correctly, Blender will automatically set the values for you.
 
 
 ## Publishing models
@@ -72,7 +71,7 @@ name of the group you have selected.
 `Use selection` checkbox will use whatever you have selected in Outliner to be
 wrapped in Model instance. This is usually what you want. Click on **Create** button.
 
-You'll notice then after you've created new Model instance, there is a new 
+You'll notice then after you've created new Model instance, there is a new
 collection in Outliner called after your asset and subset, in our case it is
 `character1_modelDefault`. The assets selected when creating the Model instance
 are linked in the new collection.
@@ -84,7 +83,7 @@ in Save dialog is already set to place where scenes related to modeling task on
 your asset should reside. As in our case we are working on asset called
 **character1** and on task **modeling**, path relative to your project directory will be
 `project_XY/assets/character1/work/modeling`. The default name for the file will
-be `project_XY_asset_task_version`, so in our case 
+be `project_XY_asset_task_version`, so in our case
 `simonetest_character1_modeling_v001.blend`. Let's save it.
 
 ![Model create instance](assets/blender-save_modelling_file.jpg)
@@ -104,7 +103,7 @@ publishing, red means something went wrong either during collection phase
 or publishing phase. Empty one with gray text is disabled.
 
 See that in this case we are publishing from the scene file
-`simonetest_character1_modeling_v001.blend` the Blender model named 
+`simonetest_character1_modeling_v001.blend` the Blender model named
 `character1_modelDefault`.
 
 Right column lists all tasks that are run during collection, validation,
@@ -130,7 +129,7 @@ You can click on arrow next to it to see more details:
 ![Failed Model Validator details](assets/blender-model_error_details.jpg)
 
 From there you can see in **Records** entry that there is problem with the
-object `Suzanne`. Some validators have option to fix problem for you or just 
+object `Suzanne`. Some validators have option to fix problem for you or just
 select objects that cause trouble. This is the case with our failed validator.
 
 In main overview you can notice little A in a circle next to validator
@@ -155,8 +154,15 @@ There you should see your model, named `modelDefault`.
 
 ### Loading models
 
-You can load model with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
-select your rig, right click on it and click **Link model (blend)**.
+You can load model with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+select your model, right click on it and click **Link model (blend)**.
+
+Notice that loading models is not the same depending to the current task.
+
+- Loading model in `rig` or `lookdev` tasks will be done by linking each geometries
+  with their auto-generated override library.
+- Loading model with tasks as `setdress` or `layout` will be done with an
+  instancer object with the linked model collection as reference.
 
 ## Creating Rigs
 
@@ -175,7 +181,7 @@ demonstration, I'll create a simple model for a robotic arm made of simple boxes
 I have now created the armature `RIG_RobotArm`. While the naming is not important,
 you can just adhere to your naming conventions, the hierarchy is. Once the models
 are skinned to the armature, the geometry must be organized in a separate Collection.
-In this case, I have the armature in the main Collection, and the geometry in 
+In this case, I have the armature in the main Collection, and the geometry in
 the `Geometry` Collection.
 
 ![Blender - Rig Hierarchy Example](assets/blender-rig_hierarchy_example.jpg)
@@ -202,6 +208,32 @@ and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools_pu
 You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link rig (blend)**.
 
+### Rigging with published Model dependency
+
+Working with model from published model asset can be very effective if for some
+reason some geometries need update.
+
+First you need to load the model with [Loader](artist_tools.md#loader)
+Go **OpenPype → Load...**,
+select your model, right click on it and click **Link model (blend)**.
+
+Create the armature and setup the modifiers, drivers and contraints.
+
+If the rig using `Armature Deform` modifiers with vertex groups, you have to make
+geometries local to enter in `Weight Paint` mode and add or edit vertex groups.
+Otherwise all vertex group modifications will be lost at the next opening.
+
+When publishing rig with local geometry within loaded model asset, pyblish validator
+`Validate Linked Data` will failed. This validator could be optional but having
+all the data linked with the last model ensures that the model will be the same
+across the different departments such as lookdev. To make sure to update properly
+the model you can trigger the `Extract And Publish Not Linked` action by right
+clicking on the circle next to validator name.
+
+If linked model is out to date when publishing, validator `Validate Linked Version`
+will failed and corrective action `Update With Last Representation` can be triggered
+to fix this.
+
 ## Layouts in Blender
 
 A layout is a set of elements that populate a scene. OpenPype allows to version
@@ -224,3 +256,31 @@ You can load a Layout using [Loader](artist_tools_loader)
 (**OpenPype → Load...**). Select your layout, right click on it and
 select **Link Layout (blend)**. This will populate your scene with all those
 models you've put into layout.
+
+## Animation in Blender
+
+Animation task start with loading its last published upstream layout (see above).
+
+At this point you will notice that animation containers are automatically generated
+with all the loaded rigs containers linked inside.
+
+All the armatures loaded from layout have now their own local action based on the
+linked layout action so you can start animate and save your work without needed to
+make local rigs or any or linked elements.
+
+### Publishing an animation
+
+All you need to do when animation is complete is to publish it with
+**OpenPype → Publish**.
+
+Notice that only the actions will be extracted from the scene.
+Adding, updating, deleting elements should be done in the layout task.
+
+### Loading animations
+
+You can load an Animation using [Loader](artist_tools.md#loader)
+(**OpenPype → Load...**). Select your animation, right click on it and
+select **Link Animation (blend)**.
+
+Loading an animation should be done after loading the layout or rigs that have
+been animated in the animation task.
