@@ -1,7 +1,8 @@
 import os
+import re
 import sys
 import traceback
-from typing import Callable, Dict, Iterator, List, Optional
+from typing import Callable, Dict, Iterator, List, Optional, Union
 
 import bpy
 
@@ -10,7 +11,6 @@ from . import ops
 
 import pyblish.api
 
-from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     schema,
     legacy_io,
@@ -34,13 +34,14 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+SCRIPTS_PATH = os.path.join(HOST_DIR, "scripts")
 
 ORIGINAL_EXCEPTHOOK = sys.excepthook
 
-AVALON_INSTANCES = "AVALON_INSTANCES"
-AVALON_CONTAINERS = "AVALON_CONTAINERS"
 AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
+
+MODEL_DOWNSTREAM = ("Rigging", "Lookdev")
 
 log = Logger.get_logger(__name__)
 
@@ -54,6 +55,7 @@ def install():
     sys.excepthook = pype_excepthook_handler
 
     pyblish.api.register_host("blender")
+    pyblish.api.register_target("local")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
     register_loader_plugin_path(str(LOAD_PATH))
@@ -111,9 +113,11 @@ def message_window(title, message):
 
 
 def set_start_end_frames():
-    project_name = legacy_io.active_project()
     asset_name = legacy_io.Session["AVALON_ASSET"]
-    asset_doc = get_asset_by_name(project_name, asset_name)
+    asset_doc = legacy_io.find_one({
+        "type": "asset",
+        "name": asset_name
+    })
 
     scene = bpy.context.scene
 
@@ -131,15 +135,15 @@ def set_start_end_frames():
         return
 
     if data.get("frameStart"):
-        frameStart = data.get("frameStart")
+        frameStart = int(data.get("frameStart"))
     if data.get("frameEnd"):
-        frameEnd = data.get("frameEnd")
+        frameEnd = int(data.get("frameEnd"))
     if data.get("fps"):
-        fps = data.get("fps")
+        fps = float(data.get("fps"))
     if data.get("resolutionWidth"):
-        resolution_x = data.get("resolutionWidth")
+        resolution_x = int(data.get("resolutionWidth"))
     if data.get("resolutionHeight"):
-        resolution_y = data.get("resolutionHeight")
+        resolution_y = int(data.get("resolutionHeight"))
 
     scene.frame_start = frameStart
     scene.frame_end = frameEnd
@@ -269,28 +273,6 @@ def _discover_gui() -> Optional[Callable]:
     return None
 
 
-def add_to_avalon_container(container: bpy.types.Collection):
-    """Add the container to the Avalon container."""
-
-    avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-    if not avalon_container:
-        avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
-
-        # Link the container to the scene so it's easily visible to the artist
-        # and can be managed easily. Otherwise it's only found in "Blender
-        # File" view and it will be removed by Blenders garbage collection,
-        # unless you set a 'fake user'.
-        bpy.context.scene.collection.children.link(avalon_container)
-
-    avalon_container.children.link(container)
-
-    # Disable Avalon containers for the view layers.
-    for view_layer in bpy.context.scene.view_layers:
-        for child in view_layer.layer_collection.children:
-            if child.collection == avalon_container:
-                child.exclude = True
-
-
 def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     """Imprint the node with metadata.
 
@@ -300,8 +282,6 @@ def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     if not node.get(AVALON_PROPERTY):
         node[AVALON_PROPERTY] = dict()
     for key, value in data.items():
-        if value is None:
-            continue
         node[AVALON_PROPERTY][key] = value
 
 
@@ -349,7 +329,6 @@ def containerise(name: str,
     }
 
     metadata_update(container, data)
-    add_to_avalon_container(container)
 
     return container
 
@@ -388,13 +367,14 @@ def containerise_existing(
     }
 
     metadata_update(container, data)
-    add_to_avalon_container(container)
 
     return container
 
 
-def parse_container(container: bpy.types.Collection,
-                    validate: bool = True) -> Dict:
+def parse_container(
+    container: Union[bpy.types.Collection, bpy.types.Object],
+    validate: bool = True
+) -> Dict:
     """Return the container node's full container data.
 
     Args:
@@ -407,9 +387,20 @@ def parse_container(container: bpy.types.Collection,
     """
 
     data = lib.read(container)
+    if (
+        isinstance(container, bpy.types.Object)
+        and container.is_instancer
+        and container.instance_collection
+    ):
+        data.update(lib.read(container.instance_collection))
 
     # Append transient data
     data["objectName"] = container.name
+
+    # Fix namespace if empty
+    if not data.get("namespace"):
+        re_match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
+        data["namespace"] = re_match.group(1) if re_match else container.name
 
     if validate:
         schema.validate(data)
@@ -425,8 +416,19 @@ def ls() -> Iterator:
     called containers.
     """
 
-    for container in lib.lsattr("id", AVALON_CONTAINER_ID):
-        yield parse_container(container)
+    collections = lib.lsattr("id", AVALON_CONTAINER_ID)
+    scene_collections = list(bpy.context.scene.collection.children)
+    for collection in scene_collections:
+        if len(collection.children):
+            scene_collections.extend(collection.children)
+
+    for container in collections:
+        if container in scene_collections and not container.override_library:
+            yield parse_container(container)
+
+    for obj in bpy.context.scene.objects:
+        if obj.is_instancer and obj.instance_collection in collections:
+            yield parse_container(obj)
 
 
 def update_hierarchy(containers):
