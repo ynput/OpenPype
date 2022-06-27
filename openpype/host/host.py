@@ -234,14 +234,14 @@ class ILoadHost:
             raise MissingMethodsError(host, missing)
 
     @abstractmethod
-    def get_referenced_containers(self):
+    def get_containers(self):
         """Retreive referenced containers from scene.
 
         This can be implemented in hosts where referencing can be used.
 
         Todo:
             Rename function to something more self explanatory.
-                Suggestion: 'get_referenced_containers'
+                Suggestion: 'get_containers'
 
         Returns:
             list[dict]: Information about loaded containers.
@@ -251,13 +251,13 @@ class ILoadHost:
 
     # --- Deprecated method names ---
     def ls(self):
-        """Deprecated variant of 'get_referenced_containers'.
+        """Deprecated variant of 'get_containers'.
 
         Todo:
             Remove when all usages are replaced.
         """
 
-        return self.get_referenced_containers()
+        return self.get_containers()
 
 
 @six.add_metaclass(ABCMeta)

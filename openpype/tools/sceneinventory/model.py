@@ -195,7 +195,7 @@ class InventoryModel(TreeModel):
         host = registered_host()
         if not items:  # for debugging or testing, injecting items from outside
             if isinstance(host, ILoadHost):
-                items = host.get_referenced_containers()
+                items = host.get_containers()
             else:
                 items = host.ls()
 

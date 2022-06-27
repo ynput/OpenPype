@@ -115,7 +115,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
     def get_workfile_extensions(self):
         return file_extensions()
 
-    def get_referenced_containers(self):
+    def get_containers(self):
         return ls()
 
     @contextlib.contextmanager
