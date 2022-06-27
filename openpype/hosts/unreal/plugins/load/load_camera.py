@@ -171,6 +171,8 @@ class CameraLoader(plugin.Loader):
 
         project_name = legacy_io.active_project()
         # TODO refactor
+        #   - Creationg of hierarchy should be a function in unreal integration
+        #       - it's used in multiple loaders but must not be loader's logic
         #   - variables does not match their meaning
         #       - why scene is stored to sequences?
         #       - asset documents vs. elements
@@ -206,13 +208,19 @@ class CameraLoader(plugin.Loader):
                     factory=unreal.LevelSequenceFactoryNew()
                 )
 
-                asset_data = get_asset_by_name(project_name, h.split('/')[-1])
+                asset_data = get_asset_by_name(
+                    project_name,
+                    h.split('/')[-1],
+                    fields=["_id", "data.fps"]
+                )
 
                 start_frames = []
                 end_frames = []
 
                 elements = list(get_assets(
-                    project_name, parent_ids=[asset_data["_id"]]
+                    project_name,
+                    parent_ids=[asset_data["_id"]],
+                    fields=["_id", "data.clipIn", "data.clipOut"]
                 ))
 
                 for e in elements:
@@ -220,7 +228,9 @@ class CameraLoader(plugin.Loader):
                     end_frames.append(e.get('data').get('clipOut'))
 
                     elements.extend(get_assets(
-                        project_name, parent_ids=[e["_id"]]
+                        project_name,
+                        parent_ids=[e["_id"]],
+                        fields=["_id", "data.clipIn", "data.clipOut"]
                     ))
 
                 min_frame = min(start_frames)
