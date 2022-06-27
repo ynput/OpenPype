@@ -100,7 +100,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
     def open_workfile(self, filepath):
         return open_file(filepath)
 
-    def save_current_workfile(self, filepath=None):
+    def save_workfile(self, filepath=None):
         return save_file(filepath)
 
     def work_root(self, session):

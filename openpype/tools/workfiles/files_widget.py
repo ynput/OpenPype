@@ -481,7 +481,7 @@ class FilesWidget(QtWidgets.QWidget):
 
                 # Save current scene, continue to open file
                 if isinstance(host, IWorkfileHost):
-                    host.save_current_workfile(current_file)
+                    host.save_workfile(current_file)
                 else:
                     host.save_file(current_file)
 
@@ -653,7 +653,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         if not self.published_enabled:
             if isinstance(self.host, IWorkfileHost):
-                self.host.save_current_workfile(filepath)
+                self.host.save_workfile(filepath)
             else:
                 self.host.save_file(filepath)
         else:

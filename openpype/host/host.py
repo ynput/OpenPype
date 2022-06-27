@@ -323,7 +323,7 @@ class IWorkfileHost:
         return []
 
     @abstractmethod
-    def save_current_workfile(self, dst_path=None):
+    def save_workfile(self, dst_path=None):
         """Save currently opened scene.
 
         Args:
@@ -400,13 +400,13 @@ class IWorkfileHost:
         return self.get_workfile_extensions()
 
     def save_file(self, dst_path=None):
-        """Deprecated variant of 'save_current_workfile'.
+        """Deprecated variant of 'save_workfile'.
 
         Todo:
             Remove when all usages are replaced.
         """
 
-        self.save_current_workfile()
+        self.save_workfile()
 
     def open_file(self, filepath):
         """Deprecated variant of 'open_workfile'.
