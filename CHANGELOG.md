@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.12.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.1...HEAD)
 
@@ -8,7 +8,7 @@
 
 - Linux: update OIIO package [\#3401](https://github.com/pypeclub/OpenPype/pull/3401)
 - General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
-- Feature/multiverse [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
+- Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
 
 **🚀 Enhancements**
 
@@ -17,6 +17,7 @@
 
 **🐛 Bug fixes**
 
+- Nuke: Fix keyword argument in query function [\#3414](https://github.com/pypeclub/OpenPype/pull/3414)
 - Nuke: Collect representation files based on Write [\#3407](https://github.com/pypeclub/OpenPype/pull/3407)
 - General: Filter representations before integration start [\#3398](https://github.com/pypeclub/OpenPype/pull/3398)
 - Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
