@@ -6,7 +6,7 @@ import unreal
 from unreal import EditorAssetLibrary
 from unreal import EditorLevelLibrary
 from unreal import EditorLevelUtils
-
+from openpype.client import get_assets, get_asset_by_name
 from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
@@ -23,14 +23,6 @@ class CameraLoader(plugin.Loader):
     representations = ["fbx"]
     icon = "cube"
     color = "orange"
-
-    def _get_data(self, asset_name):
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-
-        return asset_doc.get("data")
 
     def _set_sequence_hierarchy(
         self, seq_i, seq_j, min_frame_j, max_frame_j
@@ -177,6 +169,19 @@ class CameraLoader(plugin.Loader):
         EditorLevelLibrary.save_all_dirty_levels()
         EditorLevelLibrary.load_level(level)
 
+        project_name = legacy_io.active_project()
+        # TODO refactor
+        #   - variables does not match their meaning
+        #       - why scene is stored to sequences?
+        #       - asset documents vs. elements
+        #   - cleanup variable names in whole function
+        #       - e.g. 'asset', 'asset_name', 'asset_data', 'asset_doc'
+        #   - this loop should be a method
+        #   - really inefficient queries of asset documents
+        #       - it looks like the loader cares about much more then should?
+        #   - existing asset in scene is considered as "with correct values"
+        #   - variable 'elements' is modified during it's loop?
+        #   - separate into more methods (spaghetti)
         # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
         sequences = []
@@ -201,26 +206,22 @@ class CameraLoader(plugin.Loader):
                     factory=unreal.LevelSequenceFactoryNew()
                 )
 
-                asset_data = legacy_io.find_one({
-                    "type": "asset",
-                    "name": h.split('/')[-1]
-                })
-
-                id = asset_data.get('_id')
+                asset_data = get_asset_by_name(project_name, h.split('/')[-1])
 
                 start_frames = []
                 end_frames = []
 
-                elements = list(
-                    legacy_io.find({"type": "asset", "data.visualParent": id}))
+                elements = list(get_assets(
+                    project_name, parent_ids=[asset_data["_id"]]
+                ))
+
                 for e in elements:
                     start_frames.append(e.get('data').get('clipIn'))
                     end_frames.append(e.get('data').get('clipOut'))
 
-                    elements.extend(legacy_io.find({
-                        "type": "asset",
-                        "data.visualParent": e.get('_id')
-                    }))
+                    elements.extend(get_assets(
+                        project_name, parent_ids=[e["_id"]]
+                    ))
 
                 min_frame = min(start_frames)
                 max_frame = max(end_frames)
@@ -256,7 +257,7 @@ class CameraLoader(plugin.Loader):
                 sequences[i], sequences[i + 1],
                 frame_ranges[i + 1][0], frame_ranges[i + 1][1])
 
-        data = self._get_data(asset)
+        data = get_asset_by_name(project_name, asset)["data"]
         cam_seq.set_display_rate(
             unreal.FrameRate(data.get("fps"), 1.0))
         cam_seq.set_playback_start(0)
