@@ -1,11 +1,10 @@
 """Load an animation in Blender."""
 
-from typing import Dict, List, Optional
+from typing import Dict
 
 import bpy
 
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendAnimationLoader(plugin.AssetLoader):
@@ -22,44 +21,85 @@ class BlendAnimationLoader(plugin.AssetLoader):
     label = "Link Animation"
     icon = "code-fork"
     color = "orange"
+    color_tag = "COLOR_01"
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
+    def _restor_actions_from_library(self, objects):
+        """Restor action from override library reference animation data"""
+        for obj in objects:
+            if (
+                obj.animation_data
+                and obj.override_library
+                and obj.override_library.reference
+                and obj.override_library.reference.animation_data
+                and obj.override_library.reference.animation_data.action
+            ):
+                obj.animation_data.action = (
+                    obj.override_library.reference.animation_data.action
+                )
+
+    def _remove_container(self, container: Dict) -> bool:
+        """Remove an existing container from a Blender scene.
+
         Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        libpath = self.fname
+            container: Container to remove.
 
+        Returns:
+            bool: Whether the container was deleted.
+        """
+        object_name = container["objectName"]
+        asset_group = bpy.data.collections.get(object_name)
+
+        if not asset_group:
+            return False
+
+        # Restor action from override library reference animation data.
+        self._restor_actions_from_library(asset_group.all_objects)
+
+        # Unlink all child objects and collections.
+        for obj in asset_group.objects:
+            asset_group.objects.unlink(obj)
+        for child in asset_group.children:
+            asset_group.children.unlink(child)
+
+        plugin.remove_container(asset_group)
+        plugin.orphans_purge()
+
+        return True
+
+    def _process(self, libpath, asset_group):
+        # Load actions from libpath library.
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
-            data_to.objects = data_from.objects
             data_to.actions = data_from.actions
 
-        container = data_to.objects[0]
+        assert data_to.actions, "No actions found"
 
-        assert container, "No asset group found"
+        scene = bpy.context.scene
+        scene_collections = plugin.get_children_recursive(scene.collection)
 
-        target_namespace = container.get(AVALON_PROPERTY).get('namespace')
+        # Try to assign linked actions with parsing their name.
+        for action in data_to.actions:
 
-        action = data_to.actions[0].make_local().copy()
+            collection_name = action.get("collection", "NONE")
+            armature_name = action.get("armature", "NONE")
 
-        for obj in bpy.data.objects:
-            if obj.get(AVALON_PROPERTY) and obj.get(AVALON_PROPERTY).get(
-                    'namespace') == target_namespace:
-                if obj.children[0]:
-                    if not obj.children[0].animation_data:
-                        obj.children[0].animation_data_create()
-                    obj.children[0].animation_data.action = action
-                break
+            collection = next(
+                (c for c in scene_collections if c.name == collection_name),
+                None
+            )
+            assert collection, (
+                f"invalid collection name for action: {action.name}"
+            )
+            armature = collection.all_objects.get(armature_name)
+            assert armature, (
+                f"invalid armature name for action: {armature.name}"
+            )
 
-        bpy.data.objects.remove(container)
+            if not armature.animation_data:
+                armature.animation_data_create()
+            armature.animation_data.action = action
 
-        library = bpy.data.libraries.get(bpy.path.basename(libpath))
-        bpy.data.libraries.remove(library)
+            plugin.link_to_collection(collection, asset_group)
+
+        plugin.orphans_purge()
