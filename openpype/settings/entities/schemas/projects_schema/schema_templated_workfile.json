@@ -1,0 +1,45 @@
+[{
+    "type": "dict",
+    "collapsible": true,
+    "key": "templated_workfile_builder",
+    "label": "Templated Workfile Builder",
+    "children": [
+        {
+            "type": "list",
+            "key": "templates",
+            "label": "Templates",
+            "is_group": true,
+            "use_label_wrap": true,
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "type": "task-types-enum",
+                        "key": "task_types",
+                        "label": "Task types"
+                    },
+                    {
+                        "type": "task-types-enum",
+                        "key": "task_names",
+                        "label": "Task names"
+                    },
+                    {
+                        "type": "splitter"
+                    },
+                    {
+                        "type": "label",
+                        "label": "Absolute path to workfile template or OpenPype Anatomy text is accepted."
+                    },
+                    {
+                        "type": "path",
+                        "key": "path",
+                        "label": "Path",
+                        "multiplatform": true,
+                        "multipath": false
+                    }
+                ]
+            }
+        }
+    ]
+}
+]

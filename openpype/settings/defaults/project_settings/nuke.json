@@ -277,5 +277,14 @@
             }
         ]
     },
+    "templated_workfile_build": {
+        "profiles": [
+            {
+                "task_types": [],
+                "task_names": [],
+                "path": "path\\to\\template"
+            }
+        ]
+    },
     "filters": {}
 }

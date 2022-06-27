@@ -2604,3 +2604,60 @@ def ls_img_sequence(path):
         }
 
     return False
+
+
+
+def get_io(nodes):
+
+    """ get the input and the output of a group of nodes
+    """
+    if len(nodes) == 0 :
+        raise Exception("there is no nodes in the list")    
+    if len(nodes) > 1:
+        input = None 
+        output = None
+        for n in nodes :
+            if "Input" in n.name() :
+                input = n
+                break
+
+        for n in nodes :
+            if "Output" in n.name():
+                output = n
+                break
+        if input == None :
+            raise Exception("No Input found")
+        if output == None :
+            raise Exception("No Output found")
+        
+    else :
+        input = output = nodes[0]
+
+    return input, output
+
+
+
+def get_extremes(nodes):
+
+    """ get the 4 numbers that represent the box of a group of nodes """
+    if len(nodes) == 0 :
+        raise Exception("there is no nodes in the list")
+    nodes_xpos = [n.xpos()  for n in nodes] + \
+                    [n.xpos() + n.screenWidth() for n in nodes]
+
+    nodes_ypos = [n.ypos()  for n in nodes] + \
+                [n.ypos() + n.screenHeight() for n in nodes]
+    min_x, min_y = (min(nodes_xpos),min(nodes_ypos))
+    max_x, max_y = (max(nodes_xpos),max(nodes_ypos))
+    return min_x, min_y , max_x, max_y
+
+
+def refresh_node(node):
+
+    """ correct a bug caused by the multi-threading of nuke
+        refresh the node to make sure that it takes the desired attributes """
+        
+    x = node.xpos()
+    y = node.ypos()
+    nuke.autoplaceSnap(node)
+    node.setXYpos(x,y)

@@ -1,7 +1,9 @@
 import logging
+from pickletools import optimize
 
 from Qt import QtWidgets, QtCore, QtGui
-import qargparse
+from openpype.vendor.python.common import qargparse
+# import argparse
 import qtawesome
 from openpype.style import (
     get_objected_colors,

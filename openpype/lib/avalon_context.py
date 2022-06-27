@@ -1589,6 +1589,21 @@ class BuildWorkfile:
 
 
 @with_pipeline_io
+def get_loaders_by_name():
+
+    from openpype.pipeline.load.plugins import discover_loader_plugins
+    loaders_by_name = {}
+    for loader in discover_loader_plugins():
+        loader_name = loader.__name__
+        if loader_name in loaders_by_name:
+            raise KeyError(
+                "Duplicated loader name {0}!".format(loader_name)
+            )
+        loaders_by_name[loader_name] = loader
+    return loaders_by_name
+
+
+@with_pipeline_io
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
