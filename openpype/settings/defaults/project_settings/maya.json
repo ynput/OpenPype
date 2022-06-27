@@ -515,7 +515,7 @@
                     "hwFogColorR": 1.0,
                     "hwFogColorG": 1.0,
                     "hwFogColorB": 1.0,
-                    "motionBlurEnable": true,
+                    "motionBlurEnable": false,
                     "motionBlurSampleCount": 8,
                     "motionBlurShutterOpenFraction": 0.2,
                     "cameras": false,
