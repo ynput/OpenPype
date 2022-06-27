@@ -62,8 +62,12 @@ def get_unique_number(
     return f"{count:0>2}"
 
 
-def create_blender_context(active: Optional[bpy.types.Object] = None,
-                           selected: Optional[bpy.types.Object] = None,):
+def create_blender_context(
+    active: Optional[bpy.types.Object] = None,
+    selected: Optional[bpy.types.Object] = None,
+    window: Optional[bpy.types.Window] = None,
+    area_type: Optional[str] = "VIEW_3D"
+):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
     """
@@ -73,18 +77,20 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
 
     override_context = bpy.context.copy()
 
-    for win in bpy.context.window_manager.windows:
+    windows = [window] if window else bpy.context.window_manager.windows
+
+    for win in windows:
         for area in win.screen.areas:
-            if area.type == 'VIEW_3D':
+            if area.type == area_type:
                 for region in area.regions:
-                    if region.type == 'WINDOW':
-                        override_context['window'] = win
-                        override_context['screen'] = win.screen
-                        override_context['area'] = area
-                        override_context['region'] = region
-                        override_context['scene'] = bpy.context.scene
-                        override_context['active_object'] = active
-                        override_context['selected_objects'] = selected
+                    if region.type == "WINDOW":
+                        override_context["window"] = win
+                        override_context["screen"] = win.screen
+                        override_context["area"] = area
+                        override_context["region"] = region
+                        override_context["scene"] = bpy.context.scene
+                        override_context["active_object"] = active
+                        override_context["selected_objects"] = selected
                         return override_context
     raise Exception("Could not create a custom Blender context.")
 
@@ -104,7 +110,7 @@ def create_container(
     """
     if bpy.data.collections.get(name) is None:
         container = bpy.data.collections.new(name)
-        if color_tag:
+        if color_tag and hasattr(container, "color_tag"):
             container.color_tag = color_tag
         bpy.context.scene.collection.children.link(container)
         return container
@@ -677,30 +683,46 @@ class AssetLoader(LoaderPlugin):
         # Load collections from libpath library.
         library_collection = self._load_library_collection(libpath)
 
-        # Create override library for container and elements.
-        override = library_collection.override_hierarchy_create(
-            bpy.context.scene, bpy.context.view_layer
-        )
+        # Create override for the library collection and this elements.
+        if hasattr(library_collection, "override_hierarchy_create"):
+            override = library_collection.override_hierarchy_create(
+                bpy.context.scene, bpy.context.view_layer
+            )
+        else:
+            # If override_hierarchy_create method is not implemented for older
+            # Blender versions we need the following steps.
+            link_to_collection(
+                library_collection, bpy.context.scene.collection
+            )
+            override = library_collection.override_create(
+                remap_local_usages=True
+            )
 
-        # Since Blender 3.2 property is_system_override need to
-        # be False for editable override library.
-        if hasattr(override.override_library, "is_system_override"):
+            for child in get_children_recursive(override):
+                child.override_create(remap_local_usages=True)
+
             for obj in set(override.all_objects):
-                if obj.override_library:
-                    obj.override_library.is_system_override = False
+                obj.override_create(remap_local_usages=True)
 
-        # Force override object data like meshes and curves.
-        overridden_data = set()
+            # force remap to fix modifers, constaints and drivers targets.
+            for obj in set(override.all_objects):
+                obj.override_library.reference.user_remap(obj.id_data)
+
         for obj in set(override.all_objects):
-            if obj.data and obj.data not in overridden_data:
+            # Force override object data like meshes and curves.
+            if obj.data and not obj.data.override_library:
                 obj.data.override_create(remap_local_usages=True)
-                overridden_data.add(obj.data)
+
+            # Since Blender 3.2 property is_system_override need to be False
+            # for editable override library.
+            if hasattr(override.override_library, "is_system_override"):
+                obj.override_library.is_system_override = False
 
         # Move objects and child collections from override to asset_group.
         link_to_collection(override.objects, asset_group)
         link_to_collection(override.children, asset_group)
 
-        # Clear and purge useless datablocks and selection.
+        # Clear and purge useless datablocks.
         bpy.data.collections.remove(override)
         orphans_purge()
 
@@ -738,7 +760,8 @@ class AssetLoader(LoaderPlugin):
             namespace = namespace or f"{asset}_{unique_number}"
 
         asset_group = bpy.data.collections.new(group_name)
-        asset_group.color_tag = self.color_tag
+        if hasattr(asset_group, "color_tag"):
+            asset_group.color_tag = self.color_tag
         get_main_collection().children.link(asset_group)
 
         self._process(libpath, asset_group)
@@ -893,7 +916,8 @@ class AssetLoader(LoaderPlugin):
             bpy.data.objects.remove(asset_group)
             # Creating collection for asset group.
             asset_group = bpy.data.collections.new(collection_name)
-            asset_group.color_tag = self.color_tag
+            if hasattr(asset_group, "color_tag"):
+                asset_group.color_tag = self.color_tag
             asset_group[AVALON_PROPERTY] = instance_metadata
             asset_group[AVALON_PROPERTY]["libpath"] = ""  # force update
             # Link the asset group collection.
@@ -968,9 +992,9 @@ class AssetLoader(LoaderPlugin):
         # remain, so we do orphans purge one last time.
         orphans_purge()
 
-        # Update override library operations from asset objects.
+        # Update override library operations from asset objects if available.
         for obj in get_container_objects(asset_group):
-            if obj.override_library:
+            if getattr(obj.override_library, "operations_update", None):
                 obj.override_library.operations_update()
 
         # update metadata
@@ -1208,7 +1232,7 @@ def maintained_targets(container):
         # store modifiers targets from object
         for attr_name in ("target", "object", "object_from", "object_to"):
             stored_targets += [
-                (modifier, modifier.target.name, attr_name)
+                (modifier, getattr(modifier, attr_name).name, attr_name)
                 for modifier in obj.modifiers
                 if getattr(modifier, attr_name, None) in container_objects
             ]
@@ -1307,7 +1331,11 @@ def maintained_local_data(container, data_types):
             if obj and obj.type == "MESH":
 
                 if obj.override_library:
-                    obj.override_library.destroy()
+                    if hasattr(obj.override_library, "destroy"):
+                        obj.override_library.destroy()
+                    else:
+                        ref = obj.override_library.reference
+                        obj.user_remap(ref)
                     obj = bpy.context.scene.objects.get(obj_name)
                 if obj.library:
                     obj = obj.make_local()
@@ -1389,7 +1417,7 @@ class StructDescriptor:
         self.name = bpy_struct.name
         self.type = bpy_struct.type
         self.object_name = bpy_struct.id_data.name
-        self.is_override_data = bpy_struct.is_override_data
+        self.is_override_data = getattr(bpy_struct, "is_override_data", False)
 
         self.properties = dict()
         for prop_name, prop_value in getmembers(bpy_struct):
@@ -1401,7 +1429,7 @@ class StructDescriptor:
                 continue
             # store the property
             if (
-                not bpy_struct.is_override_data
+                not self.is_override_data
                 or bpy_struct.is_property_overridable_library(prop_name)
             ):
                 self.store_property(prop_name, prop_value)
