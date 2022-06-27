@@ -616,8 +616,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     continue
                 repre_context[key] = template_data[key]
 
+            # Initialize ID, trying to get it from an earlier stage
+            repre_id = repre.get('id')
+
+            # If ID has been created in early stage, cast to ObjectId from str
+            if repre_id:
+                repre_id = ObjectId(repre_id)
+
             # Use previous representation's id if there are any
-            repre_id = None
             repre_name_low = repre["name"].lower()
             for _repre in existing_repres:
                 # NOTE should we check lowered names?
