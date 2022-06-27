@@ -1,6 +1,9 @@
 # Metadata ID of loaded container into scene
 AVALON_CONTAINER_ID = AYON_CONTAINER_ID = "pyblish.avalon.container"
 
+# TODO use this constant to replace all hard coded "pyblish.avalon.instance"
+AVALON_INSTANCE_ID = "pyblish.avalon.instance"
+
 # TODO get extensions from host implementations
 HOST_WORKFILE_EXTENSIONS = {
     "blender": [".blend"],
