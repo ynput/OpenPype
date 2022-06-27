@@ -506,7 +506,7 @@
                     "ssaoRadius": 16,
                     "ssaoFilterRadius": 16,
                     "ssaoSamples": 16,
-                    "fogging": true,
+                    "fogging": false,
                     "hwFogFalloff": "0",
                     "hwFogDensity": 0,
                     "hwFogStart": 0,
