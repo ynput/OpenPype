@@ -11,7 +11,7 @@ from openpype.settings import get_project_settings
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
-import avalon.api
+from openpype.pipeline import AvalonMongoDB
 
 log = logging.getLogger(__name__)
 
@@ -204,7 +204,7 @@ def concatenate_splitted_paths(split_paths, anatomy):
 
 
 def get_format_data(anatomy):
-    dbcon = avalon.api.AvalonMongoDB()
+    dbcon = AvalonMongoDB()
     dbcon.Session["AVALON_PROJECT"] = anatomy.project_name
     project_doc = dbcon.find_one({"type": "project"})
     project_code = project_doc["data"]["code"]
