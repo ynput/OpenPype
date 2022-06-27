@@ -34,7 +34,6 @@ class ExtractCameraAlembic(openpype.api.Extractor):
                           dag=True, type="camera")
 
         # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
         assert isinstance(step, float), "Step must be a float value"
         camera = cameras[0]
 
@@ -44,8 +43,12 @@ class ExtractCameraAlembic(openpype.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform alembic extraction
+        member_shapes = cmds.ls(
+            members, leaf=True, shapes=True, long=True, dag=True)
         with lib.maintained_selection():
-            cmds.select(camera, replace=True, noExpand=True)
+            cmds.select(
+                member_shapes,
+                replace=True, noExpand=True)
 
             # Enforce forward slashes for AbcExport because we're
             # embedding it into a job string
@@ -57,10 +60,12 @@ class ExtractCameraAlembic(openpype.api.Extractor):
             job_str += ' -step {0} '.format(step)
 
             if bake_to_worldspace:
-                transform = cmds.listRelatives(camera,
-                                               parent=True,
-                                               fullPath=True)[0]
-                job_str += ' -worldSpace -root {0}'.format(transform)
+                job_str += ' -worldSpace'
+                for member in member_shapes:
+                    self.log.info(f"processing {member}")
+                    transform = cmds.listRelatives(
+                        member, parent=True, fullPath=True)[0]
+                    job_str += ' -root {0}'.format(transform)
 
             job_str += ' -file "{0}"'.format(path)
 

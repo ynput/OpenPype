@@ -789,14 +789,19 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
 
 
 def get_last_version_by_subset_name(
-    project_name, subset_name, asset_id, fields=None
+    project_name, subset_name, asset_id=None, asset_name=None, fields=None
 ):
-    """Last version for passed subset name under asset id.
+    """Last version for passed subset name under asset id/name.
+
+    It is required to pass 'asset_id' or 'asset_name'. Asset id is recommended
+    if is available.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
         subset_name (str): Name of subset.
-        asset_id (str|ObjectId): Asset id which is parnt of passed subset name.
+        asset_id (str|ObjectId): Asset id which is parent of passed
+            subset name.
+        asset_name (str): Asset name which is parent of passed subset name.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -805,6 +810,14 @@ def get_last_version_by_subset_name(
         Dict: Version document which can be reduced to specified 'fields'.
     """
 
+    if not asset_id and not asset_name:
+        return None
+
+    if not asset_id:
+        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
+        if not asset_doc:
+            return None
+        asset_id = asset_doc["_id"]
     subset_doc = get_subset_by_name(
         project_name, subset_name, asset_id, fields=["_id"]
     )
