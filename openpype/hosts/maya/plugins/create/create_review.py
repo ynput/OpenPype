@@ -15,8 +15,8 @@ class CreateReview(plugin.Creator):
     keepImages = False
     isolate = False
     imagePlane = True
-    resolutionWidth = 0
-    resolutionHeight = 0
+    attrWidth = 0
+    attrHeight = 0
     transparency = [
         "preset",
         "simple",
@@ -35,8 +35,8 @@ class CreateReview(plugin.Creator):
         for key, value in animation_data.items():
             data[key] = value
 
-        data["resolutionWidth"] = self.resolutionWidth
-        data["resolutionHeight"] = self.resolutionHeight
+        data["attrWidth"] = self.attrWidth
+        data["attrHeight"] = self.attrHeight
         data["isolate"] = self.isolate
         data["keepImages"] = self.keepImages
         data["imagePlane"] = self.imagePlane
