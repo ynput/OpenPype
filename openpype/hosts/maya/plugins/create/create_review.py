@@ -35,8 +35,8 @@ class CreateReview(plugin.Creator):
         for key, value in animation_data.items():
             data[key] = value
 
-        data["attrWidth"] = self.attrWidth
-        data["attrHeight"] = self.attrHeight
+        data["instanceHeight"] = self.attrWidth
+        data["instanceWidth"] = self.attrHeight
         data["isolate"] = self.isolate
         data["keepImages"] = self.keepImages
         data["imagePlane"] = self.imagePlane

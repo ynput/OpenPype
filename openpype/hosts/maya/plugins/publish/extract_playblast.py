@@ -59,8 +59,8 @@ class ExtractPlayblast(openpype.api.Extractor):
         # Set resolution variables from asset values
         asset_width = instance.data.get("resolutionWidth")
         asset_height = instance.data.get("resolutionHeight")
-        review_instance_width = instance.data.get("attrWidth")
-        review_instance_height = instance.data.get("attrHeight")
+        review_instance_width = instance.data.get("instanceWidth")
+        review_instance_height = instance.data.get("instanceHeight")
         preset['camera'] = camera
 
         # Tests if project resolution is set,
