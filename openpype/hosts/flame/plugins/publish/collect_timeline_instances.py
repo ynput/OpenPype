@@ -1,4 +1,5 @@
 import re
+from types import NoneType
 import pyblish
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
@@ -78,6 +79,12 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 marker_data["handleEnd"]
             )
 
+            # make sure there is not NoneType rather 0
+            if isinstance(head, NoneType):
+                head = 0
+            if isinstance(tail, NoneType):
+                tail = 0
+
             # make sure value is absolute
             if head != 0:
                 head = abs(head)
@@ -128,7 +135,8 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "flameAddTasks": self.add_tasks,
                 "tasks": {
                     task["name"]: {"type": task["type"]}
-                    for task in self.add_tasks}
+                    for task in self.add_tasks},
+                "representations": []
             })
             self.log.debug("__ inst_data: {}".format(pformat(inst_data)))
 
