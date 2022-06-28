@@ -27,7 +27,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 "yeticache"]
     optional = True
     actions = [openpype.api.RepairAction]
-    exclude_families = ["model", "rig", "staticMesh"]
+    exclude_families = []
 
     def process(self, instance):
         context = instance.context
