@@ -3224,8 +3224,8 @@ def maintained_time():
         cmds.currentTime(ct, edit=True)
 
 
-def get_visible_in_frame_range(nodes, start, end):
-    """Return nodes that are visible in start-end frame range.
+def iter_visible_in_frame_range(nodes, start, end):
+    """Yield nodes that are visible in start-end frame range.
 
     - Ignores intermediateObjects completely.
     - Considers animated visibility attributes + upstream visibilities.
@@ -3261,7 +3261,7 @@ def get_visible_in_frame_range(nodes, start, end):
     # Consider only non-intermediate dag nodes and use the "long" names.
     nodes = cmds.ls(nodes, long=True, noIntermediate=True, type="dagNode")
     if not nodes:
-        return []
+        return
 
     with maintained_time():
         # Go to first frame of the range if the current time is outside
@@ -3275,7 +3275,8 @@ def get_visible_in_frame_range(nodes, start, end):
         if len(visible) == len(nodes) or start == end:
             # All are visible on frame one, so they are at least visible once
             # inside the frame range.
-            return visible
+            for node in visible:
+                yield node
 
     # For the invisible ones check whether its visibility and/or
     # any of its parents visibility attributes are animated. If so, it might
@@ -3358,7 +3359,7 @@ def get_visible_in_frame_range(nodes, start, end):
             node_dependencies[node] = dependencies
 
     if not node_dependencies:
-        return list(visible)
+        return
 
     # Now we only have to check the visibilities for nodes that have animated
     # visibility dependencies upstream. The fastest way to check these
@@ -3409,7 +3410,7 @@ def get_visible_in_frame_range(nodes, start, end):
 
                 else:
                     # All dependencies are visible.
-                    visible.add(node)
+                    yield node
                     # Remove node with dependencies for next frame iterations
                     # because it was visible at least once.
                     node_dependencies.pop(node)
@@ -3417,5 +3418,3 @@ def get_visible_in_frame_range(nodes, start, end):
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
             break
-
-    return list(visible)

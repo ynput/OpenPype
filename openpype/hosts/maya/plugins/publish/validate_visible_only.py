@@ -1,7 +1,7 @@
 import pyblish.api
 
 import openpype.api
-from openpype.hosts.maya.api.lib import get_visible_in_frame_range
+from openpype.hosts.maya.api.lib import iter_visible_in_frame_range
 import openpype.hosts.maya.api.action
 
 
@@ -40,9 +40,7 @@ class ValidateAlembicVisibleOnly(pyblish.api.InstancePlugin):
             nodes = instance[:]
 
         start, end = cls.get_frame_range(instance)
-        visible = get_visible_in_frame_range(nodes, start, end)
-
-        if not visible:
+        if not any(iter_visible_in_frame_range(nodes, start, end)):
             # Return the nodes we have considered so the user can identify
             # them with the select invalid action
             return nodes

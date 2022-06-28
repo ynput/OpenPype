@@ -7,7 +7,7 @@ from openpype.hosts.maya.api.lib import (
     extract_alembic,
     suspended_refresh,
     maintained_selection,
-    get_visible_in_frame_range
+    iter_visible_in_frame_range
 )
 
 
@@ -83,9 +83,9 @@ class ExtractAnimation(openpype.api.Extractor):
             # flag does not filter out those that are only hidden on some
             # frames as it counts "animated" or "connected" visibilities as
             # if it's always visible.
-            nodes = get_visible_in_frame_range(nodes,
-                                               start=start,
-                                               end=end)
+            nodes = list(iter_visible_in_frame_range(nodes,
+                                                     start=start,
+                                                     end=end))
 
         with suspended_refresh():
             with maintained_selection():
