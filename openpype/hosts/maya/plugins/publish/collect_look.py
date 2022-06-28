@@ -440,7 +440,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             for res in self.collect_resources(n):
                 instance.data["resources"].append(res)
 
-        self.log.info("Collected resources: {}".format(instance.data["resources"]))
+        self.log.info("Collected resources: {}".format(
+            instance.data["resources"]))
 
         # Log warning when no relevant sets were retrieved for the look.
         if (
