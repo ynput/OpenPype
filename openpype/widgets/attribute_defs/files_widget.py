@@ -43,11 +43,11 @@ class DropEmpty(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addSpacing(10)
+        layout.addSpacing(20)
         layout.addWidget(
             drop_label_widget, 0, alignment=QtCore.Qt.AlignCenter
         )
-        layout.addSpacing(10)
+        layout.addSpacing(30)
         layout.addStretch(1)
         layout.addWidget(
             items_label_widget, 0, alignment=QtCore.Qt.AlignCenter
