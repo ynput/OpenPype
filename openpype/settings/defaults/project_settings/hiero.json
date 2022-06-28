@@ -19,14 +19,10 @@
         "definition": [
             {
                 "type": "action",
-                "command": "import openpype.hosts.hiero.api.commands as hiero; hiero.edit_shader_definitions()",
                 "sourcetype": "python",
-                "title": "Edit shader name definitions",
-                "tooltip": "Edit shader name definitions used in validation and renaming.",
-                "tags": [
-                    "pipeline",
-                    "shader"
-                ]
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_hiero')",
+                "tooltip": "Open the OpenPype Hiero user doc page"
             }
         ]
     },
