@@ -65,7 +65,7 @@ def range_from_frames(*args, **kwargs):
 
 
 @editorial_deprecated
-def frames_to_seconds(*args, **kwargs):
+def frames_to_secons(*args, **kwargs):
     from openpype.pipeline.editorial import frames_to_seconds
 
     return frames_to_seconds(*args, **kwargs)
