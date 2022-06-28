@@ -8,8 +8,8 @@ import re
 
 import attr
 import pyblish.api
-from avalon import api
 
+from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -238,6 +238,7 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
+    targets = ["local"]
 
     optional = True
     use_published = False
@@ -280,7 +281,7 @@ class HarmonySubmitDeadline(
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         for key in keys:
             val = environment.get(key)
             if val:
@@ -321,7 +322,9 @@ class HarmonySubmitDeadline(
         )
         unzip_dir = (published_scene.parent / published_scene.stem)
         with _ZipFile(published_scene, "r") as zip_ref:
-            zip_ref.extractall(unzip_dir.as_posix())
+            # UNC path (//?/) added to minimalize risk with extracting
+            # to large file paths
+            zip_ref.extractall("//?/" + str(unzip_dir.as_posix()))
 
         # find any xstage files in directory, prefer the one with the same name
         # as directory (plus extension)

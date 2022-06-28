@@ -1,10 +1,15 @@
 import os
 import collections
+from pprint import pformat
 
 import pyblish.api
-from avalon import io
 
-from pprint import pformat
+from openpype.client import (
+    get_subsets,
+    get_last_versions,
+    get_representations
+)
+from openpype.pipeline import legacy_io
 
 
 class AppendCelactionAudio(pyblish.api.ContextPlugin):
@@ -60,10 +65,10 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         """
 
         # Query all subsets for asset
-        subset_docs = io.find({
-            "type": "subset",
-            "parent": asset_doc["_id"]
-        })
+        project_name = legacy_io.active_project()
+        subset_docs = get_subsets(
+            project_name, asset_ids=[asset_doc["_id"]], fields=["_id"]
+        )
         # Collect all subset ids
         subset_ids = [
             subset_doc["_id"]
@@ -76,37 +81,19 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
             "Try this for start `r'.*'`: asset: `{}`"
         ).format(asset_doc["name"])
 
-        # Last version aggregation
-        pipeline = [
-            # Find all versions of those subsets
-            {"$match": {
-                "type": "version",
-                "parent": {"$in": subset_ids}
-            }},
-            # Sorting versions all together
-            {"$sort": {"name": 1}},
-            # Group them by "parent", but only take the last
-            {"$group": {
-                "_id": "$parent",
-                "_version_id": {"$last": "$_id"},
-                "name": {"$last": "$name"}
-            }}
-        ]
-        last_versions_by_subset_id = dict()
-        for doc in io.aggregate(pipeline):
-            doc["parent"] = doc["_id"]
-            doc["_id"] = doc.pop("_version_id")
-            last_versions_by_subset_id[doc["parent"]] = doc
+        last_versions_by_subset_id = get_last_versions(
+            project_name, subset_ids, fields=["_id", "parent"]
+        )
 
         version_docs_by_id = {}
         for version_doc in last_versions_by_subset_id.values():
             version_docs_by_id[version_doc["_id"]] = version_doc
 
-        repre_docs = io.find({
-            "type": "representation",
-            "parent": {"$in": list(version_docs_by_id.keys())},
-            "name": {"$in": representations}
-        })
+        repre_docs = get_representations(
+            project_name,
+            version_ids=version_docs_by_id.keys(),
+            representation_names=representations
+        )
         repre_docs_by_version_id = collections.defaultdict(list)
         for repre_doc in repre_docs:
             version_id = repre_doc["parent"]

@@ -80,6 +80,14 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_scriptsmenu"
+        },
+        {
+            "type": "schema",
+            "name": "schema_nuke_scriptsgizmo"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -87,7 +95,7 @@
             "children": [
                 {
                     "type": "dict",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "CreateWriteRender",
                     "label": "CreateWriteRender",
                     "is_group": true,
@@ -104,12 +112,53 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "schema_template",
+                            "name": "template_nuke_knob_inputs",
+                            "template_data": [
+                                {
+                                    "label": "Node knobs",
+                                    "key": "knobs"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "prenodes",
+                            "label": "Pre write nodes",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "nodeclass",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "dependent",
+                                        "label": "Outside node dependency",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         }
                     ]
                 },
                 {
                     "type": "dict",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "CreateWritePrerender",
                     "label": "CreateWritePrerender",
                     "is_group": true,
@@ -136,6 +185,110 @@
                             "type": "boolean",
                             "key": "reviewable",
                             "label": "Add reviewable toggle"
+                        },
+                        {
+                            "type": "schema_template",
+                            "name": "template_nuke_knob_inputs",
+                            "template_data": [
+                                {
+                                    "label": "Node knobs",
+                                    "key": "knobs"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "prenodes",
+                            "label": "Pre write nodes",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "nodeclass",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "dependent",
+                                        "label": "Outside node dependency",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateWriteStill",
+                    "label": "CreateWriteStill",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "fpath_template",
+                            "label": "Path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Subset name defaults",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "schema_template",
+                            "name": "template_nuke_knob_inputs",
+                            "template_data": [
+                                {
+                                    "label": "Node knobs",
+                                    "key": "knobs"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "prenodes",
+                            "label": "Pre write nodes",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "nodeclass",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "dependent",
+                                        "label": "Outside node dependency",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }

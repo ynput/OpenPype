@@ -12,8 +12,13 @@ from pymongo import UpdateOne
 import arrow
 import ftrack_api
 
-from avalon import schema
-from avalon.api import AvalonMongoDB
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_archived_assets,
+    get_asset_ids_with_subsets
+)
+from openpype.pipeline import AvalonMongoDB, schema
 
 from openpype_modules.ftrack.lib import (
     get_openpype_attr,
@@ -150,12 +155,11 @@ class SyncToAvalonEvent(BaseEvent):
     @property
     def avalon_entities(self):
         if self._avalon_ents is None:
+            project_name = self.cur_project["full_name"]
             self.dbcon.install()
-            self.dbcon.Session["AVALON_PROJECT"] = (
-                self.cur_project["full_name"]
-            )
-            avalon_project = self.dbcon.find_one({"type": "project"})
-            avalon_entities = list(self.dbcon.find({"type": "asset"}))
+            self.dbcon.Session["AVALON_PROJECT"] = project_name
+            avalon_project = get_project(project_name)
+            avalon_entities = list(get_assets(project_name))
             self._avalon_ents = (avalon_project, avalon_entities)
         return self._avalon_ents
 
@@ -285,28 +289,21 @@ class SyncToAvalonEvent(BaseEvent):
         self._avalon_ents_by_ftrack_id[ftrack_id] = doc
 
     @property
-    def avalon_subsets_by_parents(self):
-        if self._avalon_subsets_by_parents is None:
-            self._avalon_subsets_by_parents = collections.defaultdict(list)
-            self.dbcon.install()
-            self.dbcon.Session["AVALON_PROJECT"] = (
-                self.cur_project["full_name"]
+    def avalon_asset_ids_with_subsets(self):
+        if self._avalon_asset_ids_with_subsets is None:
+            project_name = self.cur_project["full_name"]
+            self._avalon_asset_ids_with_subsets = get_asset_ids_with_subsets(
+                project_name
             )
-            for subset in self.dbcon.find({"type": "subset"}):
-                self._avalon_subsets_by_parents[subset["parent"]].append(
-                    subset
-                )
-        return self._avalon_subsets_by_parents
+
+        return self._avalon_asset_ids_with_subsets
 
     @property
     def avalon_archived_by_id(self):
         if self._avalon_archived_by_id is None:
             self._avalon_archived_by_id = {}
-            self.dbcon.install()
-            self.dbcon.Session["AVALON_PROJECT"] = (
-                self.cur_project["full_name"]
-            )
-            for asset in self.dbcon.find({"type": "archived_asset"}):
+            project_name = self.cur_project["full_name"]
+            for asset in get_archived_assets(project_name):
                 self._avalon_archived_by_id[asset["_id"]] = asset
         return self._avalon_archived_by_id
 
@@ -328,7 +325,7 @@ class SyncToAvalonEvent(BaseEvent):
             avalon_project, avalon_entities = self.avalon_entities
             self._changeability_by_mongo_id[avalon_project["_id"]] = False
             self._bubble_changeability(
-                list(self.avalon_subsets_by_parents.keys())
+                list(self.avalon_asset_ids_with_subsets)
             )
 
         return self._changeability_by_mongo_id
@@ -450,14 +447,9 @@ class SyncToAvalonEvent(BaseEvent):
             if not entity:
                 # if entity is not found then it is subset without parent
                 if entity_id in unchangeable_ids:
-                    _subset_ids = [
-                        str(sub["_id"]) for sub in
-                        self.avalon_subsets_by_parents[entity_id]
-                    ]
-                    joined_subset_ids = "| ".join(_subset_ids)
                     self.log.warning((
-                        "Parent <{}> for subsets <{}> does not exist"
-                    ).format(str(entity_id), joined_subset_ids))
+                        "Parent <{}> with subsets does not exist"
+                    ).format(str(entity_id)))
                 else:
                     self.log.warning((
                         "In avalon are entities without valid parents that"
@@ -484,7 +476,7 @@ class SyncToAvalonEvent(BaseEvent):
         self._avalon_ents_by_parent_id = None
         self._avalon_ents_by_ftrack_id = None
         self._avalon_ents_by_name = None
-        self._avalon_subsets_by_parents = None
+        self._avalon_asset_ids_with_subsets = None
         self._changeability_by_mongo_id = None
         self._avalon_archived_by_id = None
         self._avalon_archived_by_name = None

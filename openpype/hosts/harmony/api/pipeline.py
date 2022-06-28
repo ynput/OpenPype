@@ -2,14 +2,13 @@ import os
 from pathlib import Path
 import logging
 
-from bson.objectid import ObjectId
 import pyblish.api
 
-from avalon import io
-
 from openpype import lib
+from openpype.client import get_representation_by_id
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
@@ -105,21 +104,19 @@ def check_inventory():
     If it does it will colorize outdated nodes and display warning message
     in Harmony.
     """
-    if not lib.any_outdated():
-        return
 
+    project_name = legacy_io.active_project()
     outdated_containers = []
     for container in ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
+        representation_id = container['representation']
+        representation_doc = get_representation_by_id(
+            project_name, representation_id, fields=["parent"]
         )
         if representation_doc and not lib.is_latest(representation_doc):
             outdated_containers.append(container)
+
+    if not outdated_containers:
+        return
 
     # Colour nodes.
     outdated_nodes = []

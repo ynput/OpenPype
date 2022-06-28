@@ -3,9 +3,15 @@ import re
 from pprint import pformat
 import nuke
 import pyblish.api
-from avalon import io
-import openpype.api as pype
-from openpype.pipeline import get_representation_path
+
+from openpype.client import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 
 
 @pyblish.api.log
@@ -50,9 +56,21 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             first_frame = int(node["first"].getValue())
             last_frame = int(node["last"].getValue())
 
-        # get path
+        # Prepare expected output paths by evaluating each frame of write node
+        #   - paths are first collected to set to avoid duplicated paths, then
+        #       sorted and converted to list
+        node_file = node["file"]
+        expected_paths = list(sorted({
+            node_file.evaluate(frame)
+            for frame in range(first_frame, last_frame + 1)
+        }))
+        expected_filenames = [
+            os.path.basename(filepath)
+            for filepath in expected_paths
+        ]
         path = nuke.filename(node)
         output_dir = os.path.dirname(path)
+
         self.log.debug('output dir: {}'.format(output_dir))
 
         # create label
@@ -69,16 +87,19 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
-                representation = {
-                    'name': ext,
-                    'ext': ext,
-                    "stagingDir": output_dir,
-                    "tags": list()
-                }
+            representation = {
+                'name': ext,
+                'ext': ext,
+                "stagingDir": output_dir,
+                "tags": list()
+            }
 
             try:
-                collected_frames = [f for f in os.listdir(output_dir)
-                                    if ext in f]
+                collected_frames = [
+                    filename
+                    for filename in os.listdir(output_dir)
+                    if filename in expected_filenames
+                ]
                 if collected_frames:
                     collected_frames_len = len(collected_frames)
                     frame_start_str = "%0{}d".format(
@@ -172,17 +193,31 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "frameEndHandle": last_frame,
             })
 
+            # make sure rendered sequence on farm will
+            # be used for exctract review
+            if not instance.data["review"]:
+                instance.data["useSequenceForReview"] = False
+
+        project_name = legacy_io.active_project()
+        asset_name = instance.data["asset"]
         # * Add audio to instance if exists.
         # Find latest versions document
-        version_doc = pype.get_latest_version(
-            instance.data["asset"], "audioMain"
+        last_version_doc = get_last_version_by_subset_name(
+            project_name, "audioMain", asset_name=asset_name, fields=["_id"]
         )
+
         repre_doc = None
-        if version_doc:
+        if last_version_doc:
             # Try to find it's representation (Expected there is only one)
-            repre_doc = io.find_one(
-                {"type": "representation", "parent": version_doc["_id"]}
-            )
+            repre_docs = list(get_representations(
+                project_name, version_ids=[last_version_doc["_id"]]
+            ))
+            if not repre_docs:
+                self.log.warning(
+                    "Version document does not contain any representations"
+                )
+            else:
+                repre_doc = repre_docs[0]
 
         # Add audio to instance if representation was found
         if repre_doc:

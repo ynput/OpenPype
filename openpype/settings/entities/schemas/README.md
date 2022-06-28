@@ -46,8 +46,7 @@
     }, {
         "type": "raw-json",
         "label": "{host_label} Environments",
-        "key": "{host_name}_environments",
-        "env_group_key": "{host_name}"
+        "key": "{host_name}_environments"
     }, {
         "type": "path",
         "key": "{host_name}_executables",

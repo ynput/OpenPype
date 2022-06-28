@@ -1,7 +1,10 @@
-from avalon import api
 import pyblish.api
+
 import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    legacy_io,
+)
 from openpype.hosts.aftereffects.api import get_stub
 
 
@@ -27,7 +30,7 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
         for instance in instances:
             data = stub.read(instance[0])
 
-            data["asset"] = api.Session["AVALON_ASSET"]
+            data["asset"] = legacy_io.Session["AVALON_ASSET"]
             stub.imprint(instance[0].instance_id, data)
 
 
@@ -51,7 +54,7 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         instance_asset = instance.data["asset"]
-        current_asset = api.Session["AVALON_ASSET"]
+        current_asset = legacy_io.Session["AVALON_ASSET"]
         msg = (
             f"Instance asset {instance_asset} is not the same "
             f"as current context {current_asset}."

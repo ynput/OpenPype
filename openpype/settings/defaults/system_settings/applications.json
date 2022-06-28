@@ -12,6 +12,26 @@
             "LC_ALL": "C"
         },
         "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2023\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2023/bin/maya"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2023"
+                }
+            },
             "2022": {
                 "use_python_2": false,
                 "executables": {
@@ -91,9 +111,6 @@
                 "environment": {
                     "MAYA_VERSION": "2018"
                 }
-            },
-            "__dynamic_keys_labels__": {
-                "2022": "2022"
             }
         }
     },
@@ -275,7 +292,7 @@
     "nukex": {
         "enabled": true,
         "label": "Nuke X",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukex.png",
         "host_name": "nuke",
         "environment": {
             "NUKE_PATH": [
@@ -414,7 +431,7 @@
     "nukestudio": {
         "enabled": true,
         "label": "Nuke Studio",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukestudio.png",
         "host_name": "hiero",
         "environment": {
             "WORKFILES_STARTUP": "0",
@@ -969,8 +986,6 @@
         },
         "variants": {
             "21": {
-                "enabled": true,
-                "variant_label": "21",
                 "executables": {
                     "windows": [
                         "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 21 Premium\\win64\\bin\\HarmonyPremium.exe"
@@ -988,8 +1003,6 @@
                 "environment": {}
             },
             "20": {
-                "enabled": true,
-                "variant_label": "20",
                 "executables": {
                     "windows": [
                         "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 20 Premium\\win64\\bin\\HarmonyPremium.exe"
@@ -1007,8 +1020,6 @@
                 "environment": {}
             },
             "17": {
-                "enabled": true,
-                "variant_label": "17",
                 "executables": {
                     "windows": [
                         "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 17 Premium\\win64\\bin\\HarmonyPremium.exe"
@@ -1138,11 +1149,9 @@
         },
         "variants": {
             "2020": {
-                "enabled": true,
-                "variant_label": "2020",
                 "executables": {
                     "windows": [
-                        ""
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\AfterFX.exe"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1155,8 +1164,6 @@
                 "environment": {}
             },
             "2021": {
-                "enabled": true,
-                "variant_label": "2021",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
@@ -1172,8 +1179,6 @@
                 "environment": {}
             },
             "2022": {
-                "enabled": true,
-                "variant_label": "2022",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\AfterFX.exe"
@@ -1226,9 +1231,19 @@
         "host_name": "unreal",
         "environment": {},
         "variants": {
-            "4-26": {
+            "4-27": {
                 "use_python_2": false,
                 "environment": {}
+            },
+            "5-0": {
+                "use_python_2": false,
+                "environment": {
+                    "UE_PYTHONPATH": "{PYTHONPATH}"
+                }
+            },
+            "__dynamic_keys_labels__": {
+                "4-27": "4.27",
+                "5-0": "5.0"
             }
         }
     },

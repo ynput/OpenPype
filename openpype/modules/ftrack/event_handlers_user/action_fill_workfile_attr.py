@@ -7,7 +7,10 @@ import datetime
 
 import ftrack_api
 
-from avalon.api import AvalonMongoDB
+from openpype.client import (
+    get_project,
+    get_assets,
+)
 from openpype.api import get_project_settings
 from openpype.lib import (
     get_workfile_template_key,
@@ -248,10 +251,8 @@ class FillWorkfileAttributeAction(BaseAction):
         # Find matchin asset documents and map them by ftrack task entities
         # - result stored to 'asset_docs_with_task_entities' is list with
         #   tuple `(asset document, [task entitis, ...])`
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
         # Quety all asset documents
-        asset_docs = list(dbcon.find({"type": "asset"}))
+        asset_docs = list(get_assets(project_name))
         job_entity["data"] = json.dumps({
             "description": "(1/3) Asset documents queried."
         })
@@ -276,7 +277,7 @@ class FillWorkfileAttributeAction(BaseAction):
         # Keep placeholders in the template unfilled
         host_name = "{app}"
         extension = "{ext}"
-        project_doc = dbcon.find_one({"type": "project"})
+        project_doc = get_project(project_name)
         project_settings = get_project_settings(project_name)
         anatomy = Anatomy(project_name)
         templates_by_key = {}

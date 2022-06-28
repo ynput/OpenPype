@@ -33,7 +33,7 @@
             "enabled": false,
             "profiles": []
         },
-        "ExtractJpegEXR": {
+        "ExtractThumbnail": {
             "enabled": true,
             "ffmpeg_args": {
                 "input": [
@@ -307,7 +307,7 @@
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Task}_{Render_layer}_{Render_pass}"
+                    "template": "{family}{Task}_{Renderlayer}_{Renderpass}"
                 },
                 {
                     "families": [
@@ -401,7 +401,7 @@
             ]
         }
     },
-    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
+    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets\": {\"characters\": {}, \"locations\": {}}, \"shots\": {}}}",
     "sync_server": {
         "enabled": false,
         "config": {

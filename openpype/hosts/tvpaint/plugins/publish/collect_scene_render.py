@@ -1,8 +1,8 @@
 import json
 import copy
 import pyblish.api
-from avalon import io
 
+from openpype.client import get_asset_by_name
 from openpype.lib import get_subset_name_with_asset_doc
 
 
@@ -56,22 +56,23 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
         # - not sure if it's good idea to require asset id in
         #   get_subset_name?
         workfile_context = context.data["workfile_context"]
-        asset_name = workfile_context["asset"]
-        asset_doc = io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-
         # Project name from workfile context
         project_name = context.data["workfile_context"]["project"]
+        asset_name = workfile_context["asset"]
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
         # Host name from environment variable
         host_name = context.data["hostName"]
         # Variant is using render pass name
         variant = self.render_layer
         dynamic_data = {
-            "render_layer": self.render_layer,
-            "render_pass": self.render_pass
+            "renderlayer": self.render_layer,
+            "renderpass": self.render_pass,
         }
+        # TODO remove - Backwards compatibility for old subset name templates
+        # - added 2022/04/28
+        dynamic_data["render_layer"] = dynamic_data["renderlayer"]
+        dynamic_data["render_pass"] = dynamic_data["renderpass"]
 
         task_name = workfile_context["task"]
         subset_name = get_subset_name_with_asset_doc(
@@ -100,7 +101,9 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
             "representations": [],
             "layers": copy.deepcopy(context.data["layersData"]),
             "asset": asset_name,
-            "task": task_name
+            "task": task_name,
+            # Add render layer to instance data
+            "renderlayer": self.render_layer
         }
 
         instance = context.create_instance(**instance_data)

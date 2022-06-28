@@ -9,14 +9,13 @@ import six
 import re
 import shutil
 from collections import deque, defaultdict
+from datetime import datetime
 
 from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
-from avalon import io
+
 import openpype.api
-from datetime import datetime
-# from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib import (
     prepare_template_data,
@@ -24,6 +23,7 @@ from openpype.lib import (
     StringTemplate,
     TemplateUnsolved
 )
+from openpype.pipeline import legacy_io
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -109,11 +109,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "usd",
                 "staticMesh",
                 "skeletalMesh",
-                "usdComposition",
-                "usdOverride",
+                "mvLook",
+                "mvUsd",
+                "mvUsdComposition",
+                "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip", "render.farm"]
+    exclude_families = ["render.farm"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
@@ -139,9 +141,47 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     ef, instance.data["family"], instance.data["families"]))
                 return
 
+        # instance should be published on a farm
+        if instance.data.get("farm"):
+            return
+
+        # Prepare repsentations that should be integrated
+        repres = instance.data.get("representations")
+        # Raise error if instance don't have any representations
+        if not repres:
+            raise ValueError(
+                "Instance {} has no files to transfer".format(
+                    instance.data["family"]
+                )
+            )
+
+        # Validate type of stored representations
+        if not isinstance(repres, (list, tuple)):
+            raise TypeError(
+                "Instance 'files' must be a list, got: {0} {1}".format(
+                    str(type(repres)), str(repres)
+                )
+            )
+
+        # Filter representations
+        filtered_repres = []
+        for repre in repres:
+            if "delete" in repre.get("tags", []):
+                continue
+            filtered_repres.append(repre)
+
+        # Skip instance if there are not representations to integrate
+        #   all representations should not be integrated
+        if not filtered_repres:
+            self.log.warning((
+                "Skipping, there are no representations"
+                " to integrate for instance {}"
+            ).format(instance.data["family"]))
+            return
+
         self.integrated_file_sizes = {}
         try:
-            self.register(instance)
+            self.register(instance, filtered_repres)
             self.log.info("Integrated Asset in to the database ...")
             self.log.info("instance.data: {}".format(instance.data))
             self.handle_destination_files(self.integrated_file_sizes,
@@ -152,11 +192,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.handle_destination_files(self.integrated_file_sizes, 'remove')
             six.reraise(*sys.exc_info())
 
-    def register(self, instance):
+    def register(self, instance, repres):
         # Required environment variables
         anatomy_data = instance.data["anatomyData"]
 
-        io.install()
+        legacy_io.install()
 
         context = instance.context
 
@@ -170,7 +210,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")
         if not asset_entity or asset_entity["name"] != context_asset_name:
-            asset_entity = io.find_one({
+            asset_entity = legacy_io.find_one({
                 "type": "asset",
                 "name": asset_name,
                 "parent": project_entity["_id"]
@@ -230,18 +270,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "Establishing staging directory @ {0}".format(stagingdir)
             )
 
-        # Ensure at least one file is set up for transfer in staging dir.
-        repres = instance.data.get("representations")
-        repres = instance.data.get("representations")
-        msg = "Instance {} has no files to transfer".format(
-            instance.data["family"])
-        assert repres, msg
-        assert isinstance(repres, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0} {1}".format(
-                str(type(repres)), str(repres)
-            )
-        )
-
         subset = self.get_subset(asset_entity, instance)
         instance.data["subsetEntity"] = subset
 
@@ -264,16 +292,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         self.log.debug("Creating version ...")
 
-        new_repre_names_low = [_repre["name"].lower() for _repre in repres]
+        new_repre_names_low = [
+            _repre["name"].lower()
+            for _repre in repres
+        ]
 
-        existing_version = io.find_one({
+        existing_version = legacy_io.find_one({
             'type': 'version',
             'parent': subset["_id"],
             'name': version_number
         })
 
         if existing_version is None:
-            version_id = io.insert_one(version).inserted_id
+            version_id = legacy_io.insert_one(version).inserted_id
         else:
             # Check if instance have set `append` mode which cause that
             # only replicated representations are set to archive
@@ -281,7 +312,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Update version data
             # TODO query by _id and
-            io.update_many({
+            legacy_io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
                 'name': version_number
@@ -291,7 +322,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             version_id = existing_version['_id']
 
             # Find representations of existing version and archive them
-            current_repres = list(io.find({
+            current_repres = list(legacy_io.find({
                 "type": "representation",
                 "parent": version_id
             }))
@@ -314,14 +345,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # bulk updates
             if bulk_writes:
-                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                project_name = legacy_io.Session["AVALON_PROJECT"]
+                legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
 
-        version = io.find_one({"_id": version_id})
+        version = legacy_io.find_one({"_id": version_id})
         instance.data["versionEntity"] = version
 
-        existing_repres = list(io.find({
+        existing_repres = list(legacy_io.find({
             "parent": version_id,
             "type": "archived_representation"
         }))
@@ -366,18 +398,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if profile:
             template_name = profile["template_name"]
 
-
-
         published_representations = {}
-        for idx, repre in enumerate(instance.data["representations"]):
-            # reset transfers for next representation
-            # instance.data['transfers'] is used as a global variable
-            # in current codebase
-            instance.data['transfers'] = list(orig_transfers)
-
-            if "delete" in repre.get("tags", []):
-                continue
-
+        for idx, repre in enumerate(repres):
             published_files = []
 
             # create template data for Anatomy
@@ -655,18 +677,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "published_files": published_files
             }
             self.log.debug("__ representations: {}".format(representations))
+            # reset transfers for next representation
+            # instance.data['transfers'] is used as a global variable
+            # in current codebase
+            instance.data['transfers'] = list(orig_transfers)
 
         # Remove old representations if there are any (before insertion of new)
         if existing_repres:
             repre_ids_to_remove = []
             for repre in existing_repres:
                 repre_ids_to_remove.append(repre["_id"])
-            io.delete_many({"_id": {"$in": repre_ids_to_remove}})
+            legacy_io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
         for rep in instance.data["representations"]:
             self.log.debug("__ rep: {}".format(rep))
 
-        io.insert_many(representations)
+        legacy_io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations
         )
@@ -768,7 +794,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def get_subset(self, asset, instance):
         subset_name = instance.data["subset"]
-        subset = io.find_one({
+        subset = legacy_io.find_one({
             "type": "subset",
             "parent": asset["_id"],
             "name": subset_name
@@ -789,7 +815,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if _family not in families:
                     families.append(_family)
 
-            _id = io.insert_one({
+            _id = legacy_io.insert_one({
                 "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
@@ -799,7 +825,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "parent": asset["_id"]
             }).inserted_id
 
-            subset = io.find_one({"_id": _id})
+            subset = legacy_io.find_one({"_id": _id})
 
         # QUESTION Why is changing of group and updating it's
         #   families in 'get_subset'?
@@ -808,7 +834,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Update families on subset.
         families = [instance.data["family"]]
         families.extend(instance.data.get("families", []))
-        io.update_many(
+        legacy_io.update_many(
             {"type": "subset", "_id": ObjectId(subset["_id"])},
             {"$set": {"data.families": families}}
         )
@@ -832,7 +858,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             subset_group = self._get_subset_group(instance)
 
         if subset_group:
-            io.update_many({
+            legacy_io.update_many({
                 'type': 'subset',
                 '_id': ObjectId(subset_id)
             }, {'$set': {'data.subsetGroup': subset_group}})
@@ -933,9 +959,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         families += current_families
 
         # create relative source path for DB
-        if "source" in instance.data:
-            source = instance.data["source"]
-        else:
+        source = instance.data.get("source")
+        if not source:
             source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
             source = self.get_rootless_path(anatomy, source)

@@ -18,10 +18,11 @@ from openpype.api import (
 )
 
 from openpype.lib import requests_get
-from openpype.pipeline import CreatorError
+from openpype.pipeline import (
+    CreatorError,
+    legacy_io,
+)
 from openpype.modules import ModulesManager
-
-from avalon.api import Session
 
 
 class CreateVRayScene(plugin.Creator):
@@ -47,7 +48,7 @@ class CreateVRayScene(plugin.Creator):
             self.deadline_servers = {}
             return
         self._project_settings = get_project_settings(
-            Session["AVALON_PROJECT"])
+            legacy_io.Session["AVALON_PROJECT"])
 
         try:
             default_servers = deadline_settings["deadline_urls"]

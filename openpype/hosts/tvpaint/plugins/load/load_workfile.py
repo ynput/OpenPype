@@ -1,13 +1,16 @@
 import os
 
-from avalon import io
+from openpype.client import get_project, get_asset_by_name
 from openpype.lib import (
     StringTemplate,
     get_workfile_template_key_from_context,
     get_workdir_data,
     get_last_workfile_with_version,
 )
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 from openpype.api import Anatomy
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
 
@@ -42,28 +45,24 @@ class LoadWorkfile(plugin.Loader):
 
         # Save workfile.
         host_name = "tvpaint"
+        project_name = context.get("project")
         asset_name = context.get("asset")
         task_name = context.get("task")
         # Far cases when there is workfile without context
         if not asset_name:
-            asset_name = io.Session["AVALON_ASSET"]
-            task_name = io.Session["AVALON_TASK"]
+            project_name = legacy_io.active_project()
+            asset_name = legacy_io.Session["AVALON_ASSET"]
+            task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_doc = io.find_one({
-            "type": "project"
-        })
-        asset_doc = io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-        project_name = project_doc["name"]
+        project_doc = get_project(project_name)
+        asset_doc = get_asset_by_name(project_name, asset_name)
 
         template_key = get_workfile_template_key_from_context(
             asset_name,
             task_name,
             host_name,
             project_name=project_name,
-            dbcon=io
+            dbcon=legacy_io
         )
         anatomy = Anatomy(project_name)
 

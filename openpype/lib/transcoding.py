@@ -493,8 +493,9 @@ def convert_for_ffmpeg(
             erase_reason = "has too long value ({} chars).".format(
                 len(attr_value)
             )
+            erase_attribute = True
 
-        if erase_attribute:
+        if not erase_attribute:
             for char in NOT_ALLOWED_FFMPEG_CHARS:
                 if char in attr_value:
                     erase_attribute = True
@@ -532,7 +533,7 @@ def convert_input_paths_for_ffmpeg(
     output_dir,
     logger=None
 ):
-    """Contert source file to format supported in ffmpeg.
+    """Convert source file to format supported in ffmpeg.
 
     Currently can convert only exrs. The input filepaths should be files
     with same type. Information about input is loaded only from first found
@@ -623,8 +624,9 @@ def convert_input_paths_for_ffmpeg(
                 erase_reason = "has too long value ({} chars).".format(
                     len(attr_value)
                 )
+                erase_attribute = True
 
-            if erase_attribute:
+            if not erase_attribute:
                 for char in NOT_ALLOWED_FFMPEG_CHARS:
                     if char in attr_value:
                         erase_attribute = True
@@ -727,9 +729,9 @@ def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):
 def _ffmpeg_mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
     input_format = ffprobe_data["format"]
     format_tags = input_format.get("tags") or {}
-    product_name = format_tags.get("product_name") or ""
+    operational_pattern_ul = format_tags.get("operational_pattern_ul") or ""
     output = []
-    if "opatom" in product_name.lower():
+    if operational_pattern_ul == "060e2b34.04010102.0d010201.10030000":
         output.extend(["-f", "mxf_opatom"])
     return output
 

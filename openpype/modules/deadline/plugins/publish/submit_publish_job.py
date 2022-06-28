@@ -7,14 +7,15 @@ import re
 from copy import copy, deepcopy
 import requests
 import clique
-import openpype.api
-from openpype.pipeline.farm.patterning import match_aov_pattern
-
-from avalon import api, io
 
 import pyblish.api
 
-from openpype.pipeline import get_representation_path
+import openpype.api
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
+from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
 def get_resources(version, extension=None):
@@ -23,7 +24,7 @@ def get_resources(version, extension=None):
     if extension:
         query["name"] = extension
 
-    representation = io.find_one(query)
+    representation = legacy_io.find_one(query)
     assert representation, "This is a bug"
 
     directory = get_representation_path(representation)
@@ -102,6 +103,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     deadline_plugin = "OpenPype"
+    targets = ["local"]
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
@@ -127,7 +129,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_MONGO"
     ]
 
     # custom deadline attributes
@@ -144,7 +147,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # mapping of instance properties to be transfered to new instance for every
     # specified family
     instance_transfer = {
-        "slate": ["slateFrame"],
+        "slate": ["slateFrames"],
         "review": ["lutPath"],
         "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
@@ -222,9 +225,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._create_metadata_path(instance)
 
         environment = job["Props"].get("Env", {})
-        environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
-        environment["AVALON_ASSET"] = io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = io.Session["AVALON_TASK"]
+        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
+        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
+        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
@@ -465,7 +468,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance_data.get("multipartExr"):
                 preview = True
 
-            new_instance = copy(instance_data)
+            new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
             if preview:
@@ -639,6 +642,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
+
         # if we have one representation with preview tag
         # flag whole instance for review and for ftrack
         if preview:
@@ -669,7 +673,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if hasattr(instance, "_log"):
             data['_log'] = instance._log
 
-        asset = data.get("asset") or api.Session["AVALON_ASSET"]
+        asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 
         start = instance.data.get("frameStart")
@@ -718,10 +722,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " This may cause issues."
             ).format(source))
 
-        families = ["render"]
+        family = "render"
+        if "prerender" in instance.data["families"]:
+            family = "prerender"
+        families = [family]
+
+        # pass review to families if marked as review
+        if data.get("review"):
+            families.append("review")
 
         instance_skeleton_data = {
-            "family": "render",
+            "family": family,
             "subset": subset,
             "families": families,
             "asset": asset,
@@ -742,11 +753,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True)
         }
-
-        if "prerender" in instance.data["families"]:
-            instance_skeleton_data.update({
-                "family": "prerender",
-                "families": []})
 
         # skip locking version if we are creating v01
         instance_version = instance.data.get("version")  # take this if exists
@@ -882,8 +888,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i = copy(i)
                     new_i["version"] = at.get("version")
                     new_i["subset"] = at.get("subset")
+                    new_i["family"] = at.get("family")
                     new_i["append"] = True
-                    new_i["families"].append(at.get("family"))
+                    # don't set subsetGroup if we are attaching
+                    new_i.pop("subsetGroup")
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))
@@ -961,7 +969,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             "job": render_job or None,
-            "session": api.Session.copy(),
+            "session": legacy_io.Session.copy(),
             "instances": instances
         }
 
@@ -1069,7 +1077,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
+            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."

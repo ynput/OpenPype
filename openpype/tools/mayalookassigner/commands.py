@@ -2,12 +2,11 @@ from collections import defaultdict
 import logging
 import os
 
-from bson.objectid import ObjectId
 import maya.cmds as cmds
 
-from avalon import io
-
+from openpype.client import get_asset_by_id
 from openpype.pipeline import (
+    legacy_io,
     remove_container,
     registered_host,
 )
@@ -160,9 +159,9 @@ def create_items_from_nodes(nodes):
         log.warning("No id hashes")
         return asset_view_items
 
+    project_name = legacy_io.active_project()
     for _id, id_nodes in id_hashes.items():
-        asset = io.find_one({"_id": ObjectId(_id)},
-                            projection={"name": True})
+        asset = get_asset_by_id(project_name, _id, fields=["name"])
 
         # Skip if asset id is not found
         if not asset:
@@ -179,10 +178,12 @@ def create_items_from_nodes(nodes):
             namespace = get_namespace_from_node(node)
             namespaces.add(namespace)
 
-        asset_view_items.append({"label": asset["name"],
-                                 "asset": asset,
-                                 "looks": looks,
-                                 "namespaces": namespaces})
+        asset_view_items.append({
+            "label": asset["name"],
+            "asset": asset,
+            "looks": looks,
+            "namespaces": namespaces
+        })
 
     return asset_view_items
 

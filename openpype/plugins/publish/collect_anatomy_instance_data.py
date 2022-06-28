@@ -25,8 +25,9 @@ import copy
 import json
 import collections
 
-from avalon import io
 import pyblish.api
+
+from openpype.pipeline import legacy_io
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -83,7 +84,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Querying asset documents with names: {}".format(
             ", ".join(["\"{}\"".format(name) for name in asset_names])
         ))
-        asset_docs = io.find({
+        asset_docs = legacy_io.find({
             "type": "asset",
             "name": {"$in": asset_names}
         })
@@ -153,7 +154,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
         subset_docs = []
         if subset_filters:
-            subset_docs = list(io.find({
+            subset_docs = list(legacy_io.find({
                 "type": "subset",
                 "$or": subset_filters
             }))
@@ -202,7 +203,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         ]
 
         last_version_by_subset_id = {}
-        for doc in io.aggregate(_pipeline):
+        for doc in legacy_io.aggregate(_pipeline):
             subset_id = doc["_id"]
             last_version_by_subset_id[subset_id] = doc["name"]
 

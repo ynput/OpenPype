@@ -5,10 +5,17 @@ from collections import defaultdict
 
 from Qt import QtCore, QtGui
 import qtawesome
-from bson.objectid import ObjectId
 
-from avalon import io, schema
+from openpype.client import (
+    get_asset_by_id,
+    get_subset_by_id,
+    get_version_by_id,
+    get_last_version_by_subset_id,
+    get_representation_by_id,
+)
 from openpype.pipeline import (
+    legacy_io,
+    schema,
     HeroVersionType,
     registered_host,
 )
@@ -54,7 +61,7 @@ class InventoryModel(TreeModel):
         if not self.sync_enabled:
             return
 
-        project_name = io.Session["AVALON_PROJECT"]
+        project_name = legacy_io.current_project()
         active_site = sync_server.get_active_site(project_name)
         remote_site = sync_server.get_remote_site(project_name)
 
@@ -191,12 +198,12 @@ class InventoryModel(TreeModel):
         self.clear()
 
         if self._hierarchy_view and selected:
-
             if not hasattr(host.pipeline, "update_hierarchy"):
                 # If host doesn't support hierarchical containers, then
                 # cherry-pick only.
                 self.add_items((item for item in items
                                 if item["objectName"] in selected))
+                return
 
             # Update hierarchy info for all containers
             items_by_name = {item["objectName"]: item
@@ -290,6 +297,9 @@ class InventoryModel(TreeModel):
             node.Item: root node which has children added based on the data
         """
 
+        # NOTE: @iLLiCiTiT this need refactor
+        project_name = legacy_io.active_project()
+
         self.beginResetModel()
 
         # Group by representation
@@ -303,32 +313,36 @@ class InventoryModel(TreeModel):
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
             # Get parenthood per group
-            representation = io.find_one({"_id": ObjectId(repre_id)})
+            representation = get_representation_by_id(
+                project_name, repre_id
+            )
             if not representation:
                 not_found["representation"].append(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            version = io.find_one({"_id": representation["parent"]})
+            version = get_version_by_id(
+                project_name, representation["parent"]
+            )
             if not version:
                 not_found["version"].append(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
             elif version["type"] == "hero_version":
-                _version = io.find_one({
-                    "_id": version["version_id"]
-                })
+                _version = get_version_by_id(
+                    project_name, version["version_id"]
+                )
                 version["name"] = HeroVersionType(_version["name"])
                 version["data"] = _version["data"]
 
-            subset = io.find_one({"_id": version["parent"]})
+            subset = get_subset_by_id(project_name, version["parent"])
             if not subset:
                 not_found["subset"].append(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            asset = io.find_one({"_id": subset["parent"]})
+            asset = get_asset_by_id(project_name, subset["parent"])
             if not asset:
                 not_found["asset"].append(group_items)
                 not_found_ids.append(repre_id)
@@ -389,10 +403,9 @@ class InventoryModel(TreeModel):
 
             # Store the highest available version so the model can know
             # whether current version is currently up-to-date.
-            highest_version = io.find_one({
-                "type": "version",
-                "parent": version["parent"]
-            }, sort=[("name", -1)])
+            highest_version = get_last_version_by_subset_id(
+                project_name, version["parent"]
+            )
 
             # create the group header
             group_node = Item()

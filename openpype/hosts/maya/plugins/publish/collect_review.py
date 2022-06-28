@@ -2,7 +2,9 @@ from maya import cmds, mel
 import pymel.core as pm
 
 import pyblish.api
-import avalon.api
+
+from openpype.client import get_subset_by_name
+from openpype.pipeline import legacy_io
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -19,7 +21,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug('instance: {}'.format(instance))
 
-        task = avalon.api.Session["AVALON_TASK"]
+        task = legacy_io.Session["AVALON_TASK"]
 
         # get cameras
         members = instance.data['setMembers']
@@ -76,15 +78,18 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data['remove'] = True
                 self.log.debug('isntance data {}'.format(instance.data))
         else:
-            if self.legacy:
-                instance.data['subset'] = task + 'Review'
-            else:
-                subset = "{}{}{}".format(
-                    task,
-                    instance.data["subset"][0].upper(),
-                    instance.data["subset"][1:]
-                )
-                instance.data['subset'] = subset
+            legacy_subset_name = task + 'Review'
+            asset_doc = instance.context.data['assetEntity']
+            project_name = legacy_io.active_project()
+            subset_doc = get_subset_by_name(
+                project_name,
+                legacy_subset_name,
+                asset_doc["_id"],
+                fields=["_id"]
+            )
+            if subset_doc:
+                self.log.debug("Existing subsets found, keep legacy name.")
+                instance.data['subset'] = legacy_subset_name
 
             instance.data['review_camera'] = camera
             instance.data['frameStartFtrack'] = \

@@ -1,6 +1,7 @@
-import pyblish.api
-from avalon import io
 from copy import deepcopy
+import pyblish.api
+from openpype.pipeline import legacy_io
+
 
 class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""
@@ -14,33 +15,16 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         if "hierarchyContext" not in context.data:
             self.log.info("skipping IntegrateHierarchyToAvalon")
             return
-        hierarchy_context = deepcopy(context.data["hierarchyContext"])
 
-        if not io.Session:
-            io.install()
+        if not legacy_io.Session:
+            legacy_io.install()
 
-        active_assets = []
-        # filter only the active publishing insatnces
-        for instance in context:
-            if instance.data.get("publish") is False:
-                continue
-
-            if not instance.data.get("asset"):
-                continue
-
-            active_assets.append(instance.data["asset"])
-
-        # remove duplicity in list
-        self.active_assets = list(set(active_assets))
-        self.log.debug("__ self.active_assets: {}".format(self.active_assets))
-
-        hierarchy_context = self._get_assets(hierarchy_context)
-
+        hierarchy_context = self._get_active_assets(context)
         self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
-        input_data = context.data["hierarchyContext"] = hierarchy_context
 
         self.project = None
-        self.import_to_avalon(input_data)
+        self.import_to_avalon(hierarchy_context)
+
 
     def import_to_avalon(self, input_data, parent=None):
         for name in input_data:
@@ -78,7 +62,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             update_data = True
             # Process project
             if entity_type.lower() == "project":
-                entity = io.find_one({"type": "project"})
+                entity = legacy_io.find_one({"type": "project"})
                 # TODO: should be in validator?
                 assert (entity is not None), "Did not find project in DB"
 
@@ -95,7 +79,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 )
             # Else process assset
             else:
-                entity = io.find_one({"type": "asset", "name": name})
+                entity = legacy_io.find_one({"type": "asset", "name": name})
                 if entity:
                     # Do not override data, only update
                     cur_entity_data = entity.get("data") or {}
@@ -119,7 +103,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     # Skip updating data
                     update_data = False
 
-                    archived_entities = io.find({
+                    archived_entities = legacy_io.find({
                         "type": "archived_asset",
                         "name": name
                     })
@@ -143,7 +127,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
             if update_data:
                 # Update entity data with input data
-                io.update_many(
+                legacy_io.update_many(
                     {"_id": entity["_id"]},
                     {"$set": {"data": data}}
                 )
@@ -161,7 +145,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             "type": "asset",
             "data": data
         }
-        io.replace_one(
+        legacy_io.replace_one(
             {"_id": entity["_id"]},
             new_entity
         )
@@ -176,27 +160,44 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             "data": data
         }
         self.log.debug("Creating asset: {}".format(item))
-        entity_id = io.insert_one(item).inserted_id
+        entity_id = legacy_io.insert_one(item).inserted_id
 
-        return io.find_one({"_id": entity_id})
+        return legacy_io.find_one({"_id": entity_id})
 
-    def _get_assets(self, input_dict):
+    def _get_active_assets(self, context):
         """ Returns only asset dictionary.
             Usually the last part of deep dictionary which
             is not having any children
         """
-        input_dict_copy = deepcopy(input_dict)
-
-        for key in input_dict.keys():
-            self.log.debug("__ key: {}".format(key))
-            # check if child key is available
-            if input_dict[key].get("childs"):
-                # loop deeper
-                input_dict_copy[key]["childs"] = self._get_assets(
-                    input_dict[key]["childs"])
-            else:
-                # filter out unwanted assets
-                if key not in self.active_assets:
+        def get_pure_hierarchy_data(input_dict):
+            input_dict_copy = deepcopy(input_dict)
+            for key in input_dict.keys():
+                self.log.debug("__ key: {}".format(key))
+                # check if child key is available
+                if input_dict[key].get("childs"):
+                    # loop deeper
+                    input_dict_copy[
+                        key]["childs"] = get_pure_hierarchy_data(
+                            input_dict[key]["childs"])
+                elif key not in active_assets:
                     input_dict_copy.pop(key, None)
+            return input_dict_copy
 
-        return input_dict_copy
+        hierarchy_context = context.data["hierarchyContext"]
+
+        active_assets = []
+        # filter only the active publishing insatnces
+        for instance in context:
+            if instance.data.get("publish") is False:
+                continue
+
+            if not instance.data.get("asset"):
+                continue
+
+            active_assets.append(instance.data["asset"])
+
+        # remove duplicity in list
+        active_assets = list(set(active_assets))
+        self.log.debug("__ active_assets: {}".format(active_assets))
+
+        return get_pure_hierarchy_data(hierarchy_context)

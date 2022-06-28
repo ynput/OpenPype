@@ -19,7 +19,8 @@ import copy
 from pprint import pformat
 import clique
 import pyblish.api
-from avalon import io
+
+from openpype.pipeline import legacy_io
 
 
 class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
@@ -37,7 +38,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # get json paths from os and load them
-        io.install()
+        legacy_io.install()
 
         # get json file context
         input_json_path = os.environ.get("SAPUBLISH_INPATH")

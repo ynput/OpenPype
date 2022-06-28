@@ -4,7 +4,6 @@ import sys
 from Qt import QtWidgets
 
 import pyblish.api
-from avalon import io
 
 from openpype import lib
 from openpype.api import Logger
@@ -14,7 +13,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    registered_host,
+    legacy_io,
 )
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
@@ -66,14 +65,14 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     instance[0].Visible = new_value
 
 
-def get_asset_settings():
+def get_asset_settings(asset_doc):
     """Get settings on current asset from database.
 
     Returns:
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
@@ -140,23 +139,11 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = pyblish.api.registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": io.ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
     # Warn about outdated containers.
-    print("Starting new QApplication..")
-    _app = QtWidgets.QApplication(sys.argv)
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
@@ -282,11 +269,10 @@ def update_context_data(data, changes):
 
 def get_context_title():
     """Returns title for Creator window"""
-    import avalon.api
 
-    project_name = avalon.api.Session["AVALON_PROJECT"]
-    asset_name = avalon.api.Session["AVALON_ASSET"]
-    task_name = avalon.api.Session["AVALON_TASK"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
     return "{}/{}/{}".format(project_name, asset_name, task_name)
 
 

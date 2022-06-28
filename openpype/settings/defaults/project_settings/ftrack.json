@@ -109,6 +109,22 @@
                 "Omitted"
             ],
             "name_sorting": false
+        },
+        "transfer_values_of_hierarchical_attributes": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "create_daily_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project Manager"
+            ],
+            "cycle_enabled": false,
+            "review_session_template": "{yy}{mm}{dd}"
         }
     },
     "user_handlers": {
@@ -418,7 +434,8 @@
                 "redshiftproxy": "cache",
                 "usd": "usd"
             },
-            "keep_first_subset_name_for_review": true
+            "keep_first_subset_name_for_review": true,
+            "asset_versions_status_profiles": []
         }
     }
 }

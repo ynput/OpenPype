@@ -1,9 +1,9 @@
-from avalon import api as avalon_api
 from openpype.hosts.photoshop import api
 from openpype.lib import BoolDef
 from openpype.pipeline import (
     Creator,
-    CreatedInstance
+    CreatedInstance,
+    legacy_io
 )
 
 
@@ -133,7 +133,7 @@ class ImageCreator(Creator):
             instance_data.pop("uuid")
 
         if not instance_data.get("task"):
-            instance_data["task"] = avalon_api.Session.get("AVALON_TASK")
+            instance_data["task"] = legacy_io.Session.get("AVALON_TASK")
 
         if not instance_data.get("variant"):
             instance_data["variant"] = ''

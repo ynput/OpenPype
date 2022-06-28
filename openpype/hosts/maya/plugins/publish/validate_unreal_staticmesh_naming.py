@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Validator for correct naming of Static Meshes."""
-from maya import cmds  # noqa
+import re
+
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from avalon.api import Session
+from openpype.pipeline import legacy_io
 from openpype.api import get_project_settings
-import re
 
 
 class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
@@ -63,7 +63,9 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
 
         invalid = []
 
-        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        project_settings = get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"]
+        )
         collision_prefixes = (
             project_settings
             ["maya"]

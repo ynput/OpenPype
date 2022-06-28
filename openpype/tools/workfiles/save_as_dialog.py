@@ -5,13 +5,18 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from avalon import api, io
-
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
 from openpype.lib import (
     get_last_workfile_with_version,
     get_workdir_data,
 )
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 from openpype.tools.utils import PlaceholderLineEdit
 
 log = logging.getLogger(__name__)
@@ -21,29 +26,19 @@ def build_workfile_data(session):
     """Get the data required for workfile formatting from avalon `session`"""
 
     # Set work file data for template formatting
+    project_name = session["AVALON_PROJECT"]
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
-    project_doc = io.find_one(
-        {"type": "project"},
-        {
-            "name": True,
-            "data.code": True,
-            "config.tasks": True,
-        }
+    project_doc = get_project(
+        project_name, fields=["name", "data.code", "config.tasks"]
+    )
+    asset_doc = get_asset_by_name(
+        project_name,
+        asset_name,
+        fields=["name", "data.tasks", "data.parents"]
     )
 
-    asset_doc = io.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        {
-            "name": True,
-            "data.tasks": True,
-            "data.parents": True
-        }
-    )
     data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
     data.update({
         "version": 1,
@@ -208,7 +203,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         if not session:
             # Fallback to active session
-            session = api.Session
+            session = legacy_io.Session
 
         self.data = build_workfile_data(session)
 
@@ -283,7 +278,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             if current_filepath:
                 # We match the current filename against the current session
                 # instead of the session where the user is saving to.
-                current_data = build_workfile_data(api.Session)
+                current_data = build_workfile_data(legacy_io.Session)
                 matcher = CommentMatcher(anatomy, template_key, current_data)
                 comment = matcher.parse_comment(current_filepath)
                 if comment:

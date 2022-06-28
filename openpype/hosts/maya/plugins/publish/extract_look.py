@@ -12,9 +12,9 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-from avalon import io
 
 import openpype.api
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
@@ -40,7 +40,7 @@ def find_paths_by_hash(texture_hash):
 
     """
     key = "data.sourceHashes.{0}".format(texture_hash)
-    return io.distinct(key, {"type": "version"})
+    return legacy_io.distinct(key, {"type": "version"})
 
 
 def maketx(source, destination, *args):
@@ -146,7 +146,7 @@ class ExtractLook(openpype.api.Extractor):
 
     label = "Extract Look (Maya Scene + JSON)"
     hosts = ["maya"]
-    families = ["look"]
+    families = ["look", "mvLook"]
     order = pyblish.api.ExtractorOrder + 0.2
     scene_type = "ma"
     look_data_type = "json"
@@ -372,10 +372,12 @@ class ExtractLook(openpype.api.Extractor):
 
             if mode == COPY:
                 transfers.append((source, destination))
-                self.log.info('copying')
+                self.log.info('file will be copied {} -> {}'.format(
+                    source, destination))
             elif mode == HARDLINK:
                 hardlinks.append((source, destination))
-                self.log.info('hardlinking')
+                self.log.info('file will be hardlinked {} -> {}'.format(
+                    source, destination))
 
             # Store the hashes from hash to destination to include in the
             # database

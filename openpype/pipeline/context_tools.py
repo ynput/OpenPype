@@ -11,19 +11,16 @@ import platform
 import pyblish.api
 from pyblish.lib import MessageHandler
 
-from avalon import io, Session
-
 import openpype
-from openpype.modules import load_modules
+from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 from openpype.lib import (
     Anatomy,
-    register_event_callback,
     filter_pyblish_plugins,
-    change_timer_to_current_context,
 )
 
 from . import (
+    legacy_io,
     register_loader_plugin_path,
     register_inventory_action,
     register_creator_plugin_path,
@@ -34,6 +31,9 @@ from . import (
 _is_installed = False
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
+# Keep modules manager (and it's modules) in memory
+# - that gives option to register modules' callbacks
+_modules_manager = None
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +43,23 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+
+
+def _get_modules_manager():
+    """Get or create modules manager for host installation.
+
+    This is not meant for public usage. Reason is to keep modules
+    in memory of process to be able trigger their event callbacks if they
+    need any.
+
+    Returns:
+        ModulesManager: Manager wrapping discovered modules.
+    """
+
+    global _modules_manager
+    if _modules_manager is None:
+        _modules_manager = ModulesManager()
+    return _modules_manager
 
 
 def register_root(path):
@@ -57,7 +74,7 @@ def registered_root():
     if root:
         return root
 
-    root = Session.get("AVALON_PROJECTS")
+    root = legacy_io.Session.get("AVALON_PROJECTS")
     if root:
         return os.path.normpath(root)
     return ""
@@ -74,20 +91,21 @@ def install_host(host):
 
     _is_installed = True
 
-    io.install()
+    legacy_io.install()
+    modules_manager = _get_modules_manager()
 
     missing = list()
     for key in ("AVALON_PROJECT", "AVALON_ASSET"):
-        if key not in Session:
+        if key not in legacy_io.Session:
             missing.append(key)
 
     assert not missing, (
         "%s missing from environment, %s" % (
             ", ".join(missing),
-            json.dumps(Session, indent=4, sort_keys=True)
+            json.dumps(legacy_io.Session, indent=4, sort_keys=True)
         ))
 
-    project_name = Session["AVALON_PROJECT"]
+    project_name = legacy_io.Session["AVALON_PROJECT"]
     log.info("Activating %s.." % project_name)
 
     # Optional host install function
@@ -96,8 +114,6 @@ def install_host(host):
 
     register_host(host)
 
-    register_event_callback("taskChanged", _on_task_change)
-
     def modified_emit(obj, record):
         """Method replacing `emit` in Pyblish's MessageHandler."""
         record.msg = record.getMessage()
@@ -105,10 +121,25 @@ def install_host(host):
 
     MessageHandler.emit = modified_emit
 
-    install_openpype_plugins()
+    if os.environ.get("OPENPYPE_REMOTE_PUBLISH"):
+        # target "farm" == rendering on farm, expects OPENPYPE_PUBLISH_DATA
+        # target "remote" == remote execution, installs host
+        print("Registering pyblish target: remote")
+        pyblish.api.register_target("remote")
+    else:
+        pyblish.api.register_target("local")
+
+    project_name = os.environ.get("AVALON_PROJECT")
+    host_name = os.environ.get("AVALON_APP")
+
+    # Give option to handle host installation
+    for module in modules_manager.get_enabled_modules():
+        module.on_host_install(host, host_name, project_name)
+
+    install_openpype_plugins(project_name, host_name)
 
 
-def install_openpype_plugins(project_name=None):
+def install_openpype_plugins(project_name=None, host_name=None):
     # Make sure modules are loaded
     load_modules()
 
@@ -116,6 +147,18 @@ def install_openpype_plugins(project_name=None):
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
+
+    modules_manager = _get_modules_manager()
+    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
+    for path in publish_plugin_dirs:
+        pyblish.api.register_plugin_path(path)
+
+    if host_name is None:
+        host_name = os.environ.get("AVALON_APP")
+
+    creator_paths = modules_manager.collect_creator_plugin_paths(host_name)
+    for creator_path in creator_paths:
+        register_creator_plugin_path(creator_path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
@@ -149,10 +192,6 @@ def install_openpype_plugins(project_name=None):
             register_inventory_action(path)
 
 
-def _on_task_change():
-    change_timer_to_current_context()
-
-
 def uninstall_host():
     """Undo all of what `install()` did"""
     host = registered_host()
@@ -170,7 +209,7 @@ def uninstall_host():
 
     deregister_host()
 
-    io.uninstall()
+    legacy_io.uninstall()
 
     log.info("Successfully uninstalled Avalon!")
 

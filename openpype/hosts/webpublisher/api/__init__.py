@@ -1,9 +1,9 @@
 import os
 import logging
 
-from avalon import io
 from pyblish import api as pyblish
 import openpype.hosts.webpublisher
+from openpype.pipeline import legacy_io
 
 log = logging.getLogger("openpype.hosts.webpublisher")
 
@@ -19,7 +19,7 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     log.info(PUBLISH_PATH)
 
-    io.install()
+    legacy_io.install()
 
 
 def uninstall():

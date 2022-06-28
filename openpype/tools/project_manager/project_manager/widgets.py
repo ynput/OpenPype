@@ -1,5 +1,6 @@
 import re
 
+from openpype.client import get_projects
 from .constants import (
     NAME_ALLOWED_SYMBOLS,
     NAME_REGEX
@@ -10,11 +11,11 @@ from openpype.lib import (
     PROJECT_NAME_REGEX
 )
 from openpype.style import load_stylesheet
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import (
     PlaceholderLineEdit,
     get_warning_pixmap
 )
-from avalon.api import AvalonMongoDB
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -272,15 +273,9 @@ class CreateProjectDialog(QtWidgets.QDialog):
     def _get_existing_projects(self):
         project_names = set()
         project_codes = set()
-        for project_name in self.dbcon.database.collection_names():
-            # Each collection will have exactly one project document
-            project_doc = self.dbcon.database[project_name].find_one(
-                {"type": "project"},
-                {"name": 1, "data.code": 1}
-            )
-            if not project_doc:
-                continue
-
+        for project_doc in get_projects(
+            inactive=True, fields=["name", "data.code"]
+        ):
             project_name = project_doc.get("name")
             if not project_name:
                 continue

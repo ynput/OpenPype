@@ -1,11 +1,12 @@
 import os
 import logging
 import shutil
+import copy
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import io, api
 
+from openpype.client import get_asset_by_id
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
@@ -18,7 +19,10 @@ from openpype.lib.avalon_context import (
     update_current_task,
     compute_session_changes
 )
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 from .model import (
     WorkAreaFilesModel,
     PublishFilesModel,
@@ -87,7 +91,9 @@ class FilesWidget(QtWidgets.QWidget):
         self._task_type = None
 
         # Pype's anatomy object for current project
-        self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        self.anatomy = Anatomy(project_name)
+        self.project_name = project_name
         # Template key used to get work template from anatomy templates
         self.template_key = "work"
 
@@ -95,6 +101,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._workfiles_root = None
         self._workdir_path = None
         self.host = registered_host()
+        self.host_name = os.environ["AVALON_APP"]
 
         # Whether to automatically select the latest modified
         # file on a refresh of the files model.
@@ -147,7 +154,9 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_files_view.setColumnWidth(0, 330)
 
         # --- Publish files view ---
-        publish_files_model = PublishFilesModel(extensions, io, self.anatomy)
+        publish_files_model = PublishFilesModel(
+            extensions, legacy_io, self.anatomy
+        )
 
         publish_proxy_model = QtCore.QSortFilterProxyModel()
         publish_proxy_model.setSourceModel(publish_files_model)
@@ -380,17 +389,20 @@ class FilesWidget(QtWidgets.QWidget):
             return None
 
         if self._asset_doc is None:
-            self._asset_doc = io.find_one({"_id": self._asset_id})
+            self._asset_doc = get_asset_by_id(
+                self.project_name, self._asset_id
+            )
+
         return self._asset_doc
 
     def _get_session(self):
         """Return a modified session for the current asset and task"""
 
-        session = api.Session.copy()
+        session = legacy_io.Session.copy()
         self.template_key = get_workfile_template_key(
             self._task_type,
-            session["AVALON_APP"],
-            project_name=session["AVALON_PROJECT"]
+            self.host_name,
+            project_name=self.project_name
         )
         changes = compute_session_changes(
             session,
@@ -405,7 +417,7 @@ class FilesWidget(QtWidgets.QWidget):
     def _enter_session(self):
         """Enter the asset and task session currently selected"""
 
-        session = api.Session.copy()
+        session = legacy_io.Session.copy()
         changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
@@ -422,6 +434,21 @@ class FilesWidget(QtWidgets.QWidget):
             task=self._task_name,
             template_key=self.template_key
         )
+
+    def _get_event_context_data(self):
+        asset_id = None
+        asset_name = None
+        asset_doc = self._get_asset_doc()
+        if asset_doc:
+            asset_id = asset_doc["_id"]
+            asset_name = asset_doc["name"]
+        return {
+            "project_name": self.project_name,
+            "asset_id": asset_id,
+            "asset_name": asset_name,
+            "task_name": self._task_name,
+            "host_name": self.host_name
+        }
 
     def open_file(self, filepath):
         host = self.host
@@ -446,8 +473,21 @@ class FilesWidget(QtWidgets.QWidget):
                 # Save current scene, continue to open file
                 host.save_file(current_file)
 
+        event_data_before = self._get_event_context_data()
+        event_data_before["filepath"] = filepath
+        event_data_after = copy.deepcopy(event_data_before)
+        emit_event(
+            "workfile.open.before",
+            event_data_before,
+            source="workfiles.tool"
+        )
         self._enter_session()
         host.open_file(filepath)
+        emit_event(
+            "workfile.open.after",
+            event_data_after,
+            source="workfiles.tool"
+        )
         self.file_opened.emit()
 
     def save_changes_prompt(self):
@@ -560,9 +600,14 @@ class FilesWidget(QtWidgets.QWidget):
         src_path = self._get_selected_filepath()
 
         # Trigger before save event
+        event_data_before = self._get_event_context_data()
+        event_data_before.update({
+            "filename": work_filename,
+            "workdir_path": self._workdir_path
+        })
         emit_event(
             "workfile.save.before",
-            {"filename": work_filename, "workdir_path": self._workdir_path},
+            event_data_before,
             source="workfiles.tool"
         )
 
@@ -595,15 +640,20 @@ class FilesWidget(QtWidgets.QWidget):
         # Create extra folders
         create_workdir_extra_folders(
             self._workdir_path,
-            api.Session["AVALON_APP"],
+            self.host_name,
             self._task_type,
             self._task_name,
-            api.Session["AVALON_PROJECT"]
+            self.project_name
         )
+        event_data_after = self._get_event_context_data()
+        event_data_after.update({
+            "filename": work_filename,
+            "workdir_path": self._workdir_path
+        })
         # Trigger after save events
         emit_event(
             "workfile.save.after",
-            {"filename": work_filename, "workdir_path": self._workdir_path},
+            event_data_after,
             source="workfiles.tool"
         )
 
