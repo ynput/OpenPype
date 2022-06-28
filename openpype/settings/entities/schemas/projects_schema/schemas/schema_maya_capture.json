@@ -205,14 +205,6 @@
                             "type": "splitter"
                         },
                         {
-                            "type": "number",
-                            "key": "multiSample",
-                            "label": "Anti Aliasing Samples",
-                            "decimal": 0,
-                            "minimum": 0,
-                            "maximum": 32
-                        },
-                        {
                             "type": "splitter"
                         },
                         {
@@ -237,6 +229,14 @@
                             "type": "boolean",
                             "key": "lineAAEnable",
                             "label": "Enable Anti-Aliasing"
+                        },
+                        {
+                            "type": "number",
+                            "key": "multiSample",
+                            "label": "Anti Aliasing Samples",
+                            "decimal": 0,
+                            "minimum": 0,
+                            "maximum": 32
                         },
                         {
                             "type": "splitter"
