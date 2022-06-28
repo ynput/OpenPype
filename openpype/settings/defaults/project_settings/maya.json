@@ -205,7 +205,7 @@
             "enabled": true,
             "optional": true,
             "active": true,
-            "exclude_families": []
+            "exclude_families": ["model", "rig", "staticMesh"]
         },
         "ValidateShaderName": {
             "enabled": false,
