@@ -11,31 +11,14 @@ from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractAnimationFBX(publish.Extractor):
-    """Extract as animation."""
+    """Extract animation as FBX."""
 
     label = "Extract FBX"
     hosts = ["blender"]
     families = ["animation"]
     optional = True
 
-    def process(self, instance):
-        # Define extract output file path
-        stagingdir = self.staging_dir(instance)
-
-        # Perform extraction
-        self.log.info("Performing extraction..")
-
-        # The first collection object in the instance is taken, as there
-        # should be only one that contains the asset group.
-        collection = [
-            obj for obj in instance if type(obj) is bpy.types.Collection][0]
-
-        # Again, the first object in the collection is taken , as there
-        # should be only the asset group in the collection.
-        asset_group = collection.objects[0]
-
-        armature = [
-            obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
+    def _export_animation(self, armature, stagingdir, fbx_count):
 
         object_action_pairs = []
         original_actions = []
@@ -44,27 +27,13 @@ class ExtractAnimationFBX(publish.Extractor):
         ending_frames = []
 
         # For each armature, we make a copy of the current action
-        curr_action = None
-        copy_action = None
+        curr_action = armature.animation_data.action
+        copy_action = curr_action.copy()
 
-        if armature.animation_data and armature.animation_data.action:
-            curr_action = armature.animation_data.action
-            copy_action = curr_action.copy()
+        curr_frame_range = curr_action.frame_range
 
-            curr_frame_range = curr_action.frame_range
-
-            starting_frames.append(curr_frame_range[0])
-            ending_frames.append(curr_frame_range[1])
-        else:
-            self.log.info("Object have no animation.")
-            return
-
-        asset_group_name = asset_group.name
-        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
-
-        armature_name = armature.name
-        original_name = armature_name.split(':')[1]
-        armature.name = original_name
+        starting_frames.append(curr_frame_range[0])
+        ending_frames.append(curr_frame_range[1])
 
         object_action_pairs.append((armature, copy_action))
         original_actions.append(curr_action)
@@ -81,30 +50,26 @@ class ExtractAnimationFBX(publish.Extractor):
             do_clean=False
         )
 
-        for obj in bpy.data.objects:
-            obj.select_set(False)
+        plugin.deselect_all()
 
-        asset_group.select_set(True)
         armature.select_set(True)
-        fbx_filename = f"{instance.name}_{armature.name}.fbx"
+        fbx_filename = f"{fbx_count:03d}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
-        override = plugin.create_blender_context(
-            active=asset_group, selected=[asset_group, armature])
         bpy.ops.export_scene.fbx(
-            override,
+            plugin.create_blender_context(
+                active=armature,
+                selected=[armature],
+            ),
             filepath=filepath,
             use_active_collection=False,
             use_selection=True,
             bake_anim_use_nla_strips=False,
             bake_anim_use_all_actions=False,
             add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'EMPTY', 'ARMATURE'}
+            armature_nodetype="ROOT",
+            object_types={"EMPTY", "ARMATURE"}
         )
-        armature.name = armature_name
-        asset_group.name = asset_group_name
-        asset_group.select_set(False)
         armature.select_set(False)
 
         # We delete the baked action and set the original one back
@@ -119,44 +84,73 @@ class ExtractAnimationFBX(publish.Extractor):
                 pair[1].user_clear()
                 bpy.data.actions.remove(pair[1])
 
+        return fbx_filename
+
+    def process(self, instance):
+        # Define extract output file path
+        stagingdir = self.staging_dir(instance)
+
+        # Perform extraction
+        self.log.info("Performing extraction..")
+
+        collections = [
+            obj
+            for obj in set(instance[:-1])
+            if plugin.is_container(obj, family="rig")
+        ]
+
+        json_data = []
+        fbx_files = []
+
+        for collection in collections:
+            metadata = collection.get(AVALON_PROPERTY)
+            armatures = [
+                obj
+                for obj in collection.all_objects
+                if obj.type == "ARMATURE"
+            ]
+            for armature in armatures:
+                if armature.animation_data and armature.animation_data.action:
+                    fbx_filename = self._export_animation(
+                        armature, stagingdir, len(fbx_files)
+                    )
+                    json_data.append({
+                        "instance_name": instance.name,
+                        "namespace": metadata.get("namespace"),
+                        "asset_name": metadata.get("asset_name"),
+                        "family": metadata.get("family"),
+                        "libpath": metadata.get("libpath"),
+                        "objectName": collection.name,
+                        "armatureName": armature.name,
+                        "fbx_filename": fbx_filename,
+                    })
+                    fbx_files.append(fbx_filename)
+                else:
+                    self.log.info(f"No animation for: {armature.name}")
+
         json_filename = f"{instance.name}.json"
         json_path = os.path.join(stagingdir, json_filename)
 
-        json_dict = {
-            "instance_name": asset_group.get(AVALON_PROPERTY).get("objectName")
-        }
+        with open(json_path, "w+") as f:
+            json.dump(json_data, fp=f, indent=2)
 
-        # collection = instance.data.get("name")
-        # container = None
-        # for obj in bpy.data.collections[collection].objects:
-        #     if obj.type == "ARMATURE":
-        #         container_name = obj.get("avalon").get("container_name")
-        #         container = bpy.data.collections[container_name]
-        # if container:
-        #     json_dict = {
-        #         "instance_name": container.get("avalon").get("instance_name")
-        #     }
-
-        with open(json_path, "w+") as file:
-            json.dump(json_dict, fp=file, indent=2)
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+        instance.data.setdefault("representations", [])
 
         fbx_representation = {
-            'name': 'fbx',
-            'ext': 'fbx',
-            'files': fbx_filename,
+            "name": "fbx",
+            "ext": "000.fbx" if len(fbx_files) == 1 else "fbx",
+            "files": fbx_files[0] if len(fbx_files) == 1 else fbx_files,
             "stagingDir": stagingdir,
         }
         json_representation = {
-            'name': 'json',
-            'ext': 'json',
-            'files': json_filename,
+            "name": "json",
+            "ext": "json",
+            "files": json_filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(fbx_representation)
         instance.data["representations"].append(json_representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
-                      instance.name, fbx_representation))
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: '{fbx_representation}'"
+        )

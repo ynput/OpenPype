@@ -53,8 +53,8 @@ class ExtractCamera(publish.Extractor):
             bake_anim_use_nla_strips=False,
             bake_anim_use_all_actions=False,
             add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'CAMERA'},
+            armature_nodetype="ROOT",
+            object_types={"CAMERA"},
             bake_anim_simplify_factor=0.0
         )
 
@@ -62,16 +62,16 @@ class ExtractCamera(publish.Extractor):
 
         plugin.deselect_all()
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+        instance.data.setdefault("representations", [])
 
         representation = {
-            'name': 'fbx',
-            'ext': 'fbx',
-            'files': filename,
+            "name": "fbx",
+            "ext": "fbx",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {representation}"
+        )

@@ -3,8 +3,8 @@ import os
 import bpy
 
 from openpype.pipeline import publish
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractFBX(publish.Extractor):
@@ -21,37 +21,47 @@ class ExtractFBX(publish.Extractor):
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
+        # Get project settings
+        project_settings = api.get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"]
+        )
+        scale_length = (
+            project_settings
+            ["blender"]
+            ["publish"]
+            ["ExtractFBX"]
+            ["scale_length"]
+        )
+
         # Perform extraction
         self.log.info("Performing extraction..")
 
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
 
         for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
-
-        context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            if isinstance(obj, bpy.types.Object):
+                obj.select_set(True)
+                selected.append(obj)
 
         new_materials = []
         new_materials_objs = []
-        objects = list(asset_group.children)
 
-        for obj in objects:
-            objects.extend(obj.children)
+        for obj in selected:
             if obj.type == 'MESH' and len(obj.data.materials) == 0:
                 mat = bpy.data.materials.new(obj.name)
                 obj.data.materials.append(mat)
                 new_materials.append(mat)
                 new_materials_objs.append(obj)
 
-        scale_length = bpy.context.scene.unit_settings.scale_length
-        bpy.context.scene.unit_settings.scale_length = 0.01
+        context = plugin.create_blender_context(
+            active=selected[-1], selected=selected
+        )
+
+        kept_scale_length = bpy.context.scene.unit_settings.scale_length
+        if scale_length > 0:
+            bpy.context.scene.unit_settings.scale_length = scale_length
 
         # We export the fbx
         bpy.ops.export_scene.fbx(
@@ -63,7 +73,7 @@ class ExtractFBX(publish.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.context.scene.unit_settings.scale_length = scale_length
+        bpy.context.scene.unit_settings.scale_length = kept_scale_length
 
         plugin.deselect_all()
 
@@ -73,8 +83,7 @@ class ExtractFBX(publish.Extractor):
         for obj in new_materials_objs:
             obj.data.materials.pop()
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+        instance.data.setdefault("representations", [])
 
         representation = {
             'name': 'fbx',
@@ -84,5 +93,6 @@ class ExtractFBX(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {representation}"
+        )
