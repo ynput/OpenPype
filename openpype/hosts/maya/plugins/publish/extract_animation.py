@@ -86,6 +86,13 @@ class ExtractAnimation(openpype.api.Extractor):
             nodes = get_visible_in_frame_range(nodes,
                                                start=start,
                                                end=end)
+            if not nodes:
+                self.log.warning(
+                    "No visible nodes found in frame range {}-{}. "
+                    "Skipping extraction because `visibleOnly` is enabled on "
+                    "the instance.".format(start, end)
+                )
+                return
 
         with suspended_refresh():
             with maintained_selection():
