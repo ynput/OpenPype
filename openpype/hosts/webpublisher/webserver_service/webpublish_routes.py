@@ -8,13 +8,13 @@ from bson.objectid import ObjectId
 from aiohttp.web_response import Response
 
 from openpype.client import (
-    get_projects
+    get_projects,
+    get_assets
 )
 from openpype.lib import (
     OpenPypeMongoConnection,
     PypeLogger,
 )
-from openpype.client import get_assets
 from openpype.lib.remote_publish import (
     get_task_data,
     ERROR_STATUS,

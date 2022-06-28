@@ -14,7 +14,6 @@ from openpype.style import (
     get_default_entity_icon_color,
     get_objected_colors,
 )
-
 from openpype.resources import get_image_path
 from openpype.lib import filter_profiles
 from openpype.api import (
