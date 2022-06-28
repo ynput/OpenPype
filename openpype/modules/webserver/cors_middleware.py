@@ -278,7 +278,6 @@ def cors_middleware(
     return middleware
 
 
-
 def match_items(items: UrlCollection, value: str) -> bool:
     """Go through all items and try to match item with given value."""
     return any(match_path(item, value) for item in items)
