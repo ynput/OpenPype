@@ -14,7 +14,6 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings
 )
-
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .events import emit_event
