@@ -47,6 +47,19 @@ python-versions = ">=3.5"
 aiohttp = ">=3,<4"
 
 [[package]]
+name = "aiohttp-middlewares"
+version = "2.0.0"
+description = "Collection of useful middlewares for aiohttp applications."
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+aiohttp = ">=3.8.1,<4.0.0"
+async-timeout = ">=4.0.2,<5.0.0"
+yarl = ">=1.5.1,<2.0.0"
+
+[[package]]
 name = "aiosignal"
 version = "1.2.0"
 description = "aiosignal: a list of registered asynchronous callbacks"
@@ -1782,6 +1795,10 @@ aiohttp = [
 aiohttp-json-rpc = [
     {file = "aiohttp-json-rpc-0.13.3.tar.gz", hash = "sha256:6237a104478c22c6ef96c7227a01d6832597b414e4b79a52d85593356a169e99"},
     {file = "aiohttp_json_rpc-0.13.3-py3-none-any.whl", hash = "sha256:4fbd197aced61bd2df7ae3237ead7d3e08833c2ccf48b8581e1828c95ebee680"},
+]
+aiohttp-middlewares = [
+    {file = "aiohttp-middlewares-2.0.0.tar.gz", hash = "sha256:e08ba04dc0e8fe379aa5e9444a68485c275677ee1e18c55cbb855de0c3629502"},
+    {file = "aiohttp_middlewares-2.0.0-py3-none-any.whl", hash = "sha256:29cf1513176b4013844711975ff520e26a8a5d8f9fefbbddb5e91224a86b043e"},
 ]
 aiosignal = [
     {file = "aiosignal-1.2.0-py3-none-any.whl", hash = "sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a"},
