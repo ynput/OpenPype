@@ -4,6 +4,7 @@ from datetime import datetime
 
 from bson.objectid import ObjectId
 
+from openpype.client import get_assets, get_subsets
 from openpype.pipeline import AvalonMongoDB
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
@@ -91,10 +92,8 @@ class DeleteAssetSubset(BaseAction):
                 continue
 
             ftrack_id = entity.get("entityId")
-            if not ftrack_id:
-                continue
-
-            ftrack_ids.append(ftrack_id)
+            if ftrack_id:
+                ftrack_ids.append(ftrack_id)
 
         if project_in_selection:
             msg = "It is not possible to use this action on project entity."
@@ -120,48 +119,51 @@ class DeleteAssetSubset(BaseAction):
                 "message": "Invalid selection for this action (Bug)"
             }
 
-        if entities[0].entity_type.lower() == "project":
-            project = entities[0]
-        else:
-            project = entities[0]["project"]
-
+        project = self.get_project_from_entity(entities[0], session)
         project_name = project["full_name"]
         self.dbcon.Session["AVALON_PROJECT"] = project_name
 
-        selected_av_entities = list(self.dbcon.find({
-            "type": "asset",
-            "data.ftrackId": {"$in": ftrack_ids}
-        }))
+        asset_docs = list(get_assets(
+            project_name,
+            fields=["_id", "name", "data.ftrackId", "data.parents"]
+        ))
+        selected_av_entities = []
+        found_ftrack_ids = set()
+        asset_docs_by_name = collections.defaultdict(list)
+        for asset_doc in asset_docs:
+            ftrack_id = asset_doc["data"].get("ftrackId")
+            if ftrack_id:
+                found_ftrack_ids.add(ftrack_id)
+                if ftrack_id in entity_mapping:
+                    selected_av_entities.append(asset_doc)
+
+            asset_name = asset_doc["name"]
+            asset_docs_by_name[asset_name].append(asset_doc)
+
         found_without_ftrack_id = {}
-        if len(selected_av_entities) != len(ftrack_ids):
-            found_ftrack_ids = [
-                ent["data"]["ftrackId"] for ent in selected_av_entities
-            ]
-            for ftrack_id, entity in entity_mapping.items():
-                if ftrack_id in found_ftrack_ids:
+        for ftrack_id, entity in entity_mapping.items():
+            if ftrack_id in found_ftrack_ids:
+                continue
+
+            av_ents_by_name = asset_docs_by_name[entity["name"]]
+            if not av_ents_by_name:
+                continue
+
+            ent_path_items = [ent["name"] for ent in entity["link"]]
+            end_index = len(ent_path_items) - 1
+            parents = ent_path_items[1:end_index:]
+            # TODO we should say to user that
+            # few of them are missing in avalon
+            for av_ent in av_ents_by_name:
+                if av_ent["data"]["parents"] != parents:
                     continue
 
-                av_ents_by_name = list(self.dbcon.find({
-                    "type": "asset",
-                    "name": entity["name"]
-                }))
-                if not av_ents_by_name:
-                    continue
-
-                ent_path_items = [ent["name"] for ent in entity["link"]]
-                parents = ent_path_items[1:len(ent_path_items)-1:]
-                # TODO we should say to user that
-                # few of them are missing in avalon
-                for av_ent in av_ents_by_name:
-                    if av_ent["data"]["parents"] != parents:
-                        continue
-
-                    # TODO we should say to user that found entity
-                    # with same name does not match same ftrack id?
-                    if "ftrackId" not in av_ent["data"]:
-                        selected_av_entities.append(av_ent)
-                        found_without_ftrack_id[str(av_ent["_id"])] = ftrack_id
-                        break
+                # TODO we should say to user that found entity
+                # with same name does not match same ftrack id?
+                if "ftrackId" not in av_ent["data"]:
+                    selected_av_entities.append(av_ent)
+                    found_without_ftrack_id[str(av_ent["_id"])] = ftrack_id
+                    break
 
         if not selected_av_entities:
             return {
@@ -206,10 +208,7 @@ class DeleteAssetSubset(BaseAction):
 
         items.append(id_item)
         asset_ids = [ent["_id"] for ent in selected_av_entities]
-        subsets_for_selection = self.dbcon.find({
-            "type": "subset",
-            "parent": {"$in": asset_ids}
-        })
+        subsets_for_selection = get_subsets(project_name, asset_ids=asset_ids)
 
         asset_ending = ""
         if len(selected_av_entities) > 1:
@@ -459,13 +458,9 @@ class DeleteAssetSubset(BaseAction):
         if len(assets_to_delete) > 0:
             map_av_ftrack_id = spec_data["without_ftrack_id"]
             # Prepare data when deleting whole avalon asset
-            avalon_assets = self.dbcon.find(
-                {"type": "asset"},
-                {
-                    "_id": 1,
-                    "data.visualParent": 1,
-                    "data.ftrackId": 1
-                }
+            avalon_assets = get_assets(
+                project_name,
+                fields=["_id", "data.visualParent", "data.ftrackId"]
             )
             avalon_assets_by_parent = collections.defaultdict(list)
             for asset in avalon_assets:

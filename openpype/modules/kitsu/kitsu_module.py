@@ -129,8 +129,8 @@ def sync_service(login, password):
         login (str): Kitsu user login
         password (str): Kitsu user password
     """
-    from .utils.update_op_with_zou import sync_all_project
+    from .utils.update_op_with_zou import sync_all_projects
     from .utils.sync_service import start_listeners
 
-    sync_all_project(login, password)
+    sync_all_projects(login, password)
     start_listeners(login, password)

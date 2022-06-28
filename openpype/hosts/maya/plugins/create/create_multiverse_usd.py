@@ -16,7 +16,7 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data.update(lib.collect_animation_data(True))
 
         self.data["fileFormat"] = ["usd", "usda", "usdz"]
-        self.data["stripNamespaces"] = False
+        self.data["stripNamespaces"] = True
         self.data["mergeTransformAndShape"] = False
         self.data["writeAncestors"] = True
         self.data["flattenParentXforms"] = False
@@ -37,15 +37,15 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data["writeUVs"] = True
         self.data["writeColorSets"] = False
         self.data["writeTangents"] = False
-        self.data["writeRefPositions"] = False
+        self.data["writeRefPositions"] = True
         self.data["writeBlendShapes"] = False
-        self.data["writeDisplayColor"] = False
+        self.data["writeDisplayColor"] = True
         self.data["writeSkinWeights"] = False
         self.data["writeMaterialAssignment"] = False
         self.data["writeHardwareShader"] = False
         self.data["writeShadingNetworks"] = False
         self.data["writeTransformMatrix"] = True
-        self.data["writeUsdAttributes"] = False
+        self.data["writeUsdAttributes"] = True
         self.data["writeInstancesAsReferences"] = False
         self.data["timeVaryingTopology"] = False
         self.data["customMaterialNamespace"] = ''
