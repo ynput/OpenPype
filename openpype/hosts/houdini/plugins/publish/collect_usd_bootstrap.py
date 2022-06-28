@@ -1,5 +1,6 @@
 import pyblish.api
 
+from openyppe.client import get_subset_by_name, get_asset_by_name
 from openpype.pipeline import legacy_io
 import openpype.lib.usdlib as usdlib
 
@@ -50,10 +51,8 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         self.log.debug("Add bootstrap for: %s" % bootstrap)
 
-        asset = legacy_io.find_one({
-            "name": instance.data["asset"],
-            "type": "asset"
-        })
+        project_name = legacy_io.active_project()
+        asset = get_asset_by_name(project_name, instance.data["asset"])
         assert asset, "Asset must exist: %s" % asset
 
         # Check which are not about to be created and don't exist yet
@@ -70,7 +69,7 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         self.log.debug("Checking required bootstrap: %s" % required)
         for subset in required:
-            if self._subset_exists(instance, subset, asset):
+            if self._subset_exists(project_name, instance, subset, asset):
                 continue
 
             self.log.debug(
@@ -93,7 +92,7 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
             for key in ["asset"]:
                 new.data[key] = instance.data[key]
 
-    def _subset_exists(self, instance, subset, asset):
+    def _subset_exists(self, project_name, instance, subset, asset):
         """Return whether subset exists in current context or in database."""
         # Allow it to be created during this publish session
         context = instance.context
@@ -106,9 +105,8 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         # Or, if they already exist in the database we can
         # skip them too.
-        return bool(
-            legacy_io.find_one(
-                {"name": subset, "type": "subset", "parent": asset["_id"]},
-                {"_id": True}
-            )
-        )
+        if get_subset_by_name(
+            project_name, subset, asset["_id"], fields=["_id"]
+        ):
+            return True
+        return False

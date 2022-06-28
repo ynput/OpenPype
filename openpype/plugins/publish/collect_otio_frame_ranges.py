@@ -8,8 +8,11 @@ Requires:
 # import os
 import opentimelineio as otio
 import pyblish.api
-import openpype.lib
 from pprint import pformat
+from openpype.pipeline.editorial import (
+    otio_range_to_frame_range,
+    otio_range_with_handles
+)
 
 
 class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
@@ -31,9 +34,9 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         otio_tl_range = otio_clip.range_in_parent()
         otio_src_range = otio_clip.source_range
         otio_avalable_range = otio_clip.available_range()
-        otio_tl_range_handles = openpype.lib.otio_range_with_handles(
+        otio_tl_range_handles = otio_range_with_handles(
             otio_tl_range, instance)
-        otio_src_range_handles = openpype.lib.otio_range_with_handles(
+        otio_src_range_handles = otio_range_with_handles(
             otio_src_range, instance)
 
         # get source avalable start frame
@@ -42,7 +45,7 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
             otio_avalable_range.start_time.rate)
 
         # convert to frames
-        range_convert = openpype.lib.otio_range_to_frame_range
+        range_convert = otio_range_to_frame_range
         tl_start, tl_end = range_convert(otio_tl_range)
         tl_start_h, tl_end_h = range_convert(otio_tl_range_handles)
         src_start, src_end = range_convert(otio_src_range)
