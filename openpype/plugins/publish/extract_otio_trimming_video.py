@@ -9,6 +9,7 @@ import os
 from pyblish import api
 import openpype
 from copy import deepcopy
+from openpype.pipeline.editorial import frames_to_seconds
 
 
 class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
@@ -81,8 +82,8 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
         frame_start = otio_range.start_time.value
         input_fps = otio_range.start_time.rate
         frame_duration = otio_range.duration.value - 1
-        sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
-        sec_duration = openpype.lib.frames_to_secons(frame_duration, input_fps)
+        sec_start = frames_to_seconds(frame_start, input_fps)
+        sec_duration = frames_to_seconds(frame_duration, input_fps)
 
         # form command for rendering gap files
         command.extend([
