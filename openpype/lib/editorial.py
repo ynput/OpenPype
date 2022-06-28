@@ -1,5 +1,14 @@
+"""Code related to editorial utility functions was moved
+to 'openpype.pipeline.editorial' please change your imports as soon as
+possible. File will be probably removed in OpenPype 3.14.*
+"""
+
 import warnings
 import functools
+
+
+class EditorialDeprecatedWarning(DeprecationWarning):
+    pass
 
 
 def editorial_deprecated(func):
@@ -10,12 +19,13 @@ def editorial_deprecated(func):
 
     @functools.wraps(func)
     def new_func(*args, **kwargs):
+        warnings.simplefilter("always", EditorialDeprecatedWarning)
         warnings.warn(
             (
                 "Call to deprecated function '{}'."
                 " Function was moved to 'openpype.pipeline.editorial'."
             ).format(func.__name__),
-            category=DeprecationWarning,
+            category=EditorialDeprecatedWarning,
             stacklevel=2
         )
         return func(*args, **kwargs)
