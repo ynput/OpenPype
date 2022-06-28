@@ -1,35 +1,45 @@
 # Changelog
 
-## [3.12.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.1...HEAD)
 
 ### 📖 Documentation
 
+- Fix typo in documentation: pyenv on mac [\#3417](https://github.com/pypeclub/OpenPype/pull/3417)
 - Linux: update OIIO package [\#3401](https://github.com/pypeclub/OpenPype/pull/3401)
-- General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
-- Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
 
 **🚀 Enhancements**
 
+- Webserver: Added CORS middleware [\#3422](https://github.com/pypeclub/OpenPype/pull/3422)
+- Attribute Defs UI: Files widget show what is allowed to drop in [\#3411](https://github.com/pypeclub/OpenPype/pull/3411)
+- General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
 - Hosts: More options for in-host callbacks [\#3357](https://github.com/pypeclub/OpenPype/pull/3357)
+- Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
 - Maya: Allow more data to be published along camera 🎥  [\#3304](https://github.com/pypeclub/OpenPype/pull/3304)
 
 **🐛 Bug fixes**
 
+- NewPublisher: Fix subset name change on change of creator plugin [\#3420](https://github.com/pypeclub/OpenPype/pull/3420)
+- Bug: fix invalid avalon import [\#3418](https://github.com/pypeclub/OpenPype/pull/3418)
 - Nuke: Fix keyword argument in query function [\#3414](https://github.com/pypeclub/OpenPype/pull/3414)
+- Houdini: fix loading and updating vbd/bgeo sequences [\#3408](https://github.com/pypeclub/OpenPype/pull/3408)
 - Nuke: Collect representation files based on Write [\#3407](https://github.com/pypeclub/OpenPype/pull/3407)
 - General: Filter representations before integration start [\#3398](https://github.com/pypeclub/OpenPype/pull/3398)
 - Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
 - TVPaint: Make sure exit code is set to not None [\#3382](https://github.com/pypeclub/OpenPype/pull/3382)
 - Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
+- Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
 - Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
 - Standalone: settings improvements [\#3355](https://github.com/pypeclub/OpenPype/pull/3355)
 - Nuke: Load full model hierarchy by default [\#3328](https://github.com/pypeclub/OpenPype/pull/3328)
 
 **🔀 Refactored code**
 
+- Unreal: Use client query functions [\#3421](https://github.com/pypeclub/OpenPype/pull/3421)
+- General: Move editorial lib to pipeline [\#3419](https://github.com/pypeclub/OpenPype/pull/3419)
 - Kitsu: renaming to plural func sync\_all\_projects [\#3397](https://github.com/pypeclub/OpenPype/pull/3397)
+- Houdini: Use client query functions [\#3395](https://github.com/pypeclub/OpenPype/pull/3395)
 - Hiero: Use client query functions [\#3393](https://github.com/pypeclub/OpenPype/pull/3393)
 - Nuke: Use client query functions [\#3391](https://github.com/pypeclub/OpenPype/pull/3391)
 - Maya: Use client query functions [\#3385](https://github.com/pypeclub/OpenPype/pull/3385)
@@ -43,6 +53,7 @@
 
 **Merged pull requests:**
 
+- Sync Queue: Added far future value for null values for dates [\#3371](https://github.com/pypeclub/OpenPype/pull/3371)
 - Maya - added support for single frame playblast review [\#3369](https://github.com/pypeclub/OpenPype/pull/3369)
 
 ## [3.11.1](https://github.com/pypeclub/OpenPype/tree/3.11.1) (2022-06-20)
@@ -73,7 +84,6 @@
 - nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 - Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
-- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
 
 **🔀 Refactored code**
 
@@ -97,17 +107,15 @@
 - Ftrack: Delivery action can work on ReviewSessions [\#3307](https://github.com/pypeclub/OpenPype/pull/3307)
 - Maya: Look assigner UI improvements [\#3298](https://github.com/pypeclub/OpenPype/pull/3298)
 - Ftrack: Action to transfer values of hierarchical attributes [\#3284](https://github.com/pypeclub/OpenPype/pull/3284)
-- Maya: better handling of legacy review subsets names [\#3269](https://github.com/pypeclub/OpenPype/pull/3269)
-- General: Updated windows oiio tool [\#3268](https://github.com/pypeclub/OpenPype/pull/3268)
-- Unreal: add support for skeletalMesh and staticMesh to loaders [\#3267](https://github.com/pypeclub/OpenPype/pull/3267)
-- Maya: reference loaders could store placeholder in referenced url [\#3264](https://github.com/pypeclub/OpenPype/pull/3264)
 
 **🐛 Bug fixes**
 
 - General: Handle empty source key on instance [\#3342](https://github.com/pypeclub/OpenPype/pull/3342)
+- General: Handle empty source key on instance [\#3341](https://github.com/pypeclub/OpenPype/pull/3341)
 - Houdini: Fix Houdini VDB manage update wrong file attribute name [\#3322](https://github.com/pypeclub/OpenPype/pull/3322)
 - Nuke: anatomy compatibility issue hacks [\#3321](https://github.com/pypeclub/OpenPype/pull/3321)
 - hiero: otio p3 compatibility issue - metadata on effect use update 3.11 [\#3314](https://github.com/pypeclub/OpenPype/pull/3314)
+- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
 - General: Vendorized modules for Python 2 and update poetry lock [\#3305](https://github.com/pypeclub/OpenPype/pull/3305)
 - Fix - added local targets to install host [\#3303](https://github.com/pypeclub/OpenPype/pull/3303)
 - Settings: Add missing default settings for nuke gizmo [\#3301](https://github.com/pypeclub/OpenPype/pull/3301)
@@ -115,9 +123,6 @@
 - Maya: point cache publish handles Maya instances [\#3297](https://github.com/pypeclub/OpenPype/pull/3297)
 - Global: extract review slate issues [\#3286](https://github.com/pypeclub/OpenPype/pull/3286)
 - Webpublisher: return only active projects in ProjectsEndpoint [\#3281](https://github.com/pypeclub/OpenPype/pull/3281)
-- Hiero: add support for task tags 3.10.x [\#3279](https://github.com/pypeclub/OpenPype/pull/3279)
-- General: Fix Oiio tool path resolving [\#3278](https://github.com/pypeclub/OpenPype/pull/3278)
-- Maya: Fix udim support for e.g. uppercase \<UDIM\> tag [\#3266](https://github.com/pypeclub/OpenPype/pull/3266)
 
 **🔀 Refactored code**
 
@@ -127,7 +132,6 @@
 **Merged pull requests:**
 
 - Maya: add pointcache family to gpu cache loader [\#3318](https://github.com/pypeclub/OpenPype/pull/3318)
-- Maya look: skip empty file attributes [\#3274](https://github.com/pypeclub/OpenPype/pull/3274)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
