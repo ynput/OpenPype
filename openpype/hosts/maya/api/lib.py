@@ -3241,8 +3241,8 @@ def get_visible_in_frame_range(nodes, start, end):
 
     Args:
         nodes (list): List of node names to consider.
-        start (int): Start frame.
-        end (int): End frame.
+        start (int, float): Start frame.
+        end (int, float): End frame.
 
     Returns:
         list: List of node names. These will be long full path names so
