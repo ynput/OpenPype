@@ -60,7 +60,32 @@ class ExtractThumbnail(openpype.api.Extractor):
             "overscan": 1.0,
             "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
         }
+        capture_presets = capture_preset
+        # Set resolution variables from capture presets
+        width_preset = capture_presets["Resolution"]["width"]
+        height_preset = capture_presets["Resolution"]["height"]
+        # Set resolution variables from asset values
+        asset_width = instance.data.get("resolutionWidth")
+        asset_height = instance.data.get("resolutionHeight")
+        review_instance_width = instance.data.get("instanceWidth")
+        review_instance_height = instance.data.get("instanceHeight")
+        # Tests if project resolution is set,
+        # if it is a value other than zero, that value is
+        # used, if not then the asset resolution is
+        # used
+        if review_instance_width != 0:
+            preset['width'] = review_instance_width
+        elif width_preset == 0:
+            preset['width'] = asset_width
+        elif width_preset != 0:
+            preset['width'] = width_preset
 
+        if review_instance_height != 0:
+            preset['height'] = review_instance_height
+        elif height_preset == 0:
+            preset['height'] = asset_height
+        elif height_preset != 0:
+            preset['height'] = height_preset
         stagingDir = self.staging_dir(instance)
         filename = "{0}".format(instance.name)
         path = os.path.join(stagingDir, filename)
