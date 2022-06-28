@@ -102,6 +102,9 @@ class InstallPySideToBlender(PreLaunchHook):
             python_executable = os.path.join(python_bin, "python.exe")
         else:
             python_executable = os.path.join(python_bin, python_version)
+            # Check for python with enabled 'pymalloc'
+            if not os.path.exists(python_executable):
+                python_executable += "m"
 
         if not os.path.exists(python_executable):
             self.log.warning(
