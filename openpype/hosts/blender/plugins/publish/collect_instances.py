@@ -26,8 +26,18 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect instances from the current Blender scene."""
+
+        # Collect global scene data.
+        context.data.update({
+            "frameStart": bpy.context.scene.frame_start,
+            "frameEnd": bpy.context.scene.frame_end,
+            "fps": bpy.context.scene.render.fps,
+        })
+
+        # Collect pyblish.avalon.instance collections.
         collections = self.get_collections()
 
+        # Create pyblish instances from collections.
         for collection in collections:
             avalon_prop = collection[AVALON_PROPERTY]
             asset = avalon_prop["asset"]
