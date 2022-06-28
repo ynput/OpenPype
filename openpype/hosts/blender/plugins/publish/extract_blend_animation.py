@@ -3,10 +3,11 @@ import os
 import bpy
 
 from openpype.pipeline import publish
+from openpype.hosts.blender.api import plugin
 
 
 class ExtractBlendAnimation(publish.Extractor):
-    """Extract a blend file."""
+    """Extract animation as blend file."""
 
     label = "Extract Blend"
     hosts = ["blender"]
@@ -24,31 +25,36 @@ class ExtractBlendAnimation(publish.Extractor):
         self.log.info("Performing extraction..")
 
         data_blocks = set()
+        collections = set()
 
         for obj in instance:
-            if isinstance(obj, bpy.types.Object) and obj.type == 'EMPTY':
-                child = obj.children[0]
-                if child and child.type == 'ARMATURE':
-                    if child.animation_data and child.animation_data.action:
-                        if not obj.animation_data:
-                            obj.animation_data_create()
-                        obj.animation_data.action = child.animation_data.action
-                        obj.animation_data_clear()
-                        data_blocks.add(child.animation_data.action)
-                        data_blocks.add(obj)
+            if plugin.is_container(obj, family="rig"):
+                collections.add(obj)
+
+        for collection in collections:
+            for obj in collection.all_objects:
+                if obj.animation_data and obj.animation_data.action:
+                    action = obj.animation_data.action.copy()
+                    action_name = obj.animation_data.action.name.split(":")[-1]
+                    action.name = f"{instance.name}:{action_name}"
+                    action["collection"] = collection.name
+                    action["armature"] = obj.name
+                    data_blocks.add(action)
 
         bpy.data.libraries.write(filepath, data_blocks)
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+        for action in data_blocks:
+            bpy.data.actions.remove(action)
 
         representation = {
-            'name': 'blend',
-            'ext': 'blend',
-            'files': filename,
+            "name": "blend",
+            "ext": "blend",
+            "files": filename,
             "stagingDir": stagingdir,
         }
+        instance.data.setdefault("representations", [])
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {representation}"
+        )
