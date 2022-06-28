@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.12.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.1...3.12.0)
 
 ### 📖 Documentation
 
@@ -29,7 +29,6 @@
 - Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
 - TVPaint: Make sure exit code is set to not None [\#3382](https://github.com/pypeclub/OpenPype/pull/3382)
 - Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
-- Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
 - Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
 - Standalone: settings improvements [\#3355](https://github.com/pypeclub/OpenPype/pull/3355)
 - Nuke: Load full model hierarchy by default [\#3328](https://github.com/pypeclub/OpenPype/pull/3328)
@@ -74,6 +73,7 @@
 
 **🐛 Bug fixes**
 
+- Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
 - Nuke: bake streams with slate on farm [\#3368](https://github.com/pypeclub/OpenPype/pull/3368)
 - Harmony: audio validator has wrong logic [\#3364](https://github.com/pypeclub/OpenPype/pull/3364)
 - Nuke: Fix missing variable in extract thumbnail [\#3363](https://github.com/pypeclub/OpenPype/pull/3363)
@@ -84,6 +84,7 @@
 - nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 - Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
+- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
 
 **🔀 Refactored code**
 
@@ -111,11 +112,9 @@
 **🐛 Bug fixes**
 
 - General: Handle empty source key on instance [\#3342](https://github.com/pypeclub/OpenPype/pull/3342)
-- General: Handle empty source key on instance [\#3341](https://github.com/pypeclub/OpenPype/pull/3341)
 - Houdini: Fix Houdini VDB manage update wrong file attribute name [\#3322](https://github.com/pypeclub/OpenPype/pull/3322)
 - Nuke: anatomy compatibility issue hacks [\#3321](https://github.com/pypeclub/OpenPype/pull/3321)
 - hiero: otio p3 compatibility issue - metadata on effect use update 3.11 [\#3314](https://github.com/pypeclub/OpenPype/pull/3314)
-- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
 - General: Vendorized modules for Python 2 and update poetry lock [\#3305](https://github.com/pypeclub/OpenPype/pull/3305)
 - Fix - added local targets to install host [\#3303](https://github.com/pypeclub/OpenPype/pull/3303)
 - Settings: Add missing default settings for nuke gizmo [\#3301](https://github.com/pypeclub/OpenPype/pull/3301)
