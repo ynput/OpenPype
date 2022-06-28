@@ -37,6 +37,35 @@ class CollectReview(pyblish.api.InstancePlugin):
             if isinstance(obj, bpy.types.Object) and obj.type == "MESH"
         ]
 
+        reviewable_instances = [
+            context_instance
+            for context_instance in instance.context
+            if context_instance.data.get("family") not in (
+                "review", "camera", "workfile"
+            )
+        ]
+
+        if reviewable_instances:
+            assert len(reviewable_instances) == 1, (
+                f"Multiple subsets for review {reviewable_instances}"
+            )
+
+            reviewable_instance = reviewable_instances[0]
+            self.log.debug(f"Subset for review: {reviewable_instance}")
+
+            if not isinstance(reviewable_instance.data.get("families"), list):
+                reviewable_instance.data["families"] = []
+            reviewable_instance.data["families"].append("review")
+
+            reviewable_instance.data.update({
+                "review_camera": camera,
+                "frameStart": instance.context.data["frameStart"],
+                "frameEnd": instance.context.data["frameEnd"],
+                "fps": instance.context.data["fps"],
+                "isolate": isolate_objects,
+            })
+            instance.data["remove"] = True
+
         if not instance.data.get("remove"):
 
             task = legacy_io.Session.get("AVALON_TASK")

@@ -2,14 +2,14 @@ import os
 import glob
 
 import pyblish.api
-from openpype.pipeline import publish
+import openpype.api
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 import bpy
 
 
-class ExtractThumbnail(publish.Extractor):
+class ExtractThumbnail(openpype.api.Extractor):
     """Extract viewport thumbnail.
 
     Takes review camera and creates a thumbnail based on viewport
@@ -19,9 +19,8 @@ class ExtractThumbnail(publish.Extractor):
 
     label = "Extract Thumbnail"
     hosts = ["blender"]
-    families = ["review"]
+    families = ["review", "model", "rig"]
     order = pyblish.api.ExtractorOrder + 0.01
-    presets = {}
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -37,7 +36,11 @@ class ExtractThumbnail(publish.Extractor):
         family = instance.data.get("family")
         isolate = instance.data("isolate", None)
 
-        preset = self.presets.get(family, {})
+        project_settings = instance.context.data["project_settings"]["blender"]
+        extractor_settings = project_settings["publish"]["ExtractThumbnail"]
+        presets = extractor_settings.get("presets")
+
+        preset = presets.get(family, {})
 
         preset.update({
             "camera": camera,

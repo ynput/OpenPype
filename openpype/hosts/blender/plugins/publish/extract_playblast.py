@@ -1,20 +1,20 @@
 import os
 import clique
 
-import bpy
-
 import pyblish.api
-from openpype.pipeline import publish
+import openpype.api
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
+import bpy
 
-class ExtractPlayblast(publish.Extractor):
-    """
-    Extract viewport playblast.
+
+class ExtractPlayblast(openpype.api.Extractor):
+    """Extract viewport playblast.
 
     Takes review camera and creates review Quicktime video based on viewport
     capture.
+
     """
 
     label = "Extract Playblast"
@@ -25,8 +25,6 @@ class ExtractPlayblast(publish.Extractor):
 
     def process(self, instance):
         self.log.info("Extracting capture..")
-
-        self.log.info(instance.data)
 
         # get scene fps
         fps = instance.data.get("fps")
@@ -84,23 +82,18 @@ class ExtractPlayblast(publish.Extractor):
         self.log.debug(f"playblast path {path}")
 
         collected_files = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(
-            collected_files,
-            patterns=[f"{filename}\\.{clique.DIGITS_PATTERN}\\.png$"],
-        )
+        collections, remainder = clique.assemble(collected_files)
 
-        if len(collections) > 1:
-            raise RuntimeError(
-                f"More than one collection found in stagingdir: {stagingdir}"
-            )
-        elif len(collections) == 0:
-            raise RuntimeError(
-                f"No collection found in stagingdir: {stagingdir}"
-            )
-
-        frame_collection = collections[0]
-
-        self.log.info(f"We found collection of interest {frame_collection}")
+        self.log.debug(f"filename {filename}")
+        frame_collection = None
+        for collection in collections:
+            filebase = collection.format("{head}").rstrip(".")
+            self.log.debug(f"collection head {filebase}")
+            if filebase in filename:
+                frame_collection = collection
+                self.log.info(
+                    f"we found collection of interest {frame_collection}"
+                )
 
         instance.data.setdefault("representations", [])
 
@@ -116,6 +109,7 @@ class ExtractPlayblast(publish.Extractor):
             "frameStart": start,
             "frameEnd": end,
             "fps": fps,
+            "preview": True,
             "tags": tags,
             "camera_name": camera
         }
