@@ -225,7 +225,9 @@ def get_file_node_files(node):
     paths = get_file_node_paths(node)
     paths = [cmds.workspace(expandName=path) for path in paths]
     if node_uses_image_sequence(node):
-        globs = [glob.glob(seq_to_glob(path)) for path in paths]
+        globs = []
+        for path in paths:
+            globs += glob.glob(seq_to_glob(path))
         return globs
     else:
         return list(filter(lambda x: os.path.exists(x), paths))
