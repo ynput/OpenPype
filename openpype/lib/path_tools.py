@@ -6,6 +6,7 @@ import logging
 import six
 import platform
 
+from openpype.client import get_project
 from openpype.settings import get_project_settings
 
 from .anatomy import Anatomy
@@ -171,45 +172,73 @@ def get_last_version_from_path(path_dir, filter):
     return None
 
 
-def compute_paths(basic_paths_items, project_root):
+def concatenate_splitted_paths(split_paths, anatomy):
     pattern_array = re.compile(r"\[.*\]")
-    project_root_key = "__project_root__"
     output = []
-    for path_items in basic_paths_items:
+    for path_items in split_paths:
         clean_items = []
+        if isinstance(path_items, str):
+            path_items = [path_items]
+
         for path_item in path_items:
-            matches = re.findall(pattern_array, path_item)
-            if len(matches) > 0:
-                path_item = path_item.replace(matches[0], "")
-            if path_item == project_root_key:
-                path_item = project_root
+            if not re.match(r"{.+}", path_item):
+                path_item = re.sub(pattern_array, "", path_item)
             clean_items.append(path_item)
+
+        # backward compatibility
+        if "__project_root__" in path_items:
+            for root, root_path in anatomy.roots.items():
+                if not os.path.exists(str(root_path)):
+                    log.debug("Root {} path path {} not exist on \
+                        computer!".format(root, root_path))
+                    continue
+                clean_items = ["{{root[{}]}}".format(root),
+                               r"{project[name]}"] + clean_items[1:]
+                output.append(os.path.normpath(os.path.sep.join(clean_items)))
+            continue
+
         output.append(os.path.normpath(os.path.sep.join(clean_items)))
+
     return output
+
+
+def get_format_data(anatomy):
+    project_doc = get_project(anatomy.project_name, fields=["data.code"])
+    project_code = project_doc["data"]["code"]
+
+    return {
+        "root": anatomy.roots,
+        "project": {
+            "name": anatomy.project_name,
+            "code": project_code
+        },
+    }
+
+
+def fill_paths(path_list, anatomy):
+    format_data = get_format_data(anatomy)
+    filled_paths = []
+
+    for path in path_list:
+        new_path = path.format(**format_data)
+        filled_paths.append(new_path)
+
+    return filled_paths
 
 
 def create_project_folders(basic_paths, project_name):
     anatomy = Anatomy(project_name)
-    roots_paths = []
-    if isinstance(anatomy.roots, dict):
-        for root in anatomy.roots.values():
-            roots_paths.append(root.value)
-    else:
-        roots_paths.append(anatomy.roots.value)
 
-    for root_path in roots_paths:
-        project_root = os.path.join(root_path, project_name)
-        full_paths = compute_paths(basic_paths, project_root)
-        # Create folders
-        for path in full_paths:
-            full_path = path.format(project_root=project_root)
-            if os.path.exists(full_path):
-                log.debug(
-                    "Folder already exists: {}".format(full_path)
-                )
-            else:
-                log.debug("Creating folder: {}".format(full_path))
-                os.makedirs(full_path)
+    concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
+    filled_paths = fill_paths(concat_paths, anatomy)
+
+    # Create folders
+    for path in filled_paths:
+        if os.path.exists(path):
+            log.debug("Folder already exists: {}".format(path))
+        else:
+            log.debug("Creating folder: {}".format(path))
+            os.makedirs(path)
 
 
 def _list_path_items(folder_structure):
@@ -308,6 +337,7 @@ class HostDirmap:
             on_dirmap_enabled: run host code for enabling dirmap
             do_dirmap: run host code to do actual remapping
     """
+
     def __init__(self, host_name, project_settings, sync_module=None):
         self.host_name = host_name
         self.project_settings = project_settings

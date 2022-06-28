@@ -1,29 +1,40 @@
 # Changelog
 
-## [3.11.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.1...HEAD)
 
 ### 📖 Documentation
 
+- Linux: update OIIO package [\#3401](https://github.com/pypeclub/OpenPype/pull/3401)
 - General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
-- Feature/multiverse [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
+- Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
 
 **🚀 Enhancements**
 
 - Hosts: More options for in-host callbacks [\#3357](https://github.com/pypeclub/OpenPype/pull/3357)
-- TVPaint: Extractor use mark in/out range to render [\#3308](https://github.com/pypeclub/OpenPype/pull/3308)
 - Maya: Allow more data to be published along camera 🎥  [\#3304](https://github.com/pypeclub/OpenPype/pull/3304)
 
 **🐛 Bug fixes**
 
+- Nuke: Fix keyword argument in query function [\#3414](https://github.com/pypeclub/OpenPype/pull/3414)
+- Nuke: Collect representation files based on Write [\#3407](https://github.com/pypeclub/OpenPype/pull/3407)
+- General: Filter representations before integration start [\#3398](https://github.com/pypeclub/OpenPype/pull/3398)
+- Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
 - TVPaint: Make sure exit code is set to not None [\#3382](https://github.com/pypeclub/OpenPype/pull/3382)
 - Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
 - Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
+- Standalone: settings improvements [\#3355](https://github.com/pypeclub/OpenPype/pull/3355)
+- Nuke: Load full model hierarchy by default [\#3328](https://github.com/pypeclub/OpenPype/pull/3328)
 
 **🔀 Refactored code**
 
+- Kitsu: renaming to plural func sync\_all\_projects [\#3397](https://github.com/pypeclub/OpenPype/pull/3397)
+- Hiero: Use client query functions [\#3393](https://github.com/pypeclub/OpenPype/pull/3393)
+- Nuke: Use client query functions [\#3391](https://github.com/pypeclub/OpenPype/pull/3391)
+- Maya: Use client query functions [\#3385](https://github.com/pypeclub/OpenPype/pull/3385)
 - Harmony: Use client query functions [\#3378](https://github.com/pypeclub/OpenPype/pull/3378)
+- Celaction: Use client query functions [\#3376](https://github.com/pypeclub/OpenPype/pull/3376)
 - Photoshop: Use client query functions [\#3375](https://github.com/pypeclub/OpenPype/pull/3375)
 - AfterEffects: Use client query functions [\#3374](https://github.com/pypeclub/OpenPype/pull/3374)
 - TVPaint: Use client query functions [\#3340](https://github.com/pypeclub/OpenPype/pull/3340)
@@ -49,7 +60,6 @@
 - Ftrack: Removed requirement of pypeclub role from default settings [\#3354](https://github.com/pypeclub/OpenPype/pull/3354)
 - Kitsu: Prevent crash on missing frames information [\#3352](https://github.com/pypeclub/OpenPype/pull/3352)
 - Ftrack: Open browser from tray [\#3320](https://github.com/pypeclub/OpenPype/pull/3320)
-- Enhancement: More control over thumbnail processing. [\#3259](https://github.com/pypeclub/OpenPype/pull/3259)
 
 **🐛 Bug fixes**
 
@@ -63,6 +73,7 @@
 - nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 - Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
+- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
 
 **🔀 Refactored code**
 
@@ -90,15 +101,13 @@
 - General: Updated windows oiio tool [\#3268](https://github.com/pypeclub/OpenPype/pull/3268)
 - Unreal: add support for skeletalMesh and staticMesh to loaders [\#3267](https://github.com/pypeclub/OpenPype/pull/3267)
 - Maya: reference loaders could store placeholder in referenced url [\#3264](https://github.com/pypeclub/OpenPype/pull/3264)
-- TVPaint: Init file for TVPaint worker also handle guideline images [\#3250](https://github.com/pypeclub/OpenPype/pull/3250)
-- Nuke: Change default icon path in settings [\#3247](https://github.com/pypeclub/OpenPype/pull/3247)
 
 **🐛 Bug fixes**
 
+- General: Handle empty source key on instance [\#3342](https://github.com/pypeclub/OpenPype/pull/3342)
 - Houdini: Fix Houdini VDB manage update wrong file attribute name [\#3322](https://github.com/pypeclub/OpenPype/pull/3322)
 - Nuke: anatomy compatibility issue hacks [\#3321](https://github.com/pypeclub/OpenPype/pull/3321)
 - hiero: otio p3 compatibility issue - metadata on effect use update 3.11 [\#3314](https://github.com/pypeclub/OpenPype/pull/3314)
-- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
 - General: Vendorized modules for Python 2 and update poetry lock [\#3305](https://github.com/pypeclub/OpenPype/pull/3305)
 - Fix - added local targets to install host [\#3303](https://github.com/pypeclub/OpenPype/pull/3303)
 - Settings: Add missing default settings for nuke gizmo [\#3301](https://github.com/pypeclub/OpenPype/pull/3301)
@@ -109,9 +118,6 @@
 - Hiero: add support for task tags 3.10.x [\#3279](https://github.com/pypeclub/OpenPype/pull/3279)
 - General: Fix Oiio tool path resolving [\#3278](https://github.com/pypeclub/OpenPype/pull/3278)
 - Maya: Fix udim support for e.g. uppercase \<UDIM\> tag [\#3266](https://github.com/pypeclub/OpenPype/pull/3266)
-- Nuke: bake reformat was failing on string type [\#3261](https://github.com/pypeclub/OpenPype/pull/3261)
-- Maya: hotfix Pxr multitexture in looks [\#3260](https://github.com/pypeclub/OpenPype/pull/3260)
-- Unreal: Fix Camera Loading if Layout is missing [\#3255](https://github.com/pypeclub/OpenPype/pull/3255)
 
 **🔀 Refactored code**
 
@@ -126,21 +132,6 @@
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.10.0-nightly.6...3.10.0)
-
-**🚀 Enhancements**
-
-- Maya: FBX camera export [\#3253](https://github.com/pypeclub/OpenPype/pull/3253)
-- General: updating common vendor `scriptmenu` to 1.5.2 [\#3246](https://github.com/pypeclub/OpenPype/pull/3246)
-
-**🐛 Bug fixes**
-
-- nuke: use framerange issue [\#3254](https://github.com/pypeclub/OpenPype/pull/3254)
-- Ftrack: Chunk sizes for queries has minimal condition [\#3244](https://github.com/pypeclub/OpenPype/pull/3244)
-
-**Merged pull requests:**
-
-- Harmony: message length in 21.1 [\#3257](https://github.com/pypeclub/OpenPype/pull/3257)
-- Harmony: 21.1 fix [\#3249](https://github.com/pypeclub/OpenPype/pull/3249)
 
 ## [3.9.8](https://github.com/pypeclub/OpenPype/tree/3.9.8) (2022-05-19)
 
