@@ -1,6 +1,7 @@
-
 """Blender Capture
+
 Playblasting with independent viewport, camera and display options
+
 """
 import contextlib
 import bpy
