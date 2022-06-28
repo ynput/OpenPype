@@ -1,15 +1,18 @@
+import re
 import threading
 import asyncio
 
 from aiohttp import web
 
 from openpype.lib import PypeLogger
+from .cors_middleware import cors_middleware
 
 log = PypeLogger.get_logger("WebServer")
 
 
 class WebServerManager:
     """Manger that care about web server thread."""
+
     def __init__(self, port=None, host=None):
         self.port = port or 8079
         self.host = host or "localhost"
@@ -18,7 +21,13 @@ class WebServerManager:
         self.handlers = {}
         self.on_stop_callbacks = []
 
-        self.app = web.Application()
+        self.app = web.Application(
+            middlewares=[
+                cors_middleware(
+                    origins=[re.compile(r"^https?\:\/\/localhost")]
+                )
+            ]
+        )
 
         # add route with multiple methods for single "external app"
 
