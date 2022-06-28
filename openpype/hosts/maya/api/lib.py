@@ -3272,11 +3272,12 @@ def iter_visible_in_frame_range(nodes, start, end):
             cmds.currentTime(start)
 
         visible = cmds.ls(nodes, long=True, visible=True)
+        for node in visible:
+            yield node
         if len(visible) == len(nodes) or start == end:
             # All are visible on frame one, so they are at least visible once
             # inside the frame range.
-            for node in visible:
-                yield node
+            return
 
     # For the invisible ones check whether its visibility and/or
     # any of its parents visibility attributes are animated. If so, it might
