@@ -14,7 +14,7 @@ from openpype.lib import (
     OpenPypeMongoConnection,
     PypeLogger,
 )
-from openpype.lib.avalon_context import get_asset_hierarchy_tree
+from openpype.tools.utils.lib import get_asset_hierarchy_tree
 from openpype.lib.remote_publish import (
     get_task_data,
     ERROR_STATUS,
