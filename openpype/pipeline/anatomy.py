@@ -5,6 +5,8 @@ import platform
 import collections
 import numbers
 
+import six
+
 from openpype.settings.lib import (
     get_default_anatomy_settings,
     get_anatomy_settings
@@ -18,11 +20,6 @@ from openpype.lib.path_templates import (
 from openpype.lib.log import PypeLogger
 
 log = PypeLogger.get_logger(__name__)
-
-try:
-    StringType = basestring
-except NameError:
-    StringType = str
 
 
 class ProjectNotSet(Exception):
@@ -124,7 +121,7 @@ class Anatomy:
                     if isinstance(value, dict):
                         value_queue.append(value)
 
-                    elif isinstance(value, StringType):
+                    elif isinstance(value, six.string_types):
                         item[key] = value.replace("{task}", "{task[name]}")
         return anatomy_data
 
@@ -462,7 +459,7 @@ class AnatomyTemplates(TemplatesDict):
                     v_queue.append(value)
 
                 elif (
-                    isinstance(value, StringType)
+                    isinstance(value, six.string_types)
                     and "{task}" in value
                 ):
                     item[key] = value.replace("{task}", "{task[name]}")
@@ -522,8 +519,10 @@ class AnatomyTemplates(TemplatesDict):
                         " invalid inner key `{1}`."
                     ).format(key, anatomy_sub_key))
 
-                valid = isinstance(replace_value, (numbers.Number, StringType))
-                if not valid:
+                if not (
+                    isinstance(replace_value, numbers.Number)
+                    or isinstance(replace_value, six.string_types)
+                ):
                     raise ValueError((
                         "Anatomy templates can't be filled."
                         " Anatomy key `{0}` has"
@@ -550,7 +549,7 @@ class AnatomyTemplates(TemplatesDict):
             for key in tuple(keys_to_solve):
                 value = key_values[key]
 
-                if isinstance(value, StringType):
+                if isinstance(value, six.string_types):
                     matches = cls.inner_key_pattern.findall(value)
                     if not matches:
                         keys_to_solve.remove(key)
@@ -1245,7 +1244,7 @@ class Roots:
             parent_keys = []
         is_last = False
         for value in data.values():
-            if isinstance(value, StringType):
+            if isinstance(value, six.string_types):
                 is_last = True
                 break
 
