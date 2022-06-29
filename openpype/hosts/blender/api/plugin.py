@@ -1195,9 +1195,14 @@ def maintained_modifiers(container):
         yield
     finally:
         # Restor modifiers.
-        for modifiers in objects_modifiers:
+        for index, modifiers in enumerate(objects_modifiers):
             for modifier in modifiers:
                 modifier.restor()
+            # TODO (kaamaurice): Restor modifiers order.
+            # This could be verry tricky if upstream object hasn't the same
+            # modifier count.
+            # Only ops method are available for this process:
+            #    bpy.ops.object.modifier_move_up(modifier=modifier.name)
 
 
 @contextmanager
@@ -1226,7 +1231,7 @@ def maintained_constraints(container):
     try:
         yield
     finally:
-        # Restor modifiers.
+        # Restor constraints.
         for constraints in objects_constraints:
             for constraint in constraints:
                 constraint.restor()
