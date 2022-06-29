@@ -53,7 +53,6 @@ def install():
     sys.excepthook = pype_excepthook_handler
 
     pyblish.api.register_host("blender")
-    pyblish.api.register_target("local")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
     register_loader_plugin_path(str(LOAD_PATH))
