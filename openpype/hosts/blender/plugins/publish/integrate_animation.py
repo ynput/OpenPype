@@ -15,6 +15,9 @@ class IntegrateAnimation(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.info("Integrate Animation")
 
+        # NOTE (kaamaurice) not sure about this integrator purpose.
+        # - There is not json extractor implemented for setdress.
+
         representation = instance.data.get('representations')[0]
         json_path = representation.get('publishedFiles')[0]
 
