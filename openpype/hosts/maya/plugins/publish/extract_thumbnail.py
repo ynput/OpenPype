@@ -27,7 +27,6 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         camera = instance.data['review_camera']
 
-        capture_preset = ""
         capture_preset = (
             instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
         )
