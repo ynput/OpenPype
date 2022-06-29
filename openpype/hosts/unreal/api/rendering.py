@@ -2,7 +2,7 @@ import os
 
 import unreal
 
-from openpype.api import Anatomy
+from openpype.pipeline import Anatomy
 from openpype.hosts.unreal.api import pipeline
 
 
