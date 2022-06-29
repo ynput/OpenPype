@@ -1,9 +1,9 @@
 """Load a setdress in Blender."""
 
-from openpype.hosts.blender.plugins.load import load_layout_blend
+from openpype.hosts.blender.api import plugin
 
 
-class BlendSetdressLoader(load_layout_blend.BlendLayoutLoader):
+class BlendSetdressLoader(plugin.AssetLoader):
     """Load setdress from a .blend file."""
 
     families = ["setdress"]
@@ -13,3 +13,6 @@ class BlendSetdressLoader(load_layout_blend.BlendLayoutLoader):
     icon = "code-fork"
     color = "orange"
     color_tag = "COLOR_06"
+
+    def _process(self, libpath, asset_group):
+        self._load_blend(libpath, asset_group)
