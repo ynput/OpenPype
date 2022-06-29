@@ -81,8 +81,6 @@ class ExtractThumbnail(openpype.api.Extractor):
             preset["isolate"] = instance.data["setMembers"]
 
         with lib.maintained_time():
-            filename = preset.get("filename", "%TEMP%")
-
             # Force viewer to False in call to capture because we have our own
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
