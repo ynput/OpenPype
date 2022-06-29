@@ -1,8 +1,10 @@
 import os
 
 from openpype.api import get_project_settings
-from openpype.pipeline import load
-
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 # TODO aiVolume doesn't automatically set velocity fps correctly, set manual?
 
 
@@ -85,7 +87,7 @@ class LoadVDBtoArnold(load.LoaderPlugin):
 
         from maya import cmds
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         # Find VRayVolumeGrid
         members = cmds.sets(container['objectName'], query=True)
