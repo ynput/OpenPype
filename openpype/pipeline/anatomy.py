@@ -369,6 +369,17 @@ class AnatomyTemplateResult(TemplateResult):
                 self.invalid_types
             )
 
+    def copy(self):
+        tmp = TemplateResult(
+            str(self),
+            self.template,
+            self.solved,
+            self.used_values,
+            self.missing_keys,
+            self.invalid_types
+        )
+        return self.__class__(tmp, self.rootless)
+
 
 class AnatomyTemplates(TemplatesDict):
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
