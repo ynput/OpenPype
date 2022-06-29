@@ -1,8 +1,16 @@
 # Changelog
 
+## [3.12.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.0...HEAD)
+
+**🚀 Enhancements**
+
+- Blender: pre pyside install for all platforms [\#3400](https://github.com/pypeclub/OpenPype/pull/3400)
+
 ## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.11.1...3.12.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.12.0-nightly.3...3.12.0)
 
 ### 📖 Documentation
 
@@ -29,6 +37,7 @@
 - Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
 - TVPaint: Make sure exit code is set to not None [\#3382](https://github.com/pypeclub/OpenPype/pull/3382)
 - Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
+- Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
 - Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
 - Standalone: settings improvements [\#3355](https://github.com/pypeclub/OpenPype/pull/3355)
 - Nuke: Load full model hierarchy by default [\#3328](https://github.com/pypeclub/OpenPype/pull/3328)
@@ -48,6 +57,7 @@
 - AfterEffects: Use client query functions [\#3374](https://github.com/pypeclub/OpenPype/pull/3374)
 - TVPaint: Use client query functions [\#3340](https://github.com/pypeclub/OpenPype/pull/3340)
 - Ftrack: Use client query functions [\#3339](https://github.com/pypeclub/OpenPype/pull/3339)
+- Webpublisher: Use client query functions [\#3333](https://github.com/pypeclub/OpenPype/pull/3333)
 - Standalone Publisher: Use client query functions [\#3330](https://github.com/pypeclub/OpenPype/pull/3330)
 
 **Merged pull requests:**
@@ -73,7 +83,6 @@
 
 **🐛 Bug fixes**
 
-- Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
 - Nuke: bake streams with slate on farm [\#3368](https://github.com/pypeclub/OpenPype/pull/3368)
 - Harmony: audio validator has wrong logic [\#3364](https://github.com/pypeclub/OpenPype/pull/3364)
 - Nuke: Fix missing variable in extract thumbnail [\#3363](https://github.com/pypeclub/OpenPype/pull/3363)
@@ -85,10 +94,6 @@
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 - Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
 - Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
-
-**🔀 Refactored code**
-
-- Webpublisher: Use client query functions [\#3333](https://github.com/pypeclub/OpenPype/pull/3333)
 
 ## [3.11.0](https://github.com/pypeclub/OpenPype/tree/3.11.0) (2022-06-17)
 
@@ -121,7 +126,6 @@
 - Maya: Fix swaped width and height in reviews [\#3300](https://github.com/pypeclub/OpenPype/pull/3300)
 - Maya: point cache publish handles Maya instances [\#3297](https://github.com/pypeclub/OpenPype/pull/3297)
 - Global: extract review slate issues [\#3286](https://github.com/pypeclub/OpenPype/pull/3286)
-- Webpublisher: return only active projects in ProjectsEndpoint [\#3281](https://github.com/pypeclub/OpenPype/pull/3281)
 
 **🔀 Refactored code**
 
