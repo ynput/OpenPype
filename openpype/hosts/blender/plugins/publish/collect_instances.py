@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.plugin import get_children_recursive
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
-    """Collect the data of a model."""
+    """Gather instances and their data from avalone instance collections."""
 
     hosts = ["blender"]
     label = "Collect Instances"
@@ -25,7 +25,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 yield collection
 
     def process(self, context):
-        """Collect the models from the current Blender scene."""
+        """Collect instances from the current Blender scene."""
         collections = self.get_collections()
 
         for collection in collections:

@@ -31,7 +31,7 @@ class CreateAnimation(plugin.Creator):
         container = super()._process()
 
         if (self.options or {}).get("asset_groups"):
-            for asset_group in self.options["asset_groups"]:
-                container.children.link(asset_group)
+            asset_groups = set(self.options["asset_groups"])
+            plugin.link_to_collection(asset_groups, container)
 
         return container
