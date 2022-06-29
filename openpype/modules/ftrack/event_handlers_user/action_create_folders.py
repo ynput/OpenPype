@@ -1,7 +1,7 @@
 import os
 import collections
 import copy
-from openpype.api import Anatomy
+from openpype.pipeline import Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
