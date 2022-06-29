@@ -1118,25 +1118,35 @@ def maintained_parent(container):
     objects_parents = dict()
     for obj in scene_objects:
         if obj.parent in container_objects:
-            objects_parents[obj.name] = (
-                obj.parent.name, obj.matrix_parent_inverse.copy()
-            )
+            objects_parents[obj.name] = {
+                "name": obj.parent.name,
+                "type": obj.parent_type,
+                "bone": obj.parent_bone,
+                "vertices": list(obj.parent_vertices),
+                "matrix_inverse": obj.matrix_parent_inverse.copy(),
+            }
     for obj in container_objects:
         if obj.parent in scene_objects:
-            objects_parents[obj.name] = (
-                obj.parent.name, obj.matrix_parent_inverse.copy()
-            )
+            objects_parents[obj.name] = {
+                "name": obj.parent.name,
+                "type": obj.parent_type,
+                "bone": obj.parent_bone,
+                "vertices": list(obj.parent_vertices),
+                "matrix_inverse": obj.matrix_parent_inverse.copy(),
+            }
     try:
         yield
     finally:
         # Restor parent.
-        for obj_name, parent_tuple in objects_parents.items():
-            parent_name, matrix_inverse = parent_tuple
+        for obj_name, parent_data in objects_parents.items():
             obj = bpy.context.scene.objects.get(obj_name)
-            parent = bpy.context.scene.objects.get(parent_name)
+            parent = bpy.context.scene.objects.get(parent_data["name"])
             if obj and parent and obj.parent is not parent:
                 obj.parent = parent
-                obj.matrix_parent_inverse = matrix_inverse
+                obj.parent_type = parent_data["type"]
+                obj.parent_bone = parent_data["bone"]
+                obj.parent_vertices = parent_data["vertices"]
+                obj.matrix_parent_inverse = parent_data["matrix_inverse"]
 
 
 @contextmanager
@@ -1407,20 +1417,44 @@ class StructDescriptor:
         "is_override_data",
     ]
 
+    def _get_from_data(self, prop_value: Dict):
+        if (
+            prop_value.get("class") is bpy.types.Object
+            and bpy.context.scene.objects.get(prop_value.get("name"))
+        ):
+            return bpy.context.scene.objects.get(prop_value.get("name"))
+        else:
+            for _, data_member in getmembers(bpy.data):
+                if (
+                    isinstance(data_member, bpy.types.bpy_prop_collection)
+                    and isinstance(
+                        data_member.get(prop_value.get("name")),
+                        prop_value.get("class"),
+                    )
+                ):
+                    return data_member.get(prop_value.get("name"))
+
     def store_property(self, prop_name, prop_value):
-        if isinstance(prop_value, bpy.types.Object):
-            prop_value = f"bpy.types.object:{prop_value.name}"
+        if isinstance(prop_value, bpy.types.ID):
+            prop_value = {
+                "class": prop_value.__class__,
+                "name": prop_value.name,
+            }
         elif isinstance(prop_value, Matrix):
             prop_value = prop_value.copy()
         self.properties[prop_name] = prop_value
 
     def restore_property(self, entity, prop_name):
         prop_value = self.properties.get(prop_name)
+
+        # get property value as bpy.types.{class} if needed.
         if (
-            isinstance(prop_value, str)
-            and prop_value.startswith("bpy.types.object:")
+            isinstance(prop_value, dict)
+            and prop_value.get("class")
+            and prop_value.get("name")
         ):
-            prop_value = bpy.context.scene.objects.get(prop_value[17:])
+            prop_value = self._get_from_data(prop_value)
+
         setattr(entity, prop_name, prop_value)
 
     def __init__(self, bpy_struct: bpy.types.bpy_struct):
