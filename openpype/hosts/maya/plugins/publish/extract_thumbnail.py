@@ -1,5 +1,4 @@
 import os
-import contextlib
 import glob
 
 import capture
@@ -81,7 +80,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
-        with maintained_time():
+        with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
             # Force viewer to False in call to capture because we have our own
@@ -152,12 +151,3 @@ class ExtractThumbnail(openpype.api.Extractor):
             filepath = max(files, key=os.path.getmtime)
 
         return filepath
-
-
-@contextlib.contextmanager
-def maintained_time():
-    ct = cmds.currentTime(query=True)
-    try:
-        yield
-    finally:
-        cmds.currentTime(ct, edit=True)
