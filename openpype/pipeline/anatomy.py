@@ -7,10 +7,7 @@ import numbers
 
 import six
 
-from openpype.settings.lib import (
-    get_default_anatomy_settings,
-    get_anatomy_settings
-)
+from openpype.settings.lib import get_anatomy_settings
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
@@ -89,16 +86,6 @@ class Anatomy:
 
     def items(self):
         return copy.deepcopy(self._data).items()
-
-    @staticmethod
-    def default_data():
-        """Default project anatomy data.
-
-        Always return fresh loaded data. May be used as data for new project.
-
-        Not used inside Anatomy itself.
-        """
-        return get_default_anatomy_settings(clear_metadata=False)
 
     @staticmethod
     def _prepare_anatomy_data(anatomy_data):
