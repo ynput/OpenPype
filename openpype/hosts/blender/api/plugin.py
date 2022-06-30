@@ -500,6 +500,348 @@ def orphans_purge():
             bpy.data.libraries.remove(library)
 
 
+class ContainerMaintainer(ExitStack):
+    """ContextManager to maintain all important properties
+    when updating container.
+
+    Arguments:
+        container: Container to maintain after updating.
+    """
+
+    maintained_parameters = [
+        "parent",
+        "transforms",
+        "modifiers",
+        "constraints",
+        "targets",
+        "drivers",
+        "actions",
+    ]
+
+    def __init__(
+        self, container: Union[bpy.types.Collection, bpy.types.Object]
+    ):
+        super().__init__()
+        self.container = container
+        self.container_objects = set(get_container_objects(self.container))
+
+    def __enter__(self):
+        for parameter_name in self.maintained_parameters:
+            maintainer = getattr(self, f"maintained_{parameter_name}", None)
+            if maintainer:
+                self.enter_context(maintainer(self.container_objects))
+
+    @contextmanager
+    def maintained_parent(self, objects):
+        """Maintain parent during context."""
+        scene_objects = set(bpy.context.scene.objects) - objects
+        objects_parents = dict()
+        for obj in scene_objects:
+            if obj.parent in objects:
+                objects_parents[obj.name] = {
+                    "name": obj.parent.name,
+                    "type": obj.parent_type,
+                    "bone": obj.parent_bone,
+                    "vertices": list(obj.parent_vertices),
+                    "matrix_inverse": obj.matrix_parent_inverse.copy(),
+                }
+        for obj in objects:
+            if obj.parent in scene_objects:
+                objects_parents[obj.name] = {
+                    "name": obj.parent.name,
+                    "type": obj.parent_type,
+                    "bone": obj.parent_bone,
+                    "vertices": list(obj.parent_vertices),
+                    "matrix_inverse": obj.matrix_parent_inverse.copy(),
+                }
+        try:
+            yield
+        finally:
+            # Restor parent.
+            for obj_name, parent_data in objects_parents.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                parent = bpy.context.scene.objects.get(parent_data["name"])
+                if obj and parent and obj.parent is not parent:
+                    obj.parent = parent
+                    obj.parent_type = parent_data["type"]
+                    obj.parent_bone = parent_data["bone"]
+                    obj.parent_vertices = parent_data["vertices"]
+                    obj.matrix_parent_inverse = parent_data["matrix_inverse"]
+
+    @contextmanager
+    def maintained_transforms(self, objects):
+        """Maintain transforms during context."""
+        # Store transforms for all objects in container.
+        objects_transforms = {
+            obj.name: obj.matrix_basis.copy()
+            for obj in objects
+        }
+        # Store transforms for all bones from armatures in container.
+        bones_transforms = {
+            obj.name: {
+                bone.name: bone.matrix_basis.copy()
+                for bone in obj.pose.bones
+            }
+            for obj in objects
+            if obj.type == "ARMATURE"
+        }
+        try:
+            yield
+        finally:
+            # Restor transforms.
+            for obj in set(bpy.context.scene.objects):
+                if obj.name in objects_transforms:
+                    obj.matrix_basis = objects_transforms[obj.name]
+                # Restor transforms for bones from armature.
+                if obj.type == "ARMATURE" and obj.name in bones_transforms:
+                    for bone in obj.pose.bones:
+                        if bone.name in bones_transforms[obj.name]:
+                            bone.matrix_basis = (
+                                bones_transforms[obj.name][bone.name]
+                            )
+
+    @contextmanager
+    def maintained_modifiers(self, objects):
+        """Maintain modifiers during context."""
+        objects_modifiers = [
+            [ModifierDescriptor(modifier) for modifier in obj.modifiers]
+            for obj in objects
+        ]
+        try:
+            yield
+        finally:
+            # Restor modifiers.
+            for modifiers in objects_modifiers:
+                for modifier in modifiers:
+                    modifier.restor()
+                # Restor modifiers order.
+                #   NOTE (kaamaurice) This could be verry tricky if the
+                #   upstream object hasn't the same modifiers count.
+                #   So currently we reorder only non-override modifiers
+                #   and if object has the same modifiers count.
+                for modifier in modifiers:
+                    obj = modifier.get_object()
+                    if not obj or len(obj.modifiers) != len(modifiers):
+                        break
+                    if not modifier.is_override_data:
+                        modifier.reorder()
+
+    @contextmanager
+    def maintained_constraints(self, objects):
+        """Maintain constraints during context."""
+        objects_constraints = []
+        armature_constraints = []
+        for obj in objects:
+            objects_constraints.append(
+                [
+                    ConstraintDescriptor(constraint)
+                    for constraint in obj.constraints
+                ]
+            )
+            if obj.type == "ARMATURE":
+                armature_constraints.append(
+                    {
+                        bone.name: [
+                            ConstraintDescriptor(constraint)
+                            for constraint in bone.constraints
+                        ]
+                        for bone in obj.pose.bones
+                    }
+                )
+        try:
+            yield
+        finally:
+            # Restor constraints.
+            for constraints in objects_constraints:
+                for constraint in constraints:
+                    constraint.restor()
+            for bones_constraints in armature_constraints:
+                for bone_name, constraints in bones_constraints.items():
+                    for constraint in constraints:
+                        constraint.restor(bone_name=bone_name)
+
+    @contextmanager
+    def maintained_targets(self, objects):
+        """Maintain constraints during context."""
+        scene_objects = set(bpy.context.scene.objects) - set(objects)
+        stored_targets = []
+        for obj in scene_objects:
+            # store constraints targets from object
+            stored_targets += [
+                (constraint, constraint.target.name, "target")
+                for constraint in obj.constraints
+                if getattr(constraint, "target", None) in objects
+            ]
+            # store modifiers targets from object
+            for attr_name in ("target", "object", "object_from", "object_to"):
+                stored_targets += [
+                    (modifier, getattr(modifier, attr_name).name, attr_name)
+                    for modifier in obj.modifiers
+                    if getattr(modifier, attr_name, None) in objects
+                ]
+            # store constraints targets from bones in armature
+            if obj.type == "ARMATURE":
+                for bone in obj.pose.bones:
+                    stored_targets += [
+                        (constraint, constraint.target.name, "target")
+                        for constraint in bone.constraints
+                        if getattr(constraint, "target", None) in objects
+                    ]
+            # store texture mesh target from mesh object
+            if obj.type == "MESH":
+                if obj.data.texture_mesh in objects:
+                    stored_targets.append(
+                        (obj.data, obj.data.texture_mesh.name, "texture_mesh")
+                    )
+            # store driver variable targets from animation data
+            if obj.animation_data:
+                for driver in obj.animation_data.drivers:
+                    for var in driver.driver.variables:
+                        for target in var.targets:
+                            if target.id in objects:
+                                stored_targets.append(
+                                    target, target.id.name, "id"
+                                )
+        try:
+            yield
+        finally:
+            # Restor targets.
+            for entity, target_name, attr_name in stored_targets:
+                target = bpy.context.scene.objects.get(target_name)
+                if target and hasattr(entity, attr_name):
+                    setattr(entity, attr_name, target)
+
+    @contextmanager
+    def maintained_drivers(self, objects):
+        """Maintain drivers during context."""
+        objects_drivers = {}
+        objects_copies = []
+        for obj in objects:
+            if obj.animation_data and len(obj.animation_data.drivers):
+                obj_copy = obj.copy()
+                obj_copy.name = f"{obj_copy.name}.copy"
+                obj_copy.use_fake_user = True
+                objects_copies.append(obj_copy)
+                objects_drivers[obj.name] = [
+                    driver
+                    for driver in obj_copy.animation_data.drivers
+                ]
+        try:
+            yield
+        finally:
+            # Restor drivers.
+            for obj_name, drivers in objects_drivers.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                if not obj:
+                    continue
+                if not obj.animation_data:
+                    obj.animation_data_create()
+                for driver in drivers:
+                    obj.animation_data.drivers.from_existing(src_driver=driver)
+            # Clear copies.
+            for obj_copy in objects_copies:
+                obj_copy.use_fake_user = False
+                bpy.data.objects.remove(obj_copy)
+
+    @contextmanager
+    def maintained_actions(self, objects):
+        """Maintain action during context."""
+        actions = {}
+        # Store actions from objects.
+        for obj in objects:
+            if obj.animation_data and obj.animation_data.action:
+                actions[obj.name] = obj.animation_data.action
+                obj.animation_data.action.use_fake_user = True
+        try:
+            yield
+        finally:
+            # Restor actions.
+            for obj_name, action in actions.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                if obj:
+                    if obj.animation_data is None:
+                        obj.animation_data_create()
+                    obj.animation_data.action = action
+            # Clear fake user.
+            for action in actions.values():
+                action.use_fake_user = False
+
+    @contextmanager
+    def maintained_local_data(self, objects, data_types):
+        """Maintain local data during context."""
+        local_data = {}
+        # Store local data from mesh objects.
+        for obj in objects:
+            if (
+                obj.type == "MESH"
+                and not obj.data.library
+                and not obj.data.override_library
+            ):
+                # TODO : check if obj.data has data_type
+                local_copy = obj.data.copy()
+                local_copy.name = f"{obj.data.name}.copy"
+                local_copy.use_fake_user = True
+                local_data[obj.name] = local_copy
+        try:
+            yield
+        finally:
+            # Transfert local data.
+            for obj_name, data in local_data.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                if obj and obj.type == "MESH":
+
+                    if obj.override_library:
+                        if hasattr(obj.override_library, "destroy"):
+                            obj.override_library.destroy()
+                        else:
+                            ref = obj.override_library.reference
+                            obj.user_remap(ref)
+                        obj = bpy.context.scene.objects.get(obj_name)
+                    if obj.library:
+                        obj = obj.make_local()
+                        obj.data.make_local()
+
+                    tmp = bpy.data.objects.new("tmp", data)
+                    link_to_collection(tmp, bpy.context.scene.collection)
+                    tmp.matrix_world = obj.matrix_world.copy()
+
+                    deselect_all()
+                    bpy.context.view_layer.objects.active = tmp
+                    obj.select_set(True)
+                    context = create_blender_context(active=tmp, selected=obj)
+
+                    if data.unit_test_compare(mesh=obj.data) == "Same":
+                        mapping = {
+                            "vert_mapping": "TOPOLOGY",
+                            "edge_mapping": "TOPOLOGY",
+                            "loop_mapping": "TOPOLOGY",
+                            "poly_mapping": "TOPOLOGY",
+                        }
+                    else:
+                        mapping = {
+                            "vert_mapping": "EDGE_NEAREST",
+                            "edge_mapping": "POLY_NEAREST",
+                            "loop_mapping": "NEAREST_POLYNOR",
+                            "poly_mapping": "NEAREST",
+                        }
+
+                    for data_type in data_types:
+                        bpy.ops.object.data_transfer(
+                            context,
+                            data_type=data_type,
+                            layers_select_src="ALL",
+                            layers_select_dst="NAME",
+                            **mapping
+                        )
+
+                    bpy.data.objects.remove(tmp)
+                    deselect_all()
+
+            # Clear local data.
+            for data in local_data.values():
+                bpy.data.meshes.remove(data)
+
+
 class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
@@ -578,6 +920,7 @@ class AssetLoader(LoaderPlugin):
     it's different for different types (e.g. model, rig, animation,
     etc.).
     """
+    update_mainterner = ContainerMaintainer
 
     def _get_container_from_collections(
         self, collections: List, famillies: Optional[List] = None
@@ -979,14 +1322,7 @@ class AssetLoader(LoaderPlugin):
             return
 
         # Update the asset group with maintained contexts.
-        with ExitStack() as stack:
-            stack.enter_context(maintained_parent(asset_group))
-            stack.enter_context(maintained_transforms(asset_group))
-            stack.enter_context(maintained_modifiers(asset_group))
-            stack.enter_context(maintained_constraints(asset_group))
-            stack.enter_context(maintained_targets(asset_group))
-            stack.enter_context(maintained_drivers(asset_group))
-            stack.enter_context(self.maintained_actions(asset_group))
+        with self.update_mainterner(asset_group):
 
             remove_container(asset_group, content_only=True)
 
@@ -1084,333 +1420,6 @@ class AssetLoader(LoaderPlugin):
         orphans_purge()
 
         return True
-
-    @contextmanager
-    def maintained_actions(self, container):
-        """Maintain action during context."""
-        objects = get_container_objects(container)
-        actions = {}
-        # Store actions from objects.
-        for obj in objects:
-            if obj.animation_data and obj.animation_data.action:
-                actions[obj.name] = obj.animation_data.action
-                obj.animation_data.action.use_fake_user = True
-        try:
-            yield
-        finally:
-            # Restor actions.
-            for obj_name, action in actions.items():
-                obj = bpy.context.scene.objects.get(obj_name)
-                if obj:
-                    if obj.animation_data is None:
-                        obj.animation_data_create()
-                    obj.animation_data.action = action
-            # Clear fake user.
-            for action in actions.values():
-                action.use_fake_user = False
-
-
-@contextmanager
-def maintained_parent(container):
-    """Maintain parent during context."""
-    container_objects = set(get_container_objects(container))
-    scene_objects = set(bpy.context.scene.objects) - container_objects
-    objects_parents = dict()
-    for obj in scene_objects:
-        if obj.parent in container_objects:
-            objects_parents[obj.name] = {
-                "name": obj.parent.name,
-                "type": obj.parent_type,
-                "bone": obj.parent_bone,
-                "vertices": list(obj.parent_vertices),
-                "matrix_inverse": obj.matrix_parent_inverse.copy(),
-            }
-    for obj in container_objects:
-        if obj.parent in scene_objects:
-            objects_parents[obj.name] = {
-                "name": obj.parent.name,
-                "type": obj.parent_type,
-                "bone": obj.parent_bone,
-                "vertices": list(obj.parent_vertices),
-                "matrix_inverse": obj.matrix_parent_inverse.copy(),
-            }
-    try:
-        yield
-    finally:
-        # Restor parent.
-        for obj_name, parent_data in objects_parents.items():
-            obj = bpy.context.scene.objects.get(obj_name)
-            parent = bpy.context.scene.objects.get(parent_data["name"])
-            if obj and parent and obj.parent is not parent:
-                obj.parent = parent
-                obj.parent_type = parent_data["type"]
-                obj.parent_bone = parent_data["bone"]
-                obj.parent_vertices = parent_data["vertices"]
-                obj.matrix_parent_inverse = parent_data["matrix_inverse"]
-
-
-@contextmanager
-def maintained_transforms(container):
-    """Maintain transforms during context."""
-    objects = get_container_objects(container)
-    # Store transforms for all objects in container.
-    objects_transforms = {
-        obj.name: obj.matrix_basis.copy()
-        for obj in objects
-    }
-    # Store transforms for all bones from armatures in container.
-    bones_transforms = {
-        obj.name: {
-            bone.name: bone.matrix_basis.copy()
-            for bone in obj.pose.bones
-        }
-        for obj in objects
-        if obj.type == "ARMATURE"
-    }
-    try:
-        yield
-    finally:
-        # Restor transforms.
-        for obj in set(bpy.context.scene.objects):
-            if obj.name in objects_transforms:
-                obj.matrix_basis = objects_transforms[obj.name]
-            # Restor transforms for bones from armature.
-            if obj.type == "ARMATURE" and obj.name in bones_transforms:
-                for bone in obj.pose.bones:
-                    if bone.name in bones_transforms[obj.name]:
-                        bone.matrix_basis = (
-                            bones_transforms[obj.name][bone.name]
-                        )
-
-
-@contextmanager
-def maintained_modifiers(container):
-    """Maintain modifiers during context."""
-    objects = get_container_objects(container)
-    objects_modifiers = [
-        [ModifierDescriptor(modifier) for modifier in obj.modifiers]
-        for obj in objects
-    ]
-    try:
-        yield
-    finally:
-        # Restor modifiers.
-        for modifiers in objects_modifiers:
-            for modifier in modifiers:
-                modifier.restor()
-            # Restor modifiers order.
-            #   NOTE (kaamaurice) This could be verry tricky if the upstream
-            #   object hasn't the same modifiers count. So currently we
-            #   reorder only non-override modifiers and if object has the same
-            #   modifiers count.
-            for modifier in modifiers:
-                obj = modifier.get_object()
-                if not obj or len(obj.modifiers) != len(modifiers):
-                    break
-                if not modifier.is_override_data:
-                    modifier.reorder()
-
-
-@contextmanager
-def maintained_constraints(container):
-    """Maintain constraints during context."""
-    objects = get_container_objects(container)
-    objects_constraints = []
-    armature_constraints = []
-    for obj in objects:
-        objects_constraints.append(
-            [
-                ConstraintDescriptor(constraint)
-                for constraint in obj.constraints
-            ]
-        )
-        if obj.type == "ARMATURE":
-            armature_constraints.append(
-                {
-                    bone.name: [
-                        ConstraintDescriptor(constraint)
-                        for constraint in bone.constraints
-                    ]
-                    for bone in obj.pose.bones
-                }
-            )
-    try:
-        yield
-    finally:
-        # Restor constraints.
-        for constraints in objects_constraints:
-            for constraint in constraints:
-                constraint.restor()
-        for bones_constraints in armature_constraints:
-            for bone_name, constraints in bones_constraints.items():
-                for constraint in constraints:
-                    constraint.restor(bone_name=bone_name)
-
-
-@contextmanager
-def maintained_targets(container):
-    """Maintain constraints during context."""
-    container_objects = set(get_container_objects(container))
-    scene_objects = set(bpy.context.scene.objects) - container_objects
-    stored_targets = []
-    for obj in scene_objects:
-        # store constraints targets from object
-        stored_targets += [
-            (constraint, constraint.target.name, "target")
-            for constraint in obj.constraints
-            if getattr(constraint, "target", None) in container_objects
-        ]
-        # store modifiers targets from object
-        for attr_name in ("target", "object", "object_from", "object_to"):
-            stored_targets += [
-                (modifier, getattr(modifier, attr_name).name, attr_name)
-                for modifier in obj.modifiers
-                if getattr(modifier, attr_name, None) in container_objects
-            ]
-        # store constraints targets from bones in armature
-        if obj.type == "ARMATURE":
-            for bone in obj.pose.bones:
-                stored_targets += [
-                    (constraint, constraint.target.name, "target")
-                    for constraint in bone.constraints
-                    if getattr(constraint, "target", None) in (
-                        container_objects
-                    )
-                ]
-        # store texture mesh target from mesh object
-        if obj.type == "MESH":
-            if obj.data.texture_mesh in container_objects:
-                stored_targets.append(
-                    (obj.data, obj.data.texture_mesh.name, "texture_mesh")
-                )
-        # store driver variable targets from animation data
-        if obj.animation_data:
-            for driver in obj.animation_data.drivers:
-                for var in driver.driver.variables:
-                    for target in var.targets:
-                        if target.id in container_objects:
-                            stored_targets.append(
-                                target, target.id.name, "id"
-                            )
-    try:
-        yield
-    finally:
-        # Restor targets.
-        for entity, target_name, attr_name in stored_targets:
-            target = bpy.context.scene.objects.get(target_name)
-            if target and hasattr(entity, attr_name):
-                setattr(entity, attr_name, target)
-
-
-@contextmanager
-def maintained_drivers(container):
-    """Maintain drivers during context."""
-    objects = get_container_objects(container)
-    objects_drivers = {}
-    objects_copies = []
-    for obj in objects:
-        if obj.animation_data and len(obj.animation_data.drivers):
-            obj_copy = obj.copy()
-            obj_copy.name = f"{obj_copy.name}.copy"
-            obj_copy.use_fake_user = True
-            objects_copies.append(obj_copy)
-            objects_drivers[obj.name] = [
-                driver
-                for driver in obj_copy.animation_data.drivers
-            ]
-    try:
-        yield
-    finally:
-        # Restor drivers.
-        for obj_name, drivers in objects_drivers.items():
-            obj = bpy.context.scene.objects.get(obj_name)
-            if not obj:
-                continue
-            if not obj.animation_data:
-                obj.animation_data_create()
-            for driver in drivers:
-                obj.animation_data.drivers.from_existing(src_driver=driver)
-        # Clear copies.
-        for obj_copy in objects_copies:
-            obj_copy.use_fake_user = False
-            bpy.data.objects.remove(obj_copy)
-
-
-@contextmanager
-def maintained_local_data(container, data_types):
-    """Maintain local data during context."""
-    objects = get_container_objects(container)
-    local_data = {}
-    # Store local data from mesh objects.
-    for obj in objects:
-        if (
-            obj.type == "MESH"
-            and not obj.data.library
-            and not obj.data.override_library
-        ):
-            # TODO : check if obj.data has data_type
-            local_copy = obj.data.copy()
-            local_copy.name = f"{obj.data.name}.copy"
-            local_copy.use_fake_user = True
-            local_data[obj.name] = local_copy
-    try:
-        yield
-    finally:
-        # Transfert local data.
-        for obj_name, data in local_data.items():
-            obj = bpy.context.scene.objects.get(obj_name)
-            if obj and obj.type == "MESH":
-
-                if obj.override_library:
-                    if hasattr(obj.override_library, "destroy"):
-                        obj.override_library.destroy()
-                    else:
-                        ref = obj.override_library.reference
-                        obj.user_remap(ref)
-                    obj = bpy.context.scene.objects.get(obj_name)
-                if obj.library:
-                    obj = obj.make_local()
-                    obj.data.make_local()
-
-                tmp = bpy.data.objects.new("tmp", data)
-                link_to_collection(tmp, bpy.context.scene.collection)
-                tmp.matrix_world = obj.matrix_world.copy()
-
-                deselect_all()
-                bpy.context.view_layer.objects.active = tmp
-                obj.select_set(True)
-                context = create_blender_context(active=tmp, selected=obj)
-
-                if data.unit_test_compare(mesh=obj.data) == "Same":
-                    mapping = {
-                        "vert_mapping": "TOPOLOGY",
-                        "edge_mapping": "TOPOLOGY",
-                        "loop_mapping": "TOPOLOGY",
-                        "poly_mapping": "TOPOLOGY",
-                    }
-                else:
-                    mapping = {
-                        "vert_mapping": "EDGE_NEAREST",
-                        "edge_mapping": "POLY_NEAREST",
-                        "loop_mapping": "NEAREST_POLYNOR",
-                        "poly_mapping": "NEAREST",
-                    }
-
-                for data_type in data_types:
-                    bpy.ops.object.data_transfer(
-                        context,
-                        data_type=data_type,
-                        layers_select_src="ALL",
-                        layers_select_dst="NAME",
-                        **mapping
-                    )
-
-                bpy.data.objects.remove(tmp)
-                deselect_all()
-
-        # Clear local data.
-        for data in local_data.values():
-            bpy.data.meshes.remove(data)
 
 
 class StructDescriptor:

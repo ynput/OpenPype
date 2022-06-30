@@ -6,9 +6,7 @@ from openpype.pipeline import legacy_io, update_container
 from openpype.pipeline.publish import get_errored_instances_from_context
 
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-from openpype.hosts.blender.api.plugin import maintained_local_data
-
-from contextlib import ExitStack
+from openpype.hosts.blender.api.plugin import ContainerMaintainer
 
 
 def _get_invalid_nodes(context, plugin):
@@ -83,9 +81,11 @@ class UpdateContainer(pyblish.api.Action):
 
         for collection in out_to_date_collections:
             self.log.info(f"Updating {collection.name}..")
-            with ExitStack() as stack:
+            with ContainerMaintainer(collection) as maintainer:
                 if current_task == "Rigging":
-                    stack.enter_context(
-                        maintained_local_data(collection, ["VGROUP_WEIGHTS"])
+                    maintainer.enter_context(
+                        maintainer.maintained_local_data(
+                            collection, ["VGROUP_WEIGHTS"]
+                        )
                     )
                 update_container(collection[AVALON_PROPERTY], -1)
