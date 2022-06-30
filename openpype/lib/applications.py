@@ -11,6 +11,10 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
 from openpype.settings import (
     get_system_settings,
     get_project_settings,
@@ -1313,11 +1317,8 @@ def get_app_environments_for_context(
     dbcon.install()
 
     # Project document
-    project_doc = dbcon.find_one({"type": "project"})
-    asset_doc = dbcon.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
 
     if modules_manager is None:
         from openpype.modules import ModulesManager
