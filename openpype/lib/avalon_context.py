@@ -13,6 +13,8 @@ import warnings
 
 from openpype.client import (
     get_project,
+    get_version_by_id,
+    get_last_version_by_subset_id,
     get_workfile_info,
 )
 from openpype.settings import (
@@ -183,23 +185,24 @@ def is_latest(representation):
 
     Returns:
         bool: Whether the representation is of latest version.
-
     """
 
-    version = legacy_io.find_one({"_id": representation['parent']})
+    project_name = legacy_io.active_project()
+    version = get_version_by_id(
+        project_name,
+        representation["parent"],
+        hero=True,
+        fields=["_id", "type", "parent"]
+    )
     if version["type"] == "hero_version":
         return True
 
     # Get highest version under the parent
-    highest_version = legacy_io.find_one({
-        "type": "version",
-        "parent": version["parent"]
-    }, sort=[("name", -1)], projection={"name": True})
+    last_version = get_last_version_by_subset_id(
+        project_name, version["parent"], fields=["_id"]
+    )
 
-    if version['name'] == highest_version['name']:
-        return True
-    else:
-        return False
+    return version["_id"] == last_version["_id"]
 
 
 @with_pipeline_io
