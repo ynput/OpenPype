@@ -7,8 +7,6 @@ import platform
 import logging
 import collections
 import functools
-
-from bson.objectid import ObjectId
 import warnings
 
 from openpype.client import (
