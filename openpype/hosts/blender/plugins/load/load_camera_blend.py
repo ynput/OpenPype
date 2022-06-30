@@ -1,8 +1,19 @@
 """Load a camera asset in Blender."""
 
-from contextlib import contextmanager
-
 from openpype.hosts.blender.api import plugin
+
+
+class CameraMaintainer(plugin.ContainerMaintainer):
+    """Overloaded ContainerMaintainer to maintain only needed properties
+    for camera container."""
+
+    maintained_parameters = [
+        "parent",
+        "transforms",
+        "constraints",
+        "targets",
+        "drivers",
+    ]
 
 
 class BlendCameraLoader(plugin.AssetLoader):
@@ -21,18 +32,7 @@ class BlendCameraLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_05"
 
+    update_mainterner = CameraMaintainer
+
     def _process(self, libpath, asset_group):
         self._load_blend(libpath, asset_group)
-
-    @contextmanager
-    def maintained_actions(self, container):
-        """Maintain action during context."""
-        # We always want the action from linked camera blend file.
-        # So this overload do maintain nothing to force current action to be
-        # overrided from linked file.
-        # TODO (kaamaurice): Add a Pyblish Validator + Action to allow user to
-        # update the camera action from an opened animation blend file.
-        try:
-            yield
-        finally:
-            pass
