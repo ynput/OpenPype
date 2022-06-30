@@ -371,7 +371,9 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         )
         return None
 
-    version_doc = get_last_version_by_subset_id(project_name, subset_doc["_id"])
+    version_doc = get_last_version_by_subset_id(
+        project_name, subset_doc["_id"]
+    )
     if not version_doc:
         log.info(
             "Subset \"{}\" does not have any version yet.".format(subset_name)
@@ -960,7 +962,9 @@ class BuildWorkfile:
         # Get current asset name and entity
         project_name = legacy_io.active_project()
         current_asset_name = legacy_io.Session["AVALON_ASSET"]
-        current_asset_entity = get_asset_by_name(project_name, current_asset_name)
+        current_asset_entity = get_asset_by_name(
+            project_name, current_asset_name
+        )
         # Skip if asset was not found
         if not current_asset_entity:
             print("Asset entity with name `{}` was not found".format(
