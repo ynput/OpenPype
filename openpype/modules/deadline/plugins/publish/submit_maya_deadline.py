@@ -709,7 +709,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 new_payload["JobInfo"].update(tiles_data["JobInfo"])
                 new_payload["PluginInfo"].update(tiles_data["PluginInfo"])
 
-                job_hash = hashlib.sha256("{}_{}".format(file_index, file))
+                job_hash = hashlib.sha256(
+                    ("{}_{}".format(file_index, file)).encode("utf-8"))
                 frame_jobs[frame] = job_hash.hexdigest()
                 new_payload["JobInfo"]["ExtraInfo0"] = job_hash.hexdigest()
                 new_payload["JobInfo"]["ExtraInfo1"] = file
