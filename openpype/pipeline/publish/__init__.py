@@ -16,6 +16,12 @@ from .lib import (
     load_help_content_from_filepath,
 )
 
+from .abstract_expected_files import ExpectedFiles
+from .abstract_collect_render import (
+    RenderInstance,
+    AbstractCollectRender,
+)
+
 
 __all__ = (
     "AbstractMetaInstancePlugin",
@@ -31,4 +37,9 @@ __all__ = (
     "publish_plugins_discover",
     "load_help_content_from_plugin",
     "load_help_content_from_filepath",
+
+    "ExpectedFiles",
+
+    "RenderInstance",
+    "AbstractCollectRender",
 )
