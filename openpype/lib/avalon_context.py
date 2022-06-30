@@ -12,6 +12,7 @@ from bson.objectid import ObjectId
 import warnings
 
 from openpype.client import (
+    get_project,
     get_workfile_info,
 )
 from openpype.settings import (
@@ -114,6 +115,11 @@ def create_project(
     from openpype.pipeline import AvalonMongoDB
     from openpype.pipeline.schema import validate
 
+    if get_project(project_name, fields=["name"]):
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
+
     if dbcon is None:
         dbcon = AvalonMongoDB()
 
@@ -123,15 +129,6 @@ def create_project(
         ).format(project_name))
 
     database = dbcon.database
-    project_doc = database[project_name].find_one(
-        {"type": "project"},
-        {"name": 1}
-    )
-    if project_doc:
-        raise ValueError("Project with name \"{}\" already exists".format(
-            project_name
-        ))
-
     project_doc = {
         "type": "project",
         "name": project_name,
@@ -154,7 +151,7 @@ def create_project(
         database[project_name].delete_one({"type": "project"})
         raise
 
-    project_doc = database[project_name].find_one({"type": "project"})
+    project_doc = get_project(project_name)
 
     try:
         # Validate created project document
