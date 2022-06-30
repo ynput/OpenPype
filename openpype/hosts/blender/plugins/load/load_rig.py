@@ -1,6 +1,5 @@
 """Load a rig asset in Blender."""
 
-import contextlib
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -167,57 +166,3 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Ensure updated rig has action.
         self._assign_actions(asset_group)
-
-    @contextlib.contextmanager
-    def maintained_actions_nop(self, asset_group):
-        """Maintain actions during context."""
-        asset_group_name = asset_group.name
-        objects_actions = {}
-        armature_action = None
-        # Get the armature from asset_group.
-        armatures = [
-            obj
-            for obj in asset_group.all_objects
-            if obj.type == "ARMATURE"
-        ]
-        # Store action from armature.
-        if (
-            len(armatures) == 1
-            and armatures[0].animation_data
-            and armatures[0].animation_data.action
-        ):
-            armature_action = armatures[0].animation_data.action
-            armature_action.use_fake_user = True
-
-        else:
-            # If there is no or multiple armature or no action from armature,
-            # we get actions from all objects from asset_group.
-            for obj in asset_group.all_objects:
-                if obj.animation_data and obj.animation_data.action:
-                    objects_actions[obj.name] = obj.animation_data.action
-                    obj.animation_data.action.use_fake_user = True
-        try:
-            yield
-        finally:
-            # Restor action.
-            asset_group = bpy.data.collections.get(asset_group_name)
-
-            if asset_group and armature_action:
-                for obj in asset_group.all_objects:
-                    if obj.type == "ARMATURE":
-                        if obj.animation_data is None:
-                            obj.animation_data_create()
-                        obj.animation_data.action = armature_action
-                armature_action.use_fake_user = False
-
-            elif asset_group and objects_actions:
-                for obj in asset_group.all_objects:
-                    action = objects_actions.get(obj.name)
-                    if action:
-                        if obj.animation_data is None:
-                            obj.animation_data_create()
-                        obj.animation_data.action = action
-
-            # Clear fake user.
-            for action in objects_actions.values():
-                action.use_fake_user = False
