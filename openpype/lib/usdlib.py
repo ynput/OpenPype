@@ -8,10 +8,9 @@ except ImportError:
     # Allow to fall back on Multiverse 6.3.0+ pxr usd library
     from mvpxr import Usd, UsdGeom, Sdf, Kind
 
-from openpype.pipeline import (
-    registered_root,
-    legacy_io,
-)
+from openpype.client import get_project, get_asset_by_name
+from openpype.pipeline import legacy_io
+from openpypa.lib import Anatomy
 
 log = logging.getLogger(__name__)
 
@@ -128,7 +127,8 @@ def create_model(filename, asset, variant_subsets):
 
     """
 
-    asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_doc = get_asset_by_name(project_name, asset)
     assert asset_doc, "Asset not found: %s" % asset
 
     variants = []
@@ -178,7 +178,8 @@ def create_shade(filename, asset, variant_subsets):
 
     """
 
-    asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_doc = get_asset_by_name(project_name, asset)
     assert asset_doc, "Asset not found: %s" % asset
 
     variants = []
@@ -213,7 +214,8 @@ def create_shade_variation(filename, asset, model_variant, shade_variants):
 
     """
 
-    asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_doc = get_asset_by_name(project_name, asset)
     assert asset_doc, "Asset not found: %s" % asset
 
     variants = []
@@ -313,21 +315,25 @@ def get_usd_master_path(asset, subset, representation):
 
     """
 
-    project = legacy_io.find_one(
-        {"type": "project"}, projection={"config.template.publish": True}
+    project_name = legacy_io.active_project()
+    anatomy = Anatomy(project_name)
+    project_doc = get_project(
+        project_name,
+        fields=["name", "data.code"]
     )
-    template = project["config"]["template"]["publish"]
 
     if isinstance(asset, dict) and "name" in asset:
         # Allow explicitly passing asset document
         asset_doc = asset
     else:
-        asset_doc = legacy_io.find_one({"name": asset, "type": "asset"})
+        asset_doc = get_asset_by_name(project_name, asset, fields=["name"])
 
-    path = template.format(
-        **{
-            "root": registered_root(),
-            "project": legacy_io.Session["AVALON_PROJECT"],
+    formatted_result = anatomy.format(
+        {
+            "project": {
+                "name": project_name,
+                "code": project_doc.get("data", {}).get("code")
+            },
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": representation,
@@ -335,6 +341,7 @@ def get_usd_master_path(asset, subset, representation):
         }
     )
 
+    path = formatted_result["publish"]["path"]
     # Remove the version folder
     subset_folder = os.path.dirname(os.path.dirname(path))
     master_folder = os.path.join(subset_folder, "master")
