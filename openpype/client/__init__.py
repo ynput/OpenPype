@@ -33,6 +33,8 @@ from .entities import (
     get_thumbnail,
     get_thumbnails,
     get_thumbnail_id_from_source,
+
+    get_workfile_info,
 )
 
 __all__ = (
@@ -70,4 +72,6 @@ __all__ = (
     "get_thumbnail",
     "get_thumbnails",
     "get_thumbnail_id_from_source",
+
+    "get_workfile_info",
 )

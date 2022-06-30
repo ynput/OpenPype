@@ -1158,6 +1158,38 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
+def get_workfile_info(
+    project_name, asset_id, task_name, filename, fields=None
+):
+    """Document with workfile information.
+
+    Warning:
+        Query is based on filename and context which does not meant it will
+        find always right expected result. There is a limited amound of usage
+        and is recommended to not expect that all workfiles are stored in
+        database.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        asset_id (str|ObjectId): Id of asset entity.
+        task_name (str): Task name on asset.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+    """
+
+    if not asset_id or not task_name or not filename:
+        return None
+
+    query_filter = {
+        "type": "workfile",
+        "parent": _convert_id(asset_id),
+        "task_name": task_name,
+        "filename": filename
+    }
+    conn = _get_project_connection(project_name)
+    return conn.find_one(query_filter, _prepare_fields(fields))
+
+
 """
 ## Custom data storage:
 - Settings - OP settings overrides and local settings

@@ -9,7 +9,11 @@ import collections
 import functools
 
 from bson.objectid import ObjectId
+import warnings
 
+from openpype.client import (
+    get_workfile_info,
+)
 from openpype.settings import (
     get_project_settings,
     get_system_settings
@@ -34,6 +38,51 @@ PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
 PROJECT_NAME_REGEX = re.compile(
     "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
 )
+
+
+class AvalonContextDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", AvalonContextDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=AvalonContextDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 def create_project(
@@ -759,6 +808,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
 
 @with_pipeline_io
+@deprecated("openpype.client.get_workfile_info")
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
 
@@ -775,16 +825,13 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     Returns:
         dict: Workfile document or None.
     """
+
     # Use legacy_io if dbcon is not entered
     if not dbcon:
         dbcon = legacy_io
 
-    return dbcon.find_one({
-        "type": "workfile",
-        "parent": asset_id,
-        "task_name": task_name,
-        "filename": filename
-    })
+    project_name = dbcon.active_project()
+    return get_workfile_info(project_name, asset_id, task_name, filename)
 
 
 @with_pipeline_io
