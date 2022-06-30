@@ -9,8 +9,7 @@ except ImportError:
     from mvpxr import Usd, UsdGeom, Sdf, Kind
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.pipeline import legacy_io
-from openpypa.lib import Anatomy
+from openpype.pipeline import legacy_io, Anatomy
 
 log = logging.getLogger(__name__)
 
