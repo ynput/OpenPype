@@ -15,12 +15,15 @@ from bson.objectid import ObjectId
 from openpype.lib.mongo import OpenPypeMongoConnection
 
 
-def _get_project_connection(project_name=None):
+def _get_project_database():
     db_name = os.environ.get("AVALON_DB") or "avalon"
-    mongodb = OpenPypeMongoConnection.get_mongo_client()[db_name]
-    if project_name:
-        return mongodb[project_name]
-    return mongodb
+    return OpenPypeMongoConnection.get_mongo_client()[db_name]
+
+
+def _get_project_connection(project_name):
+    if not project_name:
+        raise ValueError("Invalid project name {}".format(str(project_name)))
+    return _get_project_database()[project_name]
 
 
 def _prepare_fields(fields, required_fields=None):
@@ -55,7 +58,7 @@ def _convert_ids(in_ids):
 
 
 def get_projects(active=True, inactive=False, fields=None):
-    mongodb = _get_project_connection()
+    mongodb = _get_project_database()
     for project_name in mongodb.collection_names():
         if project_name in ("system.indexes",):
             continue
