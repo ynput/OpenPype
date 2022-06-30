@@ -84,7 +84,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
         repre_docs_by_id[repre_doc["_id"]] = repre_doc
 
     version_docs = get_versions(
-        project_name, verison_ids=version_ids, hero=True
+        project_name, version_ids, hero=True
     )
 
     version_docs_by_id = {}
@@ -111,7 +111,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
             version_data = copy.deepcopy(_version_data_by_id[version_id])
             version_docs_by_id[hero_version_id]["data"] = version_data
 
-    subset_docs = get_subsets(project_name, subset_ids=subset_ids)
+    subset_docs = get_subsets(project_name, subset_ids)
     subset_docs_by_id = {}
     asset_ids = set()
     for subset_doc in subset_docs:
@@ -164,7 +164,7 @@ def get_subset_contexts(subset_ids, dbcon=None):
     if not subset_ids:
         return contexts
 
-    project_name = legacy_io.active_project()
+    project_name = dbcon.active_project()
     subset_docs = get_subsets(project_name, subset_ids)
     subset_docs_by_id = {}
     asset_ids = set()
