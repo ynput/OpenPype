@@ -35,6 +35,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if node is None:
             return
 
+        instance.data["writeNode"] = node
         self.log.debug("checking instance: {}".format(instance))
 
         # Determine defined file type
