@@ -1,4 +1,7 @@
 from .publish_plugins import (
+    AbstractMetaInstancePlugin,
+    AbstractMetaContextPlugin,
+
     PublishValidationError,
     PublishXmlValidationError,
     KnownPublishError,
@@ -15,6 +18,9 @@ from .lib import (
 
 
 __all__ = (
+    "AbstractMetaInstancePlugin",
+    "AbstractMetaContextPlugin",
+
     "PublishValidationError",
     "PublishXmlValidationError",
     "KnownPublishError",

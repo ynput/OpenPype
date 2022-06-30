@@ -1,10 +1,35 @@
-from abc import ABCMeta
-from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
+"""Content was moved to 'openpype.pipeline.farm.abstract_metaplugins'.
+
+Please change your imports as soon as possible.
+
+File will be probably removed in OpenPype 3.14.*
+"""
+
+import warnings
+from openpype.pipeline.publish import (
+    AbstractMetaInstancePlugin,
+    AbstractMetaContextPlugin
+)
 
 
-class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
+class MetaPluginsDeprecated(DeprecationWarning):
     pass
 
 
-class AbstractMetaContextPlugin(ABCMeta, ExplicitMetaPlugin):
-    pass
+warnings.simplefilter("always", MetaPluginsDeprecated)
+warnings.warn(
+    (
+        "Content of 'abstract_metaplugins' was moved."
+        "\nUsing deprecated source of 'abstract_metaplugins'. Content was"
+        " moved to 'openpype.pipeline.farm.abstract_metaplugins'."
+        " Please change your imports as soon as possible."
+    ),
+    category=MetaPluginsDeprecated,
+    stacklevel=4
+)
+
+
+__all__ = (
+    "AbstractMetaInstancePlugin",
+    "AbstractMetaContextPlugin",
+)
