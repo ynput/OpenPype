@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Content was moved to 'openpype.pipeline.farm.abstract_expected_files'.
+"""Content was moved to 'openpype.pipeline.publish.abstract_expected_files'.
 
 Please change your imports as soon as possible.
 
@@ -19,7 +19,7 @@ warnings.warn(
     (
         "Content of 'abstract_expected_files' was moved."
         "\nUsing deprecated source of 'abstract_expected_files'. Content was"
-        " move to 'openpype.pipeline.farm.abstract_expected_files'."
+        " move to 'openpype.pipeline.publish.abstract_expected_files'."
         " Please change your imports as soon as possible."
     ),
     category=ExpectedFilesDeprecated,

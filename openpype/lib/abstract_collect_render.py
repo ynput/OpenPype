@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Content was moved to 'openpype.pipeline.farm.abstract_collect_render'.
+"""Content was moved to 'openpype.pipeline.publish.abstract_collect_render'.
 
 Please change your imports as soon as possible.
 
@@ -19,7 +19,7 @@ warnings.warn(
     (
         "Content of 'abstract_collect_render' was moved."
         "\nUsing deprecated source of 'abstract_collect_render'. Content was"
-        " move to 'openpype.pipeline.farm.abstract_collect_render'."
+        " move to 'openpype.pipeline.publish.abstract_collect_render'."
         " Please change your imports as soon as possible."
     ),
     category=CollectRenderDeprecated,

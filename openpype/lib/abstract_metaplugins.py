@@ -1,4 +1,4 @@
-"""Content was moved to 'openpype.pipeline.farm.abstract_metaplugins'.
+"""Content was moved to 'openpype.pipeline.publish.publish_plugins'.
 
 Please change your imports as soon as possible.
 
@@ -21,7 +21,7 @@ warnings.warn(
     (
         "Content of 'abstract_metaplugins' was moved."
         "\nUsing deprecated source of 'abstract_metaplugins'. Content was"
-        " moved to 'openpype.pipeline.farm.abstract_metaplugins'."
+        " moved to 'openpype.pipeline.publish.publish_plugins'."
         " Please change your imports as soon as possible."
     ),
     category=MetaPluginsDeprecated,
