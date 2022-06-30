@@ -1180,9 +1180,8 @@ def get_workfile_info(
 
     Warning:
         Query is based on filename and context which does not meant it will
-        find always right expected result. There is a limited amound of usage
-        and is recommended to not expect that all workfiles are stored in
-        database.
+        find always right and expected result. Information have limited usage
+        and is not recommended to use it as source information about workfile.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
