@@ -94,6 +94,21 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
+def get_whole_project(project_name):
+    """Receive all documents from project.
+
+    Helper that can be used to get all document from whole project. For example
+    for backups etc.
+
+    Returns:
+        Cursor: Query cursor as iterable which returns all documents from
+            project collection.
+    """
+
+    conn = _get_project_connection(project_name)
+    return conn.find({})
+
+
 def get_asset_by_id(project_name, asset_id, fields=None):
     """Receive asset data by it's id.
 

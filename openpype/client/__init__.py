@@ -1,6 +1,7 @@
 from .entities import (
     get_projects,
     get_project,
+    get_whole_project,
 
     get_asset_by_id,
     get_asset_by_name,
@@ -40,6 +41,7 @@ from .entities import (
 __all__ = (
     "get_projects",
     "get_project",
+    "get_whole_project",
 
     "get_asset_by_id",
     "get_asset_by_name",
