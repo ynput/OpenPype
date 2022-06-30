@@ -384,7 +384,8 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @classmethod
     def get_local_versions(
-        cls, production: bool = None, staging: bool = None
+        cls, production: bool = None,
+        staging: bool = None, compatible_with: OpenPypeVersion = None
     ) -> List:
         """Get all versions available on this machine.
 
@@ -394,6 +395,8 @@ class OpenPypeVersion(semver.VersionInfo):
         Args:
             production (bool): Return production versions.
             staging (bool): Return staging versions.
+            compatible_with (OpenPypeVersion): Return only those compatible
+                with specified version.
         """
         # Return all local versions if arguments are set to None
         if production is None and staging is None:
@@ -412,7 +415,7 @@ class OpenPypeVersion(semver.VersionInfo):
 
         dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
         versions = OpenPypeVersion.get_versions_from_directory(
-            dir_to_search
+            dir_to_search, compatible_with=compatible_with
         )
         filtered_versions = []
         for version in versions:
@@ -425,7 +428,8 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @classmethod
     def get_remote_versions(
-        cls, production: bool = None, staging: bool = None
+        cls, production: bool = None,
+        staging: bool = None, compatible_with: OpenPypeVersion = None
     ) -> List:
         """Get all versions available in OpenPype Path.
 
@@ -435,6 +439,8 @@ class OpenPypeVersion(semver.VersionInfo):
         Args:
             production (bool): Return production versions.
             staging (bool): Return staging versions.
+            compatible_with (OpenPypeVersion): Return only those compatible
+                with specified version.
         """
         # Return all local versions if arguments are set to None
         if production is None and staging is None:
@@ -468,7 +474,8 @@ class OpenPypeVersion(semver.VersionInfo):
         if not dir_to_search:
             return []
 
-        versions = cls.get_versions_from_directory(dir_to_search)
+        versions = cls.get_versions_from_directory(
+            dir_to_search, compatible_with=compatible_with)
         filtered_versions = []
         for version in versions:
             if version.is_staging():
@@ -479,11 +486,14 @@ class OpenPypeVersion(semver.VersionInfo):
         return list(sorted(set(filtered_versions)))
 
     @staticmethod
-    def get_versions_from_directory(openpype_dir: Path) -> List:
+    def get_versions_from_directory(
+            openpype_dir: Path, compatible_with: OpenPypeVersion = None) -> List:
         """Get all detected OpenPype versions in directory.
 
         Args:
             openpype_dir (Path): Directory to scan.
+            compatible_with (OpenPypeVersion): Return only versions compatible
+                with build version specified as OpenPypeVersion.
 
         Returns:
             list of OpenPypeVersion
@@ -518,6 +528,10 @@ class OpenPypeVersion(semver.VersionInfo):
                 )[0]:
                     continue
 
+                if compatible_with and not detected_version.is_compatible(
+                        compatible_with):
+                    continue
+
                 detected_version.path = item
                 _openpype_versions.append(detected_version)
 
@@ -549,8 +563,9 @@ class OpenPypeVersion(semver.VersionInfo):
     def get_latest_version(
         staging: bool = False,
         local: bool = None,
-        remote: bool = None
-    ) -> OpenPypeVersion:
+        remote: bool = None,
+        compatible_with: OpenPypeVersion = None
+    ) -> Union[OpenPypeVersion, None]:
         """Get latest available version.
 
         The version does not contain information about path and source.
@@ -568,6 +583,9 @@ class OpenPypeVersion(semver.VersionInfo):
             staging (bool, optional): List staging versions if True.
             local (bool, optional): List local versions if True.
             remote (bool, optional): List remote versions if True.
+            compatible_with (OpenPypeVersion, optional) Return only version
+                compatible with compatible_with.
+
         """
         if local is None and remote is None:
             local = True
@@ -598,7 +616,11 @@ class OpenPypeVersion(semver.VersionInfo):
             return None
 
         all_versions.sort()
-        return all_versions[-1]
+        latest_version: OpenPypeVersion
+        latest_version = all_versions[-1]
+        if compatible_with and not latest_version.is_compatible(compatible_with):
+            return None
+        return latest_version
 
     @classmethod
     def get_expected_studio_version(cls, staging=False, global_settings=None):
@@ -621,6 +643,20 @@ class OpenPypeVersion(semver.VersionInfo):
             return None
         return OpenPypeVersion(version=result)
 
+    def is_compatible(self, version: OpenPypeVersion):
+        """Test build compatibility.
+
+        This will simply compare major and minor versions (ignoring patch
+        and the rest).
+
+        Args:
+            version (OpenPypeVersion): Version to check compatibility with.
+
+        Returns:
+            bool: if the version is compatible
+
+        """
+        return self.major == version.major and self.minor == version.minor
 
 class BootstrapRepos:
     """Class for bootstrapping local OpenPype installation.
@@ -1076,7 +1112,20 @@ class BootstrapRepos:
         sys.path.insert(0, directory.as_posix())
 
     @staticmethod
-    def find_openpype_version(version, staging):
+    def find_openpype_version(
+            version: Union[str, OpenPypeVersion],
+            staging: bool,
+            compatible_with: OpenPypeVersion = None
+    ) -> Union[OpenPypeVersion, None]:
+        """Find location of specified OpenPype version.
+
+        Args:
+            version (Union[str, OpenPypeVersion): Version to find.
+            staging (bool): Filter staging versions.
+            compatible_with (OpenPypeVersion, optional): Find only
+                versions compatible with specified one.
+
+        """
         if isinstance(version, str):
             version = OpenPypeVersion(version=version)
 
@@ -1085,7 +1134,8 @@ class BootstrapRepos:
             return installed_version
 
         local_versions = OpenPypeVersion.get_local_versions(
-            staging=staging, production=not staging
+            staging=staging, production=not staging,
+            compatible_with=compatible_with
         )
         zip_version = None
         for local_version in local_versions:
@@ -1099,7 +1149,8 @@ class BootstrapRepos:
             return zip_version
 
         remote_versions = OpenPypeVersion.get_remote_versions(
-            staging=staging, production=not staging
+            staging=staging, production=not staging,
+            compatible_with=compatible_with
         )
         for remote_version in remote_versions:
             if remote_version == version:
@@ -1107,13 +1158,14 @@ class BootstrapRepos:
         return None
 
     @staticmethod
-    def find_latest_openpype_version(staging):
+    def find_latest_openpype_version(
+            staging, compatible_with: OpenPypeVersion = None):
         installed_version = OpenPypeVersion.get_installed_version()
         local_versions = OpenPypeVersion.get_local_versions(
-            staging=staging
+            staging=staging, compatible_with=compatible_with
         )
         remote_versions = OpenPypeVersion.get_remote_versions(
-            staging=staging
+            staging=staging, compatible_with=compatible_with
         )
         all_versions = local_versions + remote_versions
         if not staging:
@@ -1138,7 +1190,9 @@ class BootstrapRepos:
             self,
             openpype_path: Union[Path, str] = None,
             staging: bool = False,
-            include_zips: bool = False) -> Union[List[OpenPypeVersion], None]:
+            include_zips: bool = False,
+            compatible_with: OpenPypeVersion = None
+    ) -> Union[List[OpenPypeVersion], None]:
         """Get ordered dict of detected OpenPype version.
 
         Resolution order for OpenPype is following:
@@ -1154,6 +1208,8 @@ class BootstrapRepos:
                 otherwise.
             include_zips (bool, optional): If set True it will try to find
                 OpenPype in zip files in given directory.
+            compatible_with (OpenPypeVersion, optional): Find only those
+                versions compatible with the one specified.
 
         Returns:
             dict of Path: Dictionary of detected OpenPype version.
@@ -1173,7 +1229,8 @@ class BootstrapRepos:
                  " not implemented yet."))
 
         dir_to_search = self.data_dir
-        user_versions = self.get_openpype_versions(self.data_dir, staging)
+        user_versions = self.get_openpype_versions(
+            self.data_dir, staging, compatible_with)
         # if we have openpype_path specified, search only there.
         if openpype_path:
             dir_to_search = openpype_path
@@ -1192,7 +1249,8 @@ class BootstrapRepos:
                     # nothing found in registry, we'll use data dir
                     pass
 
-        openpype_versions = self.get_openpype_versions(dir_to_search, staging)
+        openpype_versions = self.get_openpype_versions(
+            dir_to_search, staging, compatible_with=compatible_with)
         openpype_versions += user_versions
 
         # remove zip file version if needed.
@@ -1557,14 +1615,18 @@ class BootstrapRepos:
             return False
         return True
 
-    def get_openpype_versions(self,
-                              openpype_dir: Path,
-                              staging: bool = False) -> list:
+    def get_openpype_versions(
+            self,
+            openpype_dir: Path,
+            staging: bool = False,
+            compatible_with: OpenPypeVersion = None) -> list:
         """Get all detected OpenPype versions in directory.
 
         Args:
             openpype_dir (Path): Directory to scan.
             staging (bool, optional): Find staging versions if True.
+            compatible_with (OpenPypeVersion, optional): Get only versions
+                compatible with the one specified.
 
         Returns:
             list of OpenPypeVersion
@@ -1597,6 +1659,10 @@ class BootstrapRepos:
                 if item.is_file() and not self._is_openpype_in_zip(
                     item, detected_version
                 ):
+                    continue
+
+                if compatible_with and \
+                        detected_version.is_compatible(compatible_with):
                     continue
 
                 detected_version.path = item

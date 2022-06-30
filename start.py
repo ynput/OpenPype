@@ -242,7 +242,8 @@ from igniter.tools import (
     get_openpype_global_settings,
     get_openpype_path_from_settings,
     validate_mongo_connection,
-    OpenPypeVersionNotFound
+    OpenPypeVersionNotFound,
+    OpenPypeVersionIncompatible
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
@@ -686,26 +687,31 @@ def _find_frozen_openpype(use_version: str = None,
             # Version says to use latest version
             _print("Finding latest version defined by use version")
             openpype_version = bootstrap.find_latest_openpype_version(
-                use_staging
+                use_staging, compatible_with=installed_version
             )
         else:
-            _print("Finding specified version \"{}\"".format(use_version))
+            _print(f"Finding specified version \"{use_version}\"")
             openpype_version = bootstrap.find_openpype_version(
                 use_version, use_staging
             )
 
         if openpype_version is None:
             raise OpenPypeVersionNotFound(
-                "Requested version \"{}\" was not found.".format(
-                    use_version
-                )
+                f"Requested version \"{use_version}\" was not found."
             )
+
+        if not openpype_version.is_compatible(installed_version):
+            raise OpenPypeVersionIncompatible((
+                f"Requested version \"{use_version}\" is not compatible "
+                f"with installed version \"{installed_version}\""
+            ))
+
 
     elif studio_version is not None:
         # Studio has defined a version to use
         _print("Finding studio version \"{}\"".format(studio_version))
         openpype_version = bootstrap.find_openpype_version(
-            studio_version, use_staging
+            studio_version, use_staging, compatible_with=installed_version
         )
         if openpype_version is None:
             raise OpenPypeVersionNotFound((
@@ -715,9 +721,10 @@ def _find_frozen_openpype(use_version: str = None,
 
     else:
         # Default behavior to use latest version
-        _print("Finding latest version")
+        _print(
+            f"Finding latest version compatible with [ {installed_version} ]")
         openpype_version = bootstrap.find_latest_openpype_version(
-            use_staging
+            use_staging, compatible_with=installed_version
         )
         if openpype_version is None:
             if use_staging:
@@ -813,7 +820,7 @@ def _bootstrap_from_code(use_version, use_staging):
                 use_version, use_staging
             )
             if version_to_use is None:
-                raise OpenPypeVersionNotFound(
+                raise OpenPypeVersionIncompatible(
                     "Requested version \"{}\" was not found.".format(
                         use_version
                     )
