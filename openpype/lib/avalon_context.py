@@ -768,7 +768,10 @@ def get_workdir_from_session(session=None, template_key=None):
             host_name,
             project_name=project_name
         )
-    return anatomy_filled[template_key]["folder"]
+    path = anatomy_filled[template_key]["folder"]
+    if path:
+        path = os.path.normpath(path)
+    return path
 
 
 @with_pipeline_io
