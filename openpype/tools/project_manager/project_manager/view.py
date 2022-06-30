@@ -3,6 +3,7 @@ from queue import Queue
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.client import get_project
 from .delegates import (
     NumberDelegate,
     NameDelegate,
@@ -47,12 +48,8 @@ class ProjectDocCache:
     def set_project(self, project_name):
         self.project_doc = None
 
-        if not project_name:
-            return
-
-        self.project_doc = self.dbcon.database[project_name].find_one(
-            {"type": "project"}
-        )
+        if project_name:
+            self.project_doc = get_project(project_name)
 
 
 class ToolsCache:

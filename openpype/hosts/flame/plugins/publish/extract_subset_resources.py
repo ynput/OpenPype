@@ -1,5 +1,6 @@
 import os
 import re
+import tempfile
 from pprint import pformat
 from copy import deepcopy
 
@@ -22,6 +23,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
     hosts = ["flame"]
 
     # plugin defaults
+    keep_original_representation = False
+
     default_presets = {
         "thumbnail": {
             "active": True,
@@ -44,7 +47,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        if "representations" not in instance.data:
+
+        if not self.keep_original_representation:
+            # remove previeous representation if not needed
             instance.data["representations"] = []
 
         # flame objects
@@ -81,7 +86,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # add default preset type for thumbnail and reviewable video
         # update them with settings and override in case the same
         # are found in there
-        export_presets = deepcopy(self.default_presets)
+        _preset_keys = [k.split('_')[0] for k in self.export_presets_mapping]
+        export_presets = {
+            k: v for k, v in deepcopy(self.default_presets).items()
+            if k not in _preset_keys
+        }
         export_presets.update(self.export_presets_mapping)
 
         # loop all preset names and
@@ -217,9 +226,14 @@ class ExtractSubsetResources(openpype.api.Extractor):
             opfapi.export_clip(
                 export_dir_path, exporting_clip, preset_path, **export_kwargs)
 
+            repr_name = unique_name
             # make sure only first segment is used if underscore in name
             # HACK: `ftrackreview_withLUT` will result only in `ftrackreview`
-            repr_name = unique_name.split("_")[0]
+            if (
+                "thumbnail" in unique_name
+                or "ftrackreview" in unique_name
+            ):
+                repr_name = unique_name.split("_")[0]
 
             # create representation data
             representation_data = {
@@ -258,7 +272,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     if os.path.splitext(f)[-1] == ".mov"
                 ]
                 # then try if thumbnail is not in unique name
-                or unique_name == "thumbnail"
+                or repr_name == "thumbnail"
             ):
                 representation_data["files"] = files.pop()
             else:
@@ -420,3 +434,30 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 "Path `{}` is containing more that one clip".format(path)
             )
         return clips[0]
+
+    def staging_dir(self, instance):
+        """Provide a temporary directory in which to store extracted files
+
+        Upon calling this method the staging directory is stored inside
+        the instance.data['stagingDir']
+        """
+        staging_dir = instance.data.get('stagingDir', None)
+        openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
+
+        if not staging_dir:
+            if openpype_temp_dir and os.path.exists(openpype_temp_dir):
+                staging_dir = os.path.normpath(
+                    tempfile.mkdtemp(
+                        prefix="pyblish_tmp_",
+                        dir=openpype_temp_dir
+                    )
+                )
+            else:
+                staging_dir = os.path.normpath(
+                    tempfile.mkdtemp(prefix="pyblish_tmp_")
+                )
+            instance.data['stagingDir'] = staging_dir
+
+        instance.context.data["cleanupFullPaths"].append(staging_dir)
+
+        return staging_dir

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.11.0-nightly.2" # OpenPype
+version = "3.12.1-nightly.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -68,6 +68,7 @@ slack-sdk = "^3.6.0"
 requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
+aiohttp-middlewares = "^2.0.0"
 
 
 [tool.poetry.dev-dependencies]
@@ -114,6 +115,8 @@ build-backend = "poetry.core.masonry.api"
 # https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers
 version = "==5.15.2"
 
+# TODO: we will need to handle different linux flavours here and
+#       also different macos versions too.
 [openpype.thirdparty.ffmpeg.windows]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
 hash = "dd51ba29d64ee238e7c4c3c7301b19754c3f0ee2e2a729c20a0e2789e72db925"
@@ -131,8 +134,8 @@ url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.3.10-windows.zip"
 hash = "b9950f5d2fa3720b52b8be55bacf5f56d33f9e029d38ee86534995f3d8d253d2"
 
 [openpype.thirdparty.oiio.linux]
-url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.12-linux.tgz"
-hash = "de63a8bf7f6c45ff59ecafeba13123f710c2cbc1783ec9e0b938e980d4f5c37f"
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.20-linux-centos7.tgz"
+hash = "be1abf8a50e9da5913298447421af0a17829d83ed6252ae1d40da7fa36a78787"
 
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"

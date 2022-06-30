@@ -287,6 +287,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
+    targets = ["local"]
 
     use_published = True
     tile_assembler_plugin = "OpenPypeTileAssembler"

@@ -8,6 +8,7 @@ import requests
 
 import pyblish.api
 
+from openpype.client import get_project, get_asset_by_name
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
 from openpype.lib import register_event_callback
@@ -442,14 +443,14 @@ def set_context_settings(asset_doc=None):
 
     Change fps, resolution and frame start/end.
     """
-    if asset_doc is None:
-        # Use current session asset if not passed
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": legacy_io.Session["AVALON_ASSET"]
-        })
 
-    project_doc = legacy_io.find_one({"type": "project"})
+    project_name = legacy_io.active_project()
+    if asset_doc is None:
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        # Use current session asset if not passed
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
+    project_doc = get_project(project_name)
 
     framerate = asset_doc["data"].get("fps")
     if framerate is None:
