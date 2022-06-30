@@ -1195,14 +1195,20 @@ def maintained_modifiers(container):
         yield
     finally:
         # Restor modifiers.
-        for index, modifiers in enumerate(objects_modifiers):
+        for modifiers in objects_modifiers:
             for modifier in modifiers:
                 modifier.restor()
-            # TODO (kaamaurice): Restor modifiers order.
-            # This could be verry tricky if upstream object hasn't the same
-            # modifier count.
-            # Only ops method are available for this process:
-            #    bpy.ops.object.modifier_move_up(modifier=modifier.name)
+            # Restor modifiers order.
+            #   NOTE (kaamaurice) This could be verry tricky if the upstream
+            #   object hasn't the same modifiers count. So currently we
+            #   reorder only non-override modifiers and if object has the same
+            #   modifiers count.
+            for modifier in modifiers:
+                obj = modifier.get_object()
+                if not obj or len(obj.modifiers) != len(modifiers):
+                    break
+                if not modifier.is_override_data:
+                    modifier.reorder()
 
 
 @contextmanager
@@ -1422,7 +1428,7 @@ class StructDescriptor:
         "is_override_data",
     ]
 
-    def _get_from_data(self, prop_value: Dict):
+    def _get_from_bpy_data(self, prop_value: Dict):
         if (
             prop_value.get("class") is bpy.types.Object
             and bpy.context.scene.objects.get(prop_value.get("name"))
@@ -1438,6 +1444,12 @@ class StructDescriptor:
                     )
                 ):
                     return data_member.get(prop_value.get("name"))
+
+    def get_object(self):
+        return (
+            bpy.context.scene.objects.get(self.object_name)
+            or bpy.data.objects.get(self.object_name)
+        )
 
     def store_property(self, prop_name, prop_value):
         if isinstance(prop_value, bpy.types.ID):
@@ -1458,7 +1470,7 @@ class StructDescriptor:
             and prop_value.get("class")
             and prop_value.get("name")
         ):
-            prop_value = self._get_from_data(prop_value)
+            prop_value = self._get_from_bpy_data(prop_value)
 
         setattr(entity, prop_name, prop_value)
 
@@ -1487,11 +1499,13 @@ class StructDescriptor:
 class ModifierDescriptor(StructDescriptor):
     """Store the name, type, properties and object of a modifier."""
 
+    def __init__(self, bpy_struct: bpy.types.bpy_struct):
+        super().__init__(bpy_struct)
+
+        self.order_index = bpy_struct.id_data.modifiers.find(self.name)
+
     def restor(self):
-        obj = (
-            bpy.context.scene.objects.get(self.object_name)
-            or bpy.data.objects.get(self.object_name)
-        )
+        obj = self.get_object()
         if obj:
             modifier = obj.modifiers.get(self.name)
             if not modifier and not self.is_override_data:
@@ -1503,15 +1517,27 @@ class ModifierDescriptor(StructDescriptor):
                 for prop_name in self.properties:
                     self.restore_property(modifier, prop_name)
 
+    def reorder(self):
+        obj = self.get_object()
+        if obj:
+            current_index = obj.modifiers.find(self.name)
+            if current_index > self.order_index > -1:
+                while current_index > self.order_index:
+                    print(obj.name, self.name, "UP")
+                    ops_result = bpy.ops.object.modifier_move_up(
+                        create_blender_context(active=obj, selected=obj),
+                        modifier=self.name,
+                    )
+                    current_index = obj.modifiers.find(self.name)
+                    if "CANCELLED" in ops_result:
+                        break
+
 
 class ConstraintDescriptor(StructDescriptor):
     """Store the name, type, properties and object of a constraint."""
 
     def restor(self, bone_name=None):
-        obj = (
-            bpy.context.scene.objects.get(self.object_name)
-            or bpy.data.objects.get(self.object_name)
-        )
+        obj = self.get_object()
         if bone_name:
             if obj and obj.type == "ARMATURE":
                 obj = obj.pose.bones.get(bone_name)
