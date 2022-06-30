@@ -84,7 +84,9 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
                                       name="{}RVSShape".format(label),
                                       parent=root)
 
-        self._apply_settings(volume_node, path=self.fname)
+        self._set_path(volume_node,
+                       path=self.fname,
+                       representation=context["representation"])
 
         nodes = [root, volume_node]
         self[:] = nodes
@@ -95,36 +97,6 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
             nodes=nodes,
             context=context,
             loader=self.__class__.__name__)
-
-    def _apply_settings(self,
-                        grid_node,
-                        path):
-        """Apply the settings for the VDB path to the VRayVolumeGrid"""
-        from maya import cmds
-
-        # The path points to a single file. However the vdb files could be
-        # either just that single file or a sequence in a folder so we check
-        # whether it's a sequence
-        folder = os.path.dirname(path)
-        files = os.listdir(folder)
-        is_single_file = len(files) == 1
-        if is_single_file:
-            filename = path
-        else:
-            # The path points to the publish .vdb sequence filepath so we
-            # find the first file in there that ends with .vdb
-            files = sorted(files)
-            first = next((x for x in files if x.endswith(".vdb")), None)
-            if first is None:
-                raise RuntimeError("Couldn't find first .vdb file of "
-                                   "sequence in: %s" % path)
-            filename = os.path.join(path, first)
-
-        # Tell Redshift whether it should load as sequence or single file
-        cmds.setAttr(grid_node + ".useFrameExtension", not is_single_file)
-
-        # Set file path
-        cmds.setAttr(grid_node + ".fileName", filename, type="string")
 
     def update(self, container, representation):
         from maya import cmds
@@ -137,7 +109,7 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
         assert len(grid_nodes) == 1, "This is a bug"
 
         # Update the VRayVolumeGrid
-        self._apply_settings(grid_nodes[0], path=path)
+        self._set_path(grid_nodes[0], path=path, representation=representation)
 
         # Update container representation
         cmds.setAttr(container["objectName"] + ".representation",
@@ -162,3 +134,19 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
 
     def switch(self, container, representation):
         self.update(container, representation)
+
+    @staticmethod
+    def _set_path(grid_node,
+                  path,
+                  representation):
+        """Apply the settings for the VDB path to the RedshiftVolumeShape"""
+        from maya import cmds
+
+        if not os.path.exists(path):
+            raise RuntimeError("Path does not exist: %s" % path)
+
+        is_sequence = bool(representation["context"].get("frame"))
+        cmds.setAttr(grid_node + ".useFrameExtension", is_sequence)
+
+        # Set file path
+        cmds.setAttr(grid_node + ".fileName", path, type="string")
