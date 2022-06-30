@@ -262,8 +262,9 @@ def get_asset(asset_name=None):
     return asset_document
 
 
-def get_system_general_anatomy_data():
-    system_settings = get_system_settings()
+def get_system_general_anatomy_data(system_settings=None):
+    if not system_settings:
+        system_settings = get_system_settings()
     studio_name = system_settings["general"]["studio_name"]
     studio_code = system_settings["general"]["studio_code"]
     return {
