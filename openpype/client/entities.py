@@ -1012,8 +1012,10 @@ def get_representations_parents(project_name, representations):
     versions_by_subset_id = collections.defaultdict(list)
     subsets_by_subset_id = {}
     subsets_by_asset_id = collections.defaultdict(list)
+    output = {}
     for representation in representations:
         repre_id = representation["_id"]
+        output[repre_id] = (None, None, None, None)
         version_id = representation["parent"]
         repres_by_version_id[version_id].append(representation)
 
@@ -1043,7 +1045,6 @@ def get_representations_parents(project_name, representations):
 
     project = get_project(project_name)
 
-    output = {}
     for version_id, representations in repres_by_version_id.items():
         asset = None
         subset = None
@@ -1083,7 +1084,7 @@ def get_representation_parents(project_name, representation):
     parents_by_repre_id = get_representations_parents(
         project_name, [representation]
     )
-    return parents_by_repre_id.get(repre_id)
+    return parents_by_repre_id[repre_id]
 
 
 def get_thumbnail_id_from_source(project_name, src_type, src_id):
