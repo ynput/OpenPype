@@ -685,12 +685,12 @@ def _find_frozen_openpype(use_version: str = None,
         # Specific version is defined
         if use_version.lower() == "latest":
             # Version says to use latest version
-            _print("Finding latest version defined by use version")
+            _print(">>> Finding latest version defined by use version")
             openpype_version = bootstrap.find_latest_openpype_version(
                 use_staging, compatible_with=installed_version
             )
         else:
-            _print(f"Finding specified version \"{use_version}\"")
+            _print(f">>> Finding specified version \"{use_version}\"")
             openpype_version = bootstrap.find_openpype_version(
                 use_version, use_staging
             )
@@ -709,7 +709,7 @@ def _find_frozen_openpype(use_version: str = None,
 
     elif studio_version is not None:
         # Studio has defined a version to use
-        _print("Finding studio version \"{}\"".format(studio_version))
+        _print(">>> Finding studio version \"{}\"".format(studio_version))
         openpype_version = bootstrap.find_openpype_version(
             studio_version, use_staging, compatible_with=installed_version
         )
@@ -722,7 +722,7 @@ def _find_frozen_openpype(use_version: str = None,
     else:
         # Default behavior to use latest version
         _print(
-            f"Finding latest version compatible with [ {installed_version} ]")
+            f">>> Finding latest version compatible with [ {installed_version} ]")
         openpype_version = bootstrap.find_latest_openpype_version(
             use_staging, compatible_with=installed_version
         )
@@ -805,7 +805,7 @@ def _bootstrap_from_code(use_version, use_staging):
 
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(_openpype_root))
-        switch_str = f" - will switch to {use_version}" if use_version else ""
+        switch_str = f" - will switch to {use_version}" if use_version and use_version != local_version else ""  # noqa
         _print(f"  - booting version: {local_version}{switch_str}")
         assert local_version
     else:

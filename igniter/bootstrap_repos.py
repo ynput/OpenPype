@@ -487,7 +487,8 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @staticmethod
     def get_versions_from_directory(
-            openpype_dir: Path, compatible_with: OpenPypeVersion = None) -> List:
+            openpype_dir: Path,
+            compatible_with: OpenPypeVersion = None) -> List:
         """Get all detected OpenPype versions in directory.
 
         Args:
@@ -618,7 +619,8 @@ class OpenPypeVersion(semver.VersionInfo):
         all_versions.sort()
         latest_version: OpenPypeVersion
         latest_version = all_versions[-1]
-        if compatible_with and not latest_version.is_compatible(compatible_with):
+        if compatible_with and not latest_version.is_compatible(
+                compatible_with):
             return None
         return latest_version
 
