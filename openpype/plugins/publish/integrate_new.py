@@ -16,6 +16,14 @@ from pymongo import DeleteOne, InsertOne
 import pyblish.api
 
 import openpype.api
+from openpype.client import (
+    get_asset_by_name,
+    get_subset_by_id,
+    get_version_by_id,
+    get_version_by_name,
+    get_representations,
+    get_archived_representations,
+)
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib import (
     prepare_template_data,
@@ -201,6 +209,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         context = instance.context
 
         project_entity = instance.data["projectEntity"]
+        project_name = project_entity["name"]
 
         context_asset_name = None
         context_asset_doc = context.data.get("assetEntity")
@@ -210,11 +219,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")
         if not asset_entity or asset_entity["name"] != context_asset_name:
-            asset_entity = legacy_io.find_one({
-                "type": "asset",
-                "name": asset_name,
-                "parent": project_entity["_id"]
-            })
+            asset_entity = get_asset_by_name(project_name, asset_name)
             assert asset_entity, (
                 "No asset found by the name \"{0}\" in project \"{1}\""
             ).format(asset_name, project_entity["name"])
@@ -270,7 +275,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "Establishing staging directory @ {0}".format(stagingdir)
             )
 
-        subset = self.get_subset(asset_entity, instance)
+        subset = self.get_subset(project_name, asset_entity, instance)
         instance.data["subsetEntity"] = subset
 
         version_number = instance.data["version"]
@@ -297,11 +302,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             for _repre in repres
         ]
 
-        existing_version = legacy_io.find_one({
-            'type': 'version',
-            'parent': subset["_id"],
-            'name': version_number
-        })
+        existing_version = get_version_by_name(
+            project_name, version_number, subset["_id"]
+        )
 
         if existing_version is None:
             version_id = legacy_io.insert_one(version).inserted_id
@@ -322,10 +325,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             version_id = existing_version['_id']
 
             # Find representations of existing version and archive them
-            current_repres = list(legacy_io.find({
-                "type": "representation",
-                "parent": version_id
-            }))
+            current_repres = list(get_representations(
+                project_name, version_ids=[version_id]
+            ))
             bulk_writes = []
             for repre in current_repres:
                 if append_repres:
@@ -345,18 +347,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # bulk updates
             if bulk_writes:
-                project_name = legacy_io.Session["AVALON_PROJECT"]
                 legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
 
-        version = legacy_io.find_one({"_id": version_id})
+        version = get_version_by_id(project_name, version_id)
         instance.data["versionEntity"] = version
 
-        existing_repres = list(legacy_io.find({
-            "parent": version_id,
-            "type": "archived_representation"
-        }))
+        existing_repres = list(get_archived_representations(
+            project_name,
+            version_ids=[version_id]
+        ))
 
         instance.data['version'] = version['name']
 
@@ -792,13 +793,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         create_hard_link(src, dst)
 
-    def get_subset(self, asset, instance):
+    def get_subset(self, project_name, asset, instance):
         subset_name = instance.data["subset"]
-        subset = legacy_io.find_one({
-            "type": "subset",
-            "parent": asset["_id"],
-            "name": subset_name
-        })
+        subset = get_subset_by_name(project_name, subset_name, asset["_id"])
 
         if subset is None:
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
@@ -825,7 +822,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "parent": asset["_id"]
             }).inserted_id
 
-            subset = legacy_io.find_one({"_id": _id})
+            subset = get_subset_by_id(project_name, _id)
 
         # QUESTION Why is changing of group and updating it's
         #   families in 'get_subset'?
