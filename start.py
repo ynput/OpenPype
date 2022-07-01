@@ -706,23 +706,24 @@ def _find_frozen_openpype(use_version: str = None,
                 f"with installed version \"{installed_version}\""
             ))
 
-
     elif studio_version is not None:
         # Studio has defined a version to use
-        _print(">>> Finding studio version \"{}\"".format(studio_version))
+        _print(f">>> Finding studio version \"{studio_version}\"")
         openpype_version = bootstrap.find_openpype_version(
             studio_version, use_staging, compatible_with=installed_version
         )
         if openpype_version is None:
             raise OpenPypeVersionNotFound((
-                "Requested OpenPype version \"{}\" defined by settings"
+                "Requested OpenPype version "
+                f"\"{studio_version}\" defined by settings"
                 " was not found."
-            ).format(studio_version))
+            ))
 
     else:
         # Default behavior to use latest version
-        _print(
-            f">>> Finding latest version compatible with [ {installed_version} ]")
+        _print((
+            ">>> Finding latest version compatible "
+            f"with [ {installed_version} ]"))
         openpype_version = bootstrap.find_latest_openpype_version(
             use_staging, compatible_with=installed_version
         )
@@ -821,10 +822,7 @@ def _bootstrap_from_code(use_version, use_staging):
             )
             if version_to_use is None:
                 raise OpenPypeVersionIncompatible(
-                    "Requested version \"{}\" was not found.".format(
-                        use_version
-                    )
-                )
+                    f"Requested version \"{use_version}\" was not found.")
         else:
             # Staging version should be used
             version_to_use = bootstrap.find_latest_openpype_version(
