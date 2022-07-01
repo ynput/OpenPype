@@ -1255,32 +1255,56 @@ class BootstrapRepos:
                 ("Finding OpenPype in non-filesystem locations is"
                  " not implemented yet."))
 
-        dir_to_search = self.data_dir
-        user_versions = self.get_openpype_versions(
-            self.data_dir, staging, compatible_with)
-        # if we have openpype_path specified, search only there.
+        version_dir = ""
+        if compatible_with:
+            version_dir = f"{compatible_with.major}.{compatible_with.minor}"
+
+        # if checks bellow for OPENPYPE_PATH and registry fails, use data_dir
+        # DEPRECATED: lookup in root of this folder is deprecated in favour
+        #             of major.minor sub-folders.
+        dirs_to_search = [
+            self.data_dir
+        ]
+        if compatible_with:
+            dirs_to_search.append(self.data_dir / version_dir)
+
         if openpype_path:
-            dir_to_search = openpype_path
+            dirs_to_search = [openpype_path]
+
+            if compatible_with:
+                dirs_to_search.append(openpype_path / version_dir)
+
+        # first try OPENPYPE_PATH and if that is not available,
+        # try registry.
+        if os.getenv("OPENPYPE_PATH") \
+                and Path(os.getenv("OPENPYPE_PATH")).exists():
+            dirs_to_search = [Path(os.getenv("OPENPYPE_PATH"))]
+
+            if compatible_with:
+                dirs_to_search.append(
+                    Path(os.getenv("OPENPYPE_PATH")) / version_dir)
         else:
-            if os.getenv("OPENPYPE_PATH"):
-                if Path(os.getenv("OPENPYPE_PATH")).exists():
-                    dir_to_search = Path(os.getenv("OPENPYPE_PATH"))
-            else:
-                try:
-                    registry_dir = Path(
-                        str(self.registry.get_item("openPypePath")))
-                    if registry_dir.exists():
-                        dir_to_search = registry_dir
+            try:
+                registry_dir = Path(
+                    str(self.registry.get_item("openPypePath")))
+                if registry_dir.exists():
+                    dirs_to_search = [registry_dir]
+                if compatible_with:
+                    dirs_to_search.append(registry_dir / version_dir)
 
-                except ValueError:
-                    # nothing found in registry, we'll use data dir
-                    pass
+            except ValueError:
+                # nothing found in registry, we'll use data dir
+                pass
 
-        openpype_versions = self.get_openpype_versions(
-            dir_to_search, staging, compatible_with=compatible_with)
-        openpype_versions += user_versions
+        openpype_versions = []
+        for dir_to_search in dirs_to_search:
+            try:
+                openpype_versions += self.get_openpype_versions(
+                    dir_to_search, staging, compatible_with=compatible_with)
+            except ValueError:
+                # location is invalid, skip it
+                pass
 
-        # remove zip file version if needed.
         if not include_zips:
             openpype_versions = [
                 v for v in openpype_versions if v.path.suffix != ".zip"
@@ -1662,7 +1686,7 @@ class BootstrapRepos:
 
         """
         if not openpype_dir.exists() and not openpype_dir.is_dir():
-            raise ValueError("specified directory is invalid")
+            raise ValueError(f"specified directory {openpype_dir} is invalid")
 
         _openpype_versions = []
         # iterate over directory in first level and find all that might
@@ -1688,7 +1712,7 @@ class BootstrapRepos:
                     continue
 
                 if compatible_with and \
-                        detected_version.is_compatible(compatible_with):
+                        not detected_version.is_compatible(compatible_with):
                     continue
 
                 detected_version.path = item

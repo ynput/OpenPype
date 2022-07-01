@@ -35,7 +35,6 @@ def main(path):
     version = OpenPypeVersion(
         version=OpenPypeVersion.get_version_string_from_directory(
             openpype_root))
-    bs.data_dir = bs.data_dir / f"{version.major}.{version.minor}"
     if path:
         out_path = Path(path)
         bs.data_dir = out_path
