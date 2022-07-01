@@ -88,10 +88,15 @@ class BlendAnimationLoader(plugin.AssetLoader):
                 (c for c in scene_collections if c.name == collection_name),
                 None
             )
-            assert collection, (
-                f"invalid collection name for action: {action.name}"
-            )
-            armature = collection.all_objects.get(armature_name)
+
+            if collection_name == "NONE":
+                armature = bpy.context.scene.objects.get(armature_name)
+            else:
+                assert collection, (
+                    f"invalid collection name for action: {action.name}"
+                )
+                armature = collection.all_objects.get(armature_name)
+
             assert armature, (
                 f"invalid armature name for action: {armature.name}"
             )
@@ -100,6 +105,9 @@ class BlendAnimationLoader(plugin.AssetLoader):
                 armature.animation_data_create()
             armature.animation_data.action = action
 
-            plugin.link_to_collection(collection, asset_group)
+            if collection:
+                plugin.link_to_collection(collection, asset_group)
+            else:
+                plugin.link_to_collection(armature, asset_group)
 
         plugin.orphans_purge()
