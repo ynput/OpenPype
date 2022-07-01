@@ -133,7 +133,7 @@ class _InterfacesClass(_ModuleClass):
 
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
-            if attr_name in ("__path__", "__file__"):
+            if attr_name in ("__path__", "__file__", "__addon_enabled__"):
                 return None
 
             raise AttributeError((
