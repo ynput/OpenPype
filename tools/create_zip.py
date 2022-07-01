@@ -32,9 +32,6 @@ def main(path):
 
     openpype_root = Path(os.path.dirname(__file__)).parent
     bs = bootstrap_repos.BootstrapRepos(progress_callback=progress)
-    version = OpenPypeVersion(
-        version=OpenPypeVersion.get_version_string_from_directory(
-            openpype_root))
     if path:
         out_path = Path(path)
         bs.data_dir = out_path
