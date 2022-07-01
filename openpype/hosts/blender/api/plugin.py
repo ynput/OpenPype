@@ -11,6 +11,7 @@ from bson.objectid import ObjectId
 import bpy
 from mathutils import Matrix
 
+from openpype.api import Logger
 from openpype.pipeline import (
     legacy_io,
     LegacyCreator,
@@ -31,6 +32,8 @@ from .pipeline import metadata_update, AVALON_PROPERTY, MODEL_DOWNSTREAM
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
+
+log = Logger.get_logger(__name__)
 
 
 def asset_name(
@@ -972,20 +975,21 @@ class AssetLoader(LoaderPlugin):
             if obj is not asset_group:
                 obj.name = f"{namespace}:{obj.name}"
 
-            if obj.data:
+            if obj.data and not obj.data.library and obj.data.users == 1:
                 objects_data.add(obj.data)
 
             if obj.type == 'MESH':
                 for material_slot in obj.material_slots:
-                    if material_slot.material:
+                    mtl = material_slot.material
+                    if mtl and not mtl.library and mtl.users == 1:
                         materials.add(material_slot.material)
 
             elif obj.type == 'ARMATURE':
                 anim_data = obj.animation_data
-                if anim_data and anim_data.action:
-                    anim_data.action.name = (
-                        f"{namespace}:{anim_data.action.name}"
-                    )
+                if anim_data:
+                    action = anim_data.action
+                    if action and not action.library and action.users == 1:
+                        action.name = f"{namespace}:{anim_data.action.name}"
 
         for data in objects_data:
             data.name = f"{namespace}:{data.name}"
@@ -1061,15 +1065,13 @@ class AssetLoader(LoaderPlugin):
             for obj in set(override.all_objects):
                 obj.override_library.reference.user_remap(obj.id_data)
 
-        for obj in set(override.all_objects):
-            # Force override object data like meshes and curves.
-            if obj.data and not obj.data.override_library:
-                obj.data.override_create(remap_local_usages=True)
-
-            # Since Blender 3.2 property is_system_override need to be False
-            # for editable override library.
-            if hasattr(override.override_library, "is_system_override"):
+        # Since Blender 3.2 property is_system_override need to be False
+        # for editable override library.
+        if hasattr(override.override_library, "is_system_override"):
+            for obj in set(override.all_objects):
                 obj.override_library.is_system_override = False
+            for child in set(override.children):
+                child.override_library.is_system_override = False
 
         # Move objects and child collections from override to asset_group.
         link_to_collection(override.objects, asset_group)
@@ -1481,13 +1483,20 @@ class StructDescriptor:
         ):
             prop_value = self._get_from_bpy_data(prop_value)
 
-        setattr(entity, prop_name, prop_value)
+        try:
+            setattr(entity, prop_name, prop_value)
+        except Exception as error:
+            log.warning(
+                "restore_property failed:"
+                f" >>> {entity.name}.{prop_name}={prop_value}"
+                f" *** {error}"
+            )
 
     def __init__(self, bpy_struct: bpy.types.bpy_struct):
         self.name = bpy_struct.name
         self.type = bpy_struct.type
         self.object_name = bpy_struct.id_data.name
-        self.is_override_data = getattr(bpy_struct, "is_override_data", False)
+        self.is_override_data = getattr(bpy_struct, "is_override_data", True)
 
         self.properties = dict()
         for prop_name, prop_value in getmembers(bpy_struct):
@@ -1532,7 +1541,6 @@ class ModifierDescriptor(StructDescriptor):
             current_index = obj.modifiers.find(self.name)
             if current_index > self.order_index > -1:
                 while current_index > self.order_index:
-                    print(obj.name, self.name, "UP")
                     ops_result = bpy.ops.object.modifier_move_up(
                         create_blender_context(active=obj, selected=obj),
                         modifier=self.name,
