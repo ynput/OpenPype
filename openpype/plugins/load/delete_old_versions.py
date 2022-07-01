@@ -4,13 +4,14 @@ import uuid
 
 import clique
 from pymongo import UpdateOne
-import ftrack_api
+import importlib
 import qargparse
 from Qt import QtWidgets, QtCore
 
 from openpype import style
 from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.lib import StringTemplate
+from openpype.settings import get_system_settings
 
 
 class DeleteOldVersions(load.SubsetLoaderPlugin):
@@ -370,37 +371,39 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
         self.dbcon.uninstall()
 
-        # Set attribute `is_published` to `False` on ftrack AssetVersions
-        session = ftrack_api.Session()
-        query = (
-            "AssetVersion where asset.parent.id is \"{}\""
-            " and asset.name is \"{}\""
-            " and version is \"{}\""
-        )
-        for v in data["versions"]:
-            try:
-                ftrack_version = session.query(
-                    query.format(
-                        data["asset"]["data"]["ftrackId"],
-                        data["subset"]["name"],
-                        v["name"]
-                    )
-                ).one()
-            except ftrack_api.exception.NoResultFoundError:
-                continue
-
-            ftrack_version["is_published"] = False
-
-        try:
-            session.commit()
-
-        except Exception:
-            msg = (
-                "Could not set `is_published` attribute to `False`"
-                " for selected AssetVersions."
+        if get_system_settings()["modules"]["ftrack"]["enabled"]:
+            # Set attribute `is_published` to `False` on ftrack AssetVersions
+            ftrack_api = importlib.import_module("ftrack_api")
+            session = ftrack_api.Session()
+            query = (
+                "AssetVersion where asset.parent.id is \"{}\""
+                " and asset.name is \"{}\""
+                " and version is \"{}\""
             )
-            self.log.error(msg)
-            self.message(msg)
+            for v in data["versions"]:
+                try:
+                    ftrack_version = session.query(
+                        query.format(
+                            data["asset"]["data"]["ftrackId"],
+                            data["subset"]["name"],
+                            v["name"]
+                        )
+                    ).one()
+                except ftrack_api.exception.NoResultFoundError:
+                    continue
+
+                ftrack_version["is_published"] = False
+
+            try:
+                session.commit()
+
+            except Exception:
+                msg = (
+                    "Could not set `is_published` attribute to `False`"
+                    " for selected AssetVersions."
+                )
+                self.log.error(msg)
+                self.message(msg)
 
         return size
 
