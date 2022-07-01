@@ -133,4 +133,3 @@ class ExtractAnimation(ExtractAlembic):
                                            fullPath=True) or []
 
         return nodes, roots
-
