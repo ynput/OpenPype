@@ -122,7 +122,7 @@ class OpenPypeVersion(semver.VersionInfo):
         if self.staging:
             if kwargs.get("build"):
                 if "staging" not in kwargs.get("build"):
-                    kwargs["build"] = "{}-staging".format(kwargs.get("build"))
+                    kwargs["build"] = f"{kwargs.get('build')}-staging"
             else:
                 kwargs["build"] = "staging"
 
@@ -136,8 +136,7 @@ class OpenPypeVersion(semver.VersionInfo):
         return bool(result and self.staging == other.staging)
 
     def __repr__(self):
-        return "<{}: {} - path={}>".format(
-            self.__class__.__name__, str(self), self.path)
+        return f"<{self.__class__.__name__}: {str(self)} - path={self.path}>"
 
     def __lt__(self, other: OpenPypeVersion):
         result = super().__lt__(other)
@@ -232,10 +231,7 @@ class OpenPypeVersion(semver.VersionInfo):
         return openpype_version
 
     def __hash__(self):
-        if self.path:
-            return hash(self.path)
-        else:
-            return hash(str(self))
+        return hash(self.path) if self.path else hash(str(self))
 
     @staticmethod
     def is_version_in_dir(
@@ -413,10 +409,19 @@ class OpenPypeVersion(semver.VersionInfo):
         if not production and not staging:
             return []
 
+        # DEPRECATED: backwards compatible way to look for versions in root
         dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
         versions = OpenPypeVersion.get_versions_from_directory(
             dir_to_search, compatible_with=compatible_with
         )
+        if compatible_with:
+            dir_to_search = Path(
+                user_data_dir("openpype", "pypeclub")) / f"{compatible_with.major}.{compatible_with.minor}"  # noqa
+            versions += OpenPypeVersion.get_versions_from_directory(
+                dir_to_search, compatible_with=compatible_with
+            )
+
+
         filtered_versions = []
         for version in versions:
             if version.is_staging():
@@ -474,8 +479,14 @@ class OpenPypeVersion(semver.VersionInfo):
         if not dir_to_search:
             return []
 
+        # DEPRECATED: look for version in root directory
         versions = cls.get_versions_from_directory(
             dir_to_search, compatible_with=compatible_with)
+        if compatible_with:
+            dir_to_search = dir_to_search / f"{compatible_with.major}.{compatible_with.minor}"  # noqa
+            versions += cls.get_versions_from_directory(
+                dir_to_search, compatible_with=compatible_with)
+
         filtered_versions = []
         for version in versions:
             if version.is_staging():
@@ -660,6 +671,7 @@ class OpenPypeVersion(semver.VersionInfo):
         """
         return self.major == version.major and self.minor == version.minor
 
+
 class BootstrapRepos:
     """Class for bootstrapping local OpenPype installation.
 
@@ -779,8 +791,9 @@ class BootstrapRepos:
             return
 
         # create destination directory
-        if not self.data_dir.exists():
-            self.data_dir.mkdir(parents=True)
+        destination = self.data_dir / f"{installed_version.major}.{installed_version.minor}"  # noqa
+        if not destination.exists():
+            destination.mkdir(parents=True)
 
         # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -808,7 +821,9 @@ class BootstrapRepos:
             Path to moved zip on success.
 
         """
-        destination = self.data_dir / zip_file.name
+        version = OpenPypeVersion.version_in_str(zip_file.name)
+        destination_dir = self.data_dir / f"{version.major}.{version.minor}"
+        destination = destination_dir / zip_file.name
 
         if destination.exists():
             self._print(
@@ -820,7 +835,7 @@ class BootstrapRepos:
                 self._print(str(e), LOG_ERROR, exc_info=True)
                 return None
         try:
-            shutil.move(zip_file.as_posix(), self.data_dir.as_posix())
+            shutil.move(zip_file.as_posix(), destination_dir.as_posix())
         except shutil.Error as e:
             self._print(str(e), LOG_ERROR, exc_info=True)
             return None
@@ -1033,6 +1048,16 @@ class BootstrapRepos:
 
     @staticmethod
     def _validate_dir(path: Path) -> tuple:
+        """Validate checksums in a given path.
+
+        Args:
+            path (Path): path to folder to validate.
+
+        Returns:
+            tuple(bool, str): returns status and reason as a bool
+                and str in a tuple.
+
+        """
         checksums_file = Path(path / "checksums")
         if not checksums_file.exists():
             # FIXME: This should be set to False sometimes in the future
@@ -1368,9 +1393,8 @@ class BootstrapRepos:
             raise ValueError(
                 f"version {version} is not associated with any file")
 
-        destination = self.data_dir / version.path.stem
-        if destination.exists():
-            assert destination.is_dir()
+        destination = self.data_dir / f"{version.major}.{version.minor}" / version.path.stem  # noqa
+        if destination.exists() and destination.is_dir():
             try:
                 shutil.rmtree(destination)
             except OSError as e:
@@ -1439,7 +1463,7 @@ class BootstrapRepos:
         else:
             dir_name = openpype_version.path.stem
 
-        destination = self.data_dir / dir_name
+        destination = self.data_dir / f"{openpype_version.major}.{openpype_version.minor}" / dir_name  # noqa
 
         # test if destination directory already exist, if so lets delete it.
         if destination.exists() and force:

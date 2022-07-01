@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Create OpenPype version from live sources."""
 from igniter import bootstrap_repos
+from igniter import OpenPypeVersion
 import click
 import enlighten
 import blessed
 from pathlib2 import Path
+import os
 
 
 term = blessed.Terminal()
@@ -28,7 +30,12 @@ def main(path):
         progress_bar.update(incr=inc - last_increment)
         last_increment = inc
 
+    openpype_root = Path(os.path.dirname(__file__)).parent
     bs = bootstrap_repos.BootstrapRepos(progress_callback=progress)
+    version = OpenPypeVersion(
+        version=OpenPypeVersion.get_version_string_from_directory(
+            openpype_root))
+    bs.data_dir = bs.data_dir / f"{version.major}.{version.minor}"
     if path:
         out_path = Path(path)
         bs.data_dir = out_path
@@ -61,7 +68,7 @@ def _print(msg: str, message_type: int = 0) -> None:
     else:
         header = term.darkolivegreen3("--- ")
 
-    print("{}{}".format(header, msg))
+    print(f"{header}{msg}")
 
 
 if __name__ == "__main__":
