@@ -9,7 +9,7 @@ from openpype.hosts.blender.api import plugin
 class ExtractBlendAnimation(publish.Extractor):
     """Extract animation as blend file."""
 
-    label = "Extract Blend"
+    label = "Extract Anim Blend"
     hosts = ["blender"]
     families = ["animation"]
     optional = True
@@ -26,10 +26,17 @@ class ExtractBlendAnimation(publish.Extractor):
 
         data_blocks = set()
         collections = set()
+        animated_objects = set()
 
         for obj in instance:
             if plugin.is_container(obj, family="rig"):
                 collections.add(obj)
+            elif (
+                isinstance(obj, bpy.types.Object)
+                and obj.animation_data
+                and obj.animation_data.action
+            ):
+                animated_objects.add(obj)
 
         for collection in collections:
             for obj in collection.all_objects:
@@ -40,6 +47,14 @@ class ExtractBlendAnimation(publish.Extractor):
                     action["collection"] = collection.name
                     action["armature"] = obj.name
                     data_blocks.add(action)
+
+        for obj in animated_objects:
+            action = obj.animation_data.action.copy()
+            action_name = obj.animation_data.action.name.split(":")[-1]
+            action.name = f"{instance.name}:{action_name}"
+            action["collection"] = "NONE"
+            action["armature"] = obj.name
+            data_blocks.add(action)
 
         bpy.data.libraries.write(filepath, data_blocks)
 
