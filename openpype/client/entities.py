@@ -381,6 +381,7 @@ def get_subsets(
     subset_ids=None,
     subset_names=None,
     asset_ids=None,
+    names_by_asset_ids=None,
     archived=False,
     fields=None
 ):
@@ -396,6 +397,9 @@ def get_subsets(
             Filter ignored if 'None' is passed.
         asset_ids (list[str|ObjectId]): Asset ids under which should look for
             the subsets. Filter ignored if 'None' is passed.
+        names_by_asset_ids (dict[ObjectId, list[str]]): Complex filtering
+            using asset ids and list of subset names under the asset.
+        archived (bool): Look for archived subsets too.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -428,6 +432,18 @@ def get_subsets(
         if not subset_names:
             return []
         query_filter["name"] = {"$in": list(subset_names)}
+
+    if names_by_asset_ids is not None:
+        or_query = []
+        for asset_id, names in names_by_asset_ids.items():
+            if asset_id and names:
+                or_query.append({
+                    "parent": _convert_id(asset_id),
+                    "name": {"$in": list(names)}
+                })
+        if not or_query:
+            return []
+        query_filter["$or"] = or_query
 
     conn = _get_project_connection(project_name)
     return conn.find(query_filter, _prepare_fields(fields))
