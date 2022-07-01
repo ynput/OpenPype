@@ -918,7 +918,7 @@ def get_representation_by_id(project_name, representation_id, fields=None):
     if not representation_id:
         return None
 
-    repre_types = ["representation", "archived_representations"]
+    repre_types = ["representation", "archived_representation"]
     query_filter = {
         "type": {"$in": repre_types}
     }
@@ -962,43 +962,26 @@ def get_representation_by_name(
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
-def get_representations(
+def _get_representations(
     project_name,
-    representation_ids=None,
-    representation_names=None,
-    version_ids=None,
-    extensions=None,
-    names_by_version_ids=None,
-    archived=False,
-    fields=None
+    representation_ids,
+    representation_names,
+    version_ids,
+    extensions,
+    names_by_version_ids,
+    standard,
+    archived,
+    fields
 ):
-    """Representaion entities data from one project filtered by filters.
-
-    Filters are additive (all conditions must pass to return subset).
-
-    Args:
-        project_name (str): Name of project where to look for queried entities.
-        representation_ids (list[str|ObjectId]): Representation ids used as
-            filter. Filter ignored if 'None' is passed.
-        representation_names (list[str]): Representations names used as filter.
-            Filter ignored if 'None' is passed.
-        version_ids (list[str]): Subset ids used as parent filter. Filter
-            ignored if 'None' is passed.
-        extensions (list[str]): Filter by extension of main representation
-            file (without dot).
-        names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
-            using version ids and list of names under the version.
-        archived (bool): Output will also contain archived representations.
-        fields (list[str]): Fields that should be returned. All fields are
-            returned if 'None' is passed.
-
-    Returns:
-        Cursor: Iterable cursor yielding all matching representations.
-    """
-
-    repre_types = ["representation"]
+    repre_types = []
+    if standard:
+        repre_types.append("representation")
     if archived:
-        repre_types.append("archived_representations")
+        repre_types.append("archived_representation")
+
+    if not repre_types:
+        return []
+
     if len(repre_types) == 1:
         query_filter = {"type": repre_types[0]}
     else:
@@ -1041,6 +1024,99 @@ def get_representations(
     conn = _get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
+
+
+def get_representations(
+    project_name,
+    representation_ids=None,
+    representation_names=None,
+    version_ids=None,
+    extensions=None,
+    names_by_version_ids=None,
+    archived=False,
+    standard=True,
+    fields=None
+):
+    """Representaion entities data from one project filtered by filters.
+
+    Filters are additive (all conditions must pass to return subset).
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representation_ids (list[str|ObjectId]): Representation ids used as
+            filter. Filter ignored if 'None' is passed.
+        representation_names (list[str]): Representations names used as filter.
+            Filter ignored if 'None' is passed.
+        version_ids (list[str]): Subset ids used as parent filter. Filter
+            ignored if 'None' is passed.
+        extensions (list[str]): Filter by extension of main representation
+            file (without dot).
+        names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
+            using version ids and list of names under the version.
+        archived (bool): Output will also contain archived representations.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Iterable cursor yielding all matching representations.
+    """
+
+    return _get_representations(
+        project_name=project_name,
+        representation_ids=representation_ids,
+        representation_names=representation_names,
+        version_ids=version_ids,
+        extensions=extensions,
+        names_by_version_ids=names_by_version_ids,
+        standard=True,
+        archived=archived,
+        fields=fields
+    )
+
+
+def get_archived_representations(
+    project_name,
+    representation_ids=None,
+    representation_names=None,
+    version_ids=None,
+    extensions=None,
+    names_by_version_ids=None,
+    fields=None
+):
+    """Archived representaion entities data from project with applied filters.
+
+    Filters are additive (all conditions must pass to return subset).
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        representation_ids (list[str|ObjectId]): Representation ids used as
+            filter. Filter ignored if 'None' is passed.
+        representation_names (list[str]): Representations names used as filter.
+            Filter ignored if 'None' is passed.
+        version_ids (list[str]): Subset ids used as parent filter. Filter
+            ignored if 'None' is passed.
+        extensions (list[str]): Filter by extension of main representation
+            file (without dot).
+        names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
+            using version ids and list of names under the version.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Cursor: Iterable cursor yielding all matching representations.
+    """
+
+    return _get_representations(
+        project_name=project_name,
+        representation_ids=representation_ids,
+        representation_names=representation_names,
+        version_ids=version_ids,
+        extensions=extensions,
+        names_by_version_ids=names_by_version_ids,
+        standard=False,
+        archived=True,
+        fields=fields
+    )
 
 
 def get_representations_parents(project_name, representations):
