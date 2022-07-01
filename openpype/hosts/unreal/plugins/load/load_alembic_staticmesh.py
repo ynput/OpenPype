@@ -26,9 +26,9 @@ class StaticMeshAlembicLoader(plugin.Loader):
         sm_settings = unreal.AbcStaticMeshSettings()
         conversion_settings = unreal.AbcConversionSettings(
             preset=unreal.AbcConversionPreset.CUSTOM,
-            flip_u=False, flip_v=True,
-            rotation=[90.0, 0.0, 0.0],
-            scale=[1.0, -1.0, 1.0])
+            flip_u=False, flip_v=False,
+            rotation=[0.0, 0.0, 0.0],
+            scale=[1.0, 1.0, 1.0])
 
         task.set_editor_property('filename', filename)
         task.set_editor_property('destination_path', asset_dir)

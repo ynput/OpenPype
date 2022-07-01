@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Loader for layouts."""
-import os
 import json
 from pathlib import Path
 
@@ -170,9 +169,29 @@ class LayoutLoader(plugin.Loader):
             hid_section.set_row_index(index)
             hid_section.set_level_names(maps)
 
-    @staticmethod
+    def _transform_from_basis(self, transform, basis):
+        """Transform a transform from a basis to a new basis."""
+        # Get the basis matrix
+        basis_matrix = unreal.Matrix(
+            basis[0],
+            basis[1],
+            basis[2],
+            basis[3]
+        )
+        transform_matrix = unreal.Matrix(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3]
+        )
+
+        new_transform = (
+            basis_matrix.get_inverse() * transform_matrix * basis_matrix)
+
+        return new_transform.transform()
+
     def _process_family(
-        assets, class_name, transform, sequence, inst_name=None
+        self, assets, class_name, transform, basis, sequence, inst_name=None
     ):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -182,30 +201,12 @@ class LayoutLoader(plugin.Loader):
         for asset in assets:
             obj = ar.get_asset_by_object_path(asset).get_asset()
             if obj.get_class().get_name() == class_name:
+                t = self._transform_from_basis(transform, basis)
                 actor = EditorLevelLibrary.spawn_actor_from_object(
-                    obj,
-                    transform.get('translation')
+                    obj, t.translation
                 )
-                if inst_name:
-                    try:
-                        # Rename method leads to crash
-                        # actor.rename(name=inst_name)
-
-                        # The label works, although it make it slightly more
-                        # complicated to check for the names, as we need to
-                        # loop through all the actors in the level
-                        actor.set_actor_label(inst_name)
-                    except Exception as e:
-                        print(e)
-                actor.set_actor_rotation(unreal.Rotator(
-                    (
-                        transform.get('rotation').get('x')),
-                    (
-                        transform.get('rotation').get('z')),
-                    -(
-                        transform.get('rotation').get('y')),
-                ), False)
-                actor.set_actor_scale3d(transform.get('scale'))
+                actor.set_actor_rotation(t.rotation.rotator(), False)
+                actor.set_actor_scale3d(t.scale3d)
 
                 if class_name == 'SkeletalMesh':
                     skm_comp = actor.get_editor_property(
@@ -519,17 +520,23 @@ class LayoutLoader(plugin.Loader):
                         item.get('reference_abc') == representation)]
 
                 for instance in instances:
-                    transform = instance.get('transform')
+                    # transform = instance.get('transform')
+                    transform = instance.get('transform_matrix')
+                    basis = instance.get('basis')
                     inst = instance.get('instance_name')
 
                     actors = []
 
                     if family == 'model':
                         actors, _ = self._process_family(
-                            assets, 'StaticMesh', transform, sequence, inst)
+                            assets, 'StaticMesh', transform, basis,
+                            sequence, inst
+                        )
                     elif family == 'rig':
                         actors, bindings = self._process_family(
-                            assets, 'SkeletalMesh', transform, sequence, inst)
+                            assets, 'SkeletalMesh', transform, basis,
+                            sequence, inst
+                        )
                         actors_dict[inst] = actors
                         bindings_dict[inst] = bindings
 

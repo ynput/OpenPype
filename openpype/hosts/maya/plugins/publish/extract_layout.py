@@ -1,7 +1,9 @@
+import math
 import os
 import json
 
 from maya import cmds
+from maya.api import OpenMaya as om
 
 from bson.objectid import ObjectId
 
@@ -60,7 +62,7 @@ class ExtractLayout(openpype.api.Extractor):
             }
 
             loc = cmds.xform(asset, query=True, translation=True)
-            rot = cmds.xform(asset, query=True, rotation=True)
+            rot = cmds.xform(asset, query=True, rotation=True, euler=True)
             scl = cmds.xform(asset, query=True, relative=True, scale=True)
 
             json_element["transform"] = {
@@ -70,9 +72,9 @@ class ExtractLayout(openpype.api.Extractor):
                     "z": loc[2]
                 },
                 "rotation": {
-                    "x": rot[0],
-                    "y": rot[1],
-                    "z": rot[2]
+                    "x": math.radians(rot[0]),
+                    "y": math.radians(rot[1]),
+                    "z": math.radians(rot[2])
                 },
                 "scale": {
                     "x": scl[0],
@@ -80,6 +82,46 @@ class ExtractLayout(openpype.api.Extractor):
                     "z": scl[2]
                 }
             }
+
+            row_length = 4
+            t_matrix_list = cmds.xform(asset, query=True, matrix=True)
+
+            transform_mm = om.MMatrix(t_matrix_list)
+            transform = om.MTransformationMatrix(transform_mm)
+
+            transform.scaleBy([1.0, 1.0, -1.0], om.MSpace.kWorld)
+            transform.rotateBy(
+                om.MEulerRotation(math.radians(-90), 0, 0), om.MSpace.kWorld)
+
+            t_matrix_list = list(transform.asMatrix())
+
+            t_matrix = []
+            for i in range(0, len(t_matrix_list), row_length):
+                t_matrix.append(t_matrix_list[i:i + row_length])
+
+            json_element["transform_matrix"] = []
+            for row in t_matrix:
+                json_element["transform_matrix"].append(list(row))
+
+            basis_list = [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, -1, 0,
+                0, 0, 0, 1
+            ]
+
+            basis_mm = om.MMatrix(basis_list)
+            basis = om.MTransformationMatrix(basis_mm)
+
+            b_matrix_list = list(basis.asMatrix())
+            b_matrix = []
+
+            for i in range(0, len(b_matrix_list), row_length):
+                b_matrix.append(b_matrix_list[i:i + row_length])
+
+            json_element["basis"] = []
+            for row in b_matrix:
+                json_element["basis"].append(list(row))
 
             json_data.append(json_element)
 
