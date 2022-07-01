@@ -755,7 +755,10 @@ def get_last_versions(project_name, subset_ids, fields=None):
     """Latest versions for entered subset_ids.
 
     Args:
+        project_name (str): Name of project where to look for queried entities.
         subset_ids (list): List of subset ids.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
 
     Returns:
         dict[ObjectId, int]: Key is subset id and value is last version name.
@@ -765,7 +768,34 @@ def get_last_versions(project_name, subset_ids, fields=None):
     if not subset_ids:
         return {}
 
-    _pipeline = [
+    if fields is not None:
+        fields = list(fields)
+        if not fields:
+            return {}
+
+    # Avoid double query if only name and _id are requested
+    name_needed = False
+    limit_query = False
+    if fields:
+        fields_s = set(fields)
+        if "name" in fields_s:
+            name_needed = True
+            fields_s.remove("name")
+
+        for field in ("_id", "parent"):
+            if field in fields_s:
+                fields_s.remove(field)
+        limit_query = len(fields_s) == 0
+
+    group_item = {
+        "_id": "$parent",
+        "_version_id": {"$last": "$_id"}
+    }
+    # Add name if name is needed (only for limit query)
+    if name_needed:
+        group_item["name"] = {"$last": "$name"}
+
+    aggregation_pipeline = [
         # Find all versions of those subsets
         {"$match": {
             "type": "version",
@@ -774,16 +804,24 @@ def get_last_versions(project_name, subset_ids, fields=None):
         # Sorting versions all together
         {"$sort": {"name": 1}},
         # Group them by "parent", but only take the last
-        {"$group": {
-            "_id": "$parent",
-            "_version_id": {"$last": "$_id"}
-        }}
+        {"$group": group_item}
     ]
 
     conn = _get_project_connection(project_name)
+    aggregate_result = conn.aggregate(aggregation_pipeline)
+    if limit_query:
+        output = {}
+        for item in aggregate_result:
+            subset_id = item["_id"]
+            item_data = {"_id": item["_version_id"], "parent": subset_id}
+            if name_needed:
+                item_data["name"] = item["name"]
+            output[subset_id] = item_data
+        return output
+
     version_ids = [
         doc["_version_id"]
-        for doc in conn.aggregate(_pipeline)
+        for doc in aggregate_result
     ]
 
     fields = _prepare_fields(fields, ["parent"])
