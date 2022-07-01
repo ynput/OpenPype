@@ -66,8 +66,8 @@ class ExtractThumbnail(openpype.api.Extractor):
         height_preset = capture_presets["Resolution"]["height"]
         # Set resolution variables from asset values
         asset_data = instance.data["assetEntity"]["data"]
-        asset_width = asset_data.get("width")
-        asset_height = asset_data.get("height")
+        asset_width = asset_data.get("resolutionWidth")
+        asset_height = asset_data.get("resolutionHeight")
         review_instance_width = instance.data.get("Width")
         review_instance_height = instance.data.get("Height")
         # Tests if project resolution is set,
