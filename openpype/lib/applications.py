@@ -20,10 +20,7 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import (
-    PypeLogger,
-    Anatomy
-)
+from . import PypeLogger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
@@ -1305,7 +1302,7 @@ def get_app_environments_for_context(
         dict: Environments for passed context and application.
     """
 
-    from openpype.pipeline import AvalonMongoDB
+    from openpype.pipeline import AvalonMongoDB, Anatomy
 
     # Avalon database connection
     dbcon = AvalonMongoDB()

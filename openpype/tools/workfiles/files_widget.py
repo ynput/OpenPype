@@ -11,7 +11,6 @@ from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
     emit_event,
-    Anatomy,
     get_workfile_template_key,
     create_workdir_extra_folders,
 )
@@ -22,6 +21,7 @@ from openpype.lib.avalon_context import (
 from openpype.pipeline import (
     registered_host,
     legacy_io,
+    Anatomy,
 )
 from .model import (
     WorkAreaFilesModel,

@@ -4,10 +4,11 @@ import shutil
 import threading
 import time
 
-from openpype.api import Logger, Anatomy
+from openpype.api import Logger
+from openpype.pipeline import Anatomy
 from .abstract_provider import AbstractProvider
 
-log = Logger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class LocalDriveHandler(AbstractProvider):

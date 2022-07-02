@@ -9,7 +9,6 @@ import platform
 from openpype.client import get_project
 from openpype.settings import get_project_settings
 
-from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
@@ -227,6 +226,7 @@ def fill_paths(path_list, anatomy):
 
 
 def create_project_folders(basic_paths, project_name):
+    from openpype.pipeline import Anatomy
     anatomy = Anatomy(project_name)
 
     concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
