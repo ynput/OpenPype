@@ -1,12 +1,35 @@
 # Changelog
 
-## [3.12.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.0...HEAD)
 
+### 📖 Documentation
+
+- Docs: Added minimal permissions for MongoDB [\#3441](https://github.com/pypeclub/OpenPype/pull/3441)
+
+**🆕 New features**
+
+- Maya: Add VDB to Arnold loader [\#3433](https://github.com/pypeclub/OpenPype/pull/3433)
+
 **🚀 Enhancements**
 
+- Blender: Bugfix - Set fps properly on open [\#3426](https://github.com/pypeclub/OpenPype/pull/3426)
 - Blender: pre pyside install for all platforms [\#3400](https://github.com/pypeclub/OpenPype/pull/3400)
+
+**🐛 Bug fixes**
+
+- Nuke: prerender reviewable fails [\#3450](https://github.com/pypeclub/OpenPype/pull/3450)
+- Maya: fix hashing in Python 3 for tile rendering [\#3447](https://github.com/pypeclub/OpenPype/pull/3447)
+- LogViewer: Escape html characters in log message [\#3443](https://github.com/pypeclub/OpenPype/pull/3443)
+- Nuke: Slate frame is integrated [\#3427](https://github.com/pypeclub/OpenPype/pull/3427)
+
+**🔀 Refactored code**
+
+- Clockify: Use query functions in clockify actions [\#3458](https://github.com/pypeclub/OpenPype/pull/3458)
+- General: Use query functions in rest api calls [\#3457](https://github.com/pypeclub/OpenPype/pull/3457)
+- General: Use Anatomy after move to pipeline [\#3436](https://github.com/pypeclub/OpenPype/pull/3436)
+- General: Anatomy moved to pipeline [\#3435](https://github.com/pypeclub/OpenPype/pull/3435)
 
 ## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
@@ -24,7 +47,6 @@
 - General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
 - Hosts: More options for in-host callbacks [\#3357](https://github.com/pypeclub/OpenPype/pull/3357)
 - Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
-- Maya: Allow more data to be published along camera 🎥  [\#3304](https://github.com/pypeclub/OpenPype/pull/3304)
 
 **🐛 Bug fixes**
 
@@ -57,7 +79,6 @@
 - AfterEffects: Use client query functions [\#3374](https://github.com/pypeclub/OpenPype/pull/3374)
 - TVPaint: Use client query functions [\#3340](https://github.com/pypeclub/OpenPype/pull/3340)
 - Ftrack: Use client query functions [\#3339](https://github.com/pypeclub/OpenPype/pull/3339)
-- Webpublisher: Use client query functions [\#3333](https://github.com/pypeclub/OpenPype/pull/3333)
 - Standalone Publisher: Use client query functions [\#3330](https://github.com/pypeclub/OpenPype/pull/3330)
 
 **Merged pull requests:**
@@ -93,16 +114,14 @@
 - nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 - Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
-- Nuke: fixing farm publishing if review is disabled [\#3306](https://github.com/pypeclub/OpenPype/pull/3306)
+
+**🔀 Refactored code**
+
+- Webpublisher: Use client query functions [\#3333](https://github.com/pypeclub/OpenPype/pull/3333)
 
 ## [3.11.0](https://github.com/pypeclub/OpenPype/tree/3.11.0) (2022-06-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.11.0-nightly.4...3.11.0)
-
-### 📖 Documentation
-
-- Documentation: Add app key to template documentation [\#3299](https://github.com/pypeclub/OpenPype/pull/3299)
-- doc: adding royal render and multiverse to the web site [\#3285](https://github.com/pypeclub/OpenPype/pull/3285)
 
 **🚀 Enhancements**
 
@@ -111,8 +130,6 @@
 - Ftrack: Action to easily create daily review session [\#3310](https://github.com/pypeclub/OpenPype/pull/3310)
 - TVPaint: Extractor use mark in/out range to render [\#3309](https://github.com/pypeclub/OpenPype/pull/3309)
 - Ftrack: Delivery action can work on ReviewSessions [\#3307](https://github.com/pypeclub/OpenPype/pull/3307)
-- Maya: Look assigner UI improvements [\#3298](https://github.com/pypeclub/OpenPype/pull/3298)
-- Ftrack: Action to transfer values of hierarchical attributes [\#3284](https://github.com/pypeclub/OpenPype/pull/3284)
 
 **🐛 Bug fixes**
 
@@ -120,17 +137,10 @@
 - Houdini: Fix Houdini VDB manage update wrong file attribute name [\#3322](https://github.com/pypeclub/OpenPype/pull/3322)
 - Nuke: anatomy compatibility issue hacks [\#3321](https://github.com/pypeclub/OpenPype/pull/3321)
 - hiero: otio p3 compatibility issue - metadata on effect use update 3.11 [\#3314](https://github.com/pypeclub/OpenPype/pull/3314)
-- General: Vendorized modules for Python 2 and update poetry lock [\#3305](https://github.com/pypeclub/OpenPype/pull/3305)
-- Fix - added local targets to install host [\#3303](https://github.com/pypeclub/OpenPype/pull/3303)
-- Settings: Add missing default settings for nuke gizmo [\#3301](https://github.com/pypeclub/OpenPype/pull/3301)
-- Maya: Fix swaped width and height in reviews [\#3300](https://github.com/pypeclub/OpenPype/pull/3300)
-- Maya: point cache publish handles Maya instances [\#3297](https://github.com/pypeclub/OpenPype/pull/3297)
-- Global: extract review slate issues [\#3286](https://github.com/pypeclub/OpenPype/pull/3286)
 
 **🔀 Refactored code**
 
 - Blender: Use client query functions [\#3331](https://github.com/pypeclub/OpenPype/pull/3331)
-- General: Define query functions [\#3288](https://github.com/pypeclub/OpenPype/pull/3288)
 
 **Merged pull requests:**
 
