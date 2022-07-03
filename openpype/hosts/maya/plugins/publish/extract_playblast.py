@@ -77,8 +77,6 @@ class ExtractPlayblast(openpype.api.Extractor):
         elif asset_width and asset_height:
             preset['width'] = asset_width
             preset['height'] = asset_height
-        
-        
         preset['start_frame'] = start
         preset['end_frame'] = end
         camera_option = preset.get("camera_option", {})
