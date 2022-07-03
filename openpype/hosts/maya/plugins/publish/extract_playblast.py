@@ -60,8 +60,8 @@ class ExtractPlayblast(openpype.api.Extractor):
         asset_data = instance.data["assetEntity"]["data"]
         asset_width = asset_data.get("resolutionWidth")
         asset_height = asset_data.get("resolutionHeight")
-        review_instance_width = instance.data.get("Width")
-        review_instance_height = instance.data.get("Height")
+        review_instance_width = instance.data.get("review_width")
+        review_instance_height = instance.data.get("review_height")
         preset['camera'] = camera
 
         # Tests if project resolution is set,
@@ -71,13 +71,14 @@ class ExtractPlayblast(openpype.api.Extractor):
         if review_instance_width and review_instance_height:
             preset['width'] = review_instance_width
             preset['height'] = review_instance_height
-        elif asset_width and asset_height:
-            preset['width'] = asset_width
-            preset['height'] = asset_height
         elif width_preset and height_preset:
             preset['width'] = width_preset
             preset['height'] = height_preset
-
+        elif asset_width and asset_height:
+            preset['width'] = asset_width
+            preset['height'] = asset_height
+        
+        
         preset['start_frame'] = start
         preset['end_frame'] = end
         camera_option = preset.get("camera_option", {})

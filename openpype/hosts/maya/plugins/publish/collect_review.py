@@ -71,8 +71,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                 data['handles'] = instance.data.get('handles', None)
                 data['step'] = instance.data['step']
                 data['fps'] = instance.data['fps']
-                data['Width'] = instance.data['Width']
-                data['Height'] = instance.data['Height']
+                data['review_width'] = instance.data['review_width']
+                data['review_height'] = instance.data['review_height']
                 data["isolate"] = instance.data["isolate"]
                 cmds.setAttr(str(instance) + '.active', 1)
                 self.log.debug('data {}'.format(instance.context[i].data))

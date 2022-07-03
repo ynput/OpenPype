@@ -68,8 +68,8 @@ class ExtractThumbnail(openpype.api.Extractor):
         asset_data = instance.data["assetEntity"]["data"]
         asset_width = asset_data.get("resolutionWidth")
         asset_height = asset_data.get("resolutionHeight")
-        review_instance_width = instance.data.get("Width")
-        review_instance_height = instance.data.get("Height")
+        review_instance_width = instance.data.get("review_width")
+        review_instance_height = instance.data.get("review_height")
         # Tests if project resolution is set,
         # if it is a value other than zero, that value is
         # used, if not then the asset resolution is
@@ -77,12 +77,12 @@ class ExtractThumbnail(openpype.api.Extractor):
         if review_instance_width and review_instance_height:
             preset['width'] = review_instance_width
             preset['height'] = review_instance_height
-        elif asset_width and asset_height:
-            preset['width'] = asset_width
-            preset['height'] = asset_height
         elif width_preset and height_preset:
             preset['width'] = width_preset
             preset['height'] = height_preset
+        elif asset_width and asset_height:
+            preset['width'] = asset_width
+            preset['height'] = asset_height
         stagingDir = self.staging_dir(instance)
         filename = "{0}".format(instance.name)
         path = os.path.join(stagingDir, filename)
