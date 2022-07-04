@@ -20,10 +20,10 @@ from openpype.client import (
     get_representation_by_name,
     get_representation_parents
 )
-from openpype.lib import Anatomy
 from openpype.pipeline import (
     schema,
     legacy_io,
+    Anatomy,
 )
 
 log = logging.getLogger(__name__)

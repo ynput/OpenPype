@@ -14,11 +14,8 @@ from pyblish.lib import MessageHandler
 import openpype
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
-from openpype.lib import (
-    Anatomy,
-    filter_pyblish_plugins,
-)
-
+from openpype.lib import filter_pyblish_plugins
+from .anatomy import Anatomy
 from . import (
     legacy_io,
     register_loader_plugin_path,

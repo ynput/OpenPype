@@ -104,7 +104,10 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     self, instance, o_name, o_data["extension"],
                     multiple_presets)
 
-                if "render.farm" in families:
+                if (
+                    "render.farm" in families or
+                    "prerender.farm" in families
+                ):
                     if "review" in instance.data["families"]:
                         instance.data["families"].remove("review")
 

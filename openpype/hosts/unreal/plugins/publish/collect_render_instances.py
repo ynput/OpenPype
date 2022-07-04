@@ -3,7 +3,7 @@ from pathlib import Path
 
 import unreal
 
-from openpype.api import Anatomy
+from openpype.pipeline import Anatomy
 from openpype.hosts.unreal.api import pipeline
 import pyblish.api
 
