@@ -195,7 +195,6 @@ def is_latest(representation):
     version = get_version_by_id(
         project_name,
         representation["parent"],
-        hero=True,
         fields=["_id", "type", "parent"]
     )
     if version["type"] == "hero_version":
