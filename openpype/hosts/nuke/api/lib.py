@@ -2606,50 +2606,49 @@ def ls_img_sequence(path):
     return False
 
 
-
 def get_io(nodes):
 
     """ get the input and the output of a group of nodes
     """
-    if len(nodes) == 0 :
+    if not nodes:
         raise Exception("there is no nodes in the list")    
     if len(nodes) > 1:
         input = None 
         output = None
-        for n in nodes :
-            if "Input" in n.name() :
+        for n in nodes:
+            if "Input" in n.name():
                 input = n
                 break
 
-        for n in nodes :
+        for n in nodes:
             if "Output" in n.name():
                 output = n
                 break
-        if input == None :
+        if input is None:
             raise Exception("No Input found")
-        if output == None :
+        if output is None:
             raise Exception("No Output found")
-        
-    else :
+    else:
         input = output = nodes[0]
 
     return input, output
 
 
-
 def get_extremes(nodes):
 
     """ get the 4 numbers that represent the box of a group of nodes """
-    if len(nodes) == 0 :
+    if not nodes:
         raise Exception("there is no nodes in the list")
-    nodes_xpos = [n.xpos()  for n in nodes] + \
-                    [n.xpos() + n.screenWidth() for n in nodes]
+        
+    nodes_xpos = [n.xpos() for n in nodes] + \
+        [n.xpos() + n.screenWidth() for n in nodes]
 
-    nodes_ypos = [n.ypos()  for n in nodes] + \
-                [n.ypos() + n.screenHeight() for n in nodes]
-    min_x, min_y = (min(nodes_xpos),min(nodes_ypos))
-    max_x, max_y = (max(nodes_xpos),max(nodes_ypos))
-    return min_x, min_y , max_x, max_y
+    nodes_ypos = [n.ypos() for n in nodes] + \
+        [n.ypos() + n.screenHeight() for n in nodes]
+
+    min_x, min_y = (min(nodes_xpos), min(nodes_ypos))
+    max_x, max_y = (max(nodes_xpos), max(nodes_ypos))
+    return min_x, min_y, max_x, max_y
 
 
 def refresh_node(node):
@@ -2660,4 +2659,23 @@ def refresh_node(node):
     x = node.xpos()
     y = node.ypos()
     nuke.autoplaceSnap(node)
-    node.setXYpos(x,y)
+    node.setXYpos(x, y)
+
+
+def refresh_nodes(nodes):
+    for n in nodes:
+        refresh_node(n)
+
+
+def get_names_from_nodes(nodes):
+    names = []
+    for node in nodes:
+        names.append(node.name())
+    return names
+
+
+def get_nodes_from_names(names):
+    nodes = []
+    for name in names:
+        nodes.append(nuke.toNode(name))
+    return nodes

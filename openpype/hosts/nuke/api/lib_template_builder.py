@@ -1,7 +1,5 @@
 from collections import OrderedDict
 
-from attr import attributes
-
 # import maya.cmds as cmds
 # from avalon.maya.lib import imprint
 from openpype.vendor.python.common import qargparse
@@ -9,31 +7,28 @@ from openpype.tools.utils.widgets import OptionDialog
 from openpype.hosts.nuke.api.lib import imprint
 import nuke
 # from avalon.maya.pipeline import get_main_window
-# from openpype.hosts.nuke.api.pipeline import get_main_window
 
 
 # To change as enum
 build_types = ["context_asset", "linked_asset", "all_assets"]
 
 
+def get_placeholder_attributes(node, enumerate=False):
+    list_atts = ['builder_type', 'family', 'representation', 'loader',
+                 'loader_args', 'order', 'asset', 'subset',
+                 'hierarchy', 'siblings', 'last_loaded']
+    attributes = {}
+    for attr in node.knobs().keys():
+        if attr in list_atts:
+            if enumerate:
+                try: 
+                    attributes[attr] = node.knob(attr).values()
+                except AttributeError:
+                    attributes[attr] = node.knob(attr).getValue()
+            else:
+                attributes[attr] = node.knob(attr).getValue()
 
-
-
-
-def get_placeholder_attributes(node, enumerate = False):
-    list_atts = ['builder_type', 'family', 'representation', 'loader', 'loader_args', 'order', 'asset', 'subset', 'hierarchy', 'siblings', 'last_loaded']
-    d = {}
-    for attr in node.knobs().keys() :
-        if attr in list_atts :
-            if enumerate :
-                try : 
-                    d[attr] = node.knob(attr).values()
-                except :
-                    d[attr] = node.knob(attr).getValue()
-            else :
-                d[attr] = node.knob(attr).getValue()
-
-    return d
+    return attributes
 
 
 def delete_placeholder_attributes(node):
@@ -42,8 +37,8 @@ def delete_placeholder_attributes(node):
     '''
     extra_attributes = get_placeholder_attributes(node)
     for attribute in extra_attributes.keys():
-        try :
-            node.removeKnob(node.knobs()[attribute])
+        try:
+            node.removeKnob(node.knob(attribute))
         except ValueError:
             continue
 
@@ -54,11 +49,10 @@ def hide_placeholder_attributes(node):
     '''
     extra_attributes = get_placeholder_attributes(node)
     for attribute in extra_attributes.keys():
-        try :
+        try:
             node.knob(attribute).setVisible(False)
         except ValueError:
             continue
-
 
 
 def create_placeholder():
@@ -68,21 +62,9 @@ def create_placeholder():
     if not args:
         return  # operation canceled, no locator created
 
-    # selection = cmds.ls(selection=True)
-    selection = nuke.selectedNodes()
-
-    # placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
-    
-    
     placeholder = nuke.nodes.NoOp()
-
-
     placeholder.setName('PLACEHOLDER')
     placeholder.knob('tile_color').setValue(4278190335)
-        # nuke.collapseToGroup(show = True)
-
-    # if selection:
-    #     cmds.parent(placeholder, selection[0])
 
     # custom arg parse to force empty data query
     # and still imprint them on placeholder
@@ -92,29 +74,19 @@ def create_placeholder():
         if not type(arg) == qargparse.Separator:
             options[str(arg)] = arg._data.get("items") or arg.read()
     imprint(placeholder, options)
-    imprint(placeholder, {'is_placeholder' : True})
-
-
-    # Add helper attributes to keep placeholder info
-
-
-    # to add attributes :
-    # knoob = nuke.String_Knob("anas", "anasss")
-    # knoob.setValue("Fadil")
-    # placeholder.addKnob(knoob)
-    # imprint_enum(placeholder, args)
+    imprint(placeholder, {'is_placeholder': True})
 
 
 def update_placeholder():
     placeholder = nuke.selectedNodes()
-    if len(placeholder) == 0:
+    if not placeholder:
         raise ValueError("No node selected")
     if len(placeholder) > 1:
         raise ValueError("Too many selected nodes")
     placeholder = placeholder[0]
 
     args = placeholder_window(get_placeholder_attributes(placeholder))
-    #delete placeholder attributes
+    # delete placeholder attributes
     delete_placeholder_attributes(placeholder)
     if not args:
         return  # operation canceled
@@ -150,7 +122,6 @@ def imprint_enum(placeholder, args):
         # raise Exception (getattr(
         #     placeholder , key))
         
-
 
 def placeholder_window(options=None):
     from openpype.hosts.nuke.api.pipeline import get_main_window

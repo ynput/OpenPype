@@ -1,11 +1,9 @@
-import imp
-import openpype
+from openpype.pipeline import registered_host
+from openpype.lib import classes_from_module
+from importlib import import_module
 from .abstract_template_loader import (
     AbstractPlaceholder,
     AbstractTemplateLoader)
-
-import importlib
-
 from .build_template_exceptions import (
     TemplateLoadingFailed,
     TemplateAlreadyImported,
@@ -15,6 +13,7 @@ from .build_template_exceptions import (
 )
 
 _module_path_format = 'openpype.hosts.{host}.template_loader'
+
 
 def build_workfile_template(*args):
 
@@ -37,23 +36,20 @@ def update_workfile_template(*args):
 
 
 def build_template_loader():
-    from openpype.pipeline.context_tools import registered_host
     host_name = registered_host().__name__.partition('.')[2]
     host_name = host_name.partition('.')[2]
     module_path = _module_path_format.format(host=host_name)
-    print(10,module_path)
-    print(11,host_name)
-    try :
-        module = importlib.import_module(module_path)
-    except :
-        raise Exception(host_name + "    " +registered_host().__name__ )
+    try:
+        module = import_module(module_path)
+    except Exception as e:
+        print("Error during module import for host " + host_name + ". " + e)
     if not module:
         raise MissingHostTemplateModule(
             "No template loader found for host {}".format(host_name))
 
-    template_loader_class = openpype.lib.classes_from_module(
+    template_loader_class = classes_from_module(
         AbstractTemplateLoader, module)
-    template_placeholder_class = openpype.lib.classes_from_module(
+    template_placeholder_class = classes_from_module(
         AbstractPlaceholder, module)
 
     if not template_loader_class:

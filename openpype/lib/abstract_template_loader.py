@@ -4,7 +4,6 @@ from abc import ABCMeta, abstractmethod
 import traceback
 
 import six
-import openpype
 import openpype.pipeline.legacy_io as io
 from openpype.lib.avalon_context import get_loaders_by_name
 from openpype.settings import get_project_settings
@@ -242,7 +241,6 @@ class AbstractTemplateLoader:
                         representation['context']['subset'],
                         placeholder.loader,
                         placeholder.data['loader_args']))
-
                 try:
                     container = self.load(
                         placeholder, loaders_by_name, representation)
@@ -254,7 +252,6 @@ class AbstractTemplateLoader:
                     self.postload(placeholder)
             self.delete_placeholder(placeholder)
             
-
     def get_placeholder_representations(
             self, placeholder, current_asset, linked_assets):
         placeholder_db_filters = placeholder.convert_to_db_filters(
@@ -284,16 +281,14 @@ class AbstractTemplateLoader:
     def delete_placeholder(self, placeholder):
         pass
 
-
-
     def load(self, placeholder, loaders_by_name, last_representation):
-        from openpype.pipeline.load import load_with_repre_context, get_representation_context
+        from openpype.pipeline.load import (load_with_repre_context,
+                                            get_representation_context)
         representation = get_representation_context(last_representation)
         return load_with_repre_context(
             loaders_by_name[placeholder.loader],
             representation,
-            options= parse_loader_args(placeholder.data['loader_args']))
-
+            options=parse_loader_args(placeholder.data['loader_args']))
 
     def load_succeed(self, placeholder, container):
         placeholder.parent_in_hierarchy(container)

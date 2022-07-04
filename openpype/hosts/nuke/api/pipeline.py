@@ -1,7 +1,8 @@
 import os
 import importlib
 from collections import OrderedDict
-from openpype.lib.build_template import build_workfile_template, update_workfile_template
+from openpype.lib.build_template import (build_workfile_template,
+                                         update_workfile_template)
 from openpype.hosts.nuke.api.lib_template_builder import (
     create_placeholder, update_placeholder
 )
@@ -214,27 +215,24 @@ def _install_menu():
         lambda: BuildWorkfile().process()
     )
 
-
-    menu_template = menu.addMenu("Template Builder") #creating template menu
+    menu_template = menu.addMenu("Template Builder")  # creating template menu
     menu_template.addCommand(
         "Build Workfile from template",
         lambda: build_workfile_template()
-        )
+    )
     menu_template.addCommand(
         "Update Workfile",
         lambda: update_workfile_template()
-        )
+    )
     menu_template.addSeparator()
     menu_template.addCommand(
         "Create Place Holder",
         lambda: create_placeholder()
-        )
+    )
     menu_template.addCommand(
         "Update Place Holder",
         lambda: update_placeholder()
-        )
-
-
+    )
     menu.addSeparator()
     menu.addCommand(
         "Experimental tools...",
