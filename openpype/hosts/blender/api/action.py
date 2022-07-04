@@ -43,7 +43,7 @@ class SelectInvalidAction(pyblish.api.Action):
         objects = set()
         for node in invalid_nodes:
             if isinstance(node, bpy.types.Object):
-                objects.add()
+                objects.add(node)
             elif isinstance(node, bpy.types.Collection):
                 objects.update(node.all_objects)
 
