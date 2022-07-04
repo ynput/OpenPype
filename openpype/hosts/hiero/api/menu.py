@@ -162,11 +162,8 @@ def add_scripts_menu():
         log.warning("Skipping studio menu, no definition found.")
         return
 
-    # run the launcher for Maya menu
+    # run the launcher for Hiero menu
     studio_menu = launchforhiero.main(title=_menu.title())
 
     # apply configuration
     studio_menu.build_from_configuration(studio_menu, config)
-
-
-add_scripts_menu()
