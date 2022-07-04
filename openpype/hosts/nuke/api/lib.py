@@ -20,21 +20,23 @@ from openpype.client import (
 )
 from openpype.api import (
     Logger,
-    Anatomy,
     BuildWorkfile,
     get_version_from_path,
-    get_anatomy_settings,
     get_workdir_data,
     get_asset,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
 from openpype.lib.path_tools import HostDirmap
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_anatomy_settings,
+)
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
+    Anatomy,
 )
 
 from . import gizmo_menu

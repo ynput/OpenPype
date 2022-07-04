@@ -9,8 +9,8 @@ from openpype.pipeline import (
     LoaderPlugin,
     get_representation_path,
     AVALON_CONTAINER_ID,
+    Anatomy,
 )
-from openpype.api import Anatomy
 from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib

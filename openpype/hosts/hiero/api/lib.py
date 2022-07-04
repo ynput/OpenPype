@@ -19,8 +19,9 @@ from openpype.client import (
     get_last_versions,
     get_representations,
 )
-from openpype.pipeline import legacy_io
-from openpype.api import (Logger, Anatomy, get_anatomy_settings)
+from openpype.settings import get_anatomy_settings
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.api import Logger
 from . import tags
 
 try:

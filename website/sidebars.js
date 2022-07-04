@@ -155,6 +155,7 @@ module.exports = {
             type: "category",
             label: "Hosts integrations",
             items: [
+                "dev_host_implementation",
                 "dev_publishing"
             ]
         }
