@@ -417,7 +417,7 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                 "select id, is_published from AssetVersion where"
                 " asset.parent.id is \"{}\""
                 " and asset.name is \"{}\""
-                " and version in (\"{}\")"
+                " and version in ({})"
             ).format(
                 asset_ftrack_id,
                 subset_name,
