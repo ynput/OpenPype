@@ -1,4 +1,5 @@
 import json
+import copy
 
 from openpype.client import get_project
 from openpype.api import ProjectSettings
@@ -433,6 +434,10 @@ class PrepareProjectLocal(BaseAction):
                 self.process_identifier()
             )
             self.trigger_action(trigger_identifier, event)
+
+        event_data = copy.deepcopy(in_data)
+        event_data["project_name"] = project_name
+        self.trigger_event("openpype.project.prepared", event_data)
         return True
 
 
