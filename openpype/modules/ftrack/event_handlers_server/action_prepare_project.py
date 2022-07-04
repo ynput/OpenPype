@@ -374,6 +374,10 @@ class PrepareProjectServer(ServerAction):
                 project_name, project_code
             ))
             create_project(project_name, project_code)
+            self.trigger_event(
+                "openpype.project.created",
+                {"project_name": project_name}
+            )
 
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]

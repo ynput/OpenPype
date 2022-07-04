@@ -443,6 +443,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.project_created = False
         self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
@@ -2016,6 +2017,13 @@ class SyncEntitiesFactory:
         if len(self.create_list) > 0:
             self.dbcon.insert_many(self.create_list)
 
+        if self.project_created:
+            event = ftrack_api.event.base.Event(
+                topic="openpype.project.created",
+                data={"project_name": self.project_name}
+            )
+            self.session.event_hub.publish(event)
+
         self.session.commit()
 
         self.log.debug("* Processing entities for update")
@@ -2214,6 +2222,7 @@ class SyncEntitiesFactory:
         self._avalon_ents_by_name[project_item["name"]] = str(new_id)
 
         self.create_list.append(project_item)
+        self.project_created = True
 
         # store mongo id to ftrack entity
         entity = self.entities_dict[self.ft_project_id]["entity"]
