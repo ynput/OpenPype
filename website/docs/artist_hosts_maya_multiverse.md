@@ -65,6 +65,25 @@ the one depicted here:
 
 ![Maya - Multiverse Setup](assets/maya-multiverse_setup.png)
 
+
+```
+{
+    "MULTIVERSE_PATH": "/Path/to/Multiverse-{MULTIVERSE_VERSION}",
+    "MAYA_MODULE_PATH": "{MULTIVERSE}/Maya;{MAYA_MODULE_PATH}"
+}
+
+{
+    "MULTIVERSE_VERSION": "7.1.0-py27"
+}
+
+```
+
+The Multiverse Maya module file (.mod) pointed above contains all the necessary
+environment variables to run Multiverse.
+
+The OpenPype settings will contain blocks to enable/disable the Multiverse
+Creators and Loader, along with sensible studio setting.
+
 For more information about setup of Multiverse please refer to the relative page
 on the [Multiverse official documentation](https://multi-verse.io/docs).
 
@@ -94,7 +113,7 @@ You can choose the USD file format in the Creators' set nodes:
 - Assets: `.usd` (default) or `.usda` or `.usdz`
 - Compositions: `.usda` (default) or `.usd`
 - Overrides: `.usda` (default) or `.usd`
-- Looks: `.ma`
+- Looks: `.ma` (default)
 
 ![Maya - Multiverse Asset Creator](assets/maya-multiverse_openpype_asset_creator.png)
 

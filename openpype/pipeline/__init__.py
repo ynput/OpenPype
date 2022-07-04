@@ -6,6 +6,7 @@ from .constants import (
 from .mongodb import (
     AvalonMongoDB,
 )
+from .anatomy import Anatomy
 
 from .create import (
     BaseCreator,
@@ -95,6 +96,9 @@ __all__ = (
 
     # --- MongoDB ---
     "AvalonMongoDB",
+
+    # --- Anatomy ---
+    "Anatomy",
 
     # --- Create ---
     "BaseCreator",

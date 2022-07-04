@@ -977,7 +977,12 @@ class CreateDialog(QtWidgets.QDialog):
             elif variant:
                 self.variant_hints_menu.addAction(variant)
 
-        self.variant_input.setText(default_variant or "Main")
+        variant_text = default_variant or "Main"
+        # Make sure subset name is updated to new plugin
+        if variant_text == self.variant_input.text():
+            self._on_variant_change()
+        else:
+            self.variant_input.setText(variant_text)
 
     def _on_variant_widget_resize(self):
         self.variant_hints_btn.setFixedHeight(self.variant_input.height())

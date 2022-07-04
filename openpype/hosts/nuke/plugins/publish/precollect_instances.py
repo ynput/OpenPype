@@ -1,7 +1,6 @@
 import nuke
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from openpype.hosts.nuke.api.lib import (
     add_publish_knob,
     get_avalon_knob_data
@@ -20,12 +19,6 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     sync_workfile_version_on_families = []
 
     def process(self, context):
-        asset_data = legacy_io.find_one({
-            "type": "asset",
-            "name": legacy_io.Session["AVALON_ASSET"]
-        })
-
-        self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
 
         root = nuke.root()

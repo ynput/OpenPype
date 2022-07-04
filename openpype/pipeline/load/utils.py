@@ -9,10 +9,10 @@ import numbers
 import six
 from bson.objectid import ObjectId
 
-from openpype.lib import Anatomy
 from openpype.pipeline import (
     schema,
     legacy_io,
+    Anatomy,
 )
 
 log = logging.getLogger(__name__)
