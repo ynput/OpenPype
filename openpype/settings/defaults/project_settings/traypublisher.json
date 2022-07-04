@@ -30,6 +30,24 @@
                 ".psb",
                 ".aep"
             ]
+        },
+        {
+            "family": "editorial",
+            "identifier": "",
+            "label": "Editorial",
+            "icon": "fa.file",
+            "default_variants": [
+                "Main"
+            ],
+            "description": "Editorial files to generate shots.",
+            "detailed_description": "Supporting publishing new shots to project or updating already created. Publishing will create OTIO file.",
+            "allow_sequences": false,
+            "extensions": [
+                ".edl",
+                ".xml",
+                ".aaf",
+                ".fcpxml"
+            ]
         }
     ]
 }
