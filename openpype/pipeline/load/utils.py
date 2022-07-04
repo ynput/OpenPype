@@ -394,7 +394,7 @@ def update_container(container, version=-1):
     assert current_representation is not None, "This is a bug"
 
     current_version = get_version_by_id(
-        project_name, current_representation["_id"], fields=["parent"]
+        project_name, current_representation["parent"], fields=["parent"]
     )
     if version == -1:
         new_version = get_last_version_by_subset_id(
