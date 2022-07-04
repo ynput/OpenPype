@@ -423,7 +423,7 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                 subset_name,
                 ",".join(versions)
             )
-        )
+        ).all()
 
         # Set attribute `is_published` to `False` on ftrack AssetVersions
         for asset_version in asset_versions:
