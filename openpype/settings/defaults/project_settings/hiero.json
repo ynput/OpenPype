@@ -1,32 +1,4 @@
 {
-    "ext_mapping": {
-        "model": "hrox",
-        "mayaAscii": "hrox",
-        "camera": "hrox",
-        "rig": "hrox",
-        "workfile": "hrox",
-        "yetiRig": "hrox"
-    },
-    "hiero-dirmap": {
-        "enabled": false,
-        "paths": {
-            "source-path": [],
-            "destination-path": []
-        }
-    },
-    "scriptsmenu": {
-        "name": "OpenPype Tools",
-        "definition": [
-            {
-                "type": "action",
-                "sourcetype": "python",
-                "title": "OpenPype Docs",
-                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_hiero')",
-                "tooltip": "Open the OpenPype Hiero user doc page"
-            }
-        ]
-    },
-
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
@@ -79,5 +51,17 @@
             ]
         }
     },
-    "filters": {}
+    "filters": {},
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_hiero')",
+                "tooltip": "Open the OpenPype Hiero user doc page"
+            }
+        ]
+    }
 }
