@@ -2017,13 +2017,6 @@ class SyncEntitiesFactory:
         if len(self.create_list) > 0:
             self.dbcon.insert_many(self.create_list)
 
-        if self.project_created:
-            event = ftrack_api.event.base.Event(
-                topic="openpype.project.created",
-                data={"project_name": self.project_name}
-            )
-            self.session.event_hub.publish(event)
-
         self.session.commit()
 
         self.log.debug("* Processing entities for update")
