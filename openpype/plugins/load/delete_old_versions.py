@@ -10,7 +10,7 @@ from Qt import QtWidgets, QtCore
 from openpype import style
 from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.lib import StringTemplate
-from openpype.settings import get_system_settings
+from openpype.modules import ModulesManager
 
 
 class DeleteOldVersions(load.SubsetLoaderPlugin):
@@ -370,7 +370,9 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
         self.dbcon.uninstall()
 
-        if get_system_settings()["modules"]["ftrack"]["enabled"]:
+        modules_manager = ModulesManager()
+        ftrack_module = modules_manager.modules_by_name.get("ftrack")
+        if ftrack_module and ftrack_module.enabled:
             # Set attribute `is_published` to `False` on ftrack AssetVersions
             import ftrack_api
 
