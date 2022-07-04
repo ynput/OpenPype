@@ -1,6 +1,7 @@
 import os
 import glob
 import contextlib
+
 import clique
 import capture
 
@@ -50,8 +51,32 @@ class ExtractPlayblast(openpype.api.Extractor):
                                ['override_viewport_options']
         )
         preset = lib.load_capture_preset(data=self.capture_preset)
-
+        # Grab capture presets from the project settings
+        capture_presets = self.capture_preset
+        # Set resolution variables from capture presets
+        width_preset = capture_presets["Resolution"]["width"]
+        height_preset = capture_presets["Resolution"]["height"]
+        # Set resolution variables from asset values
+        asset_data = instance.data["assetEntity"]["data"]
+        asset_width = asset_data.get("resolutionWidth")
+        asset_height = asset_data.get("resolutionHeight")
+        review_instance_width = instance.data.get("review_width")
+        review_instance_height = instance.data.get("review_height")
         preset['camera'] = camera
+
+        # Tests if project resolution is set,
+        # if it is a value other than zero, that value is
+        # used, if not then the asset resolution is
+        # used
+        if review_instance_width and review_instance_height:
+            preset['width'] = review_instance_width
+            preset['height'] = review_instance_height
+        elif width_preset and height_preset:
+            preset['width'] = width_preset
+            preset['height'] = height_preset
+        elif asset_width and asset_height:
+            preset['width'] = asset_width
+            preset['height'] = asset_height
         preset['start_frame'] = start
         preset['end_frame'] = end
         camera_option = preset.get("camera_option", {})
