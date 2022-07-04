@@ -4,7 +4,6 @@ import uuid
 
 import clique
 from pymongo import UpdateOne
-import importlib
 import qargparse
 from Qt import QtWidgets, QtCore
 
@@ -373,7 +372,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
         if get_system_settings()["modules"]["ftrack"]["enabled"]:
             # Set attribute `is_published` to `False` on ftrack AssetVersions
-            ftrack_api = importlib.import_module("ftrack_api")
+            import ftrack_api
+
             session = ftrack_api.Session()
             query = (
                 "AssetVersion where asset.parent.id is \"{}\""
