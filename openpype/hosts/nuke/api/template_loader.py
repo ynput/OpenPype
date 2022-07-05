@@ -238,7 +238,8 @@ class NukePlaceholder(AbstractPlaceholder):
 
     def fix_z_order(self):
         """
-        fix the problem of z_order when a backdrop is loaded"""
+        fix the problem of z_order when a backdrop is loaded
+        """
         orders_bd = []
         nodes_loaded = self.data['last_loaded']
         for n in nodes_loaded:
@@ -317,9 +318,10 @@ class NukePlaceholder(AbstractPlaceholder):
 
                     refresh_node(n)
 
-    # def update
-
     def imprint_inits(self):
+        """
+        add initial positions and dimensions to the attributes
+        """
         for n in nuke.allNodes():
             refresh_node(n)
             imprint(n, {'x_init': n.xpos(), 'y_init': n.ypos()})
@@ -429,7 +431,6 @@ class NukePlaceholder(AbstractPlaceholder):
        
         # positioning of the loaded nodes
         min_x, min_y, _, _ = get_extremes(nodes_loaded)
-        
         for n in nodes_loaded:
             xpos = (n.xpos() - min_x) + node.xpos()
             ypos = (n.ypos() - min_y) + node.ypos()
@@ -469,7 +470,7 @@ class NukePlaceholder(AbstractPlaceholder):
             self.data['siblings'] = new_siblings
 
         else:
-            # if the placeholder doesn't have siblings, the loaded 
+            # if the placeholder doesn't have siblings, the loaded
             # nodes will be placed in a free space
 
             xpointer, ypointer = find_free_space_to_paste_nodes(
