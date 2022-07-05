@@ -108,7 +108,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "data": additional metadata for each representation.
     """
 
-    label = "Integrate Asset New"
+    label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
     families = ["workfile",
