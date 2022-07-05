@@ -103,6 +103,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         invalid = False
+        multipart = False
 
         renderer = instance.data['renderer']
         layer = instance.data['setMembers']
@@ -122,6 +123,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
 
         required_prefix = "maya/<scene>"
+        default_prefix = cls.ImagePrefixTokens[renderer]
 
         if not anim_override:
             invalid = True
@@ -222,14 +224,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     cls.log.error("Wrong image prefix [ {} ] - "
                                   "You can't use '<renderpass>' token "
                                   "with merge AOVs turned on".format(prefix))
+                default_prefix = re.sub(
+                    cls.R_AOV_TOKEN, "", default_prefix)
+                # remove aov token from prefix to pass validation
+                default_prefix = default_prefix.split("{aov_separator}")[0]
             elif not re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
                               "doesn't have: '<renderpass>' or "
                               "token".format(prefix))
 
-        # prefix check
-        default_prefix = cls.ImagePrefixTokens[renderer]
         default_prefix = default_prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
         if prefix.lower() != default_prefix.lower():
@@ -334,25 +338,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 else:
                     node = vray_settings[0]
 
-                aov_separator = instance.data.get("aovSeparator", "_")
-
-                # set it in vray menu (like in CreateRender)
-                menu_grp = "vrayRenderElementSeparator"
-                if cmds.optionMenuGrp(menu_grp, query=True, exists=True):
-                    items = cmds.optionMenuGrp(menu_grp, ill=True, query=True)
-                    separators = [cmds.menuItem(i, label=True, query=True) for
-                                  i in items]
-                    try:
-                        sep_idx = separators.index(aov_separator)
-                    except ValueError:
-                        raise ValueError(
-                            "AOV character {} not in {}".format(
-                                aov_separator, separators))
-                    cmds.optionMenuGrp(menu_grp, edit=True, sl=sep_idx + 1)
-
+                cmds.optionMenuGrp("vrayRenderElementSeparator",
+                                   v=instance.data.get("aovSeparator", "_"))
                 cmds.setAttr(
-                    "{}.fileNameRenderElementSeparator".format(node),
-                    aov_separator,
+                    "{}.fileNameRenderElementSeparator".format(
+                        node),
+                    instance.data.get("aovSeparator", "_"),
                     type="string"
                 )
 
