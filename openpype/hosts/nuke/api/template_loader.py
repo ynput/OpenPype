@@ -30,12 +30,12 @@ class NukeTemplateLoader(AbstractTemplateLoader):
         Returns:
             bool: Wether the template was succesfully imported or not
         """
-        
+
         # TODO check if the template is already imported
 
         nuke.nodePaste(path)
         reset_selection()
-    
+
         return True
 
     def preload(self, placeholder, loaders_by_name, last_representation):
@@ -56,7 +56,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
                 refresh_node(n)
 
     def populate_template(self, ignored_ids=None):
-        place_holders = self.get_template_nodes()            
+        place_holders = self.get_template_nodes()
         while len(place_holders) > 0:
             super().populate_template(ignored_ids)
             place_holders = self.get_template_nodes()
@@ -84,7 +84,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
     def update_missing_containers(self):
         nodes_byId = {}
         nodes_byId = defaultdict(lambda: [], nodes_byId)
-        
+
         for n in nuke.allNodes():
             if 'id_rep' in n.knobs().keys():
                 nodes_byId[n.knob('id_rep').getValue()] += [n.name()]
@@ -122,7 +122,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
     def get_placeholders(self):
         placeholders = super().get_placeholders()
         return placeholders
-   
+
     def delete_placeholder(self, placeholder):
         node = placeholder.data['node']
         lastLoaded = placeholder.data['last_loaded']
@@ -143,7 +143,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
                 for loadedNode in lastLoaded:
                     lastLoaded_names.append(loadedNode.name())
                 imprint(node, {'last_loaded': lastLoaded_names})
-                
+
                 for n in lastLoaded:
                     refresh_node(n)
                     refresh_node(node)
@@ -198,16 +198,16 @@ class NukePlaceholder(AbstractPlaceholder):
         self.data = user_data
 
     def parent_in_hierarchy(self, containers):
-        return 
+        return
 
     def create_sib_copies(self):
         """ creating copies of the palce_holder siblings (the ones who were
-        loaded with it) for the new nodes added 
-        
+        loaded with it) for the new nodes added
+
         Returns :
             copies (dict) : with copied nodes names and their copies
         """
-    
+
         copies = {}
         siblings = get_nodes_from_names(self.data['siblings'])
         for n in siblings:
@@ -241,7 +241,7 @@ class NukePlaceholder(AbstractPlaceholder):
         for n in nodes_loaded:
             if isinstance(n, nuke.BackdropNode):
                 orders_bd.append(n.knob("z_order").getValue())
-        
+
         if orders_bd:
 
             min_order = min(orders_bd)
@@ -271,7 +271,7 @@ class NukePlaceholder(AbstractPlaceholder):
             offset (int) : distance between copies
         """
         node = self.data['node']
-        
+
         min_x, min_y, max_x, max_y = get_extremes(considered_nodes)
 
         diff_x = diff_y = 0
@@ -344,7 +344,7 @@ class NukePlaceholder(AbstractPlaceholder):
                     and ('is_placeholder' not in n.knobs().keys()
                          or 'is_placeholder' in n.knobs().keys()
                          and n.knob('is_placeholder').value()):
-                
+
                 siblingss = list(set(nodes_loaded) - set([n]))
                 siblings_name = []
                 for s in siblingss:
@@ -357,7 +357,7 @@ class NukePlaceholder(AbstractPlaceholder):
                 imprint(n, d)
                 # n.knob('id_rep').setVisible(False)
                 refresh_node(n)
-    
+
     def set_loaded_connections(self):
         """
         set inputs and outputs of loaded nodes"""
@@ -424,7 +424,7 @@ class NukePlaceholder(AbstractPlaceholder):
         self.data['last_loaded'] = nodes_loaded
         reset_selection()
         refresh_nodes(nodes_loaded)
-       
+
         # positioning of the loaded nodes
         min_x, min_y, _, _ = get_extremes(nodes_loaded)
         for n in nodes_loaded:
@@ -446,7 +446,7 @@ class NukePlaceholder(AbstractPlaceholder):
 
         elif self.data['siblings']:
             # create copies of placeholder siblings for the new loaded nodes,
-            # set their inputs and outpus and update all nodes positions and 
+            # set their inputs and outpus and update all nodes positions and
             # dimensions and siblings names
 
             siblings = get_nodes_from_names(self.data['siblings'])

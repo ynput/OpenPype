@@ -2611,9 +2611,9 @@ def get_io(nodes):
     """ get the input and the output of a group of nodes
     """
     if not nodes:
-        raise Exception("there is no nodes in the list")    
+        raise Exception("there is no nodes in the list")
     if len(nodes) > 1:
-        input = None 
+        input = None
         output = None
         for n in nodes:
             if "Input" in n.name():
@@ -2639,7 +2639,7 @@ def get_extremes(nodes):
     """ get the 4 numbers that represent the box of a group of nodes """
     if not nodes:
         raise Exception("there is no nodes in the list")
-        
+
     nodes_xpos = [n.xpos() for n in nodes] + \
         [n.xpos() + n.screenWidth() for n in nodes]
 
@@ -2655,7 +2655,7 @@ def refresh_node(node):
 
     """ correct a bug caused by the multi-threading of nuke
         refresh the node to make sure that it takes the desired attributes """
-        
+
     x = node.xpos()
     y = node.ypos()
     nuke.autoplaceSnap(node)
@@ -2670,7 +2670,7 @@ def refresh_nodes(nodes):
 def get_names_from_nodes(nodes):
     """
     get list of nodes names
-    
+
     Arguments :
         nodes(list) : list of nodes (nuke nodes) to convert into names (str)"""
 
@@ -2683,10 +2683,10 @@ def get_names_from_nodes(nodes):
 def get_nodes_from_names(names):
     """
     get list of nuke nodes from their names
-    
+
     Arguments :
         names(list) : list of names (str) to convert into nodes"""
-        
+
     nodes = []
     for name in names:
         nodes.append(nuke.toNode(name))

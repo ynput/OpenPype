@@ -251,13 +251,13 @@ class AbstractTemplateLoader:
                 finally:
                     self.postload(placeholder)
             self.delete_placeholder(placeholder)
-            
+
     def get_placeholder_representations(
             self, placeholder, current_asset, linked_assets):
         placeholder_db_filters = placeholder.convert_to_db_filters(
             current_asset,
             linked_assets)
-        # get representation by assets.            
+        # get representation by assets.
         for db_filter in placeholder_db_filters:
             placeholder_representations = list(io.find(db_filter))
             for representation in reduce(update_representations,
