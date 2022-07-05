@@ -3224,7 +3224,7 @@ def maintained_time():
         cmds.currentTime(ct, edit=True)
 
 
-def iter_visible_in_frame_range(nodes, start, end):
+def iter_visible_nodes_in_range(nodes, start, end):
     """Yield nodes that are visible in start-end frame range.
 
     - Ignores intermediateObjects completely.
