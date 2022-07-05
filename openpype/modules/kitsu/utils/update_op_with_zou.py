@@ -82,22 +82,37 @@ def update_op_assets(
         item_data["zou"] = item
 
         # == Asset settings ==
-        # Frame in, fallback on 0
-        frame_in = int(item_data.get("frame_in") or 0)
+        # Frame in, fallback to project's value or default value (1001)
+        # TODO: get default from settings/project_anatomy/attributes.json
+        try:
+            frame_in = int(
+                item_data.pop(
+                    "frame_in", project_doc["data"].get("frameStart")
+                )
+            )
+        except (TypeError, ValueError):
+            frame_in = 1001
         item_data["frameStart"] = frame_in
-        item_data.pop("frame_in", None)
-        # Frame out, fallback on frame_in + duration
-        frames_duration = int(item.get("nb_frames") or 1)
-        frame_out = (
-            item_data["frame_out"]
-            if item_data.get("frame_out")
-            else frame_in + frames_duration
-        )
-        item_data["frameEnd"] = int(frame_out)
-        item_data.pop("frame_out", None)
-        # Fps, fallback to project's value when entity fps is deleted
-        if not item_data.get("fps") and item_doc["data"].get("fps"):
-            item_data["fps"] = project_doc["data"]["fps"]
+        # Frames duration, fallback on 0
+        try:
+            frames_duration = int(item_data.pop("nb_frames", 0))
+        except (TypeError, ValueError):
+            frames_duration = 0
+        # Frame out, fallback on frame_in + duration or project's value or 1001
+        frame_out = item_data.pop("frame_out", None)
+        if not frame_out:
+            frame_out = frame_in + frames_duration
+        try:
+            frame_out = int(frame_out)
+        except (TypeError, ValueError):
+            frame_out = 1001
+        item_data["frameEnd"] = frame_out
+        # Fps, fallback to project's value or default value (25.0)
+        try:
+            fps = float(item_data.get("fps", project_doc["data"].get("fps")))
+        except (TypeError, ValueError):
+            fps = 25.0
+        item_data["fps"] = fps
 
         # Tasks
         tasks_list = []
@@ -106,7 +121,6 @@ def update_op_assets(
             tasks_list = all_tasks_for_asset(item)
         elif item_type == "Shot":
             tasks_list = all_tasks_for_shot(item)
-            # TODO frame in and out
         item_data["tasks"] = {
             t["task_type_name"]: {"type": t["task_type_name"]}
             for t in tasks_list
@@ -229,9 +243,9 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_data.update(
         {
             "code": project_code,
-            "fps": project["fps"],
-            "resolutionWidth": project["resolution"].split("x")[0],
-            "resolutionHeight": project["resolution"].split("x")[1],
+            "fps": float(project["fps"]),
+            "resolutionWidth": int(project["resolution"].split("x")[0]),
+            "resolutionHeight": int(project["resolution"].split("x")[1]),
             "zou_id": project["id"],
         }
     )
