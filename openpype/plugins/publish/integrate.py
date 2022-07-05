@@ -156,8 +156,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "usd",
                 "staticMesh",
                 "skeletalMesh",
-                "usdComposition",
-                "usdOverride",
+                "mvLook",
+                "mvUsd",
+                "mvUsdComposition",
+                "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
     exclude_families = ["clip", "render.farm"]
