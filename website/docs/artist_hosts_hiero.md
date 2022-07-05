@@ -202,3 +202,52 @@ This video shows a way to publish shot look as effect from Hiero to Nuke.
 ### Assembling edit from published shot versions
 
 <iframe width="512px" height="288px" src="https://www.youtube.com/embed/5Wd6X-71vbg" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
+### Create Place Holder
+
+This tool creates a Place Holder, which is a node that will be replaced by published instances.
+
+![Create menu](assets/nuke_createPlaceHolder.png)
+
+:::note
+All published instances that will replace the place holder must contain unique input and output nodes in case they will not be imported as one node. 
+:::
+
+
+The informations about these objects are given by the user by filling the extra attributes of the Place Holder
+
+![Create menu](assets/nuke_fillingExtraAttributes.png)
+
+
+#### Result
+- Create a red node called `PLACEHOLDER` which can be manipulated as wanted by using it in nodes graph.
+
+![Create menu](assets/nuke_placeHolderNode.png)
+
+### Update Place Holder
+This tool alows the user to change the informations filled in the extra attributes of the selected Place Holder.
+
+![Create menu](assets/nuke_updatePlaceHolder.png)
+
+### Add a profile
+The path to the template that we were working on must be added as a profile on Project Settings.
+
+![Create menu](assets/nuke_addProfile.png)
+
+### Build Workfile from template
+This tool imports the template used and replaces the existed Place Holders with the corresponding published objects (which can contain Place Holders too). In case there is no published items with the description given, the place holder will remain in the node graph.
+
+![Create menu](assets/nuke_buildWorfileFromTemplate.png)
+
+:::note
+In case the instance that will replace the  Place holder **A** contains another Place Holder **B** that points to many published elements, all the nodes that were imported with **A** except **B** will be duplicated for each element that will replace **B**
+:::
+
+### Update Workfile
+This tool can be used to check if there are some instances that were published after the last build, so they will be imported.
+
+![Create menu](assets/nuke_updateWorkfile.png)
+
+:::note
+Imported instances must not be deleted because they contain extra attributes that will be used to update the workfile since the place holder is been deleted.
+:::
