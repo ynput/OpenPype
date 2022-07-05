@@ -2,7 +2,14 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance
 )
-from openpype.lib import FileDef
+from openpype.lib import (
+    FileDef,
+    TextDef,
+    NumberDef,
+    EnumDef,
+    BoolDef,
+    FileDefItem
+)
 
 from .pipeline import (
     list_instances,
@@ -91,6 +98,91 @@ class SettingsCreator(TrayPublishCreator):
                 "description": item_data["description"],
                 "detailed_description": item_data["detailed_description"],
                 "extensions": item_data["extensions"],
+                "allow_sequences": item_data["allow_sequences"],
+                "default_variants": item_data["default_variants"]
+            }
+        )
+
+
+class EditorialCreator(TrayPublishCreator):
+    create_allow_context_change = True
+
+    extensions = []
+
+    def collect_instances(self):
+        for instance_data in list_instances():
+            creator_id = instance_data.get("creator_identifier")
+            if creator_id == self.identifier:
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
+
+    def create(self, subset_name, data, pre_create_data):
+        # Pass precreate data to creator attributes
+        data["creator_attributes"] = pre_create_data
+        data["settings_creator"] = True
+        # Create new instance
+        new_instance = CreatedInstance(self.family, subset_name, data, self)
+        # Host implementation of storing metadata about instance
+        HostContext.add_instance(new_instance.data_to_store())
+        # Add instance to current context
+        self._add_instance_to_context(new_instance)
+
+    def get_instance_attr_defs(self):
+        if self.identifier == "editorial.simple":
+            return [
+                FileDef(
+                    "sequence_filepath",
+                    folders=False,
+                    extensions=self.sequence_extensions,
+                    allow_sequences=self.allow_sequences,
+                    label="Filepath",
+                )
+            ]
+        else:
+            return [
+                FileDef(
+                    "sequence_filepath",
+                    folders=False,
+                    extensions=self.sequence_extensions,
+                    allow_sequences=self.allow_sequences,
+                    label="Sequence filepath",
+                ),
+                FileDef(
+                    "clip_source_folder",
+                    folders=True,
+                    extensions=self.clip_extensions,
+                    allow_sequences=False,
+                    label="Clips' Source folder",
+                ),
+                TextDef("text input"),
+                NumberDef("number input"),
+                EnumDef("enum input", {
+                    "value1": "label1",
+                    "value2": "label2"
+                }),
+                BoolDef("bool input")
+            ]
+
+    @classmethod
+    def from_settings(cls, item_data):
+        identifier = item_data["identifier"]
+        family = item_data["family"]
+        if not identifier:
+            identifier = "settings_{}".format(family)
+        return type(
+            "{}{}".format(cls.__name__, identifier),
+            (cls, ),
+            {
+                "family": family,
+                "identifier": identifier,
+                "label": item_data["label"].strip(),
+                "icon": item_data["icon"],
+                "description": item_data["description"],
+                "detailed_description": item_data["detailed_description"],
+                "sequence_extensions": item_data["sequence_extensions"],
+                "clip_extensions": item_data["clip_extensions"],
                 "allow_sequences": item_data["allow_sequences"],
                 "default_variants": item_data["default_variants"]
             }
