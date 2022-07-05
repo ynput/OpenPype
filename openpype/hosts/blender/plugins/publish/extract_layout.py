@@ -232,15 +232,16 @@ class ExtractLayout(publish.Extractor):
         }
         instance.data["representations"].append(json_representation)
 
-        self.log.debug(fbx_files)
+        self.log.debug(f"fbx_files: {fbx_files}")
 
-        fbx_representation = {
-            "name": "fbx",
-            "ext": "000.fbx" if len(fbx_files) == 1 else "fbx",
-            "files": fbx_files[0] if len(fbx_files) == 1 else fbx_files,
-            "stagingDir": stagingdir,
-        }
-        instance.data["representations"].append(fbx_representation)
+        if fbx_files:
+            fbx_representation = {
+                "name": "fbx",
+                "ext": "000.fbx" if len(fbx_files) == 1 else "fbx",
+                "files": fbx_files[0] if len(fbx_files) == 1 else fbx_files,
+                "stagingDir": stagingdir,
+            }
+            instance.data["representations"].append(fbx_representation)
 
         self.log.info(
             f"Extracted instance '{instance.name}' to: {json_representation}"
