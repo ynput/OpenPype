@@ -4,14 +4,13 @@ import uuid
 
 import clique
 from pymongo import UpdateOne
-import importlib
 import qargparse
 from Qt import QtWidgets, QtCore
 
 from openpype import style
 from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.lib import StringTemplate
-from openpype.settings import get_system_settings
+from openpype.modules import ModulesManager
 
 
 class DeleteOldVersions(load.SubsetLoaderPlugin):
@@ -371,41 +370,75 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
         self.dbcon.uninstall()
 
-        if get_system_settings()["modules"]["ftrack"]["enabled"]:
-            # Set attribute `is_published` to `False` on ftrack AssetVersions
-            ftrack_api = importlib.import_module("ftrack_api")
-            session = ftrack_api.Session()
-            query = (
-                "AssetVersion where asset.parent.id is \"{}\""
-                " and asset.name is \"{}\""
-                " and version is \"{}\""
-            )
-            for v in data["versions"]:
-                try:
-                    ftrack_version = session.query(
-                        query.format(
-                            data["asset"]["data"]["ftrackId"],
-                            data["subset"]["name"],
-                            v["name"]
-                        )
-                    ).one()
-                except ftrack_api.exception.NoResultFoundError:
-                    continue
-
-                ftrack_version["is_published"] = False
-
-            try:
-                session.commit()
-
-            except Exception:
-                msg = (
-                    "Could not set `is_published` attribute to `False`"
-                    " for selected AssetVersions."
-                )
-                self.log.error(msg)
-                self.message(msg)
+        self._ftrack_delete_versions(data)
 
         return size
+
+    def _ftrack_delete_versions(self, data):
+        """Delete version on ftrack.
+
+        Handling of ftrack logic in this plugin is not ideal. But in OP3 it is
+        almost impossible to solve the issue other way.
+
+        Note:
+            Asset versions on ftrack are not deleted but marked as
+                "not published" which cause that they're invisible.
+
+        Args:
+            data (dict): Data sent to subset loader with full context.
+        """
+
+        # First check for ftrack id on asset document
+        #   - skip if ther is none
+        asset_ftrack_id = data["asset"]["data"].get("ftrackId")
+        if not asset_ftrack_id:
+            self.log.info((
+                "Asset does not have filled ftrack id. Skipped delete"
+                " of ftrack version."
+            ))
+            return
+
+        # Check if ftrack module is enabled
+        modules_manager = ModulesManager()
+        ftrack_module = modules_manager.modules_by_name.get("ftrack")
+        if not ftrack_module or not ftrack_module.enabled:
+            return
+
+        import ftrack_api
+
+        session = ftrack_api.Session()
+        subset_name = data["subset"]["name"]
+        versions = {
+            '"{}"'.format(version_doc["name"])
+            for version_doc in data["versions"]
+        }
+        asset_versions = session.query(
+            (
+                "select id, is_published from AssetVersion where"
+                " asset.parent.id is \"{}\""
+                " and asset.name is \"{}\""
+                " and version in ({})"
+            ).format(
+                asset_ftrack_id,
+                subset_name,
+                ",".join(versions)
+            )
+        ).all()
+
+        # Set attribute `is_published` to `False` on ftrack AssetVersions
+        for asset_version in asset_versions:
+            asset_version["is_published"] = False
+
+        try:
+            session.commit()
+
+        except Exception:
+            msg = (
+                "Could not set `is_published` attribute to `False`"
+                " for selected AssetVersions."
+            )
+            self.log.error(msg)
+            self.message(msg)
 
     def load(self, contexts, name=None, namespace=None, options=None):
         try:
