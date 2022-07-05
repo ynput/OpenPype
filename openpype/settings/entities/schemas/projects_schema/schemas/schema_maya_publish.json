@@ -62,13 +62,36 @@
                 }
             ]
         },
-        {
-            "type": "schema_template",
-            "name": "template_publish_plugin",
-            "template_data": [
+        {   
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateFrameRange",
+            "label": "Validate Frame Range",
+            "checkbox_key": "enabled",
+            "children": [
                 {
-                    "key": "ValidateFrameRange",
-                    "label": "Validate Frame Range"
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "key": "exclude_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
                 }
             ]
         },
