@@ -84,10 +84,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
     def update_missing_containers(self):
         nodes_byId = {}
         nodes_byId = defaultdict(lambda: [], nodes_byId)
-        for n in nuke.allNodes():
-            refresh_node(n)
-            if 'id_rep' in n.knobs().keys():
-                nodes_byId[n.knob('id_rep').getValue()] = []
+        
         for n in nuke.allNodes():
             if 'id_rep' in n.knobs().keys():
                 nodes_byId[n.knob('id_rep').getValue()] += [n.name()]
@@ -127,7 +124,6 @@ class NukeTemplateLoader(AbstractTemplateLoader):
         return placeholders
    
     def delete_placeholder(self, placeholder):
-        #  min_x, min_y , max_x, max_y = get_extremes(nodes_loaded)
         node = placeholder.data['node']
         lastLoaded = placeholder.data['last_loaded']
         if 'delete' in placeholder.data.keys()\
