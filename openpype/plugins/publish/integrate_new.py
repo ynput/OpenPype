@@ -62,6 +62,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset New"
     order = pyblish.api.IntegratorOrder
+    hosts = ["aftereffects", "blender", "celaction", "flame", "harmony",
+             "hiero", "houdini", "nuke", "photoshop", "resolve",
+             "standalonepublisher", "traypublisher", "tvpaint", "unreal",
+             "webpublisher"]
     families = ["workfile",
                 "pointcache",
                 "camera",

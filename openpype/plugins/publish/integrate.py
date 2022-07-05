@@ -110,6 +110,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset New"
     order = pyblish.api.IntegratorOrder
+    hosts = ["maya"]
     families = ["workfile",
                 "pointcache",
                 "camera",
