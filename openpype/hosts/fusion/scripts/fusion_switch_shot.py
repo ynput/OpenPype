@@ -4,6 +4,11 @@ import sys
 import logging
 
 # Pipeline imports
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+    get_versions,
+)
 from openpype.pipeline import (
     legacy_io,
     install_host,
@@ -164,9 +169,9 @@ def update_frame_range(comp, representations):
 
     """
 
-    version_ids = [r["parent"] for r in representations]
-    versions = legacy_io.find({"type": "version", "_id": {"$in": version_ids}})
-    versions = list(versions)
+    project_name = legacy_io.active_project()
+    version_ids = {r["parent"] for r in representations}
+    versions = list(get_versions(project_name, version_ids))
 
     versions = [v for v in versions
                 if v["data"].get("frameStart", None) is not None]
@@ -203,11 +208,12 @@ def switch(asset_name, filepath=None, new=True):
 
     # Assert asset name exists
     # It is better to do this here then to wait till switch_shot does it
-    asset = legacy_io.find_one({"type": "asset", "name": asset_name})
+    project_name = legacy_io.active_project()
+    asset = get_asset_by_name(project_name, asset_name)
     assert asset, "Could not find '%s' in the database" % asset_name
 
     # Get current project
-    self._project = legacy_io.find_one({"type": "project"})
+    self._project = get_project(project_name)
 
     # Go to comp
     if not filepath:

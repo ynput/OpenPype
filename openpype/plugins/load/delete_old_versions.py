@@ -9,9 +9,8 @@ import qargparse
 from Qt import QtWidgets, QtCore
 
 from openpype import style
-from openpype.pipeline import load, AvalonMongoDB
+from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.lib import StringTemplate
-from openpype.api import Anatomy
 
 
 class DeleteOldVersions(load.SubsetLoaderPlugin):

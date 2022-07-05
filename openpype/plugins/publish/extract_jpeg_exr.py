@@ -19,7 +19,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     label = "Extract Thumbnail"
     order = pyblish.api.ExtractorOrder
     families = [
-        "imagesequence", "render", "render2d",
+        "imagesequence", "render", "render2d", "prerender",
         "source", "plate", "take"
     ]
     hosts = ["shell", "fusion", "resolve"]

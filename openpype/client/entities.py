@@ -15,12 +15,15 @@ from bson.objectid import ObjectId
 from openpype.lib.mongo import OpenPypeMongoConnection
 
 
-def _get_project_connection(project_name=None):
+def _get_project_database():
     db_name = os.environ.get("AVALON_DB") or "avalon"
-    mongodb = OpenPypeMongoConnection.get_mongo_client()[db_name]
-    if project_name:
-        return mongodb[project_name]
-    return mongodb
+    return OpenPypeMongoConnection.get_mongo_client()[db_name]
+
+
+def _get_project_connection(project_name):
+    if not project_name:
+        raise ValueError("Invalid project name {}".format(str(project_name)))
+    return _get_project_database()[project_name]
 
 
 def _prepare_fields(fields, required_fields=None):
@@ -55,7 +58,7 @@ def _convert_ids(in_ids):
 
 
 def get_projects(active=True, inactive=False, fields=None):
-    mongodb = _get_project_connection()
+    mongodb = _get_project_database()
     for project_name in mongodb.collection_names():
         if project_name in ("system.indexes",):
             continue
@@ -146,6 +149,7 @@ def _get_assets(
     project_name,
     asset_ids=None,
     asset_names=None,
+    parent_ids=None,
     standard=True,
     archived=False,
     fields=None
@@ -161,6 +165,7 @@ def _get_assets(
         project_name (str): Name of project where to look for queried entities.
         asset_ids (list[str|ObjectId]): Asset ids that should be found.
         asset_names (list[str]): Name assets that should be found.
+        parent_ids (list[str|ObjectId]): Parent asset ids.
         standard (bool): Query standart assets (type 'asset').
         archived (bool): Query archived assets (type 'archived_asset').
         fields (list[str]): Fields that should be returned. All fields are
@@ -196,6 +201,12 @@ def _get_assets(
             return []
         query_filter["name"] = {"$in": list(asset_names)}
 
+    if parent_ids is not None:
+        parent_ids = _convert_ids(parent_ids)
+        if not parent_ids:
+            return []
+        query_filter["data.visualParent"] = {"$in": parent_ids}
+
     conn = _get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
@@ -205,6 +216,7 @@ def get_assets(
     project_name,
     asset_ids=None,
     asset_names=None,
+    parent_ids=None,
     archived=False,
     fields=None
 ):
@@ -219,6 +231,7 @@ def get_assets(
         project_name (str): Name of project where to look for queried entities.
         asset_ids (list[str|ObjectId]): Asset ids that should be found.
         asset_names (list[str]): Name assets that should be found.
+        parent_ids (list[str|ObjectId]): Parent asset ids.
         archived (bool): Add also archived assets.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -229,7 +242,13 @@ def get_assets(
     """
 
     return _get_assets(
-        project_name, asset_ids, asset_names, True, archived, fields
+        project_name,
+        asset_ids,
+        asset_names,
+        parent_ids,
+        True,
+        archived,
+        fields
     )
 
 
@@ -237,6 +256,7 @@ def get_archived_assets(
     project_name,
     asset_ids=None,
     asset_names=None,
+    parent_ids=None,
     fields=None
 ):
     """Archived assets for specified project by passed filters.
@@ -250,6 +270,7 @@ def get_archived_assets(
         project_name (str): Name of project where to look for queried entities.
         asset_ids (list[str|ObjectId]): Asset ids that should be found.
         asset_names (list[str]): Name assets that should be found.
+        parent_ids (list[str|ObjectId]): Parent asset ids.
         fields (list[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -259,7 +280,7 @@ def get_archived_assets(
     """
 
     return _get_assets(
-        project_name, asset_ids, asset_names, False, True, fields
+        project_name, asset_ids, asset_names, parent_ids, False, True, fields
     )
 
 
@@ -991,8 +1012,10 @@ def get_representations_parents(project_name, representations):
     versions_by_subset_id = collections.defaultdict(list)
     subsets_by_subset_id = {}
     subsets_by_asset_id = collections.defaultdict(list)
+    output = {}
     for representation in representations:
         repre_id = representation["_id"]
+        output[repre_id] = (None, None, None, None)
         version_id = representation["parent"]
         repres_by_version_id[version_id].append(representation)
 
@@ -1022,7 +1045,6 @@ def get_representations_parents(project_name, representations):
 
     project = get_project(project_name)
 
-    output = {}
     for version_id, representations in repres_by_version_id.items():
         asset = None
         subset = None
@@ -1062,7 +1084,7 @@ def get_representation_parents(project_name, representation):
     parents_by_repre_id = get_representations_parents(
         project_name, [representation]
     )
-    return parents_by_repre_id.get(repre_id)
+    return parents_by_repre_id[repre_id]
 
 
 def get_thumbnail_id_from_source(project_name, src_type, src_id):

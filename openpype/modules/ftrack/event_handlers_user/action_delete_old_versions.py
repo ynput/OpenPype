@@ -11,9 +11,8 @@ from openpype.client import (
     get_versions,
     get_representations
 )
-from openpype.api import Anatomy
 from openpype.lib import StringTemplate, TemplateUnsolved
-from openpype.pipeline import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB, Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 

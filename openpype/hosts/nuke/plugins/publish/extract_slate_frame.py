@@ -4,6 +4,7 @@ import nuke
 import copy
 
 import pyblish.api
+import six
 
 import openpype
 from openpype.hosts.nuke.api import (
@@ -11,7 +12,6 @@ from openpype.hosts.nuke.api import (
     duplicate_node,
     get_view_process_node
 )
-
 
 class ExtractSlateFrame(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
@@ -235,6 +235,48 @@ class ExtractSlateFrame(openpype.api.Extractor):
             int(slate_first_frame),
             int(slate_first_frame)
         )
+
+        # Add file to representation files
+        # - get write node
+        write_node = instance.data["writeNode"]
+        # - evaluate filepaths for first frame and slate frame
+        first_filename = os.path.basename(
+            write_node["file"].evaluate(first_frame))
+        slate_filename = os.path.basename(
+            write_node["file"].evaluate(slate_first_frame))
+
+        # Find matching representation based on first filename
+        matching_repre = None
+        is_sequence = None
+        for repre in instance.data["representations"]:
+            files = repre["files"]
+            if (
+                not isinstance(files, six.string_types)
+                and first_filename in files
+            ):
+                matching_repre = repre
+                is_sequence = True
+                break
+
+            elif files == first_filename:
+                matching_repre = repre
+                is_sequence = False
+                break
+
+        if not matching_repre:
+            self.log.info((
+                "Matching reresentaion was not found."
+                " Representation files were not filled with slate."
+            ))
+            return
+
+        # Add frame to matching representation files
+        if not is_sequence:
+            matching_repre["files"] = [first_filename, slate_filename]
+        elif slate_filename not in matching_repre["files"]:
+            matching_repre["files"].insert(0, slate_filename)
+
+        self.log.warning("Added slate frame to representation files")
 
     def add_comment_slate_node(self, instance, node):
 
