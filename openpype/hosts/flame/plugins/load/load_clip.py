@@ -37,7 +37,7 @@ class LoadClip(opfapi.ClipLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         clip_name = StringTemplate(self.clip_name_template).format(
-            **context["representation"]["context"])
+            context["representation"]["context"])
 
         # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping
