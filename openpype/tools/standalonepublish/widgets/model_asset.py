@@ -4,6 +4,7 @@ import collections
 from Qt import QtCore, QtGui
 import qtawesome
 
+from openpype.client import get_assets
 from openpype.style import (
     get_default_entity_icon_color,
     get_deprecated_entity_font_color,
@@ -104,17 +105,18 @@ class AssetModel(TreeModel):
     def refresh(self):
         """Refresh the data for the model."""
 
+        project_name = self.dbcon.active_project()
         self.clear()
-        if (
-            self.dbcon.active_project() is None or
-            self.dbcon.active_project() == ''
-        ):
+        if not project_name:
             return
 
         self.beginResetModel()
 
         # Get all assets in current project sorted by name
-        db_assets = self.dbcon.find({"type": "asset"}).sort("name", 1)
+        asset_docs = get_assets(project_name)
+        db_assets = list(
+            sorted(asset_docs, key=lambda item: item["name"])
+        )
 
         # Group the assets by their visual parent's id
         assets_by_parent = collections.defaultdict(list)

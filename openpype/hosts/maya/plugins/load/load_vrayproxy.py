@@ -7,10 +7,9 @@ loader will use them instead of native vray vrmesh format.
 """
 import os
 
-from bson.objectid import ObjectId
-
 import maya.cmds as cmds
 
+from openpype.client import get_representation_by_name
 from openpype.api import get_project_settings
 from openpype.pipeline import (
     legacy_io,
@@ -185,12 +184,8 @@ class VRayProxyLoader(load.LoaderPlugin):
         """
         self.log.debug(
             "Looking for abc in published representations of this version.")
-        abc_rep = legacy_io.find_one({
-            "type": "representation",
-            "parent": ObjectId(version_id),
-            "name": "abc"
-        })
-
+        project_name = legacy_io.active_project()
+        abc_rep = get_representation_by_name(project_name, "abc", version_id)
         if abc_rep:
             self.log.debug("Found, we'll link alembic to vray proxy.")
             file_name = get_representation_path(abc_rep)

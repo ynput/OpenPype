@@ -3,6 +3,7 @@ import json
 import copy
 import pyblish.api
 
+from openpype.lib import get_ffprobe_streams
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -105,10 +106,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # These must be changed for each component
             "component_data": None,
             "component_path": None,
-            "component_location": None
+            "component_location": None,
+            "component_location_name": None
         }
-
-        ft_session = instance.context.data["ftrackSession"]
 
         # Filter types of representations
         review_representations = []
@@ -127,12 +127,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 other_representations.append(repre)
 
         # Prepare ftrack locations
-        unmanaged_location = ft_session.query(
-            "Location where name is \"ftrack.unmanaged\""
-        ).one()
-        ftrack_server_location = ft_session.query(
-            "Location where name is \"ftrack.server\""
-        ).one()
+        unmanaged_location_name = "ftrack.unmanaged"
+        ftrack_server_location_name = "ftrack.server"
 
         # Components data
         component_list = []
@@ -142,6 +138,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Create thumbnail components
         # TODO what if there is multiple thumbnails?
         first_thumbnail_component = None
+        first_thumbnail_component_repre = None
         for repre in thumbnail_representations:
             published_path = repre.get("published_path")
             if not published_path:
@@ -169,11 +166,48 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             src_components_to_add.append(copy.deepcopy(thumbnail_item))
             # Create copy of first thumbnail
             if first_thumbnail_component is None:
-                first_thumbnail_component = copy.deepcopy(thumbnail_item)
+                first_thumbnail_component_repre = repre
+                first_thumbnail_component = thumbnail_item
             # Set location
-            thumbnail_item["component_location"] = ftrack_server_location
+            thumbnail_item["component_location_name"] = (
+                ftrack_server_location_name
+            )
+
             # Add item to component list
             component_list.append(thumbnail_item)
+
+        if (
+            not review_representations
+            and first_thumbnail_component is not None
+        ):
+            width = first_thumbnail_component_repre.get("width")
+            height = first_thumbnail_component_repre.get("height")
+            if not width or not height:
+                component_path = first_thumbnail_component["component_path"]
+                streams = []
+                try:
+                    streams = get_ffprobe_streams(component_path)
+                except Exception:
+                    self.log.debug((
+                        "Failed to retrieve information about intput {}"
+                    ).format(component_path))
+
+                for stream in streams:
+                    if "width" in stream and "height" in stream:
+                        width = stream["width"]
+                        height = stream["height"]
+                        break
+
+            if width and height:
+                component_data = first_thumbnail_component["component_data"]
+                component_data["name"] = "ftrackreview-image"
+                component_data["metadata"] = {
+                    "ftr_meta": json.dumps({
+                        "width": width,
+                        "height": height,
+                        "format": "image"
+                    })
+                }
 
         # Create review components
         # Change asset name of each new component for review
@@ -260,7 +294,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             src_components_to_add.append(copy.deepcopy(review_item))
 
             # Set location
-            review_item["component_location"] = ftrack_server_location
+            review_item["component_location_name"] = (
+                ftrack_server_location_name
+            )
             # Add item to component list
             component_list.append(review_item)
 
@@ -272,8 +308,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     first_thumbnail_component
                 )
                 new_thumbnail_component["asset_data"]["name"] = asset_name
-                new_thumbnail_component["component_location"] = (
-                    ftrack_server_location
+                new_thumbnail_component["component_location_name"] = (
+                    ftrack_server_location_name
                 )
                 component_list.append(new_thumbnail_component)
 
@@ -282,7 +318,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Make sure thumbnail is disabled
             copy_src_item["thumbnail"] = False
             # Set location
-            copy_src_item["component_location"] = unmanaged_location
+            copy_src_item["component_location_name"] = unmanaged_location_name
             # Modify name of component to have suffix "_src"
             component_data = copy_src_item["component_data"]
             component_name = component_data["name"]
@@ -307,7 +343,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             other_item["component_data"] = {
                 "name": repre["name"]
             }
-            other_item["component_location"] = unmanaged_location
+            other_item["component_location_name"] = unmanaged_location_name
             other_item["component_path"] = published_path
             component_list.append(other_item)
 

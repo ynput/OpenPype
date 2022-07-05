@@ -493,8 +493,9 @@ def convert_for_ffmpeg(
             erase_reason = "has too long value ({} chars).".format(
                 len(attr_value)
             )
+            erase_attribute = True
 
-        if erase_attribute:
+        if not erase_attribute:
             for char in NOT_ALLOWED_FFMPEG_CHARS:
                 if char in attr_value:
                     erase_attribute = True
@@ -532,7 +533,7 @@ def convert_input_paths_for_ffmpeg(
     output_dir,
     logger=None
 ):
-    """Contert source file to format supported in ffmpeg.
+    """Convert source file to format supported in ffmpeg.
 
     Currently can convert only exrs. The input filepaths should be files
     with same type. Information about input is loaded only from first found
@@ -623,8 +624,9 @@ def convert_input_paths_for_ffmpeg(
                 erase_reason = "has too long value ({} chars).".format(
                     len(attr_value)
                 )
+                erase_attribute = True
 
-            if erase_attribute:
+            if not erase_attribute:
                 for char in NOT_ALLOWED_FFMPEG_CHARS:
                     if char in attr_value:
                         erase_attribute = True

@@ -26,26 +26,110 @@ IS_SEQUENCE_ROLE = QtCore.Qt.UserRole + 7
 EXT_ROLE = QtCore.Qt.UserRole + 8
 
 
+class SupportLabel(QtWidgets.QLabel):
+    pass
+
+
 class DropEmpty(QtWidgets.QWidget):
-    _drop_enabled_text = "Drag & Drop\n(drop files here)"
+    _empty_extensions = "Any file"
 
-    def __init__(self, parent):
+    def __init__(self, single_item, allow_sequences, parent):
         super(DropEmpty, self).__init__(parent)
-        label_widget = QtWidgets.QLabel(self._drop_enabled_text, self)
-        label_widget.setAlignment(QtCore.Qt.AlignCenter)
 
-        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        drop_label_widget = QtWidgets.QLabel("Drag & Drop files here", self)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        items_label_widget = SupportLabel(self)
+        items_label_widget.setWordWrap(True)
+
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addSpacing(10)
+        layout.addSpacing(20)
         layout.addWidget(
-            label_widget,
-            alignment=QtCore.Qt.AlignCenter
+            drop_label_widget, 0, alignment=QtCore.Qt.AlignCenter
+        )
+        layout.addSpacing(30)
+        layout.addStretch(1)
+        layout.addWidget(
+            items_label_widget, 0, alignment=QtCore.Qt.AlignCenter
         )
         layout.addSpacing(10)
 
-        self._label_widget = label_widget
+        for widget in (
+            drop_label_widget,
+            items_label_widget,
+        ):
+            widget.setAlignment(QtCore.Qt.AlignCenter)
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self._single_item = single_item
+        self._allow_sequences = allow_sequences
+        self._allowed_extensions = set()
+        self._allow_folders = None
+
+        self._drop_label_widget = drop_label_widget
+        self._items_label_widget = items_label_widget
+
+        self.set_allow_folders(False)
+
+    def set_extensions(self, extensions):
+        if extensions:
+            extensions = {
+                ext.replace(".", "")
+                for ext in extensions
+            }
+        if extensions == self._allowed_extensions:
+            return
+        self._allowed_extensions = extensions
+
+        self._update_items_label()
+
+    def set_allow_folders(self, allowed):
+        if self._allow_folders == allowed:
+            return
+
+        self._allow_folders = allowed
+        self._update_items_label()
+
+    def _update_items_label(self):
+        allowed_items = []
+        if self._allow_folders:
+            allowed_items.append("folder")
+
+        if self._allowed_extensions:
+            allowed_items.append("file")
+            if self._allow_sequences:
+                allowed_items.append("sequence")
+
+        if not self._single_item:
+            allowed_items = [item + "s" for item in allowed_items]
+
+        if not allowed_items:
+            self._items_label_widget.setText(
+                "It is not allowed to add anything here!"
+            )
+            return
+
+        items_label = "Multiple "
+        if self._single_item:
+            items_label = "Single "
+
+        if len(allowed_items) == 1:
+            allowed_items_label = allowed_items[0]
+        elif len(allowed_items) == 2:
+            allowed_items_label = " or ".join(allowed_items)
+        else:
+            last_item = allowed_items.pop(-1)
+            new_last_item = " or ".join(last_item, allowed_items.pop(-1))
+            allowed_items.append(new_last_item)
+            allowed_items_label = ", ".join(allowed_items)
+
+        items_label += allowed_items_label
+        if self._allowed_extensions:
+            items_label += " of\n{}".format(
+                ", ".join(sorted(self._allowed_extensions))
+            )
+
+        self._items_label_widget.setText(items_label)
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
@@ -151,7 +235,7 @@ class FilesModel(QtGui.QStandardItemModel):
         item = QtGui.QStandardItem()
         item_id = str(uuid.uuid4())
         item.setData(item_id, ITEM_ID_ROLE)
-        item.setData(file_item.label, ITEM_LABEL_ROLE)
+        item.setData(file_item.label or "< empty >", ITEM_LABEL_ROLE)
         item.setData(file_item.filenames, FILENAMES_ROLE)
         item.setData(file_item.directory, DIRPATH_ROLE)
         item.setData(icon_pixmap, ITEM_ICON_ROLE)
@@ -188,7 +272,12 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 
     def set_allowed_extensions(self, extensions=None):
         if extensions is not None:
-            extensions = set(extensions)
+            _extensions = set()
+            for ext in set(extensions):
+                if not ext.startswith("."):
+                    ext = ".{}".format(ext)
+                _extensions.add(ext.lower())
+            extensions = _extensions
 
         if self._allowed_extensions != extensions:
             self._allowed_extensions = extensions
@@ -251,7 +340,7 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
 
 
 class ItemWidget(QtWidgets.QWidget):
-    split_requested = QtCore.Signal(str)
+    context_menu_requested = QtCore.Signal(QtCore.QPoint)
 
     def __init__(
         self, item_id, label, pixmap_icon, is_sequence, multivalue, parent=None
@@ -316,19 +405,9 @@ class ItemWidget(QtWidgets.QWidget):
         self._update_btn_size()
 
     def _on_actions_clicked(self):
-        menu = QtWidgets.QMenu(self._split_btn)
-
-        action = QtWidgets.QAction("Split sequence", menu)
-        action.triggered.connect(self._on_split_sequence)
-
-        menu.addAction(action)
-
         pos = self._split_btn.rect().bottomLeft()
         point = self._split_btn.mapToGlobal(pos)
-        menu.popup(point)
-
-    def _on_split_sequence(self):
-        self.split_requested.emit(self._item_id)
+        self.context_menu_requested.emit(point)
 
 
 class InViewButton(IconButton):
@@ -339,6 +418,7 @@ class FilesView(QtWidgets.QListView):
     """View showing instances and their groups."""
 
     remove_requested = QtCore.Signal()
+    context_menu_requested = QtCore.Signal(QtCore.QPoint)
 
     def __init__(self, *args, **kwargs):
         super(FilesView, self).__init__(*args, **kwargs)
@@ -347,6 +427,7 @@ class FilesView(QtWidgets.QListView):
         self.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
         remove_btn = InViewButton(self)
         pix_enabled = paint_image_with_color(
@@ -361,6 +442,7 @@ class FilesView(QtWidgets.QListView):
         remove_btn.setEnabled(False)
 
         remove_btn.clicked.connect(self._on_remove_clicked)
+        self.customContextMenuRequested.connect(self._on_context_menu_request)
 
         self._remove_btn = remove_btn
 
@@ -397,6 +479,12 @@ class FilesView(QtWidgets.QListView):
                 selected_item_ids.add(instance_id)
         return selected_item_ids
 
+    def has_selected_sequence(self):
+        for index in self.selectionModel().selectedIndexes():
+            if index.data(IS_SEQUENCE_ROLE):
+                return True
+        return False
+
     def event(self, event):
         if event.type() == QtCore.QEvent.KeyPress:
             if (
@@ -407,6 +495,12 @@ class FilesView(QtWidgets.QListView):
                 return True
 
         return super(FilesView, self).event(event)
+
+    def _on_context_menu_request(self, pos):
+        index = self.indexAt(pos)
+        if index.isValid():
+            point = self.viewport().mapToGlobal(pos)
+            self.context_menu_requested.emit(point)
 
     def _on_selection_change(self):
         self._remove_btn.setEnabled(self.has_selected_item_ids())
@@ -439,7 +533,7 @@ class FilesWidget(QtWidgets.QFrame):
         super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
-        empty_widget = DropEmpty(self)
+        empty_widget = DropEmpty(single_item, allow_sequences, self)
 
         files_model = FilesModel(single_item, allow_sequences)
         files_proxy_model = FilesProxyModel()
@@ -456,6 +550,9 @@ class FilesWidget(QtWidgets.QFrame):
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
         files_view.remove_requested.connect(self._on_remove_requested)
+        files_view.context_menu_requested.connect(
+            self._on_context_menu_requested
+        )
         self._in_set_value = False
         self._single_item = single_item
         self._multivalue = False
@@ -504,11 +601,15 @@ class FilesWidget(QtWidgets.QFrame):
             return file_items
         if file_items:
             return file_items[0]
-        return FileDefItem.create_empty_item()
+
+        empty_item = FileDefItem.create_empty_item()
+        return empty_item.to_dict()
 
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)
         self._files_proxy_model.set_allowed_extensions(exts_filter)
+        self._empty_widget.set_extensions(exts_filter)
+        self._empty_widget.set_allow_folders(folders_allowed)
 
     def _on_rows_inserted(self, parent_index, start_row, end_row):
         for row in range(start_row, end_row + 1):
@@ -527,7 +628,9 @@ class FilesWidget(QtWidgets.QFrame):
                 is_sequence,
                 self._multivalue
             )
-            widget.split_requested.connect(self._on_split_request)
+            widget.context_menu_requested.connect(
+                self._on_context_menu_requested
+            )
             self._files_view.setIndexWidget(index, widget)
             self._files_proxy_model.setData(
                 index, widget.sizeHint(), QtCore.Qt.SizeHintRole
@@ -559,17 +662,22 @@ class FilesWidget(QtWidgets.QFrame):
         if not self._in_set_value:
             self.value_changed.emit()
 
-    def _on_split_request(self, item_id):
+    def _on_split_request(self):
         if self._multivalue:
             return
 
-        file_item = self._files_model.get_file_item_by_id(item_id)
-        if not file_item:
+        item_ids = self._files_view.get_selected_item_ids()
+        if not item_ids:
             return
 
-        new_items = file_item.split_sequence()
-        self._remove_item_by_ids([item_id])
-        self._add_filepaths(new_items)
+        for item_id in item_ids:
+            file_item = self._files_model.get_file_item_by_id(item_id)
+            if not file_item:
+                return
+
+            new_items = file_item.split_sequence()
+            self._add_filepaths(new_items)
+        self._remove_item_by_ids(item_ids)
 
     def _on_remove_requested(self):
         if self._multivalue:
@@ -578,6 +686,23 @@ class FilesWidget(QtWidgets.QFrame):
         items_to_delete = self._files_view.get_selected_item_ids()
         if items_to_delete:
             self._remove_item_by_ids(items_to_delete)
+
+    def _on_context_menu_requested(self, pos):
+        if self._multivalue:
+            return
+
+        menu = QtWidgets.QMenu(self._files_view)
+
+        if self._files_view.has_selected_sequence():
+            split_action = QtWidgets.QAction("Split sequence", menu)
+            split_action.triggered.connect(self._on_split_request)
+            menu.addAction(split_action)
+
+        remove_action = QtWidgets.QAction("Remove", menu)
+        remove_action.triggered.connect(self._on_remove_requested)
+        menu.addAction(remove_action)
+
+        menu.popup(pos)
 
     def sizeHint(self):
         # Get size hints of widget and visible widgets

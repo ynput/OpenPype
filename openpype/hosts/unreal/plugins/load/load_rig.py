@@ -14,7 +14,7 @@ import unreal  # noqa
 class SkeletalMeshFBXLoader(plugin.Loader):
     """Load Unreal SkeletalMesh from FBX."""
 
-    families = ["rig"]
+    families = ["rig", "skeletalMesh"]
     label = "Import FBX Skeletal Mesh"
     representations = ["fbx"]
     icon = "cube"
@@ -52,54 +52,55 @@ class SkeletalMeshFBXLoader(plugin.Loader):
             asset_name = "{}_{}".format(asset, name)
         else:
             asset_name = "{}".format(name)
+        version = context.get('version').get('name')
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
+            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
 
         container_name += suffix
 
-        unreal.EditorAssetLibrary.make_directory(asset_dir)
+        if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
+            unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-        task = unreal.AssetImportTask()
+            task = unreal.AssetImportTask()
 
-        task.set_editor_property('filename', self.fname)
-        task.set_editor_property('destination_path', asset_dir)
-        task.set_editor_property('destination_name', asset_name)
-        task.set_editor_property('replace_existing', False)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', False)
+            task.set_editor_property('filename', self.fname)
+            task.set_editor_property('destination_path', asset_dir)
+            task.set_editor_property('destination_name', asset_name)
+            task.set_editor_property('replace_existing', False)
+            task.set_editor_property('automated', True)
+            task.set_editor_property('save', False)
 
-        # set import options here
-        options = unreal.FbxImportUI()
-        options.set_editor_property('import_as_skeletal', True)
-        options.set_editor_property('import_animations', False)
-        options.set_editor_property('import_mesh', True)
-        options.set_editor_property('import_materials', True)
-        options.set_editor_property('import_textures', True)
-        options.set_editor_property('skeleton', None)
-        options.set_editor_property('create_physics_asset', False)
+            # set import options here
+            options = unreal.FbxImportUI()
+            options.set_editor_property('import_as_skeletal', True)
+            options.set_editor_property('import_animations', False)
+            options.set_editor_property('import_mesh', True)
+            options.set_editor_property('import_materials', False)
+            options.set_editor_property('import_textures', False)
+            options.set_editor_property('skeleton', None)
+            options.set_editor_property('create_physics_asset', False)
 
-        options.set_editor_property('mesh_type_to_import',
-                                    unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+            options.set_editor_property(
+                'mesh_type_to_import',
+                unreal.FBXImportType.FBXIT_SKELETAL_MESH)
 
-        options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type',
-            unreal.FBXImportContentType.FBXICT_ALL
-        )
-        # set to import normals, otherwise Unreal will compute them
-        # and it will take a long time, depending on the size of the mesh
-        options.skeletal_mesh_import_data.set_editor_property(
-            'normal_import_method',
-            unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
-        )
+            options.skeletal_mesh_import_data.set_editor_property(
+                'import_content_type',
+                unreal.FBXImportContentType.FBXICT_ALL)
+            # set to import normals, otherwise Unreal will compute them
+            # and it will take a long time, depending on the size of the mesh
+            options.skeletal_mesh_import_data.set_editor_property(
+                'normal_import_method',
+                unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS)
 
-        task.options = options
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
+            task.options = options
+            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
-        # Create Asset Container
-        unreal_pipeline.create_container(
-            container=container_name, path=asset_dir)
+            # Create Asset Container
+            unreal_pipeline.create_container(
+                container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",

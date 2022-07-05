@@ -3,7 +3,7 @@ import json
 import pyblish.api
 
 from openpype.lib import get_subset_name_with_asset_doc
-from openpype.pipeline import legacy_io
+from openpype.client import get_asset_by_name
 
 
 class CollectBulkMovInstances(pyblish.api.InstancePlugin):
@@ -24,12 +24,9 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         context = instance.context
+        project_name = context.data["projectEntity"]["name"]
         asset_name = instance.data["asset"]
-
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
+        asset_doc = get_asset_by_name(project_name, asset_name)
         if not asset_doc:
             raise AssertionError((
                 "Couldn't find Asset document with name \"{}\""
@@ -52,7 +49,7 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
             self.subset_name_variant,
             task_name,
             asset_doc,
-            legacy_io.Session["AVALON_PROJECT"]
+            project_name
         )
         instance_name = f"{asset_name}_{subset_name}"
 

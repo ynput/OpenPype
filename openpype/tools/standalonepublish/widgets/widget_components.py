@@ -202,6 +202,7 @@ def cli_publish(data, publish_paths, gui=True):
     if os.path.exists(json_data_path):
         with open(json_data_path, "r") as f:
             result = json.load(f)
+        os.remove(json_data_path)
 
     log.info(f"Publish result: {result}")
 

@@ -91,6 +91,8 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
             layout.deleteLater()
 
         new_layout = QtWidgets.QGridLayout()
+        new_layout.setColumnStretch(0, 0)
+        new_layout.setColumnStretch(1, 1)
         self.setLayout(new_layout)
 
     def set_attr_defs(self, attr_defs):

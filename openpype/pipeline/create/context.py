@@ -6,6 +6,7 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
+from openpype.host import INewPublisher
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
     AvalonMongoDB,
@@ -651,12 +652,6 @@ class CreateContext:
         discover_publish_plugins(bool): Discover publish plugins during reset
             phase.
     """
-    # Methods required in host implementaion to be able create instances
-    #   or change context data.
-    required_methods = (
-        "get_context_data",
-        "update_context_data"
-    )
 
     def __init__(
         self, host, dbcon=None, headless=False, reset=True,
@@ -738,16 +733,20 @@ class CreateContext:
         Args:
             host(ModuleType): Host implementaion.
         """
-        missing = set()
-        for attr_name in cls.required_methods:
-            if not hasattr(host, attr_name):
-                missing.add(attr_name)
+
+        missing = set(
+            INewPublisher.get_missing_publish_methods(host)
+        )
         return missing
 
     @property
     def host_is_valid(self):
         """Is host valid for creation."""
         return self._host_is_valid
+
+    @property
+    def host_name(self):
+        return os.environ["AVALON_APP"]
 
     @property
     def log(self):
@@ -825,9 +824,10 @@ class CreateContext:
             discover_result = publish_plugins_discover()
             publish_plugins = discover_result.plugins
 
-            targets = pyblish.logic.registered_targets() or ["default"]
+            targets = set(pyblish.logic.registered_targets())
+            targets.add("default")
             plugins_by_targets = pyblish.logic.plugins_by_targets(
-                publish_plugins, targets
+                publish_plugins, list(targets)
             )
             # Collect plugins that can have attribute definitions
             for plugin in publish_plugins:
@@ -861,6 +861,17 @@ class CreateContext:
                     "Using first and skipping following"
                 ))
                 continue
+
+            # Filter by host name
+            if (
+                creator_class.host_name
+                and creator_class.host_name != self.host_name
+            ):
+                self.log.info((
+                    "Creator's host name is not supported for current host {}"
+                ).format(creator_class.host_name, self.host_name))
+                continue
+
             creator = creator_class(
                 self,
                 system_settings,

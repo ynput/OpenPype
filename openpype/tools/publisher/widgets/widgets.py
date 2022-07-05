@@ -14,7 +14,8 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     IconButton,
     PixmapLabel,
-    BaseClickableFrame
+    BaseClickableFrame,
+    set_style_property,
 )
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from .assets_widget import AssetsDialog
@@ -344,21 +345,42 @@ class AssetsField(BaseClickableFrame):
 
     def __init__(self, controller, parent):
         super(AssetsField, self).__init__(parent)
+        self.setObjectName("AssetNameInputWidget")
 
-        dialog = AssetsDialog(controller, self)
+        # Don't use 'self' for parent!
+        # - this widget has specific styles
+        dialog = AssetsDialog(controller, parent)
 
         name_input = ClickableLineEdit(self)
         name_input.setObjectName("AssetNameInput")
 
+        icon_name = "fa.window-maximize"
+        icon = qtawesome.icon(icon_name, color="white")
+        icon_btn = QtWidgets.QPushButton(self)
+        icon_btn.setIcon(icon)
+        icon_btn.setObjectName("AssetNameInputButton")
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         layout.addWidget(name_input, 1)
+        layout.addWidget(icon_btn, 0)
 
+        # Make sure all widgets are vertically extended to highest widget
+        for widget in (
+            name_input,
+            icon_btn
+        ):
+            size_policy = widget.sizePolicy()
+            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            widget.setSizePolicy(size_policy)
         name_input.clicked.connect(self._mouse_release_callback)
+        icon_btn.clicked.connect(self._mouse_release_callback)
         dialog.finished.connect(self._on_dialog_finish)
 
         self._dialog = dialog
         self._name_input = name_input
+        self._icon_btn = icon_btn
 
         self._origin_value = []
         self._origin_selection = []
@@ -406,10 +428,9 @@ class AssetsField(BaseClickableFrame):
         self._set_state_property(state)
 
     def _set_state_property(self, state):
-        current_value = self._name_input.property("state")
-        if current_value != state:
-            self._name_input.setProperty("state", state)
-            self._name_input.style().polish(self._name_input)
+        set_style_property(self, "state", state)
+        set_style_property(self._name_input, "state", state)
+        set_style_property(self._icon_btn, "state", state)
 
     def is_valid(self):
         """Is asset valid."""
@@ -842,6 +863,8 @@ class VariantInputWidget(PlaceholderLineEdit):
 
         self._ignore_value_change = True
 
+        self._has_value_changed = False
+
         self._origin_value = list(variants)
         self._current_value = list(variants)
 
@@ -892,10 +915,22 @@ class MultipleItemWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
+        model.rowsInserted.connect(self._on_insert)
+
         self._view = view
         self._model = model
 
         self._value = []
+
+    def _on_insert(self):
+        self._update_size()
+
+    def _update_size(self):
+        model = self._view.model()
+        if model.rowCount() == 0:
+            return
+        height = self._view.sizeHintForRow(0)
+        self.setMaximumHeight(height + (2 * self._view.spacing()))
 
     def showEvent(self, event):
         super(MultipleItemWidget, self).showEvent(event)
@@ -904,12 +939,14 @@ class MultipleItemWidget(QtWidgets.QWidget):
             # Add temp item to be able calculate maximum height of widget
             tmp_item = QtGui.QStandardItem("tmp")
             self._model.appendRow(tmp_item)
-
-        height = self._view.sizeHintForRow(0)
-        self.setMaximumHeight(height + (2 * self._view.spacing()))
+            self._update_size()
 
         if tmp_item is not None:
             self._model.clear()
+
+    def resizeEvent(self, event):
+        super(MultipleItemWidget, self).resizeEvent(event)
+        self._update_size()
 
     def set_value(self, value=None):
         """Set value/s of currently selected instance."""
@@ -1235,7 +1272,11 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setColumnStretch(0, 0)
+        content_layout.setColumnStretch(1, 1)
+
+        row = 0
         for attr_def, attr_instances, values in result:
             widget = create_widget_for_attr_def(attr_def, content_widget)
             if attr_def.is_value_def:
@@ -1246,10 +1287,28 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
                 else:
                     widget.set_value(values, True)
 
-            label = attr_def.label or attr_def.key
-            content_layout.addRow(label, widget)
-            widget.value_changed.connect(self._input_value_changed)
+            expand_cols = 2
+            if attr_def.is_value_def and attr_def.is_label_horizontal:
+                expand_cols = 1
 
+            col_num = 2 - expand_cols
+
+            label = attr_def.label or attr_def.key
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+                content_layout.addWidget(
+                    label_widget, row, 0, 1, expand_cols
+                )
+                if not attr_def.is_label_horizontal:
+                    row += 1
+
+            content_layout.addWidget(
+                widget, row, col_num, 1, expand_cols
+            )
+
+            row += 1
+
+            widget.value_changed.connect(self._input_value_changed)
             self._attr_def_id_to_instances[attr_def.id] = attr_instances
             self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 

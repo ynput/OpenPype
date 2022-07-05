@@ -43,11 +43,12 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         instance.data["resources"] = yeti_resources
 
-        # Force frame range for export
-        instance.data["frameStart"] = cmds.playbackOptions(
-                                        query=True, animationStartTime=True)
-        instance.data["frameEnd"] = cmds.playbackOptions(
-                                        query=True, animationStartTime=True)
+        # Force frame range for yeti cache export for the rig
+        start = cmds.playbackOptions(query=True, animationStartTime=True)
+        for key in ["frameStart", "frameEnd",
+                    "frameStartHandle", "frameEndHandle"]:
+            instance.data[key] = start
+        instance.data["preroll"] = 0
 
     def collect_input_connections(self, instance):
         """Collect the inputs for all nodes in the input_SET"""

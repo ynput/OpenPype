@@ -2,7 +2,7 @@ import openpype.hosts.maya.api.plugin
 
 
 class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Loader to reference an Alembic file"""
 
     families = ["animation",
                 "camera",
@@ -35,8 +35,9 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # hero_001 (abc)
         # asset_counter{optional}
-
-        nodes = cmds.file(self.fname,
+        file_url = self.prepare_root_value(self.fname,
+                                           context["project"]["code"])
+        nodes = cmds.file(file_url,
                           namespace=namespace,
                           sharedReferenceFile=False,
                           groupReference=True,
