@@ -1,5 +1,4 @@
 import os
-import contextlib
 import glob
 
 import capture
@@ -28,7 +27,6 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         camera = instance.data['review_camera']
 
-        capture_preset = ""
         capture_preset = (
             instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
         )
@@ -103,9 +101,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
-        with maintained_time():
-            filename = preset.get("filename", "%TEMP%")
-
+        with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
@@ -174,12 +170,3 @@ class ExtractThumbnail(openpype.api.Extractor):
             filepath = max(files, key=os.path.getmtime)
 
         return filepath
-
-
-@contextlib.contextmanager
-def maintained_time():
-    ct = cmds.currentTime(query=True)
-    try:
-        yield
-    finally:
-        cmds.currentTime(ct, edit=True)
