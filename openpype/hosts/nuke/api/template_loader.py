@@ -205,8 +205,13 @@ class NukePlaceholder(AbstractPlaceholder):
         return 
 
     def create_sib_copies(self):
-        # creating copies of the palce_holder siblings (the ones who were
-        # loaded with it) for the new nodes added
+        """ creating copies of the palce_holder siblings (the ones who were
+        loaded with it) for the new nodes added 
+        
+        Returns :
+            copies (dict) : with copied nodes names and their copies
+        """
+    
         copies = {}
         siblings = get_nodes_from_names(self.data['siblings'])
         for n in siblings:
@@ -232,7 +237,8 @@ class NukePlaceholder(AbstractPlaceholder):
         return copies
 
     def fix_z_order(self):
-        # fix the problem of Z-order
+        """
+        fix the problem of z_order when a backdrop is loaded"""
         orders_bd = []
         nodes_loaded = self.data['last_loaded']
         for n in nodes_loaded:
@@ -257,43 +263,61 @@ class NukePlaceholder(AbstractPlaceholder):
                         n.knob("z_order").setValue(
                             z_order + max_order - min_order + 1)
 
-    def update_nodes(self, nodes):
-        # Adjust backdrop dimensions and node positions by getting
-        # the difference of dimensions between what was
-        node = self.data['node']
-        width_ph = node.screenWidth()
-        height_ph = node.screenHeight()
-        nodes_loaded = self.data['last_loaded']
-        min_x, min_y, max_x, max_y = get_extremes(nodes_loaded)
+    def update_nodes(self, nodes, considered_nodes, offset_y=None):
+        """ Adjust backdrop nodes dimensions and positions considering some nodes
+            sizes
 
-        # difference of heights
-        diff_y = max_y - min_y - height_ph
-        # difference of widths
-        diff_x = max_x - min_x - width_ph
+        Arguments:
+            nodes (list): list of nodes to update
+            considered_nodes (list) : list of nodes to consider while updating
+                                      positions and dimensions
+            offset (int) : distance between copies
+        """
+        node = self.data['node']
+        
+        min_x, min_y, max_x, max_y = get_extremes(considered_nodes)
+
+        diff_x = diff_y = 0
+        contained_nodes = []  # for backdrops
+
+        if offset_y is None:
+            width_ph = node.screenWidth()
+            height_ph = node.screenHeight()
+            diff_y = max_y - min_y - height_ph
+            diff_x = max_x - min_x - width_ph
+            contained_nodes = [node]
+            min_x = node.xpos()
+            min_y = node.ypos()
+        else:
+            siblings = get_nodes_from_names(self.data['siblings'])
+            minX, _, maxX, _ = get_extremes(siblings)
+            diff_y = max_y - min_y + 20
+            diff_x = abs(max_x - min_x - maxX + minX)
+            contained_nodes = considered_nodes
 
         if diff_y > 0 or diff_x > 0:
             for n in nodes:
                 refresh_node(n)
-                if n != node and n not in nodes_loaded:
-                    width = n.screenWidth()
-                    height = n.screenHeight()
+                if n != node and n not in considered_nodes:
+
                     if not isinstance(n, nuke.BackdropNode)\
                             or isinstance(n, nuke.BackdropNode)\
-                            and node not in n.getNodes():
-                        if n.xpos() + width >= node.xpos() + width_ph:
-
+                            and not set(contained_nodes) <= set(n.getNodes()):
+                        if offset_y is None and n.xpos() >= min_x:
                             n.setXpos(n.xpos() + diff_x)
 
-                        if n.ypos() + height >= node.ypos() + height_ph:
+                        if n.ypos() >= min_y:
                             n.setYpos(n.ypos() + diff_y)
 
                     else:
-                        width = n.knob("bdwidth").getValue()
-                        height = n.knob("bdheight").getValue()
+                        width = n.screenWidth()
+                        height = n.screenHeight()
                         n.knob("bdwidth").setValue(width + diff_x)
                         n.knob("bdheight").setValue(height + diff_y)
 
                     refresh_node(n)
+
+    # def update
 
     def imprint_inits(self):
         for n in nuke.allNodes():
@@ -309,6 +333,11 @@ class NukePlaceholder(AbstractPlaceholder):
                 n.knob('h_init').setVisible(False)
 
     def imprint_siblings(self):
+        """
+        - add siblings names to placeholder attributes (nodes loaded with it)
+        - add Id to the attributes of all the other nodes
+        """
+
         nodes_loaded = self.data['last_loaded']
         d = {"id_rep": str(self.data['_id'])}
 
@@ -332,6 +361,9 @@ class NukePlaceholder(AbstractPlaceholder):
                 refresh_node(n)
     
     def set_loaded_connections(self):
+        """
+        set inputs and outputs of loaded nodes"""
+
         node = self.data['node']
         input, output = get_io(self.data['last_loaded'])
         for n in node.dependent():
@@ -345,6 +377,12 @@ class NukePlaceholder(AbstractPlaceholder):
                     input.setInput(0, n)
 
     def set_copies_connections(self, copies):
+        """
+        set inputs and outputs of the copies
+
+        Arguments :
+            copies (dict) : with copied nodes names and their copies
+        """
         input, output = get_io(self.data['last_loaded'])
         siblings = get_nodes_from_names(self.data['siblings'])
         inp, out = get_io(siblings)
@@ -398,53 +436,42 @@ class NukePlaceholder(AbstractPlaceholder):
             n.setXYpos(xpos, ypos)
         refresh_nodes(nodes_loaded)
 
-        self.fix_z_order()
+        self.fix_z_order()  # fix the problem of z_order for backdrops
         self.imprint_siblings()
 
         if self.data['nb_children'] == 0:
-            self.imprint_inits()
-            self.update_nodes(nuke.allNodes())
+            # save initial nodes postions and dimensions, update them
+            # and set inputs and outputs of loaded nodes
 
-            # update dependecies and dependent
+            self.imprint_inits()
+            self.update_nodes(nuke.allNodes(), nodes_loaded)
             self.set_loaded_connections()
 
         elif self.data['siblings']:
+            # create copies of placeholder siblings for the new loaded nodes,
+            # set their inputs and outpus and update all nodes positions and 
+            # dimensions and siblings names
+
             siblings = get_nodes_from_names(self.data['siblings'])
             refresh_nodes(siblings)
-
             copies = self.create_sib_copies()
-            new_nodes = list(copies.values())
-            self.update_nodes(new_nodes)
+            new_nodes = list(copies.values())  # copies nodes
+            self.update_nodes(new_nodes, nodes_loaded)
             node.removeKnob(node.knob('siblings'))
             new_nodes_name = get_names_from_nodes(new_nodes)
             imprint(node, {'siblings': new_nodes_name})
             self.set_copies_connections(copies)
 
-            min_xx, min_yy, max_xx, max_yy = get_extremes(new_nodes)
-            minX, _, maxX, _ = get_extremes(siblings)
-            offset_y = max_yy - min_yy + 20
-            offset_x = abs(max_xx - min_xx - maxX + minX)
-            
-            for n in nuke.allNodes():
+            self.update_nodes(nuke.allNodes(),
+                              new_nodes + nodes_loaded, 20)
 
-                if (n.ypos() >= min_yy
-                        and n not in nodes_loaded + new_nodes
-                        and n != node):
-                    n.setYpos(n.ypos() + offset_y)
-
-                if isinstance(n, nuke.BackdropNode)\
-                        and set(new_nodes) <= set(n.getNodes()):
-                    height = n.knob("bdheight").getValue()
-                    n.knob("bdheight").setValue(height + offset_y)
-                    width = n.knob("bdwidth").getValue()
-                    n.knob("bdwidth").setValue(width + offset_x)
-
-            new_siblings = []
-            for n in new_nodes:
-                new_siblings.append(n.name())
+            new_siblings = get_names_from_nodes(new_nodes)
             self.data['siblings'] = new_siblings
 
         else:
+            # if the placeholder doesn't have siblings, the loaded 
+            # nodes will be placed in a free space
+
             xpointer, ypointer = find_free_space_to_paste_nodes(
                 nodes_loaded, direction="bottom", offset=200
             )

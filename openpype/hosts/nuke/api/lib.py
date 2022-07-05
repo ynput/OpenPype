@@ -2668,6 +2668,12 @@ def refresh_nodes(nodes):
 
 
 def get_names_from_nodes(nodes):
+    """
+    get list of nodes names
+    
+    Arguments :
+        nodes(list) : list of nodes (nuke nodes) to convert into names (str)"""
+
     names = []
     for node in nodes:
         names.append(node.name())
@@ -2675,6 +2681,12 @@ def get_names_from_nodes(nodes):
 
 
 def get_nodes_from_names(names):
+    """
+    get list of nuke nodes from their names
+    
+    Arguments :
+        names(list) : list of names (str) to convert into nodes"""
+        
     nodes = []
     for name in names:
         nodes.append(nuke.toNode(name))
