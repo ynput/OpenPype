@@ -17,8 +17,6 @@ _module_path_format = 'openpype.hosts.{host}.template_loader'
 
 def build_workfile_template(*args):
 
-    # raise MissingHostTemplateModule(
-    #         "No template loader found for host ")
     template_loader = build_template_loader()
     try:
         template_loader.import_template(template_loader.template_path)

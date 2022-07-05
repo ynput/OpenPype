@@ -4,13 +4,12 @@ from openpype.hosts.nuke.api.lib_template_builder import (
 from openpype.lib.abstract_template_loader import (
     AbstractPlaceholder,
     AbstractTemplateLoader)
-# from openpype.lib.build_template_exceptions import TemplateAlreadyImported
 import nuke
 from collections import defaultdict
 from openpype.hosts.nuke.api.lib import (
     find_free_space_to_paste_nodes, get_extremes, get_io, imprint,
     refresh_node, refresh_nodes, reset_selection,
-    get_names_from_nodes, get_nodes_from_names)
+    get_names_from_nodes, get_nodes_from_names, select_nodes)
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
 
 
@@ -42,19 +41,6 @@ class NukeTemplateLoader(AbstractTemplateLoader):
         placeholder.data["nodes_init"] = nuke.allNodes()
         placeholder.data["_id"] = last_representation['_id']
 
-        reset_selection()
-        groups_name = placeholder.data['group_name']
-
-        if groups_name:
-            # nuke.nodeCopy("%clipboard%")
-            # for n in nuke.selectedNodes():
-            #     nuke.delete(n)
-            group = nuke.toNode(groups_name)
-            group.begin()
-            # nuke.nodePaste("%clipboard%")
-            for n in nuke.selectedNodes():
-                refresh_node(n)
-
     def populate_template(self, ignored_ids=None):
         place_holders = self.get_template_nodes()            
         while len(place_holders) > 0:
@@ -84,7 +70,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
     def update_missing_containers(self):
         nodes_byId = {}
         nodes_byId = defaultdict(lambda: [], nodes_byId)
-        
+
         for n in nuke.allNodes():
             if 'id_rep' in n.knobs().keys():
                 nodes_byId[n.knob('id_rep').getValue()] += [n.name()]
@@ -173,14 +159,6 @@ class NukePlaceholder(AbstractPlaceholder):
             if attr in dictKnobs.keys():
                 user_data[attr] = dictKnobs[attr].getValue()
         user_data['node'] = node
-        if 'nodes_toReplace' in dictKnobs.keys():
-            names = dictKnobs['nodes_toReplace'].values()
-            nodes = []
-            for name in names:
-                nodes.append(nuke.toNode(name))
-            user_data['nodes_toReplace'] = nodes
-        else:
-            user_data['nodes_toReplace'] = [node]
 
         if 'nb_children' in dictKnobs.keys():
             user_data['nb_children'] = int(dictKnobs['nb_children'].getValue())
@@ -198,16 +176,16 @@ class NukePlaceholder(AbstractPlaceholder):
         self.data = user_data
 
     def parent_in_hierarchy(self, containers):
-        return 
+        return
 
     def create_sib_copies(self):
         """ creating copies of the palce_holder siblings (the ones who were
-        loaded with it) for the new nodes added 
-        
-        Returns :
-            copies (dict) : with copied nodes names and their copies
+        loaded with it) for the new nodes added
+
+        Returns:
+            copies(dict) : with copied nodes names and their copies
         """
-    
+
         copies = {}
         siblings = get_nodes_from_names(self.data['siblings'])
         for n in siblings:
@@ -345,17 +323,15 @@ class NukePlaceholder(AbstractPlaceholder):
                          or 'is_placeholder' in n.knobs().keys()
                          and n.knob('is_placeholder').value()):
                 
-                siblingss = list(set(nodes_loaded) - set([n]))
-                siblings_name = []
-                for s in siblingss:
-                    siblings_name.append(s.name())
+                siblings = list(set(nodes_loaded) - set([n]))
+                siblings_name = get_names_from_nodes(siblings)
                 siblings = {"siblings": siblings_name}
                 imprint(n, siblings)
 
             elif 'builder_type' not in n.knobs().keys():
                 # save the id of representation for all imported nodes
                 imprint(n, d)
-                # n.knob('id_rep').setVisible(False)
+                n.knob('id_rep').setVisible(False)
                 refresh_node(n)
     
     def set_loaded_connections(self):
@@ -409,6 +385,22 @@ class NukePlaceholder(AbstractPlaceholder):
 
         inp.setInput(0, out_copy)
 
+    def move_to_placeholder_group(self, nodes_loaded):
+        """
+        opening the placeholder's group and copying loaded nodes in it"""
+        groups_name = self.data['group_name']
+        reset_selection()
+        select_nodes(nodes_loaded)
+        if groups_name:
+            nuke.nodeCopy("%clipboard%")
+            for n in nuke.selectedNodes():
+                nuke.delete(n)
+            group = nuke.toNode(groups_name)
+            group.begin()
+            nuke.nodePaste("%clipboard%")
+            nodes_loaded = nuke.selectedNodes()
+        return nodes_loaded
+
     def clean(self):
 
         # deselect all selected nodes
@@ -420,9 +412,8 @@ class NukePlaceholder(AbstractPlaceholder):
         if not nodes_loaded:
             self.data['delete'] = False
             return
-
+        nodes_loaded = self.move_to_placeholder_group(nodes_loaded)
         self.data['last_loaded'] = nodes_loaded
-        reset_selection()
         refresh_nodes(nodes_loaded)
        
         # positioning of the loaded nodes

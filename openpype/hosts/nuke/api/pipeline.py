@@ -1,8 +1,10 @@
 import os
 import importlib
 from collections import OrderedDict
-from openpype.lib.build_template import (build_workfile_template,
-                                         update_workfile_template)
+from openpype.lib.build_template import (
+    build_workfile_template,
+    update_workfile_template
+)
 from openpype.hosts.nuke.api.lib_template_builder import (
     create_placeholder, update_placeholder
 )
