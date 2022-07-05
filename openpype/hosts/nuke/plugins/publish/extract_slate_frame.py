@@ -230,8 +230,8 @@ class ExtractSlateFrame(openpype.api.Extractor):
             write_node.name(), int(slate_first_frame), int(slate_first_frame))
 
         # Clean up
-        # for node in temporary_nodes:
-        #     nuke.delete(node)
+        for node in temporary_nodes:
+            nuke.delete(node)
 
     def _render_slate_to_sequence(self, instance):
         # set slate frame
