@@ -78,7 +78,7 @@ class ExtractMultiverseLook(openpype.api.Extractor):
             "writeVariants": False,
             "writeVariantsDefinition": False,
             "writeActiveState": False,
-            "writeNamespaces": False,
+            "writeNamespaces": True,
             "numTimeSamples": 1,
             "timeSamplesSpan": 0.0
         }
