@@ -89,9 +89,12 @@ class ExtractLayout(openpype.api.Extractor):
             transform_mm = om.MMatrix(t_matrix_list)
             transform = om.MTransformationMatrix(transform_mm)
 
-            transform.scaleBy([1.0, 1.0, -1.0], om.MSpace.kWorld)
+            t = transform.translation(om.MSpace.kWorld)
+            t = om.MVector(t.x, t.z, -t.y)
+            transform.setTranslation(t, om.MSpace.kWorld)
             transform.rotateBy(
                 om.MEulerRotation(math.radians(-90), 0, 0), om.MSpace.kWorld)
+            transform.scaleBy([1.0, 1.0, -1.0], om.MSpace.kObject)
 
             t_matrix_list = list(transform.asMatrix())
 
