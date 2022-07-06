@@ -205,6 +205,11 @@
                             "type": "splitter"
                         },
                         {
+                            "type":"boolean",
+                            "key": "renderDepthOfField",
+                            "label": "Depth of Field"
+                        },
+                        {
                             "type": "splitter"
                         },
                         {

@@ -2522,6 +2522,9 @@ def load_capture_preset(data=None):
                 temp_options2['multiSampleEnable'] = False
                 temp_options2['multiSampleCount'] = preset[id][key]
 
+        if key == 'renderDepthOfField':
+            temp_options2['renderDepthOfField'] = preset[id][key]
+
         if key == 'ssaoEnable':
             if preset[id][key] is True:
                 temp_options2['ssaoEnable'] = True
@@ -2618,6 +2621,7 @@ def load_capture_preset(data=None):
                 'motionBlurSampleCount',
                 'motionBlurShutterOpenFraction',
                 'lineAAEnable',
+                'renderDepthOfField'
                 ]:
         temp_options.pop(key, None)
 

@@ -380,7 +380,8 @@ Viewport2Options = {
     "transparencyAlgorithm": 1,
     "transparencyQuality": 0.33,
     "useMaximumHardwareLights": True,
-    "vertexAnimationCache": 0
+    "vertexAnimationCache": 0,
+    "renderDepthOfField": 0
 }
 
 

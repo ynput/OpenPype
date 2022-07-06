@@ -496,6 +496,7 @@
                     "override_viewport_options": true,
                     "displayLights": "default",
                     "textureMaxResolution": 1024,
+                    "renderDepthOfField": true,
                     "shadows": true,
                     "textures": true,
                     "twoSidedLighting": true,
