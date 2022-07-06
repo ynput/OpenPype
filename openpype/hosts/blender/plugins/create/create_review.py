@@ -13,7 +13,6 @@ class CreateReview(plugin.Creator):
     icon = "video-camera"
     color_tag = "COLOR_07"
 
-    @staticmethod
-    def _use_selection(container):
+    def _use_selection(self, container):
         selected_objects = set(get_selection())
         plugin.link_to_collection(selected_objects, container)
