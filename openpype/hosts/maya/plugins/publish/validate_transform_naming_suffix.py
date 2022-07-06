@@ -20,6 +20,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
         - nurbsSurface: _NRB
         - locator: _LOC
         - null/group: _GRP
+    Suffices can also be overriden by project settings.
 
     .. warning::
         This grabs the first child shape as a reference and doesn't use the
@@ -42,6 +43,13 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
                            "group": ["_GRP"]}
 
     ALLOW_IF_NOT_IN_SUFFIX_TABLE = True
+
+    @classmethod
+    def get_table_for_invalid(cls):
+        ss = []
+        for k,v in cls.SUFFIX_NAMING_TABLE.items():
+            ss.append(" - {}: {}".format(k,", ".join(v)))
+        return "\n".join(ss)
 
     @staticmethod
     def is_valid_name(node_name, shape_type,
@@ -105,5 +113,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
         """
         invalid = self.get_invalid(instance)
         if invalid:
+            valid = self.get_table_for_invalid()
             raise ValueError("Incorrectly named geometry "
-                             "transforms: {0}".format(invalid))
+                             "transforms: {0}, accepted suffixes are: "
+                             "\n{1}".format(invalid, valid))
