@@ -401,14 +401,6 @@
             "optional": true,
             "active": true
         },
-        "ExtractAlembic": {
-            "enabled": true,
-            "families": [
-                "pointcache",
-                "model",
-                "vrayproxy"
-            ]
-        },
         "ValidateRigContents": {
             "enabled": false,
             "optional": true,
@@ -561,6 +553,20 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
+        },
+        "ExtractAlembic": {
+            "enabled": true,
+            "families": [
+                "pointcache",
+                "model",
+                "vrayproxy"
+            ]
+        },
+        "ExtractAnimation": {
+            "enabled": true
+        },
+        "ExtractMultiverseUsdAnim": {
+            "enabled": true
         }
     },
     "load": {
