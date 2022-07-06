@@ -6,7 +6,7 @@ use singleton approach with global functions (using helper anyway).
 import os
 
 import pyblish.api
-
+from openpype.host import IWorkfileHost, ILoadHost
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -49,12 +49,11 @@ class HostToolsHelper:
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from openpype.tools.workfiles.app import (
-                Window, validate_host_requirements
-            )
+            from openpype.tools.workfiles.app import Window
+
             # Host validation
             host = registered_host()
-            validate_host_requirements(host)
+            IWorkfileHost.validate_workfile_methods(host)
 
             workfiles_window = Window(parent=parent)
             self._workfiles_tool = workfiles_window
@@ -91,6 +90,9 @@ class HostToolsHelper:
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
             from openpype.tools.loader import LoaderWindow
+
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
 
             loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
@@ -163,6 +165,9 @@ class HostToolsHelper:
         """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
             from openpype.tools.sceneinventory import SceneInventoryWindow
+
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
 
             scene_inventory_window = SceneInventoryWindow(
                 parent=parent or self._parent

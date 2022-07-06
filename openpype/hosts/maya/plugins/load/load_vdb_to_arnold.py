@@ -5,26 +5,20 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
+# TODO aiVolume doesn't automatically set velocity fps correctly, set manual?
 
 
-class LoadVDBtoRedShift(load.LoaderPlugin):
-    """Load OpenVDB in a Redshift Volume Shape
-
-    Note that the RedshiftVolumeShape is created without a RedshiftVolume
-    shader assigned. To get the Redshift volume to render correctly assign
-    a RedshiftVolume shader (in the Hypershade) and set the density, scatter
-    and emission channels to the channel names of the volumes in the VDB file.
-
-    """
+class LoadVDBtoArnold(load.LoaderPlugin):
+    """Load OpenVDB for Arnold in aiVolume"""
 
     families = ["vdbcache"]
     representations = ["vdb"]
 
-    label = "Load VDB to RedShift"
+    label = "Load VDB to Arnold"
     icon = "cloud"
     color = "orange"
 
-    def load(self, context, name=None, namespace=None, data=None):
+    def load(self, context, name, namespace, data):
 
         from maya import cmds
         from openpype.hosts.maya.api.pipeline import containerise
@@ -35,27 +29,14 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
         except ValueError:
             family = "vdbcache"
 
-        # Check if the plugin for redshift is available on the pc
+        # Check if the plugin for arnold is available on the pc
         try:
-            cmds.loadPlugin("redshift4maya", quiet=True)
+            cmds.loadPlugin("mtoa", quiet=True)
         except Exception as exc:
             self.log.error("Encountered exception:\n%s" % exc)
             return
 
-        # Check if viewport drawing engine is Open GL Core (compat)
-        render_engine = None
-        compatible = "OpenGL"
-        if cmds.optionVar(exists="vp2RenderingEngine"):
-            render_engine = cmds.optionVar(query="vp2RenderingEngine")
-
-        if not render_engine or not render_engine.startswith(compatible):
-            raise RuntimeError("Current scene's settings are incompatible."
-                               "See Preferences > Display > Viewport 2.0 to "
-                               "set the render engine to '%s<type>'"
-                               % compatible)
-
         asset = context['asset']
-
         asset_name = asset["name"]
         namespace = namespace or unique_namespace(
             asset_name + "_",
@@ -65,7 +46,7 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
 
         # Root group
         label = "{}:{}".format(namespace, name)
-        root = cmds.createNode("transform", name=label)
+        root = cmds.group(name=label, empty=True)
 
         settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
@@ -74,21 +55,25 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                (float(c[0])/255),
-                (float(c[1])/255),
-                (float(c[2])/255)
-            )
+                         (float(c[0]) / 255),
+                         (float(c[1]) / 255),
+                         (float(c[2]) / 255)
+                         )
 
-        # Create VR
-        volume_node = cmds.createNode("RedshiftVolumeShape",
-                                      name="{}RVSShape".format(label),
-                                      parent=root)
+        # Create VRayVolumeGrid
+        grid_node = cmds.createNode("aiVolume",
+                                    name="{}Shape".format(root),
+                                    parent=root)
 
-        self._set_path(volume_node,
+        self._set_path(grid_node,
                        path=self.fname,
                        representation=context["representation"])
 
-        nodes = [root, volume_node]
+        # Lock the shape node so the user can't delete the transform/shape
+        # as if it was referenced
+        cmds.lockNode(grid_node, lock=True)
+
+        nodes = [root, grid_node]
         self[:] = nodes
 
         return containerise(
@@ -99,13 +84,14 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
             loader=self.__class__.__name__)
 
     def update(self, container, representation):
+
         from maya import cmds
 
         path = get_representation_path(representation)
 
         # Find VRayVolumeGrid
         members = cmds.sets(container['objectName'], query=True)
-        grid_nodes = cmds.ls(members, type="RedshiftVolumeShape", long=True)
+        grid_nodes = cmds.ls(members, type="aiVolume", long=True)
         assert len(grid_nodes) == 1, "This is a bug"
 
         # Update the VRayVolumeGrid
@@ -116,7 +102,11 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
                      str(representation["_id"]),
                      type="string")
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def remove(self, container):
+
         from maya import cmds
 
         # Get all members of the avalon container, ensure they are unlocked
@@ -132,14 +122,11 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
         except RuntimeError:
             pass
 
-    def switch(self, container, representation):
-        self.update(container, representation)
-
     @staticmethod
     def _set_path(grid_node,
                   path,
                   representation):
-        """Apply the settings for the VDB path to the RedshiftVolumeShape"""
+        """Apply the settings for the VDB path to the aiVolume node"""
         from maya import cmds
 
         if not os.path.exists(path):
@@ -149,4 +136,4 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
         cmds.setAttr(grid_node + ".useFrameExtension", is_sequence)
 
         # Set file path
-        cmds.setAttr(grid_node + ".fileName", path, type="string")
+        cmds.setAttr(grid_node + ".filename", path, type="string")
