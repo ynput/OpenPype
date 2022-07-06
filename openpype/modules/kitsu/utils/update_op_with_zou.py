@@ -122,7 +122,7 @@ def update_op_assets(
         elif item_type == "Shot":
             tasks_list = all_tasks_for_shot(item)
         item_data["tasks"] = {
-            t["task_type_name"]: {"type": t["task_type_name"]}
+            t["task_type_name"]: {"type": t["task_type_name"], "zou": t}
             for t in tasks_list
         }
 
