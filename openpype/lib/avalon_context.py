@@ -14,7 +14,6 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings
 )
-from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .events import emit_event
 from .path_templates import StringTemplate
@@ -593,6 +592,7 @@ def get_workdir_with_workdir_data(
         ))
 
     if not anatomy:
+        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_name)
 
     if not template_key:
@@ -604,7 +604,10 @@ def get_workdir_with_workdir_data(
 
     anatomy_filled = anatomy.format(workdir_data)
     # Output is TemplateResult object which contain useful data
-    return anatomy_filled[template_key]["folder"]
+    path = anatomy_filled[template_key]["folder"]
+    if path:
+        path = os.path.normpath(path)
+    return path
 
 
 def get_workdir(
@@ -635,6 +638,7 @@ def get_workdir(
         TemplateResult: Workdir path.
     """
     if not anatomy:
+        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
     workdir_data = get_workdir_data(
@@ -747,6 +751,8 @@ def compute_session_changes(
 
 @with_pipeline_io
 def get_workdir_from_session(session=None, template_key=None):
+    from openpype.pipeline import Anatomy
+
     if session is None:
         session = legacy_io.Session
     project_name = session["AVALON_PROJECT"]
@@ -762,7 +768,10 @@ def get_workdir_from_session(session=None, template_key=None):
             host_name,
             project_name=project_name
         )
-    return anatomy_filled[template_key]["folder"]
+    path = anatomy_filled[template_key]["folder"]
+    if path:
+        path = os.path.normpath(path)
+    return path
 
 
 @with_pipeline_io
@@ -853,6 +862,8 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
         dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
             `legacy_io` is used if not entered.
     """
+    from openpype.pipeline import Anatomy
+
     # Use legacy_io if dbcon is not entered
     if not dbcon:
         dbcon = legacy_io
@@ -1673,6 +1684,7 @@ def _get_task_context_data_for_anatomy(
     """
 
     if anatomy is None:
+        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
     asset_name = asset_doc["name"]
@@ -1741,6 +1753,7 @@ def get_custom_workfile_template_by_context(
     """
 
     if anatomy is None:
+        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
     # get project, asset, task anatomy context data

@@ -40,7 +40,7 @@ FILE_NODES = {
 
     "aiImage": "filename",
 
-    "RedshiftNormalMap": "text0",
+    "RedshiftNormalMap": "tex0",
 
     "PxrBump": "filename",
     "PxrNormalMap": "filename",
