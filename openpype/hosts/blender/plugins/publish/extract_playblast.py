@@ -82,18 +82,23 @@ class ExtractPlayblast(openpype.api.Extractor):
         self.log.debug(f"playblast path {path}")
 
         collected_files = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_files)
+        collections, remainder = clique.assemble(
+            collected_files,
+            patterns=[f"{filename}\\.{clique.DIGITS_PATTERN}\\.png$"],
+        )
 
-        self.log.debug(f"filename {filename}")
-        frame_collection = None
-        for collection in collections:
-            filebase = collection.format("{head}").rstrip(".")
-            self.log.debug(f"collection head {filebase}")
-            if filebase in filename:
-                frame_collection = collection
-                self.log.info(
-                    f"we found collection of interest {frame_collection}"
-                )
+        if len(collections) > 1:
+            raise RuntimeError(
+                f"More than one collection found in stagingdir: {stagingdir}"
+            )
+        elif len(collections) == 0:
+            raise RuntimeError(
+                f"No collection found in stagingdir: {stagingdir}"
+            )
+
+        frame_collection = collections[0]
+
+        self.log.info(f"We found collection of interest {frame_collection}")
 
         instance.data.setdefault("representations", [])
 
