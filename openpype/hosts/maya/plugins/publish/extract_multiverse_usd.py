@@ -2,6 +2,7 @@ import os
 import six
 
 from maya import cmds
+from maya import mel
 
 import openpype.api
 from openpype.hosts.maya.api.lib import maintained_selection
@@ -87,7 +88,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
         return {
             "stripNamespaces": False,
             "mergeTransformAndShape": False,
-            "writeAncestors": True,
+            "writeAncestors": False,
             "flattenParentXforms": False,
             "writeSparseOverrides": False,
             "useMetaPrimPath": False,
@@ -147,6 +148,13 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         return options
 
+    def get_default_options(self):
+        self.log.info("ExtractMultiverseUsd get_default_options")
+        return self.default_options
+
+    def filter_members(self, members):
+        return members
+
     def process(self, instance):
         # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
@@ -161,7 +169,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
         file_path = file_path.replace('\\', '/')
 
         # Parse export options
-        options = self.default_options
+        options = self.get_default_options()
         options = self.parse_overrides(instance, options)
         self.log.info("Export options: {0}".format(options))
 
@@ -170,27 +178,35 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         with maintained_selection():
             members = instance.data("setMembers")
-            self.log.info('Collected object {}'.format(members))
+            self.log.info('Collected objects: {}'.format(members))
+            members = self.filter_members(members)
+            if not members:
+                self.log.error('No members!')
+                return
+            self.log.info(' - filtered: {}'.format(members))
 
             import multiverse
 
             time_opts = None
             frame_start = instance.data['frameStart']
             frame_end = instance.data['frameEnd']
-            handle_start = instance.data['handleStart']
-            handle_end = instance.data['handleEnd']
-            step = instance.data['step']
-            fps = instance.data['fps']
             if frame_end != frame_start:
                 time_opts = multiverse.TimeOptions()
 
                 time_opts.writeTimeRange = True
+
+                handle_start = instance.data['handleStart']
+                handle_end = instance.data['handleEnd']
+
                 time_opts.frameRange = (
                     frame_start - handle_start, frame_end + handle_end)
-                time_opts.frameIncrement = step
-                time_opts.numTimeSamples = instance.data["numTimeSamples"]
-                time_opts.timeSamplesSpan = instance.data["timeSamplesSpan"]
-                time_opts.framePerSecond = fps
+                time_opts.frameIncrement = instance.data['step']
+                time_opts.numTimeSamples = instance.data.get(
+                    'numTimeSamples', options['numTimeSamples'])
+                time_opts.timeSamplesSpan = instance.data.get(
+                    'timeSamplesSpan', options['timeSamplesSpan'])
+                time_opts.framePerSecond = instance.data.get(
+                    'fps', mel.eval('currentTimeUnitToFPS()'))
 
             asset_write_opts = multiverse.AssetWriteOptions(time_opts)
             options_discard_keys = {
@@ -203,11 +219,15 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
                 'step',
                 'fps'
             }
+            self.log.debug("Write Options:")
             for key, value in options.items():
                 if key in options_discard_keys:
                     continue
+
+                self.log.debug(" - {}={}".format(key, value))
                 setattr(asset_write_opts, key, value)
 
+            self.log.info('WriteAsset: {} / {}'.format(file_path, members))
             multiverse.WriteAsset(file_path, members, asset_write_opts)
 
         if "representations" not in instance.data:
@@ -223,3 +243,31 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         self.log.info("Extracted instance {} to {}".format(
             instance.name, file_path))
+
+
+class ExtractMultiverseUsdAnim(ExtractMultiverseUsd):
+    """Extractor for Multiverse USD Animation Sparse Cache data.
+
+    This will extract the sparse cache data from the scene and generate a
+    USD file with all the animation data.
+
+    Upon publish a .usd sparse cache will be written.
+    """
+    label = "Extract Multiverse USD Animation Sparse Cache"
+    families = ["animation"]
+
+    def get_default_options(self):
+        anim_options = self.default_options
+        anim_options["writeSparseOverrides"] = True
+        anim_options["stripNamespaces"] = True
+        return anim_options
+
+    def filter_members(self, members):
+        out_set = next((i for i in members if i.endswith("out_SET")), None)
+
+        if out_set is None:
+            self.log.warning("Expecting out_SET")
+            return None
+
+        members = cmds.ls(cmds.sets(out_set, query=True), long=True)
+        return members
