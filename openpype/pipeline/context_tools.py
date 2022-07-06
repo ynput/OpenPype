@@ -1,11 +1,9 @@
 """Core pipeline functionality"""
 
 import os
-import sys
 import json
 import types
 import logging
-import inspect
 import platform
 
 import pyblish.api
@@ -232,71 +230,8 @@ def register_host(host):
             required, or browse the source code.
 
     """
-    signatures = {
-        "ls": []
-    }
 
-    _validate_signature(host, signatures)
     _registered_host["_"] = host
-
-
-def _validate_signature(module, signatures):
-    # Required signatures for each member
-
-    missing = list()
-    invalid = list()
-    success = True
-
-    for member in signatures:
-        if not hasattr(module, member):
-            missing.append(member)
-            success = False
-
-        else:
-            attr = getattr(module, member)
-            if sys.version_info.major >= 3:
-                signature = inspect.getfullargspec(attr)[0]
-            else:
-                signature = inspect.getargspec(attr)[0]
-            required_signature = signatures[member]
-
-            assert isinstance(signature, list)
-            assert isinstance(required_signature, list)
-
-            if not all(member in signature
-                       for member in required_signature):
-                invalid.append({
-                    "member": member,
-                    "signature": ", ".join(signature),
-                    "required": ", ".join(required_signature)
-                })
-                success = False
-
-    if not success:
-        report = list()
-
-        if missing:
-            report.append(
-                "Incomplete interface for module: '%s'\n"
-                "Missing: %s" % (module, ", ".join(
-                    "'%s'" % member for member in missing))
-            )
-
-        if invalid:
-            report.append(
-                "'%s': One or more members were found, but didn't "
-                "have the right argument signature." % module.__name__
-            )
-
-            for member in invalid:
-                report.append(
-                    "     Found: {member}({signature})".format(**member)
-                )
-                report.append(
-                    "  Expected: {member}({required})".format(**member)
-                )
-
-        raise ValueError("\n".join(report))
 
 
 def registered_host():

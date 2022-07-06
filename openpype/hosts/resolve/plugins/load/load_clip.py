@@ -1,6 +1,10 @@
 from copy import deepcopy
 from importlib import reload
 
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
 from openpype.hosts import resolve
 from openpype.pipeline import (
     get_representation_path,
@@ -96,10 +100,8 @@ class LoadClip(resolve.TimelineItemLoader):
         namespace = container['namespace']
         timeline_item_data = resolve.get_pype_timeline_item_by_name(namespace)
         timeline_item = timeline_item_data["clip"]["item"]
-        version = legacy_io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
@@ -138,19 +140,22 @@ class LoadClip(resolve.TimelineItemLoader):
 
     @classmethod
     def set_item_color(cls, timeline_item, version):
-
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
-        versions = legacy_io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
+        project_name = legacy_io.active_project()
+        last_version_doc = get_last_version_by_subset_id(
+            project_name,
+            version["parent"],
+            fields=["name"]
+        )
+        if last_version_doc:
+            last_version = last_version_doc["name"]
+        else:
+            last_version = None
 
         # set clip colour
-        if version_name == max_version:
+        if version_name == last_version:
             timeline_item.SetClipColor(cls.clip_color_last)
         else:
             timeline_item.SetClipColor(cls.clip_color)
