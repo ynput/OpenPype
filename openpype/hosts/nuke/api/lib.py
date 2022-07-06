@@ -3,31 +3,40 @@ from pprint import pformat
 import re
 import six
 import platform
+import tempfile
 import contextlib
 from collections import OrderedDict
 
 import clique
-from bson.objectid import ObjectId
 
 import nuke
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+    get_versions,
+    get_last_versions,
+    get_representations,
+)
 from openpype.api import (
     Logger,
-    Anatomy,
     BuildWorkfile,
     get_version_from_path,
-    get_anatomy_settings,
     get_workdir_data,
     get_asset,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
 from openpype.lib.path_tools import HostDirmap
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_anatomy_settings,
+)
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
+    Anatomy,
 )
 
 from . import gizmo_menu
@@ -711,6 +720,20 @@ def get_imageio_input_colorspace(filename):
     return preset_clrsp
 
 
+def get_view_process_node():
+    reset_selection()
+
+    ipn_orig = None
+    for v in nuke.allNodes(filter="Viewer"):
+        ipn = v['input_process_node'].getValue()
+        if "VIEWER_INPUT" not in ipn:
+            ipn_orig = nuke.toNode(ipn)
+            ipn_orig.setSelected(True)
+
+    if ipn_orig:
+        return duplicate_node(ipn_orig)
+
+
 def on_script_load():
     ''' Callback for ffmpeg support
     '''
@@ -734,47 +757,84 @@ def check_inventory_versions():
     from .pipeline import parse_container
 
     # get all Loader nodes by avalon attribute metadata
-    for each in nuke.allNodes():
-        container = parse_container(each)
+    node_with_repre_id = []
+    repre_ids = set()
+    # Find all containers and collect it's node and representation ids
+    for node in nuke.allNodes():
+        container = parse_container(node)
 
         if container:
             node = nuke.toNode(container["objectName"])
             avalon_knob_data = read_avalon_data(node)
+            repre_id = avalon_knob_data["representation"]
 
-            # get representation from io
-            representation = legacy_io.find_one({
-                "type": "representation",
-                "_id": ObjectId(avalon_knob_data["representation"])
-            })
+            repre_ids.add(repre_id)
+            node_with_repre_id.append((node, repre_id))
 
-            # Failsafe for not finding the representation.
-            if not representation:
-                log.warning(
-                    "Could not find the representation on "
-                    "node \"{}\"".format(node.name())
-                )
-                continue
+    # Skip if nothing was found
+    if not repre_ids:
+        return
 
-            # Get start frame from version data
-            version = legacy_io.find_one({
-                "type": "version",
-                "_id": representation["parent"]
-            })
+    project_name = legacy_io.active_project()
+    # Find representations based on found containers
+    repre_docs = get_representations(
+        project_name,
+        representation_ids=repre_ids,
+        fields=["_id", "parent"]
+    )
+    # Store representations by id and collect version ids
+    repre_docs_by_id = {}
+    version_ids = set()
+    for repre_doc in repre_docs:
+        # Use stringed representation id to match value in containers
+        repre_id = str(repre_doc["_id"])
+        repre_docs_by_id[repre_id] = repre_doc
+        version_ids.add(repre_doc["parent"])
 
-            # get all versions in list
-            versions = legacy_io.find({
-                "type": "version",
-                "parent": version["parent"]
-            }).distinct("name")
+    version_docs = get_versions(
+        project_name, version_ids, fields=["_id", "name", "parent"]
+    )
+    # Store versions by id and collect subset ids
+    version_docs_by_id = {}
+    subset_ids = set()
+    for version_doc in version_docs:
+        version_docs_by_id[version_doc["_id"]] = version_doc
+        subset_ids.add(version_doc["parent"])
 
-            max_version = max(versions)
+    # Query last versions based on subset ids
+    last_versions_by_subset_id = get_last_versions(
+        project_name, subset_ids=subset_ids, fields=["_id", "parent"]
+    )
 
-            # check the available version and do match
-            # change color of node if not max version
-            if version.get("name") not in [max_version]:
-                node["tile_color"].setValue(int("0xd84f20ff", 16))
-            else:
-                node["tile_color"].setValue(int("0x4ecd25ff", 16))
+    # Loop through collected container nodes and their representation ids
+    for item in node_with_repre_id:
+        # Some python versions of nuke can't unfold tuple in for loop
+        node, repre_id = item
+        repre_doc = repre_docs_by_id.get(repre_id)
+        # Failsafe for not finding the representation.
+        if not repre_doc:
+            log.warning((
+                "Could not find the representation on node \"{}\""
+            ).format(node.name()))
+            continue
+
+        version_id = repre_doc["parent"]
+        version_doc = version_docs_by_id.get(version_id)
+        if not version_doc:
+            log.warning((
+                "Could not find the version on node \"{}\""
+            ).format(node.name()))
+            continue
+
+        # Get last version based on subset id
+        subset_id = version_doc["parent"]
+        last_version = last_versions_by_subset_id[subset_id]
+        # Check if last version is same as current version
+        if last_version["_id"] == version_doc["_id"]:
+            color_value = "0x4ecd25ff"
+        else:
+            color_value = "0xd84f20ff"
+        node["tile_color"].setValue(int(color_value, 16))
 
 
 def writes_version_sync():
@@ -899,11 +959,9 @@ def format_anatomy(data):
         file = script_name()
         data["version"] = get_version_from_path(file)
 
-    project_doc = legacy_io.find_one({"type": "project"})
-    asset_doc = legacy_io.find_one({
-        "type": "asset",
-        "name": data["avalon"]["asset"]
-    })
+    project_name = anatomy.project_name
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, data["avalon"]["asset"])
     task_name = os.environ["AVALON_TASK"]
     host_name = os.environ["AVALON_APP"]
     context_data = get_workdir_data(
@@ -1692,12 +1750,13 @@ class WorkfileSettings(object):
 
     """
 
-    def __init__(self,
-                 root_node=None,
-                 nodes=None,
-                 **kwargs):
-        Context._project_doc = kwargs.get(
-            "project") or legacy_io.find_one({"type": "project"})
+    def __init__(self, root_node=None, nodes=None, **kwargs):
+        project_doc = kwargs.get("project")
+        if project_doc is None:
+            project_name = legacy_io.active_project()
+            project_doc = get_project(project_name)
+
+        Context._project_doc = project_doc
         self._asset = (
             kwargs.get("asset_name")
             or legacy_io.Session["AVALON_ASSET"]
@@ -2047,9 +2106,10 @@ class WorkfileSettings(object):
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
-        project = legacy_io.find_one({"type": "project"})
-        asset = legacy_io.Session["AVALON_ASSET"]
-        asset = legacy_io.find_one({"name": asset, "type": "asset"})
+        project_name = legacy_io.active_project()
+        project = get_project(project_name)
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        asset = get_asset_by_name(project_name, asset_name)
         asset_data = asset.get('data', {})
 
         data = {
@@ -2149,29 +2209,6 @@ class WorkfileSettings(object):
         favorite_items.update({"Work dir": work_dir.replace("\\", "/")})
 
         set_context_favorites(favorite_items)
-
-
-def get_hierarchical_attr(entity, attr, default=None):
-    attr_parts = attr.split('.')
-    value = entity
-    for part in attr_parts:
-        value = value.get(part)
-        if not value:
-            break
-
-    if value or entity["type"].lower() == "project":
-        return value
-
-    parent_id = entity["parent"]
-    if (
-        entity["type"].lower() == "asset"
-        and entity.get("data", {}).get("visualParent")
-    ):
-        parent_id = entity["data"]["visualParent"]
-
-    parent = legacy_io.find_one({"_id": parent_id})
-
-    return get_hierarchical_attr(parent, attr)
 
 
 def get_write_node_template_attr(node):
@@ -2374,6 +2411,8 @@ def process_workfile_builder():
         env_value_to_bool,
         get_custom_workfile_template
     )
+    # to avoid looping of the callback, remove it!
+    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     # get state from settings
     workfile_builder = get_current_project_settings()["nuke"].get(
@@ -2428,9 +2467,6 @@ def process_workfile_builder():
     # skip opening of last version if it is not enabled
     if not openlv_on or not os.path.exists(last_workfile_path):
         return
-
-    # to avoid looping of the callback, remove it!
-    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     log.info("Opening last workfile...")
     # open workfile
@@ -2615,6 +2651,57 @@ class DirmapCache:
         if cls._sync_module is None:
             cls._sync_module = ModulesManager().modules_by_name["sync_server"]
         return cls._sync_module
+
+
+@contextlib.contextmanager
+def _duplicate_node_temp():
+    """Create a temp file where node is pasted during duplication.
+
+    This is to avoid using clipboard for node duplication.
+    """
+
+    duplicate_node_temp_path = os.path.join(
+        tempfile.gettempdir(),
+        "openpype_nuke_duplicate_temp_{}".format(os.getpid())
+    )
+
+    # This can happen only if 'duplicate_node' would be
+    if os.path.exists(duplicate_node_temp_path):
+        log.warning((
+            "Temp file for node duplication already exists."
+            " Trying to remove {}"
+        ).format(duplicate_node_temp_path))
+        os.remove(duplicate_node_temp_path)
+
+    try:
+        # Yield the path where node can be copied
+        yield duplicate_node_temp_path
+
+    finally:
+        # Remove the file at the end
+        os.remove(duplicate_node_temp_path)
+
+
+def duplicate_node(node):
+    reset_selection()
+
+    # select required node for duplication
+    node.setSelected(True)
+
+    with _duplicate_node_temp() as filepath:
+        # copy selected to temp filepath
+        nuke.nodeCopy(filepath)
+
+        # reset selection
+        reset_selection()
+
+        # paste node and selection is on it only
+        dupli_node = nuke.nodePaste(filepath)
+
+    # reset selection
+    reset_selection()
+
+    return dupli_node
 
 
 def dirmap_file_name_filter(file_name):

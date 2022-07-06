@@ -10,12 +10,13 @@ from openpype.client import (
     get_versions,
     get_representations
 )
-from openpype.api import Anatomy, config
+from openpype.pipeline import Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from openpype_modules.ftrack.lib.custom_attributes import (
     query_custom_attributes
 )
+from openpype.lib import config
 from openpype.lib.delivery import (
     path_from_representation,
     get_format_dict,
