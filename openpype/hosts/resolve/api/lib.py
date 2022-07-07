@@ -4,7 +4,7 @@ import re
 import os
 import contextlib
 from opentimelineio import opentime
-import openpype
+from openpype.pipeline.editorial import is_overlapping_otio_ranges
 
 from ..otio import davinci_export as otio_export
 
@@ -824,7 +824,7 @@ def get_otio_clip_instance_data(otio_timeline, timeline_item_data):
             continue
         if otio_clip.name not in timeline_item.GetName():
             continue
-        if openpype.lib.is_overlapping_otio_ranges(
+        if is_overlapping_otio_ranges(
                 parent_range, timeline_range, strict=True):
 
             # add pypedata marker to otio_clip metadata

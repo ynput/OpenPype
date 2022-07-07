@@ -85,7 +85,7 @@ def update_op_assets(
         # Frame in, fallback on 0
         frame_in = int(item_data.get("frame_in") or 0)
         item_data["frameStart"] = frame_in
-        item_data.pop("frame_in")
+        item_data.pop("frame_in", None)
         # Frame out, fallback on frame_in + duration
         frames_duration = int(item.get("nb_frames") or 1)
         frame_out = (
@@ -94,7 +94,7 @@ def update_op_assets(
             else frame_in + frames_duration
         )
         item_data["frameEnd"] = int(frame_out)
-        item_data.pop("frame_out")
+        item_data.pop("frame_out", None)
         # Fps, fallback to project's value when entity fps is deleted
         if not item_data.get("fps") and item_doc["data"].get("fps"):
             item_data["fps"] = project_doc["data"]["fps"]
@@ -250,7 +250,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_project(login: str, password: str):
+def sync_all_projects(login: str, password: str):
     """Update all OP projects in DB with Zou data.
 
     Args:

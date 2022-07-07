@@ -1,11 +1,9 @@
 """Core pipeline functionality"""
 
 import os
-import sys
 import json
 import types
 import logging
-import inspect
 import platform
 
 import pyblish.api
@@ -14,13 +12,8 @@ from pyblish.lib import MessageHandler
 import openpype
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
-from openpype.lib import (
-    Anatomy,
-    register_event_callback,
-    filter_pyblish_plugins,
-    change_timer_to_current_context,
-)
-
+from openpype.lib import filter_pyblish_plugins
+from .anatomy import Anatomy
 from . import (
     legacy_io,
     register_loader_plugin_path,
@@ -33,6 +26,9 @@ from . import (
 _is_installed = False
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
+# Keep modules manager (and it's modules) in memory
+# - that gives option to register modules' callbacks
+_modules_manager = None
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +38,23 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+
+
+def _get_modules_manager():
+    """Get or create modules manager for host installation.
+
+    This is not meant for public usage. Reason is to keep modules
+    in memory of process to be able trigger their event callbacks if they
+    need any.
+
+    Returns:
+        ModulesManager: Manager wrapping discovered modules.
+    """
+
+    global _modules_manager
+    if _modules_manager is None:
+        _modules_manager = ModulesManager()
+    return _modules_manager
 
 
 def register_root(path):
@@ -74,6 +87,7 @@ def install_host(host):
     _is_installed = True
 
     legacy_io.install()
+    modules_manager = _get_modules_manager()
 
     missing = list()
     for key in ("AVALON_PROJECT", "AVALON_ASSET"):
@@ -95,8 +109,6 @@ def install_host(host):
 
     register_host(host)
 
-    register_event_callback("taskChanged", _on_task_change)
-
     def modified_emit(obj, record):
         """Method replacing `emit` in Pyblish's MessageHandler."""
         record.msg = record.getMessage()
@@ -112,7 +124,14 @@ def install_host(host):
     else:
         pyblish.api.register_target("local")
 
-    install_openpype_plugins()
+    project_name = os.environ.get("AVALON_PROJECT")
+    host_name = os.environ.get("AVALON_APP")
+
+    # Give option to handle host installation
+    for module in modules_manager.get_enabled_modules():
+        module.on_host_install(host, host_name, project_name)
+
+    install_openpype_plugins(project_name, host_name)
 
 
 def install_openpype_plugins(project_name=None, host_name=None):
@@ -124,7 +143,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    modules_manager = ModulesManager()
+    modules_manager = _get_modules_manager()
     publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
     for path in publish_plugin_dirs:
         pyblish.api.register_plugin_path(path)
@@ -166,10 +185,6 @@ def install_openpype_plugins(project_name=None, host_name=None):
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
             register_inventory_action(path)
-
-
-def _on_task_change():
-    change_timer_to_current_context()
 
 
 def uninstall_host():
@@ -215,71 +230,8 @@ def register_host(host):
             required, or browse the source code.
 
     """
-    signatures = {
-        "ls": []
-    }
 
-    _validate_signature(host, signatures)
     _registered_host["_"] = host
-
-
-def _validate_signature(module, signatures):
-    # Required signatures for each member
-
-    missing = list()
-    invalid = list()
-    success = True
-
-    for member in signatures:
-        if not hasattr(module, member):
-            missing.append(member)
-            success = False
-
-        else:
-            attr = getattr(module, member)
-            if sys.version_info.major >= 3:
-                signature = inspect.getfullargspec(attr)[0]
-            else:
-                signature = inspect.getargspec(attr)[0]
-            required_signature = signatures[member]
-
-            assert isinstance(signature, list)
-            assert isinstance(required_signature, list)
-
-            if not all(member in signature
-                       for member in required_signature):
-                invalid.append({
-                    "member": member,
-                    "signature": ", ".join(signature),
-                    "required": ", ".join(required_signature)
-                })
-                success = False
-
-    if not success:
-        report = list()
-
-        if missing:
-            report.append(
-                "Incomplete interface for module: '%s'\n"
-                "Missing: %s" % (module, ", ".join(
-                    "'%s'" % member for member in missing))
-            )
-
-        if invalid:
-            report.append(
-                "'%s': One or more members were found, but didn't "
-                "have the right argument signature." % module.__name__
-            )
-
-            for member in invalid:
-                report.append(
-                    "     Found: {member}({signature})".format(**member)
-                )
-                report.append(
-                    "  Expected: {member}({required})".format(**member)
-                )
-
-        raise ValueError("\n".join(report))
 
 
 def registered_host():

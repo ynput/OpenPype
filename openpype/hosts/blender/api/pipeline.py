@@ -10,6 +10,7 @@ from . import ops
 
 import pyblish.api
 
+from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     schema,
     legacy_io,
@@ -83,18 +84,16 @@ def uninstall():
 
 
 def set_start_end_frames():
+    project_name = legacy_io.active_project()
     asset_name = legacy_io.Session["AVALON_ASSET"]
-    asset_doc = legacy_io.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
+    asset_doc = get_asset_by_name(project_name, asset_name)
 
     scene = bpy.context.scene
 
     # Default scene settings
     frameStart = scene.frame_start
     frameEnd = scene.frame_end
-    fps = scene.render.fps
+    fps = scene.render.fps / scene.render.fps_base
     resolution_x = scene.render.resolution_x
     resolution_y = scene.render.resolution_y
 
@@ -117,7 +116,8 @@ def set_start_end_frames():
 
     scene.frame_start = frameStart
     scene.frame_end = frameEnd
-    scene.render.fps = fps
+    scene.render.fps = round(fps)
+    scene.render.fps_base = round(fps) / fps
     scene.render.resolution_x = resolution_x
     scene.render.resolution_y = resolution_y
 
