@@ -357,7 +357,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False,
-                "aovSeparator": aov_separator
+                "aovSeparator": aov_separator,
+                "RenderSetupIncludeLights": render_instance.data.get(
+                    "RenderSetupIncludeLights"
+                )
             }
 
             if deadline_url:
