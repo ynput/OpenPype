@@ -11,10 +11,10 @@ def CreateEditorial():
     project_name = os.environ["AVALON_PROJECT"]
     project_settings = get_project_settings(project_name)
 
-    simple_creators = project_settings["traypublisher"]["editorial_creators"]
+    editorial_creators = project_settings["traypublisher"]["editorial_creators"]
 
     global_variables = globals()
-    for item in simple_creators:
+    for item in editorial_creators:
 
         log.debug(pformat(item))
 

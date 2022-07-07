@@ -41,7 +41,7 @@ class TrayPublishCreator(Creator):
             self._remove_instance_from_context(instance)
 
     def get_pre_create_attr_defs(self):
-        # Use same attributes as for instance attrobites
+        # Use same attributes as for instance attributes
         return self.get_instance_attr_defs()
 
 
@@ -49,15 +49,6 @@ class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
 
     extensions = []
-
-    def collect_instances(self):
-        for instance_data in list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
 
     def create(self, subset_name, data, pre_create_data):
         # Pass precreate data to creator attributes
@@ -109,19 +100,13 @@ class EditorialCreator(TrayPublishCreator):
 
     extensions = []
 
-    def collect_instances(self):
-        for instance_data in list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
-
     def create(self, subset_name, data, pre_create_data):
+        # TODO: create otio instance
+        # TODO: create clip instances
+
         # Pass precreate data to creator attributes
         data["creator_attributes"] = pre_create_data
-        data["settings_creator"] = True
+        data["editorial_creator"] = True
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name, data, self)
         # Host implementation of storing metadata about instance
