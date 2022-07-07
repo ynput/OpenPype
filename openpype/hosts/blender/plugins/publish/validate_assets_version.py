@@ -13,7 +13,7 @@ class ValidateAssetsVersion(pyblish.api.InstancePlugin):
 
     order = ValidateContentsOrder - 0.011
     hosts = ["blender"]
-    families = ["model", "rig", "layout", "animation", "setdress"]
+    families = ["model", "rig", "layout", "animation", "setdress", "look"]
     category = "geometry"
     label = "Assets Version"
     actions = [UpdateContainer]
