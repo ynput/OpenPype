@@ -2,7 +2,7 @@ import os
 import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
-
+from openpype.lib import StringTemplate
 
 class LoadClip(opfapi.ClipLoader):
     """Load a subset to timeline as clip
@@ -22,7 +22,7 @@ class LoadClip(opfapi.ClipLoader):
     # settings
     reel_group_name = "OpenPype_Reels"
     reel_name = "Loaded"
-    clip_name_template = "{asset}_{subset}_{output}"
+    clip_name_template = "{asset}_{subset}<_{output}>"
 
     def load(self, context, name, namespace, options):
 
@@ -36,8 +36,8 @@ class LoadClip(opfapi.ClipLoader):
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
-        clip_name = self.clip_name_template.format(
-            **context["representation"]["context"])
+        clip_name = StringTemplate(self.clip_name_template).format(
+            context["representation"]["context"])
 
         # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping

@@ -33,7 +33,7 @@ class ExtractAlembic(openpype.api.Extractor):
             self.log.debug("Should be processed on farm, skipping.")
             return
 
-        nodes = instance[:]
+        nodes, roots = self.get_members_and_roots(instance)
 
         # Collect the start and end including handles
         start = float(instance.data.get("frameStartHandle", 1))
@@ -45,10 +45,6 @@ class ExtractAlembic(openpype.api.Extractor):
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
-
-        # Get extra export arguments
-        writeColorSets = instance.data.get("writeColorSets", False)
-        writeFaceSets = instance.data.get("writeFaceSets", False)
 
         self.log.info("Extracting pointcache..")
         dirname = self.staging_dir(instance)
@@ -63,8 +59,8 @@ class ExtractAlembic(openpype.api.Extractor):
             "attrPrefix": attr_prefixes,
             "writeVisibility": True,
             "writeCreases": True,
-            "writeColorSets": writeColorSets,
-            "writeFaceSets": writeFaceSets,
+            "writeColorSets": instance.data.get("writeColorSets", False),
+            "writeFaceSets": instance.data.get("writeFaceSets", False),
             "uvWrite": True,
             "selection": True,
             "worldSpace": instance.data.get("worldSpace", True)
@@ -74,7 +70,7 @@ class ExtractAlembic(openpype.api.Extractor):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
             # direct members of the set
-            options["root"] = instance.data.get("setMembers")
+            options["root"] = roots
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
@@ -112,3 +108,28 @@ class ExtractAlembic(openpype.api.Extractor):
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
+
+    def get_members_and_roots(self, instance):
+        return instance[:], instance.data.get("setMembers")
+
+
+class ExtractAnimation(ExtractAlembic):
+    label = "Extract Animation"
+    families = ["animation"]
+
+    def get_members_and_roots(self, instance):
+
+        # Collect the out set nodes
+        out_sets = [node for node in instance if node.endswith("out_SET")]
+        if len(out_sets) != 1:
+            raise RuntimeError("Couldn't find exactly one out_SET: "
+                               "{0}".format(out_sets))
+        out_set = out_sets[0]
+        roots = cmds.sets(out_set, query=True)
+
+        # Include all descendants
+        nodes = roots + cmds.listRelatives(roots,
+                                           allDescendents=True,
+                                           fullPath=True) or []
+
+        return nodes, roots
