@@ -387,7 +387,12 @@ class NukePlaceholder(AbstractPlaceholder):
 
     def move_to_placeholder_group(self, nodes_loaded):
         """
-        opening the placeholder's group and copying loaded nodes in it"""
+        opening the placeholder's group and copying loaded nodes in it.
+
+        Returns :
+            nodes_loaded (list): the new list of pasted nodes
+        """
+
         groups_name = self.data['group_name']
         reset_selection()
         select_nodes(nodes_loaded)

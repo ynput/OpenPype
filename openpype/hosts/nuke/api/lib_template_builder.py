@@ -18,7 +18,7 @@ def get_placeholder_attributes(node, enumerate=False):
     for attr in node.knobs().keys():
         if attr in list_atts:
             if enumerate:
-                try:
+                try: 
                     attributes[attr] = node.knob(attr).values()
                 except AttributeError:
                     attributes[attr] = node.knob(attr).getValue()
@@ -72,6 +72,7 @@ def create_placeholder():
             options[str(arg)] = arg._data.get("items") or arg.read()
     imprint(placeholder, options)
     imprint(placeholder, {'is_placeholder': True})
+    placeholder.knob('is_placeholder').setVisible(False)
 
 
 def update_placeholder():
@@ -93,7 +94,6 @@ def update_placeholder():
         if not type(arg) == qargparse.Separator:
             options[str(arg)] = arg._data.get("items") or arg.read()
     imprint(placeholder, options)
-    # imprint_enum(placeholder, args)
 
 
 def imprint_enum(placeholder, args):
@@ -109,15 +109,6 @@ def imprint_enum(placeholder, args):
     attrs = {}
     for key, value in enum_values.items():
         attrs[key] = string_to_value_enum_table[value]
-    # try :
-    #     nuke.setPreset(nuke.getNodeClassName(placeholder),"attributes",attrs)
-    # except Exception:
-
-        # setattr(
-        #     placeholder , key,
-        #     string_to_value_enum_table[value])
-        # raise Exception (getattr(
-        #     placeholder , key))
 
 
 def placeholder_window(options=None):
