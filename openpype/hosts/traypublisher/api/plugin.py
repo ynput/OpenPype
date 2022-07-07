@@ -3,12 +3,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import (
-    FileDef,
-    TextDef,
-    NumberDef,
-    EnumDef,
-    BoolDef,
-    FileDefItem
+    FileDef
 )
 
 from .pipeline import (
@@ -89,85 +84,6 @@ class SettingsCreator(TrayPublishCreator):
                 "description": item_data["description"],
                 "detailed_description": item_data["detailed_description"],
                 "extensions": item_data["extensions"],
-                "allow_sequences": item_data["allow_sequences"],
-                "default_variants": item_data["default_variants"]
-            }
-        )
-
-
-class EditorialCreator(TrayPublishCreator):
-    create_allow_context_change = True
-
-    extensions = []
-
-    def create(self, subset_name, data, pre_create_data):
-        # TODO: create otio instance
-        # TODO: create clip instances
-
-        # Pass precreate data to creator attributes
-        data["creator_attributes"] = pre_create_data
-        data["editorial_creator"] = True
-        # Create new instance
-        new_instance = CreatedInstance(self.family, subset_name, data, self)
-        # Host implementation of storing metadata about instance
-        HostContext.add_instance(new_instance.data_to_store())
-        # Add instance to current context
-        self._add_instance_to_context(new_instance)
-
-    def get_instance_attr_defs(self):
-        if self.identifier == "editorial.simple":
-            return [
-                FileDef(
-                    "sequence_filepath",
-                    folders=False,
-                    extensions=self.sequence_extensions,
-                    allow_sequences=self.allow_sequences,
-                    label="Filepath",
-                )
-            ]
-        else:
-            return [
-                FileDef(
-                    "sequence_filepath",
-                    folders=False,
-                    extensions=self.sequence_extensions,
-                    allow_sequences=self.allow_sequences,
-                    label="Sequence filepath",
-                ),
-                FileDef(
-                    "clip_source_folder",
-                    folders=True,
-                    extensions=self.clip_extensions,
-                    allow_sequences=False,
-                    label="Clips' Source folder",
-                ),
-                TextDef("text input"),
-                NumberDef("number input"),
-                EnumDef("enum input", {
-                    "value1": "label1",
-                    "value2": "label2"
-                }),
-                BoolDef("bool input")
-            ]
-
-    @classmethod
-    def from_settings(cls, item_data):
-        identifier = item_data["identifier"]
-        family = item_data["family"]
-        if not identifier:
-            identifier = "settings_{}".format(family)
-        return type(
-            "{}{}".format(cls.__name__, identifier),
-            (cls, ),
-            {
-                "family": family,
-                "identifier": identifier,
-                "label": item_data["label"].strip(),
-                "icon": item_data["icon"],
-                "description": item_data["description"],
-                "detailed_description": item_data["detailed_description"],
-                "sequence_extensions": item_data["sequence_extensions"],
-                "clip_extensions": item_data["clip_extensions"],
                 "allow_sequences": item_data["allow_sequences"],
                 "default_variants": item_data["default_variants"]
             }
