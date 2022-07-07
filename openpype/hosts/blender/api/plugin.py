@@ -874,6 +874,75 @@ class ContainerMaintainer(ExitStack):
             for data in local_data.values():
                 bpy.data.meshes.remove(data)
 
+    @contextmanager
+    def maintained_polygons_mat_idx(self):
+        """Maintain polygons material indexes during context."""
+        material_indexes = {}
+        # Store material indexes from objects.
+        for obj in self.container_objects:
+            if (
+                obj.type == "MESH"
+                and not obj.data.library
+                and not obj.data.override_library
+            ):
+                material_indexes[obj.name] = [
+                    face.material_index
+                    for face in obj.data.polygons
+                ]
+        try:
+            yield
+        finally:
+            # Restor material indexes.
+            for obj_name, mtl_idx in material_indexes.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                if obj and obj.type == "MESH":
+
+                    if obj.override_library or obj.library:
+                        obj = make_local(obj)
+
+                    for face in obj.data.polygons:
+                        face.material_index = (
+                            mtl_idx.pop(0) if len(mtl_idx) else 0
+                        )
+
+    @contextmanager
+    def maintained_material_slots(self):
+        """Maintain material slots during context."""
+        material_slots = {}
+        # Store material slots from objects.
+        for obj in self.container_objects:
+            if (
+                obj.type == "MESH"
+                and not obj.data.library
+                and not obj.data.override_library
+                and len(obj.material_slots)
+            ):
+                for mtl_slot in obj.material_slots:
+                    if mtl_slot.material:
+                        mtl_slot.material.use_fake_user = True
+                    material_slots[obj.name].append(mtl_slot.material)
+        try:
+            yield
+        finally:
+            # Restor material slots.
+            for obj_name, mtl_slots in material_slots.items():
+                obj = bpy.context.scene.objects.get(obj_name)
+                if obj and obj.type == "MESH":
+
+                    if obj.override_library or obj.library:
+                        obj = make_local(obj)
+
+                    for idx, mtl in enumerate(mtl_slots):
+                        if len(obj.material_slots) <= idx:
+                            obj.data.materials.append(mtl)
+                        obj.material_slots[idx].link = "OBJECT"
+                        obj.material_slots[idx].material = mtl
+
+            # Clear fake users.
+            for mtl_slots in material_slots.values():
+                for mtl in mtl_slots:
+                    mtl.use_fake_user = False
+
 
 class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
