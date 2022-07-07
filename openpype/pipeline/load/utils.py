@@ -208,10 +208,12 @@ def get_representation_context(representation):
 
     assert representation is not None, "This is a bug"
 
-    if not isinstance(representation, dict):
-        representation = get_representation_by_id(representation)
-
     project_name = legacy_io.active_project()
+    if not isinstance(representation, dict):
+        representation = get_representation_by_id(
+            project_name, representation
+        )
+
     version, subset, asset, project = get_representation_parents(
         project_name, representation
     )
