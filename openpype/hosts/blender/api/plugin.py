@@ -1010,6 +1010,7 @@ class AssetLoader(LoaderPlugin):
     it's different for different types (e.g. model, rig, animation,
     etc.).
     """
+    no_namespace = False
     update_maintainer = ContainerMaintainer
     maintained_parameters = [
         "parent",
@@ -1225,7 +1226,7 @@ class AssetLoader(LoaderPlugin):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        if legacy_io.Session.get("AVALON_ASSET") == asset:
+        if self.no_namespace or legacy_io.Session.get("AVALON_ASSET") == asset:
             group_name = asset_name(asset, subset)
             namespace = ""
         else:
