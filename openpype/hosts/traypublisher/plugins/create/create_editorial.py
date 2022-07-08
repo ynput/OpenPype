@@ -29,11 +29,10 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
     host_name = "traypublisher"
 
     def __init__(
-        self, create_context, system_settings, project_settings,
-        *args, **kwargs
+        self, project_settings, *args, **kwargs
     ):
         super(EditorialClipInstanceCreator, self).__init__(
-            create_context, system_settings, project_settings, *args, **kwargs
+            project_settings, *args, **kwargs
         )
 
     def create(self, instance_data, source_data):
@@ -59,11 +58,10 @@ or updating already created. Publishing will create OTIO file.
     icon = "fa.file"
 
     def __init__(
-        self, create_context, system_settings, project_settings,
-        *args, **kwargs
+        self, project_settings, *args, **kwargs
     ):
         super(EditorialSimpleCreator, self).__init__(
-            create_context, system_settings, project_settings, *args, **kwargs
+            project_settings, *args, **kwargs
         )
         editorial_creators = deepcopy(
             project_settings["traypublisher"]["editorial_creators"]
