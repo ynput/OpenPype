@@ -576,7 +576,10 @@ class CreateDialog(QtWidgets.QDialog):
     def _set_context_enabled(self, enabled):
         self._assets_widget.set_enabled(enabled)
         self._tasks_widget.set_enabled(enabled)
+        check_prereq = self._context_widget.isEnabled() != enabled
         self._context_widget.setEnabled(enabled)
+        if check_prereq:
+            self._invalidate_prereq()
 
     def refresh(self):
         # Get context before refresh to keep selection of asset and
