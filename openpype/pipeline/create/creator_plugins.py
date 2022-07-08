@@ -70,7 +70,7 @@ class BaseCreator:
     host_name = None
 
     def __init__(
-        self, system_settings, project_settings, create_context, headless=False
+        self, project_settings, system_settings, create_context, headless=False
     ):
         # Reference to CreateContext
         self.create_context = create_context

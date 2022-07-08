@@ -873,8 +873,8 @@ class CreateContext:
                 continue
 
             creator = creator_class(
-                system_settings,
                 project_settings,
+                system_settings,
                 self,
                 self.headless
             )
