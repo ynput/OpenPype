@@ -32,52 +32,11 @@
             ]
         }
     ],
-    "editorial_creators": [
-        {
-            "family": "editorial",
-            "identifier": "editorial.simple",
-            "label": "Editorial Simple",
-            "icon": "fa.file",
+    "editorial_creators": {
+        "editorial.simple": {
             "default_variants": [
                 "Main"
-            ],
-            "description": "Editorial files to generate shots.",
-            "detailed_description": "Supporting publishing new shots to project or updating already created. Publishing will create OTIO file.",
-            "allow_sequences": false,
-            "sequence_extensions": [
-                ".edl",
-                ".xml",
-                ".aaf",
-                ".fcpxml"
-            ],
-            "clip_extensions": [
-                ".mov",
-                ".jpg",
-                ".png"
-            ]
-        },
-        {
-            "family": "editorial",
-            "identifier": "editorial.complex",
-            "label": "Editorial Complex",
-            "icon": "fa.file",
-            "default_variants": [
-                "Main"
-            ],
-            "description": "Editorial files to generate shots.",
-            "detailed_description": "Supporting publishing new shots to project or updating already created. Publishing will create OTIO file.",
-            "allow_sequences": false,
-            "sequence_extensions": [
-                ".edl",
-                ".xml",
-                ".aaf",
-                ".fcpxml"
-            ],
-            "clip_extensions": [
-                ".mov",
-                ".jpg",
-                ".png"
             ]
         }
-    ]
+    }
 }
