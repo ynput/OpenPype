@@ -465,7 +465,7 @@ class CreateDialog(QtWidgets.QDialog):
         desc_width_anim_timer = QtCore.QTimer()
         desc_width_anim_timer.setInterval(10)
 
-        prereq_timer.timeout.connect(self._on_prereq_timer)
+        prereq_timer.timeout.connect(self._invalidate_prereq)
 
         desc_width_anim_timer.timeout.connect(self._on_desc_animation)
 
@@ -600,16 +600,16 @@ class CreateDialog(QtWidgets.QDialog):
         self._tasks_widget.set_asset_name(asset_name)
         self._tasks_widget.select_task_name(task_name)
 
-        self._invalidate_prereq()
+        self._invalidate_prereq_deffered()
 
-    def _invalidate_prereq(self):
+    def _invalidate_prereq_deffered(self):
         self._prereq_timer.start()
 
     def _on_asset_filter_height_change(self, height):
         self._creators_header_widget.setMinimumHeight(height)
         self._creators_header_widget.setMaximumHeight(height)
 
-    def _on_prereq_timer(self):
+    def _invalidate_prereq(self):
         prereq_available = True
         creator_btn_tooltips = []
         if self.creators_model.rowCount() < 1:
@@ -726,11 +726,11 @@ class CreateDialog(QtWidgets.QDialog):
         asset_name = self._assets_widget.get_selected_asset_name()
         self._tasks_widget.set_asset_name(asset_name)
         if self._context_change_is_enabled():
-            self._invalidate_prereq()
+            self._invalidate_prereq_deffered()
 
     def _on_task_change(self):
         if self._context_change_is_enabled():
-            self._invalidate_prereq()
+            self._invalidate_prereq_deffered()
 
     def _on_current_session_context_request(self):
         self._assets_widget.set_current_session_asset()
