@@ -45,7 +45,7 @@ class EditorialSimpleCreator(TrayPublishCreator):
 
     label = "Editorial Simple"
     family = "editorial"
-    identifier = "editorial.simple"
+    identifier = "editorialSimple"
     default_variants = [
         "main",
         "review"

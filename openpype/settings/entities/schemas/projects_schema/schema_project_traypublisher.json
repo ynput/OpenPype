@@ -90,7 +90,7 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "editorial.simple",
+                    "key": "editorialSimple",
                     "label": "Editorial simple creator",
                     "use_label_wrap": true,
                     "collapsible_key": true,

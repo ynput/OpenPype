@@ -33,7 +33,7 @@
         }
     ],
     "editorial_creators": {
-        "editorial.simple": {
+        "editorialSimple": {
             "default_variants": [
                 "Main"
             ]
