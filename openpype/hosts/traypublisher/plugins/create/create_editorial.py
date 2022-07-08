@@ -15,14 +15,16 @@ from openpype.lib import (
     TextDef,
     NumberDef,
     EnumDef,
-    BoolDef
+    BoolDef,
+    UISeparatorDef,
+    UILabelDef
 )
 
 from openpype.hosts.traypublisher.api.pipeline import HostContext
 
 
 class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
-    identifier = "editorial.clip"
+    identifier = "editorialClip"
     family = "clip"
     host_name = "traypublisher"
 
@@ -47,8 +49,7 @@ class EditorialSimpleCreator(TrayPublishCreator):
     family = "editorial"
     identifier = "editorialSimple"
     default_variants = [
-        "main",
-        "review"
+        "main"
     ]
     description = "Editorial files to generate shots."
     detailed_description = """
@@ -82,7 +83,7 @@ or updating already created. Publishing will create OTIO file.
             subset_name, instance_data, pre_create_data)
 
         # TODO: create clip instances
-        editorial_clip_creator = self.create_context.creators["editorial.clip"]
+        editorial_clip_creator = self.create_context.creators["editorialClip"]
         editorial_clip_creator.create({}, {})
 
     def _create_otio_instance(self, subset_name, data, pre_create_data):
@@ -127,7 +128,8 @@ or updating already created. Publishing will create OTIO file.
         # Add instance to current context
         self._add_instance_to_context(new_instance)
 
-    def get_instance_attr_defs(self):
+    def get_pre_create_attr_defs(self):
+        # Use same attributes as for instance attrobites
         return [
             FileDef(
                 "sequence_filepath_data",
@@ -140,5 +142,7 @@ or updating already created. Publishing will create OTIO file.
                 ],
                 allow_sequences=False,
                 label="Filepath",
-            )
+            ),
+            UISeparatorDef(),
+            UILabelDef("Clip instance attributes")
         ]
