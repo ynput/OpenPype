@@ -58,10 +58,6 @@ class TrayPublishCreator(Creator):
         for instance in instances:
             self._remove_instance_from_context(instance)
 
-    def get_pre_create_attr_defs(self):
-        # Use same attributes as for instance attributes
-        return self.get_instance_attr_defs()
-
 
 class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
@@ -89,6 +85,10 @@ class SettingsCreator(TrayPublishCreator):
                 label="Filepath",
             )
         ]
+
+    def get_pre_create_attr_defs(self):
+        # Use same attributes as for instance attrobites
+        return self.get_instance_attr_defs()
 
     @classmethod
     def from_settings(cls, item_data):
