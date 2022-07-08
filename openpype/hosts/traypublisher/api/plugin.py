@@ -1,6 +1,6 @@
 from openpype.pipeline.create import (
     Creator,
-    InivisbleCreator,
+    InvisibleCreator,
     CreatedInstance
 )
 from openpype.lib import (
@@ -15,8 +15,7 @@ from .pipeline import (
 )
 
 
-class InvisibleTrayPublishCreator(InivisbleCreator):
-    create_allow_context_change = True
+class InvisibleTrayPublishCreator(InvisibleCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
