@@ -616,7 +616,7 @@ class CreateDialog(QtWidgets.QDialog):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._asset_doc is None:
+        if self._context_change_is_enabled() and self._asset_doc is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -1010,11 +1010,16 @@ class CreateDialog(QtWidgets.QDialog):
         if variant_value is None:
             variant_value = self.variant_input.text()
 
-        self.create_btn.setEnabled(True)
         if not self._compiled_name_pattern.match(variant_value):
             self.create_btn.setEnabled(False)
             self._set_variant_state_property("invalid")
             self.subset_name_input.setText("< Invalid variant >")
+            return
+
+        if not self._context_change_is_enabled():
+            self.create_btn.setEnabled(True)
+            self._set_variant_state_property("")
+            self.subset_name_input.setText("< Valid variant >")
             return
 
         project_name = self.controller.project_name
@@ -1034,6 +1039,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         self.subset_name_input.setText(subset_name)
 
+        self.create_btn.setEnabled(True)
         self._validate_subset_name(subset_name, variant_value)
 
     def _validate_subset_name(self, subset_name, variant_value):
@@ -1145,10 +1151,17 @@ class CreateDialog(QtWidgets.QDialog):
         creator_label = index.data(QtCore.Qt.DisplayRole)
         creator_identifier = index.data(CREATOR_IDENTIFIER_ROLE)
         family = index.data(FAMILY_ROLE)
-        subset_name = self.subset_name_input.text()
         variant = self.variant_input.text()
-        asset_name = self._get_asset_name()
-        task_name = self._get_task_name()
+        # Care about subset name only if context change is enabled
+        if self._context_change_is_enabled():
+            subset_name = self.subset_name_input.text()
+            asset_name = self._get_asset_name()
+            task_name = self._get_task_name()
+        else:
+            subset_name = variant
+            asset_name = None
+            task_name = None
+
         pre_create_data = self._pre_create_widget.current_value()
         # Where to define these data?
         # - what data show be stored?
