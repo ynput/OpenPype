@@ -96,7 +96,7 @@ class BaseCreator:
     def project_name(self):
         """Family that plugin represents."""
 
-        self.create_context.project_name
+        return self.create_context.project_name
 
     @property
     def log(self):
