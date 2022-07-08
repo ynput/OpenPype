@@ -342,7 +342,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         creators_view = QtWidgets.QListView(self)
         creators_model = QtGui.QStandardItemModel()
-        creators_view.setModel(creators_model)
+        creators_sort_model = QtCore.QSortFilterProxyModel()
+        creators_sort_model.setSourceModel(creators_model)
+        creators_view.setModel(creators_sort_model)
 
         variant_widget = VariantInputsWidget(self)
 
@@ -516,6 +518,7 @@ class CreateDialog(QtWidgets.QDialog):
         self.creators_model = creators_model
         self.creators_view = creators_view
         self.create_btn = create_btn
+        self._creators_sort_model = creators_sort_model
 
         self._creator_short_desc_widget = creator_short_desc_widget
         self._pre_create_widget = pre_create_widget
@@ -703,6 +706,7 @@ class CreateDialog(QtWidgets.QDialog):
         if self.creators_model.rowCount() < 1:
             return
 
+        self._creators_sort_model.sort(0)
         # Make sure there is a selection
         indexes = self.creators_view.selectedIndexes()
         if not indexes:
