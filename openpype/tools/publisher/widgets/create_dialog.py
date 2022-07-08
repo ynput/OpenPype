@@ -515,10 +515,10 @@ class CreateDialog(QtWidgets.QDialog):
         self.variant_hints_group = variant_hints_group
 
         self._creators_header_widget = creators_header_widget
-        self.creators_model = creators_model
-        self.creators_view = creators_view
-        self.create_btn = create_btn
+        self._creators_model = creators_model
         self._creators_sort_model = creators_sort_model
+        self._creators_view = creators_view
+        self._create_btn = create_btn
 
         self._creator_short_desc_widget = creator_short_desc_widget
         self._pre_create_widget = pre_create_widget
@@ -619,9 +619,9 @@ class CreateDialog(QtWidgets.QDialog):
         prereq_available = True
         creator_btn_tooltips = []
 
-        available_creators = self.creators_model.rowCount() > 0
-        if available_creators != self.creators_view.isEnabled():
-            self.creators_view.setEnabled(available_creators)
+        available_creators = self._creators_model.rowCount() > 0
+        if available_creators != self._creators_view.isEnabled():
+            self._creators_view.setEnabled(available_creators)
 
         if not available_creators:
             prereq_available = False
@@ -635,14 +635,15 @@ class CreateDialog(QtWidgets.QDialog):
         if prereq_available != self._prereq_available:
             self._prereq_available = prereq_available
 
-            self.create_btn.setEnabled(prereq_available)
+            self._create_btn.setEnabled(prereq_available)
+
             self.variant_input.setEnabled(prereq_available)
             self.variant_hints_btn.setEnabled(prereq_available)
 
         tooltip = ""
         if creator_btn_tooltips:
             tooltip = "\n".join(creator_btn_tooltips)
-        self.create_btn.setToolTip(tooltip)
+        self._create_btn.setToolTip(tooltip)
 
         self._on_variant_change()
 
@@ -680,8 +681,8 @@ class CreateDialog(QtWidgets.QDialog):
         # Refresh creators and add their families to list
         existing_items = {}
         old_creators = set()
-        for row in range(self.creators_model.rowCount()):
-            item = self.creators_model.item(row, 0)
+        for row in range(self._creators_model.rowCount()):
+            item = self._creators_model.item(row, 0)
             identifier = item.data(CREATOR_IDENTIFIER_ROLE)
             existing_items[identifier] = item
             old_creators.add(identifier)
@@ -698,7 +699,7 @@ class CreateDialog(QtWidgets.QDialog):
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
                 )
-                self.creators_model.appendRow(item)
+                self._creators_model.appendRow(item)
 
             label = creator.label or identifier
             item.setData(label, QtCore.Qt.DisplayRole)
@@ -708,17 +709,17 @@ class CreateDialog(QtWidgets.QDialog):
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):
             item = existing_items[identifier]
-            self.creators_model.takeRow(item.row())
+            self._creators_model.takeRow(item.row())
 
-        if self.creators_model.rowCount() < 1:
+        if self._creators_model.rowCount() < 1:
             return
 
         self._creators_sort_model.sort(0)
         # Make sure there is a selection
-        indexes = self.creators_view.selectedIndexes()
+        indexes = self._creators_view.selectedIndexes()
         if not indexes:
             index = self._creators_sort_model.index(0, 0)
-            self.creators_view.setCurrentIndex(index)
+            self._creators_view.setCurrentIndex(index)
         else:
             index = indexes[0]
 
@@ -1022,13 +1023,13 @@ class CreateDialog(QtWidgets.QDialog):
             variant_value = self.variant_input.text()
 
         if not self._compiled_name_pattern.match(variant_value):
-            self.create_btn.setEnabled(False)
+            self._create_btn.setEnabled(False)
             self._set_variant_state_property("invalid")
             self.subset_name_input.setText("< Invalid variant >")
             return
 
         if not self._context_change_is_enabled():
-            self.create_btn.setEnabled(True)
+            self._create_btn.setEnabled(True)
             self._set_variant_state_property("")
             self.subset_name_input.setText("< Valid variant >")
             return
@@ -1043,14 +1044,14 @@ class CreateDialog(QtWidgets.QDialog):
                 variant_value, task_name, asset_doc, project_name
             )
         except TaskNotSetError:
-            self.create_btn.setEnabled(False)
+            self._create_btn.setEnabled(False)
             self._set_variant_state_property("invalid")
             self.subset_name_input.setText("< Missing task >")
             return
 
         self.subset_name_input.setText(subset_name)
 
-        self.create_btn.setEnabled(True)
+        self._create_btn.setEnabled(True)
         self._validate_subset_name(subset_name, variant_value)
 
     def _validate_subset_name(self, subset_name, variant_value):
@@ -1105,8 +1106,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._set_variant_state_property(property_value)
 
         variant_is_valid = variant_value.strip() != ""
-        if variant_is_valid != self.create_btn.isEnabled():
-            self.create_btn.setEnabled(variant_is_valid)
+        if variant_is_valid != self._create_btn.isEnabled():
+            self._create_btn.setEnabled(variant_is_valid)
 
     def _set_variant_state_property(self, state):
         current_value = self.variant_input.property("state")
@@ -1151,11 +1152,11 @@ class CreateDialog(QtWidgets.QDialog):
         self._update_help_btn()
 
     def _on_create(self):
-        indexes = self.creators_view.selectedIndexes()
+        indexes = self._creators_view.selectedIndexes()
         if not indexes or len(indexes) > 1:
             return
 
-        if not self.create_btn.isEnabled():
+        if not self._create_btn.isEnabled():
             return
 
         index = indexes[0]
