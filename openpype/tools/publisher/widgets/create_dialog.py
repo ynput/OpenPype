@@ -1164,14 +1164,13 @@ class CreateDialog(QtWidgets.QDialog):
         family = index.data(FAMILY_ROLE)
         variant = self.variant_input.text()
         # Care about subset name only if context change is enabled
+        subset_name = None
+        asset_name = None
+        task_name = None
         if self._context_change_is_enabled():
             subset_name = self.subset_name_input.text()
             asset_name = self._get_asset_name()
             task_name = self._get_task_name()
-        else:
-            subset_name = None
-            asset_name = None
-            task_name = None
 
         pre_create_data = self._pre_create_widget.current_value()
         # Where to define these data?
