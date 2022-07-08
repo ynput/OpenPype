@@ -1158,7 +1158,7 @@ class CreateDialog(QtWidgets.QDialog):
             asset_name = self._get_asset_name()
             task_name = self._get_task_name()
         else:
-            subset_name = variant
+            subset_name = None
             asset_name = None
             task_name = None
 
