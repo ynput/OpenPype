@@ -71,18 +71,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if not is_oiio_supported():
                 thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
             else:
-                # Check if the file can be read by OIIO
-                oiio_tool_path = get_oiio_tools_path()
-                args = [
-                    oiio_tool_path, "--info", "-i", full_output_path
-                ]
-                returncode = execute(args, silent=True)
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                if returncode == 0:
-                    self.log.info("Input can be read by OIIO, converting with oiiotool now.")   # noqa
-                    thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
-                else:
+                self.log.info("Trying to convert with OIIO")   # noqa
+                thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
+
+                if not thumbnail_created:
                     self.log.info("Converting with FFMPEG because input can't be read by OIIO.")    # noqa
                     thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
 
