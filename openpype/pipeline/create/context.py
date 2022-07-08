@@ -873,9 +873,9 @@ class CreateContext:
                 continue
 
             creator = creator_class(
-                self,
                 system_settings,
                 project_settings,
+                self,
                 self.headless
             )
             creators[creator_identifier] = creator
