@@ -93,6 +93,12 @@ class BaseCreator:
         pass
 
     @property
+    def project_name(self):
+        """Family that plugin represents."""
+
+        return self.create_context.project_name
+
+    @property
     def log(self):
         if self._log is None:
             from openpype.api import Logger
