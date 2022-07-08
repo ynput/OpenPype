@@ -717,7 +717,7 @@ class CreateDialog(QtWidgets.QDialog):
         # Make sure there is a selection
         indexes = self.creators_view.selectedIndexes()
         if not indexes:
-            index = self.creators_model.index(0, 0)
+            index = self._creators_sort_model.index(0, 0)
             self.creators_view.setCurrentIndex(index)
         else:
             index = indexes[0]
