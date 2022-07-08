@@ -61,10 +61,13 @@ or updating already created. Publishing will create OTIO file.
         super(EditorialSimpleCreator, self).__init__(
             create_context, system_settings, project_settings, *args, **kwargs
         )
-        editorial_creators = (
+        editorial_creators = deepcopy(
             project_settings["traypublisher"]["editorial_creators"]
         )
-        self._editorial_creators = deepcopy(editorial_creators)
+        self._creator_settings = editorial_creators.get(self.__name__)
+
+        if self._creator_settings.get("default_variants"):
+            self.default_variants = self._creator_settings["default_variants"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         # TODO: create otio instance
