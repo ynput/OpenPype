@@ -1,4 +1,5 @@
 import json
+import copy
 
 from openpype.client import get_project
 from openpype.api import ProjectSettings
@@ -373,6 +374,10 @@ class PrepareProjectServer(ServerAction):
                 project_name, project_code
             ))
             create_project(project_name, project_code)
+            self.trigger_event(
+                "openpype.project.created",
+                {"project_name": project_name}
+            )
 
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]
@@ -399,6 +404,10 @@ class PrepareProjectServer(ServerAction):
                 project_entity["custom_attributes"][key] = value
                 self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
             session.commit()
+
+        event_data = copy.deepcopy(in_data)
+        event_data["project_name"] = project_name
+        self.trigger_event("openpype.project.prepared", event_data)
 
         return True
 
