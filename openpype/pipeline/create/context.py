@@ -843,9 +843,8 @@ class CreateContext:
         self.plugins_with_defs = plugins_with_defs
 
         # Prepare settings
-        project_name = self.dbcon.Session["AVALON_PROJECT"]
         system_settings = get_system_settings()
-        project_settings = get_project_settings(project_name)
+        project_settings = get_project_settings(self.project_name)
 
         # Discover and prepare creators
         creators = {}
