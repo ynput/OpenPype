@@ -7,6 +7,7 @@ from .creator_plugins import (
     BaseCreator,
     Creator,
     AutoCreator,
+    InivisbleCreator,
 
     discover_creator_plugins,
     discover_legacy_creator_plugins,
@@ -35,6 +36,7 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
+    "InivisbleCreator",
 
     "discover_creator_plugins",
     "discover_legacy_creator_plugins",

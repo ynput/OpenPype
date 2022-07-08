@@ -1,5 +1,6 @@
-from openpype.pipeline import (
+from openpype.pipeline.create import (
     Creator,
+    InivisbleCreator,
     CreatedInstance
 )
 from openpype.lib import (
@@ -12,6 +13,28 @@ from .pipeline import (
     remove_instances,
     HostContext,
 )
+
+
+class InvisibleTrayPublishCreator(InivisbleCreator):
+    create_allow_context_change = True
+    host_name = "traypublisher"
+
+    def collect_instances(self):
+        for instance_data in list_instances():
+            creator_id = instance_data.get("creator_identifier")
+            if creator_id == self.identifier:
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
+
+    def update_instances(self, update_list):
+        update_instances(update_list)
+
+    def remove_instances(self, instances):
+        remove_instances(instances)
+        for instance in instances:
+            self._remove_instance_from_context(instance)
 
 
 class TrayPublishCreator(Creator):
