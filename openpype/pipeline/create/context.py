@@ -749,6 +749,10 @@ class CreateContext:
         return os.environ["AVALON_APP"]
 
     @property
+    def project_name(self):
+        return self.dbcon.active_project()
+
+    @property
     def log(self):
         """Dynamic access to logger."""
         if self._log is None:
