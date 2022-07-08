@@ -1,6 +1,7 @@
 import os
+from copy import deepcopy
 import opentimelineio as otio
-from openpype.api import get_project_settings
+from openpype.client import get_asset_by_name
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
 from openpype.pipeline.create.creator_plugins import InvisibleCreator
 
@@ -17,16 +18,18 @@ from openpype.lib import (
 from openpype.hosts.traypublisher.api.pipeline import HostContext
 
 
-def CreateEditorial():
-    project_name = os.environ["AVALON_PROJECT"]
-    project_settings = get_project_settings(project_name)
-
-    editorial_creators = project_settings["traypublisher"]["editorial_creators"]
-
-
 class EditorialClipInstanceCreator(InvisibleCreator):
     identifier = "editorial.clip"
     family = "clip"
+    host_name = "traypublisher"
+
+    def __init__(
+        self, create_context, system_settings, project_settings,
+        *args, **kwargs
+    ):
+        super(EditorialClipInstanceCreator, self).__init__(
+            create_context, system_settings, project_settings, *args, **kwargs
+        )
 
     def create(self, instance_data, source_data):
         # instance_data > asset, task_name, variant, family
@@ -51,10 +54,24 @@ or updating already created. Publishing will create OTIO file.
 """
     icon = "fa.file"
 
-    def create(self, subset_name, data, pre_create_data):
+    def __init__(
+        self, create_context, system_settings, project_settings,
+        *args, **kwargs
+    ):
+        super(EditorialSimpleCreator, self).__init__(
+            create_context, system_settings, project_settings, *args, **kwargs
+        )
+        editorial_creators = (
+            project_settings["traypublisher"]["editorial_creators"]
+        )
+        self._editorial_creators = deepcopy(editorial_creators)
+
+    def create(self, subset_name, instance_data, pre_create_data):
         # TODO: create otio instance
+        asset_name = instance_data["asset"]
+        asset_doc = get_asset_by_name(self.project_name, asset_name)
         otio_timeline = self._create_otio_instance(
-            subset_name, data, pre_create_data)
+            subset_name, instance_data, pre_create_data)
 
         # TODO: create clip instances
         editorial_clip_creator = self.create_context.creators["editorial.clip"]
