@@ -2,8 +2,11 @@ import os
 from copy import deepcopy
 import opentimelineio as otio
 from openpype.client import get_asset_by_name
-from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
-from openpype.pipeline.create.creator_plugins import InvisibleCreator
+from openpype.hosts.traypublisher.api.plugin import (
+    TrayPublishCreator,
+    InvisibleTrayPublishCreator
+)
+
 
 from openpype.pipeline import CreatedInstance
 
@@ -18,7 +21,7 @@ from openpype.lib import (
 from openpype.hosts.traypublisher.api.pipeline import HostContext
 
 
-class EditorialClipInstanceCreator(InvisibleCreator):
+class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
     identifier = "editorial.clip"
     family = "clip"
     host_name = "traypublisher"
@@ -64,8 +67,10 @@ or updating already created. Publishing will create OTIO file.
         editorial_creators = deepcopy(
             project_settings["traypublisher"]["editorial_creators"]
         )
-        self._creator_settings = editorial_creators.get(self.__name__)
+        # get this creator settings by identifier
+        self._creator_settings = editorial_creators.get(self.identifier)
 
+        # try to set main attributes from settings
         if self._creator_settings.get("default_variants"):
             self.default_variants = self._creator_settings["default_variants"]
 
