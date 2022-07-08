@@ -615,7 +615,12 @@ class CreateDialog(QtWidgets.QDialog):
     def _invalidate_prereq(self):
         prereq_available = True
         creator_btn_tooltips = []
-        if self.creators_model.rowCount() < 1:
+
+        available_creators = self.creators_model.rowCount() > 0
+        if available_creators != self.creators_view.isEnabled():
+            self.creators_view.setEnabled(available_creators)
+
+        if not available_creators:
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
@@ -628,7 +633,6 @@ class CreateDialog(QtWidgets.QDialog):
             self._prereq_available = prereq_available
 
             self.create_btn.setEnabled(prereq_available)
-            self.creators_view.setEnabled(prereq_available)
             self.variant_input.setEnabled(prereq_available)
             self.variant_hints_btn.setEnabled(prereq_available)
 
