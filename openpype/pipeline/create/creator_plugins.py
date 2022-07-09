@@ -70,7 +70,7 @@ class BaseCreator:
     host_name = None
 
     def __init__(
-        self, create_context, system_settings, project_settings, headless=False
+        self, project_settings, system_settings, create_context, headless=False
     ):
         # Reference to CreateContext
         self.create_context = create_context
@@ -91,6 +91,12 @@ class BaseCreator:
     def family(self):
         """Family that plugin represents."""
         pass
+
+    @property
+    def project_name(self):
+        """Family that plugin represents."""
+
+        return self.create_context.project_name
 
     @property
     def log(self):
