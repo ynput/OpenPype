@@ -25,6 +25,18 @@ from openpype.hosts.traypublisher.api.pipeline import HostContext
 
 
 CLIP_ATTR_DEFS = [
+    EnumDef(
+        "fps",
+        items={
+            "from_project": "From project",
+            23.997: "23.976",
+            24: "24",
+            25: "25",
+            29.97: "29.97",
+            30: "30"
+        },
+        label="FPS"
+    ),
     NumberDef(
         "workfile_start_frame",
         default=1001,
@@ -128,8 +140,14 @@ or updating already created. Publishing will create OTIO file.
         asset_name = instance_data["asset"]
         asset_doc = get_asset_by_name(self.project_name, asset_name)
 
-        # get asset doc data attributes
-        fps = asset_doc["data"]["fps"]
+        self.log.info(pre_create_data["fps"])
+
+        if pre_create_data["fps"] == "from_project":
+            # get asset doc data attributes
+            fps = asset_doc["data"]["fps"]
+        else:
+            fps = float(pre_create_data["fps"])
+
         instance_data.update({
             "fps": fps
         })
@@ -149,6 +167,10 @@ or updating already created. Publishing will create OTIO file.
     def _create_otio_instance(self, subset_name, data, pre_create_data):
         # get path of sequence
         file_path_data = pre_create_data["sequence_filepath_data"]
+
+        if len(file_path_data["filenames"]) == 0:
+            raise FileExistsError("File path was not added")
+
         file_path = os.path.join(
             file_path_data["directory"], file_path_data["filenames"][0])
 
