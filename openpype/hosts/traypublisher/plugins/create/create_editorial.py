@@ -26,12 +26,6 @@ from openpype.hosts.traypublisher.api.pipeline import HostContext
 
 CLIP_ATTR_DEFS = [
     NumberDef(
-        "timeline_offset",
-        default=900000,
-        label="Timeline offset"
-    ),
-    UISeparatorDef(),
-    NumberDef(
         "workfile_start_frame",
         default=1001,
         label="Workfile start frame"
@@ -62,20 +56,20 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
         )
 
     def create(self, instance_data, source_data):
-        # instance_data > asset, task_name, variant, family
-        # source_data > additional data
         self.log.info(f"instance_data: {instance_data}")
-        self.log.info(f"source_data: {source_data}")
+        subset_name = instance_data["subset"]
+        family = instance_data["family"]
 
         instance_name = "{}_{}".format(
             instance_data["name"],
-            "plateMain"
+            subset_name
         )
-        return self._create_instance(instance_name, instance_data)
+        return self._create_instance(instance_name, family, instance_data)
 
-    def _create_instance(self, subset_name, data):
+    def _create_instance(self, subset_name, family, data):
+
         # Create new instance
-        new_instance = CreatedInstance(self.family, subset_name, data, self)
+        new_instance = CreatedInstance(family, subset_name, data, self)
         # Host implementation of storing metadata about instance
         HostContext.add_instance(new_instance.data_to_store())
         # Add instance to current context
@@ -109,8 +103,6 @@ or updating already created. Publishing will create OTIO file.
 """
     icon = "fa.file"
 
-
-
     def __init__(
         self, project_settings, *args, **kwargs
     ):
@@ -132,23 +124,27 @@ or updating already created. Publishing will create OTIO file.
             k: v for k, v in pre_create_data.items()
             if k != "sequence_filepath_data"
         }
-        # TODO: create otio instance
+        # Create otio editorial instance
         asset_name = instance_data["asset"]
         asset_doc = get_asset_by_name(self.project_name, asset_name)
+
+        # get asset doc data attributes
         fps = asset_doc["data"]["fps"]
         instance_data.update({
             "fps": fps
         })
+
+        # get otio timeline
         otio_timeline = self._create_otio_instance(
             subset_name, instance_data, pre_create_data)
 
-        # TODO: create clip instances
+        # Create all clip instances
         clip_instance_properties.update({
             "fps": fps,
-            "asset_name": asset_name
+            "parent_asset_name": asset_name
         })
         self._get_clip_instances(
-            asset_name, otio_timeline, clip_instance_properties)
+            otio_timeline, clip_instance_properties)
 
     def _create_otio_instance(self, subset_name, data, pre_create_data):
         # get path of sequence
@@ -181,18 +177,19 @@ or updating already created. Publishing will create OTIO file.
 
     def _get_clip_instances(
         self,
-        asset_name,
         otio_timeline,
         clip_instance_properties
     ):
-        parent_asset_name = clip_instance_properties["asset_name"]
+        family = "plate"
+
+        # get clip instance properties
+        parent_asset_name = clip_instance_properties["parent_asset_name"]
         handle_start = clip_instance_properties["handle_start"]
         handle_end = clip_instance_properties["handle_end"]
         timeline_offset = clip_instance_properties["timeline_offset"]
         workfile_start_frame = clip_instance_properties["workfile_start_frame"]
         fps = clip_instance_properties["fps"]
 
-        assets_shared = {}
         self.asset_name_check = []
 
         editorial_clip_creator = self.create_context.creators["editorialClip"]
@@ -221,7 +218,7 @@ or updating already created. Publishing will create OTIO file.
 
                 # basic unique asset name
                 clip_name = os.path.splitext(clip.name)[0].lower()
-                name = f"{asset_name.split('_')[0]}_{clip_name}"
+                name = f"{parent_asset_name.split('_')[0]}_{clip_name}"
 
                 # make sure the name is unique
                 self._validate_name_uniqueness(name)
@@ -251,14 +248,24 @@ or updating already created. Publishing will create OTIO file.
                 )
                 frame_end = frame_start + (clip_duration - 1)
 
+                # subset name
+                variant = self.variant
+                subset_name = "{}{}".format(
+                    family, variant.capitalize()
+                )
+
                 # create shared new instance data
                 instance_data = {
-                    "variant": "Main",
-                    "families": ["plate"],
+                    "variant": variant,
+                    "family": family,
+                    "families": ["clip"],
+                    "subset": subset_name,
 
-                    # shared attributes
+                    # HACK: just for temporal bug workaround
+                    # TODO: should loockup shot name for update
                     "asset": parent_asset_name,
                     "name": clip_name,
+                    # HACK: just for temporal bug workaround
                     "task": "Compositing",
 
                     # parent time properties
@@ -334,6 +341,13 @@ or updating already created. Publishing will create OTIO file.
                 label="Filepath",
             ),
             UILabelDef("Clip instance attributes"),
+            UISeparatorDef(),
+            # TODO: perhpas better would be timecode and fps input
+            NumberDef(
+                "timeline_offset",
+                default=900000,
+                label="Timeline offset"
+            ),
             UISeparatorDef()
         ]
         attr_defs.extend(CLIP_ATTR_DEFS)
