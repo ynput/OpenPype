@@ -9,7 +9,8 @@ from unreal import EditorLevelLibrary
 from unreal import EditorLevelUtils
 from unreal import AssetToolsHelpers
 from unreal import FBXImportType
-from unreal import MathLibrary as umath
+from unreal import MovieSceneLevelVisibilityTrack
+from unreal import MovieSceneSubTrack
 
 from bson.objectid import ObjectId
 
@@ -650,8 +651,8 @@ class LayoutLoader(plugin.Loader):
         EditorLevelLibrary.new_level(f"{asset_dir}/{asset}_map")
 
         if create_sequences:
-            # Create map for the shot, and create hierarchy of map. If the maps
-            # already exist, we will use them.
+            # Create map for the shot, and create hierarchy of map. If the
+            # maps already exist, we will use them.
             if hierarchy:
                 h_dir = hierarchy_dir_list[0]
                 h_asset = hierarchy[0]
@@ -861,13 +862,16 @@ class LayoutLoader(plugin.Loader):
             if not layouts:
                 EditorAssetLibrary.delete_directory(str(Path(asset).parent))
 
-                # Delete the parent folder if there aren't any more layouts in it.
+                # Delete the parent folder if there aren't any more
+                # layouts in it.
                 asset_content = EditorAssetLibrary.list_assets(
-                    str(Path(asset).parent.parent), recursive=False, include_folder=True
+                    str(Path(asset).parent.parent), recursive=False,
+                    include_folder=True
                 )
 
                 if len(asset_content) == 0:
-                    EditorAssetLibrary.delete_directory(str(Path(asset).parent.parent))
+                    EditorAssetLibrary.delete_directory(
+                        str(Path(asset).parent.parent))
 
         master_sequence = None
         master_level = None
@@ -875,8 +879,8 @@ class LayoutLoader(plugin.Loader):
 
         if create_sequences:
             # Remove the Level Sequence from the parent.
-            # We need to traverse the hierarchy from the master sequence to find
-            # the level sequence.
+            # We need to traverse the hierarchy from the master sequence to 
+            # find the level sequence.
             namespace = container.get('namespace').replace(f"{root}/", "")
             ms_asset = namespace.split('/')[0]
             ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -901,15 +905,16 @@ class LayoutLoader(plugin.Loader):
                 subscene_track = None
                 visibility_track = None
                 for t in tracks:
-                    if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+                    if t.get_class() == MovieSceneSubTrack.static_class():
                         subscene_track = t
                     if (t.get_class() ==
-                            unreal.MovieSceneLevelVisibilityTrack.static_class()):
+                            MovieSceneLevelVisibilityTrack.static_class()):
                         visibility_track = t
                 if subscene_track:
                     sections = subscene_track.get_sections()
                     for ss in sections:
-                        if ss.get_sequence().get_name() == container.get('asset'):
+                        if (ss.get_sequence().get_name() ==
+                                container.get('asset')):
                             parent = s
                             subscene_track.remove_section(ss)
                             break
