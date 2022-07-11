@@ -78,22 +78,24 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
             asset_name = "{}_{}".format(asset, name)
         else:
             asset_name = "{}".format(name)
+        version = context.get('version').get('name')
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
+            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
 
         container_name += suffix
 
-        unreal.EditorAssetLibrary.make_directory(asset_dir)
+        if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
+            unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-        task = self.get_task(self.fname, asset_dir, asset_name, False)
+            task = self.get_task(self.fname, asset_dir, asset_name, False)
 
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
+            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
-        # Create Asset Container
-        unreal_pipeline.create_container(
-            container=container_name, path=asset_dir)
+            # Create Asset Container
+            unreal_pipeline.create_container(
+                container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
