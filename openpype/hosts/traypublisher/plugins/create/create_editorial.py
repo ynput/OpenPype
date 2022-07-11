@@ -287,8 +287,6 @@ or updating already created. Publishing will create OTIO file.
                     # TODO: should loockup shot name for update
                     "asset": parent_asset_name,
                     "name": clip_name,
-                    # HACK: just for temporal bug workaround
-                    "task": "Compositing",
 
                     # parent time properties
                     "trackStartFrame": track_start_frame,
