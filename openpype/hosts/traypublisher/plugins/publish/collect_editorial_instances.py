@@ -1,18 +1,17 @@
 import os
+from pprint import pformat
 import pyblish.api
 
 
 class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
     """Collect data for instances created by settings creators."""
 
-    label = "Collect Settings Simple Instances"
+    label = "Collect Editorial Instances"
     order = pyblish.api.CollectorOrder - 0.49
 
     hosts = ["traypublisher"]
 
     def process(self, instance):
-        if not instance.data.get("ediorial_creator"):
-            return
 
         if "families" not in instance.data:
             instance.data["families"] = []
@@ -20,7 +19,9 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         if "representations" not in instance.data:
             instance.data["representations"] = []
         repres = instance.data["representations"]
-
+        self.log.debug(
+            pformat(dict(instance.data))
+        )
         creator_attributes = instance.data["creator_attributes"]
         filepath_item = creator_attributes["filepath"]
         self.log.info(filepath_item)

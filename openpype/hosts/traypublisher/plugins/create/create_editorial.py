@@ -72,16 +72,14 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
         subset_name = instance_data["subset"]
         family = instance_data["family"]
 
-        instance_name = "{}_{}".format(
-            instance_data["name"],
-            subset_name
-        )
-        return self._create_instance(instance_name, family, instance_data)
+        return self._create_instance(subset_name, family, instance_data)
 
     def _create_instance(self, subset_name, family, data):
 
         # Create new instance
         new_instance = CreatedInstance(family, subset_name, data, self)
+        self.log.info(f"instance_data: {pformat(new_instance.data)}")
+
         # Host implementation of storing metadata about instance
         HostContext.add_instance(new_instance.data_to_store())
         # Add instance to current context
@@ -271,13 +269,20 @@ or updating already created. Publishing will create OTIO file.
                 frame_end = frame_start + (clip_duration - 1)
 
                 # subset name
-                variant = self.variant
+                variant = self.get_variant()
+                self.log.info(
+                    f"__ variant: {variant}")
+
                 subset_name = "{}{}".format(
                     family, variant.capitalize()
                 )
-
+                label = "{}_{}".format(
+                    clip_name,
+                    subset_name
+                )
                 # create shared new instance data
                 instance_data = {
+                    "label": label,
                     "variant": variant,
                     "family": family,
                     "families": ["clip"],
