@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.12.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.1-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.0...HEAD)
 
@@ -14,31 +14,43 @@
 
 **🚀 Enhancements**
 
+- General: Creator Plugins have access to project [\#3476](https://github.com/pypeclub/OpenPype/pull/3476)
+- General: Better arguments order in creator init [\#3475](https://github.com/pypeclub/OpenPype/pull/3475)
+- Ftrack: Trigger custom ftrack events on project creation and preparation [\#3465](https://github.com/pypeclub/OpenPype/pull/3465)
 - Windows installer: Clean old files and add version subfolder [\#3445](https://github.com/pypeclub/OpenPype/pull/3445)
 - Blender: Bugfix - Set fps properly on open [\#3426](https://github.com/pypeclub/OpenPype/pull/3426)
+- Hiero: Add custom scripts menu [\#3425](https://github.com/pypeclub/OpenPype/pull/3425)
 - Blender: pre pyside install for all platforms [\#3400](https://github.com/pypeclub/OpenPype/pull/3400)
 - Maya: Ability to set resolution for playblasts from asset, and override through review instance. [\#3360](https://github.com/pypeclub/OpenPype/pull/3360)
 
 **🐛 Bug fixes**
 
+- General: thumbnail extractor fix [\#3474](https://github.com/pypeclub/OpenPype/pull/3474)
+- Kitsu: bugfix with sync-service ans publish plugins [\#3473](https://github.com/pypeclub/OpenPype/pull/3473)
+- Flame: solved problem with multi-selected loading [\#3470](https://github.com/pypeclub/OpenPype/pull/3470)
+- General: Fix query function in update logic [\#3468](https://github.com/pypeclub/OpenPype/pull/3468)
+- Resolve: removed few bugs [\#3464](https://github.com/pypeclub/OpenPype/pull/3464)
+- General: Delete old versions is safer when ftrack is disabled [\#3462](https://github.com/pypeclub/OpenPype/pull/3462)
+- Nuke: fixing metadata slate TC difference [\#3455](https://github.com/pypeclub/OpenPype/pull/3455)
 - Nuke: prerender reviewable fails [\#3450](https://github.com/pypeclub/OpenPype/pull/3450)
 - Maya: fix hashing in Python 3 for tile rendering [\#3447](https://github.com/pypeclub/OpenPype/pull/3447)
 - LogViewer: Escape html characters in log message [\#3443](https://github.com/pypeclub/OpenPype/pull/3443)
 - Nuke: Slate frame is integrated [\#3427](https://github.com/pypeclub/OpenPype/pull/3427)
 - Maya: Camera extra data - additional fix for \#3304 [\#3386](https://github.com/pypeclub/OpenPype/pull/3386)
-- Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
 - Maya: Handle excluding `model` family from frame range validator. [\#3370](https://github.com/pypeclub/OpenPype/pull/3370)
 
 **🔀 Refactored code**
 
+- Maya: Merge animation + pointcache extractor logic [\#3461](https://github.com/pypeclub/OpenPype/pull/3461)
 - Maya: Re-use `maintained\_time` from lib [\#3460](https://github.com/pypeclub/OpenPype/pull/3460)
+- General: Use query functions in global plugins [\#3459](https://github.com/pypeclub/OpenPype/pull/3459)
 - Clockify: Use query functions in clockify actions [\#3458](https://github.com/pypeclub/OpenPype/pull/3458)
 - General: Use query functions in rest api calls [\#3457](https://github.com/pypeclub/OpenPype/pull/3457)
 - General: Use query functions in load utils [\#3446](https://github.com/pypeclub/OpenPype/pull/3446)
 - General: Use Anatomy after move to pipeline [\#3436](https://github.com/pypeclub/OpenPype/pull/3436)
 - General: Anatomy moved to pipeline [\#3435](https://github.com/pypeclub/OpenPype/pull/3435)
+- Fusion: Use client query functions [\#3380](https://github.com/pypeclub/OpenPype/pull/3380)
 - Resolve: Use client query functions [\#3379](https://github.com/pypeclub/OpenPype/pull/3379)
-- General: Host implementation defined with class [\#3337](https://github.com/pypeclub/OpenPype/pull/3337)
 
 ## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
@@ -53,6 +65,7 @@
 
 - Webserver: Added CORS middleware [\#3422](https://github.com/pypeclub/OpenPype/pull/3422)
 - Attribute Defs UI: Files widget show what is allowed to drop in [\#3411](https://github.com/pypeclub/OpenPype/pull/3411)
+- General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
 - Hosts: More options for in-host callbacks [\#3357](https://github.com/pypeclub/OpenPype/pull/3357)
 - Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
 
@@ -68,8 +81,8 @@
 - TVPaint: Make sure exit code is set to not None [\#3382](https://github.com/pypeclub/OpenPype/pull/3382)
 - Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
 - Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
+- Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
 - Standalone: settings improvements [\#3355](https://github.com/pypeclub/OpenPype/pull/3355)
-- Nuke: Load full model hierarchy by default [\#3328](https://github.com/pypeclub/OpenPype/pull/3328)
 
 **🔀 Refactored code**
 
@@ -77,16 +90,13 @@
 - General: Move editorial lib to pipeline [\#3419](https://github.com/pypeclub/OpenPype/pull/3419)
 - Kitsu: renaming to plural func sync\_all\_projects [\#3397](https://github.com/pypeclub/OpenPype/pull/3397)
 - Houdini: Use client query functions [\#3395](https://github.com/pypeclub/OpenPype/pull/3395)
+- Hiero: Use client query functions [\#3393](https://github.com/pypeclub/OpenPype/pull/3393)
 - Nuke: Use client query functions [\#3391](https://github.com/pypeclub/OpenPype/pull/3391)
 - Maya: Use client query functions [\#3385](https://github.com/pypeclub/OpenPype/pull/3385)
-- Fusion: Use client query functions [\#3380](https://github.com/pypeclub/OpenPype/pull/3380)
 - Harmony: Use client query functions [\#3378](https://github.com/pypeclub/OpenPype/pull/3378)
 - Celaction: Use client query functions [\#3376](https://github.com/pypeclub/OpenPype/pull/3376)
 - Photoshop: Use client query functions [\#3375](https://github.com/pypeclub/OpenPype/pull/3375)
 - AfterEffects: Use client query functions [\#3374](https://github.com/pypeclub/OpenPype/pull/3374)
-- TVPaint: Use client query functions [\#3340](https://github.com/pypeclub/OpenPype/pull/3340)
-- Ftrack: Use client query functions [\#3339](https://github.com/pypeclub/OpenPype/pull/3339)
-- Standalone Publisher: Use client query functions [\#3330](https://github.com/pypeclub/OpenPype/pull/3330)
 
 **Merged pull requests:**
 
@@ -105,7 +115,6 @@
 **🚀 Enhancements**
 
 - Pyblish Pype: Hiding/Close issues [\#3367](https://github.com/pypeclub/OpenPype/pull/3367)
-- General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
 - Ftrack: Removed requirement of pypeclub role from default settings [\#3354](https://github.com/pypeclub/OpenPype/pull/3354)
 - Kitsu: Prevent crash on missing frames information [\#3352](https://github.com/pypeclub/OpenPype/pull/3352)
 
@@ -120,28 +129,14 @@
 - General: Create only one thumbnail per instance [\#3351](https://github.com/pypeclub/OpenPype/pull/3351)
 - nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
 - General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
-- Deadline: added OPENPYPE\_MONGO to filter [\#3336](https://github.com/pypeclub/OpenPype/pull/3336)
-
-**🔀 Refactored code**
-
-- Webpublisher: Use client query functions [\#3333](https://github.com/pypeclub/OpenPype/pull/3333)
 
 ## [3.11.0](https://github.com/pypeclub/OpenPype/tree/3.11.0) (2022-06-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.11.0-nightly.4...3.11.0)
 
-**🚀 Enhancements**
-
-- Settings: Settings can be extracted from UI [\#3323](https://github.com/pypeclub/OpenPype/pull/3323)
-
 **🐛 Bug fixes**
 
 - General: Handle empty source key on instance [\#3342](https://github.com/pypeclub/OpenPype/pull/3342)
-- Houdini: Fix Houdini VDB manage update wrong file attribute name [\#3322](https://github.com/pypeclub/OpenPype/pull/3322)
-
-**🔀 Refactored code**
-
-- Blender: Use client query functions [\#3331](https://github.com/pypeclub/OpenPype/pull/3331)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 

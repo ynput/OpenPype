@@ -97,6 +97,21 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
+def get_whole_project(project_name):
+    """Receive all documents from project.
+
+    Helper that can be used to get all document from whole project. For example
+    for backups etc.
+
+    Returns:
+        Cursor: Query cursor as iterable which returns all documents from
+            project collection.
+    """
+
+    conn = _get_project_connection(project_name)
+    return conn.find({})
+
+
 def get_asset_by_id(project_name, asset_id, fields=None):
     """Receive asset data by it's id.
 
@@ -1288,6 +1303,37 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     if not thumbnail_id:
         return None
     query_filter = {"type": "thumbnail", "_id": _convert_id(thumbnail_id)}
+    conn = _get_project_connection(project_name)
+    return conn.find_one(query_filter, _prepare_fields(fields))
+
+
+def get_workfile_info(
+    project_name, asset_id, task_name, filename, fields=None
+):
+    """Document with workfile information.
+
+    Warning:
+        Query is based on filename and context which does not meant it will
+        find always right and expected result. Information have limited usage
+        and is not recommended to use it as source information about workfile.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        asset_id (str|ObjectId): Id of asset entity.
+        task_name (str): Task name on asset.
+        fields (list[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+    """
+
+    if not asset_id or not task_name or not filename:
+        return None
+
+    query_filter = {
+        "type": "workfile",
+        "parent": _convert_id(asset_id),
+        "task_name": task_name,
+        "filename": filename
+    }
     conn = _get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 

@@ -319,14 +319,13 @@ def get_current_timeline_items(
     selected_track_count = timeline.GetTrackCount(track_type)
 
     # loop all tracks and get items
-    _clips = dict()
+    _clips = {}
     for track_index in range(1, (int(selected_track_count) + 1)):
         _track_name = timeline.GetTrackName(track_type, track_index)
 
         # filter out all unmathed track names
-        if track_name:
-            if _track_name not in track_name:
-                continue
+        if track_name and _track_name not in track_name:
+            continue
 
         timeline_items = timeline.GetItemListInTrack(
             track_type, track_index)
@@ -348,12 +347,8 @@ def get_current_timeline_items(
                 "index": clip_index
             }
             ti_color = ti.GetClipColor()
-            if filter is True:
-                if selecting_color in ti_color:
-                    selected_clips.append(data)
-            else:
+            if filter and selecting_color in ti_color or not filter:
                 selected_clips.append(data)
-
     return selected_clips
 
 
