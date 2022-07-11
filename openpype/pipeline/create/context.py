@@ -497,6 +497,13 @@ class CreatedInstance:
         return self._data["subset"]
 
     @property
+    def label(self):
+        label = self._data.get("label")
+        if not label:
+            label = self.subset_name
+        return label
+
+    @property
     def creator_identifier(self):
         return self.creator.identifier
 
