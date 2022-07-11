@@ -879,7 +879,7 @@ class LayoutLoader(plugin.Loader):
 
         if create_sequences:
             # Remove the Level Sequence from the parent.
-            # We need to traverse the hierarchy from the master sequence to 
+            # We need to traverse the hierarchy from the master sequence to
             # find the level sequence.
             namespace = container.get('namespace').replace(f"{root}/", "")
             ms_asset = namespace.split('/')[0]
