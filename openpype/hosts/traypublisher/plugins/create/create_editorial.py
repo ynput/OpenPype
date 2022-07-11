@@ -160,7 +160,10 @@ or updating already created. Publishing will create OTIO file.
             "parent_asset_name": asset_name
         })
         self._get_clip_instances(
-            otio_timeline, clip_instance_properties)
+            otio_timeline,
+            clip_instance_properties,
+            variant=instance_data["variant"]
+        )
 
     def _create_otio_instance(self, subset_name, data, pre_create_data):
         # get path of sequence
@@ -198,7 +201,8 @@ or updating already created. Publishing will create OTIO file.
     def _get_clip_instances(
         self,
         otio_timeline,
-        clip_instance_properties
+        clip_instance_properties,
+        variant
     ):
         family = "plate"
 
@@ -251,6 +255,7 @@ or updating already created. Publishing will create OTIO file.
                 self.log.info(f"clip_in: {clip_in} | clip_out: {clip_out}")
 
                 # add offset in case there is any
+                self.log.debug(f"__ timeline_offset: {timeline_offset}")
                 if timeline_offset:
                     clip_in += timeline_offset
                     clip_out += timeline_offset
@@ -269,7 +274,6 @@ or updating already created. Publishing will create OTIO file.
                 frame_end = frame_start + (clip_duration - 1)
 
                 # subset name
-                variant = self.get_variant()
                 self.log.info(
                     f"__ variant: {variant}")
 
@@ -292,6 +296,7 @@ or updating already created. Publishing will create OTIO file.
                     # TODO: should loockup shot name for update
                     "asset": parent_asset_name,
                     "name": clip_name,
+                    "task": "",
 
                     # parent time properties
                     "trackStartFrame": track_start_frame,
@@ -370,7 +375,7 @@ or updating already created. Publishing will create OTIO file.
             # TODO: perhpas better would be timecode and fps input
             NumberDef(
                 "timeline_offset",
-                default=900000,
+                default=0,
                 label="Timeline offset"
             ),
             UISeparatorDef()
