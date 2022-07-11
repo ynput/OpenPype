@@ -303,13 +303,14 @@ class InstanceCardWidget(CardWidget):
         self._last_variant = variant
         self._last_subset_name = subset_name
         # Make `variant` bold
-        found_parts = set(re.findall(variant, subset_name, re.IGNORECASE))
+        label = self.instance.label
+        found_parts = set(re.findall(variant, label, re.IGNORECASE))
         if found_parts:
             for part in found_parts:
                 replacement = "<b>{}</b>".format(part)
-                subset_name = subset_name.replace(part, replacement)
+                label = label.replace(part, replacement)
 
-        self._label_widget.setText(subset_name)
+        self._label_widget.setText(label)
         # HTML text will cause that label start catch mouse clicks
         # - disabling with changing interaction flag
         self._label_widget.setTextInteractionFlags(

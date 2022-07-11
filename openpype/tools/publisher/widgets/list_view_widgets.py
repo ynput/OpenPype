@@ -113,7 +113,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance = instance
 
-        subset_name_label = QtWidgets.QLabel(instance["subset"], self)
+        subset_name_label = QtWidgets.QLabel(instance.label, self)
         subset_name_label.setObjectName("ListViewSubsetName")
 
         active_checkbox = NiceCheckbox(parent=self)
