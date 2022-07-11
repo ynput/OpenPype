@@ -78,6 +78,77 @@
                     }
                 ]
             }
+        },
+         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "BatchMovCreator",
+            "label": "Batch Mov Creator",
+            "use_label_wrap": true,
+            "collapsible_key": true,
+            "children": [
+                {
+                    "type": "text",
+                    "key": "family",
+                    "label": "Family"
+                },
+                {
+                    "type": "text",
+                    "key": "identifier",
+                    "label": "Identifier",
+                    "placeholder": "< Use 'Family' >",
+                    "tooltip": "All creators must have unique identifier.\nBy default is used 'family' but if you need to have more creators with same families\nyou have to set identifier too."
+                },
+                {
+                    "type": "text",
+                    "key": "label",
+                    "label": "Label"
+                },
+                {
+                    "type": "text",
+                    "key": "icon",
+                    "label": "Icon"
+                },
+                {
+                    "type": "list",
+                    "key": "default_variants",
+                    "label": "Default variants",
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "text",
+                    "key": "description",
+                    "label": "Description"
+                },
+                {
+                    "type": "text",
+                    "key": "detailed_description",
+                    "label": "Detailed Description",
+                    "multiline": true
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "text",
+                    "key": "default_tasks",
+                    "label": "Default task"
+                },
+                {
+                    "type": "list",
+                    "key": "extensions",
+                    "label": "Extensions",
+                    "use_label_wrap": true,
+                    "collapsible_key": true,
+                    "collapsed": false,
+                    "object_type": "text"
+                }
+            ]
         }
     ]
 }
