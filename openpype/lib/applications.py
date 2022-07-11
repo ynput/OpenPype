@@ -665,7 +665,11 @@ class ApplicationExecutable:
             if os.path.exists(plist_filepath):
                 import plistlib
 
-                parsed_plist = plistlib.readPlist(plist_filepath)
+                if hasattr(plistlib, "load"):
+                    with open(plist_filepath, "rb") as stream:
+                        parsed_plist = plistlib.load(stream)
+                else:
+                    parsed_plist = plistlib.readPlist(plist_filepath)
                 executable_filename = parsed_plist.get("CFBundleExecutable")
 
             if executable_filename:
