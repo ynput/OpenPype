@@ -15,17 +15,6 @@ class LayoutMaintainer(plugin.ContainerMaintainer):
     """Overloaded ContainerMaintainer to maintain only needed properties
     for layout container."""
 
-    maintained_parameters = [
-        "parent",
-        "transforms",
-        "modifiers",
-        "constraints",
-        "targets",
-        "drivers",
-        "actions",
-        "animation_instances",
-    ]
-
     @contextmanager
     def maintained_animation_instances(self, objects):
         """Maintain animation container content during context."""
@@ -88,7 +77,17 @@ class BlendLayoutLoader(plugin.AssetLoader):
     color = "orange"
     color_tag = "COLOR_02"
 
-    update_mainterner = LayoutMaintainer
+    update_maintainer = LayoutMaintainer
+    maintained_parameters = [
+        "parent",
+        "transforms",
+        "modifiers",
+        "constraints",
+        "targets",
+        "drivers",
+        "actions",
+        "animation_instances",
+    ]
 
     def _get_rig_assets(self, asset_group):
         return [
