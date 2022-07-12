@@ -452,10 +452,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # Calculate first frame that should be used
             cols, _ = clique.assemble(repre["files"])
             input_frames = list(sorted(cols[0].indexes))
+            first_sequence_frame = input_frames[0]
             # WARNING: This is an issue as we don't know if first frame
             #   is with or without handles!
-            # - in theory we should add handle start but how do we know we can?
-            first_sequence_frame = input_frames[0]
+            # - handle start is added but how do not know if we should
+            output_duration = (output_frame_end - output_frame_start) + 1
+            if (
+                without_handles
+                and len(input_frames) - handle_start >= output_duration
+            ):
+                first_sequence_frame += handle_start
 
             ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
             if ext in self.alpha_exts:
