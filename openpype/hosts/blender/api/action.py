@@ -2,11 +2,10 @@ import bpy
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io, update_container
+from openpype.pipeline import update_container, discover_inventory_actions
 from openpype.pipeline.publish import get_errored_instances_from_context
 
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-from openpype.hosts.blender.api.plugin import ContainerMaintainer
+from .pipeline import AVALON_PROPERTY
 
 
 def _get_invalid_nodes(context, plugin):
@@ -38,6 +37,7 @@ class SelectInvalidAction(pyblish.api.Action):
             self.log.warning(
                 "Failed plug-in doesn't have any selectable objects."
             )
+            return
 
         # Get selectable objects from invalid nodes.
         objects = set()
@@ -70,9 +70,12 @@ class UpdateContainer(pyblish.api.Action):
     def process(self, context, plugin):
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes...")
+        update_actions = [
+            (action, set())
+            for action in discover_inventory_actions()
+            if action.__name__.startswith("Update")
+        ]
         invalid_nodes = set(_get_invalid_nodes(context, plugin))
-
-        current_task = legacy_io.Session.get("AVALON_TASK")
 
         out_to_date_collections = set()
         for node in invalid_nodes:
@@ -81,11 +84,15 @@ class UpdateContainer(pyblish.api.Action):
 
         for collection in out_to_date_collections:
             self.log.info(f"Updating {collection.name}..")
-            with ContainerMaintainer(collection) as maintainer:
-                if current_task == "Rigging":
-                    maintainer.enter_context(
-                        maintainer.maintained_local_data(
-                            collection, ["VGROUP_WEIGHTS"]
-                        )
-                    )
-                update_container(collection[AVALON_PROPERTY], -1)
+            container = collection.get(AVALON_PROPERTY)
+
+            for action, containers in update_actions:
+                if action.is_compatible(container):
+                    containers.add(container)
+                    break
+            else:
+                update_container(container, -1)
+
+        for action, containers in update_actions:
+            if containers:
+                action().process(containers)
