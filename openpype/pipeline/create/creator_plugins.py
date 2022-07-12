@@ -103,17 +103,34 @@ class BaseCreator:
         return self.create_context.project_name
 
     def get_group_label(self):
+        """Group label under which are instances grouped in UI.
+
+        Default implementation use attributes in this order:
+            - 'group_label' -> 'label' -> 'identifier'
+                Keep in mind that 'identifier' use 'family' by default.
+
+        Returns:
+            str: Group label that can be used for grouping of instances in UI.
+                Group label can be overriden by instance itself.
+        """
+
         if self._group_label is None:
+            label = self.identifier
             if self.group_label:
-                self._group_label = self.group_label
+                label = self.group_label
             elif self.label:
-                self._group_label = self.label
-            else:
-                self._group_label = self.identifier
+                label = self.label
+            self._group_label = label
         return self._group_label
 
     @property
     def log(self):
+        """Logger of the plugin.
+
+        Returns:
+            logging.Logger: Logger with name of the plugin.
+        """
+
         if self._log is None:
             from openpype.api import Logger
 
@@ -121,10 +138,30 @@ class BaseCreator:
         return self._log
 
     def _add_instance_to_context(self, instance):
-        """Helper method to ad d"""
+        """Helper method to add instance to create context.
+
+        Instances should be stored to DCC workfile metadata to be able reload
+        them and also stored to CreateContext in which is creator plugin
+        existing at the moment to be able use it without refresh of
+        CreateContext.
+
+        Args:
+            instance (CreatedInstance): New created instance.
+        """
+
         self.create_context.creator_adds_instance(instance)
 
     def _remove_instance_from_context(self, instance):
+        """Helper method to remove instance from create context.
+
+        Instances must be removed from DCC workfile metadat aand from create
+        context in which plugin is existing at the moment of removement to
+        propagate the change without restarting create context.
+
+        Args:
+            instance (CreatedInstance): Instance which should be removed.
+        """
+
         self.create_context.creator_removed_instance(instance)
 
     @abstractmethod
