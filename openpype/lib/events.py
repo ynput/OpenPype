@@ -180,7 +180,10 @@ class Event(object):
         topic (str): Identifier of event.
         data (Any): Data specific for event. Dictionary is recommended.
         source (str): Identifier of source.
+        event_system (EventSystem): Event system in which can be event
+            triggered.
     """
+
     _data = {}
 
     def __init__(self, topic, data=None, source=None, event_system=None):
@@ -269,9 +272,8 @@ class GlobalEventSystem:
 
     @classmethod
     def emit(cls, topic, data, source):
-        event = Event(topic, data, source, cls.get_global_event_system())
-        event.emit()
-        return event
+        event_system = cls.get_global_event_system()
+        return event_system.emit(topic, data, source)
 
 
 def register_event_callback(topic, callback):
