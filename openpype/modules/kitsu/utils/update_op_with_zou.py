@@ -39,7 +39,7 @@ def create_op_asset(gazu_entity: dict) -> dict:
     }
 
 
-def get_kitsu_project_name(project_id: str):
+def get_kitsu_project_name(project_id: str)->str:
     """Get project name based on project id in kitsu.
 
     Args:
