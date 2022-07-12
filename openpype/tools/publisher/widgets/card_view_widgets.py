@@ -436,7 +436,7 @@ class InstanceCardView(AbstractInstanceView):
         instances_by_group = collections.defaultdict(list)
         identifiers_by_group = collections.defaultdict(set)
         for instance in self.controller.instances:
-            group_name = instance.creator_label
+            group_name = instance.group_label
             instances_by_group[group_name].append(instance)
             identifiers_by_group[group_name].add(
                 instance.creator_identifier
