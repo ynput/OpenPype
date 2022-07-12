@@ -6,24 +6,20 @@ from openpype.tools.utils import RecursiveSortFilterProxyModel
 UNIQUE_ID_ROLE = QtCore.Qt.UserRole + 1
 
 
-class ContainersWidget(QtWidgets.QWidget):
+class ContainersWidget(QtWidgets.QTreeView):
     def __init__(self, controller, parent):
         super(ContainersWidget, self).__init__(parent)
 
-        containers_view = QtWidgets.QTreeView(self)
+        self.setHeaderHidden(True)
+
         containers_model = QtGui.QStandardItemModel()
         proxy_model = RecursiveSortFilterProxyModel()
         proxy_model.setSourceModel(containers_model)
         proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        containers_view.setModel(proxy_model)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(containers_view, 1)
+        self.setModel(proxy_model)
 
         self._controller = controller
 
-        self._containers_view = containers_view
         self._containers_model = containers_model
         self._proxy_model = proxy_model
 
