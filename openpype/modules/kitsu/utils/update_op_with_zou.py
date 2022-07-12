@@ -179,14 +179,32 @@ def update_op_assets(
         )
         if visual_parent_doc_id is None:
             # Find root folder doc
-            root_folder_doc = dbcon.find_one(
-                {
-                    "type": "asset",
-                    "name": entity_parent_folders[-1],
-                    "data.root_of": substitute_item_type,
-                },
-                ["_id"],
+            root_folder_docs = get_assets(
+                project_name,
+                asset_name=[entity_parent_folders[-1]],
+                fields=["_id", "data.root_of"]
             )
+            # NOTE: Not sure why it's checking for entity type?
+            #   OP3 does not support multiple assets with same names so type
+            #       filtering is irelevant.
+            # This way mimics previous implementation:
+            # ```
+            # root_folder_doc = dbcon.find_one(
+            #     {
+            #         "type": "asset",
+            #         "name": entity_parent_folders[-1],
+            #         "data.root_of": substitute_item_type,
+            #     },
+            #     ["_id"],
+            # )
+            # ```
+            root_folder_doc = None
+            for folder_doc in root_folder_docs:
+                root_of = folder_doc.get("data", {}).get("root_of")
+                if root_of == substitute_item_type:
+                    root_folder_doc = folder_doc
+                    break
+
             if root_folder_doc:
                 visual_parent_doc_id = root_folder_doc["_id"]
 
@@ -354,9 +372,26 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         parent_folders = root.split("/")
         direct_parent_doc = None
         for i, folder in enumerate(parent_folders, 1):
-            parent_doc = dbcon.find_one(
-                {"type": "asset", "name": folder, "data.root_of": entity_type}
+            parent_doc = get_asset_by_name(
+                project_name, folder, fields=["_id", "data.root_of"]
             )
+            # NOTE: Not sure why it's checking for entity type?
+            #   OP3 does not support multiple assets with same names so type
+            #       filtering is irelevant.
+            #   Also all of the entities could find be queried at once using
+            #       'get_assets'.
+            # This way mimics previous implementation:
+            # ```
+            # parent_doc = dbcon.find_one(
+            #   {"type": "asset", "name": folder, "data.root_of": entity_type}
+            # )
+            # ```
+            if (
+                parent_doc
+                and parent_doc.get("data", {}).get("root_of") != entity_type
+            ):
+                parent_doc = None
+
             if not parent_doc:
                 direct_parent_doc = dbcon.insert_one(
                     {
