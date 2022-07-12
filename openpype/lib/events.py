@@ -229,23 +229,74 @@ class Event(object):
 
 
 class EventSystem(object):
+    """Encapsulate event handling into an object.
+
+    System wraps registered callbacks and triggered events into single object
+    so it is possible to create mutltiple independent systems that have their
+    topics and callbacks.
+
+
+    """
+
     def __init__(self):
         self._registered_callbacks = []
 
     def add_callback(self, topic, callback):
+        """Register callback in event system.
+
+        Args:
+            topic (str): Topic for EventCallback.
+            callback (Callable): Function or method that will be called
+                when topic is triggered.
+
+        Returns:
+            EventCallback: Created callback object which can be used to
+                stop listening.
+        """
+
         callback = EventCallback(topic, callback)
         self._registered_callbacks.append(callback)
         return callback
 
     def create_event(self, topic, data, source):
+        """Create new event which is bound to event system.
+
+        Args:
+            topic (str): Event topic.
+            data (dict): Data related to event.
+            source (str): Source of event.
+
+        Returns:
+            Event: Object of event.
+        """
+
         return Event(topic, data, source, self)
 
     def emit(self, topic, data, source):
+        """Create event based on passed data and emit it.
+
+        This is easiest way how to trigger event in an event system.
+
+        Args:
+            topic (str): Event topic.
+            data (dict): Data related to event.
+            source (str): Source of event.
+
+        Returns:
+            Event: Created and emitted event.
+        """
+
         event = self.create_event(topic, data, source)
         event.emit()
         return event
 
     def emit_event(self, event):
+        """Emit event object.
+
+        Args:
+            event (Event): Prepared event with topic and data.
+        """
+
         invalid_callbacks = []
         for callback in self._registered_callbacks:
             callback.process_event(event)
@@ -257,6 +308,12 @@ class EventSystem(object):
 
 
 class GlobalEventSystem:
+    """Event system living in global scope of process.
+
+    This is primarily used in host implementation to trigger events
+    related to DCC changes or changes of context in the host implementation.
+    """
+
     _global_event_system = None
 
     @classmethod
