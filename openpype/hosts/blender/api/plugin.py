@@ -503,6 +503,29 @@ def orphans_purge():
             bpy.data.libraries.remove(library)
 
 
+def make_local(obj, data_local=True):
+    """Make local for the given linked object."""
+    if obj.override_library:
+        # NOTE : obj.make_local() don't do the job.
+        # obj.make_local(clear_proxy=True) is deprecated and don't
+        # work with override_library.
+        # And obj.override_library.destroy() with obj.make_local() we lost
+        # all the overrided properties.
+        obj_name = obj.name
+        deselect_all()
+        obj.select_set(True)
+        bpy.ops.object.make_local(
+            create_blender_context(active=obj, selected=obj),
+            type="SELECT_OBDATA" if data_local else "SELECT_OBJECT",
+        )
+        obj = bpy.context.scene.objects.get(obj_name)
+    elif obj.library:
+        obj = obj.make_local()
+        if data_local:
+            obj.data.make_local()
+    return obj
+
+
 class ContainerMaintainer(ExitStack):
     """ContextManager to maintain all important properties
     when updating container.
@@ -522,25 +545,32 @@ class ContainerMaintainer(ExitStack):
     ]
 
     def __init__(
-        self, container: Union[bpy.types.Collection, bpy.types.Object]
+        self,
+        container: Union[bpy.types.Collection, bpy.types.Object],
+        parameters: Optional[List] = None
     ):
         super().__init__()
         self.container = container
         self.container_objects = set(get_container_objects(self.container))
+        if parameters is not None:
+            self.maintained_parameters = parameters
 
     def __enter__(self):
-        for parameter_name in self.maintained_parameters:
-            maintainer = getattr(self, f"maintained_{parameter_name}", None)
+        for parameter in self.maintained_parameters:
+            options = {}
+            if isinstance(parameter, (list, tuple)):
+                parameter, options = parameter
+            maintainer = getattr(self, f"maintained_{parameter}", None)
             if maintainer:
-                self.enter_context(maintainer(self.container_objects))
+                self.enter_context(maintainer(**options))
 
     @contextmanager
-    def maintained_parent(self, objects):
+    def maintained_parent(self):
         """Maintain parent during context."""
-        scene_objects = set(bpy.context.scene.objects) - objects
+        scene_objects = set(bpy.context.scene.objects) - self.container_objects
         objects_parents = dict()
         for obj in scene_objects:
-            if obj.parent in objects:
+            if obj.parent in self.container_objects:
                 objects_parents[obj.name] = {
                     "name": obj.parent.name,
                     "type": obj.parent_type,
@@ -548,7 +578,7 @@ class ContainerMaintainer(ExitStack):
                     "vertices": list(obj.parent_vertices),
                     "matrix_inverse": obj.matrix_parent_inverse.copy(),
                 }
-        for obj in objects:
+        for obj in self.container_objects:
             if obj.parent in scene_objects:
                 objects_parents[obj.name] = {
                     "name": obj.parent.name,
@@ -572,12 +602,12 @@ class ContainerMaintainer(ExitStack):
                     obj.matrix_parent_inverse = parent_data["matrix_inverse"]
 
     @contextmanager
-    def maintained_transforms(self, objects):
+    def maintained_transforms(self):
         """Maintain transforms during context."""
         # Store transforms for all objects in container.
         objects_transforms = {
             obj.name: obj.matrix_basis.copy()
-            for obj in objects
+            for obj in self.container_objects
         }
         # Store transforms for all bones from armatures in container.
         bones_transforms = {
@@ -585,7 +615,7 @@ class ContainerMaintainer(ExitStack):
                 bone.name: bone.matrix_basis.copy()
                 for bone in obj.pose.bones
             }
-            for obj in objects
+            for obj in self.container_objects
             if obj.type == "ARMATURE"
         }
         try:
@@ -604,11 +634,11 @@ class ContainerMaintainer(ExitStack):
                             )
 
     @contextmanager
-    def maintained_modifiers(self, objects):
+    def maintained_modifiers(self):
         """Maintain modifiers during context."""
         objects_modifiers = [
             [ModifierDescriptor(modifier) for modifier in obj.modifiers]
-            for obj in objects
+            for obj in self.container_objects
         ]
         try:
             yield
@@ -630,11 +660,11 @@ class ContainerMaintainer(ExitStack):
                         modifier.reorder()
 
     @contextmanager
-    def maintained_constraints(self, objects):
+    def maintained_constraints(self):
         """Maintain constraints during context."""
         objects_constraints = []
         armature_constraints = []
-        for obj in objects:
+        for obj in self.container_objects:
             objects_constraints.append(
                 [
                     ConstraintDescriptor(constraint)
@@ -664,9 +694,10 @@ class ContainerMaintainer(ExitStack):
                         constraint.restor(bone_name=bone_name)
 
     @contextmanager
-    def maintained_targets(self, objects):
+    def maintained_targets(self):
         """Maintain constraints during context."""
-        scene_objects = set(bpy.context.scene.objects) - set(objects)
+        objects = self.container_objects
+        scene_objects = set(bpy.context.scene.objects) - objects
         stored_targets = []
         for obj in scene_objects:
             # store constraints targets from object
@@ -692,7 +723,7 @@ class ContainerMaintainer(ExitStack):
                     ]
             # store texture mesh target from mesh object
             if obj.type == "MESH":
-                if obj.data.texture_mesh in objects:
+                if obj.data.texture_mesh in self.container_objects:
                     stored_targets.append(
                         (obj.data, obj.data.texture_mesh.name, "texture_mesh")
                     )
@@ -701,7 +732,7 @@ class ContainerMaintainer(ExitStack):
                 for driver in obj.animation_data.drivers:
                     for var in driver.driver.variables:
                         for target in var.targets:
-                            if target.id in objects:
+                            if target.id in self.container_objects:
                                 stored_targets.append(
                                     target, target.id.name, "id"
                                 )
@@ -715,11 +746,11 @@ class ContainerMaintainer(ExitStack):
                     setattr(entity, attr_name, target)
 
     @contextmanager
-    def maintained_drivers(self, objects):
+    def maintained_drivers(self):
         """Maintain drivers during context."""
         objects_drivers = {}
         objects_copies = []
-        for obj in objects:
+        for obj in self.container_objects:
             if obj.animation_data and len(obj.animation_data.drivers):
                 obj_copy = obj.copy()
                 obj_copy.name = f"{obj_copy.name}.copy"
@@ -747,11 +778,11 @@ class ContainerMaintainer(ExitStack):
                 bpy.data.objects.remove(obj_copy)
 
     @contextmanager
-    def maintained_actions(self, objects):
+    def maintained_actions(self):
         """Maintain action during context."""
         actions = {}
         # Store actions from objects.
-        for obj in objects:
+        for obj in self.container_objects:
             if obj.animation_data and obj.animation_data.action:
                 actions[obj.name] = obj.animation_data.action
                 obj.animation_data.action.use_fake_user = True
@@ -770,11 +801,11 @@ class ContainerMaintainer(ExitStack):
                 action.use_fake_user = False
 
     @contextmanager
-    def maintained_local_data(self, objects, data_types):
+    def maintained_local_data(self, data_types=None):
         """Maintain local data during context."""
         local_data = {}
         # Store local data from mesh objects.
-        for obj in objects:
+        for obj in self.container_objects:
             if (
                 obj.type == "MESH"
                 and not obj.data.library
@@ -793,16 +824,8 @@ class ContainerMaintainer(ExitStack):
                 obj = bpy.context.scene.objects.get(obj_name)
                 if obj and obj.type == "MESH":
 
-                    if obj.override_library:
-                        if hasattr(obj.override_library, "destroy"):
-                            obj.override_library.destroy()
-                        else:
-                            ref = obj.override_library.reference
-                            obj.user_remap(ref)
-                        obj = bpy.context.scene.objects.get(obj_name)
-                    if obj.library:
-                        obj = obj.make_local()
-                        obj.data.make_local()
+                    if obj.override_library or obj.library:
+                        obj = make_local(obj)
 
                     tmp = bpy.data.objects.new("tmp", data)
                     link_to_collection(tmp, bpy.context.scene.collection)
@@ -828,14 +851,15 @@ class ContainerMaintainer(ExitStack):
                             "poly_mapping": "NEAREST",
                         }
 
-                    for data_type in data_types:
-                        bpy.ops.object.data_transfer(
-                            context,
-                            data_type=data_type,
-                            layers_select_src="ALL",
-                            layers_select_dst="NAME",
-                            **mapping
-                        )
+                    if data_types:
+                        for data_type in data_types:
+                            bpy.ops.object.data_transfer(
+                                context,
+                                data_type=data_type,
+                                layers_select_src="ALL",
+                                layers_select_dst="NAME",
+                                **mapping
+                            )
 
                     bpy.data.objects.remove(tmp)
                     deselect_all()
@@ -900,10 +924,11 @@ class Creator(LegacyCreator):
 
         return container
 
-    def process(self):
+    def process(self) -> MainThreadItem:
         """Run the creator on Blender main thread."""
         mti = MainThreadItem(self._process)
         execute_in_main_thread(mti)
+        return mti
 
 
 class Loader(LoaderPlugin):
@@ -923,7 +948,16 @@ class AssetLoader(LoaderPlugin):
     it's different for different types (e.g. model, rig, animation,
     etc.).
     """
-    update_mainterner = ContainerMaintainer
+    update_maintainer = ContainerMaintainer
+    maintained_parameters = [
+        "parent",
+        "transforms",
+        "modifiers",
+        "constraints",
+        "targets",
+        "drivers",
+        "actions",
+    ]
 
     def _get_container_from_collections(
         self, collections: List, famillies: Optional[List] = None
@@ -1142,10 +1176,11 @@ class AssetLoader(LoaderPlugin):
         name: Optional[str] = None,
         namespace: Optional[str] = None,
         options: Optional[Dict] = None
-    ) -> Optional[bpy.types.Collection]:
+    ) -> MainThreadItem:
         """Run the loader on Blender main thread"""
         mti = MainThreadItem(self._load, context, name, namespace, options)
         execute_in_main_thread(mti)
+        return mti
 
     def _load(
         self,
@@ -1324,7 +1359,7 @@ class AssetLoader(LoaderPlugin):
             return
 
         # Update the asset group with maintained contexts.
-        with self.update_mainterner(asset_group):
+        with self.update_maintainer(asset_group, self.maintained_parameters):
 
             remove_container(asset_group, content_only=True)
 
@@ -1390,19 +1425,21 @@ class AssetLoader(LoaderPlugin):
         """Update the loaded asset"""
         self._update_process(container, representation)
 
-    def update(self, container: Dict, representation: Dict):
+    def update(self, container: Dict, representation: Dict) -> MainThreadItem:
         """Run the update on Blender main thread"""
         mti = MainThreadItem(self.exec_update, container, representation)
         execute_in_main_thread(mti)
+        return mti
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove the existing container from Blender scene"""
         return self._remove_container(container)
 
-    def remove(self, container: Dict) -> bool:
+    def remove(self, container: Dict) -> MainThreadItem:
         """Run the remove on Blender main thread"""
         mti = MainThreadItem(self.exec_remove, container)
         execute_in_main_thread(mti)
+        return mti
 
     def _remove_container(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
