@@ -55,13 +55,19 @@ class LoadClip(plugin.NukeLoader):
 
     # option gui
     defaults = {
-        "start_at_workfile": True
+        "start_at_workfile": True,
+        "add_retime": True
     }
 
     options = [
         qargparse.Boolean(
             "start_at_workfile",
             help="Load at workfile start frame",
+            default=True
+        ),
+        qargparse.Boolean(
+            "add_retime",
+            help="Load with retime",
             default=True
         )
     ]
@@ -87,6 +93,9 @@ class LoadClip(plugin.NukeLoader):
 
         start_at_workfile = options.get(
             "start_at_workfile", self.defaults["start_at_workfile"])
+
+        add_retime = options.get(
+            "add_retime", self.defaults["add_retime"])
 
         version = context['version']
         version_data = version.get("data", {})
@@ -151,7 +160,7 @@ class LoadClip(plugin.NukeLoader):
             data_imprint = {}
             for k in add_keys:
                 if k == 'version':
-                    data_imprint.update({k: context["version"]['name']})
+                    data_imprint[k] = context["version"]['name']
                 elif k == 'colorspace':
                     colorspace = repre["data"].get(k)
                     colorspace = colorspace or version_data.get(k)
@@ -159,10 +168,13 @@ class LoadClip(plugin.NukeLoader):
                     if used_colorspace:
                         data_imprint["used_colorspace"] = used_colorspace
                 else:
-                    data_imprint.update(
-                        {k: context["version"]['data'].get(k, str(None))})
+                    data_imprint[k] = context["version"]['data'].get(
+                        k, str(None))
 
-            data_imprint.update({"objectName": read_name})
+            data_imprint["objectName"] = read_name
+
+            if add_retime and version_data.get("retime", None):
+                data_imprint["addRetime"] = True
 
             read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
@@ -174,7 +186,7 @@ class LoadClip(plugin.NukeLoader):
                 loader=self.__class__.__name__,
                 data=data_imprint)
 
-        if version_data.get("retime", None):
+        if add_retime and version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
 
         self.set_as_member(read_node)
@@ -199,6 +211,10 @@ class LoadClip(plugin.NukeLoader):
         file = get_representation_path(representation).replace("\\", "/")
 
         start_at_workfile = bool("start at" in read_node['frame_mode'].value())
+
+        # TODO: find `addRetime` add openpipe data
+        # add_retime = options.get(
+        #     "add_retime", self.defaults["add_retime"])
 
         project_name = legacy_io.active_project()
         version_doc = get_version_by_id(project_name, representation["parent"])
@@ -286,7 +302,7 @@ class LoadClip(plugin.NukeLoader):
                 "updated to version: {}".format(version_doc.get("name"))
             )
 
-        if version_data.get("retime", None):
+        if add_retime and version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
         else:
             self.clear_members(read_node)
