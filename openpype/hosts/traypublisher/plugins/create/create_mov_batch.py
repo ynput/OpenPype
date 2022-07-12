@@ -2,11 +2,12 @@ import copy
 import os
 import re
 
-from openpype.client import get_assets
+from openpype.client import get_assets, get_asset_by_name
 from openpype.hosts.traypublisher.api import pipeline
-from openpype.lib import FileDef, TextDef, get_subset_name_with_asset_doc
+from openpype.lib import FileDef, get_subset_name_with_asset_doc
 from openpype.pipeline import (
-    CreatedInstance
+    CreatedInstance,
+    CreatorError
 )
 
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
@@ -89,7 +90,7 @@ class BatchMovCreator(TrayPublishCreator):
                                                         asset_name)
 
         if matching_asset_doc is None:
-            raise ValueError(
+            raise CreatorError(
                 "Cannot guess asset name from {}".format(source_filename))
 
         return matching_asset_doc, version
@@ -119,8 +120,7 @@ class BatchMovCreator(TrayPublishCreator):
         """Look if file name contains any existing asset name"""
         for asset_doc in get_assets(project_name, fields=["name"]):
             if asset_doc["name"].lower() in asset_name.lower():
-                return get_assets(project_name,
-                                  asset_names=[asset_doc["name"]])
+                return get_asset_by_name(project_name, asset_doc["name"])
 
     def _get_subset_and_task(self, asset_doc, variant, project_name):
         """Create subset name according to standard template process"""
