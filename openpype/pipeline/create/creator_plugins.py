@@ -48,7 +48,7 @@ class BaseCreator:
     label = None
     group_label = None
     # Cached group label after first call 'get_group_label'
-    _group_label = None
+    _cached_group_label = None
 
     # Variable to store logger
     _log = None
@@ -114,14 +114,14 @@ class BaseCreator:
                 Group label can be overriden by instance itself.
         """
 
-        if self._group_label is None:
+        if self._cached_group_label is None:
             label = self.identifier
             if self.group_label:
                 label = self.group_label
             elif self.label:
                 label = self.label
-            self._group_label = label
-        return self._group_label
+            self._cached_group_label = label
+        return self._cached_group_label
 
     @property
     def log(self):
