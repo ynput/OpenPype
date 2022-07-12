@@ -54,25 +54,27 @@ class LoadClip(plugin.NukeLoader):
     script_start = int(nuke.root()["first_frame"].value())
 
     # option gui
-    defaults = {
+    options_defaults = {
         "start_at_workfile": True,
         "add_retime": True
     }
 
-    options = [
-        qargparse.Boolean(
-            "start_at_workfile",
-            help="Load at workfile start frame",
-            default=True
-        ),
-        qargparse.Boolean(
-            "add_retime",
-            help="Load with retime",
-            default=True
-        )
-    ]
-
     node_name_template = "{class_name}_{ext}"
+
+    @classmethod
+    def get_options(cls, *args):
+        return [
+            qargparse.Boolean(
+                "start_at_workfile",
+                help="Load at workfile start frame",
+                default=cls.options_defaults["start_at_workfile"]
+            ),
+            qargparse.Boolean(
+                "add_retime",
+                help="Load with retime",
+                default=cls.options_defaults["add_retime"]
+            )
+        ]
 
     @classmethod
     def get_representations(cls):
@@ -92,10 +94,10 @@ class LoadClip(plugin.NukeLoader):
         file = self.fname.replace("\\", "/")
 
         start_at_workfile = options.get(
-            "start_at_workfile", self.defaults["start_at_workfile"])
+            "start_at_workfile", self.options_defaults["start_at_workfile"])
 
         add_retime = options.get(
-            "add_retime", self.defaults["add_retime"])
+            "add_retime", self.options_defaults["add_retime"])
 
         version = context['version']
         version_data = version.get("data", {})
@@ -214,7 +216,7 @@ class LoadClip(plugin.NukeLoader):
 
         # TODO: find `addRetime` add openpipe data
         # add_retime = options.get(
-        #     "add_retime", self.defaults["add_retime"])
+        #     "add_retime", self.options_defaults["add_retime"])
 
         project_name = legacy_io.active_project()
         version_doc = get_version_by_id(project_name, representation["parent"])
