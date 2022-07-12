@@ -33,6 +33,20 @@ def create_op_asset(gazu_entity: dict) -> dict:
     }
 
 
+def get_kitsu_project_name(project_id: str):
+    """Get project name based on project id in kitsu.
+
+    Args:
+        project_id (str): Id of project in Kitsu.
+
+    Returns:
+        str: Project name which has project in Kitsu.
+    """
+
+    project = gazu.project.get_project(project_id)
+    return project["name"]
+
+
 def set_op_project(dbcon: AvalonMongoDB, project_id: str):
     """Set project context.
 
@@ -40,9 +54,8 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
         dbcon (AvalonMongoDB): Connection to DB
         project_id (str): Project zou ID
     """
-    project = gazu.project.get_project(project_id)
-    project_name = project["name"]
-    dbcon.Session["AVALON_PROJECT"] = project_name
+
+    dbcon.Session["AVALON_PROJECT"] = get_kitsu_project_name(project_id)
 
 
 def update_op_assets(
