@@ -505,7 +505,7 @@ class CreatedInstance:
 
     @property
     def group_label(self):
-        label = self._data.get("group_label")
+        label = self._data.get("group")
         if label:
             return label
         return self.creator.get_group_label()
