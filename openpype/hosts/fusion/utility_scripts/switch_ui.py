@@ -7,6 +7,7 @@ from Qt import QtWidgets, QtCore
 
 import qtawesome as qta
 
+from openpype.client import get_assets
 from openpype import style
 from openpype.pipeline import (
     install_host,
@@ -142,7 +143,7 @@ class App(QtWidgets.QWidget):
         # Clear any existing items
         self._assets.clear()
 
-        asset_names = [a["name"] for a in self.collect_assets()]
+        asset_names = self.collect_asset_names()
         completer = QtWidgets.QCompleter(asset_names)
 
         self._assets.setCompleter(completer)
@@ -165,8 +166,14 @@ class App(QtWidgets.QWidget):
         items = glob.glob("{}/*.comp".format(directory))
         return items
 
-    def collect_assets(self):
-        return list(legacy_io.find({"type": "asset"}, {"name": True}))
+    def collect_asset_names(self):
+        project_name = legacy_io.active_project()
+        asset_docs = get_assets(project_name, fields=["name"])
+        asset_names = {
+            asset_doc["name"]
+            for asset_doc in asset_docs
+        }
+        return list(asset_names)
 
     def populate_comp_box(self, files):
         """Ensure we display the filename only but the path is stored as well

@@ -120,8 +120,9 @@ def install():
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
-    nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
     _install_menu()
+    launch_workfiles_app()
 
 
 def uninstall():

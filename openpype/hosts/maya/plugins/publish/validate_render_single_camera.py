@@ -12,7 +12,8 @@ ImagePrefixes = {
     'vray': 'vraySettings.fileNamePrefix',
     'arnold': 'defaultRenderGlobals.imageFilePrefix',
     'renderman': 'defaultRenderGlobals.imageFilePrefix',
-    'redshift': 'defaultRenderGlobals.imageFilePrefix'
+    'redshift': 'defaultRenderGlobals.imageFilePrefix',
+    'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
 }
 
 

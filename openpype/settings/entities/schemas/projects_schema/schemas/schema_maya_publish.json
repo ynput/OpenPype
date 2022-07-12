@@ -22,6 +22,20 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectFbxCamera",
+            "label": "Collect Camera for FBX export",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {
@@ -48,13 +62,36 @@
                 }
             ]
         },
-        {
-            "type": "schema_template",
-            "name": "template_publish_plugin",
-            "template_data": [
+        {   
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateFrameRange",
+            "label": "Validate Frame Range",
+            "checkbox_key": "enabled",
+            "children": [
                 {
-                    "key": "ValidateFrameRange",
-                    "label": "Validate Frame Range"
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "key": "exclude_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
                 }
             ]
         },
@@ -490,6 +527,30 @@
                             "label": "ValidateUniqueNames"
                         }
                     ]
+                },
+                {
+                    "type": "label",
+                    "label": "Extractors"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractAlembic",
+                    "label": "Extract Alembic",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
                 }
             ]
         },
@@ -553,6 +614,30 @@
                 {
                     "key": "ValidateAssRelativePaths",
                     "label": "ValidateAssRelativePaths"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateCameraContents",
+            "label": "Validate Camera Content",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_shapes",
+                    "label": "Validate presence of shapes"
                 }
             ]
         },

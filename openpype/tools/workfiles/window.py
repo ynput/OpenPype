@@ -2,9 +2,13 @@ import os
 import datetime
 from Qt import QtCore, QtWidgets
 
+from openpype.client import (
+    get_asset_by_id,
+    get_asset_by_name,
+    get_workfile_info,
+)
 from openpype import style
 from openpype.lib import (
-    get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
 )
@@ -223,6 +227,10 @@ class Window(QtWidgets.QMainWindow):
         self._first_show = True
         self._context_to_set = None
 
+    @property
+    def project_name(self):
+        return legacy_io.Session["AVALON_PROJECT"]
+
     def showEvent(self, event):
         super(Window, self).showEvent(event)
         if self._first_show:
@@ -250,8 +258,9 @@ class Window(QtWidgets.QMainWindow):
         workfile_doc = None
         if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
-            workfile_doc = get_workfile_doc(
-                asset_id, task_name, filename, legacy_io
+            project_name = legacy_io.active_project()
+            workfile_doc = get_workfile_info(
+                project_name, asset_id, task_name, filename
             )
         self.side_panel.set_context(
             asset_id, task_name, filepath, workfile_doc
@@ -284,8 +293,9 @@ class Window(QtWidgets.QMainWindow):
             return
 
         filename = os.path.split(filepath)[1]
-        return get_workfile_doc(
-            asset_id, task_name, filename, legacy_io
+        project_name = legacy_io.active_project()
+        return get_workfile_info(
+            project_name, asset_id, task_name, filename
         )
 
     def _create_workfile_doc(self, filepath, force=False):
@@ -296,7 +306,8 @@ class Window(QtWidgets.QMainWindow):
         if not workfile_doc:
             workdir, filename = os.path.split(filepath)
             asset_id = self.assets_widget.get_selected_asset_id()
-            asset_doc = legacy_io.find_one({"_id": asset_id})
+            project_name = legacy_io.active_project()
+            asset_doc = get_asset_by_id(project_name, asset_id)
             task_name = self.tasks_widget.get_selected_task_name()
             create_workfile_doc(
                 asset_doc, task_name, filename, workdir, legacy_io
@@ -322,14 +333,13 @@ class Window(QtWidgets.QMainWindow):
 
         self._context_to_set, context = None, self._context_to_set
         if "asset" in context:
-            asset_doc = legacy_io.find_one(
-                {
-                    "name": context["asset"],
-                    "type": "asset"
-                },
-                {"_id": 1}
-            ) or {}
-            asset_id = asset_doc.get("_id")
+            asset_doc = get_asset_by_name(
+                self.project_name, context["asset"], fields=["_id"]
+            )
+
+            asset_id = None
+            if asset_doc:
+                asset_id = asset_doc["_id"]
             # Select the asset
             self.assets_widget.select_asset(asset_id)
             self.tasks_widget.set_asset_id(asset_id)

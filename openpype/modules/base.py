@@ -370,6 +370,7 @@ def _load_modules():
 
 class _OpenPypeInterfaceMeta(ABCMeta):
     """OpenPypeInterface meta class to print proper string."""
+
     def __str__(self):
         return "<'OpenPypeInterface.{}'>".format(self.__name__)
 
@@ -388,6 +389,7 @@ class OpenPypeInterface:
     OpenPype modules which means they have to have implemented methods defined
     in the interface. By default interface does not have any abstract parts.
     """
+
     pass
 
 
@@ -432,10 +434,12 @@ class OpenPypeModule:
         It is not recommended to override __init__ that's why specific method
         was implemented.
         """
+
         pass
 
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
+
         pass
 
     def get_global_environments(self):
@@ -443,7 +447,40 @@ class OpenPypeModule:
 
         Environment variables that can be get only from system settings.
         """
+
         return {}
+
+    def modify_application_launch_arguments(self, application, env):
+        """Give option to modify launch environments before application launch.
+
+        Implementation is optional. To change environments modify passed
+        dictionary of environments.
+
+        Args:
+            application (Application): Application that is launched.
+            env (dict): Current environemnt variables.
+        """
+
+        pass
+
+    def on_host_install(self, host, host_name, project_name):
+        """Host was installed which gives option to handle in-host logic.
+
+        It is a good option to register in-host event callbacks which are
+        specific for the module. The module is kept in memory for rest of
+        the process.
+
+        Arguments may change in future. E.g. 'host_name' should be possible
+        to receive from 'host' object.
+
+        Args:
+            host (ModuleType): Access to installed/registered host object.
+            host_name (str): Name of host.
+            project_name (str): Project name which is main part of host
+                context.
+        """
+
+        pass
 
     def cli(self, module_click_group):
         """Add commands to click group.
@@ -465,6 +502,7 @@ class OpenPypeModule:
         def mycommand():
             print("my_command")
         """
+
         pass
 
 
@@ -702,6 +740,32 @@ class ModulesManager:
             ).format(expected_keys, " | ".join(msg_items)))
         return output
 
+    def collect_creator_plugin_paths(self, host_name):
+        """Helper to collect creator plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are creators meants.
+
+        Returns:
+            list: List of creator plugin paths.
+        """
+        # Output structure
+        from openpype_interfaces import IPluginPaths
+
+        output = []
+        for module in self.get_enabled_modules():
+            # Skip module that do not inherit from `IPluginPaths`
+            if not isinstance(module, IPluginPaths):
+                continue
+
+            paths = module.get_creator_plugin_paths(host_name)
+            if paths:
+                # Convert to list if value is not list
+                if not isinstance(paths, (list, tuple, set)):
+                    paths = [paths]
+                output.extend(paths)
+        return output
+
     def collect_launch_hook_paths(self):
         """Helper to collect hooks from modules inherited ILaunchHookPaths.
 
@@ -860,6 +924,7 @@ class TrayModulesManager(ModulesManager):
     modules_menu_order = (
         "user",
         "ftrack",
+        "kitsu",
         "muster",
         "launcher_tool",
         "avalon",

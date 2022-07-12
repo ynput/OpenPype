@@ -78,7 +78,7 @@ def transfer_non_default_values(src, dest, ignore=None):
 
 
 class CameraLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Load camera from an Alembic file"""
 
     families = ["camera"]
     label = "Load Camera (abc)"

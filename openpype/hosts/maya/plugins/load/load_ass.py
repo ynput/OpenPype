@@ -16,7 +16,7 @@ from openpype.hosts.maya.api.pipeline import containerise
 
 
 class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Load the Proxy"""
+    """Load Arnold Proxy as reference"""
 
     families = ["ass"]
     representations = ["ass"]
@@ -64,9 +64,11 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     path = os.path.join(publish_folder, filename)
 
             proxyPath = proxyPath_base + ".ma"
-            self.log.info
 
-            nodes = cmds.file(proxyPath,
+            file_url = self.prepare_root_value(proxyPath,
+                                               context["project"]["code"])
+
+            nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,
                               returnNewNodes=True,
@@ -123,7 +125,11 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         assert os.path.exists(proxyPath), "%s does not exist." % proxyPath
 
         try:
-            content = cmds.file(proxyPath,
+            file_url = self.prepare_root_value(proxyPath,
+                                               representation["context"]
+                                                             ["project"]
+                                                             ["code"])
+            content = cmds.file(file_url,
                                 loadReference=reference_node,
                                 type="mayaAscii",
                                 returnNewNodes=True)

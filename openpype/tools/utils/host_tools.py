@@ -6,7 +6,7 @@ use singleton approach with global functions (using helper anyway).
 import os
 
 import pyblish.api
-
+from openpype.host import IWorkfileHost, ILoadHost
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -49,12 +49,11 @@ class HostToolsHelper:
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from openpype.tools.workfiles.app import (
-                Window, validate_host_requirements
-            )
+            from openpype.tools.workfiles.app import Window
+
             # Host validation
             host = registered_host()
-            validate_host_requirements(host)
+            IWorkfileHost.validate_workfile_methods(host)
 
             workfiles_window = Window(parent=parent)
             self._workfiles_tool = workfiles_window
@@ -92,6 +91,9 @@ class HostToolsHelper:
         if self._loader_tool is None:
             from openpype.tools.loader import LoaderWindow
 
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
+
             loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
 
@@ -105,6 +107,7 @@ class HostToolsHelper:
             loader_tool.show()
             loader_tool.raise_()
             loader_tool.activateWindow()
+            loader_tool.showNormal()
 
             if use_context is None:
                 use_context = False
@@ -163,6 +166,9 @@ class HostToolsHelper:
         if self._scene_inventory_tool is None:
             from openpype.tools.sceneinventory import SceneInventoryWindow
 
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
+
             scene_inventory_window = SceneInventoryWindow(
                 parent=parent or self._parent
             )
@@ -180,6 +186,7 @@ class HostToolsHelper:
             # Pull window to the front.
             scene_inventory_tool.raise_()
             scene_inventory_tool.activateWindow()
+            scene_inventory_tool.showNormal()
 
     def get_library_loader_tool(self, parent):
         """Create, cache and return library loader tool window."""
@@ -200,7 +207,9 @@ class HostToolsHelper:
             library_loader_tool.show()
             library_loader_tool.raise_()
             library_loader_tool.activateWindow()
+            library_loader_tool.showNormal()
             library_loader_tool.refresh()
+
 
     def show_publish(self, parent=None):
         """Try showing the most desirable publish GUI
@@ -243,6 +252,11 @@ class HostToolsHelper:
             look_assigner_tool = self.get_look_assigner_tool(parent)
             look_assigner_tool.show()
 
+            # Pull window to the front.
+            look_assigner_tool.raise_()
+            look_assigner_tool.activateWindow()
+            look_assigner_tool.showNormal()
+
     def get_experimental_tools_dialog(self, parent=None):
         """Dialog of experimental tools.
 
@@ -270,6 +284,7 @@ class HostToolsHelper:
             dialog.show()
             dialog.raise_()
             dialog.activateWindow()
+            dialog.showNormal()
 
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.

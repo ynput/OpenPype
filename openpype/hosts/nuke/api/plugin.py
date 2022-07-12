@@ -14,10 +14,12 @@ from openpype.pipeline import (
 from .lib import (
     Knobby,
     check_subsetname_exists,
-    reset_selection,
     maintained_selection,
     set_avalon_knob_data,
-    add_publish_knob
+    add_publish_knob,
+    get_nuke_imageio_settings,
+    set_node_knobs_from_settings,
+    get_view_process_node
 )
 
 
@@ -27,9 +29,6 @@ class OpenPypeCreator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(OpenPypeCreator, self).__init__(*args, **kwargs)
-        self.presets = get_current_project_settings()["nuke"]["create"].get(
-            self.__class__.__name__, {}
-        )
         if check_subsetname_exists(
                 nuke.allNodes(),
                 self.data["subset"]):
@@ -217,37 +216,6 @@ class ExporterReview(object):
 
         self.data["representations"].append(repre)
 
-    def get_view_input_process_node(self):
-        """
-        Will get any active view process.
-
-        Arguments:
-            self (class): in object definition
-
-        Returns:
-            nuke.Node: copy node of Input Process node
-        """
-        reset_selection()
-        ipn_orig = None
-        for v in nuke.allNodes(filter="Viewer"):
-            ip = v["input_process"].getValue()
-            ipn = v["input_process_node"].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
-
-        if ipn_orig:
-            # copy selected to clipboard
-            nuke.nodeCopy("%clipboard%")
-            # reset selection
-            reset_selection()
-            # paste node and selection is on it only
-            nuke.nodePaste("%clipboard%")
-            # assign to variable
-            ipn = nuke.selectedNode()
-
-            return ipn
-
     def get_imageio_baking_profile(self):
         from . import lib as opnlib
         nuke_imageio = opnlib.get_nuke_imageio_settings()
@@ -312,7 +280,7 @@ class ExporterReviewLut(ExporterReview):
         self._temp_nodes = []
         self.log.info("Deleted nodes...")
 
-    def generate_lut(self):
+    def generate_lut(self, **kwargs):
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -330,7 +298,7 @@ class ExporterReviewLut(ExporterReview):
         if bake_viewer_process:
             # Node View Process
             if bake_viewer_input_process_node:
-                ipn = self.get_view_input_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -499,16 +467,7 @@ class ExporterReviewMov(ExporterReview):
             add_tags.append("reformated")
 
             rf_node = nuke.createNode("Reformat")
-            for kn_conf in reformat_node_config:
-                _type = kn_conf["type"]
-                k_name = str(kn_conf["name"])
-                k_value = kn_conf["value"]
-
-                # to remove unicode as nuke doesn't like it
-                if _type == "string":
-                    k_value = str(kn_conf["value"])
-
-                rf_node[k_name].setValue(k_value)
+            set_node_knobs_from_settings(rf_node, reformat_node_config)
 
             # connect
             rf_node.setInput(0, self.previous_node)
@@ -521,7 +480,7 @@ class ExporterReviewMov(ExporterReview):
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # View Process node
-                ipn = self.get_view_input_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -606,6 +565,7 @@ class AbstractWriteRender(OpenPypeCreator):
     icon = "sign-out"
     defaults = ["Main", "Mask"]
     knobs = []
+    prenodes = {}
 
     def __init__(self, *args, **kwargs):
         super(AbstractWriteRender, self).__init__(*args, **kwargs)
@@ -682,21 +642,12 @@ class AbstractWriteRender(OpenPypeCreator):
         self.data.update(creator_data)
         write_data.update(creator_data)
 
-        if self.presets.get('fpath_template'):
-            self.log.info("Adding template path from preset")
-            write_data.update(
-                {"fpath_template": self.presets["fpath_template"]}
-            )
-        else:
-            self.log.info("Adding template path from plugin")
-            write_data.update({
-                "fpath_template":
-                    ("{work}/" + self.family + "s/nuke/{subset}"
-                     "/{subset}.{frame}.{ext}")})
-
-        write_node = self._create_write_node(selected_node,
-                                             inputs, outputs,
-                                             write_data)
+        write_node = self._create_write_node(
+            selected_node,
+            inputs,
+            outputs,
+            write_data
+        )
 
         # relinking to collected connections
         for i, input in enumerate(inputs):
@@ -710,6 +661,28 @@ class AbstractWriteRender(OpenPypeCreator):
         write_node = self._modify_write_node(write_node)
 
         return write_node
+
+    def is_legacy(self):
+        """Check if it needs to run legacy code
+
+        In case where `type` key is missing in singe
+        knob it is legacy project anatomy.
+
+        Returns:
+            bool: True if legacy
+        """
+        imageio_nodes = get_nuke_imageio_settings()["nodes"]
+        node = imageio_nodes["requiredNodes"][0]
+        if "type" not in node["knobs"][0]:
+            # if type is not yet in project anatomy
+            return True
+        elif next(iter(
+            _k for _k in node["knobs"]
+            if _k.get("type") == "__legacy__"
+        ), None):
+            # in case someone re-saved anatomy
+            # with old configuration
+            return True
 
     @abstractmethod
     def _create_write_node(self, selected_node, inputs, outputs, write_data):

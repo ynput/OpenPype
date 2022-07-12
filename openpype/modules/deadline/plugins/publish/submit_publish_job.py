@@ -103,6 +103,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     deadline_plugin = "OpenPype"
+    targets = ["local"]
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
@@ -128,7 +129,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_MONGO"
     ]
 
     # custom deadline attributes
@@ -145,7 +147,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # mapping of instance properties to be transfered to new instance for every
     # specified family
     instance_transfer = {
-        "slate": ["slateFrame"],
+        "slate": ["slateFrames"],
         "review": ["lutPath"],
         "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
@@ -466,7 +468,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance_data.get("multipartExr"):
                 preview = True
 
-            new_instance = copy(instance_data)
+            new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
             if preview:
@@ -640,6 +642,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
+
         # if we have one representation with preview tag
         # flag whole instance for review and for ftrack
         if preview:
@@ -719,10 +722,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " This may cause issues."
             ).format(source))
 
-        families = ["render"]
+        family = "render"
+        if "prerender" in instance.data["families"]:
+            family = "prerender"
+        families = [family]
+
+        # pass review to families if marked as review
+        if data.get("review"):
+            families.append("review")
 
         instance_skeleton_data = {
-            "family": "render",
+            "family": family,
             "subset": subset,
             "families": families,
             "asset": asset,
@@ -743,11 +753,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True)
         }
-
-        if "prerender" in instance.data["families"]:
-            instance_skeleton_data.update({
-                "family": "prerender",
-                "families": []})
 
         # skip locking version if we are creating v01
         instance_version = instance.data.get("version")  # take this if exists
@@ -883,8 +888,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i = copy(i)
                     new_i["version"] = at.get("version")
                     new_i["subset"] = at.get("subset")
+                    new_i["family"] = at.get("family")
                     new_i["append"] = True
-                    new_i["families"].append(at.get("family"))
+                    # don't set subsetGroup if we are attaching
+                    new_i.pop("subsetGroup")
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))
@@ -1038,7 +1045,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     get publish_path
 
         Args:
-            anatomy (pype.lib.anatomy.Anatomy):
+            anatomy (openpype.pipeline.anatomy.Anatomy):
             template_data (dict): pre-calculated collected data for process
             asset (string): asset name
             subset (string): subset name (actually group name of subset)

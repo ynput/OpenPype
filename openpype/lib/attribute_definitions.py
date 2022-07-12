@@ -316,6 +316,7 @@ class FileDefItem(object):
         self.is_sequence = False
         self.template = None
         self.frames = []
+        self.is_empty = True
 
         self.set_filenames(filenames, frames, template)
 
@@ -323,7 +324,9 @@ class FileDefItem(object):
         return json.dumps(self.to_dict())
 
     def __repr__(self):
-        if self.is_sequence:
+        if self.is_empty:
+            filename = "< empty >"
+        elif self.is_sequence:
             filename = self.template
         else:
             filename = self.filenames[0]
@@ -335,6 +338,9 @@ class FileDefItem(object):
 
     @property
     def label(self):
+        if self.is_empty:
+            return None
+
         if not self.is_sequence:
             return self.filenames[0]
 
@@ -386,6 +392,8 @@ class FileDefItem(object):
 
     @property
     def ext(self):
+        if self.is_empty:
+            return None
         _, ext = os.path.splitext(self.filenames[0])
         if ext:
             return ext
@@ -393,6 +401,9 @@ class FileDefItem(object):
 
     @property
     def is_dir(self):
+        if self.is_empty:
+            return False
+
         # QUESTION a better way how to define folder (in init argument?)
         if self.ext:
             return False
@@ -411,6 +422,7 @@ class FileDefItem(object):
         if is_sequence and not template:
             raise ValueError("Missing template for sequence")
 
+        self.is_empty = len(filenames) == 0
         self.filenames = filenames
         self.template = template
         self.frames = frames
@@ -560,11 +572,7 @@ class FileDef(AbtractAttrDef):
         # Change horizontal label
         is_label_horizontal = kwargs.get("is_label_horizontal")
         if is_label_horizontal is None:
-            if single_item:
-                is_label_horizontal = True
-            else:
-                is_label_horizontal = False
-            kwargs["is_label_horizontal"] = is_label_horizontal
+            kwargs["is_label_horizontal"] = False
 
         self.single_item = single_item
         self.folders = folders

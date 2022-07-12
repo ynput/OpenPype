@@ -6,10 +6,10 @@ import logging
 import re
 import json
 
-from .profiles_filtering import filter_profiles
-
+from openpype.client import get_asset_by_id
 from openpype.settings import get_project_settings
 
+from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
 
@@ -135,24 +135,17 @@ def get_subset_name(
     This is legacy function should be replaced with
     `get_subset_name_with_asset_doc` where asset document is expected.
     """
-    if dbcon is None:
-        from openpype.pipeline import AvalonMongoDB
 
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
+    if project_name is None:
+        project_name = dbcon.project_name
 
-    dbcon.install()
-
-    asset_doc = dbcon.find_one(
-        {"_id": asset_id},
-        {"data.tasks": True}
-    ) or {}
+    asset_doc = get_asset_by_id(project_name, asset_id, fields=["data.tasks"])
 
     return get_subset_name_with_asset_doc(
         family,
         variant,
         task_name,
-        asset_doc,
+        asset_doc or {},
         project_name,
         host_name,
         default_template,
