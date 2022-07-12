@@ -376,6 +376,7 @@ class EnumAttrWidget(_BaseAttrDefWidget):
 
         line_edit = QtWidgets.QLineEdit(input_widget)
         line_edit.setReadOnly(True)
+        line_edit.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
         input_widget.setLineEdit(line_edit)
 
         if self.attr_def.tooltip:
@@ -413,7 +414,7 @@ class EnumAttrWidget(_BaseAttrDefWidget):
 
         else:
             line_edit = self._input_widget.lineEdit()
-            line_edit.setText("Multiselection")
+            line_edit.setText("< Multiselection> ")
 
 
 class UnknownAttrWidget(_BaseAttrDefWidget):
