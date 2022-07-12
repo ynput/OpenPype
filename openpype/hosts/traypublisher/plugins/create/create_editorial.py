@@ -284,12 +284,6 @@ or updating already created. Publishing will create OTIO file.
                     self.log.debug(f"__ family: {family}")
                     self.log.debug(f"__ _vconf: {_vconf}")
 
-                    families = ["clip"]
-
-                    # add review family if defined
-                    if _vconf.get("review"):
-                        families.append("review")
-
                     # subset name
                     subset_name = "{}{}".format(
                         family, variant_name.capitalize()
@@ -304,7 +298,7 @@ or updating already created. Publishing will create OTIO file.
                         "label": label,
                         "variant": variant_name,
                         "family": family,
-                        "families": families,
+                        "families": [],
                         "subset": subset_name,
 
                         # HACK: just for temporal bug workaround
@@ -315,9 +309,6 @@ or updating already created. Publishing will create OTIO file.
 
                         # parent time properties
                         "trackStartFrame": track_start_frame,
-
-                        # allowed file ext from settings
-                        "filterExt": _vconf["filter_ext"],
 
                         # creator_attributes
                         "creator_attributes": {
@@ -335,6 +326,16 @@ or updating already created. Publishing will create OTIO file.
                             "sourceOut": source_out,
                         }
                     }
+                    # add file extension filter only if it is not shot family
+                    if family != "shot":
+                        families = ["clip"]
+                        # add review family if defined
+                        if _vconf.get("review"):
+                            families.append("review")
+                        instance_data.update({
+                            "filterExt": _vconf["filter_ext"],
+                            "families": families
+                        })
 
                     c_instance = editorial_clip_creator.create(
                         instance_data, {})
@@ -342,11 +343,13 @@ or updating already created. Publishing will create OTIO file.
 
     def _get_allowed_family_presets(self, pre_create_data):
         self.log.debug(f"__ pre_create_data: {pre_create_data}")
-        return {
+        return_dict = {
             preset["family"]: preset
             for preset in self._creator_settings["family_presets"]
             if pre_create_data[preset["family"]]
         }
+        return_dict["shot"] = {}
+        return return_dict
 
     def _validate_clip_for_processing(self, clip):
         if clip.name is None:
