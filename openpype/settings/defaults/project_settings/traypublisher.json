@@ -33,13 +33,7 @@
         }
     ],
     "BatchMovCreator": {
-        "family": "render_mov_batch",
-        "identifier": "",
-        "label": "Batch Mov",
-        "icon": "fa.file",
         "default_variants": ["Main"],
-        "description": "",
-        "detailed_description": "",
         "default_tasks": ["Compositing"],
         "extensions": [
             ".mov"
