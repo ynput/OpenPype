@@ -374,6 +374,10 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
         input_widget.setItemDelegate(combo_delegate)
 
+        line_edit = QtWidgets.QLineEdit(input_widget)
+        line_edit.setReadOnly(True)
+        input_widget.setLineEdit(line_edit)
+
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
 
@@ -408,7 +412,8 @@ class EnumAttrWidget(_BaseAttrDefWidget):
                 self._input_widget.setCurrentIndex(idx)
 
         else:
-            self._input_widget.lineEdit().setText("Multiselection")
+            line_edit = self._input_widget.lineEdit()
+            line_edit.setText("Multiselection")
 
 
 class UnknownAttrWidget(_BaseAttrDefWidget):
