@@ -33,32 +33,35 @@
         }
     ],
     "editorial_creators": {
-        "editorialSimple": {
+        "editorial_simple": {
             "default_variants": [
                 "Main"
             ],
-            "variants": {
-                "reference": {
+            "family_presets": [
+                {
+                    "family": "reference",
                     "review": true,
                     "filter_ext": [
                         "mov",
                         "mp4"
                     ]
                 },
-                "plate": {
+                {
+                    "family": "plate",
                     "review": false,
                     "filter_ext": [
                         "mov",
                         "mp4"
                     ]
                 },
-                "audio": {
+                {
+                    "family": "audio",
                     "review": false,
                     "filter_ext": [
                         "wav"
                     ]
                 }
-            }
+            ]
         }
     }
 }

@@ -56,9 +56,10 @@ CLIP_ATTR_DEFS = [
 
 
 class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
-    identifier = "editorialClip"
+    identifier = "editorial_clip"
     family = "clip"
     host_name = "traypublisher"
+    label = "Editorial Clip"
 
     def __init__(
         self, project_settings, *args, **kwargs
@@ -102,7 +103,7 @@ class EditorialSimpleCreator(TrayPublishCreator):
 
     label = "Editorial Simple"
     family = "editorial"
-    identifier = "editorialSimple"
+    identifier = "editorial_simple"
     default_variants = [
         "main"
     ]
@@ -130,12 +131,14 @@ or updating already created. Publishing will create OTIO file.
             self.default_variants = self._creator_settings["default_variants"]
 
     def create(self, subset_name, instance_data, pre_create_data):
-        allowed_variants = self._get_allowed_variants(pre_create_data)
+        allowed_variants = self._get_allowed_family_presets(pre_create_data)
 
         clip_instance_properties = {
             k: v for k, v in pre_create_data.items()
             if k != "sequence_filepath_data"
-            if k not in self._creator_settings["variants"]
+            if k not in [
+                i["family"] for i in self._creator_settings["family_presets"]
+            ]
         }
         # Create otio editorial instance
         asset_name = instance_data["asset"]
@@ -220,7 +223,7 @@ or updating already created. Publishing will create OTIO file.
 
         self.asset_name_check = []
 
-        editorial_clip_creator = self.create_context.creators["editorialClip"]
+        editorial_clip_creator = self.create_context.creators["editorial_clip"]
 
         tracks = otio_timeline.each_child(
             descended_from_type=otio.schema.Track
@@ -337,12 +340,12 @@ or updating already created. Publishing will create OTIO file.
                         instance_data, {})
                     self.log.debug(f"{pformat(dict(c_instance.data))}")
 
-    def _get_allowed_variants(self, pre_create_data):
+    def _get_allowed_family_presets(self, pre_create_data):
         self.log.debug(f"__ pre_create_data: {pre_create_data}")
         return {
-            key: value
-            for key, value in self._creator_settings["variants"].items()
-            if pre_create_data[key]
+            preset["family"]: preset
+            for preset in self._creator_settings["family_presets"]
+            if pre_create_data[preset["family"]]
         }
 
     def _validate_clip_for_processing(self, clip):
@@ -406,8 +409,8 @@ or updating already created. Publishing will create OTIO file.
         ]
         # add variants swithers
         attr_defs.extend(
-            BoolDef(_var, label=_var)
-            for _var in self._creator_settings["variants"]
+            BoolDef(_var["family"], label=_var["family"])
+            for _var in self._creator_settings["family_presets"]
         )
         attr_defs.append(UISeparatorDef())
 

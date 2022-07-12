@@ -90,7 +90,7 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "editorialSimple",
+                    "key": "editorial_simple",
                     "label": "Editorial simple creator",
                     "use_label_wrap": true,
                     "collapsible_key": true,
@@ -108,13 +108,22 @@
                             "type": "splitter"
                         },
                         {
-                            "key": "variants",
-                            "label": "Variants",
-                            "type": "dict-modifiable",
-                            "highlight_content": true,
+                            "type": "list",
+                            "key": "family_presets",
+                            "label": "Family presets",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
+                                    {
+                                        "type": "enum",
+                                        "key": "family",
+                                        "label": "Family",
+                                        "enum_items": [
+                                            {"reference": "reference"},
+                                            {"plate": "plate"},
+                                            {"audio": "audio"}
+                                        ]
+                                    },
                                     {
                                         "type": "boolean",
                                         "key": "review",
