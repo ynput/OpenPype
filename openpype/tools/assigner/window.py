@@ -83,7 +83,7 @@ class ConnectionWindow(QtWidgets.QWidget):
         if self._first_show:
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
-            self.resize(1300, 850)
+            self.resize(1600, 850)
             self.refresh()
 
     def refresh(self):
