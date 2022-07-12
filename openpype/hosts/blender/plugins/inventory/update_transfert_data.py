@@ -46,6 +46,12 @@ class UpdateTransfertData(InventoryAction):
             maintained_params.append(
                 ["local_data", {"data_types": ["VGROUP_WEIGHTS"]}]
             )
+        elif current_task == "Lookdev":
+            maintained_params.append("material_slots")
+            maintained_params.append("polygons_mat_idx")
+            maintained_params.append(
+                ["local_data", {"data_types": ["UV", "VCOL"]}]
+            )
 
         for container in containers:
 
