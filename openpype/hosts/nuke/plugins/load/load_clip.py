@@ -212,11 +212,12 @@ class LoadClip(plugin.NukeLoader):
         read_node = nuke.toNode(container['objectName'])
         file = get_representation_path(representation).replace("\\", "/")
 
-        start_at_workfile = bool("start at" in read_node['frame_mode'].value())
+        start_at_workfile = "start at" in read_node['frame_mode'].value()
 
-        # TODO: find `addRetime` add openpipe data
-        # add_retime = options.get(
-        #     "add_retime", self.options_defaults["add_retime"])
+        add_retime = [
+            key for key in read_node.knobs().keys()
+            if "addRetime" in key
+        ]
 
         project_name = legacy_io.active_project()
         version_doc = get_version_by_id(project_name, representation["parent"])
