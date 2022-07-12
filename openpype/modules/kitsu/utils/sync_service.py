@@ -343,14 +343,25 @@ class Listener:
         """Create new task into OP DB."""
         # Get project entity
         set_op_project(self.dbcon, data["project_id"])
+        project_name = self.dbcon.active_project()
 
         # Get gazu entity
         task = gazu.task.get_task(data["task_id"])
 
         # Find asset doc
-        asset_doc = self.dbcon.find_one(
-            {"type": "asset", "data.zou.id": task["entity"]["id"]}
+        parent_name = task["entity"]["name"]
+        parent_zou_id = task["entity"]["id"]
+        asset_docs = get_assets(
+            project_name,
+            asset_names=[parent_name],
+            fields=["_id", "data.zou.id", "data.tasks"]
         )
+        asset_doc = None
+        for _asset_doc in asset_docs:
+            doc_zou_id = _asset_doc.get("data", {}).get("zou", {}).get("id")
+            if doc_zou_id == parent_zou_id:
+                asset_doc = _asset_doc
+                break
 
         # Update asset tasks with new one
         asset_tasks = asset_doc["data"].get("tasks")
