@@ -2,6 +2,10 @@ import os
 
 import gazu
 
+from openpype.client import (
+    get_project,
+    get_assets
+)
 from openpype.pipeline import AvalonMongoDB
 from .credentials import validate_credentials
 from .update_op_with_zou import (
@@ -150,7 +154,8 @@ class Listener:
     def _update_asset(self, data):
         """Update asset into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         asset = gazu.asset.get_asset(data["asset_id"])
@@ -159,7 +164,7 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[asset["project_id"]] = project_doc
@@ -199,7 +204,8 @@ class Listener:
     def _update_episode(self, data):
         """Update episode into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         episode = gazu.shot.get_episode(data["episode_id"])
@@ -208,7 +214,7 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[episode["project_id"]] = project_doc
@@ -249,7 +255,8 @@ class Listener:
     def _update_sequence(self, data):
         """Update sequence into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         sequence = gazu.shot.get_sequence(data["sequence_id"])
@@ -258,7 +265,7 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[sequence["project_id"]] = project_doc
@@ -299,7 +306,8 @@ class Listener:
     def _update_shot(self, data):
         """Update shot into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         shot = gazu.shot.get_shot(data["shot_id"])
@@ -308,7 +316,7 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[shot["project_id"]] = project_doc
@@ -359,10 +367,11 @@ class Listener:
 
     def _delete_task(self, data):
         """Delete task of OP DB."""
-        set_op_project(self.dbcon, data["project_id"])
 
+        set_op_project(self.dbcon, data["project_id"])
+        project_name = self.dbcon.active_project()
         # Find asset doc
-        asset_docs = [doc for doc in self.dbcon.find({"type": "asset"})]
+        asset_docs = list(get_assets(project_name))
         for doc in asset_docs:
             # Match task
             for name, task in doc["data"]["tasks"].items():
