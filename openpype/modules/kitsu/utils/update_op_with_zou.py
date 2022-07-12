@@ -10,6 +10,12 @@ from gazu.task import (
     all_tasks_for_shot,
 )
 
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_asset_by_id,
+    get_asset_by_name
+)
 from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib import create_project
@@ -85,9 +91,7 @@ def update_op_assets(
         if not item_doc:  # Create asset
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
-            item_doc = dbcon.find_one(
-                {"type": "asset", "_id": insert_result.inserted_id}
-            )
+            item_doc = get_asset_by_id(project_name, insert_result.inserted_id)
 
         # Update asset
         item_data = deepcopy(item_doc["data"])
@@ -235,7 +239,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
-    project_doc = dbcon.database[project_name].find_one({"type": "project"})
+    project_doc = get_project(project_name)
     if not project_doc:
         print(f"Creating project '{project_name}'")
         project_doc = create_project(project_name, project_name, dbcon=dbcon)
@@ -332,19 +336,20 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     bulk_writes.append(write_project_to_op(project, dbcon))
 
     # Try to find project document
-    dbcon.Session["AVALON_PROJECT"] = project["name"]
-    project_doc = dbcon.find_one({"type": "project"})
+    project_name = project["name"]
+    dbcon.Session["AVALON_PROJECT"] = project_name
+    project_doc = get_project(project_name)
 
     # Query all assets of the local project
     zou_ids_and_asset_docs = {
         asset_doc["data"]["zou"]["id"]: asset_doc
-        for asset_doc in dbcon.find({"type": "asset"})
+        for asset_doc in get_assets(project_name)
         if asset_doc["data"].get("zou", {}).get("id")
     }
     zou_ids_and_asset_docs[project["id"]] = project_doc
 
     # Create entities root folders
-    project_module_settings = get_project_settings(project["name"])["kitsu"]
+    project_module_settings = get_project_settings(project_name)["kitsu"]
     for entity_type, root in project_module_settings["entities_root"].items():
         parent_folders = root.split("/")
         direct_parent_doc = None
@@ -384,7 +389,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         zou_ids_and_asset_docs.update(
             {
                 asset_doc["data"]["zou"]["id"]: asset_doc
-                for asset_doc in dbcon.find({"type": "asset"})
+                for asset_doc in get_assets(projec_name)
                 if asset_doc["data"].get("zou")
             }
         )
