@@ -154,14 +154,19 @@ class PublishReport:
         self._all_instances_by_id = {}
         self._current_context = None
 
-    def reset(self, context, publish_discover_result=None):
+    def reset(self, context, create_context):
         """Reset report and clear all data."""
-        self._publish_discover_result = publish_discover_result
+
+        self._publish_discover_result = create_context.publish_discover_result
         self._plugin_data = []
         self._plugin_data_with_plugin = []
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = context
+
+        for plugin in create_context.publish_plugins_mismatch_targets:
+            plugin_data = self._add_plugin_data_item(plugin)
+            plugin_data["skipped"] = True
 
     def add_plugin_iter(self, plugin, context):
         """Add report about single iteration of plugin."""
@@ -205,6 +210,7 @@ class PublishReport:
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
+            "targets": list(plugin.targets),
             "instances_data": [],
             "actions_data": [],
             "skipped": False,
@@ -777,10 +783,7 @@ class PublisherController:
         # - pop the key after first collector using it would be safest option?
         self._publish_context.data["create_context"] = self.create_context
 
-        self._publish_report.reset(
-            self._publish_context,
-            self.create_context.publish_discover_result
-        )
+        self._publish_report.reset(self._publish_context, self.create_context)
         self._publish_validation_errors = []
         self._publish_current_plugin_validation_errors = None
         self._publish_error = None
