@@ -132,7 +132,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         active_checkbox.stateChanged.connect(self._on_active_change)
 
-        self._subset_name_label = subset_name_label
+        self._instance_label_widget = subset_name_label
         self._active_checkbox = active_checkbox
 
         self._has_valid_context = None
@@ -146,8 +146,8 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         state = ""
         if not valid:
             state = "invalid"
-        self._subset_name_label.setProperty("state", state)
-        self._subset_name_label.style().polish(self._subset_name_label)
+        self._instance_label_widget.setProperty("state", state)
+        self._instance_label_widget.style().polish(self._instance_label_widget)
 
     def is_active(self):
         """Instance is activated."""
@@ -176,9 +176,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
     def update_instance_values(self):
         """Update instance data propagated to widgets."""
         # Check subset name
-        subset_name = self.instance["subset"]
-        if subset_name != self._subset_name_label.text():
-            self._subset_name_label.setText(subset_name)
+        label = self.instance.label
+        if label != self._instance_label_widget.text():
+            self._instance_label_widget.setText(label)
         # Check active state
         self.set_active(self.instance["active"])
         # Check valid states
