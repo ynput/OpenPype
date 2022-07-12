@@ -1418,3 +1418,6 @@ InViewButton, InViewButton:disabled {
 InViewButton:hover {
     background: rgba(255, 255, 255, 37);
 }
+SupportLabel {
+    color: {color:font-disabled};
+}

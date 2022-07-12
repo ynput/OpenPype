@@ -15,7 +15,7 @@ import attr
 import requests
 
 import pyblish.api
-from openpype.lib.abstract_metaplugins import AbstractMetaInstancePlugin
+from openpype.pipeline.publish import AbstractMetaInstancePlugin
 
 
 def requests_post(*args, **kwargs):

@@ -6,8 +6,8 @@ import attr
 import pyblish.api
 
 from openpype.settings import get_project_settings
-from openpype.lib import abstract_collect_render
-from openpype.lib.abstract_collect_render import RenderInstance
+from openpype.pipeline import publish
+from openpype.pipeline.publish import RenderInstance
 
 from openpype.hosts.aftereffects.api import get_stub
 
@@ -21,11 +21,11 @@ class AERenderInstance(RenderInstance):
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
-    publish_attributes = attr.ib(default=None)
+    publish_attributes = attr.ib(default={})
     file_name = attr.ib(default=None)
 
 
-class CollectAERender(abstract_collect_render.AbstractCollectRender):
+class CollectAERender(publish.AbstractCollectRender):
 
     order = pyblish.api.CollectorOrder + 0.405
     label = "Collect After Effects Render Layers"
@@ -90,7 +90,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
-                family=family,
+                family="render",
                 families=inst.data.get("families", []),
                 version=version,
                 time="",
@@ -116,7 +116,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 toBeRenderedOn='deadline',
                 fps=fps,
                 app_version=app_version,
-                publish_attributes=inst.data.get("publish_attributes"),
+                publish_attributes=inst.data.get("publish_attributes", {}),
                 file_name=render_q.file_name
             )
 

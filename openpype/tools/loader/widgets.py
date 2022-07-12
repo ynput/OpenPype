@@ -17,8 +17,7 @@ from openpype.client import (
     get_thumbnail_id_from_source,
     get_thumbnail,
 )
-from openpype.api import Anatomy
-from openpype.pipeline import HeroVersionType
+from openpype.pipeline import HeroVersionType, Anatomy
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
     discover_loader_plugins,
@@ -355,9 +354,10 @@ class SubsetWidget(QtWidgets.QWidget):
         enabled = False
         if project_name:
             self.model.reset_sync_server(project_name)
-            if self.model.sync_server:
-                enabled_proj = self.model.sync_server.get_enabled_projects()
-                enabled = project_name in enabled_proj
+            sync_server = self.model.sync_server
+            if sync_server:
+                enabled = sync_server.is_project_enabled(project_name,
+                                                         single=True)
 
         lib.change_visibility(self.model, self.view, "repre_info", enabled)
 
@@ -1216,9 +1216,10 @@ class RepresentationWidget(QtWidgets.QWidget):
         enabled = False
         if project_name:
             self.model.reset_sync_server(project_name)
-            if self.model.sync_server:
-                enabled_proj = self.model.sync_server.get_enabled_projects()
-                enabled = project_name in enabled_proj
+            sync_server = self.model.sync_server
+            if sync_server:
+                enabled = sync_server.is_project_enabled(project_name,
+                                                         single=True)
 
         self.sync_server_enabled = enabled
         lib.change_visibility(self.model, self.tree_view,
