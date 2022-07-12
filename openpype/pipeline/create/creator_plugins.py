@@ -1,5 +1,4 @@
 import copy
-import logging
 
 from abc import (
     ABCMeta,
@@ -47,6 +46,9 @@ class BaseCreator:
 
     # Label shown in UI
     label = None
+    group_label = None
+    # Cached group label after first call 'get_group_label'
+    _group_label = None
 
     # Variable to store logger
     _log = None
@@ -85,11 +87,13 @@ class BaseCreator:
 
         Default implementation returns plugin's family.
         """
+
         return self.family
 
     @abstractproperty
     def family(self):
         """Family that plugin represents."""
+
         pass
 
     @property
@@ -97,6 +101,16 @@ class BaseCreator:
         """Family that plugin represents."""
 
         return self.create_context.project_name
+
+    def get_group_label(self):
+        if self._group_label is None:
+            if self.group_label:
+                self._group_label = self.group_label
+            elif self.label:
+                self._group_label = self.label
+            else:
+                self._group_label = self.identifier
+        return self._group_label
 
     @property
     def log(self):
@@ -121,6 +135,7 @@ class BaseCreator:
         - must expect all data that were passed to init in previous
             implementation
         """
+
         pass
 
     @abstractmethod
@@ -147,6 +162,7 @@ class BaseCreator:
                     self._add_instance_to_context(instance)
         ```
         """
+
         pass
 
     @abstractmethod
@@ -154,9 +170,10 @@ class BaseCreator:
         """Store changes of existing instances so they can be recollected.
 
         Args:
-            update_list(list<UpdateData>): Gets list of tuples. Each item
+            update_list(List[UpdateData]): Gets list of tuples. Each item
                 contain changed instance and it's changes.
         """
+
         pass
 
     @abstractmethod
@@ -167,9 +184,10 @@ class BaseCreator:
         'True' if did so.
 
         Args:
-            instance(list<CreatedInstance>): Instance objects which should be
+            instance(List[CreatedInstance]): Instance objects which should be
                 removed.
         """
+
         pass
 
     def get_icon(self):
@@ -177,6 +195,7 @@ class BaseCreator:
 
         Can return path to image file or awesome icon name.
         """
+
         return self.icon
 
     def get_dynamic_data(
@@ -187,6 +206,7 @@ class BaseCreator:
         These may be get dynamically created based on current context of
         workfile.
         """
+
         return {}
 
     def get_subset_name(
@@ -211,6 +231,7 @@ class BaseCreator:
             project_name(str): Project name.
             host_name(str): Which host creates subset.
         """
+
         dynamic_data = self.get_dynamic_data(
             variant, task_name, asset_doc, project_name, host_name
         )
@@ -237,9 +258,10 @@ class BaseCreator:
         keys/values when plugin attributes change.
 
         Returns:
-            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
                 created instance.
         """
+
         return self.instance_attr_defs
 
 
@@ -297,6 +319,7 @@ class Creator(BaseCreator):
         Returns:
             str: Short description of family.
         """
+
         return self.description
 
     def get_detail_description(self):
@@ -307,6 +330,7 @@ class Creator(BaseCreator):
         Returns:
             str: Detailed description of family for artist.
         """
+
         return self.detailed_description
 
     def get_default_variants(self):
@@ -318,8 +342,9 @@ class Creator(BaseCreator):
         By default returns `default_variants` value.
 
         Returns:
-            list<str>: Whisper variants for user input.
+            List[str]: Whisper variants for user input.
         """
+
         return copy.deepcopy(self.default_variants)
 
     def get_default_variant(self):
@@ -338,11 +363,13 @@ class Creator(BaseCreator):
         """Plugin attribute definitions needed for creation.
         Attribute definitions of plugin that define how creation will work.
         Values of these definitions are passed to `create` method.
-        NOTE:
-        Convert method should be implemented which should care about updating
-        keys/values when plugin attributes change.
+
+        Note:
+            Convert method should be implemented which should care about
+            updating keys/values when plugin attributes change.
+
         Returns:
-            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
                 created instance.
         """
         return self.pre_create_attr_defs
