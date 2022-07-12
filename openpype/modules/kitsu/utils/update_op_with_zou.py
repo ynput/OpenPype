@@ -424,7 +424,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         zou_ids_and_asset_docs.update(
             {
                 asset_doc["data"]["zou"]["id"]: asset_doc
-                for asset_doc in get_assets(projec_name)
+                for asset_doc in get_assets(project_name)
                 if asset_doc["data"].get("zou")
             }
         )
