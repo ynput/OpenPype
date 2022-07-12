@@ -40,16 +40,15 @@ class ContainerGroupItem(object):
         version,
         representation_id,
         representation_name,
+        thumbnail_id,
     ):
-        is_valid = True
-        if (
-            not asset_id
-            or not subset_id
-            or not version_id
-            or not family
-            or not representation_name
-        ):
-            is_valid = False
+        is_valid = (
+            asset_id
+            and subset_id
+            and version_id
+            and family
+            and representation_name
+        )
         label = "Invalid {}".format(representation_id)
         if is_valid:
             label = "{}:{}:{}".format(
@@ -65,6 +64,7 @@ class ContainerGroupItem(object):
         self._representation_id = representation_id
         self._family = family
         self._is_valid = is_valid
+        self._thumbnail_id = thumbnail_id
 
         self._containers_by_id = {}
 
@@ -75,6 +75,10 @@ class ContainerGroupItem(object):
     @property
     def is_valid(self):
         return self._is_valid
+
+    @property
+    def thumbnail_id(self):
+        return self._thumbnail_id
 
     @property
     def label(self):
@@ -128,9 +132,7 @@ class ContainerItem(object):
     Primarily used for UI purposes as prepares all required data.
     """
 
-    def __init__(
-            self, raw_data, group_item
-        ):
+    def __init__(self, raw_data, group_item):
         self._raw_data = copy.deepcopy(raw_data)
         self._label = raw_data["namespace"]
         # TODO probably some unique name? In scene manager is used:
@@ -146,6 +148,10 @@ class ContainerItem(object):
     @property
     def label(self):
         return self._label
+
+    @property
+    def thumbnail_id(self):
+        return self._group_item.thumbnail_id
 
     @property
     def is_valid(self):
@@ -174,7 +180,7 @@ class ContainersModel(object):
             (host implementation) and 'project_name' (current project).
     """
 
-    _representaion_fields = ["_id", "name", "parent"]
+    _representaion_fields = ["_id", "name", "parent", "data.thumbnail_id"]
     _version_fields = [
         "_id",
         "parent",
@@ -182,12 +188,19 @@ class ContainersModel(object):
         "type",
         "version_id",
         "data.family",
-        "data.families"
+        "data.families",
+        "data.thumbnail_id"
     ]
     _subset_fields = [
-        "_id", "name", "schema", "parent", "data.family", "data.families"
+        "_id",
+        "name",
+        "schema",
+        "parent",
+        "data.family",
+        "data.families",
+        "data.thumbnail_id"
     ]
-    _asset_fields = ["_id", "name"]
+    _asset_fields = ["_id", "name", "data.thumbnail_id"]
 
     def __init__(self, controller):
         self._controller = controller
@@ -311,6 +324,9 @@ class ContainersModel(object):
             subset_doc = subset_docs_by_id.get(subset_id) or {}
             asset_id = subset_doc.get("parent")
             asset_doc = asset_docs_by_id.get(asset_id) or {}
+            thumbnail_id = self._extract_thumbnail_id(
+                repre_doc, version_doc, subset_doc, asset_doc
+            )
             family = self._extract_family(subset_doc, version_doc)
             version = None
             if version_doc:
@@ -330,6 +346,7 @@ class ContainersModel(object):
                 version,
                 repre_id,
                 repre_doc.get("name"),
+                thumbnail_id,
             )
             container_groups.append(container_group_item)
             groups_by_repre_id[repre_id] = container_group_item
@@ -362,6 +379,15 @@ class ContainersModel(object):
         families = source_data.get("families")
         if families:
             return families[0]
+        return None
+
+    def _extract_thumbnail_id(
+        self, repre_doc, version_doc, subset_doc, asset_doc
+    ):
+        for doc in (repre_doc, version_doc, subset_doc, asset_doc):
+            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
+            if thumbnail_id:
+                return thumbnail_id
         return None
 
 
