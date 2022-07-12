@@ -31,9 +31,9 @@ class BatchMovCreator(TrayPublishCreator):
     def __init__(self, project_settings, *args, **kwargs):
         super(BatchMovCreator, self).__init__(project_settings,
                                               *args, **kwargs)
-        self._default_variants = (project_settings["traypublisher"]
-                                                  ["BatchMovCreator"]
-                                                  ["default_variants"])
+        self.default_variants = (project_settings["traypublisher"]
+                                                 ["BatchMovCreator"]
+                                                 ["default_variants"])
 
     def get_icon(self):
         return "fa.file"
@@ -151,9 +151,6 @@ class BatchMovCreator(TrayPublishCreator):
                 break
 
         return task_name
-
-    def get_default_variants(self):
-        return self._default_variants
 
     def get_instance_attr_defs(self):
         return []
