@@ -446,11 +446,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
             with_audio = False
 
         input_is_sequence = self.input_is_sequence(repre)
-        first_sequence_frame = None
         input_allow_bg = False
+        first_sequence_frame = None
         if input_is_sequence and repre["files"]:
+            # Calculate first frame that should be used
             cols, _ = clique.assemble(repre["files"])
-            first_sequence_frame = list(sorted(cols[0].indexes))[0]
+            input_frames = list(sorted(cols[0].indexes))
+            # WARNING: This is an issue as we don't know if first frame
+            #   is with or without handles!
+            # - in theory we should add handle start but how do we know we can?
+            first_sequence_frame = input_frames[0]
+
             ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
             if ext in self.alpha_exts:
                 input_allow_bg = True
