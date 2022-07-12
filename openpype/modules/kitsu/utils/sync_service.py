@@ -120,7 +120,7 @@ class Listener:
 
         # Write into DB
         if update_project:
-            self.dbcon = self.dbcon.database[project_name]
+            self.dbcon.Session["AVALON_PROJECT"] = project_name
             self.dbcon.bulk_write([update_project])
 
     def _delete_project(self, data):
