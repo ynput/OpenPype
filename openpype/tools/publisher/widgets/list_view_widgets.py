@@ -519,7 +519,7 @@ class InstanceListView(AbstractInstanceView):
         instances_by_group_name = collections.defaultdict(list)
         group_names = set()
         for instance in self.controller.instances:
-            group_label = instance.creator_label
+            group_label = instance.group_label
             group_names.add(group_label)
             instances_by_group_name[group_label].append(instance)
 
