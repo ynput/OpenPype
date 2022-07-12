@@ -24,16 +24,20 @@ class BatchMovCreator(TrayPublishCreator):
     create_allow_context_change = False
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
 
-    default_tasks = ["Compositing"]
-
-    extensions = [".mov"]
-
     def __init__(self, project_settings, *args, **kwargs):
         super(BatchMovCreator, self).__init__(project_settings,
                                               *args, **kwargs)
         self.default_variants = (project_settings["traypublisher"]
                                                  ["BatchMovCreator"]
                                                  ["default_variants"])
+
+        self.default_tasks = (project_settings["traypublisher"]
+                                              ["BatchMovCreator"]
+                                              ["default_tasks"])
+
+        self.extensions = (project_settings["traypublisher"]
+                                           ["BatchMovCreator"]
+                                           ["extensions"])
 
     def get_icon(self):
         return "fa.file"
