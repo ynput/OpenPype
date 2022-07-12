@@ -15,6 +15,7 @@ from openpype.lib.attribute_definitions import (
     UISeparatorDef,
     UILabelDef
 )
+from openpype.tools.utils import CustomTextComboBox
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
 from .files_widget import FilesWidget
@@ -369,8 +370,12 @@ class BoolAttrWidget(_BaseAttrDefWidget):
 
 
 class EnumAttrWidget(_BaseAttrDefWidget):
+    def __init__(self, *args, **kwargs):
+        self._multivalue = False
+        super(EnumAttrWidget, self).__init__(*args, **kwargs)
+
     def _ui_init(self):
-        input_widget = QtWidgets.QComboBox(self)
+        input_widget = CustomTextComboBox(self)
         combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
         input_widget.setItemDelegate(combo_delegate)
 
@@ -399,6 +404,9 @@ class EnumAttrWidget(_BaseAttrDefWidget):
 
     def _on_value_change(self):
         new_value = self.current_value()
+        if self._multivalue:
+            self._multivalue = False
+            self._input_widget.set_custom_text(None)
         self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
@@ -406,15 +414,23 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         return self._input_widget.itemData(idx)
 
     def set_value(self, value, multivalue=False):
+        if multivalue:
+            set_value = set(value)
+            if len(set_value) == 1:
+                multivalue = False
+                value = tuple(set_value)[0]
+
         if not multivalue:
             idx = self._input_widget.findData(value)
             cur_idx = self._input_widget.currentIndex()
             if idx != cur_idx and idx >= 0:
                 self._input_widget.setCurrentIndex(idx)
 
-        else:
-            line_edit = self._input_widget.lineEdit()
-            line_edit.setText("< Multiselection> ")
+        custom_text = None
+        if multivalue:
+            custom_text = "< Multiselection >"
+        self._input_widget.set_custom_text(custom_text)
+        self._multivalue = multivalue
 
 
 class UnknownAttrWidget(_BaseAttrDefWidget):
