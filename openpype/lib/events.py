@@ -253,13 +253,6 @@ class EventSystem(object):
             self._registered_callbacks.remove(callback)
 
 
-class GlobalEvent(Event):
-    def __init__(self, topic, data=None, source=None):
-        event_system = GlobalEventSystem.get_global_event_system()
-
-        super(GlobalEvent, self).__init__(topic, data, source, event_system)
-
-
 class GlobalEventSystem:
     _global_event_system = None
 
@@ -276,7 +269,7 @@ class GlobalEventSystem:
 
     @classmethod
     def emit(cls, topic, data, source):
-        event = GlobalEvent(topic, data, source)
+        event = Event(topic, data, source, cls.get_global_event_system())
         event.emit()
         return event
 
