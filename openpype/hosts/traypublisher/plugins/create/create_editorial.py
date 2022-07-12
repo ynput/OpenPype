@@ -61,6 +61,8 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
     host_name = "traypublisher"
     label = "Editorial Clip"
 
+    has_parent = False
+
     def __init__(
         self, project_settings, *args, **kwargs
     ):
@@ -69,6 +71,8 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
         )
 
     def create(self, instance_data, source_data):
+        self.has_parent = source_data.get("has_parent")
+
         self.log.info(f"instance_data: {instance_data}")
         subset_name = instance_data["subset"]
         family = instance_data["family"]
@@ -95,7 +99,8 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
                 label="Asset name",
             )
         ]
-        attr_defs.extend(CLIP_ATTR_DEFS)
+        if not self.has_parent:
+            attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
 
 
@@ -131,7 +136,8 @@ or updating already created. Publishing will create OTIO file.
             self.default_variants = self._creator_settings["default_variants"]
 
     def create(self, subset_name, instance_data, pre_create_data):
-        allowed_variants = self._get_allowed_family_presets(pre_create_data)
+        allowed_family_presets = self._get_allowed_family_presets(
+            pre_create_data)
 
         clip_instance_properties = {
             k: v for k, v in pre_create_data.items()
@@ -169,7 +175,7 @@ or updating already created. Publishing will create OTIO file.
             otio_timeline,
             clip_instance_properties,
             variant_name=instance_data["variant"],
-            variants=allowed_variants
+            family_presets=allowed_family_presets
 
         )
 
@@ -211,7 +217,7 @@ or updating already created. Publishing will create OTIO file.
         otio_timeline,
         clip_instance_properties,
         variant_name,
-        variants
+        family_presets
     ):
         # get clip instance properties
         parent_asset_name = clip_instance_properties["parent_asset_name"]
@@ -280,9 +286,12 @@ or updating already created. Publishing will create OTIO file.
                 )
                 frame_end = frame_start + (clip_duration - 1)
 
-                for family, _vconf in variants.items():
+                parent_instance_label = None
+                for _fpreset in family_presets:
+                    source_data = {}
+                    family = _fpreset["family"]
                     self.log.debug(f"__ family: {family}")
-                    self.log.debug(f"__ _vconf: {_vconf}")
+                    self.log.debug(f"__ _fpreset: {_fpreset}")
 
                     # subset name
                     subset_name = "{}{}".format(
@@ -299,6 +308,7 @@ or updating already created. Publishing will create OTIO file.
                         "variant": variant_name,
                         "family": family,
                         "families": [],
+                        "group": family.capitalize(),
                         "subset": subset_name,
 
                         # HACK: just for temporal bug workaround
@@ -327,29 +337,37 @@ or updating already created. Publishing will create OTIO file.
                         }
                     }
                     # add file extension filter only if it is not shot family
-                    if family != "shot":
+                    if family == "shot":
+                        parent_instance_label = label
+                        source_data
+                    else:
                         families = ["clip"]
                         # add review family if defined
-                        if _vconf.get("review"):
+                        if _fpreset.get("review"):
                             families.append("review")
                         instance_data.update({
-                            "filterExt": _vconf["filter_ext"],
-                            "families": families
+                            "filterExt": _fpreset["filter_ext"],
+                            "families": families,
+                            "creator_attributes": {
+                                "asset_name": clip_name,
+                                "parent_instance": parent_instance_label
+                            }
                         })
+                        source_data["has_parent"] = True
 
                     c_instance = editorial_clip_creator.create(
-                        instance_data, {})
+                        instance_data, source_data)
                     self.log.debug(f"{pformat(dict(c_instance.data))}")
 
     def _get_allowed_family_presets(self, pre_create_data):
         self.log.debug(f"__ pre_create_data: {pre_create_data}")
-        return_dict = {
-            preset["family"]: preset
-            for preset in self._creator_settings["family_presets"]
-            if pre_create_data[preset["family"]]
-        }
-        return_dict["shot"] = {}
-        return return_dict
+        return [
+            {"family": "shot"},
+            *[
+                preset for preset in self._creator_settings["family_presets"]
+                if pre_create_data[preset["family"]]
+            ]
+        ]
 
     def _validate_clip_for_processing(self, clip):
         if clip.name is None:
