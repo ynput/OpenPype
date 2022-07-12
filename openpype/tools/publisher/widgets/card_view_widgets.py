@@ -98,7 +98,7 @@ class GroupWidget(QtWidgets.QWidget):
             instances(list<CreatedInstance>): List of instances in
                 CreateContext.
         """
-    
+
         # Store instances by id and by subset name
         instances_by_id = {}
         instances_by_subset_name = collections.defaultdict(list)
