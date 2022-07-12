@@ -36,7 +36,29 @@
         "editorialSimple": {
             "default_variants": [
                 "Main"
-            ]
+            ],
+            "variants": {
+                "reference": {
+                    "review": true,
+                    "filter_ext": [
+                        "mov",
+                        "mp4"
+                    ]
+                },
+                "plate": {
+                    "review": false,
+                    "filter_ext": [
+                        "mov",
+                        "mp4"
+                    ]
+                },
+                "audio": {
+                    "review": false,
+                    "filter_ext": [
+                        "wav"
+                    ]
+                }
+            }
         }
     }
 }

@@ -103,6 +103,32 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "key": "variants",
+                            "label": "Variants",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "boolean",
+                                        "key": "review",
+                                        "label": "Review",
+                                        "default": true
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "filter_ext",
+                                        "label": "Allowed input file types",
+                                        "object_type": "text"
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }

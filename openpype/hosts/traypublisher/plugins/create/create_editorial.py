@@ -130,9 +130,12 @@ or updating already created. Publishing will create OTIO file.
             self.default_variants = self._creator_settings["default_variants"]
 
     def create(self, subset_name, instance_data, pre_create_data):
+        allowed_variants = self._get_allowed_variants(pre_create_data)
+
         clip_instance_properties = {
             k: v for k, v in pre_create_data.items()
             if k != "sequence_filepath_data"
+            if k not in self._creator_settings["variants"]
         }
         # Create otio editorial instance
         asset_name = instance_data["asset"]
@@ -162,7 +165,9 @@ or updating already created. Publishing will create OTIO file.
         self._get_clip_instances(
             otio_timeline,
             clip_instance_properties,
-            variant=instance_data["variant"]
+            variant_name=instance_data["variant"],
+            variants=allowed_variants
+
         )
 
     def _create_otio_instance(self, subset_name, data, pre_create_data):
@@ -202,10 +207,9 @@ or updating already created. Publishing will create OTIO file.
         self,
         otio_timeline,
         clip_instance_properties,
-        variant
+        variant_name,
+        variants
     ):
-        family = "plate"
-
         # get clip instance properties
         parent_asset_name = clip_instance_properties["parent_asset_name"]
         handle_start = clip_instance_properties["handle_start"]
@@ -273,53 +277,73 @@ or updating already created. Publishing will create OTIO file.
                 )
                 frame_end = frame_start + (clip_duration - 1)
 
-                # subset name
-                self.log.info(
-                    f"__ variant: {variant}")
+                for family, _vconf in variants.items():
+                    self.log.debug(f"__ family: {family}")
+                    self.log.debug(f"__ _vconf: {_vconf}")
 
-                subset_name = "{}{}".format(
-                    family, variant.capitalize()
-                )
-                label = "{}_{}".format(
-                    clip_name,
-                    subset_name
-                )
-                # create shared new instance data
-                instance_data = {
-                    "label": label,
-                    "variant": variant,
-                    "family": family,
-                    "families": ["clip"],
-                    "subset": subset_name,
+                    families = ["clip"]
 
-                    # HACK: just for temporal bug workaround
-                    # TODO: should loockup shot name for update
-                    "asset": parent_asset_name,
-                    "name": clip_name,
-                    "task": "",
+                    # add review family if defined
+                    if _vconf.get("review"):
+                        families.append("review")
 
-                    # parent time properties
-                    "trackStartFrame": track_start_frame,
+                    # subset name
+                    subset_name = "{}{}".format(
+                        family, variant_name.capitalize()
+                    )
+                    label = "{}_{}".format(
+                        clip_name,
+                        subset_name
+                    )
 
-                    # creator_attributes
-                    "creator_attributes": {
-                        "asset_name": clip_name,
-                        "timeline_offset": timeline_offset,
-                        "workfile_start_frame": workfile_start_frame,
-                        "frameStart": frame_start,
-                        "frameEnd": frame_end,
-                        "fps": fps,
-                        "handle_start": handle_start,
-                        "handle_end": handle_end,
-                        "clipIn": clip_in,
-                        "clipOut": clip_out,
-                        "sourceIn": source_in,
-                        "sourceOut": source_out,
+                    # create shared new instance data
+                    instance_data = {
+                        "label": label,
+                        "variant": variant_name,
+                        "family": family,
+                        "families": families,
+                        "subset": subset_name,
+
+                        # HACK: just for temporal bug workaround
+                        # TODO: should loockup shot name for update
+                        "asset": parent_asset_name,
+                        "name": clip_name,
+                        "task": "",
+
+                        # parent time properties
+                        "trackStartFrame": track_start_frame,
+
+                        # allowed file ext from settings
+                        "filterExt": _vconf["filter_ext"],
+
+                        # creator_attributes
+                        "creator_attributes": {
+                            "asset_name": clip_name,
+                            "timeline_offset": timeline_offset,
+                            "workfile_start_frame": workfile_start_frame,
+                            "frameStart": frame_start,
+                            "frameEnd": frame_end,
+                            "fps": fps,
+                            "handle_start": handle_start,
+                            "handle_end": handle_end,
+                            "clipIn": clip_in,
+                            "clipOut": clip_out,
+                            "sourceIn": source_in,
+                            "sourceOut": source_out,
+                        }
                     }
-                }
 
-                c_instance = editorial_clip_creator.create(instance_data, {})
-                self.log.debug(f"{pformat(dict(c_instance.data))}")
+                    c_instance = editorial_clip_creator.create(
+                        instance_data, {})
+                    self.log.debug(f"{pformat(dict(c_instance.data))}")
+
+    def _get_allowed_variants(self, pre_create_data):
+        self.log.debug(f"__ pre_create_data: {pre_create_data}")
+        return {
+            key: value
+            for key, value in self._creator_settings["variants"].items()
+            if pre_create_data[key]
+        }
 
     def _validate_clip_for_processing(self, clip):
         if clip.name is None:
@@ -370,15 +394,22 @@ or updating already created. Publishing will create OTIO file.
                 allow_sequences=False,
                 label="Filepath",
             ),
-            UILabelDef("Clip instance attributes"),
-            UISeparatorDef(),
             # TODO: perhpas better would be timecode and fps input
             NumberDef(
                 "timeline_offset",
                 default=0,
                 label="Timeline offset"
             ),
+            UISeparatorDef(),
+            UILabelDef("Clip instance attributes"),
             UISeparatorDef()
         ]
+        # add variants swithers
+        attr_defs.extend(
+            BoolDef(_var, label=_var)
+            for _var in self._creator_settings["variants"]
+        )
+        attr_defs.append(UISeparatorDef())
+
         attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
