@@ -7,6 +7,7 @@ from .credentials import validate_credentials
 from .update_op_with_zou import (
     create_op_asset,
     set_op_project,
+    get_kitsu_project_name,
     write_project_to_op,
     update_op_assets,
 )
@@ -124,12 +125,11 @@ class Listener:
 
     def _delete_project(self, data):
         """Delete project."""
-        project_doc = self.dbcon.find_one(
-            {"type": "project", "data.zou_id": data["project_id"]}
-        )
+
+        project_name = get_kitsu_project_name(data["project_id"])
 
         # Delete project collection
-        self.dbcon.database[project_doc["name"]].drop()
+        self.dbcon.database[project_name].drop()
 
     # == Asset ==
 
