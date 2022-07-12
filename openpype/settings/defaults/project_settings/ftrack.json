@@ -270,6 +270,49 @@
                 },
                 {
                     "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "plate"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
                         "maya"
                     ],
                     "families": [
