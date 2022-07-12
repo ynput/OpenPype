@@ -135,9 +135,12 @@
                     "type": "separator"
                 },
                 {
-                    "type": "text",
+                    "type": "list",
                     "key": "default_tasks",
-                    "label": "Default task"
+                    "label": "Default tasks",
+                    "object_type": {
+                        "type": "text"
+                    }
                 },
                 {
                     "type": "list",

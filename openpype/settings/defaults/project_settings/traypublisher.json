@@ -37,10 +37,10 @@
         "identifier": "",
         "label": "Batch Mov",
         "icon": "fa.file",
-        "default_variants": [],
+        "default_variants": ["Main"],
         "description": "",
         "detailed_description": "",
-        "default_tasks": "Compositing",
+        "default_tasks": ["Compositing"],
         "extensions": [
             ".mov"
         ]
