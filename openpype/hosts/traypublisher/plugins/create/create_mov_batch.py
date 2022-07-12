@@ -19,7 +19,6 @@ class BatchMovCreator(TrayPublishCreator):
     label = "Batch Mov"
     family = "render"
     description = "Publish batch of movs"
-    host_name = "traypublisher"
 
     create_allow_context_change = False
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
