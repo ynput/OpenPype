@@ -23,6 +23,7 @@ from openpype.pipeline import (
     legacy_io,
 )
 from openpype.api import get_asset
+from openpype.api import get_current_project_settings
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -620,8 +621,8 @@ class LayoutLoader(plugin.Loader):
         Returns:
             list(str): list of container content
         """
-        # TODO: get option from OpenPype settings
-        create_sequences = False
+        data = get_current_project_settings()
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
         # Create directory for asset and avalon container
         hierarchy = context.get('asset').get('data').get('parents')
@@ -764,8 +765,8 @@ class LayoutLoader(plugin.Loader):
         return asset_content
 
     def update(self, container, representation):
-        # TODO: get option from OpenPype settings
-        create_sequences = False
+        data = get_current_project_settings()
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -840,8 +841,8 @@ class LayoutLoader(plugin.Loader):
         Delete the layout. First, check if the assets loaded with the layout
         are used by other layouts. If not, delete the assets.
         """
-        # TODO: get option from OpenPype settings
-        create_sequences = False
+        data = get_current_project_settings()
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
         root = "/Game/OpenPype"
         path = Path(container.get("namespace"))
