@@ -28,7 +28,7 @@ CLIP_ATTR_DEFS = [
     EnumDef(
         "fps",
         items={
-            "from_project": "From project",
+            "from_selection": "From selection",
             23.997: "23.976",
             24: "24",
             25: "25",
@@ -152,7 +152,7 @@ or updating already created. Publishing will create OTIO file.
 
         self.log.info(pre_create_data["fps"])
 
-        if pre_create_data["fps"] == "from_project":
+        if pre_create_data["fps"] == "from_selection":
             # get asset doc data attributes
             fps = asset_doc["data"]["fps"]
         else:
@@ -339,7 +339,6 @@ or updating already created. Publishing will create OTIO file.
                     # add file extension filter only if it is not shot family
                     if family == "shot":
                         parent_instance_label = label
-                        source_data
                     else:
                         families = ["clip"]
                         # add review family if defined
