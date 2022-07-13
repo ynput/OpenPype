@@ -1008,6 +1008,7 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 class ProjectListWidget(QtWidgets.QWidget):
     project_changed = QtCore.Signal()
     version_change_requested = QtCore.Signal(str)
+    extract_to_file_requested = QtCore.Signal()
 
     def __init__(self, parent, only_active=False):
         self._parent = parent
@@ -1099,6 +1100,10 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.version_change_requested
             )
             submenu.addAction(action)
+
+        extract_action = QtWidgets.QAction("Extract to file", menu)
+        extract_action.triggered.connect(self.extract_to_file_requested)
+
         menu.addMenu(submenu)
         menu.exec_(QtGui.QCursor.pos())
 
