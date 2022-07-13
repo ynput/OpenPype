@@ -447,7 +447,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         input_is_sequence = self.input_is_sequence(repre)
         input_allow_bg = False
+        first_sequence_frame = None
         if input_is_sequence and repre["files"]:
+            # Calculate first frame that should be used
+            cols, _ = clique.assemble(repre["files"])
+            input_frames = list(sorted(cols[0].indexes))
+            first_sequence_frame = input_frames[0]
+            # WARNING: This is an issue as we don't know if first frame
+            #   is with or without handles!
+            # - handle start is added but how do not know if we should
+            output_duration = (output_frame_end - output_frame_start) + 1
+            if (
+                without_handles
+                and len(input_frames) - handle_start >= output_duration
+            ):
+                first_sequence_frame += handle_start
+
             ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
             if ext in self.alpha_exts:
                 input_allow_bg = True
@@ -467,6 +482,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
             "input_is_sequence": input_is_sequence,
+            "first_sequence_frame": first_sequence_frame,
             "input_allow_bg": input_allow_bg,
             "with_audio": with_audio,
             "without_handles": without_handles,
@@ -545,9 +561,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
             # - definition of input filepath
-            ffmpeg_input_args.append(
-                "-start_number {}".format(temp_data["output_frame_start"])
-            )
+            ffmpeg_input_args.extend([
+                "-start_number", str(temp_data["first_sequence_frame"])
+            ])
 
             # TODO add fps mapping `{fps: fraction}` ?
             # - e.g.: {
