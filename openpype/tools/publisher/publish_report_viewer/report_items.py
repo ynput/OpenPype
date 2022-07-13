@@ -83,10 +83,8 @@ class PublishReport:
 
         logs = []
         plugins_items_by_id = {}
-        plugins_id_order = []
         for plugin_data in data["plugins_data"]:
             item = PluginItem(plugin_data)
-            plugins_id_order.append(item.id)
             plugins_items_by_id[item.id] = item
             for instance_data_item in plugin_data["instances_data"]:
                 instance_id = instance_data_item["id"]
@@ -95,6 +93,14 @@ class PublishReport:
                         copy.deepcopy(log_item_data), item.id, instance_id
                     )
                     logs.append(log_item)
+        sorted_plugins = sorted(
+            plugins_items_by_id.values(),
+            key=lambda item: item.order
+        )
+        plugins_id_order = [
+            plugin_item.id
+            for plugin_item in sorted_plugins
+        ]
 
         logs_by_instance_id = collections.defaultdict(list)
         for log_item in logs:
