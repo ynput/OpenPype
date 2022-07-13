@@ -527,30 +527,6 @@
                             "label": "ValidateUniqueNames"
                         }
                     ]
-                },
-                {
-                    "type": "label",
-                    "label": "Extractors"
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "ExtractAlembic",
-                    "label": "Extract Alembic",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "key": "families",
-                            "label": "Families",
-                            "type": "list",
-                            "object_type": "text"
-                        }
-                    ]
                 }
             ]
         },
@@ -707,6 +683,54 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractAlembic",
+            "label": "Extract Alembic",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractAnimation",
+            "label": "Extract Alembic Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractMultiverseUsdAnim",
+            "label": "Extract USD Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
                 }
             ]
         }

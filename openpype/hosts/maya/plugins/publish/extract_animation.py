@@ -64,7 +64,9 @@ class ExtractAnimation(openpype.api.Extractor):
             "selection": True,
             "worldSpace": instance.data.get("worldSpace", True),
             "writeColorSets": instance.data.get("writeColorSets", False),
-            "writeFaceSets": instance.data.get("writeFaceSets", False)
+            "writeFaceSets": instance.data.get("writeFaceSets", False),
+            # 'noNormals' is the standard alembic option name.
+            "noNormals": not instance.data.get("writeNormals", True)
         }
 
         if not instance.data.get("includeParentHierarchy", True):

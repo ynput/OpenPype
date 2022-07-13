@@ -16,7 +16,7 @@ from openpype.hosts.maya.api.pipeline import containerise
 class MultiverseUsdLoader(load.LoaderPlugin):
     """Read USD data in a Multiverse Compound"""
 
-    families = ["model", "mvUsd", "mvUsdComposition", "mvUsdOverride",
+    families = ["model", "usd", "mvUsdComposition", "mvUsdOverride",
                 "pointcache", "animation"]
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
@@ -46,9 +46,6 @@ class MultiverseUsdLoader(load.LoaderPlugin):
                 shape = multiverse.CreateUsdCompound(self.fname)
                 transform = cmds.listRelatives(
                     shape, parent=True, fullPath=True)[0]
-
-                # Lock the shape node so the user cannot delete it.
-                cmds.lockNode(shape, lock=True)
 
         nodes = [transform, shape]
         self[:] = nodes
