@@ -1,6 +1,7 @@
 import os
 import collections
 import uuid
+import json
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -245,6 +246,62 @@ class FilesModel(QtGui.QStandardItemModel):
 
         return item_id, item
 
+    def mimeData(self, indexes):
+        item_ids = [
+            index.data(ITEM_ID_ROLE)
+            for index in indexes
+        ]
+        encoded_data = QtCore.QByteArray()
+        stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.WriteOnly)
+        stream.writeQString(json.dumps(item_ids))
+        mime_data = super(FilesModel, self).mimeData(indexes)
+        mime_data.setData("files_widget/internal_move", encoded_data)
+        return mime_data
+
+    def dropMimeData(self, mime_data, action, row, col, index):
+        internal_move_data = mime_data.data("files_widget/internal_move")
+        if isinstance(internal_move_data, QtCore.QByteArray):
+            # Raw data are already QByteArrat and we don't have to load them
+            encoded_data = internal_move_data
+        else:
+            encoded_data = QtCore.QByteArray.fromRawData(internal_move_data)
+        stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
+        text = stream.readQString()
+        try:
+            item_ids = json.loads(text)
+        except Exception:
+            return False
+
+        # Find matching item after which will be items moved
+        #   - store item before moved items are removed
+        root = self.invisibleRootItem()
+        if row >= 0:
+            src_item = self.item(row)
+        else:
+            src_item_id = index.data(ITEM_ID_ROLE)
+            src_item = self._items_by_id.get(src_item_id)
+
+        # Take out items that should be moved
+        items = []
+        for item_id in item_ids:
+            item = self._items_by_id.get(item_id)
+            if item:
+                self.takeRow(item.row())
+                items.append(item)
+
+        # Skip if there are not items that can be moved
+        if not items:
+            return False
+
+        # Calculate row where items should be inserted
+        if src_item:
+            src_row = src_item.row()
+        else:
+            src_row = root.rowCount()
+
+        root.insertRow(src_row, items)
+        return True
+
 
 class FilesProxyModel(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
@@ -428,6 +485,9 @@ class FilesView(QtWidgets.QListView):
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.setAcceptDrops(True)
+        self.setDragEnabled(True)
+        self.setDragDropMode(self.InternalMove)
 
         remove_btn = InViewButton(self)
         pix_enabled = paint_image_with_color(
@@ -636,8 +696,6 @@ class FilesWidget(QtWidgets.QFrame):
                 index, widget.sizeHint(), QtCore.Qt.SizeHintRole
             )
             self._widgets_by_id[item_id] = widget
-
-        self._files_proxy_model.sort(0)
 
         if not self._in_set_value:
             self.value_changed.emit()
