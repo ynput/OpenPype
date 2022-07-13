@@ -62,6 +62,14 @@ class DropEmpty(QtWidgets.QWidget):
             widget.setAlignment(QtCore.Qt.AlignCenter)
             widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
+        update_size_timer = QtCore.QTimer()
+        update_size_timer.setInterval(10)
+        update_size_timer.setSingleShot(True)
+
+        update_size_timer.timeout.connect(self._on_update_size_timer)
+
+        self._update_size_timer = update_size_timer
+
         self._single_item = single_item
         self._allow_sequences = allow_sequences
         self._allowed_extensions = set()
@@ -130,7 +138,28 @@ class DropEmpty(QtWidgets.QWidget):
                 ", ".join(sorted(self._allowed_extensions))
             )
 
+        if self._items_label_widget.text() == items_label:
+            return
+
         self._items_label_widget.setText(items_label)
+        self._update_size_timer.start()
+
+    def resizeEvent(self, event):
+        super(DropEmpty, self).resizeEvent(event)
+        self._update_size_timer.start()
+
+    def _on_update_size_timer(self):
+        """Recalculate height of label with extensions.
+
+        Dynamic QLabel with word wrap does not handle properly it's sizeHint
+        calculations on show. This way it is recalculated. It is good practice
+        to trigger this method with small offset using '_update_size_timer'.
+        """
+
+        width = self._items_label_widget.width()
+        height = self._items_label_widget.heightForWidth(width)
+        self._items_label_widget.setMinimumHeight(height)
+        self._items_label_widget.updateGeometry()
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
@@ -613,6 +642,7 @@ class FilesWidget(QtWidgets.QFrame):
         files_view.context_menu_requested.connect(
             self._on_context_menu_requested
         )
+
         self._in_set_value = False
         self._single_item = single_item
         self._multivalue = False
