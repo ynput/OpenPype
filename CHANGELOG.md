@@ -1,12 +1,8 @@
 # Changelog
 
-## [3.12.1-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.1-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.0...HEAD)
-
-### 📖 Documentation
-
-- Docs: Added minimal permissions for MongoDB [\#3441](https://github.com/pypeclub/OpenPype/pull/3441)
 
 **🆕 New features**
 
@@ -24,7 +20,7 @@
 - Blender: Bugfix - Set fps properly on open [\#3426](https://github.com/pypeclub/OpenPype/pull/3426)
 - Hiero: Add custom scripts menu [\#3425](https://github.com/pypeclub/OpenPype/pull/3425)
 - Blender: pre pyside install for all platforms [\#3400](https://github.com/pypeclub/OpenPype/pull/3400)
-- Maya: Ability to set resolution for playblasts from asset, and override through review instance. [\#3360](https://github.com/pypeclub/OpenPype/pull/3360)
+- Maya: Add additional playblast options to review Extractor. [\#3384](https://github.com/pypeclub/OpenPype/pull/3384)
 
 **🐛 Bug fixes**
 
@@ -40,7 +36,6 @@
 - Resolve: removed few bugs [\#3464](https://github.com/pypeclub/OpenPype/pull/3464)
 - General: Delete old versions is safer when ftrack is disabled [\#3462](https://github.com/pypeclub/OpenPype/pull/3462)
 - Nuke: fixing metadata slate TC difference [\#3455](https://github.com/pypeclub/OpenPype/pull/3455)
-- Nuke: prerender reviewable fails [\#3450](https://github.com/pypeclub/OpenPype/pull/3450)
 - Maya: fix hashing in Python 3 for tile rendering [\#3447](https://github.com/pypeclub/OpenPype/pull/3447)
 - LogViewer: Escape html characters in log message [\#3443](https://github.com/pypeclub/OpenPype/pull/3443)
 - Nuke: Slate frame is integrated [\#3427](https://github.com/pypeclub/OpenPype/pull/3427)
@@ -59,8 +54,8 @@
 - General: Move publish plugin and publish render abstractions [\#3442](https://github.com/pypeclub/OpenPype/pull/3442)
 - General: Use Anatomy after move to pipeline [\#3436](https://github.com/pypeclub/OpenPype/pull/3436)
 - General: Anatomy moved to pipeline [\#3435](https://github.com/pypeclub/OpenPype/pull/3435)
-- Fusion: Use client query functions [\#3380](https://github.com/pypeclub/OpenPype/pull/3380)
 - Resolve: Use client query functions [\#3379](https://github.com/pypeclub/OpenPype/pull/3379)
+- Photoshop: Use client query functions [\#3375](https://github.com/pypeclub/OpenPype/pull/3375)
 
 ## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
@@ -68,6 +63,7 @@
 
 ### 📖 Documentation
 
+- Docs: Added minimal permissions for MongoDB [\#3441](https://github.com/pypeclub/OpenPype/pull/3441)
 - Fix typo in documentation: pyenv on mac [\#3417](https://github.com/pypeclub/OpenPype/pull/3417)
 - Linux: update OIIO package [\#3401](https://github.com/pypeclub/OpenPype/pull/3401)
 
@@ -100,9 +96,9 @@
 - Hiero: Use client query functions [\#3393](https://github.com/pypeclub/OpenPype/pull/3393)
 - Nuke: Use client query functions [\#3391](https://github.com/pypeclub/OpenPype/pull/3391)
 - Maya: Use client query functions [\#3385](https://github.com/pypeclub/OpenPype/pull/3385)
+- Fusion: Use client query functions [\#3380](https://github.com/pypeclub/OpenPype/pull/3380)
 - Harmony: Use client query functions [\#3378](https://github.com/pypeclub/OpenPype/pull/3378)
 - Celaction: Use client query functions [\#3376](https://github.com/pypeclub/OpenPype/pull/3376)
-- Photoshop: Use client query functions [\#3375](https://github.com/pypeclub/OpenPype/pull/3375)
 - AfterEffects: Use client query functions [\#3374](https://github.com/pypeclub/OpenPype/pull/3374)
 
 **Merged pull requests:**
@@ -124,7 +120,6 @@
 - Harmony: audio validator has wrong logic [\#3364](https://github.com/pypeclub/OpenPype/pull/3364)
 - Nuke: Fix missing variable in extract thumbnail [\#3363](https://github.com/pypeclub/OpenPype/pull/3363)
 - Nuke: Fix precollect writes [\#3361](https://github.com/pypeclub/OpenPype/pull/3361)
-- AE- fix validate\_scene\_settings and renderLocal [\#3358](https://github.com/pypeclub/OpenPype/pull/3358)
 
 ## [3.11.0](https://github.com/pypeclub/OpenPype/tree/3.11.0) (2022-06-17)
 
