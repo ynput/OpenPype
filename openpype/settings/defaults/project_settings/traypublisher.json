@@ -116,6 +116,7 @@
                 ".png",
                 ".dpx",
                 ".jpg",
+                ".jpeg",
                 ".tiff",
                 ".tif",
                 ".mov",
@@ -158,6 +159,7 @@
             "extensions": [
                 ".exr",
                 ".jpg",
+                ".jpeg",
                 ".dpx",
                 ".bmp",
                 ".tif",
