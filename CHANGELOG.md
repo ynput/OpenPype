@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.12.1-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.1-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.0...HEAD)
 
@@ -14,6 +14,9 @@
 
 **🚀 Enhancements**
 
+- TrayPublisher: Added more options for grouping of instances [\#3494](https://github.com/pypeclub/OpenPype/pull/3494)
+- NewPublisher: Align creator attributes from top to bottom [\#3487](https://github.com/pypeclub/OpenPype/pull/3487)
+- NewPublisher: Added ability to use label of instance [\#3484](https://github.com/pypeclub/OpenPype/pull/3484)
 - General: Creator Plugins have access to project [\#3476](https://github.com/pypeclub/OpenPype/pull/3476)
 - General: Better arguments order in creator init [\#3475](https://github.com/pypeclub/OpenPype/pull/3475)
 - Ftrack: Trigger custom ftrack events on project creation and preparation [\#3465](https://github.com/pypeclub/OpenPype/pull/3465)
@@ -25,6 +28,11 @@
 
 **🐛 Bug fixes**
 
+- TrayPublisher: Keep use instance label in list view [\#3493](https://github.com/pypeclub/OpenPype/pull/3493)
+- General: Extract review use first frame of input sequence [\#3491](https://github.com/pypeclub/OpenPype/pull/3491)
+- General: Fix Plist loading for application launch [\#3485](https://github.com/pypeclub/OpenPype/pull/3485)
+- Nuke: Workfile tools open on start [\#3479](https://github.com/pypeclub/OpenPype/pull/3479)
+- New Publisher: Disabled context change allows creation [\#3478](https://github.com/pypeclub/OpenPype/pull/3478)
 - General: thumbnail extractor fix [\#3474](https://github.com/pypeclub/OpenPype/pull/3474)
 - Kitsu: bugfix with sync-service ans publish plugins [\#3473](https://github.com/pypeclub/OpenPype/pull/3473)
 - Flame: solved problem with multi-selected loading [\#3470](https://github.com/pypeclub/OpenPype/pull/3470)
@@ -46,7 +54,9 @@
 - General: Use query functions in global plugins [\#3459](https://github.com/pypeclub/OpenPype/pull/3459)
 - Clockify: Use query functions in clockify actions [\#3458](https://github.com/pypeclub/OpenPype/pull/3458)
 - General: Use query functions in rest api calls [\#3457](https://github.com/pypeclub/OpenPype/pull/3457)
+- General: Use query functions in openpype lib functions [\#3454](https://github.com/pypeclub/OpenPype/pull/3454)
 - General: Use query functions in load utils [\#3446](https://github.com/pypeclub/OpenPype/pull/3446)
+- General: Move publish plugin and publish render abstractions [\#3442](https://github.com/pypeclub/OpenPype/pull/3442)
 - General: Use Anatomy after move to pipeline [\#3436](https://github.com/pypeclub/OpenPype/pull/3436)
 - General: Anatomy moved to pipeline [\#3435](https://github.com/pypeclub/OpenPype/pull/3435)
 - Fusion: Use client query functions [\#3380](https://github.com/pypeclub/OpenPype/pull/3380)
@@ -66,8 +76,6 @@
 - Webserver: Added CORS middleware [\#3422](https://github.com/pypeclub/OpenPype/pull/3422)
 - Attribute Defs UI: Files widget show what is allowed to drop in [\#3411](https://github.com/pypeclub/OpenPype/pull/3411)
 - General: Add ability to change user value for templates [\#3366](https://github.com/pypeclub/OpenPype/pull/3366)
-- Hosts: More options for in-host callbacks [\#3357](https://github.com/pypeclub/OpenPype/pull/3357)
-- Multiverse: expose some settings to GUI [\#3350](https://github.com/pypeclub/OpenPype/pull/3350)
 
 **🐛 Bug fixes**
 
@@ -82,7 +90,6 @@
 - Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
 - Flame: bunch of publishing issues [\#3377](https://github.com/pypeclub/OpenPype/pull/3377)
 - Harmony: added unc path to zifile command in Harmony [\#3372](https://github.com/pypeclub/OpenPype/pull/3372)
-- Standalone: settings improvements [\#3355](https://github.com/pypeclub/OpenPype/pull/3355)
 
 **🔀 Refactored code**
 
@@ -107,16 +114,9 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.11.1-nightly.1...3.11.1)
 
-**🆕 New features**
-
-- Flame: custom export temp folder [\#3346](https://github.com/pypeclub/OpenPype/pull/3346)
-- Nuke: removing third-party plugins   [\#3344](https://github.com/pypeclub/OpenPype/pull/3344)
-
 **🚀 Enhancements**
 
 - Pyblish Pype: Hiding/Close issues [\#3367](https://github.com/pypeclub/OpenPype/pull/3367)
-- Ftrack: Removed requirement of pypeclub role from default settings [\#3354](https://github.com/pypeclub/OpenPype/pull/3354)
-- Kitsu: Prevent crash on missing frames information [\#3352](https://github.com/pypeclub/OpenPype/pull/3352)
 
 **🐛 Bug fixes**
 
@@ -125,18 +125,10 @@
 - Nuke: Fix missing variable in extract thumbnail [\#3363](https://github.com/pypeclub/OpenPype/pull/3363)
 - Nuke: Fix precollect writes [\#3361](https://github.com/pypeclub/OpenPype/pull/3361)
 - AE- fix validate\_scene\_settings and renderLocal [\#3358](https://github.com/pypeclub/OpenPype/pull/3358)
-- deadline: fixing misidentification of revieables [\#3356](https://github.com/pypeclub/OpenPype/pull/3356)
-- General: Create only one thumbnail per instance [\#3351](https://github.com/pypeclub/OpenPype/pull/3351)
-- nuke: adding extract thumbnail settings 3.10 [\#3347](https://github.com/pypeclub/OpenPype/pull/3347)
-- General: Fix last version function [\#3345](https://github.com/pypeclub/OpenPype/pull/3345)
 
 ## [3.11.0](https://github.com/pypeclub/OpenPype/tree/3.11.0) (2022-06-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.11.0-nightly.4...3.11.0)
-
-**🐛 Bug fixes**
-
-- General: Handle empty source key on instance [\#3342](https://github.com/pypeclub/OpenPype/pull/3342)
 
 ## [3.10.0](https://github.com/pypeclub/OpenPype/tree/3.10.0) (2022-05-26)
 
