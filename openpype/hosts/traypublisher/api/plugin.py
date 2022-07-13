@@ -1,3 +1,4 @@
+from openpype.lib.attribute_definitions import BoolDef
 from openpype.pipeline import (
     Creator,
     CreatedInstance
@@ -70,8 +71,10 @@ class SettingsCreator(TrayPublishCreator):
                 folders=False,
                 extensions=self.extensions,
                 allow_sequences=self.allow_sequences,
+                single_item=not self.allow_multiple_items,
                 label="Filepath",
-            )
+            ),
+            BoolDef("allow_review", label="Reviewable", default=True)
         ]
 
     @classmethod
@@ -92,6 +95,8 @@ class SettingsCreator(TrayPublishCreator):
                 "detailed_description": item_data["detailed_description"],
                 "extensions": item_data["extensions"],
                 "allow_sequences": item_data["allow_sequences"],
+                "allow_multiple_items": item_data["allow_multiple_items"],
+                "allow_review": item_data["allow_review"],
                 "default_variants": item_data["default_variants"]
             }
         )

@@ -68,6 +68,16 @@
                         "type": "boolean"
                     },
                     {
+                        "key": "allow_multiple_items",
+                        "label": "Allow multiple items",
+                        "type": "boolean"
+                    },
+                    {
+                        "key": "allow_review",
+                        "label": "Allow review",
+                        "type": "boolean"
+                    },
+                    {
                         "type": "list",
                         "key": "extensions",
                         "label": "Extensions",
