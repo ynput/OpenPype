@@ -180,6 +180,9 @@ $out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build 2>&1
 Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
 if ($LASTEXITCODE -ne 0)
 {
+    Write-Host "------------------------------------------" -ForegroundColor Red
+    Get-Content "$($openpype_root)\build\build.log"
+    Write-Host "------------------------------------------" -ForegroundColor Red
     Write-Host "!!! " -NoNewLine -ForegroundColor Red
     Write-Host "Build failed. Check the log: " -NoNewline
     Write-Host ".\build\build.log" -ForegroundColor Yellow

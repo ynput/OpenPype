@@ -8,6 +8,7 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
+        "use_env_var_as_root": false,
         "enabled": false,
         "paths": {
             "source-path": [],
@@ -52,12 +53,39 @@
                 "",
                 "_Main"
             ],
-            "static_mesh_prefix": "S_",
+            "static_mesh_prefix": "S",
             "collision_prefixes": [
                 "UBX",
                 "UCP",
                 "USP",
                 "UCX"
+            ]
+        },
+        "CreateUnrealSkeletalMesh": {
+            "enabled": true,
+            "defaults": [],
+            "joint_hints": "jnt_org"
+        },
+        "CreateMultiverseLook": {
+            "enabled": true,
+            "publish_mip_map": true
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdComp": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdOver": {
+            "enabled": true,
+            "defaults": [
+                "Main"
             ]
         },
         "CreateAnimation": {
@@ -160,6 +188,9 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "CollectFbxCamera": {
+            "enabled": false
+        },
         "ValidateInstanceInContext": {
             "enabled": true,
             "optional": true,
@@ -173,7 +204,8 @@
         "ValidateFrameRange": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": true,
+            "exclude_families": ["model", "rig", "staticMesh"]
         },
         "ValidateShaderName": {
             "enabled": false,
@@ -370,6 +402,14 @@
             "optional": true,
             "active": true
         },
+        "ExtractAlembic": {
+            "enabled": true,
+            "families": [
+                "pointcache",
+                "model",
+                "vrayproxy"
+            ]
+        },
         "ValidateRigContents": {
             "enabled": false,
             "optional": true,
@@ -403,6 +443,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateCameraContents": {
+            "enabled": true,
+            "optional": true,
+            "validate_shapes": true
         },
         "ExtractPlayblast": {
             "capture_preset": {

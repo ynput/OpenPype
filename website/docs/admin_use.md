@@ -69,6 +69,22 @@ stored in `checksums` file.
 Add `--headless` to run OpenPype without graphical UI (useful on server or on automated tasks, etc.)
 :::
 
+`--verbose` `<level>` - change log verbose level of OpenPype loggers.
+
+Level value can be integer in range `0-50` or one of enum strings `"notset" (0)`, `"debug" (10)`, `"info" (20)`, `"warning" (30)`, `"error" (40)`, `"ciritcal" (50)`. Value is stored to `OPENPYPE_LOG_LEVEL` environment variable for next processes.
+
+```shell
+openpype_console --verbose debug
+```
+
+`--debug` - set debug flag affects logging
+
+Enable debug flag for OpenPype process. Change value of environment variable `OPENPYPE_DEBUG` to `"1"`. At this moment affects only OpenPype loggers. Argument `--verbose` or environment variable `OPENPYPE_LOG_LEVEL` are used in preference to affect log level.
+
+```shell
+openpype_console --debug
+```
+
 ### Details
 When you run OpenPype from executable, few check are made: 
 
@@ -89,6 +105,10 @@ save it in secure way to your systems keyring - on Windows it is **Credential Ma
 This can be also set beforehand with environment variable `OPENPYPE_MONGO`. If set it takes precedence
 over the one set in keyring.
 
+:::tip Minimal permissions for DB user
+- `readWrite` role to `openpype` and `avalon` databases
+- `find` permission on `openpype`, `avalon` and `local`
+  
 #### Check for OpenPype version path
 When connection to MongoDB is made, OpenPype will get various settings from there - one among them is
 directory location where OpenPype versions are stored. If this directory exists OpenPype tries to

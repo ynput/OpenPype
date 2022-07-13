@@ -3,11 +3,12 @@ import json
 import tempfile
 import atexit
 
-from avalon import io
-import avalon.api
 import pyblish.api
 
-from openpype.pipeline import BaseCreator
+from openpype.pipeline import (
+    register_creator_plugin_path,
+    legacy_io,
+)
 
 ROOT_DIR = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
@@ -169,12 +170,12 @@ def install():
 
     pyblish.api.register_host("traypublisher")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
 
 def set_project_name(project_name):
     # TODO Deregister project specific plugins and register new project plugins
     os.environ["AVALON_PROJECT"] = project_name
-    avalon.api.Session["AVALON_PROJECT"] = project_name
-    io.install()
+    legacy_io.Session["AVALON_PROJECT"] = project_name
+    legacy_io.install()
     HostContext.set_project_name(project_name)

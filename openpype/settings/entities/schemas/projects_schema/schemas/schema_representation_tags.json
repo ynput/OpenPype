@@ -24,6 +24,9 @@
         },
         {
             "sequence": "Output as image sequence"
+        },
+        {
+            "no-audio": "Do not add audio"
         }
     ]
 }

@@ -29,10 +29,25 @@ from .vendor_bin_utils import (
     is_oiio_supported
 )
 
+from .attribute_definitions import (
+    AbtractAttrDef,
+
+    UIDef,
+    UISeparatorDef,
+    UILabelDef,
+
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef,
+    FileDefItem,
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
-    get_global_environments
 )
 
 from .terminal import Terminal
@@ -90,6 +105,7 @@ from .transcoding import (
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
+    convert_input_paths_for_ffmpeg,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
@@ -114,6 +130,8 @@ from .avalon_context import (
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
+    get_last_workfile_with_version,
+    get_last_workfile,
 
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -185,6 +203,7 @@ from .editorial import (
     is_overlapping_otio_ranges,
     otio_range_to_frame_range,
     otio_range_with_handles,
+    get_media_range_with_retimes,
     convert_to_padded_path,
     trim_media_range,
     range_from_frames,
@@ -202,6 +221,12 @@ from .openpype_version import (
     is_running_staging,
     is_current_version_studio_latest,
     is_current_version_higher_than_expected
+)
+
+
+from .connections import (
+    requests_get,
+    requests_post
 )
 
 terminal = Terminal
@@ -224,12 +249,25 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
-    "get_global_environments",
 
     "get_vendor_bin_path",
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
     "is_oiio_supported",
+
+    "AbtractAttrDef",
+
+    "UIDef",
+    "UISeparatorDef",
+    "UILabelDef",
+
+    "UnknownDef",
+    "NumberDef",
+    "TextDef",
+    "EnumDef",
+    "BoolDef",
+    "FileDef",
+    "FileDefItem",
 
     "import_filepath",
     "modules_from_path",
@@ -240,6 +278,7 @@ __all__ = [
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
+    "convert_input_paths_for_ffmpeg",
     "get_ffprobe_data",
     "get_ffprobe_streams",
     "get_ffmpeg_codec_args",
@@ -263,6 +302,8 @@ __all__ = [
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
+    "get_last_workfile_with_version",
+    "get_last_workfile",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",
@@ -342,6 +383,7 @@ __all__ = [
     "otio_range_with_handles",
     "convert_to_padded_path",
     "otio_range_to_frame_range",
+    "get_media_range_with_retimes",
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",
@@ -358,4 +400,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "requests_get",
+    "requests_post"
 ]

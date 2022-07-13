@@ -44,7 +44,7 @@ class BaseEvent(BaseHandler):
         return self._get_entities(
             event,
             session,
-            ignore=['socialfeed', 'socialnotification']
+            ignore=['socialfeed', 'socialnotification', 'team']
         )
 
     def get_project_name_from_event(self, session, event, project_id):

@@ -3,9 +3,10 @@ import re
 import pyblish.api
 import json
 
-from avalon.api import format_template_with_optional_keys
-
-from openpype.lib import prepare_template_data
+from openpype.lib import (
+    prepare_template_data,
+    StringTemplate,
+)
 
 
 class CollectTextures(pyblish.api.ContextPlugin):
@@ -110,8 +111,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                     formatting_data.update(explicit_data)
                     fill_pairs = prepare_template_data(formatting_data)
-                    workfile_subset = format_template_with_optional_keys(
-                        fill_pairs, self.workfile_subset_template)
+                    workfile_subset = StringTemplate.format_strict_template(
+                        self.workfile_subset_template, fill_pairs
+                    )
 
                     asset_build = self._get_asset_build(
                         repre_file,
@@ -201,8 +203,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     formatting_data.update(explicit_data)
 
                     fill_pairs = prepare_template_data(formatting_data)
-                    subset = format_template_with_optional_keys(
-                        fill_pairs, self.texture_subset_template)
+                    subset = StringTemplate.format_strict_template(
+                        self.texture_subset_template, fill_pairs
+                    )
 
                     asset_build = self._get_asset_build(
                         repre_file,

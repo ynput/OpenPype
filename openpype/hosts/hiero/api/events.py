@@ -1,12 +1,12 @@
 import os
 import hiero.core.events
 from openpype.api import Logger
+from openpype.lib import register_event_callback
 from .lib import (
     sync_avalon_data_to_workfile,
     launch_workfiles_app,
     selection_changed_timeline,
     before_project_save,
-    register_event_callback
 )
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label
@@ -109,8 +109,9 @@ def register_hiero_events():
     # hiero.core.events.registerInterest("kShutdown", shutDown)
     # hiero.core.events.registerInterest("kStartup", startupCompleted)
 
-    hiero.core.events.registerInterest(
-        ("kSelectionChanged", "kTimeline"), selection_changed_timeline)
+    # INFO: was disabled because it was slowing down timeline operations
+    # hiero.core.events.registerInterest(
+    #     ("kSelectionChanged", "kTimeline"), selection_changed_timeline)
 
     # workfiles
     try:

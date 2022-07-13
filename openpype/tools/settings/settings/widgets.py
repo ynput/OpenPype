@@ -1,13 +1,9 @@
-import os
 import copy
 import uuid
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
-from avalon.mongodb import (
-    AvalonMongoConnection,
-    AvalonMongoDB
-)
 
+from openpype.pipeline import AvalonMongoDB
 from openpype.style import get_objected_colors
 from openpype.tools.utils.widgets import ImageButton
 from openpype.tools.utils.lib import paint_image_with_color
@@ -97,6 +93,9 @@ class CompleterView(QtWidgets.QListView):
             QtCore.Qt.FramelessWindowHint
             | QtCore.Qt.Tool
         )
+
+        # Open the widget unactivated
+        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
@@ -225,9 +224,17 @@ class SettingsLineEdit(PlaceholderLineEdit):
     def __init__(self, *args, **kwargs):
         super(SettingsLineEdit, self).__init__(*args, **kwargs)
 
-        self._completer = None
+        # Timer which will get started on focus in and stopped on focus out
+        # - callback checks if line edit or completer have focus
+        #   and hide completer if not
+        focus_timer = QtCore.QTimer()
+        focus_timer.setInterval(50)
 
+        focus_timer.timeout.connect(self._on_focus_timer)
         self.textChanged.connect(self._on_text_change)
+
+        self._completer = None
+        self._focus_timer = focus_timer
 
     def _on_text_change(self, text):
         if self._completer is not None:
@@ -240,19 +247,19 @@ class SettingsLineEdit(PlaceholderLineEdit):
         new_point = self.mapToGlobal(point)
         self._completer.move(new_point)
 
+    def _on_focus_timer(self):
+        if not self.hasFocus() and not self._completer.hasFocus():
+            self._completer.hide()
+            self._focus_timer.stop()
+
     def focusInEvent(self, event):
         super(SettingsLineEdit, self).focusInEvent(event)
         self.focused_in.emit()
 
-        if self._completer is None:
-            return
-        self._completer.show()
-        self._update_completer()
-
-    def focusOutEvent(self, event):
-        super(SettingsLineEdit, self).focusOutEvent(event)
         if self._completer is not None:
-            self._completer.hide()
+            self._focus_timer.start()
+            self._completer.show()
+            self._update_completer()
 
     def paintEvent(self, event):
         super(SettingsLineEdit, self).paintEvent(event)
@@ -1197,15 +1204,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         for index in self.project_list.selectedIndexes():
             selected_project = index.data(PROJECT_NAME_ROLE)
             break
-
-        mongo_url = os.environ["OPENPYPE_MONGO"]
-
-        # Force uninstall of whole avalon connection if url does not match
-        # to current environment and set it as environment
-        if mongo_url != os.environ["AVALON_MONGO"]:
-            AvalonMongoConnection.uninstall(self.dbcon, force=True)
-            os.environ["AVALON_MONGO"] = mongo_url
-            self.dbcon = None
 
         if not self.dbcon:
             try:

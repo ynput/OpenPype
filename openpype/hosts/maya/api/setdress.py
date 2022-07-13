@@ -6,10 +6,19 @@ import contextlib
 import copy
 
 import six
+
 from maya import cmds
 
-from avalon import io
+from openpype.client import (
+    get_version_by_name,
+    get_last_version_by_subset_id,
+    get_representation_by_id,
+    get_representation_by_name,
+    get_representation_parents,
+)
 from openpype.pipeline import (
+    schema,
+    legacy_io,
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
@@ -251,7 +260,6 @@ def get_contained_containers(container):
 
     """
 
-    import avalon.schema
     from .pipeline import parse_container
 
     # Get avalon containers in this package setdress container
@@ -261,7 +269,7 @@ def get_contained_containers(container):
         try:
             member_container = parse_container(node)
             containers.append(member_container)
-        except avalon.schema.ValidationError:
+        except schema.ValidationError:
             pass
 
     return containers
@@ -281,34 +289,32 @@ def update_package_version(container, version):
     """
 
     # Versioning (from `core.maya.pipeline`)
-    current_representation = io.find_one({
-        "_id": io.ObjectId(container["representation"])
-    })
+    project_name = legacy_io.active_project()
+    current_representation = get_representation_by_id(
+        project_name, container["representation"]
+    )
 
     assert current_representation is not None, "This is a bug"
 
-    version_, subset, asset, project = io.parenthood(current_representation)
+    version_doc, subset_doc, asset_doc, project_doc = (
+        get_representation_parents(project_name, current_representation)
+    )
 
     if version == -1:
-        new_version = io.find_one({
-            "type": "version",
-            "parent": subset["_id"]
-        }, sort=[("name", -1)])
+        new_version = get_last_version_by_subset_id(
+            project_name, subset_doc["_id"]
+        )
     else:
-        new_version = io.find_one({
-            "type": "version",
-            "parent": subset["_id"],
-            "name": version,
-        })
+        new_version = get_version_by_name(
+            project_name, version, subset_doc["_id"]
+        )
 
     assert new_version is not None, "This is a bug"
 
     # Get the new representation (new file)
-    new_representation = io.find_one({
-        "type": "representation",
-        "parent": new_version["_id"],
-        "name": current_representation["name"]
-    })
+    new_representation = get_representation_by_name(
+        project_name, current_representation["name"], new_version["_id"]
+    )
 
     update_package(container, new_representation)
 
@@ -326,10 +332,10 @@ def update_package(set_container, representation):
     """
 
     # Load the original package data
-    current_representation = io.find_one({
-        "_id": io.ObjectId(set_container['representation']),
-        "type": "representation"
-    })
+    project_name = legacy_io.active_project()
+    current_representation = get_representation_by_id(
+        project_name, set_container["representation"]
+    )
 
     current_file = get_representation_path(current_representation)
     assert current_file.endswith(".json")
@@ -376,6 +382,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
     from openpype.hosts.maya.lib import DEFAULT_MATRIX, get_container_transforms
 
     set_namespace = set_container['namespace']
+    project_name = legacy_io.active_project()
 
     # Update the setdress hierarchy alembic
     set_root = get_container_transforms(set_container, root=True)
@@ -477,12 +484,12 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 # Check whether the conversion can be done by the Loader.
                 # They *must* use the same asset, subset and Loader for
                 # `update_container` to make sense.
-                old = io.find_one({
-                    "_id": io.ObjectId(representation_current)
-                })
-                new = io.find_one({
-                    "_id": io.ObjectId(representation_new)
-                })
+                old = get_representation_by_id(
+                    project_name, representation_current
+                )
+                new = get_representation_by_id(
+                    project_name, representation_new
+                )
                 is_valid = compare_representations(old=old, new=new)
                 if not is_valid:
                     log.error("Skipping: %s. See log for details.",

@@ -25,7 +25,7 @@ class PypeCommands:
     Most of its methods are called by :mod:`cli` module.
     """
     @staticmethod
-    def launch_tray(debug=False):
+    def launch_tray():
         PypeLogger.set_process_name("Tray")
 
         from openpype.tools import tray
@@ -101,7 +101,8 @@ class PypeCommands:
             RuntimeError: When there is no path to process.
         """
         from openpype.modules import ModulesManager
-        from openpype import install, uninstall
+        from openpype.pipeline import install_openpype_plugins
+
         from openpype.api import Logger
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
@@ -112,7 +113,7 @@ class PypeCommands:
 
         log = Logger.get_logger()
 
-        install()
+        install_openpype_plugins()
 
         manager = ModulesManager()
 
@@ -124,13 +125,14 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        env = get_app_environments_for_context(
-            os.environ["AVALON_PROJECT"],
-            os.environ["AVALON_ASSET"],
-            os.environ["AVALON_TASK"],
-            os.environ["AVALON_APP_NAME"]
-        )
-        os.environ.update(env)
+        if os.getenv("AVALON_APP_NAME"):
+            env = get_app_environments_for_context(
+                os.environ["AVALON_PROJECT"],
+                os.environ["AVALON_ASSET"],
+                os.environ["AVALON_TASK"],
+                os.environ["AVALON_APP_NAME"]
+            )
+            os.environ.update(env)
 
         pyblish.api.register_host("shell")
 
@@ -142,6 +144,7 @@ class PypeCommands:
             pyblish.api.register_target("farm")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         log.info("Running publish ...")
 
@@ -171,9 +174,11 @@ class PypeCommands:
                              user_email, targets=None):
         """Opens installed variant of 'host' and run remote publish there.
 
+        Eventually should be yanked out to Webpublisher cli.
+
         Currently implemented and tested for Photoshop where customer
         wants to process uploaded .psd file and publish collected layers
-        from there.
+        from there. Triggered by Webpublisher.
 
         Checks if no other batches are running (status =='in_progress). If
         so, it sleeps for SLEEP (this is separate process),
@@ -271,7 +276,8 @@ class PypeCommands:
     def remotepublish(project, batch_path, user_email, targets=None):
         """Start headless publishing.
 
-        Used to publish rendered assets, workfiles etc.
+        Used to publish rendered assets, workfiles etc via Webpublisher.
+        Eventually should be yanked out to Webpublisher cli.
 
         Publish use json from passed paths argument.
 
@@ -294,7 +300,8 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
-        import avalon.api
+
+        from openpype.pipeline import install_host
         from openpype.hosts.webpublisher import api as webpublisher
 
         log = PypeLogger.get_logger()
@@ -306,6 +313,7 @@ class PypeCommands:
         os.environ["AVALON_PROJECT"] = project
         os.environ["AVALON_APP"] = host_name
         os.environ["USER_EMAIL"] = user_email
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         pyblish.api.register_host(host_name)
 
@@ -315,7 +323,7 @@ class PypeCommands:
             for target in targets:
                 pyblish.api.register_target(target)
 
-        avalon.api.install(webpublisher)
+        install_host(webpublisher)
 
         log.info("Running publish ...")
 
@@ -328,9 +336,12 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def extractenvironments(
-        output_json_path, project, asset, task, app, env_group
-    ):
+    def extractenvironments(output_json_path, project, asset, task, app,
+                            env_group):
+        """Produces json file with environment based on project and app.
+
+        Called by Deadline plugin to propagate environment into render jobs.
+        """
         if all((project, asset, task, app)):
             from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(

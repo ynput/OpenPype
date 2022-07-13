@@ -6,7 +6,7 @@ from maya import cmds
 
 import openpype.api
 from openpype.hosts.maya.api.lib import maintained_selection
-from avalon.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import AVALON_CONTAINER_ID
 
 
 class ExtractMayaSceneRaw(openpype.api.Extractor):

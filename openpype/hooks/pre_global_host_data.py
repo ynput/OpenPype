@@ -1,12 +1,10 @@
-from openpype.api import Anatomy
 from openpype.lib import (
     PreLaunchHook,
     EnvironmentPrepData,
     prepare_app_environments,
     prepare_context_environments
 )
-
-import avalon.api
+from openpype.pipeline import AvalonMongoDB, Anatomy
 
 
 class GlobalHostDataHook(PreLaunchHook):
@@ -64,7 +62,7 @@ class GlobalHostDataHook(PreLaunchHook):
         self.data["anatomy"] = Anatomy(project_name)
 
         # Mongo connection
-        dbcon = avalon.api.AvalonMongoDB()
+        dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
         dbcon.install()
 

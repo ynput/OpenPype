@@ -1,8 +1,14 @@
 import nuke
 import qargparse
-from avalon import io
 
-from openpype.pipeline import get_representation_path
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
+from openpype.pipeline import (
+    legacy_io,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace,
     maintained_selection
@@ -101,7 +107,7 @@ class LoadClip(plugin.NukeLoader):
         last += self.handle_end
 
         if not is_sequence:
-            duration = last - first + 1
+            duration = last - first
             first = 1
             last = first + duration
         elif "#" not in file:
@@ -194,11 +200,10 @@ class LoadClip(plugin.NukeLoader):
 
         start_at_workfile = bool("start at" in read_node['frame_mode'].value())
 
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
-        version_data = version.get("data", {})
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
+        version_data = version_doc.get("data", {})
         repre_id = representation["_id"]
 
         repre_cont = representation["context"]
@@ -216,7 +221,7 @@ class LoadClip(plugin.NukeLoader):
         last += self.handle_end
 
         if not is_sequence:
-            duration = last - first + 1
+            duration = last - first
             first = 1
             last = first + duration
         elif "#" not in file:
@@ -249,7 +254,7 @@ class LoadClip(plugin.NukeLoader):
                 "representation": str(representation["_id"]),
                 "frameStart": str(first),
                 "frameEnd": str(last),
-                "version": str(version.get("name")),
+                "version": str(version_doc.get("name")),
                 "db_colorspace": colorspace,
                 "source": version_data.get("source"),
                 "handleStart": str(self.handle_start),
@@ -262,26 +267,24 @@ class LoadClip(plugin.NukeLoader):
             if used_colorspace:
                 updated_dict["used_colorspace"] = used_colorspace
 
+            last_version_doc = get_last_version_by_subset_id(
+                project_name, version_doc["parent"], fields=["_id"]
+            )
             # change color of read_node
-            # get all versions in list
-            versions = io.find({
-                "type": "version",
-                "parent": version["parent"]
-            }).distinct('name')
-
-            max_version = max(versions)
-
-            if version.get("name") not in [max_version]:
-                read_node["tile_color"].setValue(int("0xd84f20ff", 16))
+            if version_doc["_id"] == last_version_doc["_id"]:
+                color_value = "0x4ecd25ff"
             else:
-                read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
+                color_value = "0xd84f20ff"
+            read_node["tile_color"].setValue(int(color_value, 16))
 
             # Update the imprinted representation
             update_container(
                 read_node,
                 updated_dict
             )
-            self.log.info("updated to version: {}".format(version.get("name")))
+            self.log.info(
+                "updated to version: {}".format(version_doc.get("name"))
+            )
 
         if version_data.get("retime", None):
             self._make_retimes(read_node, version_data)

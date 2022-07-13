@@ -14,6 +14,7 @@
         - this keys is not allowed for all inputs as they may have not reason for that
         - key is validated, can be only once in hierarchy but is not required
 - currently there are `system settings` and `project settings`
+- all entities can have set `"tooltip"` key with description which will be shown in UI
 
 ## Inner schema
 - GUI schemas are huge json files, to be able to split whole configuration into multiple schema there's type `schema`
@@ -45,8 +46,7 @@
     }, {
         "type": "raw-json",
         "label": "{host_label} Environments",
-        "key": "{host_name}_environments",
-        "env_group_key": "{host_name}"
+        "key": "{host_name}_environments"
     }, {
         "type": "path",
         "key": "{host_name}_executables",
@@ -744,6 +744,7 @@ How output of the schema could look like on save:
 ### label
 - add label with note or explanations
 - it is possible to use html tags inside the label
+- set `work_wrap` to `true`/`false` if you want to enable word wrapping in UI (default: `false`)
 
 ```
 {

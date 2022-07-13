@@ -10,7 +10,7 @@ def add_implementation_envs(env, _app):
     ]
     old_nuke_path = env.get("NUKE_PATH") or ""
     for path in old_nuke_path.split(os.pathsep):
-        if not path or not os.path.exists(path):
+        if not path:
             continue
 
         norm_path = os.path.normpath(path)

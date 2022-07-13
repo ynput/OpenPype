@@ -6,16 +6,23 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-import avalon.api
-
-from openpype.style import get_default_entity_icon_color
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_objected_colors,
+)
+from openpype.resources import get_image_path
+from openpype.lib import filter_profiles
 from openpype.api import (
     get_project_settings,
     Logger
 )
-from openpype.lib import filter_profiles
-from openpype.style import get_objected_colors
-from openpype.resources import get_image_path
+from openpype.pipeline import registered_host
+
+log = Logger.get_logger(__name__)
 
 
 def center_window(window):
@@ -111,12 +118,22 @@ def get_qta_icon_by_name_and_color(icon_name, icon_color):
         variants.append("{0}.{1}".format(key, icon_name))
 
     icon = None
+    used_variant = None
     for variant in variants:
         try:
             icon = qtawesome.icon(variant, color=icon_color)
+            used_variant = variant
             break
         except Exception:
             pass
+
+    if used_variant is None:
+        log.info("Didn't find icon \"{}\"".format(icon_name))
+
+    elif used_variant != icon_name:
+        log.debug("Icon \"{}\" was not found \"{}\" is used instead".format(
+            icon_name, used_variant
+        ))
 
     SharedObjects.icons[full_icon_name] = icon
     return icon
@@ -140,8 +157,8 @@ def get_asset_icon_name(asset_doc, has_children=True):
         return icon_name
 
     if has_children:
-        return "folder"
-    return "folder-o"
+        return "fa.folder"
+    return "fa.folder-o"
 
 
 def get_asset_icon_color(asset_doc):
@@ -390,13 +407,14 @@ class FamilyConfigCache:
 
         self.family_configs.clear()
         # Skip if we're not in host context
-        if not avalon.api.registered_host():
+        if not registered_host():
             return
 
         # Update the icons from the project configuration
         project_name = os.environ.get("AVALON_PROJECT")
         asset_name = os.environ.get("AVALON_ASSET")
         task_name = os.environ.get("AVALON_TASK")
+        host_name = os.environ.get("AVALON_APP")
         if not all((project_name, asset_name, task_name)):
             return
 
@@ -410,15 +428,20 @@ class FamilyConfigCache:
             ["family_filter_profiles"]
         )
         if profiles:
-            asset_doc = self.dbcon.find_one(
-                {"type": "asset", "name": asset_name},
-                {"data.tasks": True}
-            )
+            # Make sure connection is installed
+            # - accessing attribute which does not have auto-install
+            self.dbcon.install()
+            database = getattr(self.dbcon, "database", None)
+            if database is None:
+                database = self.dbcon._database
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["data.tasks"]
+            ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")
             profiles_filter = {
                 "task_types": task_type,
-                "hosts": os.environ["AVALON_APP"]
+                "hosts": host_name
             }
             matching_item = filter_profiles(profiles, profiles_filter)
 
@@ -480,10 +503,7 @@ class GroupsConfig:
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             # Get pre-defined group name and appearance from project config
-            project_doc = self.dbcon.find_one(
-                {"type": "project"},
-                projection={"config.groups": True}
-            )
+            project_doc = get_project(project_name, fields=["config.groups"])
 
             if project_doc:
                 group_configs = project_doc["config"].get("groups") or []
@@ -707,11 +727,11 @@ def is_sync_loader(loader):
 
 
 def is_remove_site_loader(loader):
-    return hasattr(loader, "remove_site_on_representation")
+    return hasattr(loader, "is_remove_site_loader")
 
 
 def is_add_site_loader(loader):
-    return hasattr(loader, "add_site_to_representation")
+    return hasattr(loader, "is_add_site_loader")
 
 
 class WrappedCallbackItem:

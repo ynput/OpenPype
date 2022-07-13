@@ -1,7 +1,11 @@
 import nuke
 
-from avalon import io
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id
+)
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path,
 )
@@ -102,17 +106,16 @@ class AlembicCameraLoader(load.LoaderPlugin):
             None
         """
         # Get version from io
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
         object_name = container['objectName']
         # get corresponding node
         camera_node = nuke.toNode(object_name)
 
         # get main variables
-        version_data = version.get("data", {})
-        vname = version.get("name", None)
+        version_data = version_doc.get("data", {})
+        vname = version_doc.get("name", None)
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
         fps = version_data.get("fps") or nuke.root()["fps"].getValue()
@@ -165,28 +168,27 @@ class AlembicCameraLoader(load.LoaderPlugin):
                 d.setInput(index, camera_node)
 
         # color node by correct color by actual version
-        self.node_version_color(version, camera_node)
+        self.node_version_color(version_doc, camera_node)
 
-        self.log.info("updated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version_doc.get("name")))
 
         return update_container(camera_node, data_imprint)
 
-    def node_version_color(self, version, node):
+    def node_version_color(self, version_doc, node):
         """ Coloring a node by correct color by actual version
         """
         # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
+        project_name = legacy_io.active_project()
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
 
         # change color of node
-        if version.get("name") not in [max_version]:
-            node["tile_color"].setValue(int("0xd88467ff", 16))
+        if version_doc["_id"] == last_version_doc["_id"]:
+            color_value = self.node_color
         else:
-            node["tile_color"].setValue(int(self.node_color, 16))
+            color_value = "0xd88467ff"
+        node["tile_color"].setValue(int(color_value, 16))
 
     def switch(self, container, representation):
         self.update(container, representation)

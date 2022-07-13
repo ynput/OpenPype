@@ -24,7 +24,11 @@ openpype_console --use-version=3.0.0-foo+bar
 
 `--list-versions [--use-staging]` - to list available versions.
 
-`--validate-version` to validate integrity of given version
+`--validate-version` - to validate integrity of given version
+
+`--verbose` `<level>` - change log verbose level of OpenPype loggers
+
+`--debug` - set debug flag affects logging
 
 For more information [see here](admin_use.md#run-openpype).
 
@@ -47,13 +51,9 @@ For more information [see here](admin_use.md#run-openpype).
 
 ---
 ### `tray` arguments {#tray-arguments}
-| Argument | Description |
-| --- | --- |
-| `--debug` | print verbose information useful for debugging (works with `openpype_console`) |
 
-To launch Tray with debugging information:
 ```shell
-openpype_console tray --debug
+openpype_console tray
 ```
 ---
 ### `launch` arguments {#eventserver-arguments}
@@ -62,7 +62,6 @@ option to specify them.
 
 | Argument | Description |
 | --- | --- |
-| `--debug` | print debug info |
 | `--ftrack-url` | URL to ftrack server (can be set with `FTRACK_SERVER`) |
 | `--ftrack-user` |user name to log in to ftrack (can be set with `FTRACK_API_USER`) |
 | `--ftrack-api-key` | ftrack api key (can be set with `FTRACK_API_KEY`) |
@@ -98,12 +97,16 @@ pype launch --app python --project my_project --asset my_asset --task my_task
 ---
 ### `publish` arguments {#publish-arguments}
 
+Run publishing based on metadata passed in json file e.g. on farm.
+
 | Argument | Description |
 | --- | --- |
-| `--debug` | print more verbose information |
+| `--targets` | define publishing targets (e.g. "farm") |
+| `--gui` (`-g`) | Show publishing |
+| Positional argument | Path to metadata json file |
 
 ```shell
-pype publish <PATH_TO_JSON>
+openpype publish <PATH_TO_JSON> --targes farm
 ```
 
 ---

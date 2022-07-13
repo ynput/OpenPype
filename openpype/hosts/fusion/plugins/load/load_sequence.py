@@ -1,10 +1,10 @@
 import os
 import contextlib
 
-from avalon import io
-
+from openpype.client import get_version_by_id
 from openpype.pipeline import (
     load,
+    legacy_io,
     get_representation_path,
 )
 from openpype.hosts.fusion.api import (
@@ -124,7 +124,7 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review", "render"]
+    families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -212,8 +212,8 @@ class FusionLoadSequence(load.LoaderPlugin):
         path = self._get_first_image(root)
 
         # Get start frame from version data
-        version = io.find_one({"type": "version",
-                               "_id": representation["parent"]})
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
         start = version["data"].get("frameStart")
         if start is None:
             self.log.warning("Missing start frame for updated version"

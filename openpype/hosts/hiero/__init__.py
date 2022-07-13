@@ -10,7 +10,7 @@ def add_implementation_envs(env, _app):
     ]
     old_hiero_path = env.get("HIERO_PLUGIN_PATH") or ""
     for path in old_hiero_path.split(os.pathsep):
-        if not path or not os.path.exists(path):
+        if not path:
             continue
 
         norm_path = os.path.normpath(path)

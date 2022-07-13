@@ -15,7 +15,6 @@ from .exceptions import (
 from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL,
-    M_ENVIRONMENT_KEY,
     KEY_REGEX,
     KEY_ALLOWED_SYMBOLS
 )
@@ -148,11 +147,7 @@ class DictMutableKeysEntity(EndpointEntity):
         ):
             raise InvalidKeySymbols(self.path, key)
 
-        if self.value_is_env_group:
-            item_schema = copy.deepcopy(self.item_schema)
-            item_schema["env_group_key"] = key
-        else:
-            item_schema = self.item_schema
+        item_schema = self.item_schema
 
         new_child = self.create_schema_object(item_schema, self, True)
         self.children_by_key[key] = new_child
@@ -216,9 +211,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.children_label_by_id = {}
 
         self.store_as_list = self.schema_data.get("store_as_list") or False
-        self.value_is_env_group = (
-            self.schema_data.get("value_is_env_group") or False
-        )
+
         self.required_keys = self.schema_data.get("required_keys") or []
         self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
@@ -241,9 +234,6 @@ class DictMutableKeysEntity(EndpointEntity):
                 object_type.update(input_modifiers)
         self.item_schema = object_type
 
-        if self.value_is_env_group:
-            self.item_schema["env_group_key"] = ""
-
         if self.group_item is None:
             self.is_group = True
 
@@ -258,10 +248,6 @@ class DictMutableKeysEntity(EndpointEntity):
         super(DictMutableKeysEntity, self).schema_validations()
         if used_temp_label:
             self.label = None
-
-        if self.value_is_env_group and self.store_as_list:
-            reason = "Item can't store environments metadata to list output."
-            raise EntitySchemaError(self, reason)
 
         if not self.schema_data.get("object_type"):
             reason = (
@@ -393,11 +379,15 @@ class DictMutableKeysEntity(EndpointEntity):
             value = self.value_on_not_set
 
         using_values_from_state = False
+        log_invalid_types = True
         if state is OverrideState.PROJECT:
+            log_invalid_types = self._project_log_invalid_types
             using_values_from_state = using_project_overrides
         elif state is OverrideState.STUDIO:
+            log_invalid_types = self._studio_log_invalid_types
             using_values_from_state = using_studio_overrides
         elif state is OverrideState.DEFAULTS:
+            log_invalid_types = self._default_log_invalid_types
             using_values_from_state = using_default_values
 
         new_value = copy.deepcopy(value)
@@ -437,11 +427,11 @@ class DictMutableKeysEntity(EndpointEntity):
                 if not label:
                     label = metadata_labels.get(new_key)
 
-            child_entity.update_default_value(_value)
+            child_entity.update_default_value(_value, log_invalid_types)
             if using_project_overrides:
-                child_entity.update_project_value(_value)
+                child_entity.update_project_value(_value, log_invalid_types)
             elif using_studio_overrides:
-                child_entity.update_studio_value(_value)
+                child_entity.update_studio_value(_value, log_invalid_types)
 
             if label:
                 children_label_by_id[child_entity.id] = label
@@ -575,18 +565,10 @@ class DictMutableKeysEntity(EndpointEntity):
                 output.append([key, child_value])
             return output
 
-        output = {}
-        for key, child_entity in self.children_by_key.items():
-            child_value = child_entity.settings_value()
-            # TODO child should have setter of env group key se child can
-            #   know what env group represents.
-            if self.value_is_env_group:
-                if key not in child_value[M_ENVIRONMENT_KEY]:
-                    _metadata = child_value[M_ENVIRONMENT_KEY]
-                    _m_keykey = tuple(_metadata.keys())[0]
-                    env_keys = child_value[M_ENVIRONMENT_KEY].pop(_m_keykey)
-                    child_value[M_ENVIRONMENT_KEY][key] = env_keys
-            output[key] = child_value
+        output = {
+            key: child_entity.settings_value()
+            for key, child_entity in self.children_by_key.items()
+        }
         output.update(self.metadata)
         return output
 
@@ -598,8 +580,11 @@ class DictMutableKeysEntity(EndpointEntity):
                     metadata[key] = value.pop(key)
         return value, metadata
 
-    def update_default_value(self, value):
-        value = self._check_update_value(value, "default")
+    def update_default_value(self, value, log_invalid_types=True):
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         has_default_value = value is not NOT_SET
         if has_default_value:
             for required_key in self.required_keys:
@@ -611,15 +596,21 @@ class DictMutableKeysEntity(EndpointEntity):
         self._default_value = value
         self._default_metadata = metadata
 
-    def update_studio_value(self, value):
-        value = self._check_update_value(value, "studio override")
+    def update_studio_value(self, value, log_invalid_types=True):
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self._studio_override_metadata = metadata
         self.had_studio_override = value is not NOT_SET
 
-    def update_project_value(self, value):
-        value = self._check_update_value(value, "project override")
+    def update_project_value(self, value, log_invalid_types=True):
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         value, metadata = self._prepare_value(value)
         self._project_override_value = value
         self._project_override_metadata = metadata
@@ -686,9 +677,12 @@ class DictMutableKeysEntity(EndpointEntity):
         if not self._can_remove_from_project_override:
             return
 
+        log_invalid_types = True
         if self._has_studio_override:
+            log_invalid_types = self._studio_log_invalid_types
             value = self._studio_override_value
         elif self.has_default_value:
+            log_invalid_types = self._default_log_invalid_types
             value = self._default_value
         else:
             value = self.value_on_not_set
@@ -709,9 +703,9 @@ class DictMutableKeysEntity(EndpointEntity):
         for _key, _value in new_value.items():
             new_key = self._convert_to_regex_valid_key(_key)
             child_entity = self._add_key(new_key)
-            child_entity.update_default_value(_value)
+            child_entity.update_default_value(_value, log_invalid_types)
             if self._has_studio_override:
-                child_entity.update_studio_value(_value)
+                child_entity.update_studio_value(_value, log_invalid_types)
 
             label = metadata_labels.get(_key)
             if label:

@@ -3,6 +3,8 @@
 import pyblish.api
 import os
 
+from openpype.lib import get_subset_name_with_asset_doc
+
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -14,10 +16,15 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
         """Plugin entry point."""
         family = "workfile"
-        task = os.getenv("AVALON_TASK", None)
-        sanitized_task_name = task[0].upper() + task[1:]
         basename = os.path.basename(context.data["currentFile"])
-        subset = "{}{}".format(family, sanitized_task_name)
+        subset = get_subset_name_with_asset_doc(
+            family,
+            "",
+            context.data["anatomyData"]["task"]["name"],
+            context.data["assetEntity"],
+            context.data["anatomyData"]["project"]["name"],
+            host_name=context.data["hostName"]
+        )
 
         # Create instance
         instance = context.create_instance(subset)

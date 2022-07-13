@@ -8,6 +8,11 @@ class ResumableError(Exception):
     pass
 
 
+class SiteAlreadyPresentError(Exception):
+    """Representation has already site skeleton present."""
+    pass
+
+
 class SyncStatus:
     DO_NOTHING = 0
     DO_UPLOAD = 1

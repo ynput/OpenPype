@@ -3,10 +3,8 @@ from collections import defaultdict
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.api import AvalonMongoDB
-
-from openpype.pipeline import load
-from openpype.api import Anatomy, config
+from openpype.lib import config
+from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype import resources, style
 
 from openpype.lib.delivery import (

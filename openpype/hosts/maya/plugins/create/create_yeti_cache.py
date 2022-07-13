@@ -22,7 +22,8 @@ class CreateYetiCache(plugin.Creator):
         # Add animation data without step and handles
         anim_data = lib.collect_animation_data()
         anim_data.pop("step")
-        anim_data.pop("handles")
+        anim_data.pop("handleStart")
+        anim_data.pop("handleEnd")
         self.data.update(anim_data)
 
         # Add samples

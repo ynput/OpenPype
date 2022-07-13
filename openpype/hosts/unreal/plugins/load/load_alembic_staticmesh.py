@@ -2,8 +2,10 @@
 """Loader for Static Mesh alembics."""
 import os
 
-from avalon import pipeline
-from openpype.pipeline import get_representation_path
+from openpype.pipeline import (
+    get_representation_path,
+    AVALON_CONTAINER_ID
+)
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 import unreal  # noqa
@@ -100,7 +102,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         data = {
             "schema": "openpype:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,

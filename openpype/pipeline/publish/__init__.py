@@ -3,6 +3,7 @@ from .publish_plugins import (
     PublishXmlValidationError,
     KnownPublishError,
     OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
 )
 
 from .lib import (
@@ -18,6 +19,7 @@ __all__ = (
     "PublishXmlValidationError",
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
+    "OptionalPyblishPluginMixin",
 
     "DiscoverResult",
     "publish_plugins_discover",

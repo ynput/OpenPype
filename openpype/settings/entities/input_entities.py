@@ -15,10 +15,7 @@ from .exceptions import (
     EntitySchemaError
 )
 
-from openpype.settings.constants import (
-    METADATA_KEYS,
-    M_ENVIRONMENT_KEY
-)
+from openpype.settings.constants import METADATA_KEYS
 
 
 class EndpointEntity(ItemEntity):
@@ -90,18 +87,27 @@ class EndpointEntity(ItemEntity):
     def require_restart(self):
         return self.has_unsaved_changes
 
-    def update_default_value(self, value):
-        value = self._check_update_value(value, "default")
+    def update_default_value(self, value, log_invalid_types=True):
+        self._default_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "default", log_invalid_types
+        )
         self._default_value = value
         self.has_default_value = value is not NOT_SET
 
-    def update_studio_value(self, value):
-        value = self._check_update_value(value, "studio override")
+    def update_studio_value(self, value, log_invalid_types=True):
+        self._studio_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         self._studio_override_value = value
         self.had_studio_override = bool(value is not NOT_SET)
 
-    def update_project_value(self, value):
-        value = self._check_update_value(value, "project override")
+    def update_project_value(self, value, log_invalid_types=True):
+        self._project_log_invalid_types = log_invalid_types
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         self._project_override_value = value
         self.had_project_override = bool(value is not NOT_SET)
 
@@ -525,13 +531,7 @@ class RawJsonEntity(InputEntity):
 
     @property
     def metadata(self):
-        output = {}
-        if isinstance(self._current_value, dict) and self.is_env_group:
-            output[M_ENVIRONMENT_KEY] = {
-                self.env_group_key: list(self._current_value.keys())
-            }
-
-        return output
+        return {}
 
     @property
     def has_unsaved_changes(self):
@@ -539,15 +539,6 @@ class RawJsonEntity(InputEntity):
         if not result:
             result = self.metadata != self._metadata_for_current_state()
         return result
-
-    def schema_validations(self):
-        if self.store_as_string and self.is_env_group:
-            reason = (
-                "RawJson entity can't store environment group metadata"
-                " as string."
-            )
-            raise EntitySchemaError(self, reason)
-        super(RawJsonEntity, self).schema_validations()
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, STRING_TYPE):
@@ -574,9 +565,6 @@ class RawJsonEntity(InputEntity):
 
     def _settings_value(self):
         value = super(RawJsonEntity, self)._settings_value()
-        if self.is_env_group and isinstance(value, dict):
-            value.update(self.metadata)
-
         if self.store_as_string:
             return json.dumps(value)
         return value
@@ -590,22 +578,26 @@ class RawJsonEntity(InputEntity):
                     metadata[key] = value.pop(key)
         return value, metadata
 
-    def update_default_value(self, value):
-        value = self._check_update_value(value, "default")
+    def update_default_value(self, value, log_invalid_types=True):
+        value = self._check_update_value(value, "default", log_invalid_types)
         self.has_default_value = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self._default_value = value
         self.default_metadata = metadata
 
-    def update_studio_value(self, value):
-        value = self._check_update_value(value, "studio override")
+    def update_studio_value(self, value, log_invalid_types=True):
+        value = self._check_update_value(
+            value, "studio override", log_invalid_types
+        )
         self.had_studio_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self.studio_override_metadata = metadata
 
-    def update_project_value(self, value):
-        value = self._check_update_value(value, "project override")
+    def update_project_value(self, value, log_invalid_types=True):
+        value = self._check_update_value(
+            value, "project override", log_invalid_types
+        )
         self.had_project_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self._project_override_value = value

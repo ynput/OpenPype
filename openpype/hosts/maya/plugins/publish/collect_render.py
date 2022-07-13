@@ -49,8 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import api
 from openpype.lib import get_formatted_current_time
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -93,7 +93,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
-        asset = api.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
         deadline_settings = (
@@ -207,6 +207,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         product_name: layer_render_products.get_files(
                             product)
                     })
+
+            has_cameras = any(product.camera for product in render_products)
+            assert has_cameras, "No render cameras found."
 
             self.log.info("multipart: {}".format(
                 multipart))
@@ -323,8 +326,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
-                "renderer": self.get_render_attribute("currentRenderer",
-                                                      layer=layer_name),
+                "renderer": self.get_render_attribute(
+                    "currentRenderer", layer=layer_name).lower(),
                 # instance subset
                 "family": "renderlayer",
                 "families": ["renderlayer"],
@@ -336,9 +339,15 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "source": filepath,
                 "expectedFiles": full_exp_files,
                 "publishRenderMetadataFolder": common_publish_meta_path,
-                "resolutionWidth": cmds.getAttr("defaultResolution.width"),
-                "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
+                "resolutionWidth": lib.get_attr_in_layer(
+                    "defaultResolution.width", layer=layer_name
+                ),
+                "resolutionHeight": lib.get_attr_in_layer(
+                    "defaultResolution.height", layer=layer_name
+                ),
+                "pixelAspect": lib.get_attr_in_layer(
+                    "defaultResolution.pixelAspect", layer=layer_name
+                ),
                 "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
                 "tilesX": render_instance.data.get("tilesX") or 2,
                 "tilesY": render_instance.data.get("tilesY") or 2,
@@ -385,6 +394,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # Get global overrides and translate to Deadline values
             overrides = self.parse_options(str(render_globals))
             data.update(**overrides)
+
+            # get string values for pools
+            primary_pool = overrides["renderGlobals"]["Pool"]
+            secondary_pool = overrides["renderGlobals"].get("SecondaryPool")
+            data["primaryPool"] = primary_pool
+            data["secondaryPool"] = secondary_pool
 
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])

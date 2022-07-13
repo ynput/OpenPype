@@ -1,6 +1,6 @@
 import nuke
 import pyblish.api
-from avalon import io, api
+
 from openpype.hosts.nuke.api.lib import (
     add_publish_knob,
     get_avalon_knob_data
@@ -19,12 +19,6 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     sync_workfile_version_on_families = []
 
     def process(self, context):
-        asset_data = io.find_one({
-            "type": "asset",
-            "name": api.Session["AVALON_ASSET"]
-        })
-
-        self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
 
         root = nuke.root()
@@ -68,6 +62,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             # Create instance
             instance = context.create_instance(subset)
             instance.append(node)
+
+            suspend_publish = False
+            if "suspend_publish" in node.knobs():
+                suspend_publish = node["suspend_publish"].value()
+            instance.data["suspend_publish"] = suspend_publish
 
             # get review knob value
             review = False
@@ -145,15 +144,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 "resolutionWidth": resolution_width,
                 "resolutionHeight": resolution_height,
                 "pixelAspect": pixel_aspect,
-                "review": review
+                "review": review,
+                "representations": []
 
             })
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)
 
-        # create instances in context data if not are created yet
-        if not context.data.get("instances"):
-            context.data["instances"] = list()
-
-        context.data["instances"].extend(instances)
         self.log.debug("context: {}".format(context))

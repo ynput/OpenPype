@@ -1,6 +1,8 @@
 import os
 import random
 import string
+from collections import OrderedDict
+from abc import abstractmethod
 
 import nuke
 
@@ -12,10 +14,12 @@ from openpype.pipeline import (
 from .lib import (
     Knobby,
     check_subsetname_exists,
-    reset_selection,
     maintained_selection,
     set_avalon_knob_data,
-    add_publish_knob
+    add_publish_knob,
+    get_nuke_imageio_settings,
+    set_node_knobs_from_settings,
+    get_view_process_node
 )
 
 
@@ -25,9 +29,6 @@ class OpenPypeCreator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(OpenPypeCreator, self).__init__(*args, **kwargs)
-        self.presets = get_current_project_settings()["nuke"]["create"].get(
-            self.__class__.__name__, {}
-        )
         if check_subsetname_exists(
                 nuke.allNodes(),
                 self.data["subset"]):
@@ -215,37 +216,6 @@ class ExporterReview(object):
 
         self.data["representations"].append(repre)
 
-    def get_view_input_process_node(self):
-        """
-        Will get any active view process.
-
-        Arguments:
-            self (class): in object definition
-
-        Returns:
-            nuke.Node: copy node of Input Process node
-        """
-        reset_selection()
-        ipn_orig = None
-        for v in nuke.allNodes(filter="Viewer"):
-            ip = v["input_process"].getValue()
-            ipn = v["input_process_node"].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
-
-        if ipn_orig:
-            # copy selected to clipboard
-            nuke.nodeCopy("%clipboard%")
-            # reset selection
-            reset_selection()
-            # paste node and selection is on it only
-            nuke.nodePaste("%clipboard%")
-            # assign to variable
-            ipn = nuke.selectedNode()
-
-            return ipn
-
     def get_imageio_baking_profile(self):
         from . import lib as opnlib
         nuke_imageio = opnlib.get_nuke_imageio_settings()
@@ -256,8 +226,6 @@ class ExporterReview(object):
             return nuke_imageio["baking"]["viewerProcess"]
         else:
             return nuke_imageio["viewer"]["viewerProcess"]
-
-
 
 
 class ExporterReviewLut(ExporterReview):
@@ -312,7 +280,7 @@ class ExporterReviewLut(ExporterReview):
         self._temp_nodes = []
         self.log.info("Deleted nodes...")
 
-    def generate_lut(self):
+    def generate_lut(self, **kwargs):
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -330,7 +298,7 @@ class ExporterReviewLut(ExporterReview):
         if bake_viewer_process:
             # Node View Process
             if bake_viewer_input_process_node:
-                ipn = self.get_view_input_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -450,6 +418,7 @@ class ExporterReviewMov(ExporterReview):
 
     def generate_mov(self, farm=False, **kwargs):
         self.publish_on_farm = farm
+        read_raw = kwargs["read_raw"]
         reformat_node_add = kwargs["reformat_node_add"]
         reformat_node_config = kwargs["reformat_node_config"]
         bake_viewer_process = kwargs["bake_viewer_process"]
@@ -484,6 +453,9 @@ class ExporterReviewMov(ExporterReview):
         r_node["origlast"].setValue(self.last_frame)
         r_node["colorspace"].setValue(self.write_colorspace)
 
+        if read_raw:
+            r_node["raw"].setValue(1)
+
         # connect
         self._temp_nodes[subset].append(r_node)
         self.previous_node = r_node
@@ -495,16 +467,7 @@ class ExporterReviewMov(ExporterReview):
             add_tags.append("reformated")
 
             rf_node = nuke.createNode("Reformat")
-            for kn_conf in reformat_node_config:
-                _type = kn_conf["type"]
-                k_name = str(kn_conf["name"])
-                k_value = kn_conf["value"]
-
-                # to remove unicode as nuke doesn't like it
-                if _type == "string":
-                    k_value = str(kn_conf["value"])
-
-                rf_node[k_name].setValue(k_value)
+            set_node_knobs_from_settings(rf_node, reformat_node_config)
 
             # connect
             rf_node.setInput(0, self.previous_node)
@@ -517,7 +480,7 @@ class ExporterReviewMov(ExporterReview):
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # View Process node
-                ipn = self.get_view_input_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -590,3 +553,156 @@ class ExporterReviewMov(ExporterReview):
         nuke.scriptSave()
 
         return self.data
+
+
+class AbstractWriteRender(OpenPypeCreator):
+    """Abstract creator to gather similar implementation for Write creators"""
+    name = ""
+    label = ""
+    hosts = ["nuke"]
+    n_class = "Write"
+    family = "render"
+    icon = "sign-out"
+    defaults = ["Main", "Mask"]
+    knobs = []
+    prenodes = {}
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractWriteRender, self).__init__(*args, **kwargs)
+
+        data = OrderedDict()
+
+        data["family"] = self.family
+        data["families"] = self.n_class
+
+        for k, v in self.data.items():
+            if k not in data.keys():
+                data.update({k: v})
+
+        self.data = data
+        self.nodes = nuke.selectedNodes()
+        self.log.debug("_ self.data: '{}'".format(self.data))
+
+    def process(self):
+
+        inputs = []
+        outputs = []
+        instance = nuke.toNode(self.data["subset"])
+        selected_node = None
+
+        # use selection
+        if (self.options or {}).get("useSelection"):
+            nodes = self.nodes
+
+            if not (len(nodes) < 2):
+                msg = ("Select only one node. "
+                       "The node you want to connect to, "
+                       "or tick off `Use selection`")
+                self.log.error(msg)
+                nuke.message(msg)
+                return
+
+            if len(nodes) == 0:
+                msg = (
+                    "No nodes selected. Please select a single node to connect"
+                    " to or tick off `Use selection`"
+                )
+                self.log.error(msg)
+                nuke.message(msg)
+                return
+
+            selected_node = nodes[0]
+            inputs = [selected_node]
+            outputs = selected_node.dependent()
+
+            if instance:
+                if (instance.name() in selected_node.name()):
+                    selected_node = instance.dependencies()[0]
+
+        # if node already exist
+        if instance:
+            # collect input / outputs
+            inputs = instance.dependencies()
+            outputs = instance.dependent()
+            selected_node = inputs[0]
+            # remove old one
+            nuke.delete(instance)
+
+        # recreate new
+        write_data = {
+            "nodeclass": self.n_class,
+            "families": [self.family],
+            "avalon": self.data,
+            "subset": self.data["subset"],
+            "knobs": self.knobs
+        }
+
+        # add creator data
+        creator_data = {"creator": self.__class__.__name__}
+        self.data.update(creator_data)
+        write_data.update(creator_data)
+
+        write_node = self._create_write_node(
+            selected_node,
+            inputs,
+            outputs,
+            write_data
+        )
+
+        # relinking to collected connections
+        for i, input in enumerate(inputs):
+            write_node.setInput(i, input)
+
+        write_node.autoplace()
+
+        for output in outputs:
+            output.setInput(0, write_node)
+
+        write_node = self._modify_write_node(write_node)
+
+        return write_node
+
+    def is_legacy(self):
+        """Check if it needs to run legacy code
+
+        In case where `type` key is missing in singe
+        knob it is legacy project anatomy.
+
+        Returns:
+            bool: True if legacy
+        """
+        imageio_nodes = get_nuke_imageio_settings()["nodes"]
+        node = imageio_nodes["requiredNodes"][0]
+        if "type" not in node["knobs"][0]:
+            # if type is not yet in project anatomy
+            return True
+        elif next(iter(
+            _k for _k in node["knobs"]
+            if _k.get("type") == "__legacy__"
+        ), None):
+            # in case someone re-saved anatomy
+            # with old configuration
+            return True
+
+    @abstractmethod
+    def _create_write_node(self, selected_node, inputs, outputs, write_data):
+        """Family dependent implementation of Write node creation
+
+        Args:
+            selected_node (nuke.Node)
+            inputs (list of nuke.Node) - input dependencies (what is connected)
+            outputs (list of nuke.Node) - output dependencies
+            write_data (dict) - values used to fill Knobs
+        Returns:
+            node (nuke.Node): group node with  data as Knobs
+        """
+        pass
+
+    @abstractmethod
+    def _modify_write_node(self, write_node):
+        """Family dependent modification of created 'write_node'
+
+        Returns:
+            node (nuke.Node): group node with data as Knobs
+        """
+        pass

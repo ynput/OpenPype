@@ -70,6 +70,8 @@ coverage.xml
 ##################
 node_modules
 package-lock.json
+package.json
+yarn.lock
 
 openpype/premiere/ppro/js/debug.log
 
@@ -100,3 +102,5 @@ website/.docusaurus
 
 .poetry/
 .python-version
+
+tools/run_eventserver.*

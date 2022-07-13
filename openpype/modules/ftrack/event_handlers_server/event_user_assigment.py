@@ -1,14 +1,11 @@
-import os
 import re
 import subprocess
 
+from openpype.client import get_asset_by_id, get_asset_by_name
+from openpype.settings import get_project_settings
+from openpype.pipeline import Anatomy
 from openpype_modules.ftrack.lib import BaseEvent
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
-from avalon.api import AvalonMongoDB
-
-from bson.objectid import ObjectId
-
-from openpype.api import Anatomy, get_project_settings
 
 
 class UserAssigmentEvent(BaseEvent):
@@ -36,8 +33,6 @@ class UserAssigmentEvent(BaseEvent):
         2) path to workfiles of task user was (de)assigned to
         3) path to publish files of task user was (de)assigned to
     """
-
-    db_con = AvalonMongoDB()
 
     def error(self, *err):
         for e in err:
@@ -87,8 +82,8 @@ class UserAssigmentEvent(BaseEvent):
         if not user_id:
             return None, None
 
-        task = session.query('Task where id is "{}"'.format(task_id)).one()
-        user = session.query('User where id is "{}"'.format(user_id)).one()
+        task = session.query('Task where id is "{}"'.format(task_id)).first()
+        user = session.query('User where id is "{}"'.format(user_id)).first()
 
         return task, user
 
@@ -102,26 +97,16 @@ class UserAssigmentEvent(BaseEvent):
         :rtype: dict
         """
         parent = task['parent']
-        self.db_con.install()
-        self.db_con.Session['AVALON_PROJECT'] = task['project']['full_name']
-
+        project_name = task["project"]["full_name"]
         avalon_entity = None
         parent_id = parent['custom_attributes'].get(CUST_ATTR_ID_KEY)
         if parent_id:
-            parent_id = ObjectId(parent_id)
-            avalon_entity = self.db_con.find_one({
-                '_id': parent_id,
-                'type': 'asset'
-            })
+            avalon_entity = get_asset_by_id(project_name, parent_id)
 
         if not avalon_entity:
-            avalon_entity = self.db_con.find_one({
-                'type': 'asset',
-                'name': parent['name']
-            })
+            avalon_entity = get_asset_by_name(project_name, parent["name"])
 
         if not avalon_entity:
-            self.db_con.uninstall()
             msg = 'Entity "{}" not found in avalon database'.format(
                 parent['name']
             )
@@ -130,7 +115,6 @@ class UserAssigmentEvent(BaseEvent):
                 'success': False,
                 'message': msg
             }
-        self.db_con.uninstall()
         return avalon_entity
 
     def _get_hierarchy(self, asset):

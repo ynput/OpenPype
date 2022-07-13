@@ -5,8 +5,18 @@ import contextlib
 
 from Qt import QtGui
 
-from avalon import io
-from openpype.pipeline import switch_container
+from openpype.client import (
+    get_asset_by_name,
+    get_subset_by_name,
+    get_last_version_by_subset_id,
+    get_representation_by_id,
+    get_representation_by_name,
+    get_representation_parents,
+)
+from openpype.pipeline import (
+    switch_container,
+    legacy_io,
+)
 from .pipeline import get_current_comp, comp_lock_and_undo_chunk
 
 self = sys.modules[__name__]
@@ -90,11 +100,16 @@ def switch_item(container,
         raise ValueError("Must have at least one change provided to switch.")
 
     # Collect any of current asset, subset and representation if not provided
-    # so we can use the original name from those.
+    #   so we can use the original name from those.
+    project_name = legacy_io.active_project()
     if any(not x for x in [asset_name, subset_name, representation_name]):
-        _id = io.ObjectId(container["representation"])
-        representation = io.find_one({"type": "representation", "_id": _id})
-        version, subset, asset, project = io.parenthood(representation)
+        repre_id = container["representation"]
+        representation = get_representation_by_id(project_name, repre_id)
+        repre_parent_docs = get_representation_parents(representation)
+        if repre_parent_docs:
+            version, subset, asset, _ = repre_parent_docs
+        else:
+            version = subset = asset = None
 
         if asset_name is None:
             asset_name = asset["name"]
@@ -106,39 +121,26 @@ def switch_item(container,
             representation_name = representation["name"]
 
     # Find the new one
-    asset = io.find_one({
-        "name": asset_name,
-        "type": "asset"
-    })
+    asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
     assert asset, ("Could not find asset in the database with the name "
                    "'%s'" % asset_name)
 
-    subset = io.find_one({
-        "name": subset_name,
-        "type": "subset",
-        "parent": asset["_id"]
-    })
+    subset = get_subset_by_name(
+        project_name, subset_name, asset["_id"], fields=["_id"]
+    )
     assert subset, ("Could not find subset in the database with the name "
                     "'%s'" % subset_name)
 
-    version = io.find_one(
-        {
-            "type": "version",
-            "parent": subset["_id"]
-        },
-        sort=[('name', -1)]
+    version = get_last_version_by_subset_id(
+        project_name, subset["_id"], fields=["_id"]
     )
-
     assert version, "Could not find a version for {}.{}".format(
         asset_name, subset_name
     )
 
-    representation = io.find_one({
-        "name": representation_name,
-        "type": "representation",
-        "parent": version["_id"]}
+    representation = get_representation_by_name(
+        project_name, representation_name, version["_id"]
     )
-
     assert representation, ("Could not find representation in the database "
                             "with the name '%s'" % representation_name)
 

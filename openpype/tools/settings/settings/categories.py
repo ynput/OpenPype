@@ -45,8 +45,15 @@ from .breadcrumbs_widget import (
     SystemSettingsBreadcrumbs,
     ProjectSettingsBreadcrumbs
 )
-
-from .base import GUIWidget
+from .constants import (
+    SETTINGS_PATH_KEY,
+    ROOT_KEY,
+    VALUE_KEY,
+)
+from .base import (
+    ExtractHelper,
+    GUIWidget,
+)
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget
 from .dict_mutable_widget import DictMutableKeysWidget
@@ -216,7 +223,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def create_ui(self):
         self.modify_defaults_checkbox = None
 
-        conf_wrapper_widget = QtWidgets.QWidget(self)
+        conf_wrapper_widget = QtWidgets.QSplitter(self)
         configurations_widget = QtWidgets.QWidget(conf_wrapper_widget)
 
         # Breadcrumbs/Path widget
@@ -294,10 +301,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         configurations_layout.addWidget(scroll_widget, 1)
 
-        conf_wrapper_layout = QtWidgets.QHBoxLayout(conf_wrapper_widget)
-        conf_wrapper_layout.setContentsMargins(0, 0, 0, 0)
-        conf_wrapper_layout.setSpacing(0)
-        conf_wrapper_layout.addWidget(configurations_widget, 1)
+        conf_wrapper_widget.addWidget(configurations_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -327,7 +331,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.breadcrumbs_model = None
         self.refresh_btn = refresh_btn
 
-        self.conf_wrapper_layout = conf_wrapper_layout
+        self.conf_wrapper_widget = conf_wrapper_widget
         self.main_layout = main_layout
 
         self.ui_tweaks()
@@ -630,10 +634,34 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 self._on_context_version_trigger
             )
             submenu.addAction(action)
+
         menu.addMenu(submenu)
+
+        extract_action = QtWidgets.QAction("Extract to file", menu)
+        extract_action.triggered.connect(self._on_extract_to_file)
+
+        menu.addAction(extract_action)
 
     def _on_context_version_trigger(self, version):
         self._on_source_version_change(version)
+
+    def _on_extract_to_file(self):
+        filepath = ExtractHelper.ask_for_save_filepath(self)
+        if not filepath:
+            return
+
+        settings_data = {
+            SETTINGS_PATH_KEY: self.entity.root_key,
+            ROOT_KEY: self.entity.root_key,
+            VALUE_KEY: self.entity.value
+        }
+        project_name = 0
+        if hasattr(self, "project_name"):
+            project_name = self.project_name
+
+        ExtractHelper.extract_settings_to_json(
+            filepath, settings_data, project_name
+        )
 
     def _on_reset_crash(self):
         self.save_btn.setEnabled(False)
@@ -818,7 +846,9 @@ class ProjectWidget(SettingsCategoryWidget):
 
         project_list_widget = ProjectListWidget(self)
 
-        self.conf_wrapper_layout.insertWidget(0, project_list_widget, 0)
+        self.conf_wrapper_widget.insertWidget(0, project_list_widget)
+        self.conf_wrapper_widget.setStretchFactor(0, 0)
+        self.conf_wrapper_widget.setStretchFactor(1, 1)
 
         project_list_widget.project_changed.connect(self._on_project_change)
         project_list_widget.version_change_requested.connect(

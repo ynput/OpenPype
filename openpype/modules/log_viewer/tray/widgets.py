@@ -1,3 +1,4 @@
+import html
 from Qt import QtCore, QtWidgets
 import qtawesome
 from .models import LogModel, LogsFilterProxy
@@ -155,6 +156,11 @@ class LogsWidget(QtWidgets.QWidget):
             QtCore.Qt.DescendingOrder
         )
 
+        refresh_triggered_timer = QtCore.QTimer()
+        refresh_triggered_timer.setSingleShot(True)
+        refresh_triggered_timer.setInterval(200)
+
+        refresh_triggered_timer.timeout.connect(self._on_refresh_timeout)
         view.selectionModel().selectionChanged.connect(self._on_index_change)
         refresh_btn.clicked.connect(self._on_refresh_clicked)
 
@@ -169,10 +175,12 @@ class LogsWidget(QtWidgets.QWidget):
         self.detail_widget = detail_widget
         self.refresh_btn = refresh_btn
 
-        # prepare
-        self.refresh()
+        self._refresh_triggered_timer = refresh_triggered_timer
 
     def refresh(self):
+        self._refresh_triggered_timer.start()
+
+    def _on_refresh_timeout(self):
         self.model.refresh()
         self.detail_widget.refresh()
 
@@ -279,7 +287,7 @@ class OutputWidget(QtWidgets.QWidget):
             if level == "debug":
                 line_f = (
                     "<font color=\"Yellow\"> -"
-                    " <font color=\"Lime\">{{  {loggerName}  }}: ["
+                    " <font color=\"Lime\">{{  {logger_name}  }}: ["
                     " <font color=\"White\">{message}"
                     " <font color=\"Lime\">]"
                 )
@@ -292,7 +300,7 @@ class OutputWidget(QtWidgets.QWidget):
             elif level == "warning":
                 line_f = (
                     "<font color=\"Yellow\">*** WRN:"
-                    " <font color=\"Lime\"> >>> {{ {loggerName} }}: ["
+                    " <font color=\"Lime\"> >>> {{ {logger_name} }}: ["
                     " <font color=\"White\">{message}"
                     " <font color=\"Lime\">]"
                 )
@@ -300,16 +308,25 @@ class OutputWidget(QtWidgets.QWidget):
                 line_f = (
                     "<font color=\"Red\">!!! ERR:"
                     " <font color=\"White\">{timestamp}"
-                    " <font color=\"Lime\">>>> {{ {loggerName} }}: ["
+                    " <font color=\"Lime\">>>> {{ {logger_name} }}: ["
                     " <font color=\"White\">{message}"
                     " <font color=\"Lime\">]"
                 )
 
+            logger_name = log["loggerName"]
+            timestamp = ""
+            if not show_timecode:
+                timestamp = log["timestamp"]
+            message = log["message"]
             exc = log.get("exception")
             if exc:
-                log["message"] = exc["message"]
+                message = exc["message"]
 
-            line = line_f.format(**log)
+            line = line_f.format(
+                message=html.escape(message),
+                logger_name=logger_name,
+                timestamp=timestamp
+            )
 
             if show_timecode:
                 timestamp = log["timestamp"]

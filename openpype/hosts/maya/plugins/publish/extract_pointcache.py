@@ -6,7 +6,8 @@ import openpype.api
 from openpype.hosts.maya.api.lib import (
     extract_alembic,
     suspended_refresh,
-    maintained_selection
+    maintained_selection,
+    iter_visible_nodes_in_range
 )
 
 
@@ -16,6 +17,8 @@ class ExtractAlembic(openpype.api.Extractor):
     Positions and normals, uvs, creases are preserved, but nothing more,
     for plain and predictable point caches.
 
+    Plugin can run locally or remotely (on a farm - if instance is marked with
+    "farm" it will be skipped in local processing, but processed on farm)
     """
 
     label = "Extract Pointcache (Alembic)"
@@ -23,8 +26,12 @@ class ExtractAlembic(openpype.api.Extractor):
     families = ["pointcache",
                 "model",
                 "vrayproxy"]
+    targets = ["local", "remote"]
 
     def process(self, instance):
+        if instance.data.get("farm"):
+            self.log.debug("Should be processed on farm, skipping.")
+            return
 
         nodes = instance[:]
 
@@ -73,6 +80,16 @@ class ExtractAlembic(openpype.api.Extractor):
             # Since Maya 2017 alembic supports multiple uv sets - write them.
             options["writeUVSets"] = True
 
+        if instance.data.get("visibleOnly", False):
+            # If we only want to include nodes that are visible in the frame
+            # range then we need to do our own check. Alembic's `visibleOnly`
+            # flag does not filter out those that are only hidden on some
+            # frames as it counts "animated" or "connected" visibilities as
+            # if it's always visible.
+            nodes = list(iter_visible_nodes_in_range(nodes,
+                                                     start=start,
+                                                     end=end))
+
         with suspended_refresh():
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
@@ -91,5 +108,7 @@ class ExtractAlembic(openpype.api.Extractor):
             "stagingDir": dirname
         }
         instance.data["representations"].append(representation)
+
+        instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

@@ -39,10 +39,13 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
         # Generate mov file.
         fps = instance.data["fps"]
         video_file_path = instance.data["editorialSourcePath"]
-        extensions = instance.data.get("extensions", [".mov"])
+        extensions = instance.data.get("extensions", ["mov"])
 
         for ext in extensions:
             self.log.info("Processing ext: `{}`".format(ext))
+
+            if not ext.startswith("."):
+                ext = "." + ext
 
             clip_trimed_path = os.path.join(
                 staging_dir, instance.data["name"] + ext)

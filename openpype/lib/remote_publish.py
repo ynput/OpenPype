@@ -1,13 +1,12 @@
 import os
 from datetime import datetime
-import sys
-from bson.objectid import ObjectId
 import collections
+
+from bson.objectid import ObjectId
 
 import pyblish.util
 import pyblish.api
 
-from openpype import uninstall
 from openpype.lib.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
@@ -61,7 +60,7 @@ def start_webpublish_log(dbcon, batch_id, user):
     }).inserted_id
 
 
-def publish(log, close_plugin_name=None):
+def publish(log, close_plugin_name=None, raise_error=False):
     """Loops through all plugins, logs to console. Used for tests.
 
         Args:
@@ -80,11 +79,15 @@ def publish(log, close_plugin_name=None):
                 result["plugin"].label, record.msg))
 
         if result["error"]:
-            log.error(error_format.format(**result))
-            uninstall()
+            error_message = error_format.format(**result)
+            log.error(error_message)
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
+            if raise_error:
+                # Fatal Error is because of Deadline
+                error_message = "Fatal Error: " + error_format.format(**result)
+                raise RuntimeError(error_message)
 
 
 def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
@@ -118,7 +121,6 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
 
         if result["error"]:
             log.error(error_format.format(**result))
-            uninstall()
             log_lines = [error_format.format(**result)] + log_lines
             dbcon.update_one(
                 {"_id": _id},
@@ -231,7 +233,7 @@ def _get_close_plugin(close_plugin_name, log):
             if plugin.__name__ == close_plugin_name:
                 return plugin
 
-    log.warning("Close plugin not found, app might not close.")
+    log.debug("Close plugin not found, app might not close.")
 
 
 def get_task_data(batch_dir):

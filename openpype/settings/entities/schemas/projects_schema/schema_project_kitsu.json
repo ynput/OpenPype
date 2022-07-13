@@ -1,0 +1,78 @@
+{
+    "type": "dict",
+    "key": "kitsu",
+    "label": "Kitsu",
+    "collapsible": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "key": "entities_root",
+            "label": "Entities root folder",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "assets",
+                    "label": "Assets:"
+                },
+                {
+                    "type": "text",
+                    "key": "shots",
+                    "label": "Shots (includes Episodes & Sequences if any):"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "entities_naming_pattern",
+            "label": "Entities naming pattern",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "episode",
+                    "label": "Episode:"
+                },
+                {
+                    "type": "text",
+                    "key": "sequence",
+                    "label": "Sequence:"
+                },
+                {
+                    "type": "text",
+                    "key": "shot",
+                    "label": "Shot:"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "label",
+                    "label": "Integrator"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "IntegrateKitsuNote",
+                    "label": "Integrate Kitsu Note",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "set_status_note",
+                            "label": "Set status on note"
+                        },
+                        {
+                            "type": "text",
+                            "key": "note_status_shortname",
+                            "label": "Note shortname"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

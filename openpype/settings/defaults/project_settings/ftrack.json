@@ -109,6 +109,22 @@
                 "Omitted"
             ],
             "name_sorting": false
+        },
+        "transfer_values_of_hierarchical_attributes": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "create_daily_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project Manager"
+            ],
+            "cycle_enabled": false,
+            "review_session_template": "{yy}{mm}{dd}"
         }
     },
     "user_handlers": {
@@ -192,6 +208,11 @@
                 "Pypeclub",
                 "Administrator"
             ]
+        },
+        "fill_workfile_attribute": {
+            "enabled": false,
+            "custom_attribute_key": "",
+            "role_list": []
         },
         "seed_project": {
             "enabled": true,
@@ -344,13 +365,35 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "photoshop"
+                    ],
+                    "families": [
+                        "review"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
+        "CollectFtrackCustomAttributeData": {
+            "enabled": false,
+            "custom_attribute_keys": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
-            "note_with_intent_template": "{intent}: {comment}",
+            "note_template": "{intent}: {comment}",
             "note_labels": []
+        },
+        "IntegrateFtrackDescription": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "description_template": "{comment}"
         },
         "ValidateFtrackAttributes": {
             "enabled": false,
@@ -390,7 +433,9 @@
                 "vrayproxy": "cache",
                 "redshiftproxy": "cache",
                 "usd": "usd"
-            }
+            },
+            "keep_first_subset_name_for_review": true,
+            "asset_versions_status_profiles": []
         }
     }
 }

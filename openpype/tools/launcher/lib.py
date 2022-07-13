@@ -1,19 +1,3 @@
-"""Utility script for updating database with configuration files
-
-Until assets are created entirely in the database, this script
-provides a bridge between the file-based project inventory and configuration.
-
-- Migrating an old project:
-    $ python -m avalon.inventory --extract --silo-parent=f02_prod
-    $ python -m avalon.inventory --upload
-
-- Managing an existing project:
-    1. Run `python -m avalon.inventory --load`
-    2. Update the .inventory.toml or .config.toml
-    3. Run `python -m avalon.inventory --save`
-
-"""
-
 import os
 from Qt import QtGui
 import qtawesome

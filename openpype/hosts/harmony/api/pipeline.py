@@ -4,16 +4,16 @@ import logging
 
 import pyblish.api
 
-from avalon import io
-import avalon.api
-from avalon.pipeline import AVALON_CONTAINER_ID
-
 from openpype import lib
+from openpype.client import get_representation_by_id
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
+    legacy_io,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
@@ -104,22 +104,19 @@ def check_inventory():
     If it does it will colorize outdated nodes and display warning message
     in Harmony.
     """
-    if not lib.any_outdated():
-        return
 
-    host = avalon.api.registered_host()
+    project_name = legacy_io.active_project()
     outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": io.ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
+    for container in ls():
+        representation_id = container['representation']
+        representation_doc = get_representation_by_id(
+            project_name, representation_id, fields=["parent"]
         )
         if representation_doc and not lib.is_latest(representation_doc):
             outdated_containers.append(container)
+
+    if not outdated_containers:
+        return
 
     # Colour nodes.
     outdated_nodes = []
@@ -185,7 +182,7 @@ def install():
     pyblish.api.register_host("harmony")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     # Register callbacks.
@@ -199,7 +196,7 @@ def install():
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):

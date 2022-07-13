@@ -6,17 +6,25 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
-from ..lib import UnknownDef
+from openpype.host import INewPublisher
+from openpype.pipeline import legacy_io
+from openpype.pipeline.mongodb import (
+    AvalonMongoDB,
+    session_data_from_environment,
+)
+
 from .creator_plugins import (
-    BaseCreator,
     Creator,
-    AutoCreator
+    AutoCreator,
+    discover_creator_plugins,
 )
 
 from openpype.api import (
     get_system_settings,
     get_project_settings
 )
+
+UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
 class ImmutableKeyError(TypeError):
@@ -87,6 +95,8 @@ class AttributeValues:
         origin_data(dict): Values loaded from host before conversion.
     """
     def __init__(self, attr_defs, values, origin_data=None):
+        from openpype.lib.attribute_definitions import UnknownDef
+
         if origin_data is None:
             origin_data = copy.deepcopy(values)
         self._origin_data = origin_data
@@ -352,7 +362,7 @@ class CreatedInstance:
             already existing instance.
         creator(BaseCreator): Creator responsible for instance.
         host(ModuleType): Host implementation loaded with
-            `avalon.api.registered_host`.
+            `openpype.pipeline.registered_host`.
         new(bool): Is instance new.
     """
     # Keys that can't be changed or removed from data after loading using
@@ -642,12 +652,6 @@ class CreateContext:
         discover_publish_plugins(bool): Discover publish plugins during reset
             phase.
     """
-    # Methods required in host implementaion to be able create instances
-    #   or change context data.
-    required_methods = (
-        "get_context_data",
-        "update_context_data"
-    )
 
     def __init__(
         self, host, dbcon=None, headless=False, reset=True,
@@ -655,10 +659,8 @@ class CreateContext:
     ):
         # Create conncetion if is not passed
         if dbcon is None:
-            import avalon.api
-
-            session = avalon.api.session_data_from_environment(True)
-            dbcon = avalon.api.AvalonMongoDB(session)
+            session = session_data_from_environment(True)
+            dbcon = AvalonMongoDB(session)
             dbcon.install()
 
         self.dbcon = dbcon
@@ -731,16 +733,20 @@ class CreateContext:
         Args:
             host(ModuleType): Host implementaion.
         """
-        missing = set()
-        for attr_name in cls.required_methods:
-            if not hasattr(host, attr_name):
-                missing.add(attr_name)
+
+        missing = set(
+            INewPublisher.get_missing_publish_methods(host)
+        )
         return missing
 
     @property
     def host_is_valid(self):
         """Is host valid for creation."""
         return self._host_is_valid
+
+    @property
+    def host_name(self):
+        return os.environ["AVALON_APP"]
 
     @property
     def log(self):
@@ -766,12 +772,11 @@ class CreateContext:
         """Give ability to reset avalon context.
 
         Reset is based on optional host implementation of `get_current_context`
-        function or using `avalon.api.Session`.
+        function or using `legacy_io.Session`.
 
         Some hosts have ability to change context file without using workfiles
         tool but that change is not propagated to
         """
-        import avalon.api
 
         project_name = asset_name = task_name = None
         if hasattr(self.host, "get_current_context"):
@@ -782,11 +787,11 @@ class CreateContext:
                 task_name = host_context.get("task_name")
 
         if not project_name:
-            project_name = avalon.api.Session.get("AVALON_PROJECT")
+            project_name = legacy_io.Session.get("AVALON_PROJECT")
         if not asset_name:
-            asset_name = avalon.api.Session.get("AVALON_ASSET")
+            asset_name = legacy_io.Session.get("AVALON_ASSET")
         if not task_name:
-            task_name = avalon.api.Session.get("AVALON_TASK")
+            task_name = legacy_io.Session.get("AVALON_TASK")
 
         if project_name:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
@@ -801,7 +806,6 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
-        import avalon.api
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -820,9 +824,10 @@ class CreateContext:
             discover_result = publish_plugins_discover()
             publish_plugins = discover_result.plugins
 
-            targets = pyblish.logic.registered_targets() or ["default"]
+            targets = set(pyblish.logic.registered_targets())
+            targets.add("default")
             plugins_by_targets = pyblish.logic.plugins_by_targets(
-                publish_plugins, targets
+                publish_plugins, list(targets)
             )
             # Collect plugins that can have attribute definitions
             for plugin in publish_plugins:
@@ -842,7 +847,7 @@ class CreateContext:
         creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in avalon.api.discover(BaseCreator):
+        for creator_class in discover_creator_plugins():
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))
@@ -856,6 +861,17 @@ class CreateContext:
                     "Using first and skipping following"
                 ))
                 continue
+
+            # Filter by host name
+            if (
+                creator_class.host_name
+                and creator_class.host_name != self.host_name
+            ):
+                self.log.info((
+                    "Creator's host name is not supported for current host {}"
+                ).format(creator_class.host_name, self.host_name))
+                continue
+
             creator = creator_class(
                 self,
                 system_settings,
@@ -1080,7 +1096,7 @@ class CreateContext:
             for instance in cretor_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
-                    update_list.append((instance, instance_changes))
+                    update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
             if update_list:

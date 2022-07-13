@@ -5,11 +5,15 @@ import uuid
 import clique
 from pymongo import UpdateOne
 
+from openpype.client import (
+    get_assets,
+    get_subsets,
+    get_versions,
+    get_representations
+)
+from openpype.lib import StringTemplate, TemplateUnsolved
+from openpype.pipeline import AvalonMongoDB, Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
-from avalon.api import AvalonMongoDB
-from openpype.api import Anatomy
-
-import avalon.pipeline
 
 
 class DeleteOldVersions(BaseAction):
@@ -198,10 +202,9 @@ class DeleteOldVersions(BaseAction):
         self.log.debug("Project is set to {}".format(project_name))
 
         # Get Assets from avalon database
-        assets = list(self.dbcon.find({
-            "type": "asset",
-            "name": {"$in": avalon_asset_names}
-        }))
+        assets = list(
+            get_assets(project_name, asset_names=avalon_asset_names)
+        )
         asset_id_to_name_map = {
             asset["_id"]: asset["name"] for asset in assets
         }
@@ -210,10 +213,9 @@ class DeleteOldVersions(BaseAction):
         self.log.debug("Collected assets ({})".format(len(asset_ids)))
 
         # Get Subsets
-        subsets = list(self.dbcon.find({
-            "type": "subset",
-            "parent": {"$in": asset_ids}
-        }))
+        subsets = list(
+            get_subsets(project_name, asset_ids=asset_ids)
+        )
         subsets_by_id = {}
         subset_ids = []
         for subset in subsets:
@@ -230,10 +232,9 @@ class DeleteOldVersions(BaseAction):
         self.log.debug("Collected subsets ({})".format(len(subset_ids)))
 
         # Get Versions
-        versions = list(self.dbcon.find({
-            "type": "version",
-            "parent": {"$in": subset_ids}
-        }))
+        versions = list(
+            get_versions(project_name, subset_ids=subset_ids)
+        )
 
         versions_by_parent = collections.defaultdict(list)
         for ent in versions:
@@ -295,10 +296,9 @@ class DeleteOldVersions(BaseAction):
                 "message": msg
             }
 
-        repres = list(self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        }))
+        repres = list(
+            get_representations(project_name, version_ids=version_ids)
+        )
 
         self.log.debug(
             "Collected representations to remove ({})".format(len(repres))
@@ -492,7 +492,8 @@ class DeleteOldVersions(BaseAction):
                         os.remove(file_path)
                         self.log.debug("Removed file: {}".format(file_path))
 
-                    remainders.remove(file_path_base)
+                    if file_path_base in remainders:
+                        remainders.remove(file_path_base)
                     continue
 
                 seq_path_base = os.path.split(seq_path)[1]
@@ -563,18 +564,16 @@ class DeleteOldVersions(BaseAction):
         try:
             context = representation["context"]
             context["root"] = anatomy.roots
-            path = avalon.pipeline.format_template_with_optional_keys(
-                context, template
-            )
+            path = StringTemplate.format_strict_template(template, context)
             if "frame" in context:
                 context["frame"] = self.sequence_splitter
                 sequence_path = os.path.normpath(
-                    avalon.pipeline.format_template_with_optional_keys(
-                        context, template
+                    StringTemplate.format_strict_template(
+                        template, context
                     )
                 )
 
-        except KeyError:
+        except (KeyError, TemplateUnsolved):
             # Template references unavailable data
             return (None, None)
 

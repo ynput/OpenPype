@@ -369,6 +369,63 @@
                             "key": "name_sorting"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "key": "transfer_values_of_hierarchical_attributes",
+                    "label": "Action to transfer hierarchical attribute values",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "key": "create_daily_review_session",
+                    "label": "Create daily review session",
+                    "type": "dict",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text",
+                            "use_label_wrap": true
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "cycle_enabled",
+                            "label": "Create daily review session"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "review_session_template",
+                            "label": "ReviewSession template",
+                            "placeholder": "Default: {yy}{mm}{dd}"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Possible formatting keys in template:<br/>- \"project_name\" - &lt;Name of project&gt;<br/>- \"d\" - &lt;Day of month number&gt; in shortest possible way.<br/>- \"dd\" - &lt;Day of month number&gt; with 2 digits.<br/>- \"ddd\" - &lt;Week day name&gt; shortened week day. e.g.: `Mon`, ...<br/>- \"dddd\" - &lt;Week day name&gt; full name of week day. e.g.: `Monday`, ...<br/>- \"m\" - &lt;Month number&gt; in shortest possible way. e.g.: `1` if January<br/>- \"mm\" - &lt;Month number&gt; with 2 digits.<br/>- \"mmm\" - &lt;Month name&gt; shortened month name. e.g.: `Jan`, ...<br/>- \"mmmm\" -&lt;Month name&gt; full month name. e.g.: `January`, ...<br/>- \"yy\" - &lt;Year number&gt; shortened year. e.g.: `19`, `20`, ...<br/>- \"yyyy\" - &lt;Year number&gt; full year. e.g.: `2019`, `2020`, ..."
+                        }
+                    ]
                 }
             ]
         },
@@ -591,6 +648,34 @@
                 },
                 {
                     "type": "dict",
+                    "key": "fill_workfile_attribute",
+                    "label": "Fill workfile Custom attribute",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Custom attribute must be <b>Text</b> type added to <b>Task</b> entity type"
+                        },
+                        {
+                            "type": "text",
+                            "key": "custom_attribute_key",
+                            "label": "Custom attribute key"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "seed_project",
                     "label": "Seed Debug Project",
                     "checkbox_key": "enabled",
@@ -701,6 +786,31 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "CollectFtrackCustomAttributeData",
+                    "label": "Collect Custom Attribute Data",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Collect custom attributes from ftrack for ftrack entities that can be used in some templates during publishing."
+                        },
+                        {
+                            "type": "list",
+                            "key": "custom_attribute_keys",
+                            "label": "Custom attribute keys",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
                     "is_group": true,
@@ -711,15 +821,58 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b>, <b>comment</b>, <b>host_name</b>, <b>app_name</b>, <b>app_label</b> and <b>published_paths</b>."
+                        },
+                        {
                             "type": "text",
-                            "key": "note_with_intent_template",
-                            "label": "Note with intent template"
+                            "key": "note_template",
+                            "label": "Note template",
+                            "multiline": true
                         },
                         {
                             "type": "list",
                             "object_type": "text",
                             "key": "note_labels",
                             "label": "Note labels"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackDescription",
+                    "label": "Integrate Ftrack Description",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Add description to integrated AssetVersion."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b> and <b>comment</b>."
+                        },
+                        {
+                            "type": "text",
+                            "key": "description_template",
+                            "label": "Description template"
                         }
                     ]
                 },
@@ -755,6 +908,49 @@
                             "label": "Family Mapping",
                             "object_type": {
                                 "type": "text"
+                            }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "keep_first_subset_name_for_review",
+                            "label": "Make subset name as first asset name",
+                            "default": true
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "asset_versions_status_profiles",
+                            "label": "AssetVersion status on publish",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "family",
+                                        "label": "Family",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
                             }
                         }
                     ]

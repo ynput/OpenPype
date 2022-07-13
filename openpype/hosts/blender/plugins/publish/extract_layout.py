@@ -5,7 +5,7 @@ import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
-from avalon import io
+from openpype.client import get_representation_by_name
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 import openpype.api
@@ -129,43 +129,32 @@ class ExtractLayout(openpype.api.Extractor):
 
         fbx_count = 0
 
+        project_name = instance.context.data["projectEntity"]["name"]
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
 
-            parent = metadata["parent"]
+            version_id = metadata["parent"]
             family = metadata["family"]
 
-            self.log.debug("Parent: {}".format(parent))
+            self.log.debug("Parent: {}".format(version_id))
             # Get blend reference
-            blend = io.find_one(
-                {
-                    "type": "representation",
-                    "parent": io.ObjectId(parent),
-                    "name": "blend"
-                },
-                projection={"_id": True})
+            blend = get_representation_by_name(
+                project_name, "blend", version_id, fields=["_id"]
+            )
             blend_id = None
             if blend:
                 blend_id = blend["_id"]
             # Get fbx reference
-            fbx = io.find_one(
-                {
-                    "type": "representation",
-                    "parent": io.ObjectId(parent),
-                    "name": "fbx"
-                },
-                projection={"_id": True})
+            fbx = get_representation_by_name(
+                project_name, "fbx", version_id, fields=["_id"]
+            )
             fbx_id = None
             if fbx:
                 fbx_id = fbx["_id"]
             # Get abc reference
-            abc = io.find_one(
-                {
-                    "type": "representation",
-                    "parent": io.ObjectId(parent),
-                    "name": "abc"
-                },
-                projection={"_id": True})
+            abc = get_representation_by_name(
+                project_name, "abc", version_id, fields=["_id"]
+            )
             abc_id = None
             if abc:
                 abc_id = abc["_id"]

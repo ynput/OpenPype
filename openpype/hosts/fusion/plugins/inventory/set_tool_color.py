@@ -1,6 +1,6 @@
-from avalon import api
 from Qt import QtGui, QtWidgets
 
+from openpype.pipeline import InventoryAction
 from openpype import style
 from openpype.hosts.fusion.api import (
     get_current_comp,
@@ -8,7 +8,7 @@ from openpype.hosts.fusion.api import (
 )
 
 
-class FusionSetToolColor(api.InventoryAction):
+class FusionSetToolColor(InventoryAction):
     """Update the color of the selected tools"""
 
     label = "Set Tool Color"

@@ -1,9 +1,10 @@
+from .window import Window
 from .app import (
     show,
-    Window
 )
 
 __all__ = [
+    "Window",
+
     "show",
-    "Window"
 ]

@@ -185,9 +185,9 @@ if [ "$disable_submodule_update" == 1 ]; then
   fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" build &> "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
+    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" build &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac &> "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
+    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   fi
   "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py"
 

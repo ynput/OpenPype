@@ -49,6 +49,12 @@ With the `Creator` you have a variety of options to create:
 - Uncheck `Use selection`.
     - This will create a single group named after the `Subset` in the `Creator`.
 
+#### Simplified publish
+
+There is a simplified workflow for simple use case where only single image should be created containing all visible layers.
+No image instances must be present in a workfile and `project_settings/photoshop/publish/CollectInstances/flatten_subset_template` must be filled in Settings.
+Then artists just need to hit 'Publish' button in menu.
+
 ### Publish
 
 When you are ready to share some work, you will need to publish. This is done by opening the `Pyblish` through the extensions `Publish` button.
@@ -105,3 +111,67 @@ You can switch to a previous version of the image or update to the latest.
 
 ![Loader](assets/photoshop_manage_switch.gif)
 ![Loader](assets/photoshop_manage_update.gif)
+
+
+### New Publisher
+
+All previous screenshot came from regular [pyblish](https://pyblish.com/) process, there is also a different UI available. This process extends existing implementation and adds new functionalities.
+
+To test this in Photoshop, the artist needs first to enable experimental `New publisher` in Settings. (Tray > Settings > Experimental tools)
+![Settings](assets/experimental_tools_settings.png)
+
+New dialog opens after clicking on `Experimental tools` button in Openpype extension menu.
+![Menu](assets/experimental_tools_menu.png)
+
+After you click on this button, this dialog will show up.
+
+![Menu](assets/artist_photoshop_new_publisher_workfile.png)
+
+You can see the first instance, called `workfileYourTaskName`. (Name depends on studio naming convention for Photoshop's workfiles.). This instance is so called "automatic", 
+it was created without instigation by the artist. You shouldn't delete this instance as it might hold necessary values for future publishing, but you can choose to skip it
+from publishing (by toggling the pill button inside of the rectangular object denoting instance).
+
+New publisher allows publishing into different context, just click on a workfile instance, update `Variant`, `Asset` or `Task` in the form in the middle and don't forget to click on the 'Confirm' button.
+
+Similarly to the old publishing approach, you need to create instances for everything you want to publish. You will initiate by clicking on the '+' sign in the bottom left corner.
+
+![Instance creator](assets/artist_photoshop_new_publisher_instance.png)
+
+In this dialog you can select the family for the published layer or group. Currently only 'image' is implemented.
+
+On right hand side you can see creator attributes:
+- `Create only for selected` - mimics `Use selected` option of regular publish
+- `Create separate instance for each selected` - if separate instance should be created for each layer if multiple selected
+
+![Instance created](assets/artist_photoshop_new_publisher_instance_created.png)
+
+Here you can see a newly created instance of image family. (Name depends on studio naming convention for image family.) You can disable instance from publishing in the same fashion as a workfile instance.
+You could also decide delete instance by selecting it and clicking on a trashcan icon (next to plus button on left button)
+
+Buttons on the bottom right are for:
+- `Refresh publishing` - set publishing process to starting position - useful if previous publish failed, or you changed configuration of a publish
+- `Stop/pause publishing` - if you would like to pause publishing process at any time
+- `Validate` - if you would like to run only collecting and validating phases (nothing will be published yet)
+- `Publish` - standard way how to kick off full publishing process
+
+In the unfortunate case of some error during publishing, you would receive this kind of error dialog.
+
+![Publish failed](assets/artist_photoshop_new_publisher_publish_failed.png)
+
+In this case there is an issue that you are publishing two or more instances with the same subset name ('imageMaing'). If the error is recoverable by the artist, you should
+see helpful information in a `How to repair?` section or fix it automatically by clicking on a 'Wrench' button on the right if present.
+
+If you would like to ask for help admin or support, you could use any of the three buttons on bottom left:
+- `Copy report` - stash full publishing log to a clipboard
+- `Export and save report` - save log into a file for sending it via mail or any communication tool
+- `Show details` - switches into a more detailed list of published instances and plugins. Similar to the old pyblish list.
+
+If you are able to fix the workfile yourself, use the first button on the right to set the UI to initial state before publish. (Click the `Publish` button to start again.)
+
+New publishing process should be backward compatible, eg. if you have a workfile with instances created in the previous publishing approach, they will be translated automatically and
+could be used right away.
+
+If you would create instances in a new publisher, you cannot use them in the old approach though!
+
+If you would hit on unexpected behaviour with old instances, contact support first, then you could try some steps to recover your publish. Delete instances in New publisher UI, or try `Subset manager` in the extension menu.
+Nuclear option is to purge workfile metadata in `File > File Info > Origin > Headline`. This is only for most determined daredevils though!

@@ -12,11 +12,14 @@ import clique
 import tempfile
 import math
 
-from avalon import io
 import pyblish.api
+
+from openpype.client import (
+    get_asset_by_name,
+    get_last_version_by_subset_name
+)
 from openpype.lib import (
     prepare_template_data,
-    get_asset,
     get_ffprobe_streams,
     convert_ffprobe_fps_value,
 )
@@ -40,7 +43,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
     label = "Collect rendered frames"
-    host = ["webpublisher"]
+    hosts = ["webpublisher"]
     targets = ["filespublish"]
 
     # from Settings
@@ -56,11 +59,13 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
         self.log.info("task_sub:: {}".format(task_subfolders))
 
+        project_name = context.data["project_name"]
         asset_name = context.data["asset"]
-        asset_doc = get_asset()
+        asset_doc = get_asset_by_name(project_name, asset_name)
         task_name = context.data["task"]
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
+        variant = context.data["variant"]
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
@@ -76,10 +81,12 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension.replace(".", ''))
 
             subset_name = get_subset_name_with_asset_doc(
-                family, task_data["variant"], task_name, asset_doc,
+                family, variant, task_name, asset_doc,
                 project_name=project_name, host_name="webpublisher"
             )
-            version = self._get_last_version(asset_name, subset_name) + 1
+            version = self._get_next_version(
+                project_name, asset_doc, subset_name
+            )
 
             instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
@@ -108,15 +115,18 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"], tags
                 )
-                file_url = os.path.join(task_dir, task_data["files"][0])
-                no_of_frames = self._get_number_of_frames(file_url)
-                if no_of_frames:
+                if family != 'workfile':
+                    file_url = os.path.join(task_dir, task_data["files"][0])
                     try:
-                        frame_end = int(frame_start) + math.ceil(no_of_frames)
-                        instance.data["frameEnd"] = math.ceil(frame_end) - 1
-                        self.log.debug("frameEnd:: {}".format(
-                            instance.data["frameEnd"]))
-                    except ValueError:
+                        no_of_frames = self._get_number_of_frames(file_url)
+                        if no_of_frames:
+                            frame_end = int(frame_start) + \
+                                        math.ceil(no_of_frames)
+                            frame_end = math.ceil(frame_end) - 1
+                            instance.data["frameEnd"] = frame_end
+                            self.log.debug("frameEnd:: {}".format(
+                                instance.data["frameEnd"]))
+                    except Exception:
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
@@ -209,62 +219,25 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         msg = "No family found for combination of " +\
               "task_type: {}, is_sequence:{}, extension: {}".format(
                   task_type, is_sequence, extension)
-        found_family = "render"
         assert found_family, msg
 
         return (found_family,
                 config["families"],
                 config["tags"])
 
-    def _get_last_version(self, asset_name, subset_name):
-        """Returns version number or 0 for 'asset' and 'subset'"""
-        query = [
-            {
-                "$match": {"type": "asset", "name": asset_name}
-            },
-            {
-                "$lookup":
-                    {
-                        "from": os.environ["AVALON_PROJECT"],
-                        "localField": "_id",
-                        "foreignField": "parent",
-                        "as": "subsets"
-                    }
-            },
-            {
-                "$unwind": "$subsets"
-            },
-            {
-                "$match": {"subsets.type": "subset",
-                           "subsets.name": subset_name}},
-            {
-                "$lookup":
-                    {
-                        "from": os.environ["AVALON_PROJECT"],
-                        "localField": "subsets._id",
-                        "foreignField": "parent",
-                        "as": "versions"
-                    }
-            },
-            {
-                "$unwind": "$versions"
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "asset_name": "$name",
-                        "subset_name": "$subsets.name"
-                    },
-                    'version': {'$max': "$versions.name"}
-                }
-            }
-        ]
-        version = list(io.aggregate(query))
+    def _get_next_version(self, project_name, asset_doc, subset_name):
+        """Returns version number or 1 for 'asset' and 'subset'"""
 
-        if version:
-            return version[0].get("version") or 0
-        else:
-            return 0
+        version_doc = get_last_version_by_subset_name(
+            project_name,
+            subset_name,
+            asset_doc["_id"],
+            fields=["name"]
+        )
+        version = 1
+        if version_doc:
+            version += int(version_doc["name"])
+        return version
 
     def _get_number_of_frames(self, file_url):
         """Return duration in frames"""

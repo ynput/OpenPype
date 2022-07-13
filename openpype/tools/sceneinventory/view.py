@@ -4,14 +4,22 @@ from functools import partial
 
 from Qt import QtWidgets, QtCore
 import qtawesome
+from bson.objectid import ObjectId
 
-from avalon import io, api
-
+from openpype.client import (
+    get_version_by_id,
+    get_versions,
+    get_hero_versions,
+    get_representation_by_id,
+    get_representations,
+)
 from openpype import style
 from openpype.pipeline import (
+    legacy_io,
     HeroVersionType,
     update_container,
     remove_container,
+    discover_inventory_actions,
 )
 from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
@@ -78,16 +86,13 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         repre_ids = []
         for item in items:
-            item_id = io.ObjectId(item["representation"])
+            item_id = ObjectId(item["representation"])
             if item_id not in repre_ids:
                 repre_ids.append(item_id)
 
-        repre_docs = io.find(
-            {
-                "type": "representation",
-                "_id": {"$in": repre_ids}
-            },
-            {"parent": 1}
+        project_name = legacy_io.active_project()
+        repre_docs = get_representations(
+            project_name, representation_ids=repre_ids, fields=["parent"]
         )
 
         version_ids = []
@@ -96,10 +101,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if version_id not in version_ids:
                 version_ids.append(version_id)
 
-        loaded_versions = io.find({
-            "_id": {"$in": version_ids},
-            "type": {"$in": ["version", "hero_version"]}
-        })
+        loaded_versions = get_versions(
+            project_name, version_ids=version_ids, hero=True
+        )
 
         loaded_hero_versions = []
         versions_by_parent_id = collections.defaultdict(list)
@@ -113,10 +117,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 if parent_id not in version_parents:
                     version_parents.append(parent_id)
 
-        all_versions = io.find({
-            "type": {"$in": ["hero_version", "version"]},
-            "parent": {"$in": version_parents}
-        })
+        all_versions = get_versions(
+            project_name, subset_ids=version_parents, hero=True
+        )
         hero_versions = []
         versions = []
         for version in all_versions:
@@ -145,16 +148,14 @@ class SceneInventoryView(QtWidgets.QTreeView):
             def _on_switch_to_versioned(items):
                 repre_ids = []
                 for item in items:
-                    item_id = io.ObjectId(item["representation"])
+                    item_id = ObjectId(item["representation"])
                     if item_id not in repre_ids:
                         repre_ids.append(item_id)
 
-                repre_docs = io.find(
-                    {
-                        "type": "representation",
-                        "_id": {"$in": repre_ids}
-                    },
-                    {"parent": 1}
+                repre_docs = get_representations(
+                    project_name,
+                    representation_ids=repre_ids,
+                    fields=["parent"]
                 )
 
                 version_ids = []
@@ -164,13 +165,13 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     version_id_by_repre_id[repre_doc["_id"]] = version_id
                     if version_id not in version_ids:
                         version_ids.append(version_id)
-                hero_versions = io.find(
-                    {
-                        "_id": {"$in": version_ids},
-                        "type": "hero_version"
-                    },
-                    {"version_id": 1}
+
+                hero_versions = get_hero_versions(
+                    project_name,
+                    version_ids=version_ids,
+                    fields=["version_id"]
                 )
+
                 version_ids = set()
                 for hero_version in hero_versions:
                     version_id = hero_version["version_id"]
@@ -182,12 +183,10 @@ class SceneInventoryView(QtWidgets.QTreeView):
                         if current_version_id == hero_version_id:
                             version_id_by_repre_id[_repre_id] = version_id
 
-                version_docs = io.find(
-                    {
-                        "_id": {"$in": list(version_ids)},
-                        "type": "version"
-                    },
-                    {"name": 1}
+                version_docs = get_versions(
+                    project_name,
+                    version_ids=version_ids,
+                    fields=["name"]
                 )
                 version_name_by_id = {}
                 for version_doc in version_docs:
@@ -195,7 +194,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                         version_doc["name"]
 
                 for item in items:
-                    repre_id = io.ObjectId(item["representation"])
+                    repre_id = ObjectId(item["representation"])
                     version_id = version_id_by_repre_id.get(repre_id)
                     version_name = version_name_by_id.get(version_id)
                     if version_name is not None:
@@ -365,14 +364,13 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 repre_ids (list)
                 side (str): 'active_site'|'remote_site'
         """
-        project_name = io.Session["AVALON_PROJECT"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
         active_site = self.sync_server.get_active_site(project_name)
         remote_site = self.sync_server.get_remote_site(project_name)
 
-        repre_docs = io.find({
-            "type": "representation",
-            "_id": {"$in": repre_ids}
-        })
+        repre_docs = get_representations(
+            project_name, representation_ids=repre_ids
+        )
         repre_docs_by_id = {
             repre_doc["_id"]: repre_doc
             for repre_doc in repre_docs
@@ -487,7 +485,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         containers = containers or [dict()]
 
         # Check which action will be available in the menu
-        Plugins = api.discover(api.InventoryAction)
+        Plugins = discover_inventory_actions()
         compatible = [p() for p in Plugins if
                       any(p.is_compatible(c) for c in containers)]
 
@@ -657,25 +655,35 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         active = items[-1]
 
+        project_name = legacy_io.active_project()
         # Get available versions for active representation
-        representation_id = io.ObjectId(active["representation"])
-        representation = io.find_one({"_id": representation_id})
-        version = io.find_one({
-            "_id": representation["parent"]
-        })
+        repre_doc = get_representation_by_id(
+            project_name,
+            active["representation"],
+            fields=["parent"]
+        )
 
-        versions = list(io.find(
-            {
-                "parent": version["parent"],
-                "type": "version"
-            },
-            sort=[("name", 1)]
+        repre_version_doc = get_version_by_id(
+            project_name,
+            repre_doc["parent"],
+            fields=["parent"]
+        )
+
+        version_docs = list(get_versions(
+            project_name,
+            subset_ids=[repre_version_doc["parent"]],
+            hero=True
         ))
-
-        hero_version = io.find_one({
-            "parent": version["parent"],
-            "type": "hero_version"
-        })
+        hero_version = None
+        standard_versions = []
+        for version_doc in version_docs:
+            if version_doc["type"] == "hero_version":
+                hero_version = version_doc
+            else:
+                standard_versions.append(version_doc)
+        versions = list(reversed(
+            sorted(standard_versions, key=lambda item: item["name"])
+        ))
         if hero_version:
             _version_id = hero_version["version_id"]
             for _version in versions:
@@ -702,7 +710,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         all_versions = []
         if hero_version:
             all_versions.append(hero_version)
-        all_versions.extend(reversed(versions))
+        all_versions.extend(versions)
 
         if current_item:
             index = all_versions.index(current_item)

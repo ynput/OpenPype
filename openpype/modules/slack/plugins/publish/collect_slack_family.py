@@ -1,7 +1,7 @@
-from avalon import io
 import pyblish.api
 
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.pipeline import legacy_io
 
 
 class CollectSlackFamilies(pyblish.api.InstancePlugin):
@@ -18,7 +18,7 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
     profiles = None
 
     def process(self, instance):
-        task_name = io.Session.get("AVALON_TASK")
+        task_name = legacy_io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
         key_values = {
             "families": family,
@@ -35,20 +35,25 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
             return
 
         # make slack publishable
-        if profile:
-            self.log.info("Found profile: {}".format(profile))
-            if instance.data.get('families'):
-                instance.data['families'].append('slack')
-            else:
-                instance.data['families'] = ['slack']
+        if not profile:
+            return
 
-            instance.data["slack_channel_message_profiles"] = \
-                profile["channel_messages"]
+        self.log.info("Found profile: {}".format(profile))
+        if instance.data.get('families'):
+            instance.data['families'].append('slack')
+        else:
+            instance.data['families'] = ['slack']
 
-            slack_token = (instance.context.data["project_settings"]
-                                                ["slack"]
-                                                ["token"])
-            instance.data["slack_token"] = slack_token
+        selected_profiles = profile["channel_messages"]
+        for prof in selected_profiles:
+            prof["review_upload_limit"] = profile.get("review_upload_limit",
+                                                      50)
+        instance.data["slack_channel_message_profiles"] = selected_profiles
+
+        slack_token = (instance.context.data["project_settings"]
+                                            ["slack"]
+                                            ["token"])
+        instance.data["slack_token"] = slack_token
 
     def main_family_from_instance(self, instance):  # TODO yank from integrate
         """Returns main family of entered instance."""
