@@ -119,10 +119,16 @@
                                         "key": "family",
                                         "label": "Family",
                                         "enum_items": [
-                                            {"reference": "reference"},
+                                            {"review": "review"},
                                             {"plate": "plate"},
                                             {"audio": "audio"}
                                         ]
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "variant",
+                                        "label": "Variant",
+                                        "placeholder": "< Inherited >"
                                     },
                                     {
                                         "type": "boolean",

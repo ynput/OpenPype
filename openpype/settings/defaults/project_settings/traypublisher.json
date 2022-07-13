@@ -39,7 +39,8 @@
             ],
             "family_presets": [
                 {
-                    "family": "reference",
+                    "family": "review",
+                    "variant": "Reference",
                     "review": true,
                     "filter_ext": [
                         "mov",
@@ -48,6 +49,7 @@
                 },
                 {
                     "family": "plate",
+                    "variant": "",
                     "review": false,
                     "filter_ext": [
                         "mov",
@@ -56,6 +58,7 @@
                 },
                 {
                     "family": "audio",
+                    "variant": "",
                     "review": false,
                     "filter_ext": [
                         "wav"
