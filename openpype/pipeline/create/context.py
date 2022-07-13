@@ -29,6 +29,7 @@ UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 class ImmutableKeyError(TypeError):
     """Accessed key is immutable so does not allow changes or removements."""
+
     def __init__(self, key, msg=None):
         self.immutable_key = key
         if not msg:
@@ -40,6 +41,7 @@ class ImmutableKeyError(TypeError):
 
 class HostMissRequiredMethod(Exception):
     """Host does not have implemented required functions for creation."""
+
     def __init__(self, host, missing_methods):
         self.missing_methods = missing_methods
         self.host = host
@@ -66,6 +68,7 @@ class InstanceMember:
     TODO:
     Implement and use!
     """
+
     def __init__(self, instance, name):
         self.instance = instance
 
@@ -94,6 +97,7 @@ class AttributeValues:
         values(dict): Values after possible conversion.
         origin_data(dict): Values loaded from host before conversion.
     """
+
     def __init__(self, attr_defs, values, origin_data=None):
         from openpype.lib.attribute_definitions import UnknownDef
 
@@ -174,6 +178,10 @@ class AttributeValues:
         output = {}
         for key in self._data:
             output[key] = self[key]
+
+        for key, attr_def in self._attr_defs_by_key.items():
+            if key not in output:
+                output[key] = attr_def.default
         return output
 
     @staticmethod
@@ -196,6 +204,7 @@ class CreatorAttributeValues(AttributeValues):
     Args:
         instance (CreatedInstance): Instance for which are values hold.
     """
+
     def __init__(self, instance, *args, **kwargs):
         self.instance = instance
         super(CreatorAttributeValues, self).__init__(*args, **kwargs)
@@ -211,6 +220,7 @@ class PublishAttributeValues(AttributeValues):
         publish_attributes(PublishAttributes): Wrapper for multiple publish
             attributes is used as parent object.
     """
+
     def __init__(self, publish_attributes, *args, **kwargs):
         self.publish_attributes = publish_attributes
         super(PublishAttributeValues, self).__init__(*args, **kwargs)
@@ -232,6 +242,7 @@ class PublishAttributes:
         attr_plugins(list): List of publish plugins that may have defined
             attribute definitions.
     """
+
     def __init__(self, parent, origin_data, attr_plugins=None):
         self.parent = parent
         self._origin_data = copy.deepcopy(origin_data)
@@ -270,6 +281,7 @@ class PublishAttributes:
             key(str): Plugin name.
             default: Default value if plugin was not found.
         """
+
         if key not in self._data:
             return default
 
@@ -287,11 +299,13 @@ class PublishAttributes:
 
     def plugin_names_order(self):
         """Plugin names order by their 'order' attribute."""
+
         for name in self._plugin_names_order:
             yield name
 
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
+
         output = {}
         for key, attr_value in self._data.items():
             output[key] = attr_value.data_to_store()
@@ -299,6 +313,7 @@ class PublishAttributes:
 
     def changes(self):
         """Return changes per each key."""
+
         changes = {}
         for key, attr_val in self._data.items():
             attr_changes = attr_val.changes()
@@ -314,6 +329,7 @@ class PublishAttributes:
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
+
         self._plugin_names_order = []
         self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
@@ -365,6 +381,7 @@ class CreatedInstance:
             `openpype.pipeline.registered_host`.
         new(bool): Is instance new.
     """
+
     # Keys that can't be changed or removed from data after loading using
     #   creator.
     # - 'creator_attributes' and 'publish_attributes' can change values of
@@ -566,6 +583,7 @@ class CreatedInstance:
     @property
     def id(self):
         """Instance identifier."""
+
         return self._data["instance_id"]
 
     @property
@@ -574,10 +592,12 @@ class CreatedInstance:
 
         Access to data is needed to modify values.
         """
+
         return self
 
     def changes(self):
         """Calculate and return changes."""
+
         changes = {}
         new_keys = set()
         for key, new_value in self._data.items():
