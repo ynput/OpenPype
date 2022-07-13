@@ -31,4 +31,6 @@ class CollectMovBatch(
 
         instance.data["representations"].append(repre)
 
+        instance.data["source"] = file_url
+
         self.log.debug("instance.data {}".format(instance.data))
