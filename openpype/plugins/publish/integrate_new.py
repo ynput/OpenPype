@@ -69,8 +69,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "data": additional metadata for each representation.
     """
 
-    label = "Integrate Asset New"
+    label = "Integrate Asset (legacy)"
     order = pyblish.api.IntegratorOrder
+    hosts = ["aftereffects", "blender", "celaction", "flame", "harmony",
+             "hiero", "houdini", "nuke", "photoshop", "resolve",
+             "standalonepublisher", "traypublisher", "tvpaint", "unreal",
+             "webpublisher"]
     families = ["workfile",
                 "pointcache",
                 "camera",
@@ -101,7 +105,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image",
-                "source",
                 "assembly",
                 "fbx",
                 "textures",
