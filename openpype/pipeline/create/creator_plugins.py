@@ -102,6 +102,10 @@ class BaseCreator:
 
         return self.create_context.project_name
 
+    @property
+    def host(self):
+        return self.create_context.host
+
     def get_group_label(self):
         """Group label under which are instances grouped in UI.
 

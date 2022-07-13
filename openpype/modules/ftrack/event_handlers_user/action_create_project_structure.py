@@ -84,6 +84,11 @@ class CreateProjectFolders(BaseAction):
             create_project_folders(basic_paths, project_name)
             self.create_ftrack_entities(basic_paths, project_entity)
 
+            self.trigger_event(
+                "openpype.project.structure.created",
+                {"project_name": project_name}
+            )
+
         except Exception as exc:
             self.log.warning("Creating of structure crashed.", exc_info=True)
             session.rollback()

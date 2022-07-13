@@ -35,6 +35,21 @@ class InvisibleTrayPublishCreator(InvisibleCreator):
         for instance in instances:
             self._remove_instance_from_context(instance)
 
+    def _store_new_instance(self, new_instance):
+        """Tray publisher specific method to store instance.
+
+        Instance is stored into "workfile" of traypublisher and also add it
+        to CreateContext.
+
+        Args:
+            new_instance (CreatedInstance): Instance that should be stored.
+        """
+
+        # Host implementation of storing metadata about instance
+        HostContext.add_instance(new_instance.data_to_store())
+        # Add instance to current context
+        self._add_instance_to_context(new_instance)
+
 
 class TrayPublishCreator(Creator):
     create_allow_context_change = True
@@ -69,10 +84,8 @@ class SettingsCreator(TrayPublishCreator):
         data["settings_creator"] = True
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name, data, self)
-        # Host implementation of storing metadata about instance
-        HostContext.add_instance(new_instance.data_to_store())
-        # Add instance to current context
-        self._add_instance_to_context(new_instance)
+
+        self._store_new_instance(new_instance)
 
     def get_instance_attr_defs(self):
         return [
