@@ -805,8 +805,12 @@ class FilesWidget(QtWidgets.QFrame):
         event.accept()
 
     def dropEvent(self, event):
+        if self._multivalue:
+            return
+
         mime_data = event.mimeData()
-        if not self._multivalue and mime_data.hasUrls():
+        if mime_data.hasUrls():
+            event.accept()
             filepaths = []
             for url in mime_data.urls():
                 filepath = url.toLocalFile()
@@ -817,7 +821,8 @@ class FilesWidget(QtWidgets.QFrame):
             filepaths = self._files_proxy_model.filter_valid_files(filepaths)
             if filepaths:
                 self._add_filepaths(filepaths)
-        event.accept()
+
+        super(FilesWidget, self).dropEvent(event)
 
     def _add_filepaths(self, filepaths):
         self._files_model.add_filepaths(filepaths)
