@@ -16,7 +16,8 @@ class CollectReviewFamily(
         "image",
         "render",
         "plate",
-        "review"
+        "review",
+        "audio"
     ]
 
     def process(self, instance):
