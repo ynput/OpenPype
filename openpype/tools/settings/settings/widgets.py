@@ -1105,6 +1105,7 @@ class ProjectListWidget(QtWidgets.QWidget):
         extract_action.triggered.connect(self.extract_to_file_requested)
 
         menu.addMenu(submenu)
+        menu.addAction(extract_action)
         menu.exec_(QtGui.QCursor.pos())
 
     def on_item_clicked(self, new_index):
