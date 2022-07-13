@@ -45,6 +45,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             "files": filenames
         })
 
+        instance.data["source"] = filepaths
+
         self.log.debug("Created Simple Settings instance {}".format(
             instance.data
         ))
