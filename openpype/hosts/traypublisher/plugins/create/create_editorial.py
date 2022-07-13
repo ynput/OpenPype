@@ -55,34 +55,26 @@ CLIP_ATTR_DEFS = [
 ]
 
 
-class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
-    identifier = "editorial_clip"
-    family = "clip"
+class EditorialClipInstanceCreatorBase(InvisibleTrayPublishCreator):
     host_name = "traypublisher"
-    label = "Editorial Clip"
-
-    has_parent = False
 
     def __init__(
         self, project_settings, *args, **kwargs
     ):
-        super(EditorialClipInstanceCreator, self).__init__(
+        super(EditorialClipInstanceCreatorBase, self).__init__(
             project_settings, *args, **kwargs
         )
 
-    def create(self, instance_data, source_data):
-        self.has_parent = source_data.get("has_parent")
-
+    def create(self, instance_data, source_data=None):
         self.log.info(f"instance_data: {instance_data}")
         subset_name = instance_data["subset"]
-        family = instance_data["family"]
 
-        return self._create_instance(subset_name, family, instance_data)
+        return self._create_instance(subset_name, instance_data)
 
-    def _create_instance(self, subset_name, family, data):
+    def _create_instance(self, subset_name, data):
 
         # Create new instance
-        new_instance = CreatedInstance(family, subset_name, data, self)
+        new_instance = CreatedInstance(self.family, subset_name, data, self)
         self.log.info(f"instance_data: {pformat(new_instance.data)}")
 
         # Host implementation of storing metadata about instance
@@ -92,6 +84,19 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
 
         return new_instance
 
+
+class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
+    identifier = "editorial_shot"
+    family = "shot"
+    label = "Editorial Shot"
+
+    def __init__(
+        self, project_settings, *args, **kwargs
+    ):
+        super(EditorialShotInstanceCreator, self).__init__(
+            project_settings, *args, **kwargs
+        )
+
     def get_instance_attr_defs(self):
         attr_defs = [
             TextDef(
@@ -99,9 +104,47 @@ class EditorialClipInstanceCreator(InvisibleTrayPublishCreator):
                 label="Asset name",
             )
         ]
-        if not self.has_parent:
-            attr_defs.extend(CLIP_ATTR_DEFS)
+        attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
+
+
+class EditorialPlateInstanceCreator(EditorialClipInstanceCreatorBase):
+    identifier = "editorial_plate"
+    family = "plate"
+    label = "Editorial Plate"
+
+    def __init__(
+        self, project_settings, *args, **kwargs
+    ):
+        super(EditorialPlateInstanceCreator, self).__init__(
+            project_settings, *args, **kwargs
+        )
+
+
+class EditorialAudioInstanceCreator(EditorialClipInstanceCreatorBase):
+    identifier = "editorial_audio"
+    family = "audio"
+    label = "Editorial Audio"
+
+    def __init__(
+        self, project_settings, *args, **kwargs
+    ):
+        super(EditorialAudioInstanceCreator, self).__init__(
+            project_settings, *args, **kwargs
+        )
+
+
+class EditorialReviewInstanceCreator(EditorialClipInstanceCreatorBase):
+    identifier = "editorial_review"
+    family = "review"
+    label = "Editorial Review"
+
+    def __init__(
+        self, project_settings, *args, **kwargs
+    ):
+        super(EditorialReviewInstanceCreator, self).__init__(
+            project_settings, *args, **kwargs
+        )
 
 
 class EditorialSimpleCreator(TrayPublishCreator):
@@ -229,8 +272,6 @@ or updating already created. Publishing will create OTIO file.
 
         self.asset_name_check = []
 
-        editorial_clip_creator = self.create_context.creators["editorial_clip"]
-
         tracks = otio_timeline.each_child(
             descended_from_type=otio.schema.Track
         )
@@ -287,15 +328,17 @@ or updating already created. Publishing will create OTIO file.
                 frame_end = frame_start + (clip_duration - 1)
 
                 parent_instance_label = None
+                parent_instance_id = None
                 for _fpreset in family_presets:
-                    source_data = {}
+                    # get variant name from preset or from inharitance
+                    _variant_name = _fpreset.get("variant") or variant_name
                     family = _fpreset["family"]
                     self.log.debug(f"__ family: {family}")
                     self.log.debug(f"__ _fpreset: {_fpreset}")
 
                     # subset name
                     subset_name = "{}{}".format(
-                        family, variant_name.capitalize()
+                        family, _variant_name.capitalize()
                     )
                     label = "{}_{}".format(
                         clip_name,
@@ -305,10 +348,8 @@ or updating already created. Publishing will create OTIO file.
                     # create shared new instance data
                     instance_data = {
                         "label": label,
-                        "variant": variant_name,
+                        "variant": _variant_name,
                         "family": family,
-                        "families": [],
-                        "group": family.capitalize(),
                         "subset": subset_name,
 
                         # HACK: just for temporal bug workaround
@@ -319,43 +360,51 @@ or updating already created. Publishing will create OTIO file.
 
                         # parent time properties
                         "trackStartFrame": track_start_frame,
+                        "timelineOffset": timeline_offset,
 
                         # creator_attributes
                         "creator_attributes": {
                             "asset_name": clip_name,
-                            "timeline_offset": timeline_offset,
                             "workfile_start_frame": workfile_start_frame,
-                            "frameStart": frame_start,
-                            "frameEnd": frame_end,
+                            "frameStart": int(frame_start),
+                            "frameEnd": int(frame_end),
                             "fps": fps,
-                            "handle_start": handle_start,
-                            "handle_end": handle_end,
-                            "clipIn": clip_in,
-                            "clipOut": clip_out,
-                            "sourceIn": source_in,
-                            "sourceOut": source_out,
+                            "handle_start": int(handle_start),
+                            "handle_end": int(handle_end),
+                            "clipIn": int(clip_in),
+                            "clipOut": int(clip_out),
+                            "sourceIn": int(source_in),
+                            "sourceOut": int(source_out),
                         }
                     }
                     # add file extension filter only if it is not shot family
                     if family == "shot":
+                        c_instance = self.create_context.creators[
+                            "editorial_shot"].create(
+                                instance_data)
                         parent_instance_label = label
+                        parent_instance_id = c_instance.data["instance_id"]
                     else:
-                        families = ["clip"]
                         # add review family if defined
-                        if _fpreset.get("review"):
-                            families.append("review")
                         instance_data.update({
                             "filterExt": _fpreset["filter_ext"],
-                            "families": families,
+                            "parent_instance_id": parent_instance_id,
                             "creator_attributes": {
-                                "asset_name": clip_name,
                                 "parent_instance": parent_instance_label
+                            },
+                            "publish_attributes": {
+                                "CollectReviewFamily": {
+                                    "add_review_family": _fpreset.get("review")
+                                }
                             }
                         })
-                        source_data["has_parent"] = True
 
-                    c_instance = editorial_clip_creator.create(
-                        instance_data, source_data)
+                        creator_identifier = f"editorial_{family}"
+                        editorial_clip_creator = self.create_context.creators[
+                            creator_identifier]
+                        c_instance = editorial_clip_creator.create(
+                            instance_data)
+
                     self.log.debug(f"{pformat(dict(c_instance.data))}")
 
     def _get_allowed_family_presets(self, pre_create_data):
