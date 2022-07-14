@@ -212,12 +212,12 @@ or updating already created. Publishing will create OTIO file.
         # Create all clip instances
         clip_instance_properties.update({
             "fps": fps,
-            "parent_asset_name": asset_name
+            "parent_asset_name": asset_name,
+            "variant": instance_data["variant"]
         })
         self._get_clip_instances(
             otio_timeline,
             clip_instance_properties,
-            variant_name=instance_data["variant"],
             family_presets=allowed_family_presets
 
         )
@@ -259,17 +259,8 @@ or updating already created. Publishing will create OTIO file.
         self,
         otio_timeline,
         clip_instance_properties,
-        variant_name,
         family_presets
     ):
-        # get clip instance properties
-        parent_asset_name = clip_instance_properties["parent_asset_name"]
-        handle_start = clip_instance_properties["handle_start"]
-        handle_end = clip_instance_properties["handle_end"]
-        timeline_offset = clip_instance_properties["timeline_offset"]
-        workfile_start_frame = clip_instance_properties["workfile_start_frame"]
-        fps = clip_instance_properties["fps"]
-
         self.asset_name_check = []
 
         tracks = otio_timeline.each_child(
@@ -294,118 +285,207 @@ or updating already created. Publishing will create OTIO file.
                 if not self._validate_clip_for_processing(clip):
                     continue
 
-                # basic unique asset name
-                clip_name = os.path.splitext(clip.name)[0].lower()
-                name = f"{parent_asset_name.split('_')[0]}_{clip_name}"
-
-                # make sure the name is unique
-                self._validate_name_uniqueness(name)
-
-                # frame ranges data
-                clip_in = clip.range_in_parent().start_time.value
-                clip_in += track_start_frame
-                clip_out = clip.range_in_parent().end_time_inclusive().value
-                clip_out += track_start_frame
-                self.log.info(f"clip_in: {clip_in} | clip_out: {clip_out}")
-
-                # add offset in case there is any
-                self.log.debug(f"__ timeline_offset: {timeline_offset}")
-                if timeline_offset:
-                    clip_in += timeline_offset
-                    clip_out += timeline_offset
-
-                clip_duration = clip.duration().value
-                self.log.info(f"clip duration: {clip_duration}")
-
-                source_in = clip.trimmed_range().start_time.value
-                source_out = source_in + clip_duration
-
-                # define starting frame for future shot
-                frame_start = (
-                    clip_in if workfile_start_frame is None
-                    else workfile_start_frame
+                base_instance_data = self._get_base_instance_data(
+                    clip,
+                    clip_instance_properties,
+                    track_start_frame
                 )
-                frame_end = frame_start + (clip_duration - 1)
 
-                parent_instance_label = None
-                parent_instance_id = None
+                parenting_data = {
+                    "instance_label": None,
+                    "instance_id": None
+                }
                 for _fpreset in family_presets:
-                    # get variant name from preset or from inharitance
-                    _variant_name = _fpreset.get("variant") or variant_name
-                    family = _fpreset["family"]
-                    self.log.debug(f"__ family: {family}")
-                    self.log.debug(f"__ _fpreset: {_fpreset}")
-
-                    # subset name
-                    subset_name = "{}{}".format(
-                        family, _variant_name.capitalize()
+                    instance = self._make_subset_instance(
+                        _fpreset["family"],
+                        _fpreset,
+                        deepcopy(base_instance_data),
+                        parenting_data
                     )
-                    label = "{}_{}".format(
-                        clip_name,
-                        subset_name
-                    )
+                    self.log.debug(f"{pformat(dict(instance.data))}")
 
-                    # create shared new instance data
-                    instance_data = {
-                        "label": label,
-                        "variant": _variant_name,
-                        "family": family,
-                        "subset": subset_name,
+    def _make_subset_instance(
+        self,
+        _fpreset,
+        family,
+        future_instance_data,
+        parenting_data
+    ):
+        label = self._make_subset_naming(
+            _fpreset["family"],
+            _fpreset,
+            future_instance_data
+        )
 
-                        # HACK: just for temporal bug workaround
-                        # TODO: should loockup shot name for update
-                        "asset": parent_asset_name,
-                        "name": clip_name,
-                        "task": "",
+        # add file extension filter only if it is not shot family
+        if family == "shot":
+            c_instance = self.create_context.creators[
+                "editorial_shot"].create(
+                    future_instance_data)
+            parenting_data = {
+                "instance_label": label,
+                "instance_id": c_instance.data["instance_id"]
+            }
 
-                        # parent time properties
-                        "trackStartFrame": track_start_frame,
-                        "timelineOffset": timeline_offset,
-
-                        # creator_attributes
-                        "creator_attributes": {
-                            "asset_name": clip_name,
-                            "workfile_start_frame": workfile_start_frame,
-                            "frameStart": int(frame_start),
-                            "frameEnd": int(frame_end),
-                            "fps": fps,
-                            "handle_start": int(handle_start),
-                            "handle_end": int(handle_end),
-                            "clipIn": int(clip_in),
-                            "clipOut": int(clip_out),
-                            "sourceIn": int(source_in),
-                            "sourceOut": int(source_out),
-                        }
+        else:
+            # add review family if defined
+            future_instance_data.update({
+                "filterExt": _fpreset["filter_ext"],
+                "parent_instance_id": parenting_data["instance_id"],
+                "creator_attributes": {
+                    "parent_instance": parenting_data["instance_label"]
+                },
+                "publish_attributes": {
+                    "CollectReviewFamily": {
+                        "add_review_family": _fpreset.get("review")
                     }
-                    # add file extension filter only if it is not shot family
-                    if family == "shot":
-                        c_instance = self.create_context.creators[
-                            "editorial_shot"].create(
-                                instance_data)
-                        parent_instance_label = label
-                        parent_instance_id = c_instance.data["instance_id"]
-                    else:
-                        # add review family if defined
-                        instance_data.update({
-                            "filterExt": _fpreset["filter_ext"],
-                            "parent_instance_id": parent_instance_id,
-                            "creator_attributes": {
-                                "parent_instance": parent_instance_label
-                            },
-                            "publish_attributes": {
-                                "CollectReviewFamily": {
-                                    "add_review_family": _fpreset.get("review")
-                                }
-                            }
-                        })
+                }
+            })
 
-                        creator_identifier = f"editorial_{family}"
-                        editorial_clip_creator = self.create_context.creators[
-                            creator_identifier]
-                        c_instance = editorial_clip_creator.create(
-                            instance_data)
+            creator_identifier = f"editorial_{family}"
+            editorial_clip_creator = self.create_context.creators[
+                creator_identifier]
+            c_instance = editorial_clip_creator.create(
+                future_instance_data)
 
-                    self.log.debug(f"{pformat(dict(c_instance.data))}")
+        return c_instance
+
+    def _make_subset_naming(
+        self,
+        family,
+        _fpreset,
+        future_instance_data
+    ):
+        shot_name = future_instance_data["shotName"]
+        variant_name = future_instance_data["variant"]
+
+        # get variant name from preset or from inharitance
+        _variant_name = _fpreset.get("variant") or variant_name
+
+        self.log.debug(f"__ family: {family}")
+        self.log.debug(f"__ _fpreset: {_fpreset}")
+
+        # subset name
+        subset_name = "{}{}".format(
+            family, _variant_name.capitalize()
+        )
+        label = "{}_{}".format(
+            shot_name,
+            subset_name
+        )
+
+        future_instance_data.update({
+            "family": family,
+            "label": label,
+            "variant": _variant_name,
+            "subset": subset_name,
+        })
+
+        return label
+
+    def _get_base_instance_data(
+        self,
+        clip,
+        clip_instance_properties,
+        track_start_frame,
+    ):
+        # get clip instance properties
+        parent_asset_name = clip_instance_properties["parent_asset_name"]
+        handle_start = clip_instance_properties["handle_start"]
+        handle_end = clip_instance_properties["handle_end"]
+        timeline_offset = clip_instance_properties["timeline_offset"]
+        workfile_start_frame = clip_instance_properties["workfile_start_frame"]
+        fps = clip_instance_properties["fps"]
+        variant_name = clip_instance_properties["variant"]
+
+        shot_name = self._get_clip_name(clip, parent_asset_name)
+
+        timing_data = self._get_timing_data(
+            clip,
+            timeline_offset,
+            track_start_frame,
+            workfile_start_frame
+        )
+
+        # create creator attributes
+        creator_attributes = {
+            "asset_name": shot_name,
+            "workfile_start_frame": workfile_start_frame,
+            "fps": fps,
+            "handle_start": int(handle_start),
+            "handle_end": int(handle_end)
+        }
+        creator_attributes.update(timing_data)
+
+        # create shared new instance data
+        base_instance_data = {
+            "shotName": shot_name,
+            "variant": variant_name,
+
+            # HACK: just for temporal bug workaround
+            # TODO: should loockup shot name for update
+            "asset": parent_asset_name,
+            "task": "",
+            # parent time properties
+            "trackStartFrame": track_start_frame,
+            "timelineOffset": timeline_offset,
+            # creator_attributes
+            "creator_attributes": creator_attributes
+        }
+
+        return base_instance_data
+
+    def _get_timing_data(
+        self,
+        clip,
+        timeline_offset,
+        track_start_frame,
+        workfile_start_frame
+    ):
+        # frame ranges data
+        clip_in = clip.range_in_parent().start_time.value
+        clip_in += track_start_frame
+        clip_out = clip.range_in_parent().end_time_inclusive().value
+        clip_out += track_start_frame
+        self.log.info(f"clip_in: {clip_in} | clip_out: {clip_out}")
+
+        # add offset in case there is any
+        self.log.debug(f"__ timeline_offset: {timeline_offset}")
+        if timeline_offset:
+            clip_in += timeline_offset
+            clip_out += timeline_offset
+
+        clip_duration = clip.duration().value
+        self.log.info(f"clip duration: {clip_duration}")
+
+        source_in = clip.trimmed_range().start_time.value
+        source_out = source_in + clip_duration
+
+        # define starting frame for future shot
+        frame_start = (
+            clip_in if workfile_start_frame is None
+            else workfile_start_frame
+        )
+        frame_end = frame_start + (clip_duration - 1)
+
+        return {
+            "frameStart": int(frame_start),
+            "frameEnd": int(frame_end),
+            "clipIn": int(clip_in),
+            "clipOut": int(clip_out),
+            "sourceIn": int(source_in),
+            "sourceOut": int(source_out)
+        }
+
+    def _get_clip_name(self, clip, selected_asset_name):
+        # basic unique asset name
+        clip_name = os.path.splitext(clip.name)[0].lower()
+        name = f"{selected_asset_name.split('_')[0]}_{clip_name}"
+
+        # make sure the name is unique
+        self._validate_name_uniqueness(name)
+
+        return clip_name
 
     def _get_allowed_family_presets(self, pre_create_data):
         self.log.debug(f"__ pre_create_data: {pre_create_data}")
