@@ -73,11 +73,6 @@
                         "type": "boolean"
                     },
                     {
-                        "key": "reviewable",
-                        "label": "Reviewable",
-                        "type": "boolean"
-                    },
-                    {
                         "type": "list",
                         "key": "extensions",
                         "label": "Extensions",
