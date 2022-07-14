@@ -34,7 +34,7 @@ class SupportLabel(QtWidgets.QLabel):
 class DropEmpty(QtWidgets.QWidget):
     _empty_extensions = "Any file"
 
-    def __init__(self, single_item, allow_sequences, parent):
+    def __init__(self, single_item, allow_sequences, extensions_label, parent):
         super(DropEmpty, self).__init__(parent)
 
         drop_label_widget = QtWidgets.QLabel("Drag & Drop files here", self)
@@ -70,7 +70,11 @@ class DropEmpty(QtWidgets.QWidget):
 
         self._update_size_timer = update_size_timer
 
+        if extensions_label and not extensions_label.startswith(" "):
+            extensions_label = " " + extensions_label
+
         self._single_item = single_item
+        self._extensions_label = extensions_label
         self._allow_sequences = allow_sequences
         self._allowed_extensions = set()
         self._allow_folders = None
@@ -123,24 +127,32 @@ class DropEmpty(QtWidgets.QWidget):
             items_label = "Single "
 
         if len(allowed_items) == 1:
-            allowed_items_label = allowed_items[0]
+            extensions_label = allowed_items[0]
         elif len(allowed_items) == 2:
-            allowed_items_label = " or ".join(allowed_items)
+            extensions_label = " or ".join(allowed_items)
         else:
             last_item = allowed_items.pop(-1)
             new_last_item = " or ".join(last_item, allowed_items.pop(-1))
             allowed_items.append(new_last_item)
-            allowed_items_label = ", ".join(allowed_items)
+            extensions_label = ", ".join(allowed_items)
+
+        allowed_items_label = extensions_label
 
         items_label += allowed_items_label
+        label_tooltip = None
         if self._allowed_extensions:
             items_label += " of\n{}".format(
                 ", ".join(sorted(self._allowed_extensions))
             )
 
+        if self._extensions_label:
+            label_tooltip = items_label
+            items_label = self._extensions_label
+
         if self._items_label_widget.text() == items_label:
             return
 
+        self._items_label_widget.setToolTip(label_tooltip)
         self._items_label_widget.setText(items_label)
         self._update_size_timer.start()
 
@@ -618,11 +630,13 @@ class FilesView(QtWidgets.QListView):
 class FilesWidget(QtWidgets.QFrame):
     value_changed = QtCore.Signal()
 
-    def __init__(self, single_item, allow_sequences, parent):
+    def __init__(self, single_item, allow_sequences, extensions_label, parent):
         super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
-        empty_widget = DropEmpty(single_item, allow_sequences, self)
+        empty_widget = DropEmpty(
+            single_item, allow_sequences, extensions_label, self
+        )
 
         files_model = FilesModel(single_item, allow_sequences)
         files_proxy_model = FilesProxyModel()
