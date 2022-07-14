@@ -2,13 +2,13 @@ import os
 import platform
 
 
+from openpype.client import get_asset_by_name
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
     ILaunchHookPaths
 )
 from openpype.lib.events import register_event_callback
-from openpype.pipeline import AvalonMongoDB
 
 from .exceptions import InvalidContextError
 
@@ -197,22 +197,13 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
                 " Project: \"{}\" Asset: \"{}\" Task: \"{}\""
             ).format(str(project_name), str(asset_name), str(task_name)))
 
-        dbconn = AvalonMongoDB()
-        dbconn.install()
-        dbconn.Session["AVALON_PROJECT"] = project_name
-
-        asset_doc = dbconn.find_one(
-            {
-                "type": "asset",
-                "name": asset_name
-            },
-            {
-                "data.tasks": True,
-                "data.parents": True
-            }
+        asset_doc = get_asset_by_name(
+            project_name,
+            asset_name,
+            fields=["_id", "name", "data.tasks", "data.parents"]
         )
+
         if not asset_doc:
-            dbconn.uninstall()
             raise InvalidContextError((
                 "Asset \"{}\" not found in project \"{}\""
             ).format(asset_name, project_name))
@@ -220,7 +211,6 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         asset_data = asset_doc.get("data") or {}
         asset_tasks = asset_data.get("tasks") or {}
         if task_name not in asset_tasks:
-            dbconn.uninstall()
             raise InvalidContextError((
                 "Task \"{}\" not found on asset \"{}\" in project \"{}\""
             ).format(task_name, asset_name, project_name))
@@ -238,9 +228,10 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         hierarchy_items = asset_data.get("parents") or []
         hierarchy_items.append(asset_name)
 
-        dbconn.uninstall()
         return {
             "project_name": project_name,
+            "asset_id": str(asset_doc["_id"]),
+            "asset_name": asset_doc["name"],
             "task_name": task_name,
             "task_type": task_type,
             "hierarchy": hierarchy_items
