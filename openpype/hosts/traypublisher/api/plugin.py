@@ -87,7 +87,11 @@ class SettingsCreator(TrayPublishCreator):
                 single_item=not self.allow_multiple_items,
                 label="Filepath",
             ),
-            BoolDef("allow_review", label="Reviewable", default=True)
+            BoolDef(
+                "reviewable",
+                label="Reviewable",
+                default=self.reviewable
+            )
         ]
 
     @classmethod
@@ -109,7 +113,7 @@ class SettingsCreator(TrayPublishCreator):
                 "extensions": item_data["extensions"],
                 "allow_sequences": item_data["allow_sequences"],
                 "allow_multiple_items": item_data["allow_multiple_items"],
-                "allow_review": item_data["allow_review"],
+                "reviewable": item_data["reviewable"],
                 "default_variants": item_data["default_variants"]
             }
         )

@@ -73,8 +73,8 @@
                         "type": "boolean"
                     },
                     {
-                        "key": "allow_review",
-                        "label": "Allow review",
+                        "key": "reviewable",
+                        "label": "Reviewable",
                         "type": "boolean"
                     },
                     {
