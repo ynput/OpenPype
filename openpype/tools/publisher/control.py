@@ -575,6 +575,8 @@ class PublisherController:
         # Stop publishing
         self.stop_publish()
 
+        self.save_changes()
+
         # Reset avalon context
         self.create_context.reset_avalon_context()
 
