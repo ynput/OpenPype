@@ -8,15 +8,20 @@ import pyblish.api
 class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
     """Collect data for instances created by settings creators.
 
-    Plugin create representations based on 'filepath' attribute stored
-    on instance.
+    Plugin create representations for simple instances based
+    on 'representation_files' attribute stored on instance data.
+
+    There is also possibility to have reviewable representation which can be
+    stored under 'reviewable' attribute stored on instance data. If there was
+    already created representation with the same files as 'revieable' containes
 
     Representations can be marked for review and in that case is also added
     'review' family to instance families. For review can be marked only one
     representation so **first** representation that has extension available
     in '_review_extensions' is used for review.
 
-    For 'source' on instance is used path from last created representation.
+    For instance 'source' is used path from last representation created
+    from 'representation_files'.
 
     Set staging directory on instance. That is probably never used because
     each created representation has it's own staging dir.
