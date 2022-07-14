@@ -1,4 +1,6 @@
 import os
+import json
+import tempfile
 
 import clique
 import pyblish.api
@@ -38,50 +40,113 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         if not instance.data.get("settings_creator"):
             return
 
+        instance_label = instance.data["name"]
         # Create instance's staging dir in temp
         tmp_folder = tempfile.mkdtemp(prefix="traypublisher_")
         instance.data["stagingDir"] = tmp_folder
         instance.context.data["cleanupFullPaths"].append(tmp_folder)
 
-        self.log.debug(
-            "Created temp staging directory for instance {}".format(tmp_folder)
-        )
+        self.log.debug((
+            "Created temp staging directory for instance {}. {}"
+        ).format(instance_label, tmp_folder))
 
         repres = instance.data["representations"]
 
         creator_attributes = instance.data["creator_attributes"]
-        filepath_item = creator_attributes["filepath"]
-        self.log.info(filepath_item)
-        filepaths = [
-            os.path.join(filepath_item["directory"], filename)
-            for filename in filepath_item["filenames"]
-        ]
+        self.log.info(json.dumps(creator_attributes))
+        filepath_items = creator_attributes["filepath"]
+        if not isinstance(filepath_items, list):
+            filepath_items = [filepath_items]
 
-        cols, rems = clique.assemble(filepaths)
+        # Last found representation is used as source for instance
         source = None
+        # Check if review is enabled and should be created
+        reviewable = creator_attributes.get("reviewable")
+        # Store review representation - first found that can be used for
+        #   review is stored
+        review_representation = None
+        review_path = None
+
+        # Make sure there are no representations with same name
+        repre_names_counter = {}
+        # Store created names for logging
+        _repre_names = []
+        # Store filepaths for validation of their existence
+        source_filepaths = []
+
+        # Create representations
+        for filepath_item in filepath_items:
+            filepaths = [
+                os.path.join(filepath_item["directory"], filename)
+                for filename in filepath_item["filenames"]
+            ]
+            source_filepaths.extend(filepaths)
+
+            source = self._calculate_source(filepaths)
+            filenames = filepath_item["filenames"]
+            _, ext = os.path.splitext(filenames[0])
+            if len(filenames) == 1:
+                filenames = filenames[0]
+
+            repre_name = repre_ext = ext[1:]
+            if repre_name not in repre_names_counter:
+                repre_names_counter[repre_name] = 2
+            else:
+                counter = repre_names_counter[repre_name]
+                repre_names_counter[repre_name] += 1
+                repre_name = "{}_{}".format(repre_name, counter)
+
+            _repre_names.append('"{}"'.format(repre_name))
+            representation = {
+                "ext": repre_ext,
+                "name": repre_name,
+                "stagingDir": filepath_item["directory"],
+                "files": filenames,
+                "tags": []
+            }
+            repres.append(representation)
+
+            if (
+                reviewable
+                and review_representation is None
+                and ext in self._review_extensions
+            ):
+                review_representation = representation
+                review_path = source
+
+        instance.data["source"] = source
+        instance.data["sourceFilepaths"] = source_filepaths
+
+        if reviewable:
+            self._prepare_review(instance, review_representation, review_path)
+
+        self.log.debug((
+            "Created Simple Settings instance \"{}\""
+            " with {} representations: {}"
+        ).format(instance_label, len(repres), ", ".join(_repre_names)))
+
+    def _calculate_source(self, filepaths):
+        if not filepaths:
+            return None
+        cols, rems = clique.assemble(filepaths)
         if cols:
             source = cols[0].format("{head}{padding}{tail}")
         elif rems:
             source = rems[0]
+        return source
 
-        instance.data["source"] = source
-        instance.data["sourceFilepaths"] = filepaths
+    def _prepare_review(self, instance, review_representation, review_path):
+        if not review_representation:
+            self.log.waring((
+                "Didn't find any representation"
+                " that could be used as source for review"
+            ))
+            return
 
-        filenames = filepath_item["filenames"]
-        _, ext = os.path.splitext(filenames[0])
-        ext = ext[1:]
-        if len(filenames) == 1:
-            filenames = filenames[0]
+        if "review" not in instance.data["families"]:
+            instance.data["families"].append("review")
 
-        repres.append({
-            "ext": ext,
-            "name": ext,
-            "stagingDir": filepath_item["directory"],
-            "files": filenames
-        })
-
-        instance.data["source"] = "\n".join(filepaths)
-
-        self.log.debug("Created Simple Settings instance {}".format(
-            instance.data
+        review_representation["tags"].append("review")
+        self.log.debug("Representation {} was marked for review. {}".format(
+            review_representation["name"], review_path
         ))
