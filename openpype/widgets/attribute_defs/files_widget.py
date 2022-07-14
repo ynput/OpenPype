@@ -905,10 +905,9 @@ class FilesWidget(QtWidgets.QFrame):
         if self._handle_full_data_drop(
             mime_data.data("files_widget/full_data")
         ):
-            event.accept()
             event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
 
-        # print(self._files_model.id, event)
         super(FilesWidget, self).dropEvent(event)
 
     def _handle_full_data_drag(self, value):
@@ -942,7 +941,18 @@ class FilesWidget(QtWidgets.QFrame):
             filepaths = self._files_proxy_model.filter_valid_files(filepaths)
             if filepaths:
                 self._add_filepaths(filepaths)
+
+        if self._copy_modifiers_enabled():
+            return False
         return True
+
+    def _copy_modifiers_enabled(self):
+        if (
+            QtWidgets.QApplication.keyboardModifiers()
+            & QtCore.Qt.ControlModifier
+        ):
+            return True
+        return False
 
     def _add_filepaths(self, filepaths):
         self._files_model.add_filepaths(filepaths)
