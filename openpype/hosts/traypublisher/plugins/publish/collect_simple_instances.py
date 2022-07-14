@@ -88,7 +88,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         representation_files_mapping
     ):
         creator_attributes = instance.data["creator_attributes"]
-        filepath_items = creator_attributes["filepath"]
+        filepath_items = creator_attributes["representation_files"]
         if not isinstance(filepath_items, list):
             filepath_items = [filepath_items]
 

@@ -102,7 +102,7 @@ class SettingsCreator(TrayPublishCreator):
     def get_instance_attr_defs(self):
         return [
             FileDef(
-                "filepath",
+                "representation_files",
                 folders=False,
                 extensions=self.extensions,
                 allow_sequences=self.allow_sequences,
