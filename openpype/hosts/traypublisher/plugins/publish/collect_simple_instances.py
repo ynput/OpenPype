@@ -12,6 +12,28 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
     hosts = ["traypublisher"]
 
+    _image_extensions = [
+        ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
+        ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
+        ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
+        ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+        ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
+        ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
+        ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+        ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+        ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
+        ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
+        ".xpm", ".xwd"
+    ]
+    _video_extensions = [
+        ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
+        ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
+        ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
+        ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
+        ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
+    ]
+    _review_extensions = _image_extensions + _video_extensions
+
     def process(self, instance):
         if not instance.data.get("settings_creator"):
             return
