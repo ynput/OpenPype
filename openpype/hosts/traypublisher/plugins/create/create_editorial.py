@@ -295,9 +295,11 @@ or updating already created. Publishing will create OTIO file.
                     "instance_label": None,
                     "instance_id": None
                 }
+                self.log.info(
+                    f"Creating subsets from presets: \n{pformat(family_presets)}")
+
                 for _fpreset in family_presets:
                     instance = self._make_subset_instance(
-                        _fpreset["family"],
                         _fpreset,
                         deepcopy(base_instance_data),
                         parenting_data
@@ -307,12 +309,11 @@ or updating already created. Publishing will create OTIO file.
     def _make_subset_instance(
         self,
         _fpreset,
-        family,
         future_instance_data,
         parenting_data
     ):
+        family = _fpreset["family"]
         label = self._make_subset_naming(
-            _fpreset["family"],
             _fpreset,
             future_instance_data
         )
@@ -322,10 +323,10 @@ or updating already created. Publishing will create OTIO file.
             c_instance = self.create_context.creators[
                 "editorial_shot"].create(
                     future_instance_data)
-            parenting_data = {
+            parenting_data.update({
                 "instance_label": label,
                 "instance_id": c_instance.data["instance_id"]
-            }
+            })
 
         else:
             # add review family if defined
@@ -352,12 +353,12 @@ or updating already created. Publishing will create OTIO file.
 
     def _make_subset_naming(
         self,
-        family,
         _fpreset,
         future_instance_data
     ):
         shot_name = future_instance_data["shotName"]
         variant_name = future_instance_data["variant"]
+        family = _fpreset["family"]
 
         # get variant name from preset or from inharitance
         _variant_name = _fpreset.get("variant") or variant_name
