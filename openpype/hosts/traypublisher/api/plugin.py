@@ -1,9 +1,8 @@
-from openpype.lib.attribute_definitions import BoolDef
+from openpype.lib.attribute_definitions import BoolDef, FileDef
 from openpype.pipeline import (
     Creator,
     CreatedInstance
 )
-from openpype.lib import FileDef
 
 from .pipeline import (
     list_instances,
