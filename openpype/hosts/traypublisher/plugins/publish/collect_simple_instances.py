@@ -38,11 +38,15 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         if not instance.data.get("settings_creator"):
             return
 
-        if "families" not in instance.data:
-            instance.data["families"] = []
+        # Create instance's staging dir in temp
+        tmp_folder = tempfile.mkdtemp(prefix="traypublisher_")
+        instance.data["stagingDir"] = tmp_folder
+        instance.context.data["cleanupFullPaths"].append(tmp_folder)
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+        self.log.debug(
+            "Created temp staging directory for instance {}".format(tmp_folder)
+        )
+
         repres = instance.data["representations"]
 
         creator_attributes = instance.data["creator_attributes"]
@@ -62,7 +66,6 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
         instance.data["source"] = source
         instance.data["sourceFilepaths"] = filepaths
-        instance.data["stagingDir"] = filepath_item["directory"]
 
         filenames = filepath_item["filenames"]
         _, ext = os.path.splitext(filenames[0])
