@@ -379,11 +379,6 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
         input_widget.setItemDelegate(combo_delegate)
 
-        line_edit = QtWidgets.QLineEdit(input_widget)
-        line_edit.setReadOnly(True)
-        line_edit.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-        input_widget.setLineEdit(line_edit)
-
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
 
