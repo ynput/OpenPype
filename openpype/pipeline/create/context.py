@@ -736,6 +736,7 @@ class CreateContext:
         self.manual_creators = {}
 
         self.publish_discover_result = None
+        self.publish_plugins_mismatch_targets = []
         self.publish_plugins = []
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
@@ -858,6 +859,7 @@ class CreateContext:
         discover_result = DiscoverResult()
         plugins_with_defs = []
         plugins_by_targets = []
+        plugins_mismatch_targets = []
         if discover_publish_plugins:
             discover_result = publish_plugins_discover()
             publish_plugins = discover_result.plugins
@@ -867,11 +869,19 @@ class CreateContext:
             plugins_by_targets = pyblish.logic.plugins_by_targets(
                 publish_plugins, list(targets)
             )
+
             # Collect plugins that can have attribute definitions
             for plugin in publish_plugins:
                 if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
                     plugins_with_defs.append(plugin)
 
+            plugins_mismatch_targets = [
+                plugin
+                for plugin in publish_plugins
+                if plugin not in plugins_by_targets
+            ]
+
+        self.publish_plugins_mismatch_targets = plugins_mismatch_targets
         self.publish_discover_result = discover_result
         self.publish_plugins = plugins_by_targets
         self.plugins_with_defs = plugins_with_defs
