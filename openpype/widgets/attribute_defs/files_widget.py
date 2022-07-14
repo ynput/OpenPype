@@ -27,6 +27,20 @@ IS_SEQUENCE_ROLE = QtCore.Qt.UserRole + 7
 EXT_ROLE = QtCore.Qt.UserRole + 8
 
 
+def convert_bytes_to_json(bytes_value):
+    if isinstance(bytes_value, QtCore.QByteArray):
+        # Raw data are already QByteArray and we don't have to load them
+        encoded_data = bytes_value
+    else:
+        encoded_data = QtCore.QByteArray.fromRawData(bytes_value)
+    stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
+    text = stream.readQString()
+    try:
+        return json.loads(text)
+    except Exception:
+        return None
+
+
 class SupportLabel(QtWidgets.QLabel):
     pass
 
@@ -300,17 +314,10 @@ class FilesModel(QtGui.QStandardItemModel):
         return mime_data
 
     def dropMimeData(self, mime_data, action, row, col, index):
-        internal_move_data = mime_data.data("files_widget/internal_move")
-        if isinstance(internal_move_data, QtCore.QByteArray):
-            # Raw data are already QByteArrat and we don't have to load them
-            encoded_data = internal_move_data
-        else:
-            encoded_data = QtCore.QByteArray.fromRawData(internal_move_data)
-        stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
-        text = stream.readQString()
-        try:
-            item_ids = json.loads(text)
-        except Exception:
+        item_ids = convert_bytes_to_json(
+            mime_data.data("files_widget/internal_move")
+        )
+        if item_ids is None:
             return False
 
         # Find matching item after which will be items moved
