@@ -108,42 +108,157 @@
                             "type": "splitter"
                         },
                         {
-                            "type": "list",
-                            "key": "family_presets",
-                            "label": "Family presets",
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "type": "enum",
-                                        "key": "family",
-                                        "label": "Family",
-                                        "enum_items": [
-                                            {"review": "review"},
-                                            {"plate": "plate"},
-                                            {"audio": "audio"}
-                                        ]
-                                    },
-                                    {
-                                        "type": "text",
-                                        "key": "variant",
-                                        "label": "Variant",
-                                        "placeholder": "< Inherited >"
-                                    },
-                                    {
-                                        "type": "boolean",
-                                        "key": "review",
-                                        "label": "Review",
-                                        "default": true
-                                    },
-                                    {
-                                        "type": "list",
-                                        "key": "filter_ext",
-                                        "label": "Allowed input file types",
-                                        "object_type": "text"
+                            "type": "collapsible-wrap",
+                            "label": "Shot metadata creator",
+                            "collapsible": true,
+                            "collapsed": true,
+                            "children": [
+                                {
+                                    "key": "clip_name_tokenizer",
+                                    "label": "Clip name tokenizer",
+                                    "type": "dict-modifiable",
+                                    "highlight_content": true,
+                                    "tooltip": "Using Regex expression to create tokens. \nThose can be used later in \"Shot rename\" creator \nor \"Shot hierarchy\". \n\nTokens should be decorated with \"_\" on each side",
+                                    "object_type": {
+                                        "type": "text"
                                     }
-                                ]
-                            }
+                                },
+                                {
+                                    "type": "dict",
+                                    "key": "shot_rename",
+                                    "label": "Shot rename",
+                                    "checkbox_key": "enabled",
+                                    "children": [
+                                        {
+                                            "type": "boolean",
+                                            "key": "enabled",
+                                            "label": "Enabled"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "shot_rename_template",
+                                            "label": "Shot rename template",
+                                            "tooltip":"Template only supports Anatomy keys and Tokens \nfrom \"Clip name tokenizer\""
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "dict",
+                                    "key": "shot_hierarchy",
+                                    "label": "Shot hierarchy",
+                                    "checkbox_key": "enabled",
+                                    "children": [
+                                        {
+                                            "type": "boolean",
+                                            "key": "enabled",
+                                            "label": "Enabled"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "parents_path",
+                                            "label": "Parents path template",
+                                            "tooltip": "Using keys from \"Token to parent convertor\" or tokens directly"
+                                        },
+                                        {
+                                            "key": "parents",
+                                            "label": "Token to parent convertor",
+                                            "type": "list",
+                                            "highlight_content": true,
+                                            "tooltip": "The left side is key to be used in template. \nThe right is value build from Tokens comming from \n\"Clip name tokenizer\"",
+                                            "object_type": {
+                                                "type": "dict",
+                                                "children": [
+                                                    {
+                                                        "type": "enum",
+                                                        "key": "type",
+                                                        "label": "Parent type",
+                                                        "enum_items": [
+                                                            {"project": "Project"},
+                                                            {"folder": "Folder"},
+                                                            {"episode": "Episode"},
+                                                            {"sequence": "Sequence"}
+                                                        ]
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "name",
+                                                        "label": "Parent token name",
+                                                        "tooltip": "Unique name used in \"Parent path template\""
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "value",
+                                                        "label": "Parent name value",
+                                                        "tooltip": "Template where any text, Anatomy keys and Tokens could be used"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "key": "shot_add_tasks",
+                                    "label": "Add tasks to shot",
+                                    "type": "dict-modifiable",
+                                    "highlight_content": true,
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "task-types-enum",
+                                                "key": "type",
+                                                "label": "Task type"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "collapsible-wrap",
+                            "label": "Shot's subset creator",
+                            "collapsible": true,
+                            "collapsed": true,
+                            "children": [
+                                {
+                                    "type": "list",
+                                    "key": "family_presets",
+                                    "label": "Family presets",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "enum",
+                                                "key": "family",
+                                                "label": "Family",
+                                                "enum_items": [
+                                                    {"review": "review"},
+                                                    {"plate": "plate"},
+                                                    {"audio": "audio"}
+                                                ]
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "variant",
+                                                "label": "Variant",
+                                                "placeholder": "< Inherited >"
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "review",
+                                                "label": "Review",
+                                                "default": true
+                                            },
+                                            {
+                                                "type": "list",
+                                                "key": "filter_ext",
+                                                "label": "Allowed input file types",
+                                                "object_type": "text"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
                         }
                     ]
                 }
