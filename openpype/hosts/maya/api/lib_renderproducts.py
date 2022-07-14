@@ -1109,12 +1109,28 @@ class RenderProductsRenderman(ARenderProducts):
                 # Create render product and set it as multipart only on
                 # display types supporting it. In all other cases, Renderman
                 # will create separate output per channel.
-                product = RenderProduct(
-                    productName=aov_name,
-                    ext=extensions,
-                    camera=camera,
-                    multipart=display["driverNode"]["type"] in ["d_openexr", "d_deepexr", "d_tiff"]  # noqa
-                )
+                if display["driverNode"]["type"] in ["d_openexr", "d_deepexr", "d_tiff"]:  # noqa
+                    product = RenderProduct(
+                        productName=aov_name,
+                        ext=extensions,
+                        camera=camera,
+                        multipart=True
+                    )
+                else:
+                    # this code should handle the case where no multipart
+                    # capable format is selected. But since it involves
+                    # shady logic to determine what channel become what
+                    # lets not do that as all productions will use exr anyway.
+                    """
+                    for channel in display['params']['displayChannels']['value']:  # noqa
+                        product = RenderProduct(
+                            productName="{}_{}".format(aov_name, channel),
+                            ext=extensions,
+                            camera=camera,
+                            multipart=False
+                        )
+                    """
+                    raise UnsupportedImageFormatException("Only exr, deep exr and tiff formats are supported.")
 
                 products.append(product)
 
@@ -1208,3 +1224,7 @@ class UnsupportedRendererException(Exception):
 
     Raised when requesting data from unsupported renderer.
     """
+
+
+class UnsupportedImageFormatException(Exception):
+    """Custom exception to report unsupported output image format."""
