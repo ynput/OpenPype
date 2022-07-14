@@ -41,6 +41,13 @@ def convert_bytes_to_json(bytes_value):
         return None
 
 
+def convert_data_to_bytes(data):
+    bytes_value = QtCore.QByteArray()
+    stream = QtCore.QDataStream(bytes_value, QtCore.QIODevice.WriteOnly)
+    stream.writeQString(json.dumps(data))
+    return bytes_value
+
+
 class SupportLabel(QtWidgets.QLabel):
     pass
 
@@ -306,11 +313,10 @@ class FilesModel(QtGui.QStandardItemModel):
             index.data(ITEM_ID_ROLE)
             for index in indexes
         ]
-        encoded_data = QtCore.QByteArray()
-        stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.WriteOnly)
-        stream.writeQString(json.dumps(item_ids))
-        mime_data = super(FilesModel, self).mimeData(indexes)
-        mime_data.setData("files_widget/internal_move", encoded_data)
+
+        item_ids_data = convert_data_to_bytes(item_ids)
+        mime_data = QtCore.QMimeData()
+        mime_data.setData("files_widget/internal_move", item_ids_data)
         return mime_data
 
     def dropMimeData(self, mime_data, action, row, col, index):
