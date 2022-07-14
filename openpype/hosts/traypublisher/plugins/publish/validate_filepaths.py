@@ -28,18 +28,22 @@ class ValidateFilePath(pyblish.api.InstancePlugin):
             ))
             return
 
+        family = instance.data["family"]
+        label = instance.data["name"]
         filepaths = instance.data["sourceFilepaths"]
         if not filepaths:
             raise PublishValidationError(
                 (
                     "Source filepaths of '{}' instance \"{}\" are not filled"
-                ).format(instance.data["family"], instance.data["name"]),
+                ).format(family, label),
                 "File not filled",
                 (
                     "## Files were not filled"
-                    "\nThis could mean that you didn't enter files into file"
-                    "input."
-                )
+                    "\nThis mean that you didn't enter any files into required"
+                    " file input."
+                    "\n- Please refresh publishing and check instance"
+                    " <b>{}</b>"
+                ).format(label)
             )
 
         not_found_files = [
@@ -55,11 +59,7 @@ class ValidateFilePath(pyblish.api.InstancePlugin):
             raise PublishValidationError(
                 (
                     "Filepath of '{}' instance \"{}\" does not exist:\n{}"
-                ).format(
-                    instance.data["family"],
-                    instance.data["name"],
-                    joined_paths
-                ),
+                ).format(family, label, joined_paths),
                 "File not found",
                 (
                     "## Files were not found\nFiles\n{}"
