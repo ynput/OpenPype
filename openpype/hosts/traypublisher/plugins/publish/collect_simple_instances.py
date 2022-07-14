@@ -140,8 +140,6 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         ).format(instance_label, len(repres), ", ".join(_repre_names)))
 
     def _calculate_source(self, filepaths):
-        if not filepaths:
-            return None
         cols, rems = clique.assemble(filepaths)
         if cols:
             source = cols[0].format("{head}{padding}{tail}")
