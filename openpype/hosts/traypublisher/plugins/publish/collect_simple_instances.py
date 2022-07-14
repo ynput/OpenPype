@@ -205,7 +205,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             counter = repre_names_counter[repre_name]
             repre_names_counter[repre_name] += 1
             repre_name = "{}_{}".format(repre_name, counter)
-        repre_names.append(repre_names)
+        repre_names.append(repre_name)
         return {
             "ext": repre_ext,
             "name": repre_name,
