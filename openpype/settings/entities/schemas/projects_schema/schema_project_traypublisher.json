@@ -207,7 +207,8 @@
                                             {
                                                 "type": "task-types-enum",
                                                 "key": "type",
-                                                "label": "Task type"
+                                                "label": "Task type",
+                                                "multiselection": false
                                             }
                                         ]
                                     }

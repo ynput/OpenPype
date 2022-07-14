@@ -2,12 +2,17 @@ import os
 from copy import deepcopy
 from pprint import pformat
 import opentimelineio as otio
-from openpype.client import get_asset_by_name
+from openpype.client import (
+    get_asset_by_name,
+    get_project
+)
 from openpype.hosts.traypublisher.api.plugin import (
     TrayPublishCreator,
     InvisibleTrayPublishCreator
 )
-
+from openpype.hosts.traypublisher.api.editorial import (
+    ShotMetadataSover
+)
 
 from openpype.pipeline import CreatedInstance
 
@@ -173,6 +178,7 @@ or updating already created. Publishing will create OTIO file.
         )
         # get this creator settings by identifier
         self._creator_settings = editorial_creators.get(self.identifier)
+        self._shot_metadata_solver = ShotMetadataSover(self._creator_settings)
 
         # try to set main attributes from settings
         if self._creator_settings.get("default_variants"):
@@ -399,7 +405,19 @@ or updating already created. Publishing will create OTIO file.
         fps = clip_instance_properties["fps"]
         variant_name = clip_instance_properties["variant"]
 
-        shot_name = self._get_clip_name(clip, parent_asset_name)
+        # basic unique asset name
+        clip_name = os.path.splitext(clip.name)[0].lower()
+
+        shot_name, shot_metadata = self._shot_metadata_solver.generate_data(
+            clip_name,
+            {
+                "anatomy_data": anatomy_data,
+                "selected_asset_doc": get_asset_by_name(parent_asset_name),
+                "project_doc": get_project(self.project_name)
+            }
+        )
+
+        self._validate_name_uniqueness(shot_name)
 
         timing_data = self._get_timing_data(
             clip,
@@ -477,16 +495,6 @@ or updating already created. Publishing will create OTIO file.
             "sourceIn": int(source_in),
             "sourceOut": int(source_out)
         }
-
-    def _get_clip_name(self, clip, selected_asset_name):
-        # basic unique asset name
-        clip_name = os.path.splitext(clip.name)[0].lower()
-        name = f"{selected_asset_name.split('_')[0]}_{clip_name}"
-
-        # make sure the name is unique
-        self._validate_name_uniqueness(name)
-
-        return clip_name
 
     def _get_allowed_family_presets(self, pre_create_data):
         self.log.debug(f"__ pre_create_data: {pre_create_data}")
