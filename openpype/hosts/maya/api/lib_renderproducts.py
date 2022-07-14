@@ -1087,7 +1087,7 @@ class RenderProductsRenderman(ARenderProducts):
             "d_tiff": "tif"
         }
 
-        displays = get_displays()["displays"]
+        displays = get_displays(override_dst="render")["displays"]
         for name, display in displays.items():
             enabled = display["params"]["enable"]["value"]
             if not enabled:
@@ -1106,9 +1106,16 @@ class RenderProductsRenderman(ARenderProducts):
                 display["driverNode"]["type"], "exr")
 
             for camera in cameras:
-                product = RenderProduct(productName=aov_name,
-                                        ext=extensions,
-                                        camera=camera)
+                # Create render product and set it as multipart only on
+                # display types supporting it. In all other cases, Renderman
+                # will create separate output per channel.
+                product = RenderProduct(
+                    productName=aov_name,
+                    ext=extensions,
+                    camera=camera,
+                    multipart=display["driverNode"]["type"] in ["d_openexr", "d_deepexr", "d_tiff"]  # noqa
+                )
+
                 products.append(product)
 
         return products
