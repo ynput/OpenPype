@@ -225,6 +225,7 @@ class FilesModel(QtGui.QStandardItemModel):
     def __init__(self, single_item, allow_sequences):
         super(FilesModel, self).__init__()
 
+        self._id = str(uuid.uuid4())
         self._single_item = single_item
         self._multivalue = False
         self._allow_sequences = allow_sequences
@@ -233,6 +234,10 @@ class FilesModel(QtGui.QStandardItemModel):
         self._file_items_by_id = {}
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
+
+    @property
+    def id(self):
+        return self._id
 
     def set_multivalue(self, multivalue):
         """Disable filtering."""
@@ -315,8 +320,20 @@ class FilesModel(QtGui.QStandardItemModel):
         ]
 
         item_ids_data = convert_data_to_bytes(item_ids)
-        mime_data = QtCore.QMimeData()
+        mime_data = super(FilesModel, self).mimeData(indexes)
         mime_data.setData("files_widget/internal_move", item_ids_data)
+
+        file_items = []
+        for item_id in item_ids:
+            file_item = self.get_file_item_by_id(item_id)
+            if file_item:
+                file_items.append(file_item.to_dict())
+
+        full_item_data = convert_data_to_bytes({
+            "items": file_items,
+            "id": self._id
+        })
+        mime_data.setData("files_widget/full_data", full_item_data)
         return mime_data
 
     def dropMimeData(self, mime_data, action, row, col, index):
@@ -858,6 +875,11 @@ class FilesWidget(QtWidgets.QFrame):
                 event.setDropAction(QtCore.Qt.CopyAction)
                 event.accept()
 
+        full_data_value = mime_data.data("files_widget/full_data")
+        if self._handle_full_data_drag(full_data_value):
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+
     def dragLeaveEvent(self, event):
         event.accept()
 
@@ -868,6 +890,7 @@ class FilesWidget(QtWidgets.QFrame):
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             event.accept()
+            # event.setDropAction(QtCore.Qt.CopyAction)
             filepaths = []
             for url in mime_data.urls():
                 filepath = url.toLocalFile()
@@ -879,7 +902,47 @@ class FilesWidget(QtWidgets.QFrame):
             if filepaths:
                 self._add_filepaths(filepaths)
 
+        if self._handle_full_data_drop(
+            mime_data.data("files_widget/full_data")
+        ):
+            event.accept()
+            event.setDropAction(QtCore.Qt.CopyAction)
+
+        # print(self._files_model.id, event)
         super(FilesWidget, self).dropEvent(event)
+
+    def _handle_full_data_drag(self, value):
+        if value is None:
+            return False
+
+        full_data = convert_bytes_to_json(value)
+        if full_data is None:
+            return False
+
+        if full_data["id"] == self._files_model.id:
+            return False
+        return True
+
+    def _handle_full_data_drop(self, value):
+        if value is None:
+            return False
+
+        full_data = convert_bytes_to_json(value)
+        if full_data is None:
+            return False
+
+        if full_data["id"] == self._files_model.id:
+            return False
+
+        for item in full_data["items"]:
+            filepaths = [
+                os.path.join(item["directory"], filename)
+                for filename in item["filenames"]
+            ]
+            filepaths = self._files_proxy_model.filter_valid_files(filepaths)
+            if filepaths:
+                self._add_filepaths(filepaths)
+        return True
 
     def _add_filepaths(self, filepaths):
         self._files_model.add_filepaths(filepaths)
