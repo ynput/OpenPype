@@ -1130,7 +1130,8 @@ class RenderProductsRenderman(ARenderProducts):
                             multipart=False
                         )
                     """
-                    raise UnsupportedImageFormatException("Only exr, deep exr and tiff formats are supported.")
+                    raise UnsupportedImageFormatException(
+                        "Only exr, deep exr and tiff formats are supported.")
 
                 products.append(product)
 
