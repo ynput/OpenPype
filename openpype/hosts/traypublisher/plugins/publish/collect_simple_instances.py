@@ -137,7 +137,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
     def _prepare_review(self, instance, review_representation, review_path):
         if not review_representation:
-            self.log.waring((
+            self.log.warning((
                 "Didn't find any representation"
                 " that could be used as source for review"
             ))
