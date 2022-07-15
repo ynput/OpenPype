@@ -568,7 +568,7 @@ def version_is_latest(project_name, version_id):
 
     Args:
         project_name (str):Name of project where to look for queried entities.
-        version_id (str|ObjectId): Version id which is checked.
+        version_id (Union[str, ObjectId]): Version id which is checked.
 
     Returns:
         bool: True if is latest version from subset else False.
