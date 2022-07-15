@@ -10,6 +10,11 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype.client import (
+    get_project,
+    get_asset_by_id,
+    get_asset_by_name,
+)
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 from openpype.lib import filter_pyblish_plugins
@@ -282,3 +287,50 @@ def debug_host():
     })
 
     return host
+
+
+def get_current_project(fields=None):
+    """Helper function to get project document based on global Session.
+
+    This function should be called only in process where host is installed.
+
+    Returns:
+        dict: Project document.
+        None: Project is not set.
+    """
+
+    project_name = legacy_io.active_project()
+    return get_project(project_name, fields=fields)
+
+
+def get_current_project_asset(asset_name=None, asset_id=None, fields=None):
+    """Helper function to get asset document based on global Session.
+
+    This function should be called only in process where host is installed.
+
+    Asset is found out based on passed asset name or id (not both). Asset name
+    is not used for filtering if asset id is passed. When both asset name and
+    id are missing then asset name from current process is used.
+
+    Args:
+        asset_name (str): Name of asset used for filter.
+        asset_id (Union[str, ObjectId]): Asset document id. If entered then
+            is used as only filter.
+        fields (Union[List[str], None]): Limit returned data of asset documents
+            to specific keys.
+
+    Returns:
+        dict: Asset document.
+        None: Asset is not set or not exist.
+    """
+
+    project_name = legacy_io.active_project()
+    if asset_id:
+        return get_asset_by_id(project_name, asset_id, fields=fields)
+
+    if not asset_name:
+        asset_name = legacy_io.Session.get("AVALON_ASSET")
+        # Skip if is not set even on context
+        if not asset_name:
+            return None
+    return get_asset_by_name(project_name, asset_name, fields=fields)
