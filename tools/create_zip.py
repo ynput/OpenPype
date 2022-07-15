@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Create OpenPype version from live sources."""
 from igniter import bootstrap_repos
-from igniter import OpenPypeVersion
 import click
 import enlighten
 import blessed
@@ -30,7 +29,6 @@ def main(path):
         progress_bar.update(incr=inc - last_increment)
         last_increment = inc
 
-    openpype_root = Path(os.path.dirname(__file__)).parent
     bs = bootstrap_repos.BootstrapRepos(progress_callback=progress)
     if path:
         out_path = Path(path)
