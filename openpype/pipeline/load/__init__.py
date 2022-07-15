@@ -24,6 +24,8 @@ from .utils import (
 
     loaders_from_repre_context,
     loaders_from_representation,
+
+    filter_containers,
 )
 
 from .plugins import (
@@ -65,6 +67,8 @@ __all__ = (
 
     "loaders_from_repre_context",
     "loaders_from_representation",
+
+    "filter_containers",
 
     # plugins.py
     "LoaderPlugin",
