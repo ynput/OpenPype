@@ -324,8 +324,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 copy_args = (
                     "-metadata",
                     "-metadata:s:v:0",
-                    "-codec:v",
-                    "-pixfmt",
                     "-b:v",
                     "-b:a",
                 )
