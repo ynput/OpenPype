@@ -694,6 +694,35 @@ def loaders_from_representation(loaders, representation):
     return loaders_from_repre_context(loaders, context)
 
 
+def any_outdated_containers(host=None, project_name=None):
+    """Check if there are any outdated containers in scene."""
+
+    if get_outdated_containers(host, project_name):
+        return True
+    return False
+
+
+def get_outdated_containers(host=None, project_name=None):
+    """Collect outdated containers from host scene.
+
+    Currently registered host and project in global session are used if
+    arguments are not passed.
+
+    Args:
+        host (ModuleType): Host implementation with 'ls' function available.
+        project_name (str): Name of project in which context we are.
+    """
+
+    if host is None:
+        from openpype.pipeline import registered_host
+        host = registered_host()
+
+    if project_name is None:
+        project_name = legacy_io.active_project()
+    containers = host.ls()
+    return filter_containers(containers, project_name).outdated
+
+
 def filter_containers(containers, project_name):
     """Filter containers and split them into 4 categories.
 

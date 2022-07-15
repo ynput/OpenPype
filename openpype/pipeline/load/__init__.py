@@ -25,6 +25,8 @@ from .utils import (
     loaders_from_repre_context,
     loaders_from_representation,
 
+    any_outdated_containers,
+    get_outdated_containers,
     filter_containers,
 )
 
@@ -68,6 +70,8 @@ __all__ = (
     "loaders_from_repre_context",
     "loaders_from_representation",
 
+    "any_outdated_containers",
+    "get_outdated_containers",
     "filter_containers",
 
     # plugins.py
