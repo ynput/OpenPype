@@ -4,7 +4,8 @@ import gazu
 
 from openpype.client import (
     get_project,
-    get_assets
+    get_assets,
+    get_asset_by_name
 )
 from openpype.pipeline import AvalonMongoDB
 from .credentials import validate_credentials
@@ -350,18 +351,8 @@ class Listener:
 
         # Find asset doc
         parent_name = task["entity"]["name"]
-        parent_zou_id = task["entity"]["id"]
-        asset_docs = get_assets(
-            project_name,
-            asset_names=[parent_name],
-            fields=["_id", "data.zou.id", "data.tasks"]
-        )
-        asset_doc = None
-        for _asset_doc in asset_docs:
-            doc_zou_id = _asset_doc.get("data", {}).get("zou", {}).get("id")
-            if doc_zou_id == parent_zou_id:
-                asset_doc = _asset_doc
-                break
+
+        asset_doc = get_asset_by_name(project_name, parent_name)
 
         # Update asset tasks with new one
         asset_tasks = asset_doc["data"].get("tasks")
