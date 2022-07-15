@@ -178,7 +178,8 @@ or updating already created. Publishing will create OTIO file.
         )
         # get this creator settings by identifier
         self._creator_settings = editorial_creators.get(self.identifier)
-        self._shot_metadata_solver = ShotMetadataSover(self._creator_settings)
+        self._shot_metadata_solver = ShotMetadataSover(
+            self._creator_settings, self.log)
 
         # try to set main attributes from settings
         if self._creator_settings.get("default_variants"):
@@ -407,13 +408,22 @@ or updating already created. Publishing will create OTIO file.
 
         # basic unique asset name
         clip_name = os.path.splitext(clip.name)[0].lower()
+        project_doc = get_project(self.project_name)
 
         shot_name, shot_metadata = self._shot_metadata_solver.generate_data(
             clip_name,
             {
-                "anatomy_data": anatomy_data,
-                "selected_asset_doc": get_asset_by_name(parent_asset_name),
-                "project_doc": get_project(self.project_name)
+                "anatomy_data": {
+                    "project": {
+                        "name": self.project_name,
+                        "code": project_doc["data"]["code"]
+                    },
+                    "parent": parent_asset_name,
+                    "app": self.host_name
+                },
+                "selected_asset_doc": get_asset_by_name(
+                    self.project_name, parent_asset_name),
+                "project_doc": project_doc
             }
         )
 
@@ -429,6 +439,7 @@ or updating already created. Publishing will create OTIO file.
         # create creator attributes
         creator_attributes = {
             "asset_name": shot_name,
+            "Parent hierarchy path": shot_metadata["hierarchy"],
             "workfile_start_frame": workfile_start_frame,
             "fps": fps,
             "handle_start": int(handle_start),
@@ -451,6 +462,8 @@ or updating already created. Publishing will create OTIO file.
             # creator_attributes
             "creator_attributes": creator_attributes
         }
+        # add hierarchy shot metadata
+        base_instance_data.update(shot_metadata)
 
         return base_instance_data
 

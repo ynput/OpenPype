@@ -2,7 +2,7 @@ import re
 from copy import deepcopy
 
 from openpype.client import get_asset_by_id
-
+from openpype.pipeline.create import CreatorError
 
 class ShotMetadataSover:
     """Collecting hierarchy context from `parents` and `hierarchy` data
@@ -21,16 +21,27 @@ class ShotMetadataSover:
     shot_hierarchy = None
     shot_add_tasks = None
 
-    def __init__(self, creator_settings):
+    def __init__(self, creator_settings, logger):
         self.clip_name_tokenizer = creator_settings["clip_name_tokenizer"]
         self.shot_rename = creator_settings["shot_rename"]
         self.shot_hierarchy = creator_settings["shot_hierarchy"]
         self.shot_add_tasks = creator_settings["shot_add_tasks"]
 
+        self.log = logger
+
     def _rename_template(self, data):
-        # format to new shot name
-        return self.shot_rename[
-            "shot_rename_template"].format(**data)
+        shot_rename_template = self.shot_rename[
+            "shot_rename_template"]
+        try:
+            # format to new shot name
+            return shot_rename_template.format(**data)
+        except KeyError as _E:
+            raise CreatorError((
+                "Make sure all keys are correct in settings: \n\n"
+                f"From template string {shot_rename_template} > "
+                f"`{_E}` has no equivalent in \n"
+                f"{list(data.keys())} input formating keys!"
+            ))
 
     def _generate_tokens(self, clip_name, source_data):
         output_data = deepcopy(source_data["anatomy_data"])
@@ -47,7 +58,13 @@ class ShotMetadataSover:
             p = re.compile(pattern)
             match = p.findall(search_text)
             if not match:
-                continue
+                raise CreatorError((
+                    "Make sure regex expression is correct: \n\n"
+                    f"From settings '{token_key}' key "
+                    f"with '{pattern}' expression, \n"
+                    f"is not able to find anything in '{search_text}'!"
+                ))
+
             #  QUESTION:how to refactory `match[-1]` to some better way?
             output_data[token_key] = match[-1]
 
@@ -60,10 +77,17 @@ class ShotMetadataSover:
         hierarchy_parents = shot_hierarchy["parents"]
 
         # fill parent keys data template from anatomy data
-        _parent_tokens_formating_data = {
-            parent_token["name"]: parent_token["value"].format(**data)
-            for parent_token in hierarchy_parents
-        }
+        try:
+            _parent_tokens_formating_data = {
+                parent_token["name"]: parent_token["value"].format(**data)
+                for parent_token in hierarchy_parents
+            }
+        except KeyError as _E:
+            raise CreatorError((
+                "Make sure all keys are correct in settings: \n"
+                f"`{_E}` has no equivalent in \n{list(data.keys())}"
+            ))
+
         _parent_tokens_type = {
             parent_token["name"]: parent_token["type"]
             for parent_token in hierarchy_parents
@@ -72,8 +96,17 @@ class ShotMetadataSover:
                 shot_hierarchy["parents_path"].split("/")
         ):
             # format parent token with value which is formated
-            parent_name = _parent.format(
-                **_parent_tokens_formating_data)
+            try:
+                parent_name = _parent.format(
+                    **_parent_tokens_formating_data)
+            except KeyError as _E:
+                raise CreatorError((
+                    "Make sure all keys are correct in settings: \n\n"
+                    f"From template string {shot_hierarchy['parents_path']} > "
+                    f"`{_E}` has no equivalent in \n"
+                    f"{list(_parent_tokens_formating_data.keys())} parents"
+                ))
+
             parent_token_name = (
                 self.NO_DECOR_PATERN.findall(_parent).pop())
 
@@ -95,7 +128,7 @@ class ShotMetadataSover:
             # in case first parent is project then start parents from start
             if (
                 _index == 0
-                and parent_token_type == "project"
+                and parent_token_type == "Project"
             ):
                 self.log.debug("rebuilding parents from scratch")
                 project_parent = parents[0]
@@ -113,7 +146,10 @@ class ShotMetadataSover:
 
     def _create_hierarchy_path(self, parents):
         return "/".join(
-            [p for p in parents if p["entity_type"] != "project"]
+            [
+                p["entity_name"] for p in parents
+                if p["entity_type"] != "Project"
+            ]
         ) if parents else ""
 
     def _get_parents_from_selected_asset(
@@ -187,11 +223,12 @@ class ShotMetadataSover:
         parents = self._get_parents_from_selected_asset(asset_doc, project_doc)
 
         if self.shot_rename["enabled"]:
-            shot_name = self._rename_template(clip_name, formating_data)
+            shot_name = self._rename_template(formating_data)
             self.log.info(f"Renamed shot name: {shot_name}")
 
         if self.shot_hierarchy["enabled"]:
-            parents = self._create_parents_from_settings(formating_data)
+            parents = self._create_parents_from_settings(
+                parents, formating_data)
 
         if self.shot_add_tasks:
             tasks = self._generate_tasks_from_settings(
