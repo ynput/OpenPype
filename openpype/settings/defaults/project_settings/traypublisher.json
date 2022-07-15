@@ -245,17 +245,17 @@
                 "parents_path": "{project}/{folder}/{sequence}",
                 "parents": [
                     {
-                        "type": "project",
-                        "name": "projekt",
-                        "value": "{projekt[name]}"
+                        "type": "Project",
+                        "name": "project",
+                        "value": "{project[name]}"
                     },
                     {
-                        "type": "folder",
+                        "type": "Folder",
                         "name": "folder",
                         "value": "shots"
                     },
                     {
-                        "type": "sequence",
+                        "type": "Sequence",
                         "name": "sequence",
                         "value": "{_sequence_}"
                     }

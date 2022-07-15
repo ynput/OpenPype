@@ -173,10 +173,10 @@
                                                         "key": "type",
                                                         "label": "Parent type",
                                                         "enum_items": [
-                                                            {"project": "Project"},
-                                                            {"folder": "Folder"},
-                                                            {"episode": "Episode"},
-                                                            {"sequence": "Sequence"}
+                                                            {"Project": "Project"},
+                                                            {"Folder": "Folder"},
+                                                            {"Episode": "Episode"},
+                                                            {"Sequence": "Sequence"}
                                                         ]
                                                     },
                                                     {
