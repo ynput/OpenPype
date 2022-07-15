@@ -45,6 +45,7 @@ For more information [see here](admin_use.md#run-openpype).
 | publish | Pype takes JSON from provided path and use it to publish data in it. | [📑](#publish-arguments) |
 | extractenvironments | Extract environment variables for entered context to a json file. | [📑](#extractenvironments-arguments) |
 | run | Execute given python script within OpenPype environment. | [📑](#run-arguments) |
+| interactive | Start python like interactive console session. | |
 | projectmanager | Launch Project Manager UI | [📑](#projectmanager-arguments) |
 | settings | Open Settings UI | [📑](#settings-arguments) |
 | standalonepublisher | Open Standalone Publisher UI | [📑](#standalonepublisher-arguments) |
