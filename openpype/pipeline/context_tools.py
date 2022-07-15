@@ -240,29 +240,7 @@ def registered_host():
 
 
 def deregister_host():
-    _registered_host["_"] = default_host()
-
-
-def default_host():
-    """A default host, in place of anything better
-
-    This may be considered as reference for the
-    interface a host must implement. It also ensures
-    that the system runs, even when nothing is there
-    to support it.
-
-    """
-
-    host = types.ModuleType("defaultHost")
-
-    def ls():
-        return list()
-
-    host.__dict__.update({
-        "ls": ls
-    })
-
-    return host
+    _registered_host["_"] = None
 
 
 def debug_host():
