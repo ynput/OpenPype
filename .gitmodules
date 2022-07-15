@@ -1,7 +1,7 @@
-[submodule "vendor/powershell/BurntToast"]
-    path = vendor/powershell/BurntToast
+[submodule "tools/modules/powershell/BurntToast"]
+    path = tools/modules/powershell/PSWriteColor
     url = https://github.com/Windos/BurntToast.git
 
-[submodule "vendor/powershell/PSWriteColor"]
-    path = vendor/powershell/PSWriteColor
+[submodule "tools/modules/powershell/PSWriteColor"]
+    path = tools/modules/powershell/PSWriteColor
     url = https://github.com/EvotecIT/PSWriteColor.git
