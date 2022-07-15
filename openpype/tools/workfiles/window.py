@@ -2,10 +2,13 @@ import os
 import datetime
 from Qt import QtCore, QtWidgets
 
-from openpype.client import get_asset_by_id, get_asset_by_name
+from openpype.client import (
+    get_asset_by_id,
+    get_asset_by_name,
+    get_workfile_info,
+)
 from openpype import style
 from openpype.lib import (
-    get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
 )
@@ -255,8 +258,9 @@ class Window(QtWidgets.QMainWindow):
         workfile_doc = None
         if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
-            workfile_doc = get_workfile_doc(
-                asset_id, task_name, filename, legacy_io
+            project_name = legacy_io.active_project()
+            workfile_doc = get_workfile_info(
+                project_name, asset_id, task_name, filename
             )
         self.side_panel.set_context(
             asset_id, task_name, filepath, workfile_doc
@@ -289,8 +293,9 @@ class Window(QtWidgets.QMainWindow):
             return
 
         filename = os.path.split(filepath)[1]
-        return get_workfile_doc(
-            asset_id, task_name, filename, legacy_io
+        project_name = legacy_io.active_project()
+        return get_workfile_info(
+            project_name, asset_id, task_name, filename
         )
 
     def _create_workfile_doc(self, filepath, force=False):

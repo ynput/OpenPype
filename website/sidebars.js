@@ -100,6 +100,7 @@ module.exports = {
             label: "Integrations",
             items: [
                 "admin_hosts_blender",
+                "admin_hosts_hiero",
                 "admin_hosts_maya",
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",

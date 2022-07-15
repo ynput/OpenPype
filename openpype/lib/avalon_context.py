@@ -7,9 +7,21 @@ import platform
 import logging
 import collections
 import functools
+import warnings
 
-from bson.objectid import ObjectId
-
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_asset_by_name,
+    get_subset_by_name,
+    get_subsets,
+    get_version_by_id,
+    get_last_versions,
+    get_last_version_by_subset_id,
+    get_representations,
+    get_representation_by_id,
+    get_workfile_info,
+)
 from openpype.settings import (
     get_project_settings,
     get_system_settings
@@ -33,6 +45,51 @@ PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
 PROJECT_NAME_REGEX = re.compile(
     "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
 )
+
+
+class AvalonContextDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", AvalonContextDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=AvalonContextDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 def create_project(
@@ -64,6 +121,11 @@ def create_project(
     from openpype.pipeline import AvalonMongoDB
     from openpype.pipeline.schema import validate
 
+    if get_project(project_name, fields=["name"]):
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
+
     if dbcon is None:
         dbcon = AvalonMongoDB()
 
@@ -73,15 +135,6 @@ def create_project(
         ).format(project_name))
 
     database = dbcon.database
-    project_doc = database[project_name].find_one(
-        {"type": "project"},
-        {"name": 1}
-    )
-    if project_doc:
-        raise ValueError("Project with name \"{}\" already exists".format(
-            project_name
-        ))
-
     project_doc = {
         "type": "project",
         "name": project_name,
@@ -104,7 +157,7 @@ def create_project(
         database[project_name].delete_one({"type": "project"})
         raise
 
-    project_doc = database[project_name].find_one({"type": "project"})
+    project_doc = get_project(project_name)
 
     try:
         # Validate created project document
@@ -136,23 +189,23 @@ def is_latest(representation):
 
     Returns:
         bool: Whether the representation is of latest version.
-
     """
 
-    version = legacy_io.find_one({"_id": representation['parent']})
+    project_name = legacy_io.active_project()
+    version = get_version_by_id(
+        project_name,
+        representation["parent"],
+        fields=["_id", "type", "parent"]
+    )
     if version["type"] == "hero_version":
         return True
 
     # Get highest version under the parent
-    highest_version = legacy_io.find_one({
-        "type": "version",
-        "parent": version["parent"]
-    }, sort=[("name", -1)], projection={"name": True})
+    last_version = get_last_version_by_subset_id(
+        project_name, version["parent"], fields=["_id"]
+    )
 
-    if version['name'] == highest_version['name']:
-        return True
-    else:
-        return False
+    return version["_id"] == last_version["_id"]
 
 
 @with_pipeline_io
@@ -160,6 +213,7 @@ def any_outdated():
     """Return whether the current scene has any outdated content"""
     from openpype.pipeline import registered_host
 
+    project_name = legacy_io.active_project()
     checked = set()
     host = registered_host()
     for container in host.ls():
@@ -167,12 +221,8 @@ def any_outdated():
         if representation in checked:
             continue
 
-        representation_doc = legacy_io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
+        representation_doc = get_representation_by_id(
+            project_name, representation, fields=["parent"]
         )
         if representation_doc and not is_latest(representation_doc):
             return True
@@ -190,81 +240,29 @@ def any_outdated():
 def get_asset(asset_name=None):
     """ Returning asset document from database by its name.
 
-        Doesn't count with duplicities on asset names!
+    Doesn't count with duplicities on asset names!
 
-        Args:
-            asset_name (str)
+    Args:
+        asset_name (str)
 
-        Returns:
-            (MongoDB document)
+    Returns:
+        (MongoDB document)
     """
+
+    project_name = legacy_io.active_project()
     if not asset_name:
         asset_name = legacy_io.Session["AVALON_ASSET"]
 
-    asset_document = legacy_io.find_one({
-        "name": asset_name,
-        "type": "asset"
-    })
-
+    asset_document = get_asset_by_name(project_name, asset_name)
     if not asset_document:
         raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
 
     return asset_document
 
 
-@with_pipeline_io
-def get_hierarchy(asset_name=None):
-    """
-    Obtain asset hierarchy path string from mongo db
-
-    Args:
-        asset_name (str)
-
-    Returns:
-        (string): asset hierarchy path
-
-    """
-    if not asset_name:
-        asset_name = legacy_io.Session.get(
-            "AVALON_ASSET",
-            os.environ["AVALON_ASSET"]
-        )
-
-    asset_entity = legacy_io.find_one({
-        "type": 'asset',
-        "name": asset_name
-    })
-
-    not_set = "PARENTS_NOT_SET"
-    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
-
-    # If entity already have parents then just return joined
-    if entity_parents != not_set:
-        return "/".join(entity_parents)
-
-    # Else query parents through visualParents and store result to entity
-    hierarchy_items = []
-    entity = asset_entity
-    while True:
-        parent_id = entity.get("data", {}).get("visualParent")
-        if not parent_id:
-            break
-        entity = legacy_io.find_one({"_id": parent_id})
-        hierarchy_items.append(entity["name"])
-
-    # Add parents to entity data for next query
-    entity_data = asset_entity.get("data", {})
-    entity_data["parents"] = hierarchy_items
-    legacy_io.update_many(
-        {"_id": asset_entity["_id"]},
-        {"$set": {"data": entity_data}}
-    )
-
-    return "/".join(hierarchy_items)
-
-
-def get_system_general_anatomy_data():
-    system_settings = get_system_settings()
+def get_system_general_anatomy_data(system_settings=None):
+    if not system_settings:
+        system_settings = get_system_settings()
     studio_name = system_settings["general"]["studio_name"]
     studio_code = system_settings["general"]["studio_code"]
     return {
@@ -312,11 +310,13 @@ def get_linked_assets(asset_doc):
     Returns:
         (list) Asset documents of input links for passed asset doc.
     """
+
     link_ids = get_linked_asset_ids(asset_doc)
     if not link_ids:
         return []
 
-    return list(legacy_io.find({"_id": {"$in": link_ids}}))
+    project_name = legacy_io.active_project()
+    return list(get_assets(project_name, link_ids))
 
 
 @with_pipeline_io
@@ -338,20 +338,14 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         dict: Last version document for entered .
     """
 
-    if not dbcon:
-        log.debug("Using `legacy_io` for query.")
-        dbcon = legacy_io
-        # Make sure is installed
-        dbcon.install()
+    if not project_name:
+        if not dbcon:
+            log.debug("Using `legacy_io` for query.")
+            dbcon = legacy_io
+            # Make sure is installed
+            dbcon.install()
 
-    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
-        # `legacy_io` has only `_database` attribute
-        # but `AvalonMongoDB` has `database`
-        database = getattr(dbcon, "database", dbcon._database)
-        collection = database[project_name]
-    else:
-        project_name = dbcon.Session.get("AVALON_PROJECT")
-        collection = dbcon
+        project_name = dbcon.active_project()
 
     log.debug((
         "Getting latest version for Project: \"{}\" Asset: \"{}\""
@@ -359,19 +353,15 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     ).format(project_name, asset_name, subset_name))
 
     # Query asset document id by asset name
-    asset_doc = collection.find_one(
-        {"type": "asset", "name": asset_name},
-        {"_id": True}
-    )
+    asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
     if not asset_doc:
         log.info(
             "Asset \"{}\" was not found in Database.".format(asset_name)
         )
         return None
 
-    subset_doc = collection.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
-        {"_id": True}
+    subset_doc = get_subset_by_name(
+        project_name, subset_name, asset_doc["_id"]
     )
     if not subset_doc:
         log.info(
@@ -379,9 +369,8 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         )
         return None
 
-    version_doc = collection.find_one(
-        {"type": "version", "parent": subset_doc["_id"]},
-        sort=[("name", -1)],
+    version_doc = get_last_version_by_subset_id(
+        project_name, subset_doc["_id"]
     )
     if not version_doc:
         log.info(
@@ -419,28 +408,17 @@ def get_workfile_template_key_from_context(
         ValueError: When both 'dbcon' and 'project_name' were not
             passed.
     """
-    if not dbcon:
-        if not project_name:
+    if not project_name:
+        if not dbcon:
             raise ValueError((
                 "`get_workfile_template_key_from_context` requires to pass"
                 " one of 'dbcon' or 'project_name' arguments."
             ))
-        from openpype.pipeline import AvalonMongoDB
 
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_name = dbcon.active_project()
 
-    elif not project_name:
-        project_name = dbcon.Session["AVALON_PROJECT"]
-
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        {
-            "data.tasks": 1
-        }
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["data.tasks"]
     )
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
@@ -637,6 +615,7 @@ def get_workdir(
     Returns:
         TemplateResult: Workdir path.
     """
+
     if not anatomy:
         from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
@@ -665,15 +644,11 @@ def template_data_from_session(session=None):
         session = legacy_io.Session
 
     project_name = session["AVALON_PROJECT"]
-    project_doc = legacy_io.database[project_name].find_one({
-        "type": "project"
-    })
-    asset_doc = legacy_io.database[project_name].find_one({
-        "type": "asset",
-        "name": session["AVALON_ASSET"]
-    })
+    asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
     return get_workdir_data(project_doc, asset_doc, task_name, host_name)
 
 
@@ -698,8 +673,8 @@ def compute_session_changes(
 
     Returns:
         dict: The required changes in the Session dictionary.
-
     """
+
     changes = dict()
 
     # If no changes, return directly
@@ -717,12 +692,9 @@ def compute_session_changes(
 
     if not asset_document or not asset_tasks:
         # Assume asset name
-        asset_document = legacy_io.find_one(
-            {
-                "name": asset,
-                "type": "asset"
-            },
-            {"data.tasks": True}
+        project_name = session["AVALON_PROJECT"]
+        asset_document = get_asset_by_name(
+            project_name, asset, fields=["data.tasks"]
         )
         assert asset_document, "Asset must exist"
 
@@ -819,6 +791,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
 
 @with_pipeline_io
+@deprecated("openpype.client.get_workfile_info")
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
 
@@ -835,16 +808,13 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     Returns:
         dict: Workfile document or None.
     """
+
     # Use legacy_io if dbcon is not entered
     if not dbcon:
         dbcon = legacy_io
 
-    return dbcon.find_one({
-        "type": "workfile",
-        "parent": asset_id,
-        "task_name": task_name,
-        "filename": filename
-    })
+    project_name = dbcon.active_project()
+    return get_workfile_info(project_name, asset_id, task_name, filename)
 
 
 @with_pipeline_io
@@ -879,12 +849,13 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     doc_data = copy.deepcopy(doc_filter)
 
     # Prepare project for workdir data
-    project_doc = dbcon.find_one({"type": "project"})
+    project_name = dbcon.active_project()
+    project_doc = get_project(project_name)
     workdir_data = get_workdir_data(
         project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
     )
     # Prepare anatomy
-    anatomy = Anatomy(project_doc["name"])
+    anatomy = Anatomy(project_name)
     # Get workdir path (result is anatomy.TemplateResult)
     template_workdir = get_workdir_with_workdir_data(
         workdir_data, anatomy
@@ -999,12 +970,11 @@ class BuildWorkfile:
         from openpype.pipeline import discover_loader_plugins
 
         # Get current asset name and entity
+        project_name = legacy_io.active_project()
         current_asset_name = legacy_io.Session["AVALON_ASSET"]
-        current_asset_entity = legacy_io.find_one({
-            "type": "asset",
-            "name": current_asset_name
-        })
-
+        current_asset_entity = get_asset_by_name(
+            project_name, current_asset_name
+        )
         # Skip if asset was not found
         if not current_asset_entity:
             print("Asset entity with name `{}` was not found".format(
@@ -1509,7 +1479,7 @@ class BuildWorkfile:
         return loaded_containers
 
     @with_pipeline_io
-    def _collect_last_version_repres(self, asset_entities):
+    def _collect_last_version_repres(self, asset_docs):
         """Collect subsets, versions and representations for asset_entities.
 
         Args:
@@ -1542,64 +1512,56 @@ class BuildWorkfile:
         ```
         """
 
-        if not asset_entities:
-            return {}
+        output = {}
+        if not asset_docs:
+            return output
 
-        asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
+        asset_docs_by_ids = {asset["_id"]: asset for asset in asset_docs}
 
-        subsets = list(legacy_io.find({
-            "type": "subset",
-            "parent": {"$in": list(asset_entity_by_ids.keys())}
-        }))
+        project_name = legacy_io.active_project()
+        subsets = list(get_subsets(
+            project_name, asset_ids=asset_docs_by_ids.keys()
+        ))
         subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
 
-        sorted_versions = list(legacy_io.find({
-            "type": "version",
-            "parent": {"$in": list(subset_entity_by_ids.keys())}
-        }).sort("name", -1))
+        last_version_by_subset_id = get_last_versions(
+            project_name, subset_entity_by_ids.keys()
+        )
+        last_version_docs_by_id = {
+            version["_id"]: version
+            for version in last_version_by_subset_id.values()
+        }
+        repre_docs = get_representations(
+            project_name, version_ids=last_version_docs_by_id.keys()
+        )
 
-        subset_id_with_latest_version = []
-        last_versions_by_id = {}
-        for version in sorted_versions:
-            subset_id = version["parent"]
-            if subset_id in subset_id_with_latest_version:
-                continue
-            subset_id_with_latest_version.append(subset_id)
-            last_versions_by_id[version["_id"]] = version
+        for repre_doc in repre_docs:
+            version_id = repre_doc["parent"]
+            version_doc = last_version_docs_by_id[version_id]
 
-        repres = legacy_io.find({
-            "type": "representation",
-            "parent": {"$in": list(last_versions_by_id.keys())}
-        })
+            subset_id = version_doc["parent"]
+            subset_doc = subset_entity_by_ids[subset_id]
 
-        output = {}
-        for repre in repres:
-            version_id = repre["parent"]
-            version = last_versions_by_id[version_id]
-
-            subset_id = version["parent"]
-            subset = subset_entity_by_ids[subset_id]
-
-            asset_id = subset["parent"]
-            asset = asset_entity_by_ids[asset_id]
+            asset_id = subset_doc["parent"]
+            asset_doc = asset_docs_by_ids[asset_id]
 
             if asset_id not in output:
                 output[asset_id] = {
-                    "asset_entity": asset,
+                    "asset_entity": asset_doc,
                     "subsets": {}
                 }
 
             if subset_id not in output[asset_id]["subsets"]:
                 output[asset_id]["subsets"][subset_id] = {
-                    "subset_entity": subset,
+                    "subset_entity": subset_doc,
                     "version": {
-                        "version_entity": version,
+                        "version_entity": version_doc,
                         "repres": []
                     }
                 }
 
             output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-                repre
+                repre_doc
             )
 
         return output
@@ -1807,35 +1769,19 @@ def get_custom_workfile_template_by_string_context(
             context. (Existence of formatted path is not validated.)
     """
 
-    if dbcon is None:
-        from openpype.pipeline import AvalonMongoDB
+    project_name = None
+    if anatomy is not None:
+        project_name = anatomy.project_name
 
-        dbcon = AvalonMongoDB()
+    if not project_name and dbcon is not None:
+        project_name = dbcon.active_project()
 
-    dbcon.install()
+    if not project_name:
+        raise ValueError("Can't determina project")
 
-    if dbcon.Session["AVALON_PROJECT"] != project_name:
-        dbcon.Session["AVALON_PROJECT"] = project_name
-
-    project_doc = dbcon.find_one(
-        {"type": "project"},
-        # All we need is "name" and "data.code" keys
-        {
-            "name": 1,
-            "data.code": 1
-        }
-    )
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        # All we need is "name" and "data.tasks" keys
-        {
-            "name": 1,
-            "data.tasks": 1
-        }
-    )
+    project_doc = get_project(project_name, fields=["name", "data.code"])
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["name", "data.tasks"])
 
     return get_custom_workfile_template_by_context(
         template_profiles, project_doc, asset_doc, task_name, anatomy
