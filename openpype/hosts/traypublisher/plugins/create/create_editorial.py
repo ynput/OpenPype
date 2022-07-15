@@ -8,7 +8,7 @@ from openpype.client import (
 )
 from openpype.hosts.traypublisher.api.plugin import (
     TrayPublishCreator,
-    InvisibleTrayPublishCreator
+    HiddenTrayPublishCreator
 )
 from openpype.hosts.traypublisher.api.editorial import (
     ShotMetadataSover
@@ -60,7 +60,7 @@ CLIP_ATTR_DEFS = [
 ]
 
 
-class EditorialClipInstanceCreatorBase(InvisibleTrayPublishCreator):
+class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
     host_name = "traypublisher"
 
     def __init__(
