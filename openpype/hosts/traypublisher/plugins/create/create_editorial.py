@@ -255,7 +255,8 @@ or updating already created. Publishing will create OTIO file.
 
         # Pass precreate data to creator attributes
         data.update({
-            "sequence_file_path": file_path
+            "sequenceFilePath": file_path,
+            "otioTimeline": otio.adapters.write_to_string(otio_timeline)
         })
 
         self._create_instance(self.family, subset_name, data)
@@ -324,6 +325,7 @@ or updating already created. Publishing will create OTIO file.
             _fpreset,
             future_instance_data
         )
+        future_instance_data["label"] = label
 
         # add file extension filter only if it is not shot family
         if family == "shot":
