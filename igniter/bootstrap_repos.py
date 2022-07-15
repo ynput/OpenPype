@@ -1273,28 +1273,28 @@ class BootstrapRepos:
 
             if compatible_with:
                 dirs_to_search.append(openpype_path / version_dir)
-
-        # first try OPENPYPE_PATH and if that is not available,
-        # try registry.
-        if os.getenv("OPENPYPE_PATH") \
-                and Path(os.getenv("OPENPYPE_PATH")).exists():
-            dirs_to_search = [Path(os.getenv("OPENPYPE_PATH"))]
-
-            if compatible_with:
-                dirs_to_search.append(
-                    Path(os.getenv("OPENPYPE_PATH")) / version_dir)
         else:
-            try:
-                registry_dir = Path(
-                    str(self.registry.get_item("openPypePath")))
-                if registry_dir.exists():
-                    dirs_to_search = [registry_dir]
-                if compatible_with:
-                    dirs_to_search.append(registry_dir / version_dir)
+            # first try OPENPYPE_PATH and if that is not available,
+            # try registry.
+            if os.getenv("OPENPYPE_PATH") \
+                    and Path(os.getenv("OPENPYPE_PATH")).exists():
+                dirs_to_search = [Path(os.getenv("OPENPYPE_PATH"))]
 
-            except ValueError:
-                # nothing found in registry, we'll use data dir
-                pass
+                if compatible_with:
+                    dirs_to_search.append(
+                        Path(os.getenv("OPENPYPE_PATH")) / version_dir)
+            else:
+                try:
+                    registry_dir = Path(
+                        str(self.registry.get_item("openPypePath")))
+                    if registry_dir.exists():
+                        dirs_to_search = [registry_dir]
+                    if compatible_with:
+                        dirs_to_search.append(registry_dir / version_dir)
+
+                except ValueError:
+                    # nothing found in registry, we'll use data dir
+                    pass
 
         openpype_versions = []
         for dir_to_search in dirs_to_search:
