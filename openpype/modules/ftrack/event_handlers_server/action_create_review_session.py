@@ -123,7 +123,9 @@ class CreateDailyReviewSessionServerAction(ServerAction):
         # Store cycle time which will be used to create next timer
         self._last_cyle_time = cycle_time
         # Create timer thread
-        self._cycle_timer = threading.Timer(seconds_delta, self._timer_callback)
+        self._cycle_timer = threading.Timer(
+            seconds_delta, self._timer_callback
+        )
         self._cycle_timer.start()
 
         self._check_review_session()
