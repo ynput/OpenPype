@@ -30,7 +30,7 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 & git submodule update --init --recursive
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
 
 
 function Exit-WithCode($exitcode) {
