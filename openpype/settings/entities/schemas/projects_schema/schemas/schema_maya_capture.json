@@ -202,12 +202,15 @@
                             "decimal": 0
                         },
                         {
-                            "type": "number",
-                            "key": "multiSample",
-                            "label": "Anti Aliasing Samples",
-                            "decimal": 0,
-                            "minimum": 0,
-                            "maximum": 32
+                            "type": "splitter"
+                        },
+                        {
+                            "type":"boolean",
+                            "key": "renderDepthOfField",
+                            "label": "Depth of Field"
+                        },
+                        {
+                            "type": "splitter"
                         },
                         {
                             "type": "boolean",
@@ -225,9 +228,143 @@
                             "label": "Two Sided Lighting"
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "lineAAEnable",
+                            "label": "Enable Anti-Aliasing"
+                        },
+                        {
+                            "type": "number",
+                            "key": "multiSample",
+                            "label": "Anti Aliasing Samples",
+                            "decimal": 0,
+                            "minimum": 0,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "boolean",
                             "key": "ssaoEnable",
                             "label": "Screen Space Ambient Occlusion"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoAmount",
+                            "label": "SSAO Amount"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoRadius",
+                            "label": "SSAO Radius"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoFilterRadius",
+                            "label": "SSAO Filter Radius",
+                            "decimal": 0,
+                            "minimum": 1,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoSamples",
+                            "label": "SSAO Samples",
+                            "decimal": 0,
+                            "minimum": 8,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "fogging",
+                            "label": "Enable Hardware Fog"
+                        },
+                        {
+                            "type": "enum",
+                            "key": "hwFogFalloff",
+                            "label": "Hardware Falloff",
+                            "enum_items": [
+                                { "0": "Linear"},
+                                { "1": "Exponential"},
+                                { "2": "Exponential Squared"}
+                            ]
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogDensity",
+                            "label": "Fog Density",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogStart",
+                            "label": "Fog Start"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogEnd",
+                            "label": "Fog End"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogAlpha",
+                            "label": "Fog Alpha"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorR",
+                            "label": "Fog Color R",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorG",
+                            "label": "Fog Color G",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorB",
+                            "label": "Fog Color B",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "motionBlurEnable",
+                            "label": "Enable Motion Blur"
+                        },
+                        {
+                            "type": "number",
+                            "key": "motionBlurSampleCount",
+                            "label": "Motion Blur Sample Count",
+                            "decimal": 0,
+                            "minimum": 8,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "number",
+                            "key": "motionBlurShutterOpenFraction",
+                            "label": "Shutter Open Fraction",
+                            "decimal": 3,
+                            "minimum": 0.01,
+                            "maximum": 32
                         },
                         {
                             "type": "splitter"

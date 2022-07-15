@@ -443,7 +443,10 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
 class FileAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         input_widget = FilesWidget(
-            self.attr_def.single_item, self.attr_def.allow_sequences, self
+            self.attr_def.single_item,
+            self.attr_def.allow_sequences,
+            self.attr_def.extensions_label,
+            self
         )
 
         if self.attr_def.tooltip:
