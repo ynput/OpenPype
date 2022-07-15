@@ -22,7 +22,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d", "prerender",
         "source", "plate", "take"
     ]
-    hosts = ["shell", "fusion", "resolve"]
+    hosts = ["shell", "fusion", "resolve", "traypublisher"]
     enabled = False
 
     # presetable attribute
@@ -44,6 +44,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # Skip if review not set.
         if not instance.data.get("review", True):
             self.log.info("Skipping - no review set on instance.")
+            return
+
+        if self._has_thumbnail_already(instance):
+            self.log.info("Thumbnail representation already present.")
             return
 
         filtered_repres = self._get_filtered_repres(instance)
@@ -101,6 +105,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             instance.data["representations"].append(new_repre)
             # There is no need to create more then one thumbnail
             break
+
+    def _has_thumbnail_already(self, instance):
+        for repre in instance.data.get("representations", []):
+            self.log.info("repre {}".format(repre))
+            if repre["name"] == "thumbnail":
+                return True
+
+        return False
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
