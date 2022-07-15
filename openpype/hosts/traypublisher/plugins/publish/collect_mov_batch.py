@@ -2,7 +2,6 @@ import os
 
 import pyblish.api
 from openpype.pipeline import OpenPypePyblishPluginMixin
-from openpype.lib import BoolDef
 
 
 class CollectMovBatch(
