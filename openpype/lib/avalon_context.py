@@ -19,7 +19,6 @@ from openpype.client import (
     get_last_versions,
     get_last_version_by_subset_id,
     get_representations,
-    get_representation_by_id,
     get_workfile_info,
 )
 from openpype.settings import (
@@ -208,32 +207,13 @@ def is_latest(representation):
     return version["_id"] == last_version["_id"]
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.load.any_outdated_containers")
 def any_outdated():
     """Return whether the current scene has any outdated content"""
-    from openpype.pipeline import registered_host
 
-    project_name = legacy_io.active_project()
-    checked = set()
-    host = registered_host()
-    for container in host.ls():
-        representation = container['representation']
-        if representation in checked:
-            continue
+    from openpype.pipeline.load import any_outdated_containers
 
-        representation_doc = get_representation_by_id(
-            project_name, representation, fields=["parent"]
-        )
-        if representation_doc and not is_latest(representation_doc):
-            return True
-        elif not representation_doc:
-            log.debug("Container '{objectName}' has an invalid "
-                      "representation, it is missing in the "
-                      "database".format(**container))
-
-        checked.add(representation)
-
-    return False
+    return any_outdated_containers()
 
 
 @with_pipeline_io
