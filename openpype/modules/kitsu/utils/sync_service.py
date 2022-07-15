@@ -165,10 +165,12 @@ class Listener:
         zou_ids_and_asset_docs[asset["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [asset], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_asset(self, data):
         """Delete asset of OP DB."""
@@ -212,10 +214,12 @@ class Listener:
         zou_ids_and_asset_docs[episode["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [episode], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_episode(self, data):
         """Delete shot of OP DB."""
@@ -260,10 +264,12 @@ class Listener:
         zou_ids_and_asset_docs[sequence["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [sequence], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_sequence(self, data):
         """Delete sequence of OP DB."""
@@ -308,10 +314,12 @@ class Listener:
         zou_ids_and_asset_docs[shot["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [shot], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_shot(self, data):
         """Delete shot of OP DB."""

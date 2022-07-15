@@ -152,6 +152,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.debug("__ first_frame: {}".format(first_frame))
         self.log.debug("__ slate_first_frame: {}".format(slate_first_frame))
 
+        above_slate_node = slate_node.dependencies().pop()
         # fallback if files does not exists
         if self._check_frames_exists(instance):
             # Read node
@@ -164,8 +165,16 @@ class ExtractSlateFrame(openpype.api.Extractor):
             r_node["colorspace"].setValue(instance.data["colorspace"])
             previous_node = r_node
             temporary_nodes = [previous_node]
+
+            # adding copy metadata node for correct frame metadata
+            cm_node = nuke.createNode("CopyMetaData")
+            cm_node.setInput(0, previous_node)
+            cm_node.setInput(1, above_slate_node)
+            previous_node = cm_node
+            temporary_nodes.append(cm_node)
+
         else:
-            previous_node = slate_node.dependencies().pop()
+            previous_node = above_slate_node
             temporary_nodes = []
 
         # only create colorspace baking if toggled on

@@ -1,4 +1,6 @@
 import os
+
+import clique
 import pyblish.api
 
 
@@ -29,6 +31,14 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             for filename in filepath_item["filenames"]
         ]
 
+        cols, rems = clique.assemble(filepaths)
+        source = None
+        if cols:
+            source = cols[0].format("{head}{padding}{tail}")
+        elif rems:
+            source = rems[0]
+
+        instance.data["source"] = source
         instance.data["sourceFilepaths"] = filepaths
         instance.data["stagingDir"] = filepath_item["directory"]
 
@@ -44,6 +54,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             "stagingDir": filepath_item["directory"],
             "files": filenames
         })
+
+        instance.data["source"] = "\n".join(filepaths)
 
         self.log.debug("Created Simple Settings instance {}".format(
             instance.data
