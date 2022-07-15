@@ -285,36 +285,32 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     audio_channels,
                     audio_sample_rate,
                     audio_channel_layout,
+                    input_frame_rate
                 )
 
                 # replace slate with silent slate for concat
                 slate_v_path = slate_silent_path
 
-            # create ffmpeg concat text file path
-            conc_text_file = input_file.replace(ext, "") + "_concat" + ".txt"
-            conc_text_path = os.path.join(
-                os.path.normpath(stagingdir), conc_text_file)
-            _remove_at_end.append(conc_text_path)
-            self.log.debug("__ conc_text_path: {}".format(conc_text_path))
-
-            new_line = "\n"
-            with open(conc_text_path, "w") as conc_text_f:
-                conc_text_f.writelines([
-                    "file {}".format(
-                        slate_v_path.replace("\\", "/")),
-                    new_line,
-                    "file {}".format(input_path.replace("\\", "/"))
-                ])
-
-            # concat slate and videos together
+            # concat slate and videos together with concat filter
+            # this will reencode the output
+            if input_audio:
+                fmap = [
+                    "[0:v] [0:a] [1:v] [1:a] concat=n=2:v=1:a=1 [v] [a]",
+                    "-map", '[v]',
+                    "-map", '[a]'
+                ]
+            else:
+                fmap = [
+                    "[0:v] [1:v] concat=n=2:v=1:a=0 [v]",
+                    "-map", '[v]'
+                ]
             concat_args = [
                 ffmpeg_path,
-                "-y",
-                "-f", "concat",
-                "-safe", "0",
-                "-i", conc_text_path,
-                "-c", "copy",
+                "-i", slate_v_path,
+                "-i", input_path,
+                "-filter_complex",
             ]
+            concat_args.extend(fmap)
             if offset_timecode:
                 concat_args.extend(["-timecode", offset_timecode])
             # NOTE: Added because of OP Atom demuxers
@@ -328,6 +324,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 copy_args = (
                     "-metadata",
                     "-metadata:s:v:0",
+                    "-codec:v",
+                    "-pixfmt",
+                    "-b:v",
+                    "-b:a",
                 )
                 args = source_ffmpeg_cmd.split(" ")
                 for indx, arg in enumerate(args):
@@ -335,12 +335,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         concat_args.append(arg)
                         # assumes arg has one parameter
                         concat_args.append(args[indx + 1])
+            concat_args.append("-y")
             # add final output path
             concat_args.append(output_path)
 
             # ffmpeg concat subprocess
             self.log.debug(
-                "Executing concat: {}".format(" ".join(concat_args))
+                "Executing concat filter: {}".format
+                (" ".join(concat_args))
             )
             openpype.api.run_subprocess(
                 concat_args, logger=self.log
@@ -488,9 +490,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
         audio_channels,
         audio_sample_rate,
         audio_channel_layout,
+        input_frame_rate
     ):
         # Get duration of one frame in micro seconds
-        items = audio_sample_rate.split("/")
+        items = input_frame_rate.split("/")
         if len(items) == 1:
             one_frame_duration = 1.0 / float(items[0])
         elif len(items) == 2:
