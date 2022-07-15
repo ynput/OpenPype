@@ -437,4 +437,9 @@ def interactive():
         Executable 'openpype_gui' on windows won't work.
     """
 
-    code.interact()
+    from openpype.version import __version__
+
+    banner = "OpenPype {}\nPython {} on {}".format(
+        __version__, sys.version, sys.platform
+    )
+    code.interact(banner)
