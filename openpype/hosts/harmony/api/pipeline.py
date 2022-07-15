@@ -5,16 +5,15 @@ import logging
 import pyblish.api
 
 from openpype import lib
-from openpype.client import get_representation_by_id
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import get_outdated_containers
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
 
@@ -105,16 +104,7 @@ def check_inventory():
     in Harmony.
     """
 
-    project_name = legacy_io.active_project()
-    outdated_containers = []
-    for container in ls():
-        representation_id = container['representation']
-        representation_doc = get_representation_by_id(
-            project_name, representation_id, fields=["parent"]
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
+    outdated_containers = get_outdated_containers()
     if not outdated_containers:
         return
 
