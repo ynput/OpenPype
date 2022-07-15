@@ -4,6 +4,7 @@ from copy import deepcopy
 from openpype.client import get_asset_by_id
 from openpype.pipeline.create import CreatorError
 
+
 class ShotMetadataSover:
     """Collecting hierarchy context from `parents` and `hierarchy` data
     present in `clip` family instances coming from the request json data file

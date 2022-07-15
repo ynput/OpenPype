@@ -232,14 +232,10 @@ or updating already created. Publishing will create OTIO file.
     def _create_otio_instance(self, subset_name, data, pre_create_data):
         # get path of sequence
         file_path_data = pre_create_data["sequence_filepath_data"]
+        media_path_data = pre_create_data["media_filepaths_data"]
 
-        if len(file_path_data["filenames"]) == 0:
-            raise FileExistsError("File path was not added")
-
-        file_path = os.path.join(
-            file_path_data["directory"], file_path_data["filenames"][0])
-
-        self.log.info(f"file_path: {file_path}")
+        file_path = self._get_path_from_file_data(file_path_data)
+        media_path = self._get_path_from_file_data(media_path_data)
 
         # get editorial sequence file into otio timeline object
         extension = os.path.splitext(file_path)[1]
@@ -256,12 +252,25 @@ or updating already created. Publishing will create OTIO file.
         # Pass precreate data to creator attributes
         data.update({
             "sequenceFilePath": file_path,
+            "editorialSourcePath": media_path,
             "otioTimeline": otio.adapters.write_to_string(otio_timeline)
         })
 
         self._create_instance(self.family, subset_name, data)
 
         return otio_timeline
+
+    def _get_path_from_file_data(self, file_path_data):
+        # TODO: just temporarly solving only one media file
+        if isinstance(file_path_data, list):
+            file_path_data = file_path_data.pop()
+
+        if len(file_path_data["filenames"]) == 0:
+            raise FileExistsError(
+                f"File path was not added: {file_path_data}")
+
+        return os.path.join(
+            file_path_data["directory"], file_path_data["filenames"][0])
 
     def _get_clip_instances(
         self,
@@ -303,11 +312,14 @@ or updating already created. Publishing will create OTIO file.
                     "instance_label": None,
                     "instance_id": None
                 }
-                self.log.info(
-                    f"Creating subsets from presets: \n{pformat(family_presets)}")
+                self.log.info((
+                    "Creating subsets from presets: \n"
+                    f"{pformat(family_presets)}"
+                ))
 
                 for _fpreset in family_presets:
                     instance = self._make_subset_instance(
+                        clip,
                         _fpreset,
                         deepcopy(base_instance_data),
                         parenting_data
@@ -316,6 +328,7 @@ or updating already created. Publishing will create OTIO file.
 
     def _make_subset_instance(
         self,
+        clip,
         _fpreset,
         future_instance_data,
         parenting_data
@@ -329,6 +342,8 @@ or updating already created. Publishing will create OTIO file.
 
         # add file extension filter only if it is not shot family
         if family == "shot":
+            future_instance_data["otioClip"] = (
+                otio.adapters.write_to_string(clip))
             c_instance = self.create_context.creators[
                 "editorial_shot"].create(
                     future_instance_data)
@@ -458,6 +473,7 @@ or updating already created. Publishing will create OTIO file.
             # TODO: should loockup shot name for update
             "asset": parent_asset_name,
             "task": "",
+
             # parent time properties
             "trackStartFrame": track_start_frame,
             "timelineOffset": timeline_offset,
@@ -568,7 +584,20 @@ or updating already created. Publishing will create OTIO file.
                     ".fcpxml"
                 ],
                 allow_sequences=False,
-                label="Filepath",
+                single_item=True,
+                label="Sequence file",
+            ),
+            FileDef(
+                "media_filepaths_data",
+                folders=False,
+                extensions=[
+                    ".mov",
+                    ".mp4",
+                    ".wav"
+                ],
+                allow_sequences=False,
+                single_item=False,
+                label="Media files",
             ),
             # TODO: perhpas better would be timecode and fps input
             NumberDef(

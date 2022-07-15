@@ -4,11 +4,11 @@ import pyblish.api
 import opentimelineio as otio
 
 
-class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
+class CollectEditorialInstance(pyblish.api.InstancePlugin):
     """Collect data for instances created by settings creators."""
 
     label = "Collect Editorial Instances"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.1
 
     hosts = ["traypublisher"]
     families = ["editorial"]
@@ -27,6 +27,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             otio_timeline_string)
 
         instance.context.data["otioTimeline"] = otio_timeline
+        instance.context.data["editorialSourcePath"] = (
+            instance.data["editorialSourcePath"])
 
         self.log.info(fpath)
 
@@ -41,6 +43,6 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             "files": os.path.basename(fpath)
         })
 
-        self.log.debug("Created Simple Settings instance {}".format(
+        self.log.debug("Created Editorial Instance {}".format(
             pformat(instance.data)
         ))

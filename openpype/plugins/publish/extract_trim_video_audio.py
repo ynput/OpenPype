@@ -14,7 +14,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
     # must be before `ExtractThumbnailSP`
     order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract Trim Video/Audio"
-    hosts = ["standalonepublisher"]
+    hosts = ["standalonepublisher", "traypublisher"]
     families = ["clip", "trimming"]
 
     # make sure it is enabled only if at least both families are available
