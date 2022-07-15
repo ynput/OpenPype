@@ -1,15 +1,17 @@
 import os
 from pprint import pformat
 import pyblish.api
+import opentimelineio as otio
 
 
 class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
     """Collect data for instances created by settings creators."""
 
     label = "Collect Editorial Instances"
-    order = pyblish.api.CollectorOrder - 0.49
+    order = pyblish.api.CollectorOrder
 
     hosts = ["traypublisher"]
+    families = ["editorial"]
 
     def process(self, instance):
 
@@ -18,34 +20,27 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
-        repres = instance.data["representations"]
-        self.log.debug(
-            pformat(dict(instance.data))
-        )
-        creator_attributes = instance.data["creator_attributes"]
-        filepath_item = creator_attributes["filepath"]
-        self.log.info(filepath_item)
-        filepaths = [
-            os.path.join(filepath_item["directory"], filename)
-            for filename in filepath_item["filenames"]
-        ]
 
-        instance.data["sourceFilepaths"] = filepaths
-        instance.data["stagingDir"] = filepath_item["directory"]
+        fpath = instance.data["sequenceFilePath"]
+        otio_timeline_string = instance.data.pop("otioTimeline")
+        otio_timeline = otio.adapters.read_from_string(
+            otio_timeline_string)
 
-        filenames = filepath_item["filenames"]
-        _, ext = os.path.splitext(filenames[0])
-        ext = ext[1:]
-        if len(filenames) == 1:
-            filenames = filenames[0]
+        instance.context.data["otioTimeline"] = otio_timeline
 
-        repres.append({
-            "ext": ext,
-            "name": ext,
-            "stagingDir": filepath_item["directory"],
-            "files": filenames
+        self.log.info(fpath)
+
+        instance.data["stagingDir"] = os.path.dirname(fpath)
+
+        _, ext = os.path.splitext(fpath)
+
+        instance.data["representations"].append({
+            "ext": ext[1:],
+            "name": ext[1:],
+            "stagingDir": instance.data["stagingDir"],
+            "files": os.path.basename(fpath)
         })
 
         self.log.debug("Created Simple Settings instance {}".format(
-            instance.data
+            pformat(instance.data)
         ))
