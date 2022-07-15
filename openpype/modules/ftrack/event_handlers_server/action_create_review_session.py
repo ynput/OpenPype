@@ -6,7 +6,10 @@ import collections
 import ftrack_api
 
 from openpype.lib import get_datetime_data
-from openpype.api import get_project_settings
+from openpype.settings.lib import (
+    get_project_settings,
+    get_default_project_settings
+)
 from openpype_modules.ftrack.lib import ServerAction
 
 
@@ -79,6 +82,35 @@ class CreateDailyReviewSessionServerAction(ServerAction):
         )
         return True
 
+    def _calculate_next_cycle_delta(self):
+        studio_default_settings = get_default_project_settings()
+        action_settings = (
+            studio_default_settings
+            ["ftrack"]
+            [self.settings_frack_subkey]
+            [self.settings_key]
+        )
+        cycle_hour_start = action_settings.get("cycle_hour_start")
+        if not cycle_hour_start:
+            h = m = s = 0
+        else:
+            h, m, s = cycle_hour_start
+
+        # Create threading timer which will trigger creation of report
+        #   at the 00:00:01 of next day
+        # - callback will trigger another timer which will have 1 day offset
+        now = datetime.datetime.now()
+        # Create object of today morning
+        expected_next_trigger = datetime.datetime(
+            now.year, now.month, now.day, h, m, s
+        )
+        if expected_next_trigger > now:
+            seconds = (expected_next_trigger - now).total_seconds()
+        else:
+            expected_next_trigger += self._day_delta
+            seconds = (expected_next_trigger - now).total_seconds()
+        return seconds, expected_next_trigger
+
     def register(self, *args, **kwargs):
         """Override register to be able trigger """
         # Register server action as would be normally
@@ -86,22 +118,12 @@ class CreateDailyReviewSessionServerAction(ServerAction):
             *args, **kwargs
         )
 
-        # Create threading timer which will trigger creation of report
-        #   at the 00:00:01 of next day
-        # - callback will trigger another timer which will have 1 day offset
-        now = datetime.datetime.now()
-        # Create object of today morning
-        today_morning = datetime.datetime(
-            now.year, now.month, now.day, 0, 0, 1
-        )
-        # Add a day delta (to calculate next day date)
-        next_day_morning = today_morning + self._day_delta
-        # Calculate first delta in seconds for first threading timer
-        first_delta = (next_day_morning - now).total_seconds()
+        seconds_delta, cycle_time = self._calculate_next_cycle_delta()
+
         # Store cycle time which will be used to create next timer
-        self._last_cyle_time = next_day_morning
+        self._last_cyle_time = cycle_time
         # Create timer thread
-        self._cycle_timer = threading.Timer(first_delta, self._timer_callback)
+        self._cycle_timer = threading.Timer(seconds_delta, self._timer_callback)
         self._cycle_timer.start()
 
         self._check_review_session()
@@ -111,13 +133,12 @@ class CreateDailyReviewSessionServerAction(ServerAction):
             self._cycle_timer is not None
             and self._last_cyle_time is not None
         ):
-            now = datetime.datetime.now()
-            while self._last_cyle_time < now:
-                self._last_cyle_time = self._last_cyle_time + self._day_delta
+            seconds_delta, cycle_time = self._calculate_next_cycle_delta()
+            self._last_cyle_time = cycle_time
 
-            delay = (self._last_cyle_time - now).total_seconds()
-
-            self._cycle_timer = threading.Timer(delay, self._timer_callback)
+            self._cycle_timer = threading.Timer(
+                seconds_delta, self._timer_callback
+            )
             self._cycle_timer.start()
         self._check_review_session()
 
