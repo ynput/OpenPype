@@ -39,14 +39,14 @@ def create_op_asset(gazu_entity: dict) -> dict:
     }
 
 
-def get_kitsu_project_name(project_id: str)->str:
+def get_kitsu_project_name(project_id: str) -> str:
     """Get project name based on project id in kitsu.
 
     Args:
-        project_id (str): Id of project in Kitsu.
+        project_id (str): UUID of project in Kitsu.
 
     Returns:
-        str: Project name which has project in Kitsu.
+        str: Name of Kitsu project.
     """
 
     project = gazu.project.get_project(project_id)
@@ -178,7 +178,7 @@ def update_op_assets(
             asset_doc_ids[parent_zou_id]["_id"] if parent_zou_id else None
         )
         if visual_parent_doc_id is None:
-            # Find root folder doc
+            # Find root folder docs
             root_folder_docs = get_assets(
                 project_name,
                 asset_name=[entity_parent_folders[-1]],
