@@ -11,6 +11,12 @@
 PS> .\build_win_installer.ps1
 
 #>
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
 
 function Start-Progress {
     param([ScriptBlock]$code)
@@ -44,7 +50,6 @@ function Start-Progress {
   #>
 }
 
-
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
@@ -56,10 +61,8 @@ function Exit-WithCode($exitcode) {
 
 function Show-PSWarning() {
     if ($PSVersionTable.PSVersion.Major -lt 7) {
-        Write-Host "!!! " -NoNewline -ForegroundColor Red
-        Write-Host "You are using old version of PowerShell. $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
-        Write-Host "Please update to at least 7.0 - " -NoNewline -ForegroundColor Gray
-        Write-Host "https://github.com/PowerShell/PowerShell/releases" -ForegroundColor White
+        Write-Color -Text "!!! ", "You are using old version of PowerShell - ",  "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)" -Color Red, Yellow, White
+        Write-Color -Text "    Please update to at least 7.0 - ", "https://github.com/PowerShell/PowerShell/releases" -Color Yellow, White
         Exit-WithCode 1
     }
 }
@@ -87,9 +90,6 @@ Write-Host $art -ForegroundColor DarkGreen
 # Enable if PS 7.x is needed.
 # Show-PSWarning
 
-$current_dir = Get-Location
-$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
 
 Set-Location -Path $openpype_root
 
@@ -97,16 +97,15 @@ $version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {
-  Write-Host "!!! " -ForegroundColor yellow -NoNewline
-  Write-Host "Cannot determine OpenPype version."
+  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
   Exit-WithCode 1
 }
+
 $env:BUILD_VERSION = $openpype_version
 
 iscc 
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Detecting host Python ... " -NoNewline
+Write-Color ">>> ", "Detecting host Python ... " -Color Green, White -NoNewline
 $python = "python"
 if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
     $pyenv_python = & pyenv which python
@@ -115,7 +114,7 @@ if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
     }
 }
 if (-not (Get-Command $python -ErrorAction SilentlyContinue)) {
-    Write-Host "!!! Python not detected" -ForegroundColor red
+    Write-Color "!!! ", "Python not detected" -Color Red, Yellow
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
@@ -128,7 +127,7 @@ $p = & $python -c $version_command
 $env:PYTHON_VERSION = $p
 $m = $p -match '(\d+)\.(\d+)'
 if(-not $m) {
-    Write-Host "!!! Cannot determine version" -ForegroundColor red
+    Write-Color "!!! ", "Cannot determine version" -Color Red, Yellow
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
@@ -145,8 +144,7 @@ if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
     Write-Host "OK [ $p ]" -ForegroundColor green
 }
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Creating OpenPype installer ... " -ForegroundColor white
+Write-Color -Text ">>> ", "Creating OpenPype installer ... " -Color Green, White
 
 $build_dir_command = @"
 import sys
@@ -155,24 +153,25 @@ print('exe.{}-{}'.format(get_platform(), sys.version[0:3]))
 "@
 
 $build_dir = & $python -c $build_dir_command
-Write-Host "Build directory ... ${build_dir}" -ForegroundColor white
+Write-Color -Text "--- ", "Build directory ", "${build_dir}" -Color Green, Gray, White
 $env:BUILD_DIR = $build_dir
 
-if (Get-Command iscc -errorAction SilentlyContinue -ErrorVariable ProcessError)
-{
-  iscc "$openpype_root\inno_setup.iss"
-}else {
-  Write-Host "!!! Cannot find Inno Setup command" -ForegroundColor red
-  Write-Host "!!! You can download it at https://jrsoftware.org/" -ForegroundColor red
+if (-not (Get-Command iscc -errorAction SilentlyContinue -ErrorVariable ProcessError)) {
+  Write-Color -Text "!!! ", "Cannot find Inno Setup command" -Color Red, Yellow
+  Write-Color "!!! You can download it at https://jrsoftware.org/" -ForegroundColor red
   Exit-WithCode 1
 }
 
+& iscc "$openpype_root\inno_setup.iss"
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "restoring current directory"
+if ($LASTEXITCODE -ne 0) {
+    Write-Color -Text "!!! ", "Creating installer failed." -Color Red, Yellow
+    Exit-WithCode 1
+}
+
+Write-Color -Text ">>> ", "Restoring current directory" -Color Green, Gray
 Set-Location -Path $current_dir
 
-Write-Host "*** " -NoNewline -ForegroundColor Cyan
-Write-Host "All done. You will find OpenPype installer in " -NoNewLine
-Write-Host "'.\build'" -NoNewline -ForegroundColor Green
-Write-Host " directory."
+New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done. You will find You will find OpenPype installer in '.\build' directory."
+
+Write-Color -Text "*** ", "All done. You will find OpenPype installer in ", "'.\build'", " directory." -Color Green, Gray, White, Gray

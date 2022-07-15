@@ -11,6 +11,13 @@ PS> .\run_mongo.ps1
 
 #>
 
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+
 $art = @"
 
              . .   ..     .    ..
@@ -43,8 +50,7 @@ function Exit-WithCode($exitcode) {
 
 function Find-Mongo ($preferred_version) {
     $defaultPath = "C:\Program Files\MongoDB\Server"
-    Write-Host ">>> " -NoNewLine -ForegroundColor Green
-    Write-Host "Detecting MongoDB ... " -NoNewline
+    Write-Color -Text ">>> ", "Detecting MongoDB ... " -Color Geen, Gray -NoNewline
     if (-not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
         if(Test-Path "$($defaultPath)\*\bin\mongod.exe" -PathType Leaf) {
         # we have mongo server installed on standard Windows location
@@ -52,17 +58,14 @@ function Find-Mongo ($preferred_version) {
         # $preferred_version.
         $mongoVersions = Get-ChildItem -Directory 'C:\Program Files\MongoDB\Server' | Sort-Object -Property {$_.Name -as [int]}
         if(Test-Path "$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
-            Write-Host "OK" -ForegroundColor Green
+            Write-Color -Text "OK" -Color Green
             $use_version = $mongoVersions[-1]
             foreach ($v in $mongoVersions) {
-                Write-Host "  - found [ " -NoNewline
-                Write-Host $v -NoNewLine -ForegroundColor Cyan
-                Write-Host " ]" -NoNewLine
-
+                Write-Color -Text "  - found [ ", $v, " ]" - Color Cyan, White, Cyan -NoNewLine
                 $version = Split-Path $v -Leaf
 
                 if ($preferred_version -eq $version) {
-                    Write-Host " *" -ForegroundColor Green
+                    Write-Color -Text " *" -Color Green
                     $use_version = $v
                 } else {
                     Write-Host ""
@@ -71,27 +74,20 @@ function Find-Mongo ($preferred_version) {
 
             $env:PATH = "$($env:PATH);$($use_version)\bin\"
 
-            Write-Host "  - auto-added from [ " -NoNewline
-            Write-Host "$($use_version)\bin\mongod.exe" -NoNewLine -ForegroundColor Cyan
-            Write-Host " ]"
+            Write-Color -Text "  - auto-added from [ ", "$($use_version)\bin\mongod.exe", " ]" -Color Cyan, White, Cyan
             return "$($use_version)\bin\mongod.exe"
         } else {
-            Write-Host "FAILED " -NoNewLine -ForegroundColor Red
-            Write-Host "MongoDB not detected" -ForegroundColor Yellow
-            Write-Host "Tried to find it on standard location " -NoNewline -ForegroundColor Gray
-            Write-Host " [ " -NoNewline -ForegroundColor Cyan
-            Write-Host "$($mongoVersions[-1])\bin\mongod.exe" -NoNewline -ForegroundColor White
-            Write-Host " ] " -NoNewLine -ForegroundColor Cyan
-            Write-Host "but failed." -ForegroundColor Gray
+            Write-Color -Text "FAILED " -Color Red  -NoNewLine
+            Write-Color -Text "MongoDB not detected" -Color Yellow
+            Write-Color -Text "Tried to find it on standard location ", "[ ", "$($mongoVersions[-1])\bin\mongod.exe", " ]", " but failed." -Color Gray, Cyan, White, Cyan, Gray -NoNewline
             Exit-WithCode 1
         }
     } else {
-        Write-Host "FAILED " -NoNewLine -ForegroundColor Red
-        Write-Host "MongoDB not detected in PATH" -ForegroundColor Yellow
+        Write-Color -Text "FAILED ", "MongoDB not detected in PATH" -Color Red, Yellow
         Exit-WithCode 1
     }
   } else {
-        Write-Host "OK" -ForegroundColor Green
+        Write-Color -Text "OK" -Color Green
         return Get-Command "mongod" -ErrorAction SilentlyContinue
   }
   <#
@@ -104,9 +100,6 @@ function Find-Mongo ($preferred_version) {
   #>
 }
 
-$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
-
 # mongodb port
 $port = 2707
 
@@ -116,15 +109,7 @@ $dbpath = (Get-Item $openpype_root).parent.FullName + "\mongo_db_data"
 $preferred_version = "5.0"
 
 $mongoPath = Find-Mongo $preferred_version
-Write-Host ">>> " -NoNewLine -ForegroundColor Green
-Write-Host "Using DB path: " -NoNewLine
-Write-Host " [ " -NoNewline -ForegroundColor Cyan
-Write-Host "$($dbpath)" -NoNewline -ForegroundColor White
-Write-Host " ] "-ForegroundColor Cyan
-Write-Host ">>> " -NoNewLine -ForegroundColor Green
-Write-Host "Port: " -NoNewLine
-Write-Host " [ " -NoNewline -ForegroundColor Cyan
-Write-Host "$($port)" -NoNewline -ForegroundColor White
-Write-Host " ] " -ForegroundColor Cyan
-Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru | Out-Null
+Write-Color -Text ">>> ", "Using DB path: ", "[ ", "$($dbpath)", " ]" -Color Green, Gray, Cyan, White, Cyan
+Write-Color -Text ">>> ", "Port: ", "[ ", "$($port)", " ]", -Color Green, Gray, Cyan, White, Cyan
 
+Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru | Out-Null

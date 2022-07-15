@@ -14,6 +14,9 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
 # make sure Poetry is in PATH
@@ -24,15 +27,13 @@ $env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
 
 Set-Location -Path $openpype_root
 
-Write-Host ">>> " -NoNewline -ForegroundColor Green
-Write-Host "Reading Poetry ... " -NoNewline
+Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
-    Write-Host "NOT FOUND" -ForegroundColor Yellow
-    Write-Host "*** " -NoNewline -ForegroundColor Yellow
-    Write-Host "We need to install Poetry create virtual env first ..."
+    Write-Color -Text "NOT FOUND" -Color Yellow
+    Write-Color -Text "*** ", "We need to install Poetry create virtual env first ..." -Color Yellow, Gray
     & "$openpype_root\tools\create_env.ps1"
 } else {
-    Write-Host "OK" -ForegroundColor Green
+    Write-Color -Text "OK" -Color Green
 }
 
 & "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\start.py" tray --debug
