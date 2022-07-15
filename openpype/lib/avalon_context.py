@@ -15,7 +15,6 @@ from openpype.client import (
     get_asset_by_name,
     get_subset_by_name,
     get_subsets,
-    get_version_by_id,
     get_last_versions,
     get_last_version_by_subset_id,
     get_representations,
@@ -179,7 +178,7 @@ def with_pipeline_io(func):
     return wrapped
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.is_representation_from_latest")
 def is_latest(representation):
     """Return whether the representation is from latest version
 
@@ -190,21 +189,9 @@ def is_latest(representation):
         bool: Whether the representation is of latest version.
     """
 
-    project_name = legacy_io.active_project()
-    version = get_version_by_id(
-        project_name,
-        representation["parent"],
-        fields=["_id", "type", "parent"]
-    )
-    if version["type"] == "hero_version":
-        return True
+    from openpype.pipeline.context_tools import is_representation_from_latest
 
-    # Get highest version under the parent
-    last_version = get_last_version_by_subset_id(
-        project_name, version["parent"], fields=["_id"]
-    )
-
-    return version["_id"] == last_version["_id"]
+    return is_representation_from_latest(representation)
 
 
 @deprecated("openpype.pipeline.load.any_outdated_containers")

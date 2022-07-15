@@ -10,8 +10,8 @@ from openpype.pipeline import (
     load,
     get_representation_path,
 )
+from openpype.pipeline.context_tools import is_representation_from_latest
 import openpype.hosts.harmony.api as harmony
-import openpype.lib
 
 
 class ImageSequenceLoader(load.LoaderPlugin):
@@ -109,7 +109,7 @@ class ImageSequenceLoader(load.LoaderPlugin):
         )
 
         # Colour node.
-        if openpype.lib.is_latest(representation):
+        if is_representation_from_latest(representation["parent"]):
             harmony.send(
                 {
                     "function": "PypeHarmony.setColor",

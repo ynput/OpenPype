@@ -10,6 +10,7 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype.client import version_is_latest
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 from openpype.lib import filter_pyblish_plugins
@@ -304,3 +305,17 @@ def debug_host():
     })
 
     return host
+
+
+def is_representation_from_latest(representation):
+    """Return whether the representation is from latest version
+
+    Args:
+        representation (dict): The representation document from the database.
+
+    Returns:
+        bool: Whether the representation is of latest version.
+    """
+
+    project_name = legacy_io.active_project()
+    return version_is_latest(project_name, representation["parent"])

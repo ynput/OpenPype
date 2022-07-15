@@ -10,8 +10,8 @@ from openpype.pipeline import (
     load,
     get_representation_path,
 )
+from openpype.pipeline.context_tools import is_representation_from_latest
 import openpype.hosts.harmony.api as harmony
-import openpype.lib
 
 
 class TemplateLoader(load.LoaderPlugin):
@@ -83,7 +83,7 @@ class TemplateLoader(load.LoaderPlugin):
         self_name = self.__class__.__name__
 
         update_and_replace = False
-        if openpype.lib.is_latest(representation):
+        if is_representation_from_latest(representation["parent"]):
             self._set_green(node)
         else:
             self._set_red(node)
