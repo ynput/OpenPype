@@ -4,7 +4,7 @@ import re
 
 from openpype.client import get_assets, get_asset_by_name
 from openpype.hosts.traypublisher.api import pipeline
-from openpype.lib import FileDef, get_subset_name_with_asset_doc
+from openpype.lib import FileDef, BoolDef, get_subset_name_with_asset_doc
 from openpype.pipeline import (
     CreatedInstance,
     CreatorError
@@ -151,7 +151,13 @@ class BatchMovCreator(TrayPublishCreator):
         return task_name
 
     def get_instance_attr_defs(self):
-        return []
+        return [
+            BoolDef(
+                "add_review_family",
+                default=True,
+                label="Review"
+            )
+        ]
 
     def get_pre_create_attr_defs(self):
         # Use same attributes as for instance attributes
@@ -162,6 +168,11 @@ class BatchMovCreator(TrayPublishCreator):
                 single_item=False,
                 extensions=self.extensions,
                 label="Filepath"
+            ),
+            BoolDef(
+                "add_review_family",
+                default=True,
+                label="Review"
             )
         ]
 
