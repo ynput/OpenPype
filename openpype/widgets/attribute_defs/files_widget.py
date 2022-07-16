@@ -1,6 +1,7 @@
 import os
 import collections
 import uuid
+import json
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -26,6 +27,27 @@ IS_SEQUENCE_ROLE = QtCore.Qt.UserRole + 7
 EXT_ROLE = QtCore.Qt.UserRole + 8
 
 
+def convert_bytes_to_json(bytes_value):
+    if isinstance(bytes_value, QtCore.QByteArray):
+        # Raw data are already QByteArray and we don't have to load them
+        encoded_data = bytes_value
+    else:
+        encoded_data = QtCore.QByteArray.fromRawData(bytes_value)
+    stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
+    text = stream.readQString()
+    try:
+        return json.loads(text)
+    except Exception:
+        return None
+
+
+def convert_data_to_bytes(data):
+    bytes_value = QtCore.QByteArray()
+    stream = QtCore.QDataStream(bytes_value, QtCore.QIODevice.WriteOnly)
+    stream.writeQString(json.dumps(data))
+    return bytes_value
+
+
 class SupportLabel(QtWidgets.QLabel):
     pass
 
@@ -33,7 +55,7 @@ class SupportLabel(QtWidgets.QLabel):
 class DropEmpty(QtWidgets.QWidget):
     _empty_extensions = "Any file"
 
-    def __init__(self, single_item, allow_sequences, parent):
+    def __init__(self, single_item, allow_sequences, extensions_label, parent):
         super(DropEmpty, self).__init__(parent)
 
         drop_label_widget = QtWidgets.QLabel("Drag & Drop files here", self)
@@ -61,7 +83,19 @@ class DropEmpty(QtWidgets.QWidget):
             widget.setAlignment(QtCore.Qt.AlignCenter)
             widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
+        update_size_timer = QtCore.QTimer()
+        update_size_timer.setInterval(10)
+        update_size_timer.setSingleShot(True)
+
+        update_size_timer.timeout.connect(self._on_update_size_timer)
+
+        self._update_size_timer = update_size_timer
+
+        if extensions_label and not extensions_label.startswith(" "):
+            extensions_label = " " + extensions_label
+
         self._single_item = single_item
+        self._extensions_label = extensions_label
         self._allow_sequences = allow_sequences
         self._allowed_extensions = set()
         self._allow_folders = None
@@ -114,22 +148,51 @@ class DropEmpty(QtWidgets.QWidget):
             items_label = "Single "
 
         if len(allowed_items) == 1:
-            allowed_items_label = allowed_items[0]
+            extensions_label = allowed_items[0]
         elif len(allowed_items) == 2:
-            allowed_items_label = " or ".join(allowed_items)
+            extensions_label = " or ".join(allowed_items)
         else:
             last_item = allowed_items.pop(-1)
             new_last_item = " or ".join(last_item, allowed_items.pop(-1))
             allowed_items.append(new_last_item)
-            allowed_items_label = ", ".join(allowed_items)
+            extensions_label = ", ".join(allowed_items)
+
+        allowed_items_label = extensions_label
 
         items_label += allowed_items_label
+        label_tooltip = None
         if self._allowed_extensions:
             items_label += " of\n{}".format(
                 ", ".join(sorted(self._allowed_extensions))
             )
 
+        if self._extensions_label:
+            label_tooltip = items_label
+            items_label = self._extensions_label
+
+        if self._items_label_widget.text() == items_label:
+            return
+
+        self._items_label_widget.setToolTip(label_tooltip)
         self._items_label_widget.setText(items_label)
+        self._update_size_timer.start()
+
+    def resizeEvent(self, event):
+        super(DropEmpty, self).resizeEvent(event)
+        self._update_size_timer.start()
+
+    def _on_update_size_timer(self):
+        """Recalculate height of label with extensions.
+
+        Dynamic QLabel with word wrap does not handle properly it's sizeHint
+        calculations on show. This way it is recalculated. It is good practice
+        to trigger this method with small offset using '_update_size_timer'.
+        """
+
+        width = self._items_label_widget.width()
+        height = self._items_label_widget.heightForWidth(width)
+        self._items_label_widget.setMinimumHeight(height)
+        self._items_label_widget.updateGeometry()
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
@@ -162,6 +225,7 @@ class FilesModel(QtGui.QStandardItemModel):
     def __init__(self, single_item, allow_sequences):
         super(FilesModel, self).__init__()
 
+        self._id = str(uuid.uuid4())
         self._single_item = single_item
         self._multivalue = False
         self._allow_sequences = allow_sequences
@@ -170,6 +234,10 @@ class FilesModel(QtGui.QStandardItemModel):
         self._file_items_by_id = {}
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
+
+    @property
+    def id(self):
+        return self._id
 
     def set_multivalue(self, multivalue):
         """Disable filtering."""
@@ -244,6 +312,66 @@ class FilesModel(QtGui.QStandardItemModel):
         item.setData(file_item.is_sequence, IS_SEQUENCE_ROLE)
 
         return item_id, item
+
+    def mimeData(self, indexes):
+        item_ids = [
+            index.data(ITEM_ID_ROLE)
+            for index in indexes
+        ]
+
+        item_ids_data = convert_data_to_bytes(item_ids)
+        mime_data = super(FilesModel, self).mimeData(indexes)
+        mime_data.setData("files_widget/internal_move", item_ids_data)
+
+        file_items = []
+        for item_id in item_ids:
+            file_item = self.get_file_item_by_id(item_id)
+            if file_item:
+                file_items.append(file_item.to_dict())
+
+        full_item_data = convert_data_to_bytes({
+            "items": file_items,
+            "id": self._id
+        })
+        mime_data.setData("files_widget/full_data", full_item_data)
+        return mime_data
+
+    def dropMimeData(self, mime_data, action, row, col, index):
+        item_ids = convert_bytes_to_json(
+            mime_data.data("files_widget/internal_move")
+        )
+        if item_ids is None:
+            return False
+
+        # Find matching item after which will be items moved
+        #   - store item before moved items are removed
+        root = self.invisibleRootItem()
+        if row >= 0:
+            src_item = self.item(row)
+        else:
+            src_item_id = index.data(ITEM_ID_ROLE)
+            src_item = self._items_by_id.get(src_item_id)
+
+        # Take out items that should be moved
+        items = []
+        for item_id in item_ids:
+            item = self._items_by_id.get(item_id)
+            if item:
+                self.takeRow(item.row())
+                items.append(item)
+
+        # Skip if there are not items that can be moved
+        if not items:
+            return False
+
+        # Calculate row where items should be inserted
+        if src_item:
+            src_row = src_item.row()
+        else:
+            src_row = root.rowCount()
+
+        root.insertRow(src_row, items)
+        return True
 
 
 class FilesProxyModel(QtCore.QSortFilterProxyModel):
@@ -428,6 +556,9 @@ class FilesView(QtWidgets.QListView):
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.setAcceptDrops(True)
+        self.setDragEnabled(True)
+        self.setDragDropMode(self.InternalMove)
 
         remove_btn = InViewButton(self)
         pix_enabled = paint_image_with_color(
@@ -529,11 +660,13 @@ class FilesView(QtWidgets.QListView):
 class FilesWidget(QtWidgets.QFrame):
     value_changed = QtCore.Signal()
 
-    def __init__(self, single_item, allow_sequences, parent):
+    def __init__(self, single_item, allow_sequences, extensions_label, parent):
         super(FilesWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
-        empty_widget = DropEmpty(single_item, allow_sequences, self)
+        empty_widget = DropEmpty(
+            single_item, allow_sequences, extensions_label, self
+        )
 
         files_model = FilesModel(single_item, allow_sequences)
         files_proxy_model = FilesProxyModel()
@@ -553,6 +686,7 @@ class FilesWidget(QtWidgets.QFrame):
         files_view.context_menu_requested.connect(
             self._on_context_menu_requested
         )
+
         self._in_set_value = False
         self._single_item = single_item
         self._multivalue = False
@@ -636,8 +770,6 @@ class FilesWidget(QtWidgets.QFrame):
                 index, widget.sizeHint(), QtCore.Qt.SizeHintRole
             )
             self._widgets_by_id[item_id] = widget
-
-        self._files_proxy_model.sort(0)
 
         if not self._in_set_value:
             self.value_changed.emit()
@@ -743,12 +875,22 @@ class FilesWidget(QtWidgets.QFrame):
                 event.setDropAction(QtCore.Qt.CopyAction)
                 event.accept()
 
+        full_data_value = mime_data.data("files_widget/full_data")
+        if self._handle_full_data_drag(full_data_value):
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+
     def dragLeaveEvent(self, event):
         event.accept()
 
     def dropEvent(self, event):
+        if self._multivalue:
+            return
+
         mime_data = event.mimeData()
-        if not self._multivalue and mime_data.hasUrls():
+        if mime_data.hasUrls():
+            event.accept()
+            # event.setDropAction(QtCore.Qt.CopyAction)
             filepaths = []
             for url in mime_data.urls():
                 filepath = url.toLocalFile()
@@ -759,7 +901,58 @@ class FilesWidget(QtWidgets.QFrame):
             filepaths = self._files_proxy_model.filter_valid_files(filepaths)
             if filepaths:
                 self._add_filepaths(filepaths)
-        event.accept()
+
+        if self._handle_full_data_drop(
+            mime_data.data("files_widget/full_data")
+        ):
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+
+        super(FilesWidget, self).dropEvent(event)
+
+    def _handle_full_data_drag(self, value):
+        if value is None:
+            return False
+
+        full_data = convert_bytes_to_json(value)
+        if full_data is None:
+            return False
+
+        if full_data["id"] == self._files_model.id:
+            return False
+        return True
+
+    def _handle_full_data_drop(self, value):
+        if value is None:
+            return False
+
+        full_data = convert_bytes_to_json(value)
+        if full_data is None:
+            return False
+
+        if full_data["id"] == self._files_model.id:
+            return False
+
+        for item in full_data["items"]:
+            filepaths = [
+                os.path.join(item["directory"], filename)
+                for filename in item["filenames"]
+            ]
+            filepaths = self._files_proxy_model.filter_valid_files(filepaths)
+            if filepaths:
+                self._add_filepaths(filepaths)
+
+        if self._copy_modifiers_enabled():
+            return False
+        return True
+
+    def _copy_modifiers_enabled(self):
+        if (
+            QtWidgets.QApplication.keyboardModifiers()
+            & QtCore.Qt.ControlModifier
+        ):
+            return True
+        return False
 
     def _add_filepaths(self, filepaths):
         self._files_model.add_filepaths(filepaths)
