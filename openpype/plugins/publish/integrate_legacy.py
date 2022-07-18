@@ -145,6 +145,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     subset_grouping_profiles = None
 
     def process(self, instance):
+        if instance.data.get("processedWithNewIntegrator"):
+            self.log.info("Instance was already processed with new integrator")
+            return
+
         for ef in self.exclude_families:
             if (
                     instance.data["family"] == ef or

@@ -171,7 +171,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     template_name_profiles = None
 
     def process(self, instance):
-
+        instance.data["processedWithNewIntegrator"] = True
         # Exclude instances that also contain families from exclude families
         families = set(get_instance_families(instance))
         exclude = families & set(self.exclude_families)
