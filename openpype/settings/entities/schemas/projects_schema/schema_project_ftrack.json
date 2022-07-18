@@ -410,7 +410,41 @@
                         {
                             "type": "boolean",
                             "key": "cycle_enabled",
-                            "label": "Create daily review session"
+                            "label": "Run automatically every day"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "cycle_hour_start",
+                            "label": "Create daily review session at",
+                            "tooltip": "This may take affect on next day",
+                            "object_types": [
+                                {
+                                    "label": "H:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 23,
+                                    "decimal": 0
+                                }, {
+                                    "label": "M:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 59,
+                                    "decimal": 0
+                                }, {
+                                    "label": "S:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 59,
+                                    "decimal": 0
+                                }
+                            ]
+                        },
+                        {
+                            "type": "label",
+                            "label": "This can't be overriden per project and any change will take effect on the next day or on restart of event server."
                         },
                         {
                             "type": "separator"

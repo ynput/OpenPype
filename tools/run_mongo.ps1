@@ -16,7 +16,7 @@ $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
 
 $art = @"
 
@@ -50,7 +50,7 @@ function Exit-WithCode($exitcode) {
 
 function Find-Mongo ($preferred_version) {
     $defaultPath = "C:\Program Files\MongoDB\Server"
-    Write-Color -Text ">>> ", "Detecting MongoDB ... " -Color Geen, Gray -NoNewline
+    Write-Color -Text ">>> ", "Detecting MongoDB ... " -Color Green, Gray -NoNewline
     if (-not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
         if(Test-Path "$($defaultPath)\*\bin\mongod.exe" -PathType Leaf) {
         # we have mongo server installed on standard Windows location
@@ -61,7 +61,7 @@ function Find-Mongo ($preferred_version) {
             Write-Color -Text "OK" -Color Green
             $use_version = $mongoVersions[-1]
             foreach ($v in $mongoVersions) {
-                Write-Color -Text "  - found [ ", $v, " ]" - Color Cyan, White, Cyan -NoNewLine
+                Write-Color -Text "  - found [ ", $v, " ]" -Color Cyan, White, Cyan -NoNewLine
                 $version = Split-Path $v -Leaf
 
                 if ($preferred_version -eq $version) {
@@ -110,6 +110,6 @@ $preferred_version = "5.0"
 
 $mongoPath = Find-Mongo $preferred_version
 Write-Color -Text ">>> ", "Using DB path: ", "[ ", "$($dbpath)", " ]" -Color Green, Gray, Cyan, White, Cyan
-Write-Color -Text ">>> ", "Port: ", "[ ", "$($port)", " ]", -Color Green, Gray, Cyan, White, Cyan
+Write-Color -Text ">>> ", "Port: ", "[ ", "$($port)", " ]" -Color Green, Gray, Cyan, White, Cyan
 
 Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru | Out-Null
