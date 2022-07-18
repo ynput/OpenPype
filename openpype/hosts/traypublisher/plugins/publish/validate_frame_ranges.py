@@ -43,18 +43,19 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
         handle_end = asset_data["handleEnd"]
         duration = (frame_end - frame_start + 1) + handle_start + handle_end
 
-        repre = instance.data.get("representations", [None])
-        if not repre:
+        repres = instance.data.get("representations")
+        if not repres:
             self.log.info("No representations, skipping.")
             return
-
-        ext = repre[0]['ext'].replace(".", '')
+            
+        first_repre = repres[0]
+        ext = first_repre['ext'].replace(".", '')
 
         if not ext or ext.lower() not in self.check_extensions:
             self.log.warning("Cannot check for extension {}".format(ext))
             return
 
-        files = instance.data.get("representations", [None])[0]["files"]
+        files = first_repre["files"]
         if isinstance(files, str):
             files = [files]
         frames = len(files)
