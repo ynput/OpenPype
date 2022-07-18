@@ -31,8 +31,9 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
         if not self.is_active(instance.data):
             return
 
-        if any(re.search(pattern, instance.data["task"])
-               for pattern in self.skip_timelines_check):
+        if (self.skip_timelines_check and
+            any(re.search(pattern, instance.data["task"])
+                for pattern in self.skip_timelines_check)):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
         asset_doc = instance.data["assetEntity"]
