@@ -79,12 +79,6 @@ def get_first_frame_padded(collection):
     return get_frame_padded(start_frame, padding=collection.padding)
 
 
-def bulk_write(writes):
-    """Convenience function to bulk write into active project database"""
-    project = legacy_io.Session["AVALON_PROJECT"]
-    return legacy_io._database[project].bulk_write(writes)
-
-
 class IntegrateAsset(pyblish.api.InstancePlugin):
     """Register publish in the database and transfer files to destinations.
 
@@ -288,7 +282,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Transaction to reduce the chances of another publish trying to
         # publish to the same version number since that chance can greatly
         # increase if the file transaction takes a long time.
-        bulk_write(subset_writes + version_writes)
+        legacy_io.bulk_write(subset_writes + version_writes)
         self.log.info("Subset {subset[name]} and Version {version[name]} "
                       "written to database..".format(subset=subset,
                                                      version=version))
@@ -362,7 +356,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 ))
 
         # Write representations to the database
-        bulk_write(representation_writes)
+        legacy_io.bulk_write(representation_writes)
 
         # Backwards compatibility
         # todo: can we avoid the need to store this?
