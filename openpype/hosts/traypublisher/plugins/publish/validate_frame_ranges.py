@@ -35,32 +35,35 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
                for pattern in self.skip_timelines_check):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
-        asset_data = lib.get_asset(instance.data["asset"])["data"]
+        asset_doc = instance.data["assetEntity"]
+        asset_data = asset_doc["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]
         handle_start = asset_data["handleStart"]
         handle_end = asset_data["handleEnd"]
         duration = (frame_end - frame_start + 1) + handle_start + handle_end
 
-        repre = instance.data.get("representations", [None])
-        if not repre:
+        repres = instance.data.get("representations")
+        if not repres:
             self.log.info("No representations, skipping.")
             return
-
-        ext = repre[0]['ext'].replace(".", '')
+            
+        first_repre = repres[0]
+        ext = first_repre['ext'].replace(".", '')
 
         if not ext or ext.lower() not in self.check_extensions:
             self.log.warning("Cannot check for extension {}".format(ext))
             return
 
-        files = instance.data.get("representations", [None])[0]["files"]
+        files = first_repre["files"]
         if isinstance(files, str):
             files = [files]
         frames = len(files)
 
-        msg = "Frame duration from DB:'{}' ". format(int(duration)) +\
-              " doesn't match number of files:'{}'".format(frames) +\
-              " Please change frame range for Asset or limit no. of files"
+        msg = (
+            "Frame duration from DB:'{}' doesn't match number of files:'{}'"
+            " Please change frame range for Asset or limit no. of files"
+        ). format(int(duration), frames)
 
         formatting_data = {"duration": duration,
                            "found": frames}
