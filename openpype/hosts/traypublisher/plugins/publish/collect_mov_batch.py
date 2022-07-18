@@ -19,7 +19,7 @@ class CollectMovBatch(
     hosts = ["traypublisher"]
 
     def process(self, instance):
-        if not instance.data.get("creator_identifier") == "render_mov_batch":
+        if instance.data.get("creator_identifier") != "render_mov_batch":
             return
 
         creator_attributes = instance.data["creator_attributes"]
