@@ -58,9 +58,10 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
             files = [files]
         frames = len(files)
 
-        msg = "Frame duration from DB:'{}' ". format(int(duration)) +\
-              " doesn't match number of files:'{}'".format(frames) +\
-              " Please change frame range for Asset or limit no. of files"
+        msg = (
+            "Frame duration from DB:'{}' doesn't match number of files:'{}'"
+            " Please change frame range for Asset or limit no. of files"
+        ). format(int(duration), frames)
 
         formatting_data = {"duration": duration,
                            "found": frames}
