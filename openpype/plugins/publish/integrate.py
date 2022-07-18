@@ -14,6 +14,7 @@ from openpype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import KnownPublishError
 
 log = logging.getLogger(__name__)
 
@@ -172,6 +173,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         instance.data["processedWithNewIntegrator"] = True
+
+        filtered_repres = self.filter_representations(instance)
+        # Skip instance if there are not representations to integrate
+        #   all representations should not be integrated
+        if not filtered_repres:
+            self.log.warning((
+                "Skipping, there are no representations"
+                " to integrate for instance {}"
+            ).format(instance.data["family"]))
+            return
+
         # Exclude instances that also contain families from exclude families
         families = set(get_instance_families(instance))
         exclude = families & set(self.exclude_families)
@@ -182,7 +194,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         file_transactions = FileTransaction(log=self.log)
         try:
-            self.register(instance, file_transactions)
+            self.register(instance, file_transactions, filtered_repres)
         except Exception:
             # clean destination
             # todo: preferably we'd also rollback *any* changes to the database
@@ -194,8 +206,35 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # the try, except.
         file_transactions.finalize()
 
-    def register(self, instance, file_transactions):
+    def filter_representations(self, instance):
+        # Prepare repsentations that should be integrated
+        repres = instance.data.get("representations")
+        # Raise error if instance don't have any representations
+        if not repres:
+            raise KnownPublishError(
+                "Instance {} has no representations to integrate".format(
+                    instance.data["family"]
+                )
+            )
 
+        # Validate type of stored representations
+        if not isinstance(repres, (list, tuple)):
+            raise TypeError(
+                "Instance 'files' must be a list, got: {0} {1}".format(
+                    str(type(repres)), str(repres)
+                )
+            )
+
+        # Filter representations
+        filtered_repres = []
+        for repre in repres:
+            if "delete" in repre.get("tags", []):
+                continue
+            filtered_repres.append(repre)
+
+        return filtered_repres
+
+    def register(self, instance, file_transactions, filtered_repres):
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
             self.log.info((
@@ -208,15 +247,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Establishing staging directory "
                 "@ {0}".format(instance_stagingdir)
             )
-
-        # Ensure at least one representation is set up for registering.
-        repres = instance.data.get("representations")
-        assert repres, "Instance has no representations data"
-        assert isinstance(repres, (list, tuple)), (
-            "Instance 'representations' must be a list, got: {0} {1}".format(
-                str(type(repres)), str(repres)
-            )
-        )
 
         template_name = self.get_template_name(instance)
 
@@ -238,32 +268,21 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Prepare all representations
         prepared_representations = []
-        for repre in instance.data["representations"]:
-
-            if "delete" in repre.get("tags", []):
-                self.log.debug("Skipping representation marked for deletion: "
-                               "{}".format(repre))
-                continue
-
+        for repre in filtered_repres:
             # todo: reduce/simplify what is returned from this function
-            prepared = self.prepare_representation(repre,
-                                                   template_name,
-                                                   existing_repres_by_name,
-                                                   version,
-                                                   instance_stagingdir,
-                                                   instance)
+            prepared = self.prepare_representation(
+                repre,
+                template_name,
+                existing_repres_by_name,
+                version,
+                instance_stagingdir,
+                instance)
 
             for src, dst in prepared["transfers"]:
                 # todo: add support for hardlink transfers
                 file_transactions.add(src, dst)
 
             prepared_representations.append(prepared)
-
-        if not prepared_representations:
-            # Even though we check `instance.data["representations"]` earlier
-            # this could still happen if all representations were tagged with
-            # "delete" and thus are skipped for integration
-            raise RuntimeError("No representations prepared to publish.")
 
         # Each instance can also have pre-defined transfers not explicitly
         # part of a representation - like texture resources used by a
@@ -273,6 +292,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         for src, dst in instance.data.get("transfers", []):
             file_transactions.add(src, dst, mode=FileTransaction.MODE_COPY)
             resource_destinations.add(os.path.abspath(dst))
+
         for src, dst in instance.data.get("hardlinks", []):
             file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
             resource_destinations.add(os.path.abspath(dst))
