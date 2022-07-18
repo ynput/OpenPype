@@ -15,7 +15,7 @@ $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 

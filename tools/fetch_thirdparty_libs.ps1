@@ -16,7 +16,7 @@ $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
@@ -38,4 +38,7 @@ $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 & "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\fetch_thirdparty_libs.py"
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
-New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Dependencies downloaded", "All done in $($endTime - $startTime) secs."
+try
+{
+    New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Dependencies downloaded", "All done in $( $endTime - $startTime ) secs."
+} catch {}
