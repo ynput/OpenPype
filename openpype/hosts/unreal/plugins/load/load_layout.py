@@ -788,6 +788,16 @@ class LayoutLoader(plugin.Loader):
             sequences = ar.get_assets(filter)
             sequence = sequences[0].get_asset()
 
+        prev_level = None
+
+        if not master_level:
+            curr_level = unreal.LevelEditorSubsystem().get_current_level()
+            curr_level_path = curr_level.get_outer().get_path_name()
+            # If the level path does not start with "/Game/", the current
+            # level is a temporary, unsaved level.
+            if curr_level_path.startswith("/Game/"):
+                prev_level = curr_level_path
+
         # Get layout level
         filter = unreal.ARFilter(
             class_names=["World"],
@@ -832,6 +842,8 @@ class LayoutLoader(plugin.Loader):
 
         if master_level:
             EditorLevelLibrary.load_level(master_level)
+        elif prev_level:
+            EditorLevelLibrary.load_level(prev_level)
 
     def remove(self, container):
         """
