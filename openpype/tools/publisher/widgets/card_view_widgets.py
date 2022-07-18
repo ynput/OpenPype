@@ -22,6 +22,7 @@ Only one item can be selected at a time.
 
 import re
 import collections
+import html
 
 from Qt import QtWidgets, QtCore
 
@@ -303,7 +304,7 @@ class InstanceCardWidget(CardWidget):
         self._last_variant = variant
         self._last_subset_name = subset_name
         # Make `variant` bold
-        label = self.instance.label
+        label = html.escape(self.instance.label)
         found_parts = set(re.findall(variant, label, re.IGNORECASE))
         if found_parts:
             for part in found_parts:
