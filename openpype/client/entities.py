@@ -12,7 +12,7 @@ import collections
 import six
 from bson.objectid import ObjectId
 
-from openpype.lib.mongo import OpenPypeMongoConnection
+from .mongo import OpenPypeMongoConnection
 
 
 def _get_project_database():

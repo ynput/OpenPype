@@ -1,3 +1,7 @@
+from .mongo import (
+    OpenPypeMongoConnection,
+)
+
 from .entities import (
     get_projects,
     get_project,
@@ -40,6 +44,8 @@ from .entities import (
 )
 
 __all__ = (
+    "OpenPypeMongoConnection",
+
     "get_projects",
     "get_project",
     "get_whole_project",
