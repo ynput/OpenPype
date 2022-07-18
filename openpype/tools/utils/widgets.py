@@ -11,6 +11,28 @@ from openpype.style import (
 log = logging.getLogger(__name__)
 
 
+class CustomTextComboBox(QtWidgets.QComboBox):
+    """Combobox which can have different text showed."""
+
+    def __init__(self, *args, **kwargs):
+        self._custom_text = None
+        super(CustomTextComboBox, self).__init__(*args, **kwargs)
+
+    def set_custom_text(self, text=None):
+        if self._custom_text != text:
+            self._custom_text = text
+            self.repaint()
+
+    def paintEvent(self, event):
+        painter = QtWidgets.QStylePainter(self)
+        option = QtWidgets.QStyleOptionComboBox()
+        self.initStyleOption(option)
+        if self._custom_text is not None:
+            option.currentText = self._custom_text
+        painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, option)
+        painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, option)
+
+
 class PlaceholderLineEdit(QtWidgets.QLineEdit):
     """Set placeholder color of QLineEdit in Qt 5.12 and higher."""
     def __init__(self, *args, **kwargs):
