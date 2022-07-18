@@ -46,7 +46,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             self.log.info("Skipping - no review set on instance.")
             return
 
-        if self._has_thumbnail_already(instance):
+        if self._already_has_thumbnail(instance):
             self.log.info("Thumbnail representation already present.")
             return
 
@@ -106,7 +106,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             # There is no need to create more then one thumbnail
             break
 
-    def _has_thumbnail_already(self, instance):
+    def _already_has_thumbnail(self, instance):
         for repre in instance.data.get("representations", []):
             self.log.info("repre {}".format(repre))
             if repre["name"] == "thumbnail":
