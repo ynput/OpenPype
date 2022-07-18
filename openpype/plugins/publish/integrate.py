@@ -172,7 +172,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     template_name_profiles = None
 
     def process(self, instance):
+        # Mark instance as processed for legacy integrator
         instance.data["processedWithNewIntegrator"] = True
+
+        # Instance should be integrated on a farm
+        if instance.data.get("farm"):
+            self.log.info(
+                "Instance is marked to be processed on farm. Skipping")
+            return
 
         filtered_repres = self.filter_representations(instance)
         # Skip instance if there are not representations to integrate
