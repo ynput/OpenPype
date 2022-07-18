@@ -117,8 +117,8 @@ def get_asset_by_id(project_name, asset_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_id (str|ObjectId): Asset's id.
-        fields (list[str]): Fields that should be returned. All fields are
+        asset_id (Union[str, ObjectId]): Asset's id.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -141,7 +141,7 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     Args:
         project_name (str): Name of project where to look for queried entities.
         asset_name (str): Asset's name.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -178,12 +178,13 @@ def _get_assets(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_ids (list[str|ObjectId]): Asset ids that should be found.
-        asset_names (list[str]): Name assets that should be found.
-        parent_ids (list[str|ObjectId]): Parent asset ids.
+        asset_ids (Iterable[Union[str, ObjectId]]): Asset ids that should
+            be found.
+        asset_names (Iterable[str]): Name assets that should be found.
+        parent_ids (Iterable[Union[str, ObjectId]]): Parent asset ids.
         standard (bool): Query standart assets (type 'asset').
         archived (bool): Query archived assets (type 'archived_asset').
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -244,11 +245,12 @@ def get_assets(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_ids (list[str|ObjectId]): Asset ids that should be found.
-        asset_names (list[str]): Name assets that should be found.
-        parent_ids (list[str|ObjectId]): Parent asset ids.
+        asset_ids (Iterable[Union[str, ObjectId]]): Asset ids that should
+            be found.
+        asset_names (Iterable[str]): Name assets that should be found.
+        parent_ids (Iterable[Union[str, ObjectId]]): Parent asset ids.
         archived (bool): Add also archived assets.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -283,10 +285,11 @@ def get_archived_assets(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_ids (list[str|ObjectId]): Asset ids that should be found.
-        asset_names (list[str]): Name assets that should be found.
-        parent_ids (list[str|ObjectId]): Parent asset ids.
-        fields (list[str]): Fields that should be returned. All fields are
+        asset_ids (Iterable[Union[str, ObjectId]]): Asset ids that should
+            be found.
+        asset_names (Iterable[str]): Name assets that should be found.
+        parent_ids (Iterable[Union[str, ObjectId]]): Parent asset ids.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -304,10 +307,11 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_ids (list[str|ObjectId]): Look only for entered asset ids.
+        asset_ids (Iterable[Union[str, ObjectId]]): Look only for entered
+            asset ids.
 
     Returns:
-        List[ObjectId]: Asset ids that have existing subsets.
+        Iterable[ObjectId]: Asset ids that have existing subsets.
     """
 
     subset_query = {
@@ -345,8 +349,8 @@ def get_subset_by_id(project_name, subset_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_id (str|ObjectId): Id of subset which should be found.
-        fields (list[str]): Fields that should be returned. All fields are
+        subset_id (Union[str, ObjectId]): Id of subset which should be found.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -369,8 +373,8 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
     Args:
         project_name (str): Name of project where to look for queried entities.
         subset_name (str): Name of subset.
-        asset_id (str|ObjectId): Id of parent asset.
-        fields (list[str]): Fields that should be returned. All fields are
+        asset_id (Union[str, ObjectId]): Id of parent asset.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -409,16 +413,16 @@ def get_subsets(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_ids (list[str|ObjectId]): Subset ids that should be queried.
+        subset_ids (Iterable[Union[str, ObjectId]]): Subset ids that should be
+            queried. Filter ignored if 'None' is passed.
+        subset_names (Iterable[str]): Subset names that should be queried.
             Filter ignored if 'None' is passed.
-        subset_names (list[str]): Subset names that should be queried.
-            Filter ignored if 'None' is passed.
-        asset_ids (list[str|ObjectId]): Asset ids under which should look for
-            the subsets. Filter ignored if 'None' is passed.
-        names_by_asset_ids (dict[ObjectId, list[str]]): Complex filtering
+        asset_ids (Iterable[Union[str, ObjectId]]): Asset ids under which should
+            look for the subsets. Filter ignored if 'None' is passed.
+        names_by_asset_ids (dict[ObjectId, List[str]]): Complex filtering
             using asset ids and list of subset names under the asset.
         archived (bool): Look for archived subsets too.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -472,8 +476,8 @@ def get_subset_families(project_name, subset_ids=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_ids (list[str|ObjectId]): Subset ids that should be queried.
-            All subsets from project are used if 'None' is passed.
+        subset_ids (Iterable[Union[str, ObjectId]]): Subset ids that should
+            be queried. All subsets from project are used if 'None' is passed.
 
     Returns:
          set[str]: Main families of matching subsets.
@@ -508,8 +512,8 @@ def get_version_by_id(project_name, version_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version_id (str|ObjectId): Id of version which should be found.
-        fields (list[str]): Fields that should be returned. All fields are
+        version_id (Union[str, ObjectId]): Id of version which should be found.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -535,8 +539,8 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
     Args:
         project_name (str): Name of project where to look for queried entities.
         version (int): name of version entity (it's version).
-        subset_id (str|ObjectId): Id of version which should be found.
-        fields (list[str]): Fields that should be returned. All fields are
+        subset_id (Union[str, ObjectId]): Id of version which should be found.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -621,14 +625,14 @@ def get_versions(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version_ids (list[str|ObjectId]): Version ids that will be queried.
+        version_ids (Iterable[Union[str, ObjectId]]): Version ids that will
+            be queried. Filter ignored if 'None' is passed.
+        subset_ids (Iterable[str]): Subset ids that will be queried.
             Filter ignored if 'None' is passed.
-        subset_ids (list[str]): Subset ids that will be queried.
-            Filter ignored if 'None' is passed.
-        versions (list[int]): Version names (as integers).
+        versions (Iterable[int]): Version names (as integers).
             Filter ignored if 'None' is passed.
         hero (bool): Look also for hero versions.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -651,8 +655,9 @@ def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_id (str|ObjectId): Subset id under which is hero version.
-        fields (list[str]): Fields that should be returned. All fields are
+        subset_id (Union[str, ObjectId]): Subset id under which
+            is hero version.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -681,8 +686,8 @@ def get_hero_version_by_id(project_name, version_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version_id (str|ObjectId): Hero version id.
-        fields (list[str]): Fields that should be returned. All fields are
+        version_id (Union[str, ObjectId]): Hero version id.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -716,11 +721,11 @@ def get_hero_versions(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_ids (list[str|ObjectId]): Subset ids for which should look for
-            hero versions. Filter ignored if 'None' is passed.
-        version_ids (list[str|ObjectId]): Hero version ids. Filter ignored if
-            'None' is passed.
-        fields (list[str]): Fields that should be returned. All fields are
+        subset_ids (Iterable[Union[str, ObjectId]]): Subset ids for which
+            should look for hero versions. Filter ignored if 'None' is passed.
+        version_ids (Iterable[Union[str, ObjectId]]): Hero version ids. Filter
+            ignored if 'None' is passed.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -746,13 +751,13 @@ def get_output_link_versions(project_name, version_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version_id (str|ObjectId): Version id which can be used as input link
-            for other versions.
-        fields (list[str]): Fields that should be returned. All fields are
+        version_id (Union[str, ObjectId]): Version id which can be used
+            as input link for other versions.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
-        Cursor|list: Iterable cursor yielding versions that are used as input
+        Iterable: Iterable cursor yielding versions that are used as input
             links for passed version.
     """
 
@@ -774,8 +779,8 @@ def get_last_versions(project_name, subset_ids, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_ids (list): List of subset ids.
-        fields (list[str]): Fields that should be returned. All fields are
+        subset_ids (Iterable[Union[str, ObjectId]]): List of subset ids.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -859,8 +864,8 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        subset_id (str|ObjectId): Id of version which should be found.
-        fields (list[str]): Fields that should be returned. All fields are
+        subset_id (Union[str, ObjectId]): Id of version which should be found.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -889,10 +894,10 @@ def get_last_version_by_subset_name(
     Args:
         project_name (str): Name of project where to look for queried entities.
         subset_name (str): Name of subset.
-        asset_id (str|ObjectId): Asset id which is parent of passed
+        asset_id (Union[str, ObjectId]): Asset id which is parent of passed
             subset name.
         asset_name (str): Asset name which is parent of passed subset name.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -923,8 +928,8 @@ def get_representation_by_id(project_name, representation_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        representation_id (str|ObjectId): Representation id.
-        fields (list[str]): Fields that should be returned. All fields are
+        representation_id (Union[str, ObjectId]): Representation id.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -956,8 +961,8 @@ def get_representation_by_name(
     Args:
         project_name (str): Name of project where to look for queried entities.
         representation_name (str): Representation name.
-        version_id (str|ObjectId): Id of parent version entity.
-        fields (list[str]): Fields that should be returned. All fields are
+        version_id (Union[str, ObjectId]): Id of parent version entity.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -1061,18 +1066,18 @@ def get_representations(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        representation_ids (list[str|ObjectId]): Representation ids used as
-            filter. Filter ignored if 'None' is passed.
-        representation_names (list[str]): Representations names used as filter.
-            Filter ignored if 'None' is passed.
-        version_ids (list[str]): Subset ids used as parent filter. Filter
+        representation_ids (Iterable[Union[str, ObjectId]]): Representation ids
+            used as filter. Filter ignored if 'None' is passed.
+        representation_names (Iterable[str]): Representations names used
+            as filter. Filter ignored if 'None' is passed.
+        version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        extensions (list[str]): Filter by extension of main representation
+        extensions (Iterable[str]): Filter by extension of main representation
             file (without dot).
         names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
             using version ids and list of names under the version.
         archived (bool): Output will also contain archived representations.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -1107,17 +1112,17 @@ def get_archived_representations(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        representation_ids (list[str|ObjectId]): Representation ids used as
-            filter. Filter ignored if 'None' is passed.
-        representation_names (list[str]): Representations names used as filter.
-            Filter ignored if 'None' is passed.
-        version_ids (list[str]): Subset ids used as parent filter. Filter
+        representation_ids (Iterable[Union[str, ObjectId]]): Representation ids
+            used as filter. Filter ignored if 'None' is passed.
+        representation_names (Iterable[str]): Representations names used
+            as filter. Filter ignored if 'None' is passed.
+        version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        extensions (list[str]): Filter by extension of main representation
+        extensions (Iterable[str]): Filter by extension of main representation
             file (without dot).
-        names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
+        names_by_version_ids (dict[ObjectId, List[str]]): Complex filtering
             using version ids and list of names under the version.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -1145,7 +1150,7 @@ def get_representations_parents(project_name, representations):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        representations (list[dict]): Representation entities with at least
+        representations (List[dict]): Representation entities with at least
             '_id' and 'parent' keys.
 
     Returns:
@@ -1238,7 +1243,7 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
     Args:
         project_name (str): Name of project where to look for queried entities.
         src_type (str): Type of source entity ('asset', 'version').
-        src_id (str|objectId): Id of source entity.
+        src_id (Union[str, ObjectId]): Id of source entity.
 
     Returns:
         ObjectId: Thumbnail id assigned to entity.
@@ -1265,8 +1270,9 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        thumbnail_ids (list[str|ObjectId]): Ids of thumbnail entities.
-        fields (list[str]): Fields that should be returned. All fields are
+        thumbnail_ids (Iterable[Union[str, ObjectId]]): Ids of thumbnail
+            entities.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -1291,8 +1297,8 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        thumbnail_id (str|ObjectId): Id of thumbnail entity.
-        fields (list[str]): Fields that should be returned. All fields are
+        thumbnail_id (Union[str, ObjectId]): Id of thumbnail entity.
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
     Returns:
@@ -1319,9 +1325,9 @@ def get_workfile_info(
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        asset_id (str|ObjectId): Id of asset entity.
+        asset_id (Union[str, ObjectId]): Id of asset entity.
         task_name (str): Task name on asset.
-        fields (list[str]): Fields that should be returned. All fields are
+        fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
     """
 
