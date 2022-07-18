@@ -80,7 +80,11 @@ class MayaTemplateLoader(AbstractTemplateLoader):
         return [attribute.rpartition('.')[0] for attribute in attributes]
 
     def get_loaded_containers_by_id(self):
-        containers = cmds.sets('AVALON_CONTAINERS', q=True)
+        try:
+            containers = cmds.sets("AVALON_CONTAINERS", q=True)
+        except ValueError:
+            return None
+
         return [
             cmds.getAttr(container + '.representation')
             for container in containers]
