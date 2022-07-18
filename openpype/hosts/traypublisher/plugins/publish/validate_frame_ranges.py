@@ -3,7 +3,6 @@ import re
 import pyblish.api
 
 import openpype.api
-from openpype import lib
 from openpype.pipeline import (
     PublishXmlValidationError,
     OptionalPyblishPluginMixin
@@ -48,7 +47,7 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
         if not repres:
             self.log.info("No representations, skipping.")
             return
-            
+
         first_repre = repres[0]
         ext = first_repre['ext'].replace(".", '')
 
