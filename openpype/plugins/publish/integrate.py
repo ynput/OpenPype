@@ -317,8 +317,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.debug("Retrieving Representation Site Sync information ...")
 
         # Get the accessible sites for Site Sync
-        manager = ModulesManager()
-        sync_server_module = manager.modules_by_name["sync_server"]
+        modules_by_name = instance.context.data["openPypeModules"]
+        sync_server_module = modules_by_name["sync_server"]
         sites = sync_server_module.compute_resource_sync_sites(
             project_name=instance.data["projectEntity"]["name"]
         )
