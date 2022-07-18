@@ -310,10 +310,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Process all file transfers of all integrations now
         self.log.debug("Integrating source files to destination ...")
         file_transactions.process()
-        self.log.debug("Backed up existing files: "
-                       "{}".format(file_transactions.backups))
-        self.log.debug("Transferred files: "
-                       "{}".format(file_transactions.transferred))
+        self.log.debug(
+            "Backed up existing files: {}".format(file_transactions.backups))
+        self.log.debug(
+            "Transferred files: {}".format(file_transactions.transferred))
         self.log.debug("Retrieving Representation Site Sync information ...")
 
         # Get the accessible sites for Site Sync
@@ -780,8 +780,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return {
             "families": anatomy_data["family"],
             "tasks": task.get("name"),
-            "hosts": anatomy_data["app"],
-            "task_types": task.get("type")
+            "task_types": task.get("type"),
+            "hosts": instance.context["hostName"],
         }
 
     def get_rootless_path(self, anatomy, path):
