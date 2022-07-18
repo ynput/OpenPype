@@ -17,12 +17,12 @@ from openpype.lib import (
 )
 
 
-class CollectSubsetGroup(pyblish.api.InstancePlugin):
-    """Collect Subset Group for publish."""
+class IntegrateSubsetGroup(pyblish.api.InstancePlugin):
+    """Integrate Subset Group for publish."""
 
     # Run after CollectAnatomyInstanceData
-    order = pyblish.api.CollectorOrder + 0.495
-    label = "Collect Subset Group"
+    order = pyblish.api.IntegratorOrder - 0.1
+    label = "Subset Group"
 
     # Attributes set by settings
     subset_grouping_profiles = None
