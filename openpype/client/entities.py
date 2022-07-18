@@ -580,7 +580,7 @@ def version_is_latest(project_name, version_id):
     version_doc = get_version_by_id(
         project_name, version_id, fields=["_id", "type", "parent"]
     )
-    # What to de when version is not found?
+    # What to do when version is not found?
     if not version_doc:
         return False
 
