@@ -4,8 +4,8 @@ import pyblish.api
 import copy
 from datetime import datetime
 
+from openpype.client import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import prepare_template_data
-from openpype.lib import OpenPypeMongoConnection
 
 
 class IntegrateSlackAPI(pyblish.api.InstancePlugin):

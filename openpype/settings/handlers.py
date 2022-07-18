@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 import six
 
 import openpype.version
+from openpype.client.mongo import OpenPypeMongoConnection
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -337,7 +338,6 @@ class MongoSettingsHandler(SettingsHandler):
 
     def __init__(self):
         # Get mongo connection
-        from openpype.lib import OpenPypeMongoConnection
         from openpype.pipeline import AvalonMongoDB
 
         settings_collection = OpenPypeMongoConnection.get_mongo_client()
