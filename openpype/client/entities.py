@@ -417,8 +417,8 @@ def get_subsets(
             queried. Filter ignored if 'None' is passed.
         subset_names (Iterable[str]): Subset names that should be queried.
             Filter ignored if 'None' is passed.
-        asset_ids (Iterable[Union[str, ObjectId]]): Asset ids under which should
-            look for the subsets. Filter ignored if 'None' is passed.
+        asset_ids (Iterable[Union[str, ObjectId]]): Asset ids under which
+            should look for the subsets. Filter ignored if 'None' is passed.
         names_by_asset_ids (dict[ObjectId, List[str]]): Complex filtering
             using asset ids and list of subset names under the asset.
         archived (bool): Look for archived subsets too.
