@@ -4,7 +4,12 @@ import re
 
 from openpype.client import get_assets, get_asset_by_name
 from openpype.hosts.traypublisher.api import pipeline
-from openpype.lib import FileDef, BoolDef, get_subset_name_with_asset_doc
+from openpype.lib import (
+    FileDef,
+    BoolDef,
+    get_subset_name_with_asset_doc,
+    TaskNotSetError,
+)
 from openpype.pipeline import (
     CreatedInstance,
     CreatorError
@@ -124,13 +129,27 @@ class BatchMovCreator(TrayPublishCreator):
         """Create subset name according to standard template process"""
         task_name = self._get_task_name(asset_doc)
 
-        subset_name = get_subset_name_with_asset_doc(
-            self.family,
-            variant,
-            task_name,
-            asset_doc,
-            project_name
-        )
+        try:
+            subset_name = get_subset_name_with_asset_doc(
+                self.family,
+                variant,
+                task_name,
+                asset_doc,
+                project_name
+            )
+        except TaskNotSetError:
+            # Create instance with fake task
+            # - instance will be marked as invalid so it can't be published
+            #   but user have ability to change it
+            # NOTE: This expect that there is not task 'Undefined' on asset
+            task_name = "Undefined"
+            subset_name = get_subset_name_with_asset_doc(
+                self.family,
+                variant,
+                task_name,
+                asset_doc,
+                project_name
+            )
 
         return subset_name, task_name
 
@@ -178,7 +197,7 @@ class BatchMovCreator(TrayPublishCreator):
 
     def get_detail_description(self):
         return """# Publish batch of .mov to multiple assets.
-        
+
         File names must then contain only asset name, or asset name + version.
         (eg. 'chair.mov', 'chair_v001.mov', not really safe `my_chair_v001.mov`
         """
