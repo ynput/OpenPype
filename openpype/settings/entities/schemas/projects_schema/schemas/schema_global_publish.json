@@ -584,7 +584,7 @@
             "type": "dict",
             "collapsible": true,
             "key": "IntegrateAssetNew",
-            "label": "IntegrateAssetNew",
+            "label": "IntegrateAsset (Legacy)",
             "is_group": true,
             "children": [
                 {
@@ -651,7 +651,7 @@
             "type": "dict",
             "collapsible": true,
             "key": "IntegrateAsset",
-            "label": "IntegrateAsset",
+            "label": "Integrate Asset",
             "is_group": true,
             "children": [
                 {
