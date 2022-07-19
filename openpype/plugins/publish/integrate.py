@@ -10,7 +10,6 @@ from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 
 import openpype.api
-from openpype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
