@@ -17,6 +17,8 @@ from openpype.hosts.traypublisher.api.editorial import (
 from openpype.pipeline import CreatedInstance
 
 from openpype.lib import (
+    get_ffprobe_data,
+
     FileDef,
     TextDef,
     NumberDef,
@@ -212,9 +214,16 @@ or updating already created. Publishing will create OTIO file.
             "fps": fps
         })
 
+        # get path of sequence
+        sequence_path_data = pre_create_data["sequence_filepath_data"]
+        media_path_data = pre_create_data["media_filepaths_data"]
+
+        sequence_path = self._get_path_from_file_data(sequence_path_data)
+        media_path = self._get_path_from_file_data(media_path_data)
+
         # get otio timeline
-        otio_timeline = self._create_otio_instance(
-            subset_name, instance_data, pre_create_data)
+        otio_timeline = self._create_otio_timeline(
+            sequence_path, fps)
 
         # Create all clip instances
         clip_instance_properties.update({
@@ -222,43 +231,52 @@ or updating already created. Publishing will create OTIO file.
             "parent_asset_name": asset_name,
             "variant": instance_data["variant"]
         })
+
+        # create clip instances
         self._get_clip_instances(
             otio_timeline,
+            media_path,
             clip_instance_properties,
             family_presets=allowed_family_presets
 
         )
 
-    def _create_otio_instance(self, subset_name, data, pre_create_data):
-        # get path of sequence
-        file_path_data = pre_create_data["sequence_filepath_data"]
-        media_path_data = pre_create_data["media_filepaths_data"]
+        # create otio editorial instance
+        self._create_otio_instance(
+            subset_name, instance_data,
+            sequence_path, media_path,
+            otio_timeline
+        )
 
-        file_path = self._get_path_from_file_data(file_path_data)
-        media_path = self._get_path_from_file_data(media_path_data)
-
-        # get editorial sequence file into otio timeline object
-        extension = os.path.splitext(file_path)[1]
-        kwargs = {}
-        if extension == ".edl":
-            # EDL has no frame rate embedded so needs explicit
-            # frame rate else 24 is asssumed.
-            kwargs["rate"] = data["fps"]
-
-        self.log.info(f"kwargs: {kwargs}")
-        otio_timeline = otio.adapters.read_from_file(
-            file_path, **kwargs)
-
+    def _create_otio_instance(
+        self,
+        subset_name,
+        data,
+        sequence_path,
+        media_path,
+        otio_timeline
+    ):
         # Pass precreate data to creator attributes
         data.update({
-            "sequenceFilePath": file_path,
+            "sequenceFilePath": sequence_path,
             "editorialSourcePath": media_path,
             "otioTimeline": otio.adapters.write_to_string(otio_timeline)
         })
 
         self._create_instance(self.family, subset_name, data)
 
-        return otio_timeline
+    def _create_otio_timeline(self, sequence_path, fps):
+        # get editorial sequence file into otio timeline object
+        extension = os.path.splitext(sequence_path)[1]
+
+        kwargs = {}
+        if extension == ".edl":
+            # EDL has no frame rate embedded so needs explicit
+            # frame rate else 24 is asssumed.
+            kwargs["rate"] = fps
+
+        self.log.info(f"kwargs: {kwargs}")
+        return otio.adapters.read_from_file(sequence_path, **kwargs)
 
     def _get_path_from_file_data(self, file_path_data):
         # TODO: just temporarly solving only one media file
@@ -275,6 +293,7 @@ or updating already created. Publishing will create OTIO file.
     def _get_clip_instances(
         self,
         otio_timeline,
+        media_path,
         clip_instance_properties,
         family_presets
     ):
@@ -283,6 +302,9 @@ or updating already created. Publishing will create OTIO file.
         tracks = otio_timeline.each_child(
             descended_from_type=otio.schema.Track
         )
+
+        # media data for audio sream and reference solving
+        media_data = self._get_media_source_metadata(media_path)
 
         for track in tracks:
             self.log.debug(f"track.name: {track.name}")
@@ -298,9 +320,14 @@ or updating already created. Publishing will create OTIO file.
             self.log.debug(f"track_start_frame: {track_start_frame}")
 
             for clip in track.each_child():
-
                 if not self._validate_clip_for_processing(clip):
                     continue
+
+                # get available frames info to clip data
+                self._create_otio_reference(clip, media_path, media_data)
+
+                # convert timeline range to source range
+                self._restore_otio_source_range(clip)
 
                 base_instance_data = self._get_base_instance_data(
                     clip,
@@ -325,6 +352,68 @@ or updating already created. Publishing will create OTIO file.
                         parenting_data
                     )
                     self.log.debug(f"{pformat(dict(instance.data))}")
+
+    def _restore_otio_source_range(self, otio_clip):
+        otio_clip.source_range = otio_clip.range_in_parent()
+
+    def _create_otio_reference(
+        self,
+        otio_clip,
+        media_path,
+        media_data
+    ):
+        start_frame = media_data["start_frame"]
+        frame_duration = media_data["duration"]
+        fps = media_data["fps"]
+
+        available_range = otio.opentime.TimeRange(
+            start_time=otio.opentime.RationalTime(
+                start_frame, fps),
+            duration=otio.opentime.RationalTime(
+                frame_duration, fps)
+        )
+        # in case old OTIO or video file create `ExternalReference`
+        media_reference = otio.schema.ExternalReference(
+            target_url=media_path,
+            available_range=available_range
+        )
+
+        otio_clip.media_reference = media_reference
+
+    def _get_media_source_metadata(self, full_input_path_single_file):
+        return_data = {}
+
+        try:
+            media_data = get_ffprobe_data(
+                full_input_path_single_file, self.log
+            )
+            self.log.debug(f"__ media_data: {pformat(media_data)}")
+
+            # get video stream data
+            video_stream = media_data["streams"][0]
+            return_data = {
+                "video": True,
+                "start_frame": 0,
+                "duration": int(video_stream["nb_frames"]),
+                "fps": float(video_stream["r_frame_rate"][:-2])
+            }
+
+            # get audio  streams data
+            audio_stream = [
+                stream for stream in media_data["streams"]
+                if stream["codec_type"] == "audio"
+            ]
+
+            if audio_stream:
+                return_data["audio"] = True
+
+        except Exception as exc:
+            raise AssertionError((
+                "FFprobe couldn't read information about input file: "
+                f"\"{full_input_path_single_file}\". Error message: {exc}"
+            ))
+
+        return return_data
 
     def _make_subset_instance(
         self,
@@ -355,7 +444,7 @@ or updating already created. Publishing will create OTIO file.
         else:
             # add review family if defined
             future_instance_data.update({
-                "filterExt": _fpreset["filter_ext"],
+                "outputFileType": _fpreset["output_file_type"],
                 "parent_instance_id": parenting_data["instance_id"],
                 "creator_attributes": {
                     "parent_instance": parenting_data["instance_label"]
