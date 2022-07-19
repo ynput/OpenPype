@@ -64,10 +64,7 @@ class BatchMovCreator(TrayPublishCreator):
             # Create new instance
             new_instance = CreatedInstance(self.family, subset_name,
                                            instance_data, self)
-            # Host implementation of storing metadata about instance
-            pipeline.HostContext.add_instance(new_instance.data_to_store())
-            # Add instance to current context
-            self._add_instance_to_context(new_instance)
+            self._store_new_instance(new_instance)
 
     def get_asset_doc_from_file_name(self, source_filename, project_name):
         """Try to parse out asset name from file name provided.
