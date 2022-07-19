@@ -172,9 +172,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     ]
     skip_host_families = []
 
-    # Attributes set by settings
-    template_name_profiles = None
-
     def process(self, instance):
         if self._temp_skip_instance_by_settings(instance):
             return
@@ -807,13 +804,33 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         """Return anatomy template name to use for integration"""
         # Define publish template name from profiles
         filter_criteria = self.get_profile_filter_criteria(instance)
-        profile = filter_profiles(self.template_name_profiles,
-                                  filter_criteria,
-                                  logger=self.log)
+        template_name_profiles = self._get_template_name_profiles(instance)
+        profile = filter_profiles(
+            template_name_profiles,
+            filter_criteria,
+            logger=self.log
+        )
+
         if profile:
             return profile["template_name"]
-        else:
-            return self.default_template_name
+        return self.default_template_name
+
+    def _get_template_name_profiles(self, instance):
+        """Receive profiles for publish template keys.
+
+        Reuse template name profiles from legacy integrator. Goal is to move
+        the profile settings out of plugin settings but until that happens we
+        want to be able set it at one place and don't break backwards
+        compatibility (more then once).
+        """
+
+        return (
+            instance.context["project_settings"]
+            ["global"]
+            ["publish"]
+            ["IntegrateAssetNew"]
+            ["template_name_profiles"]
+        )
 
     def get_profile_filter_criteria(self, instance):
         """Return filter criteria for `filter_profiles`"""
