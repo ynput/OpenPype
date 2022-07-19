@@ -181,7 +181,7 @@ def update_op_assets(
             # Find root folder docs
             root_folder_docs = get_assets(
                 project_name,
-                asset_name=[entity_parent_folders[-1]],
+                asset_names=[entity_parent_folders[-1]],
                 fields=["_id", "data.root_of"]
             )
             # NOTE: Not sure why it's checking for entity type?
@@ -221,6 +221,14 @@ def update_op_assets(
             parent_entity = parent_doc["data"]["zou"]
             parent_zou_id = parent_entity["parent_id"]
 
+        # Item name
+        if item_type == "Asset":
+            item_name = item_doc["name"]
+        elif item_type == "Shot":  
+            # Name with parents hierarchy "({episode}_){sequence}_{shot}"
+            # to avoid duplicate name issue
+            item_name = "_".join(item_data["parents"] + [item_doc["name"]])
+
         # Set root folders parents
         item_data["parents"] = entity_parent_folders + item_data["parents"]
 
@@ -234,7 +242,7 @@ def update_op_assets(
                     item_doc["_id"],
                     {
                         "$set": {
-                            "name": item["name"],
+                            "name": item_name,
                             "data": item_data,
                             "parent": asset_doc_ids[item["project_id"]]["_id"],
                         }
