@@ -32,12 +32,11 @@ class CollectMovBatch(
             "name": ext[1:],
             "ext": ext[1:],
             "files": file_name,
-            "stagingDir": os.path.dirname(file_url)
+            "stagingDir": os.path.dirname(file_url),
+            "tags": []
         }
 
         if creator_attributes["add_review_family"]:
-            if not repre.get("tags"):
-                repre["tags"] = []
             repre["tags"].append("review")
             instance.data["families"].append("review")
 
