@@ -1,0 +1,10 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "cinema4d",
+    "label": "Cinema4D",
+    "is_file": true,
+    "children": [
+       
+    ]
+}
