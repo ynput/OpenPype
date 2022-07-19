@@ -4,7 +4,7 @@ import pyblish.api
 from openpype.pipeline import OpenPypePyblishPluginMixin
 
 
-class CollectMovBatch(
+class CollectMovieBatch(
     pyblish.api.InstancePlugin, OpenPypePyblishPluginMixin
 ):
     """Collect file url for batch mov and create representation.
@@ -19,7 +19,7 @@ class CollectMovBatch(
     hosts = ["traypublisher"]
 
     def process(self, instance):
-        if instance.data.get("creator_identifier") != "render_mov_batch":
+        if instance.data.get("creator_identifier") != "render_movie_batch":
             return
 
         creator_attributes = instance.data["creator_attributes"]

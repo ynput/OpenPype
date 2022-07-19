@@ -87,8 +87,8 @@
          {
             "type": "dict",
             "collapsible": true,
-            "key": "BatchMovCreator",
-            "label": "Batch Mov Creator",
+            "key": "BatchMovieCreator",
+            "label": "Batch Movie Creator",
             "use_label_wrap": true,
             "collapsible_key": true,
             "children": [

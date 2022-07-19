@@ -18,21 +18,25 @@ from openpype.pipeline import (
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
 
 
-class BatchMovCreator(TrayPublishCreator):
-    """Creates instances from .mov file(s)."""
-    identifier = "render_mov_batch"
-    label = "Batch Mov"
+class BatchMovieCreator(TrayPublishCreator):
+    """Creates instances from movie file(s).
+
+    Intended for .mov files, but should work for any video file.
+    Doesn't handle image sequences though.
+    """
+    identifier = "render_movie_batch"
+    label = "Batch Movies"
     family = "render"
-    description = "Publish batch of movs"
+    description = "Publish batch of video files"
 
     create_allow_context_change = False
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
 
     def __init__(self, project_settings, *args, **kwargs):
-        super(BatchMovCreator, self).__init__(project_settings,
+        super(BatchMovieCreator, self).__init__(project_settings,
                                               *args, **kwargs)
         creator_settings = (
-            project_settings["traypublisher"]["BatchMovCreator"]
+            project_settings["traypublisher"]["BatchMovieCreator"]
         )
         self.default_variants = creator_settings["default_variants"]
         self.default_tasks = creator_settings["default_tasks"]
