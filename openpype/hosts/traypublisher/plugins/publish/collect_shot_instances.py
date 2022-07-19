@@ -15,12 +15,16 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
     SHARED_KEYS = [
         "asset",
         "fps",
+        "handleStart",
+        "handleEnd",
         "frameStart",
         "frameEnd",
         "clipIn",
         "clipOut",
         "sourceIn",
-        "sourceOut"
+        "sourceOut",
+        "otioClip",
+        "workfileFrameStart"
     ]
 
     def process(self, instance):
