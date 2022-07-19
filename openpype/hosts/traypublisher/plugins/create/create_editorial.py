@@ -91,6 +91,15 @@ class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
 
         return new_instance
 
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef(
+                "add_review_family",
+                default=True,
+                label="Review"
+            )
+        ]
+
 
 class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
     identifier = "editorial_shot"
@@ -113,7 +122,6 @@ class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
         ]
         attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
-
 
 class EditorialPlateInstanceCreator(EditorialClipInstanceCreatorBase):
     identifier = "editorial_plate"
@@ -345,6 +353,13 @@ or updating already created. Publishing will create OTIO file.
                 ))
 
                 for _fpreset in family_presets:
+                    # exclude audio family if no audio stream
+                    if (
+                        _fpreset["family"] == "audio"
+                        and not media_data.get("audio")
+                    ):
+                        continue
+
                     instance = self._make_subset_instance(
                         clip,
                         _fpreset,
@@ -447,12 +462,8 @@ or updating already created. Publishing will create OTIO file.
                 "outputFileType": _fpreset["output_file_type"],
                 "parent_instance_id": parenting_data["instance_id"],
                 "creator_attributes": {
-                    "parent_instance": parenting_data["instance_label"]
-                },
-                "publish_attributes": {
-                    "CollectReviewFamily": {
-                        "add_review_family": _fpreset.get("review")
-                    }
+                    "parent_instance": parenting_data["instance_label"],
+                    "add_review_family": _fpreset.get("review")
                 }
             })
 
