@@ -256,10 +256,14 @@
                                                 "default": true
                                             },
                                             {
-                                                "type": "list",
-                                                "key": "filter_ext",
-                                                "label": "Allowed input file types",
-                                                "object_type": "text"
+                                                "type": "enum",
+                                                "key": "output_file_type",
+                                                "label": "Integrating file type",
+                                                "enum_items": [
+                                                    {".mp4": "MP4"},
+                                                    {".mov": "MOV"},
+                                                    {".wav": "WAV"}
+                                                ]
                                             }
                                         ]
                                     }

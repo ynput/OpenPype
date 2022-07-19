@@ -276,27 +276,19 @@
                     "family": "review",
                     "variant": "Reference",
                     "review": true,
-                    "filter_ext": [
-                        "mov",
-                        "mp4"
-                    ]
+                    "output_file_type": ".mp4"
                 },
                 {
                     "family": "plate",
                     "variant": "",
                     "review": false,
-                    "filter_ext": [
-                        "mov",
-                        "mp4"
-                    ]
+                    "output_file_type": ".mov"
                 },
                 {
                     "family": "audio",
                     "variant": "",
                     "review": false,
-                    "filter_ext": [
-                        "wav"
-                    ]
+                    "output_file_type": ".wav"
                 }
             ]
         }
