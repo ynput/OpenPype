@@ -1,5 +1,5 @@
 from openpype.lib.attribute_definitions import FileDef
-from openpype.pipeline import (
+from openpype.pipeline.create import (
     Creator,
     HiddenCreator,
     CreatedInstance
