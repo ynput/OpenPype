@@ -124,6 +124,11 @@
                 "Project Manager"
             ],
             "cycle_enabled": false,
+            "cycle_hour_start": [
+                0,
+                0,
+                0
+            ],
             "review_session_template": "{yy}{mm}{dd}"
         }
     },
