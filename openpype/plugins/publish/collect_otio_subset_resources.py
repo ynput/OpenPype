@@ -23,7 +23,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     label = "Collect OTIO Subset Resources"
     order = pyblish.api.CollectorOrder - 0.077
     families = ["clip"]
-    hosts = ["resolve", "hiero", "flame"]
+    hosts = ["resolve", "hiero", "flame", "traypublisher"]
 
     def process(self, instance):
 
@@ -198,7 +198,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
 
         if kwargs.get("collection"):
             collection = kwargs.get("collection")
-            files = [f for f in collection]
+            files = list(collection)
             ext = collection.format("{tail}")
             representation_data.update({
                 "name": ext[1:],
@@ -220,7 +220,5 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             })
 
         if kwargs.get("trim") is True:
-            representation_data.update({
-                "tags": ["trim"]
-            })
+            representation_data["tags"] = ["trim"]
         return representation_data
