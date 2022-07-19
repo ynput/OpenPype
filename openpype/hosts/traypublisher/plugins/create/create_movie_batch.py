@@ -3,7 +3,6 @@ import os
 import re
 
 from openpype.client import get_assets, get_asset_by_name
-from openpype.hosts.traypublisher.api import pipeline
 from openpype.lib import (
     FileDef,
     BoolDef,
@@ -34,7 +33,7 @@ class BatchMovieCreator(TrayPublishCreator):
 
     def __init__(self, project_settings, *args, **kwargs):
         super(BatchMovieCreator, self).__init__(project_settings,
-                                              *args, **kwargs)
+                                                *args, **kwargs)
         creator_settings = (
             project_settings["traypublisher"]["BatchMovieCreator"]
         )
