@@ -171,10 +171,6 @@
             ]
         },
         "IntegrateAssetNew": {
-            "hosts": [
-            ],
-            "families": [
-            ],
             "template_name_profiles": [
                 {
                     "families": [],
@@ -220,120 +216,7 @@
             ]
         },
         "IntegrateAsset": {
-            "hosts": [
-                "maya",
-                "aftereffects",
-                "blender",
-                "celaction",
-                "flame",
-                "fusion",
-                "harmony",
-                "hiero",
-                "houdini",
-                "nuke",
-                "photoshop",
-                "resolve",
-                "tvpaint",
-                "unreal",
-                "standalonepublisher",
-                "webpublisher"
-            ],
-            "families": [
-                "workfile",
-                "pointcache",
-                "camera",
-                "animation",
-                "model",
-                "mayaAscii",
-                "mayaScene",
-                "setdress",
-                "layout",
-                "ass",
-                "vdbcache",
-                "scene",
-                "vrayproxy",
-                "vrayscene_layer",
-                "render",
-                "prerender",
-                "imagesequence",
-                "review",
-                "rendersetup",
-                "rig",
-                "plate",
-                "look",
-                "audio",
-                "yetiRig",
-                "yeticache",
-                "nukenodes",
-                "gizmo",
-                "source",
-                "matchmove",
-                "image",
-                "assembly",
-                "fbx",
-                "textures",
-                "action",
-                "harmony.template",
-                "harmony.palette",
-                "editorial",
-                "background",
-                "camerarig",
-                "redshiftproxy",
-                "effect",
-                "xgen",
-                "hda",
-                "usd",
-                "staticMesh",
-                "skeletalMesh",
-                "mvLook",
-                "mvUsd",
-                "mvUsdComposition",
-                "mvUsdOverride",
-                "simpleUnrealTexture"
-            ],
-            "template_name_profiles": [
-                {
-                    "families": [],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "publish"
-                },
-                {
-                    "families": [
-                        "review",
-                        "render",
-                        "prerender"
-                    ],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "render"
-                },
-                {
-                    "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "simpleUnrealTexture"
-                },
-                {
-                    "families": [
-                        "staticMesh",
-                        "skeletalMesh"
-                    ],
-                    "hosts": [
-                        "maya"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "maya2unreal"
-                }
-            ]
+            "skip_host_families": []
         },
         "IntegrateHeroVersion": {
             "enabled": true,
