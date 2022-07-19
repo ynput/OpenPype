@@ -825,7 +825,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         """
 
         return (
-            instance.context["project_settings"]
+            instance.context.data["project_settings"]
             ["global"]
             ["publish"]
             ["IntegrateAssetNew"]
@@ -845,7 +845,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "families": anatomy_data["family"],
             "tasks": task.get("name"),
             "task_types": task.get("type"),
-            "hosts": instance.context["hostName"],
+            "hosts": instance.context.data["hostName"],
         }
 
     def get_rootless_path(self, anatomy, path):
