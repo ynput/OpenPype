@@ -342,7 +342,7 @@ def run_disk_mapping_commands(settings):
         source = source.rstrip('/')
 
         if low_platform == "darwin":
-            scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'
+            scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'  # noqa
 
             args = ["osascript", "-e", scr]
         elif low_platform == "windows":
@@ -359,7 +359,8 @@ def run_disk_mapping_commands(settings):
 
                     raise RuntimeError(exc_msg)
         except TypeError as exc:
-            _print(f"Error {str(exc)} in mapping drive {source}, {destination}")
+            _print(
+                f"Error {str(exc)} in mapping drive {source}, {destination}")
             raise
 
 

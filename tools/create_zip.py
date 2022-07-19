@@ -5,7 +5,6 @@ import click
 import enlighten
 import blessed
 from pathlib2 import Path
-import os
 
 
 term = blessed.Terminal()

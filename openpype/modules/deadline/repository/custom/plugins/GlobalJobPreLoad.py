@@ -81,8 +81,10 @@ def inject_openpype_environment(deadlinePlugin):
             # create list of executables for different platform and let
             # Deadline decide.
             exe_list = [
-                os.path.join(compatible_versions[-1][1], "openpype_console.exe"),
-                os.path.join(compatible_versions[-1][1], "openpype_console")
+                os.path.join(
+                    compatible_versions[-1][1], "openpype_console.exe"),
+                os.path.join(
+                    compatible_versions[-1][1], "openpype_console")
             ]
             exe = FileUtils.SearchFileList(exe_list)
         if exe == "":

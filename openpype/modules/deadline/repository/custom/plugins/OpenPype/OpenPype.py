@@ -80,7 +80,10 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
             if dir:
-                sub_dirs = [f.path for f in os.scandir(install_dir) if f.is_dir()]
+                sub_dirs = [
+                    f.path for f in os.scandir(install_dir)
+                    if f.is_dir()
+                ]
                 for subdir in sub_dirs:
                     version = self.get_openpype_version_from_path(subdir)
                     openpype_versions.append((version, subdir))
@@ -111,8 +114,10 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             # create list of executables for different platform and let
             # Deadline decide.
             exe_list = [
-                os.path.join(compatible_versions[-1][1], "openpype_console.exe"),
-                os.path.join(compatible_versions[-1][1], "openpype_console")
+                os.path.join(
+                    compatible_versions[-1][1], "openpype_console.exe"),
+                os.path.join(
+                    compatible_versions[-1][1], "openpype_console")
             ]
             exe = FileUtils.SearchFileList(exe_list)
 
