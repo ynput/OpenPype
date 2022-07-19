@@ -14,7 +14,7 @@ from openpype.client import (
     get_project,
     get_assets,
     get_asset_by_id,
-    get_asset_by_name
+    get_asset_by_name,
 )
 from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
@@ -182,7 +182,7 @@ def update_op_assets(
             root_folder_docs = get_assets(
                 project_name,
                 asset_names=[entity_parent_folders[-1]],
-                fields=["_id", "data.root_of"]
+                fields=["_id", "data.root_of"],
             )
             # NOTE: Not sure why it's checking for entity type?
             #   OP3 does not support multiple assets with same names so type
@@ -224,7 +224,7 @@ def update_op_assets(
         # Item name
         if item_type == "Asset":
             item_name = item_doc["name"]
-        elif item_type == "Shot":  
+        elif item_type == "Shot":
             # Name with parents hierarchy "({episode}_){sequence}_{shot}"
             # to avoid duplicate name issue
             item_name = "_".join(item_data["parents"] + [item_doc["name"]])
