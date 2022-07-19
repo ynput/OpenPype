@@ -7,13 +7,13 @@ from openpype.pipeline import OpenPypePyblishPluginMixin
 class CollectMovieBatch(
     pyblish.api.InstancePlugin, OpenPypePyblishPluginMixin
 ):
-    """Collect file url for batch mov and create representation.
+    """Collect file url for batch movies and create representation.
 
     Adds review on instance and to repre.tags based on value of toggle button
     on creator.
     """
 
-    label = "Collect Mov Batch Files"
+    label = "Collect Movie Batch Files"
     order = pyblish.api.CollectorOrder
 
     hosts = ["traypublisher"]

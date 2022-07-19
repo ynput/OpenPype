@@ -89,9 +89,12 @@
             "collapsible": true,
             "key": "BatchMovieCreator",
             "label": "Batch Movie Creator",
-            "use_label_wrap": true,
             "collapsible_key": true,
             "children": [
+                {
+                    "type": "label",
+                    "label": "Allows to publish multiple video files in one go. <br />Name of matching asset is parsed from file names ('asset.mov', 'asset_v001.mov', 'my_asset_to_publish.mov')"
+                },
                 {
                     "type": "list",
                     "key": "default_variants",
