@@ -37,18 +37,22 @@ class IntegrateSubsetGroup(pyblish.api.InstancePlugin):
         if not self.subset_grouping_profiles:
             return
 
-        # Skip if there is no matching profile
-        filter_criteria = self.get_profile_filter_criteria(instance)
-        profile = filter_profiles(self.subset_grouping_profiles,
-                                  filter_criteria,
-                                  logger=self.log)
-        if not profile:
-            return
-
         if instance.data.get("subsetGroup"):
             # If subsetGroup is already set then allow that value to remain
-            self.log.debug("Skipping collect subset group due to existing "
-                           "value: {}".format(instance.data["subsetGroup"]))
+            self.log.debug((
+                "Skipping collect subset group due to existing value: {}"
+            ).format(instance.data["subsetGroup"]))
+            return
+
+        # Skip if there is no matching profile
+        filter_criteria = self.get_profile_filter_criteria(instance)
+        profile = filter_profiles(
+            self.subset_grouping_profiles,
+            filter_criteria,
+            logger=self.log
+        )
+
+        if not profile:
             return
 
         template = profile["template"]
@@ -68,9 +72,9 @@ class IntegrateSubsetGroup(pyblish.api.InstancePlugin):
             )
         except (KeyError, TemplateUnsolved):
             keys = fill_pairs.keys()
-            msg = "Subset grouping failed. " \
-                  "Only {} are expected in Settings".format(','.join(keys))
-            self.log.warning(msg)
+            self.log.warning((
+                "Subset grouping failed. Only {} are expected in Settings"
+            ).format(','.join(keys)))
 
         if filled_template:
             instance.data["subsetGroup"] = filled_template
