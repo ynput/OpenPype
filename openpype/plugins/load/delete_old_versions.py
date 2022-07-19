@@ -4,14 +4,14 @@ import uuid
 
 import clique
 from pymongo import UpdateOne
-import ftrack_api
 import qargparse
 from Qt import QtWidgets, QtCore
 
+from openpype.client import get_versions, get_representations
 from openpype import style
-from openpype.pipeline import load, AvalonMongoDB
+from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.lib import StringTemplate
-from openpype.api import Anatomy
+from openpype.modules import ModulesManager
 
 
 class DeleteOldVersions(load.SubsetLoaderPlugin):
@@ -198,18 +198,10 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
     def get_data(self, context, versions_count):
         subset = context["subset"]
         asset = context["asset"]
-        anatomy = Anatomy(context["project"]["name"])
+        project_name = context["project"]["name"]
+        anatomy = Anatomy(project_name)
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.Session["AVALON_PROJECT"] = context["project"]["name"]
-        self.dbcon.install()
-
-        versions = list(
-            self.dbcon.find({
-                "type": "version",
-                "parent": {"$in": [subset["_id"]]}
-            })
-        )
+        versions = list(get_versions(project_name, subset_ids=[subset["_id"]]))
 
         versions_by_parent = collections.defaultdict(list)
         for ent in versions:
@@ -268,10 +260,9 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             print(msg)
             return
 
-        repres = list(self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        }))
+        repres = list(get_representations(
+            project_name, version_ids=version_ids
+        ))
 
         self.log.debug(
             "Collected representations to remove ({})".format(len(repres))
@@ -330,7 +321,7 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
         return data
 
-    def main(self, data, remove_publish_folder):
+    def main(self, project_name, data, remove_publish_folder):
         # Size of files.
         size = 0
         if not data:
@@ -367,30 +358,70 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             ))
 
         if mongo_changes_bulk:
-            self.dbcon.bulk_write(mongo_changes_bulk)
+            dbcon = AvalonMongoDB()
+            dbcon.Session["AVALON_PROJECT"] = project_name
+            dbcon.install()
+            dbcon.bulk_write(mongo_changes_bulk)
+            dbcon.uninstall()
 
-        self.dbcon.uninstall()
+        self._ftrack_delete_versions(data)
+
+        return size
+
+    def _ftrack_delete_versions(self, data):
+        """Delete version on ftrack.
+
+        Handling of ftrack logic in this plugin is not ideal. But in OP3 it is
+        almost impossible to solve the issue other way.
+
+        Note:
+            Asset versions on ftrack are not deleted but marked as
+                "not published" which cause that they're invisible.
+
+        Args:
+            data (dict): Data sent to subset loader with full context.
+        """
+
+        # First check for ftrack id on asset document
+        #   - skip if ther is none
+        asset_ftrack_id = data["asset"]["data"].get("ftrackId")
+        if not asset_ftrack_id:
+            self.log.info((
+                "Asset does not have filled ftrack id. Skipped delete"
+                " of ftrack version."
+            ))
+            return
+
+        # Check if ftrack module is enabled
+        modules_manager = ModulesManager()
+        ftrack_module = modules_manager.modules_by_name.get("ftrack")
+        if not ftrack_module or not ftrack_module.enabled:
+            return
+
+        import ftrack_api
+
+        session = ftrack_api.Session()
+        subset_name = data["subset"]["name"]
+        versions = {
+            '"{}"'.format(version_doc["name"])
+            for version_doc in data["versions"]
+        }
+        asset_versions = session.query(
+            (
+                "select id, is_published from AssetVersion where"
+                " asset.parent.id is \"{}\""
+                " and asset.name is \"{}\""
+                " and version in ({})"
+            ).format(
+                asset_ftrack_id,
+                subset_name,
+                ",".join(versions)
+            )
+        ).all()
 
         # Set attribute `is_published` to `False` on ftrack AssetVersions
-        session = ftrack_api.Session()
-        query = (
-            "AssetVersion where asset.parent.id is \"{}\""
-            " and asset.name is \"{}\""
-            " and version is \"{}\""
-        )
-        for v in data["versions"]:
-            try:
-                ftrack_version = session.query(
-                    query.format(
-                        data["asset"]["data"]["ftrackId"],
-                        data["subset"]["name"],
-                        v["name"]
-                    )
-                ).one()
-            except ftrack_api.exception.NoResultFoundError:
-                continue
-
-            ftrack_version["is_published"] = False
+        for asset_version in asset_versions:
+            asset_version["is_published"] = False
 
         try:
             session.commit()
@@ -402,8 +433,6 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             )
             self.log.error(msg)
             self.message(msg)
-
-        return size
 
     def load(self, contexts, name=None, namespace=None, options=None):
         try:
@@ -423,7 +452,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                 if not data:
                     continue
 
-                size += self.main(data, remove_publish_folder)
+                project_name = context["project"]["name"]
+                size += self.main(project_name, data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))
 
             msg = "Total size of files: " + self.sizeof_fmt(size)
@@ -449,7 +479,7 @@ class CalculateOldVersions(DeleteOldVersions):
         )
     ]
 
-    def main(self, data, remove_publish_folder):
+    def main(self, project_name, data, remove_publish_folder):
         size = 0
 
         if not data:

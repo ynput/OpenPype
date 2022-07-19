@@ -10,6 +10,7 @@ from collections import OrderedDict
 import clique
 
 import nuke
+from Qt import QtCore, QtWidgets
 
 from openpype.client import (
     get_project,
@@ -20,21 +21,24 @@ from openpype.client import (
 )
 from openpype.api import (
     Logger,
-    Anatomy,
     BuildWorkfile,
     get_version_from_path,
-    get_anatomy_settings,
     get_workdir_data,
     get_asset,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
+from openpype.lib import env_value_to_bool
 from openpype.lib.path_tools import HostDirmap
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_anatomy_settings,
+)
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
+    Anatomy,
 )
 
 from . import gizmo_menu
@@ -61,7 +65,10 @@ class Context:
     main_window = None
     context_label = None
     project_name = os.getenv("AVALON_PROJECT")
+    # Workfile related code
     workfiles_launched = False
+    workfiles_tool_timer = None
+
     # Seems unused
     _project_doc = None
 
@@ -2382,12 +2389,19 @@ def select_nodes(nodes):
 
 
 def launch_workfiles_app():
-    '''Function letting start workfiles after start of host
-    '''
-    from openpype.lib import (
-        env_value_to_bool
-    )
-    from .pipeline import get_main_window
+    """Show workfiles tool on nuke launch.
+
+    Trigger to show workfiles tool on application launch. Can be executed only
+    once all other calls are ignored.
+
+    Workfiles tool show is deffered after application initialization using
+    QTimer.
+    """
+
+    if Context.workfiles_launched:
+        return
+
+    Context.workfiles_launched = True
 
     # get all imortant settings
     open_at_start = env_value_to_bool(
@@ -2398,10 +2412,38 @@ def launch_workfiles_app():
     if not open_at_start:
         return
 
-    if not Context.workfiles_launched:
-        Context.workfiles_launched = True
-        main_window = get_main_window()
-        host_tools.show_workfiles(parent=main_window)
+    # Show workfiles tool using timer
+    # - this will be probably triggered during initialization in that case
+    #   the application is not be able to show uis so it must be
+    #   deffered using timer
+    # - timer should be processed when initialization ends
+    #       When applications starts to process events.
+    timer = QtCore.QTimer()
+    timer.timeout.connect(_launch_workfile_app)
+    timer.setInterval(100)
+    Context.workfiles_tool_timer = timer
+    timer.start()
+
+
+def _launch_workfile_app():
+    # Safeguard to not show window when application is still starting up
+    #   or is already closing down.
+    closing_down = QtWidgets.QApplication.closingDown()
+    starting_up = QtWidgets.QApplication.startingUp()
+
+    # Stop the timer if application finished start up of is closing down
+    if closing_down or not starting_up:
+        Context.workfiles_tool_timer.stop()
+        Context.workfiles_tool_timer = None
+
+    # Skip if application is starting up or closing down
+    if starting_up or closing_down:
+        return
+
+    from .pipeline import get_main_window
+
+    main_window = get_main_window()
+    host_tools.show_workfiles(parent=main_window)
 
 
 def process_workfile_builder():

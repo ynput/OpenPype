@@ -19,10 +19,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     label = "Extract Thumbnail"
     order = pyblish.api.ExtractorOrder
     families = [
-        "imagesequence", "render", "render2d",
+        "imagesequence", "render", "render2d", "prerender",
         "source", "plate", "take"
     ]
-    hosts = ["shell", "fusion", "resolve"]
+    hosts = ["shell", "fusion", "resolve", "traypublisher"]
     enabled = False
 
     # presetable attribute
@@ -44,6 +44,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # Skip if review not set.
         if not instance.data.get("review", True):
             self.log.info("Skipping - no review set on instance.")
+            return
+
+        if self._already_has_thumbnail(instance):
+            self.log.info("Thumbnail representation already present.")
             return
 
         filtered_repres = self._get_filtered_repres(instance)
@@ -71,18 +75,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if not is_oiio_supported():
                 thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
             else:
-                # Check if the file can be read by OIIO
-                oiio_tool_path = get_oiio_tools_path()
-                args = [
-                    oiio_tool_path, "--info", "-i", full_output_path
-                ]
-                returncode = execute(args, silent=True)
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                if returncode == 0:
-                    self.log.info("Input can be read by OIIO, converting with oiiotool now.")   # noqa
-                    thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
-                else:
+                self.log.info("Trying to convert with OIIO")   # noqa
+                thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
+
+                if not thumbnail_created:
                     self.log.info("Converting with FFMPEG because input can't be read by OIIO.")    # noqa
                     thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
 
@@ -107,6 +105,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             instance.data["representations"].append(new_repre)
             # There is no need to create more then one thumbnail
             break
+
+    def _already_has_thumbnail(self, instance):
+        for repre in instance.data.get("representations", []):
+            self.log.info("repre {}".format(repre))
+            if repre["name"] == "thumbnail":
+                return True
+
+        return False
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []

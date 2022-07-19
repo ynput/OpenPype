@@ -10,6 +10,7 @@ Provides:
 
 import pyblish.api
 
+from openpype.client import get_project, get_asset_by_name
 from openpype.pipeline import legacy_io
 
 
@@ -25,10 +26,7 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         asset_name = legacy_io.Session["AVALON_ASSET"]
         task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_entity = legacy_io.find_one({
-            "type": "project",
-            "name": project_name
-        })
+        project_entity = get_project(project_name)
         assert project_entity, (
             "Project '{0}' was not found."
         ).format(project_name)
@@ -39,11 +37,8 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         if not asset_name:
             self.log.info("Context is not set. Can't collect global data.")
             return
-        asset_entity = legacy_io.find_one({
-            "type": "asset",
-            "name": asset_name,
-            "parent": project_entity["_id"]
-        })
+
+        asset_entity = get_asset_by_name(project_name, asset_name)
         assert asset_entity, (
             "No asset found by the name '{0}' in project '{1}'"
         ).format(asset_name, project_name)

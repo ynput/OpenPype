@@ -1,5 +1,15 @@
+from abc import ABCMeta
+from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 from openpype.lib import BoolDef
 from .lib import load_help_content_from_plugin
+
+
+class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
+    pass
+
+
+class AbstractMetaContextPlugin(ABCMeta, ExplicitMetaPlugin):
+    pass
 
 
 class PublishValidationError(Exception):
@@ -16,6 +26,7 @@ class PublishValidationError(Exception):
         description(str): Detailed description of an error. It is possible
             to use Markdown syntax.
     """
+
     def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
         self.title = title or "< Missing title >"
@@ -49,6 +60,7 @@ class KnownPublishError(Exception):
 
     Message will be shown in UI for artist.
     """
+
     pass
 
 
@@ -92,6 +104,7 @@ class OpenPypePyblishPluginMixin:
         Returns:
             list<AbtractAttrDef>: Attribute definitions for plugin.
         """
+
         return []
 
     @classmethod
@@ -116,6 +129,7 @@ class OpenPypePyblishPluginMixin:
         Args:
             data(dict): Data from instance or context.
         """
+
         return (
             data
             .get("publish_attributes", {})
