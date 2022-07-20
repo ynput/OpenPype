@@ -55,8 +55,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
             group = allGroups.pop(0)
             for node in group.nodes():
                 if "builder_type" in node.knobs().keys() and (
-                    'is_placeholder' not in node.knobs().keys()
-                        or 'is_placeholder' in node.knobs().keys()
+                   'is_placeholder' in node.knobs().keys()
                         and node.knob('is_placeholder').value()):
                     if 'empty' in node.knobs().keys()\
                             and node.knob('empty').value():
@@ -74,6 +73,9 @@ class NukeTemplateLoader(AbstractTemplateLoader):
         for n in nuke.allNodes():
             if 'id_rep' in n.knobs().keys():
                 nodes_byId[n.knob('id_rep').getValue()] += [n.name()]
+            if 'empty' in n.knobs().keys():
+                n.removeKnob(n.knob('empty'))
+                imprint(n, {"empty": False})
         for s in nodes_byId.values():
             n = None
             for name in s:
@@ -112,8 +114,9 @@ class NukeTemplateLoader(AbstractTemplateLoader):
     def delete_placeholder(self, placeholder):
         node = placeholder.data['node']
         lastLoaded = placeholder.data['last_loaded']
-        if 'delete' in placeholder.data.keys()\
-                and placeholder.data['delete'] is False:
+        if not placeholder.data['delete']:
+            if 'empty' in node.knobs().keys():
+                node.removeKnob(node.knob('empty'))
             imprint(node, {"empty": True})
         else:
             if lastLoaded:
@@ -172,7 +175,7 @@ class NukePlaceholder(AbstractPlaceholder):
         fullName = node.fullName()
         user_data['group_name'] = fullName.rpartition('.')[0]
         user_data['last_loaded'] = []
-
+        user_data['delete'] = False
         self.data = user_data
 
     def parent_in_hierarchy(self, containers):
@@ -414,8 +417,10 @@ class NukePlaceholder(AbstractPlaceholder):
         # getting the latest nodes added
         nodes_init = self.data["nodes_init"]
         nodes_loaded = list(set(nuke.allNodes()) - set(nodes_init))
-        if not nodes_loaded:
-            self.data['delete'] = False
+        print(nodes_loaded)
+        if nodes_loaded:
+            self.data['delete'] = True
+        else:
             return
         nodes_loaded = self.move_to_placeholder_group(nodes_loaded)
         self.data['last_loaded'] = nodes_loaded

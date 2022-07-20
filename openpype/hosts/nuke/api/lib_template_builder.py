@@ -84,10 +84,10 @@ def update_placeholder():
     placeholder = placeholder[0]
 
     args = placeholder_window(get_placeholder_attributes(placeholder))
-    # delete placeholder attributes
-    delete_placeholder_attributes(placeholder)
     if not args:
         return  # operation canceled
+    # delete placeholder attributes
+    delete_placeholder_attributes(placeholder)
 
     options = OrderedDict()
     for arg in args:

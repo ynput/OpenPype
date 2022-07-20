@@ -203,6 +203,15 @@ This video shows a way to publish shot look as effect from Hiero to Nuke.
 
 <iframe width="512px" height="288px" src="https://www.youtube.com/embed/5Wd6X-71vbg" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
+
+# Nuke Build Workfile
+This is a tool of Node Graph initialisation using a pre-created template.
+
+### Add a profile
+The path to the template that will be used in the initialisation must be added as a profile on Project Settings.
+
+![Create menu](assets/nuke_addProfile.png)
+
 ### Create Place Holder
 
 ![Create menu](assets/nuke_createPlaceHolder.png)
@@ -233,10 +242,7 @@ This tool alows the user to change the information provided in the extra attribu
 
 ![Create menu](assets/nuke_updatePlaceHolder.png)
 
-### Add a profile
-The path to the template we were working on must be added as a profile on Project Settings.
 
-![Create menu](assets/nuke_addProfile.png)
 
 ### Build Workfile from template
 This tool imports the template used and replaces the existed PlaceHolders with the corresponding published objects (which can contain Place Holders too). In case there is no published items with the description given, the place holder will remain in the node graph.
