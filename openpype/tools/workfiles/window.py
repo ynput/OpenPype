@@ -143,23 +143,19 @@ class SidePanelWidget(QtWidgets.QWidget):
         return self._workfile_doc, data
 
 
-class Window(QtWidgets.QMainWindow):
+class Window(QtWidgets.QWidget):
     """Work Files Window"""
     title = "Work Files"
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
         self.setWindowTitle(self.title)
-        window_flags = QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint
-        if not parent:
-            window_flags |= QtCore.Qt.WindowStaysOnTopHint
-        self.setWindowFlags(window_flags)
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
-        self.setCentralWidget(pages_widget)
 
         home_page_widget = QtWidgets.QWidget(pages_widget)
         home_body_widget = QtWidgets.QWidget(home_page_widget)
@@ -193,6 +189,9 @@ class Window(QtWidgets.QMainWindow):
         # Add top margin for tasks to align it visually with files as
         # the files widget has a filter field which tasks does not.
         tasks_widget.setContentsMargins(0, 32, 0, 0)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.addWidget(pages_widget, 1)
 
         # Set context after asset widget is refreshed
         # - to do so it is necessary to wait until refresh is done
