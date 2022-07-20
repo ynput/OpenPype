@@ -582,10 +582,7 @@ def get_workdir_with_workdir_data(
 
     anatomy_filled = anatomy.format(workdir_data)
     # Output is TemplateResult object which contain useful data
-    path = anatomy_filled[template_key]["folder"]
-    if path:
-        path = os.path.normpath(path)
-    return path
+    return anatomy_filled[template_key]["folder"]
 
 
 def get_workdir(
