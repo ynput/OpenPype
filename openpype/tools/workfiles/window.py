@@ -1,6 +1,6 @@
 import os
 import datetime
-from Qt import QtCore, QtWidgets
+from Qt import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
     get_asset_by_id,
@@ -8,6 +8,7 @@ from openpype.client import (
     get_workfile_info,
 )
 from openpype import style
+from openpype import resources
 from openpype.lib import (
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -153,6 +154,8 @@ class Window(QtWidgets.QMainWindow):
         if not parent:
             window_flags |= QtCore.Qt.WindowStaysOnTopHint
         self.setWindowFlags(window_flags)
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
