@@ -1,4 +1,5 @@
 import uuid
+import html
 from Qt import QtCore, QtGui
 
 import pyblish.api
@@ -45,7 +46,8 @@ class InstancesModel(QtGui.QStandardItemModel):
             all_removed = True
             for instance_item in instance_items:
                 item = QtGui.QStandardItem(instance_item.label)
-                item.setData(instance_item.label, ITEM_LABEL_ROLE)
+                instance_label = html.escape(instance_item.label)
+                item.setData(instance_label, ITEM_LABEL_ROLE)
                 item.setData(instance_item.errored, ITEM_ERRORED_ROLE)
                 item.setData(instance_item.id, ITEM_ID_ROLE)
                 item.setData(instance_item.removed, INSTANCE_REMOVED_ROLE)

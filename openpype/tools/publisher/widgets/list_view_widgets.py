@@ -23,6 +23,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 ```
 """
 import collections
+import html
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -113,7 +114,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance = instance
 
-        subset_name_label = QtWidgets.QLabel(instance.label, self)
+        instance_label = html.escape(instance.label)
+
+        subset_name_label = QtWidgets.QLabel(instance_label, self)
         subset_name_label.setObjectName("ListViewSubsetName")
 
         active_checkbox = NiceCheckbox(parent=self)
@@ -178,7 +181,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         # Check subset name
         label = self.instance.label
         if label != self._instance_label_widget.text():
-            self._instance_label_widget.setText(label)
+            self._instance_label_widget.setText(html.escape(label))
         # Check active state
         self.set_active(self.instance["active"])
         # Check valid states

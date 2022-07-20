@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.12.1" # OpenPype
+version = "3.12.2-nightly.2" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -135,7 +135,7 @@ hash = "b9950f5d2fa3720b52b8be55bacf5f56d33f9e029d38ee86534995f3d8d253d2"
 
 [openpype.thirdparty.oiio.linux]
 url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.20-linux-centos7.tgz"
-hash = "be1abf8a50e9da5913298447421af0a17829d83ed6252ae1d40da7fa36a78787"
+hash = "3894dec7e4e521463891a869586850e8605f5fd604858b674c87323bf33e273d"
 
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
