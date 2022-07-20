@@ -259,6 +259,7 @@ class ExtractMultiverseUsdAnim(ExtractMultiverseUsd):
     def get_default_options(self):
         anim_options = self.default_options
         anim_options["writeSparseOverrides"] = True
+        anim_options["writeUsdAttributes"] = True
         anim_options["stripNamespaces"] = True
         return anim_options
 
