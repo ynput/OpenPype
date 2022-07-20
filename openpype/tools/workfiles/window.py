@@ -229,6 +229,49 @@ class Window(QtWidgets.QWidget):
         self._first_show = True
         self._context_to_set = None
 
+    def ensure_visible(
+        self, use_context=None, save=None, on_top=None
+    ):
+        if save is None:
+            save = True
+
+        self.set_save_enabled(save)
+
+        if self.isVisible():
+            use_context = False
+        elif use_context is None:
+            use_context = True
+
+        if on_top is None and self._first_show:
+            on_top = self.parent() is None
+
+        window_flags = self.windowFlags()
+        new_window_flags = window_flags
+        if on_top is True:
+            new_window_flags = window_flags | QtCore.Qt.WindowStaysOnTopHint
+        elif on_top is False:
+            new_window_flags = window_flags & ~QtCore.Qt.WindowStaysOnTopHint
+
+        if new_window_flags != window_flags:
+            # Note this is not propagated after initialization of widget in
+            #   some Qt builds
+            self.setWindowFlags(new_window_flags)
+            self.show()
+
+        elif not self.isVisible():
+            self.show()
+
+        if use_context is None or use_context is True:
+            context = {
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"]
+            }
+            self.set_context(context)
+
+        # Pull window to the front.
+        self.raise_()
+        self.activateWindow()
+
     @property
     def project_name(self):
         return legacy_io.Session["AVALON_PROJECT"]
