@@ -1,23 +1,29 @@
 # Changelog
 
-## [3.12.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.2-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.1...HEAD)
 
 **🚀 Enhancements**
 
+- General: Interactive console in cli [\#3526](https://github.com/pypeclub/OpenPype/pull/3526)
 - Ftrack: Automatic daily review session creation can define trigger hour [\#3516](https://github.com/pypeclub/OpenPype/pull/3516)
 - Ftrack: add source into Note [\#3509](https://github.com/pypeclub/OpenPype/pull/3509)
 - Ftrack: Trigger custom ftrack topic of project structure creation [\#3506](https://github.com/pypeclub/OpenPype/pull/3506)
 - Settings UI: Add extract to file action on project view [\#3505](https://github.com/pypeclub/OpenPype/pull/3505)
+- Add pack and unpack convenience scripts [\#3502](https://github.com/pypeclub/OpenPype/pull/3502)
 - General: Event system [\#3499](https://github.com/pypeclub/OpenPype/pull/3499)
 - NewPublisher: Keep plugins with mismatch target in report [\#3498](https://github.com/pypeclub/OpenPype/pull/3498)
 - Nuke: load clip with options from settings [\#3497](https://github.com/pypeclub/OpenPype/pull/3497)
+- TrayPublisher: implemented render\_mov\_batch  [\#3486](https://github.com/pypeclub/OpenPype/pull/3486)
 - Migrate basic families to the new Tray Publisher [\#3469](https://github.com/pypeclub/OpenPype/pull/3469)
 
 **🐛 Bug fixes**
 
+- Additional fixes for powershell scripts [\#3525](https://github.com/pypeclub/OpenPype/pull/3525)
+- Maya: Added wrapper around cmds.setAttr [\#3523](https://github.com/pypeclub/OpenPype/pull/3523)
 - General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
+- Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
 - TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
 - NewPublisher: Publish attributes are properly collected [\#3510](https://github.com/pypeclub/OpenPype/pull/3510)
 - TrayPublisher: Make sure host name is filled [\#3504](https://github.com/pypeclub/OpenPype/pull/3504)
@@ -25,6 +31,7 @@
 
 **🔀 Refactored code**
 
+- General: Client docstrings cleanup [\#3529](https://github.com/pypeclub/OpenPype/pull/3529)
 - TimersManager: Use query functions [\#3495](https://github.com/pypeclub/OpenPype/pull/3495)
 
 ## [3.12.1](https://github.com/pypeclub/OpenPype/tree/3.12.1) (2022-07-13)
@@ -51,7 +58,6 @@
 - Blender: Bugfix - Set fps properly on open [\#3426](https://github.com/pypeclub/OpenPype/pull/3426)
 - Hiero: Add custom scripts menu [\#3425](https://github.com/pypeclub/OpenPype/pull/3425)
 - Blender: pre pyside install for all platforms [\#3400](https://github.com/pypeclub/OpenPype/pull/3400)
-- Maya: Add additional playblast options to review Extractor. [\#3384](https://github.com/pypeclub/OpenPype/pull/3384)
 
 **🐛 Bug fixes**
 
@@ -71,7 +77,6 @@
 - Maya: fix hashing in Python 3 for tile rendering [\#3447](https://github.com/pypeclub/OpenPype/pull/3447)
 - LogViewer: Escape html characters in log message [\#3443](https://github.com/pypeclub/OpenPype/pull/3443)
 - Nuke: Slate frame is integrated [\#3427](https://github.com/pypeclub/OpenPype/pull/3427)
-- Maya: Camera extra data - additional fix for \#3304 [\#3386](https://github.com/pypeclub/OpenPype/pull/3386)
 
 **🔀 Refactored code**
 
@@ -85,8 +90,6 @@
 - General: Move publish plugin and publish render abstractions [\#3442](https://github.com/pypeclub/OpenPype/pull/3442)
 - General: Use Anatomy after move to pipeline [\#3436](https://github.com/pypeclub/OpenPype/pull/3436)
 - General: Anatomy moved to pipeline [\#3435](https://github.com/pypeclub/OpenPype/pull/3435)
-- Fusion: Use client query functions [\#3380](https://github.com/pypeclub/OpenPype/pull/3380)
-- Resolve: Use client query functions [\#3379](https://github.com/pypeclub/OpenPype/pull/3379)
 
 ## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
@@ -111,7 +114,6 @@
 - Nuke: Collect representation files based on Write [\#3407](https://github.com/pypeclub/OpenPype/pull/3407)
 - General: Filter representations before integration start [\#3398](https://github.com/pypeclub/OpenPype/pull/3398)
 - Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
-- Maya: vray device aspect ratio fix [\#3381](https://github.com/pypeclub/OpenPype/pull/3381)
 
 **🔀 Refactored code**
 
@@ -121,7 +123,6 @@
 - Houdini: Use client query functions [\#3395](https://github.com/pypeclub/OpenPype/pull/3395)
 - Hiero: Use client query functions [\#3393](https://github.com/pypeclub/OpenPype/pull/3393)
 - Nuke: Use client query functions [\#3391](https://github.com/pypeclub/OpenPype/pull/3391)
-- Maya: Use client query functions [\#3385](https://github.com/pypeclub/OpenPype/pull/3385)
 
 ## [3.11.1](https://github.com/pypeclub/OpenPype/tree/3.11.1) (2022-06-20)
 
