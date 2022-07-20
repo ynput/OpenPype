@@ -171,6 +171,15 @@
             ]
         },
         "IntegrateAssetNew": {
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ],
             "template_name_profiles": [
                 {
                     "families": [],
