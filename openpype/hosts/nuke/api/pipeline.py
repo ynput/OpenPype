@@ -142,6 +142,14 @@ def uninstall():
     _uninstall_menu()
 
 
+def _show_workfiles():
+    # Make sure parent is not set
+    # - this makes Workfiles tool as separated window which
+    #   avoid issues with reopening
+    # - it is possible to explicitly change on top flag of the tool
+    host_tools.show_workfiles(parent=None, on_top=False)
+
+
 def _install_menu():
     # uninstall original avalon menu
     main_window = get_main_window()
@@ -158,7 +166,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Work Files...",
-        lambda: host_tools.show_workfiles(parent=main_window)
+        _show_workfiles
     )
 
     menu.addSeparator()

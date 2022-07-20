@@ -235,5 +235,12 @@
             "allow_multiple_items": true,
             "extensions": []
         }
-    ]
+    ],
+    "BatchMovieCreator": {
+        "default_variants": ["Main"],
+        "default_tasks": ["Compositing"],
+        "extensions": [
+            ".mov"
+        ]
+    }
 }

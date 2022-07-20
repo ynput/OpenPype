@@ -2440,10 +2440,12 @@ def _launch_workfile_app():
     if starting_up or closing_down:
         return
 
-    from .pipeline import get_main_window
-
-    main_window = get_main_window()
-    host_tools.show_workfiles(parent=main_window)
+    # Make sure on top is enabled on first show so the window is not hidden
+    #   under main nuke window
+    #   - this happened on Centos 7 and it is because the focus of nuke
+    #       changes to the main window after showing because of initialization
+    #       which moves workfiles tool under it
+    host_tools.show_workfiles(parent=None, on_top=True)
 
 
 def process_workfile_builder():
