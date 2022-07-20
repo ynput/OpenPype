@@ -16,7 +16,7 @@ $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
 
 function Start-Progress {
     param([ScriptBlock]$code)
@@ -171,7 +171,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Color -Text ">>> ", "Restoring current directory" -Color Green, Gray
 Set-Location -Path $current_dir
-
-New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done. You will find You will find OpenPype installer in '.\build' directory."
-
+try {
+    New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done. You will find You will find OpenPype installer in '.\build' directory."
+} catch {}
 Write-Color -Text "*** ", "All done. You will find OpenPype installer in ", "'.\build'", " directory." -Color Green, Gray, White, Gray
