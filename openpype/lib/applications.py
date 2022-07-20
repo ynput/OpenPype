@@ -1638,6 +1638,7 @@ def prepare_context_environments(data, env_group=None):
             "Error in anatomy.format: {}".format(str(exc))
         )
 
+    workdir = os.path.normpath(workdir)
     if not os.path.exists(workdir):
         log.debug(
             "Creating workdir folder: \"{}\"".format(workdir)

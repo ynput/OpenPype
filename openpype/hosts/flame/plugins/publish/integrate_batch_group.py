@@ -324,5 +324,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         project_doc = instance.data["projectEntity"]
         asset_entity = instance.data["assetEntity"]
 
-        return get_workdir(
-            project_doc, asset_entity, task_data["name"], "flame")
+        workdir = get_workdir(
+            project_doc, asset_entity, task_data["name"], "flame"
+        )
+        return os.path.normpath(workdir)
