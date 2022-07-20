@@ -335,7 +335,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
 
     `root_of` is meant to sort entities by type for a better readability in
     the data tree. It puts all shot like (Shot and Episode and Sequence) and
-    asset entities under two different root folders or hierarchy, defined in 
+    asset entities under two different root folders or hierarchy, defined in
     settings.
 
     Args:
