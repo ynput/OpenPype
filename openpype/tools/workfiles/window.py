@@ -1,6 +1,6 @@
 import os
 import datetime
-from Qt import QtCore, QtWidgets
+from Qt import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
     get_asset_by_id,
@@ -8,6 +8,7 @@ from openpype.client import (
     get_workfile_info,
 )
 from openpype import style
+from openpype import resources
 from openpype.lib import (
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -142,21 +143,19 @@ class SidePanelWidget(QtWidgets.QWidget):
         return self._workfile_doc, data
 
 
-class Window(QtWidgets.QMainWindow):
+class Window(QtWidgets.QWidget):
     """Work Files Window"""
     title = "Work Files"
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
         self.setWindowTitle(self.title)
-        window_flags = QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint
-        if not parent:
-            window_flags |= QtCore.Qt.WindowStaysOnTopHint
-        self.setWindowFlags(window_flags)
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
-        self.setCentralWidget(pages_widget)
 
         home_page_widget = QtWidgets.QWidget(pages_widget)
         home_body_widget = QtWidgets.QWidget(home_page_widget)
@@ -190,6 +189,9 @@ class Window(QtWidgets.QMainWindow):
         # Add top margin for tasks to align it visually with files as
         # the files widget has a filter field which tasks does not.
         tasks_widget.setContentsMargins(0, 32, 0, 0)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.addWidget(pages_widget, 1)
 
         # Set context after asset widget is refreshed
         # - to do so it is necessary to wait until refresh is done
@@ -226,6 +228,49 @@ class Window(QtWidgets.QMainWindow):
 
         self._first_show = True
         self._context_to_set = None
+
+    def ensure_visible(
+        self, use_context=None, save=None, on_top=None
+    ):
+        if save is None:
+            save = True
+
+        self.set_save_enabled(save)
+
+        if self.isVisible():
+            use_context = False
+        elif use_context is None:
+            use_context = True
+
+        if on_top is None and self._first_show:
+            on_top = self.parent() is None
+
+        window_flags = self.windowFlags()
+        new_window_flags = window_flags
+        if on_top is True:
+            new_window_flags = window_flags | QtCore.Qt.WindowStaysOnTopHint
+        elif on_top is False:
+            new_window_flags = window_flags & ~QtCore.Qt.WindowStaysOnTopHint
+
+        if new_window_flags != window_flags:
+            # Note this is not propagated after initialization of widget in
+            #   some Qt builds
+            self.setWindowFlags(new_window_flags)
+            self.show()
+
+        elif not self.isVisible():
+            self.show()
+
+        if use_context is None or use_context is True:
+            context = {
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"]
+            }
+            self.set_context(context)
+
+        # Pull window to the front.
+        self.raise_()
+        self.activateWindow()
 
     @property
     def project_name(self):
@@ -331,6 +376,7 @@ class Window(QtWidgets.QMainWindow):
         if self.assets_widget.refreshing:
             return
 
+        self._set_context_timer.stop()
         self._context_to_set, context = None, self._context_to_set
         if "asset" in context:
             asset_doc = get_asset_by_name(
