@@ -582,7 +582,10 @@ def get_workdir_with_workdir_data(
 
     anatomy_filled = anatomy.format(workdir_data)
     # Output is TemplateResult object which contain useful data
-    return anatomy_filled[template_key]["folder"]
+    output = anatomy_filled[template_key]["folder"]
+    if output:
+        return output.normalized()
+    return output
 
 
 def get_workdir(
