@@ -732,7 +732,7 @@ def filter_containers(containers, project_name):
     some missing entity in database.
 
     Args:
-        containers (list[dict]): List of containers referenced into scene.
+        containers (Iterable[dict]): List of containers referenced into scene.
         project_name (str): Name of project in which context shoud look for
             versions.
 
@@ -740,6 +740,9 @@ def filter_containers(containers, project_name):
         ContainersFilterResult: Named tuple with 'latest', 'outdated',
             'invalid' and 'not_found' containers.
     """
+
+    # Make sure containers is list that won't change
+    containers = list(containers)
 
     outdated_containers = []
     uptodate_containers = []
