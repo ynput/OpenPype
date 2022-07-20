@@ -331,6 +331,7 @@ class Window(QtWidgets.QMainWindow):
         if self.assets_widget.refreshing:
             return
 
+        self._set_context_timer.stop()
         self._context_to_set, context = None, self._context_to_set
         if "asset" in context:
             asset_doc = get_asset_by_name(
