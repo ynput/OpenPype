@@ -28,7 +28,7 @@ packages = [
 openpype = 'start:boot'
 
 [tool.poetry.dependencies]
-python = "3.7.*"
+python = "3.9.*"
 aiohttp = "^3.7"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
