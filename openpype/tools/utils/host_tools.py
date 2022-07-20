@@ -395,9 +395,9 @@ def show_tool_by_name(tool_name, parent=None, *args, **kwargs):
     _SingletonPoint.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-def show_workfiles(parent=None, use_context=None, save=None):
+def show_workfiles(*args, **kwargs):
     _SingletonPoint.show_tool_by_name(
-        "workfiles", parent, use_context=use_context, save=save
+        "workfiles", *args, **kwargs
     )
 
 
