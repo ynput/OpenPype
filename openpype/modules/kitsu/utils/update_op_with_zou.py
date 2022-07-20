@@ -333,9 +333,9 @@ def sync_all_projects(login: str, password: str):
 def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     """Update OP project in DB with Zou data.
 
-    `root_of` is meant to sort entities by type for a better readability in the data tree. It
-    puts all shot like (Shot and Episode and Sequence) and asset entities under two different root
-    folders or hierarchy, defined in settings.
+    `root_of` is meant to sort entities by type for a better readability in 
+    the data tree. It puts all shot like (Shot and Episode and Sequence) and
+    asset entities under two different root folders or hierarchy, defined in settings.
 
     Args:
         dbcon (AvalonMongoDB): MongoDB connection
