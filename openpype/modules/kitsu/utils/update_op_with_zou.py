@@ -227,6 +227,13 @@ def update_op_assets(
             parent_entity = parent_doc["data"]["zou"]
             parent_zou_id = parent_entity.get("parent_id")
 
+        if item_type in ["Shot", "Sequence"]:
+            # Name with parents hierarchy "({episode}_){sequence}_{shot}"
+            # to avoid duplicate name issue
+            item_name = "_".join(item_data["parents"] + [item_doc["name"]])
+        else:
+            item_name = item_doc["name"]
+
         # Set root folders parents
         item_data["parents"] = entity_parent_folders + item_data["parents"]
 
@@ -240,7 +247,7 @@ def update_op_assets(
                     item_doc["_id"],
                     {
                         "$set": {
-                            "name": item["name"],
+                            "name": item_name,
                             "data": item_data,
                             "parent": project_doc["_id"],
                         }
