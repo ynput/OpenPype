@@ -55,7 +55,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         scenename = os.path.basename(scene)
 
         # Get project code
-        project = legacy_io.find_one({"type": "project"})
+        project = context.data["projectEntity"]
         code = project["data"].get("code", project["name"])
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)

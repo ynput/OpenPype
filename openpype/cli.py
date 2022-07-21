@@ -2,7 +2,7 @@
 """Package for handling pype command line arguments."""
 import os
 import sys
-
+import code
 import click
 
 # import sys
@@ -424,3 +424,22 @@ def pack_project(project, dirpath):
 def unpack_project(zipfile, root):
     """Create a package of project with all files and database dump."""
     PypeCommands().unpack_project(zipfile, root)
+
+
+@main.command()
+def interactive():
+    """Interative (Python like) console.
+
+    Helpfull command not only for development to directly work with python
+    interpreter.
+
+    Warning:
+        Executable 'openpype_gui' on windows won't work.
+    """
+
+    from openpype.version import __version__
+
+    banner = "OpenPype {}\nPython {} on {}".format(
+        __version__, sys.version, sys.platform
+    )
+    code.interact(banner)

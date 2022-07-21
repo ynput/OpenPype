@@ -115,7 +115,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
-        with maintained_time():
+        with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
             # Force viewer to False in call to capture because we have our own
@@ -178,12 +178,3 @@ class ExtractPlayblast(openpype.api.Extractor):
             'camera_name': camera_node_name
         }
         instance.data["representations"].append(representation)
-
-
-@contextlib.contextmanager
-def maintained_time():
-    ct = cmds.currentTime(query=True)
-    try:
-        yield
-    finally:
-        cmds.currentTime(ct, edit=True)
