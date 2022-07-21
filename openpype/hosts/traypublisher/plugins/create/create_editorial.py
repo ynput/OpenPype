@@ -550,7 +550,7 @@ or updating already created. Publishing will create OTIO file.
             "asset": parent_asset_name,
             "task": "",
 
-            "new_asset_publishing": True,
+            "newAssetPublishing": True,
 
             # parent time properties
             "trackStartFrame": track_start_frame,
