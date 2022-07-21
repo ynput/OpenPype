@@ -19,7 +19,8 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         "hiero",
         "standalonepublisher",
         "resolve",
-        "flame"
+        "flame",
+        "traypublisher"
     ]
 
     def process(self, context):
