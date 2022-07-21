@@ -447,6 +447,9 @@
             "enabled": false,
             "ftrack_custom_attributes": {}
         },
+        "IntegrateFtrackComponentOverwrite": {
+            "enabled": true
+        },
         "IntegrateFtrackInstance": {
             "family_mapping": {
                 "camera": "cam",
