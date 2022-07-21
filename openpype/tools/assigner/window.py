@@ -7,10 +7,10 @@ from .controller import AssignerController
 from .widgets import (
     ContainersWidget,
     FamiliesWidget,
-    VersionsWidget,
     ThumbnailsWidget,
     VersionsInformationWidget,
 )
+from .versions_widget import VersionsWidget
 
 
 class ConnectionWindow(QtWidgets.QWidget):
