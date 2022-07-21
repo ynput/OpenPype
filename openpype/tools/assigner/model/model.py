@@ -13,6 +13,7 @@ from openpype.client import (
 from .versions import VersionsModel
 from .containers import ContainersModel
 
+
 class AssignerToolModel(object):
     def __init__(self, controller):
         self._controller = controller

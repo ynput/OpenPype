@@ -26,6 +26,13 @@ class VersionsWidget(QtWidgets.QWidget):
         proxy_model.setSourceModel(versions_model)
         versions_view.setModel(proxy_model)
 
+        versions_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
+        versions_view.setSortingEnabled(True)
+        versions_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
+        versions_view.setAlternatingRowColors(True)
+        versions_view.setIndentation(20)
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(versions_view, 1)
@@ -53,6 +60,8 @@ class VersionsModel(QtGui.QStandardItemModel):
 
     def __init__(self, controller):
         super(VersionsModel, self).__init__()
+
+        self.setColumnCount(len(self.column_labels))
 
         controller.event_system.add_callback(
             "versions.clear", self._on_versions_clear
@@ -109,13 +118,90 @@ class VersionsModel(QtGui.QStandardItemModel):
             item.setData(subset_item.handles, HANDLES_ROLE)
             item.setData(subset_item.step, STEP_ROLE)
 
-        items_to_remove = [
-            self._items_by_id.pop(item_id)
-            for item_id in items_ids_to_remove
-        ]
+        items_to_remove = []
+        for item_id in items_ids_to_remove:
+            items_to_remove.append(self._items_by_id.pop(item_id))
+
         root_item = self.invisibleRootItem()
         for item in items_to_remove:
             root_item.removeRow(item.row())
 
         if new_items:
             root_item.appendRows(new_items)
+
+    def _data_display_role(self, index, role):
+        col = index.column()
+        new_index = True
+        if col == 0:
+            new_index = False
+        elif col == 1:
+            role = ASSET_NAME_ROLE
+        elif col == 2:
+            role = FAMILY_ROLE
+        elif col == 3:
+            role = VERSION_ROLE
+        elif col == 4:
+            role = TIME_ROLE
+        elif col == 5:
+            role = AUTHOR_ROLE
+        elif col == 6:
+            role = FRAMES_ROLE
+        elif col == 7:
+            role = DURATION_ROLE
+        elif col == 8:
+            role = STEP_ROLE
+
+        if new_index:
+            index = self.index(index.row(), 0, index.parent())
+        return super(VersionsModel, self).data(index, role)
+
+    def _data_edit_role(self, index, role):
+        col = index.column()
+        new_index = True
+        if col == 0:
+            new_index = False
+        elif col == 3:
+            role = VERSION_EDIT_ROLE
+
+        if new_index:
+            index = self.index(index.row(), 0, index.parent())
+        return super(VersionsModel, self).data(index, role)
+
+    def _data_icon_role(self, index, role):
+        col = index.column()
+        new_index = True
+        if col == 0:
+            new_index = False
+        elif col == 2:
+            role = FAMILY_ICON_ROLE
+
+        if new_index:
+            index = self.index(index.row(), 0, index.parent())
+        return super(VersionsModel, self).data(index, role)
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self._data_display_role(index, role)
+
+        if role == QtCore.Qt.EditRole:
+            return self._data_edit_role(index, role)
+
+        if role == QtCore.Qt.DecorationRole:
+            return self._data_icon_role(index, role)
+
+        index = self.index(index.row(), 0, index.parent())
+
+        return super(VersionsModel, self).data(index, role)
+
+    def flags(self, index):
+        flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        if index.column() == 3:
+            flags |= QtCore.Qt.ItemIsEditable
+        return flags
+
+    def headerData(self, section, orientation, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.column_labels[section]
+        return super(VersionsModel, self).headerData(
+            section, orientation, role
+        )
