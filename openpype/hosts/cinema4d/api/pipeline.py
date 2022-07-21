@@ -19,7 +19,14 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-
+from .workio import (
+    open_file,
+    save_file,
+    file_extensions,
+    has_unsaved_changes,
+    work_root,
+    current_file
+)
 
 log = logging.getLogger("openpype.hosts.cinema4d")
 
@@ -58,22 +65,19 @@ class Cinema4DHost(HostBase, IWorkfileHost, ILoadHost):
 
        
     def open_workfile(self, filepath):
-        return 
+        return open_file(filepath)
 
     def save_workfile(self, filepath=None):
-        return 
-
-    def work_root(self, session):
-        return 
+        return save_file(filepath)
 
     def get_current_workfile(self):
-        return 
+        return current_file()
 
     def workfile_has_unsaved_changes(self):
-        return 
+        return has_unsaved_changes()
 
     def get_workfile_extensions(self):
-        return 
+        return file_extensions()
 
     def get_containers(self):
         return 

@@ -1,5 +1,6 @@
 import os
 import sys
+
 # C4D doesn't ship with python3.dll which PySide is
 # built against. 
 # 
@@ -89,7 +90,7 @@ class Workfiles(c4d.plugins.CommandData):
 
 class BuildWorkFile(c4d.plugins.CommandData):
     def Execute(self, doc):
-        BuildWorkFile().process()
+        BuildWorkfile().process()
         return True
 
 class ResetFrameRange(c4d.plugins.CommandData):
@@ -125,6 +126,7 @@ def EnhanceMainMenu():
     menu.InsData(c4d.MENURESOURCE_COMMAND, "PLUGIN_CMD_1059867")
     menu.InsData(c4d.MENURESOURCE_COMMAND, "PLUGIN_CMD_1059868")
     menu.InsData(c4d.MENURESOURCE_COMMAND, "PLUGIN_CMD_1059869")
+    menu.InsData(c4d.MENURESOURCE_SEPERATOR, True)
     menu.InsData(c4d.MENURESOURCE_COMMAND, "PLUGIN_CMD_1059873")
     menu.InsData(c4d.MENURESOURCE_COMMAND, "PLUGIN_CMD_1059870")
     menu.InsData(c4d.MENURESOURCE_COMMAND, "PLUGIN_CMD_1059871")
@@ -141,21 +143,80 @@ def PluginMessage(id, data):
         EnhanceMainMenu()
 
 
+def get_icon_by_name(name):
+    if name == "pyblish":
+        return os.path.join(os.environ["OPENPYPE_ROOT"], "openpype", "tools", "pyblish_pype", "img", "logo-extrasmall.png") 
+    return os.path.join(os.environ["OPENPYPE_ROOT"], "openpype", "resources", "icons", name + ".png")
+
 if __name__ == '__main__':
 
     host = Cinema4DHost()
     install_host(host)
 
-    c4d.plugins.RegisterCommandPlugin(loader_id, "Loader", 0, None, "", Loader())
-    c4d.plugins.RegisterCommandPlugin(creator_id, "Creator", 0, None, "", Creator())
-    c4d.plugins.RegisterCommandPlugin(publish_id, "Publish", 0, None, "", Publish())
-    c4d.plugins.RegisterCommandPlugin(scene_inventory_id, "Inventory", 0, None, "", SceneInventory())
-    c4d.plugins.RegisterCommandPlugin(library_id, "Library", 0, None, "", Library())
-    c4d.plugins.RegisterCommandPlugin(workfiles_id, "Workfiles", 0, None, "", Workfiles())
-    c4d.plugins.RegisterCommandPlugin(build_workfile_id, "Build Workfile", 0, None, "", BuildWorkFile())
-    c4d.plugins.RegisterCommandPlugin(reset_frame_range_id, "Reset Frame Range", 0, None, "", ResetFrameRange())
+    from Qt import QtWidgets
+
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication([])
+
+
+    loader_bmp = c4d.bitmaps.BaseBitmap()
+    loader_bmp.InitWith(get_icon_by_name("loader"))
+
     c4d.plugins.RegisterCommandPlugin(
-        reset_scene_resolution_id, "Reset Scene Resolution", 0, None, "", ResetSceneResolution())
-    c4d.plugins.RegisterCommandPlugin(reset_colorspace_id, "Reset Colorspace", 0, None, "", ResetColorspace())
+            loader_id, "Loader", c4d.PLUGINFLAG_HIDEPLUGINMENU, loader_bmp, "", Loader()
+              )
+
+    creator_bmp = c4d.bitmaps.InitResourceBitmap(1018791) # split poly cube thing
     c4d.plugins.RegisterCommandPlugin(
-        experimental_tools_id, "Experimental Tools", 0, None, "", ExperimentalTools())
+            creator_id, "Creator", c4d.PLUGINFLAG_HIDEPLUGINMENU, creator_bmp, "", Creator()
+            )
+
+    pyblish_bmp = c4d.bitmaps.BaseBitmap()
+    pyblish_bmp.InitWith(get_icon_by_name("pyblish"))
+    c4d.plugins.RegisterCommandPlugin(
+        publish_id, "Publish", c4d.PLUGINFLAG_HIDEPLUGINMENU, pyblish_bmp, "", Publish()
+        )
+
+    inventory_bmp = c4d.bitmaps.BaseBitmap()
+    inventory_bmp.InitWith(get_icon_by_name("inventory"))
+    c4d.plugins.RegisterCommandPlugin(
+        scene_inventory_id, "Inventory", c4d.PLUGINFLAG_HIDEPLUGINMENU, inventory_bmp, "", SceneInventory()
+        )
+
+    library_bmp = c4d.bitmaps.BaseBitmap()
+    library_bmp.InitWith(get_icon_by_name("folder-favorite"))
+    c4d.plugins.RegisterCommandPlugin(
+        library_id,"Library", c4d.PLUGINFLAG_HIDEPLUGINMENU, library_bmp, "", Library()
+        )
+
+    workfiles_bmp = c4d.bitmaps.BaseBitmap()
+    workfiles_bmp.InitWith(get_icon_by_name("workfiles"))
+    c4d.plugins.RegisterCommandPlugin(
+        workfiles_id, "Workfiles", c4d.PLUGINFLAG_HIDEPLUGINMENU, workfiles_bmp, "", Workfiles()
+        )
+
+    build_bmp = c4d.bitmaps.InitResourceBitmap(1024542) # wrench
+    c4d.plugins.RegisterCommandPlugin(
+        build_workfile_id, "Build Workfile", c4d.PLUGINFLAG_HIDEPLUGINMENU, build_bmp, "", BuildWorkFile()
+        )
+
+    frame_range_bmp = c4d.bitmaps.InitResourceBitmap(1038339) # filmstrip
+    c4d.plugins.RegisterCommandPlugin(
+        reset_frame_range_id, "Reset Frame Range", c4d.PLUGINFLAG_HIDEPLUGINMENU, frame_range_bmp, "", ResetFrameRange()
+        )
+
+    res_bmp = c4d.bitmaps.InitResourceBitmap(1040962) # expandy icon
+    c4d.plugins.RegisterCommandPlugin(
+        reset_scene_resolution_id, "Reset Scene Resolution", c4d.PLUGINFLAG_HIDEPLUGINMENU, res_bmp, "", ResetSceneResolution()
+        )
+
+    color_bmp = c4d.bitmaps.InitResourceBitmap(440000312) # color
+    c4d.plugins.RegisterCommandPlugin(
+        reset_colorspace_id, "Reset Colorspace", c4d.PLUGINFLAG_HIDEPLUGINMENU, color_bmp, "", ResetColorspace()
+        )
+
+    experiment_bmp = c4d.bitmaps.InitResourceBitmap(18186) # ghost
+    c4d.plugins.RegisterCommandPlugin(
+        experimental_tools_id, "Experimental Tools", c4d.PLUGINFLAG_HIDEPLUGINMENU, experiment_bmp, "", ExperimentalTools()
+        )
