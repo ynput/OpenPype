@@ -172,11 +172,11 @@ class RenderLayerCreator(Creator):
     icon = "fa5.building"
 ```
 
-- **`get_instance_attr_defs`** (method) - Attribute definitions of instance. Creator can define attribute values with default values for each instance. These attributes may affect how instances will be instance processed during publishing. Attribute defiitions can be used from `openpype.pipeline.lib.attribute_definitions` (NOTE: Will be moved to `openpype.lib.attribute_definitions` soon). Attribute definitions define basic types of values for different cases e.g. boolean, number, string, enumerator, etc. Default implementation returns **instance_attr_defs**.
+- **`get_instance_attr_defs`** (method) - Attribute definitions of instance. Creator can define attribute values with default values for each instance. These attributes may affect how instances will be instance processed during publishing. Attribute defiitions can be used from `openpype.lib.attribute_definitions`. Attribute definitions define basic types of values for different cases e.g. boolean, number, string, enumerator, etc. Default implementation returns **instance_attr_defs**.
 - **`instance_attr_defs`** (attr) - Attribute for default implementation of **get_instance_attr_defs**.
 
 ```python
-from openpype.pipeline import attribute_definitions
+from openpype.lib import attribute_definitions
 
 
 class RenderLayerCreator(Creator):
@@ -311,7 +311,8 @@ class BulkRenderCreator(Creator):
 - **`pre_create_attr_defs`** (attr) - Attribute for default implementation of **get_pre_create_attr_defs**.
 
 ```python
-from openpype.pipeline import Creator, attribute_definitions
+from openpype.lib import attribute_definitions
+from openpype.pipeline.create import Creator
 
 
 class CreateRender(Creator):
@@ -484,10 +485,8 @@ Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_
 
 ```python
 import pyblish.api
-from openpype.pipeline import (
-    OpenPypePyblishPluginMixin,
-    attribute_definitions,
-)
+from openpype.lib import attribute_definitions
+from openpype.pipeline import OpenPypePyblishPluginMixin
 
 
 # Example context plugin
