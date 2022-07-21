@@ -33,5 +33,11 @@ class AssignerController(object):
 
         return legacy_io.active_project()
 
+    def container_selection_changed(self, event):
+        self._model.set_current_containers(event["container_ids"])
+
     def get_container_groups(self):
         return self._model.get_container_groups()
+
+    def get_current_containers_subset_items(self):
+        return self._model.get_current_containers_subset_items()

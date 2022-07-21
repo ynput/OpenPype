@@ -4,19 +4,31 @@ from Qt import QtWidgets, QtCore, QtGui
 from openpype.tools.utils import RecursiveSortFilterProxyModel
 
 UNIQUE_ID_ROLE = QtCore.Qt.UserRole + 1
+CONTAINER_ID_ROLE = QtCore.Qt.UserRole + 2
 
 
 class ContainersWidget(QtWidgets.QTreeView):
+    source_name = "containers_widget"
+
     def __init__(self, controller, parent):
         super(ContainersWidget, self).__init__(parent)
 
         self.setHeaderHidden(True)
+        self.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
 
         containers_model = QtGui.QStandardItemModel()
         proxy_model = RecursiveSortFilterProxyModel()
         proxy_model.setSourceModel(containers_model)
         proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.setModel(proxy_model)
+
+        selection_timer = QtCore.QTimer()
+        selection_timer.setSingleShot(True)
+        selection_timer.setInterval(200)
+
+        selection_model = self.selectionModel()
+        selection_model.selectionChanged.connect(self._on_selection_changed)
+        selection_timer.timeout.connect(self._on_selection_timer)
 
         self._controller = controller
 
@@ -26,9 +38,48 @@ class ContainersWidget(QtWidgets.QTreeView):
         self._items_by_id = {}
         self._parent_id_by_item_id = {}
         self._item_ids_by_parent_id = collections.defaultdict(set)
+        self._selection_timer = selection_timer
 
     def set_subset_name_filter(self, subset_name):
         self._proxy_model.setFilterFixedString(subset_name)
+
+    def _on_selection_changed(self):
+        self._selection_timer.start()
+
+    def _on_selection_timer(self):
+        selection_model = self.selectionModel()
+        item_ids = set()
+        for index in selection_model.selectedIndexes():
+            item_id = index.data(UNIQUE_ID_ROLE)
+            item_ids.add(item_id)
+            children_ids = self._item_ids_by_parent_id.get(item_id) or []
+            for child_id in children_ids:
+                item_ids.add(child_id)
+
+        container_ids = set()
+
+        children_queue = collections.deque(item_ids)
+        while children_queue:
+            item_id = children_queue.popleft()
+            item = self._items_by_id.get(item_id)
+            if not item:
+                continue
+
+            container_id = item.data(CONTAINER_ID_ROLE)
+            if container_id:
+                container_ids.add(container_id)
+
+            children_ids = self._item_ids_by_parent_id.get(item_id) or []
+            for child_id in children_ids:
+                if child_id not in item_ids:
+                    item_ids.add(child_id)
+                    children_queue.append(child_id)
+
+        self._controller.event_system.emit(
+            "container.selection.changed",
+            {"container_ids": list(container_ids)},
+            self.source_name
+        )
 
     def _make_sure_group_exists(self, container_group):
         group_id = container_group.id
@@ -61,6 +112,7 @@ class ContainersWidget(QtWidgets.QTreeView):
         if item is None:
             item = QtGui.QStandardItem()
             item.setData(item_id, UNIQUE_ID_ROLE)
+            item.setData(item_id, CONTAINER_ID_ROLE)
 
             self._items_by_id[item_id] = item
             self._parent_id_by_item_id[item_id] = group_id
@@ -164,7 +216,7 @@ class FamiliesWidget(QtWidgets.QWidget):
 
 
 class VersionsWidget(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         super(VersionsWidget, self).__init__(parent)
 
         versions_view = QtWidgets.QTreeView(self)
@@ -177,9 +229,34 @@ class VersionsWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(versions_view, 1)
 
+        controller.event_system.add_callback(
+            "versions.refresh.started", self._on_version_refresh_start
+        )
+        controller.event_system.add_callback(
+            "versions.refresh.finished", self._on_version_refresh_finish
+        )
+
         self._versions_view = versions_view
         self._versions_model = versions_model
         self._proxy_model = proxy_model
+
+        self._controller = controller
+
+    def _on_version_refresh_start(self):
+        self._versions_model.clear()
+
+    def _on_version_refresh_finish(self):
+        subset_items = (
+            self._controller.get_current_containers_subset_items()
+        )
+        new_items = []
+        for subset_item in subset_items:
+            new_items.append(QtGui.QStandardItem(subset_item.label))
+
+        self._versions_model.clear()
+        root_item = self._versions_model.invisibleRootItem()
+        if new_items:
+            root_item.appendRows(new_items)
 
 
 class ThumbnailsWidget(QtWidgets.QWidget):

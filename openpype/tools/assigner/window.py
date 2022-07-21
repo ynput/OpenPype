@@ -46,7 +46,7 @@ class ConnectionWindow(QtWidgets.QWidget):
         left_side_layout.addWidget(families_widget, 1)
 
         # Versions widget with subset/version
-        versions_widget = VersionsWidget(main_splitter)
+        versions_widget = VersionsWidget(controller, main_splitter)
 
         # Right side widget
         #   - contains thumbnails and informations about selected version

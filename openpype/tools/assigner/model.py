@@ -822,6 +822,9 @@ class AssignerToolModel(object):
     def get_container_groups(self):
         return self._containers_model.get_container_groups()
 
+    def get_current_containers_subset_items(self):
+        return self._versions_model.get_subset_items()
+
     def set_current_containers(self, container_ids):
         if self._current_container_ids == container_ids:
             return
