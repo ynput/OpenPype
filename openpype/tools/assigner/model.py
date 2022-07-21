@@ -469,6 +469,8 @@ class ContainersModel(AssignerToolSubModel):
         convert them into 'ContainerItem'.
         """
 
+        self.event_system.emit("containers.refresh.started")
+
         containers_by_id = {}
         container_groups = []
         self._containers_by_id = containers_by_id
@@ -605,6 +607,8 @@ class ContainersModel(AssignerToolSubModel):
 
         self._containers = containers
 
+        self.event_system.emit("containers.refresh.finished")
+
     def _extract_family(self, subset_doc, version_doc):
         if not subset_doc:
             return None
@@ -640,6 +644,8 @@ class VersionsModel(AssignerToolSubModel):
         self._group_items = []
 
     def refresh(self):
+        self.event_system.emit("versions.refresh.started")
+
         asset_docs = self._main_model.get_asset_docs_by_ids(self._asset_ids)
         subset_docs_by_asset_id = (
             self._main_model.get_subset_docs_by_asset_ids(self._asset_ids)
@@ -721,6 +727,8 @@ class VersionsModel(AssignerToolSubModel):
                     group_item.add_children(subset_item)
 
         self._group_items = group_items
+
+        self.event_system.emit("versions.refresh.finished")
 
     def get_subset_items(self):
         output = []
