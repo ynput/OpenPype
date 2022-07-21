@@ -149,6 +149,10 @@ class ContainerItem(object):
         return self._id
 
     @property
+    def asset_id(self):
+        return self._group_item.asset_id
+
+    @property
     def label(self):
         return self._label
 
@@ -194,9 +198,15 @@ class BaseSubsetItem(object):
 
 
 class SubsetGroupItem(BaseSubsetItem):
-    def __init__(self, item_id):
+    def __init__(self, asset_name, asset_id):
         self._children_by_id = {}
-        self._id = str(item_id)
+        self._id = str(asset_id)
+        self._label = asset_name
+        self._asset_name = asset_name
+
+    @property
+    def asset_name(self):
+        return self._asset_name
 
     def __iter__(self):
         for child in self._children_by_id.values():
