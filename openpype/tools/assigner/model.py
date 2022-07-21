@@ -403,14 +403,16 @@ class VersionItem(object):
         return None
 
 
-class ContainersModel(object):
-    """Containers specific model loading necessary data for containers.
+class AssignerToolSubModel(object):
+    def __init__(self, main_model):
+        self._main_model = main_model
 
-    Args:
-        controller (object): Object that has access to 'host' attribute
-            (host implementation) and 'project_name' (current project).
-    """
+    @property
+    def event_system(self):
+        return self._main_model.event_system
 
+
+class ContainersModel(AssignerToolSubModel):
     _representation_fields = ["_id", "name", "parent", "data.thumbnail_id"]
     _version_fields = [
         "_id",
@@ -433,8 +435,8 @@ class ContainersModel(object):
     ]
     _asset_fields = ["_id", "name", "data.thumbnail_id"]
 
-    def __init__(self, main_model):
-        self._main_model = main_model
+    def __init__(self, *args, **kwargs):
+        super(ContainersModel, self).__init__(*args, **kwargs)
 
         # Containers data
         self._containers = None
@@ -631,9 +633,9 @@ class ContainersModel(object):
         return None
 
 
-class VersionsModel(object):
-    def __init__(self, main_model):
-        self._main_model = main_model
+class VersionsModel(AssignerToolSubModel):
+    def __init__(self, *args, **kwargs):
+        super(VersionsModel, self).__init__(*args, **kwargs)
         self._asset_ids = set()
         self._items_by_id = {}
 
@@ -711,6 +713,10 @@ class AssignerToolModel(object):
     @property
     def project_name(self):
         return self._controller.project_name
+
+    @property
+    def event_system(self):
+        return self._controller.event_system
 
     def get_host_containers(self):
         return self._controller.host.get_containers()
