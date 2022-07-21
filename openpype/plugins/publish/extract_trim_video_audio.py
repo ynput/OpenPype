@@ -41,6 +41,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
         video_file_path = instance.data["editorialSourcePath"]
         extensions = instance.data.get("extensions", ["mov"])
         output_file_type = instance.data.get("outputFileType")
+        reviewable = "review" in instance.data["families"]
 
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
@@ -111,9 +112,10 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
                 "frameStartFtrack": frame_start - handle_start,
                 "frameEndFtrack": frame_end + handle_end,
                 "fps": fps,
+                "tags": []
             }
 
-            if ext in [".mov", ".mp4"]:
+            if ext in [".mov", ".mp4"] and reviewable:
                 repre.update({
                     "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"]})
