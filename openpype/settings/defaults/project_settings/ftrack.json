@@ -301,7 +301,9 @@
                         "traypublisher"
                     ],
                     "families": [
-                        "plate"
+                        "plate",
+                        "review",
+                        "audio"
                     ],
                     "task_types": [],
                     "tasks": [],
