@@ -150,7 +150,7 @@ class VersionItem(object):
 
         label = "v{:0>3}".format(version)
         if is_hero:
-            label = "<{}>".format(label)
+            label = "[{}]".format(label)
         self._label = label
 
     def __repr__(self):

@@ -1,6 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui
 
-
 UNIQUE_ID_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
 FAMILY_ROLE = QtCore.Qt.UserRole + 3
@@ -20,18 +19,22 @@ class VersionsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(VersionsWidget, self).__init__(parent)
 
-        versions_view = QtWidgets.QTreeView(self)
         versions_model = VersionsModel(controller)
         proxy_model = QtCore.QSortFilterProxyModel()
         proxy_model.setSourceModel(versions_model)
-        versions_view.setModel(proxy_model)
 
+        versions_view = QtWidgets.QTreeView(self)
         versions_view.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection)
         versions_view.setSortingEnabled(True)
         versions_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         versions_view.setAlternatingRowColors(True)
         versions_view.setIndentation(20)
+        versions_view.setModel(proxy_model)
+
+        versions_delegate = VersionDelegate(versions_view)
+        column = versions_model.column_labels.index("Version")
+        versions_view.setItemDelegateForColumn(column, versions_delegate)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -40,6 +43,8 @@ class VersionsWidget(QtWidgets.QWidget):
         self._versions_view = versions_view
         self._versions_model = versions_model
         self._proxy_model = proxy_model
+
+        self._versions_delegate = versions_delegate
 
         self._controller = controller
 
@@ -97,6 +102,10 @@ class VersionsModel(QtGui.QStandardItemModel):
                 self._items_by_id[item_id] = item
                 new_items.append(item)
 
+            # TODO Versions label is not enought!!!
+            # - each version can have different thumbnail and infomation to
+            #       show
+            # - version change cause more changes
             version_labels = subset_item.get_version_labels_by_id()
             version_labels_dict = dict(version_labels)
             version_id = item.data(VERSION_ID_ROLE)
@@ -193,6 +202,19 @@ class VersionsModel(QtGui.QStandardItemModel):
 
         return super(VersionsModel, self).data(index, role)
 
+    def setData(self, index, value, role=None):
+        if role is None:
+            role = QtCore.Qt.EditRole
+
+        col = index.column()
+
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+            if col == 3:
+                role = VERSION_ROLE
+
+        index = self.index(index.row(), 0, index.parent())
+        return super(VersionsModel, self).setData(index, value, role)
+
     def flags(self, index):
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         if index.column() == 3:
@@ -205,3 +227,102 @@ class VersionsModel(QtGui.QStandardItemModel):
         return super(VersionsModel, self).headerData(
             section, orientation, role
         )
+
+
+class VersionDelegate(QtWidgets.QStyledItemDelegate):
+    """A delegate that display version integer formatted as version string."""
+
+    version_changed = QtCore.Signal()
+
+    def displayText(self, value, locale):
+        if value:
+            return str(value)
+        return ""
+
+    def paint(self, painter, option, index):
+        fg_color = index.data(QtCore.Qt.ForegroundRole)
+        if fg_color:
+            if isinstance(fg_color, QtGui.QBrush):
+                fg_color = fg_color.color()
+
+            if not isinstance(fg_color, QtGui.QColor):
+                fg_color = None
+
+        if not fg_color:
+            return super(VersionDelegate, self).paint(painter, option, index)
+
+        if option.widget:
+            style = option.widget.style()
+        else:
+            style = QtWidgets.QApplication.style()
+
+        style.drawControl(
+            style.CE_ItemViewItem, option, painter, option.widget
+        )
+
+        painter.save()
+
+        text = self.displayText(
+            index.data(QtCore.Qt.DisplayRole), option.locale
+        )
+        pen = painter.pen()
+        pen.setColor(fg_color)
+        painter.setPen(pen)
+
+        text_rect = style.subElementRect(style.SE_ItemViewItemText, option)
+        text_margin = style.proxy().pixelMetric(
+            style.PM_FocusFrameHMargin, option, option.widget
+        ) + 1
+
+        painter.drawText(
+            text_rect.adjusted(text_margin, 0, - text_margin, 0),
+            option.displayAlignment,
+            text
+        )
+
+        painter.restore()
+
+    def createEditor(self, parent, option, index):
+        editor = QtWidgets.QComboBox(parent)
+
+        def commit_data():
+            self.commitData.emit(editor)
+
+        editor.currentIndexChanged.connect(commit_data)
+
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.data(VERSION_EDIT_ROLE)
+        current_value = index.data(VERSION_ID_ROLE)
+        current_item = None
+
+        editor_model = editor.model()
+        items = []
+        for version_id, label in value:
+            item = QtGui.QStandardItem(label)
+            item.setData(version_id, VERSION_ID_ROLE)
+            items.append(item)
+
+            if current_item is None and version_id == current_value:
+                current_item = item
+
+        editor.clear()
+
+        root_item = editor_model.invisibleRootItem()
+        if items:
+            root_item.appendRows(items)
+
+        index = 0
+        if current_item:
+            index = current_item.row()
+
+        editor.setCurrentIndex(index)
+
+    def setModelData(self, editor, model, index):
+        """Apply the integer version back in the model"""
+
+        editor_model = editor.model()
+        editor_index = editor_model.index(editor.currentIndex(), 0)
+        version_id = editor_index.data(VERSION_ID_ROLE)
+        model.setData(index, version_id, VERSION_ID_ROLE)
