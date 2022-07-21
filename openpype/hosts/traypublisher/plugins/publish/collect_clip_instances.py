@@ -6,7 +6,7 @@ class CollectClipInstance(pyblish.api.InstancePlugin):
     """Collect clip instances and resolve its parent"""
 
     label = "Collect Clip Instances"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.081
 
     hosts = ["traypublisher"]
     families = ["plate", "review", "audio"]

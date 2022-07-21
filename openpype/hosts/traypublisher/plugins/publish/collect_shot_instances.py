@@ -21,6 +21,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         "frameEnd",
         "clipIn",
         "clipOut",
+        "clipDuration",
         "sourceIn",
         "sourceOut",
         "otioClip",
@@ -99,6 +100,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             "frameEnd": workfile_start_frame + frame_dur,
             "clipIn": _cr_attrs["clipIn"],
             "clipOut": _cr_attrs["clipOut"],
+            "clipDuration": _cr_attrs["clipDuration"],
             "sourceIn": _cr_attrs["sourceIn"],
             "sourceOut": _cr_attrs["sourceOut"],
             "workfileFrameStart": workfile_start_frame

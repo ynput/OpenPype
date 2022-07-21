@@ -455,7 +455,6 @@ or updating already created. Publishing will create OTIO file.
                 "instance_label": label,
                 "instance_id": c_instance.data["instance_id"]
             })
-
         else:
             # add review family if defined
             future_instance_data.update({
@@ -623,6 +622,7 @@ or updating already created. Publishing will create OTIO file.
             "frameEnd": int(frame_end),
             "clipIn": int(clip_in),
             "clipOut": int(clip_out),
+            "clipDuration": int(clip.duration().value),
             "sourceIn": int(source_in),
             "sourceOut": int(source_out)
         }
