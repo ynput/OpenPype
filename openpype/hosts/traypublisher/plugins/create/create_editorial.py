@@ -11,7 +11,7 @@ from openpype.hosts.traypublisher.api.plugin import (
     HiddenTrayPublishCreator
 )
 from openpype.hosts.traypublisher.api.editorial import (
-    ShotMetadataSover
+    ShotMetadataSolver
 )
 
 from openpype.pipeline import CreatedInstance
@@ -65,13 +65,6 @@ CLIP_ATTR_DEFS = [
 class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
     host_name = "traypublisher"
 
-    def __init__(
-        self, project_settings, *args, **kwargs
-    ):
-        super(EditorialClipInstanceCreatorBase, self).__init__(
-            project_settings, *args, **kwargs
-        )
-
     def create(self, instance_data, source_data=None):
         self.log.info(f"instance_data: {instance_data}")
         subset_name = instance_data["subset"]
@@ -106,13 +99,6 @@ class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
     family = "shot"
     label = "Editorial Shot"
 
-    def __init__(
-        self, project_settings, *args, **kwargs
-    ):
-        super(EditorialShotInstanceCreator, self).__init__(
-            project_settings, *args, **kwargs
-        )
-
     def get_instance_attr_defs(self):
         attr_defs = [
             TextDef(
@@ -123,17 +109,11 @@ class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
         attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
 
+
 class EditorialPlateInstanceCreator(EditorialClipInstanceCreatorBase):
     identifier = "editorial_plate"
     family = "plate"
     label = "Editorial Plate"
-
-    def __init__(
-        self, project_settings, *args, **kwargs
-    ):
-        super(EditorialPlateInstanceCreator, self).__init__(
-            project_settings, *args, **kwargs
-        )
 
 
 class EditorialAudioInstanceCreator(EditorialClipInstanceCreatorBase):
@@ -141,25 +121,11 @@ class EditorialAudioInstanceCreator(EditorialClipInstanceCreatorBase):
     family = "audio"
     label = "Editorial Audio"
 
-    def __init__(
-        self, project_settings, *args, **kwargs
-    ):
-        super(EditorialAudioInstanceCreator, self).__init__(
-            project_settings, *args, **kwargs
-        )
-
 
 class EditorialReviewInstanceCreator(EditorialClipInstanceCreatorBase):
     identifier = "editorial_review"
     family = "review"
     label = "Editorial Review"
-
-    def __init__(
-        self, project_settings, *args, **kwargs
-    ):
-        super(EditorialReviewInstanceCreator, self).__init__(
-            project_settings, *args, **kwargs
-        )
 
 
 class EditorialSimpleCreator(TrayPublishCreator):
@@ -188,8 +154,19 @@ or updating already created. Publishing will create OTIO file.
         )
         # get this creator settings by identifier
         self._creator_settings = editorial_creators.get(self.identifier)
-        self._shot_metadata_solver = ShotMetadataSover(
-            self._creator_settings, self.log)
+
+        clip_name_tokenizer = self._creator_settings["clip_name_tokenizer"]
+        shot_rename = self._creator_settings["shot_rename"]
+        shot_hierarchy = self._creator_settings["shot_hierarchy"]
+        shot_add_tasks = self._creator_settings["shot_add_tasks"]
+
+        self._shot_metadata_solver = ShotMetadataSolver(
+            clip_name_tokenizer,
+            shot_rename,
+            shot_hierarchy,
+            shot_add_tasks,
+            self.log
+        )
 
         # try to set main attributes from settings
         if self._creator_settings.get("default_variants"):

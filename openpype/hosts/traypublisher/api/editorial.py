@@ -5,7 +5,7 @@ from openpype.client import get_asset_by_id
 from openpype.pipeline.create import CreatorError
 
 
-class ShotMetadataSover:
+class ShotMetadataSolver:
     """Collecting hierarchy context from `parents` and `hierarchy` data
     present in `clip` family instances coming from the request json data file
 
@@ -22,12 +22,18 @@ class ShotMetadataSover:
     shot_hierarchy = None
     shot_add_tasks = None
 
-    def __init__(self, creator_settings, logger):
-        self.clip_name_tokenizer = creator_settings["clip_name_tokenizer"]
-        self.shot_rename = creator_settings["shot_rename"]
-        self.shot_hierarchy = creator_settings["shot_hierarchy"]
-        self.shot_add_tasks = creator_settings["shot_add_tasks"]
-
+    def __init__(
+        self,
+        clip_name_tokenizer,
+        shot_rename,
+        shot_hierarchy,
+        shot_add_tasks,
+        logger
+    ):
+        self.clip_name_tokenizer = clip_name_tokenizer
+        self.shot_rename = shot_rename
+        self.shot_hierarchy = shot_hierarchy
+        self.shot_add_tasks = shot_add_tasks
         self.log = logger
 
     def _rename_template(self, data):

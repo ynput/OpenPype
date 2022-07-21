@@ -1,5 +1,4 @@
 import os
-from pprint import pformat
 from openpype.api import get_project_settings, Logger
 
 log = Logger.get_logger(__name__)
@@ -15,8 +14,6 @@ def initialize():
 
     global_variables = globals()
     for item in simple_creators:
-
-        log.debug(pformat(item))
 
         dynamic_plugin = SettingsCreator.from_settings(item)
         global_variables[dynamic_plugin.__name__] = dynamic_plugin
