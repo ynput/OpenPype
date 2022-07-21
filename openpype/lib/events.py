@@ -272,7 +272,7 @@ class EventSystem(object):
 
         return Event(topic, data, source, self)
 
-    def emit(self, topic, data, source):
+    def emit(self, topic, data=None, source=None):
         """Create event based on passed data and emit it.
 
         This is easiest way how to trigger event in an event system.
