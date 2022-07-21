@@ -248,14 +248,14 @@ def create(self):
     # - variant can be filled from settings
     variant = self._variant_name
     # Only place where we can look for current context
-    project_name = io.Session["AVALON_PROJECT"]
-    asset_name = io.Session["AVALON_ASSET"]
-    task_name = io.Session["AVALON_TASK"]
-    host_name = io.Session["AVALON_APP"]
+    project_name = self.project_name
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
+    host_name = legacy_io.Session["AVALON_APP"]
 
     # Create new instance if does not exist yet
     if existing_instance is None:
-        asset_doc = io.find_one({"type": "asset", "name": asset_name})
+        asset_doc = get_asset_by_name(project_name, asset_name)
         subset_name = self.get_subset_name(
             variant, task_name, asset_doc, project_name, host_name
         )
@@ -278,7 +278,7 @@ def create(self):
         existing_instance["asset"] != asset_name
         or existing_instance["task"] != task_name
     ):
-        asset_doc = io.find_one({"type": "asset", "name": asset_name})
+        asset_doc = get_asset_by_name(project_name, asset_name)
         subset_name = self.get_subset_name(
             variant, task_name, asset_doc, project_name, host_name
         )
