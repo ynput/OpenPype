@@ -637,7 +637,7 @@ class VersionsModel(AssignerToolSubModel):
     def __init__(self, *args, **kwargs):
         super(VersionsModel, self).__init__(*args, **kwargs)
         self._asset_ids = set()
-        self._items_by_id = {}
+        self._group_items = []
 
     def refresh(self):
         asset_docs = self._main_model.get_asset_docs_by_ids(self._asset_ids)
@@ -654,7 +654,7 @@ class VersionsModel(AssignerToolSubModel):
         )
 
         group_items = []
-        subset_items_by_asset_id = {}
+        subset_items_by_asset_id = collections.defaultdict(list)
         for asset_doc in asset_docs:
             asset_id = asset_doc["_id"]
             asset_name = asset_doc["name"]
@@ -663,6 +663,10 @@ class VersionsModel(AssignerToolSubModel):
 
             for subset_doc in subset_docs_by_asset_id[asset_id]:
                 subset_id = subset_doc["_id"]
+                versions_docs = version_docs_by_subset_id.get(subset_id)
+                if not versions_docs:
+                    continue
+
                 subset_name = subset_doc["name"]
                 subset_data = subset_doc["data"]
                 family = subset_data.get("family")
@@ -671,29 +675,71 @@ class VersionsModel(AssignerToolSubModel):
                     if families:
                         family = families[0]
 
+                versions_docs_by_id = {
+                    version_doc["_id"]: version_doc
+                    for version_doc in versions_docs
+                }
+
+                version_items = []
+                for version_doc in versions_docs:
+                    is_hero = version_doc["type"] == "hero_version"
+                    version = None
+                    if not is_hero:
+                        version = version_doc["name"]
+                    else:
+                        version_id = version_doc["version_id"]
+                        versioned_doc = versions_docs_by_id.get(version_id)
+                        if versioned_doc:
+                            version = versioned_doc["name"]
+
+                    if version is not None:
+                        version_item = VersionItem(
+                            subset_id, version_doc["_id"], version, is_hero
+                        )
+                        version_items.append(version_item)
+
+                if not version_items:
+                    continue
 
                 subset_item = SubsetItem(
                     self,
+                    asset_name,
                     subset_id,
                     subset_name,
                     family
                 )
-            group_item = SubsetGroupItem(asset_id)
-            group_items.append(group_item)
+                subset_items_by_asset_id[asset_id].append(subset_item)
 
+                for version_item in version_items:
+                    subset_item.add_version(version_item)
 
+            for subset_items in subset_items_by_asset_id.values():
+                group_item = SubsetGroupItem(asset_name, asset_id)
+                group_items.append(group_item)
+
+                for subset_item in subset_items:
+                    group_item.add_children(subset_item)
+
+        self._group_items = group_items
+
+    def get_subset_items(self):
+        output = []
+        for group_item in self._group_items:
+            output.extend(group_item)
+        return output
+
+    def get_group_items(self):
+        return list(self._group_items)
 
     def set_asset_ids(self, asset_ids):
-        if not asset_ids:
+        if asset_ids:
             asset_ids = set(asset_ids)
         else:
             asset_ids = set()
 
-        if self._asset_ids == asset_ids:
-            return
-
-        self._asset_ids = asset_ids
-        self.refresh()
+        if self._asset_ids != asset_ids:
+            self._asset_ids = asset_ids
+            self.refresh()
 
 
 class AssignerToolModel(object):
