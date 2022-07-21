@@ -251,7 +251,7 @@ class VersionsWidget(QtWidgets.QWidget):
         )
         new_items = []
         for subset_item in subset_items:
-            new_items.append(QtGui.QStandardItem(subset_item.label))
+            new_items.append(QtGui.QStandardItem(subset_item.subset_name))
 
         self._versions_model.clear()
         root_item = self._versions_model.invisibleRootItem()
