@@ -20,7 +20,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder
     families = [
         "imagesequence", "render", "render2d", "prerender",
-        "source", "plate", "take", "review"
+        "source", "clip", "take"
     ]
     hosts = ["shell", "fusion", "resolve", "traypublisher"]
     enabled = False
@@ -29,13 +29,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     ffmpeg_args = None
 
     def process(self, instance):
-        # make sure this apply only to reveiw in both family keys
-        # HACK: only traypublisher review family is allowed
-        if (
-            instance.data["family"] != "review"
-            and "review" in instance.data["families"]
-        ):
-            return
 
         self.log.info("subset {}".format(instance.data['subset']))
 
