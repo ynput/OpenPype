@@ -6,7 +6,7 @@ from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateReviewSubsetUniqueness(pyblish.api.ContextPlugin):
-    """Validates that nodes has common root."""
+    """Validates that review subset has unique name."""
 
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
@@ -17,7 +17,7 @@ class ValidateReviewSubsetUniqueness(pyblish.api.ContextPlugin):
         subset_names = []
 
         for instance in context:
-            self.log.info("instance:: {}".format(instance.data))
+            self.log.debug("Instance: {}".format(instance.data))
             if instance.data.get('publish'):
                 subset_names.append(instance.data.get('subset'))
 
