@@ -6,12 +6,12 @@ from openpype.pipeline.create import CreatorError
 
 
 class ShotMetadataSolver:
-    """Collecting hierarchy context from `parents` and `hierarchy` data
-    present in `clip` family instances coming from the request json data file
+    """ Solving hierarchical metadata
 
-    It will add `hierarchical_context` into each instance for integrate
-    plugins to be able to create needed parents for the context if they
-    don't exist yet
+    Used during editorial publishing. Works with imput
+    clip name and settings defining python formatable
+    template. Settings also define searching patterns
+    and its token keys used for formating in templates.
     """
 
     NO_DECOR_PATERN = re.compile(r"\{([a-z]*?)\}")
@@ -37,6 +37,17 @@ class ShotMetadataSolver:
         self.log = logger
 
     def _rename_template(self, data):
+        """Shot renaming function
+
+        Args:
+            data (dict): formating data
+
+        Raises:
+            CreatorError: If missing keys
+
+        Returns:
+            str: formated new name
+        """
         shot_rename_template = self.shot_rename[
             "shot_rename_template"]
         try:
@@ -51,6 +62,20 @@ class ShotMetadataSolver:
             ))
 
     def _generate_tokens(self, clip_name, source_data):
+        """Token generator
+
+        Settings defines token pairs key and regex expression.
+
+        Args:
+            clip_name (str): name of clip in editorial
+            source_data (dict): data for formating
+
+        Raises:
+            CreatorError: if missing key
+
+        Returns:
+            dict: updated source_data
+        """
         output_data = deepcopy(source_data["anatomy_data"])
         output_data["clip_name"] = clip_name
 
@@ -78,7 +103,20 @@ class ShotMetadataSolver:
         return output_data
 
     def _create_parents_from_settings(self, parents, data):
+        """Formating parent components.
 
+        Args:
+            parents (list): list of dict parent components
+            data (dict): formating data
+
+        Raises:
+            CreatorError: missing formating key
+            CreatorError: missing token key
+            KeyError: missing parent token
+
+        Returns:
+            list: list of dict of parent components
+        """
         # fill the parents parts from presets
         shot_hierarchy = deepcopy(self.shot_hierarchy)
         hierarchy_parents = shot_hierarchy["parents"]
@@ -152,6 +190,14 @@ class ShotMetadataSolver:
         return parents
 
     def _create_hierarchy_path(self, parents):
+        """Converting hierarchy path from parents
+
+        Args:
+            parents (list): list of dict parent components
+
+        Returns:
+            str: hierarchy path
+        """
         return "/".join(
             [
                 p["entity_name"] for p in parents
@@ -164,6 +210,17 @@ class ShotMetadataSolver:
         asset_doc,
         project_doc
     ):
+        """Returning parents from context on selected asset.
+
+        Context defined in Traypublisher project tree.
+
+        Args:
+            asset_doc (db obj): selected asset doc
+            project_doc (db obj): actual project doc
+
+        Returns:
+            list:  list of dict parent components
+        """
         project_name = project_doc["name"]
         visual_hierarchy = [asset_doc]
         current_doc = asset_doc
@@ -192,6 +249,17 @@ class ShotMetadataSolver:
         ]
 
     def _generate_tasks_from_settings(self, project_doc):
+        """Convert settings inputs to task data.
+
+        Args:
+            project_doc (db obj): actual project doc
+
+        Raises:
+            KeyError: Missing task type in project doc
+
+        Returns:
+            dict: tasks data
+        """
         tasks_to_add = {}
 
         project_tasks = project_doc["config"]["tasks"]
@@ -214,6 +282,17 @@ class ShotMetadataSolver:
         return tasks_to_add
 
     def generate_data(self, clip_name, source_data):
+        """Metadata generator.
+
+        Converts input data to hierarchy mentadata.
+
+        Args:
+            clip_name (str): clip name
+            source_data (dict): formating data
+
+        Returns:
+            (str, dict): shot name and hierarchy data
+        """
         self.log.info(f"_ source_data: {source_data}")
 
         tasks = {}
