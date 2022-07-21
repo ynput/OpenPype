@@ -7,6 +7,7 @@ import inspect
 import collections
 import numbers
 
+from openpype.host import ILoadHost
 from openpype.client import (
     get_project,
     get_assets,
@@ -719,7 +720,11 @@ def get_outdated_containers(host=None, project_name=None):
 
     if project_name is None:
         project_name = legacy_io.active_project()
-    containers = host.ls()
+
+    if isinstance(host, ILoadHost):
+        containers = host.get_containers()
+    else:
+        containers = host.ls()
     return filter_containers(containers, project_name).outdated
 
 
