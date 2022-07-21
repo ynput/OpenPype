@@ -1,5 +1,4 @@
 import logging
-from pickletools import optimize
 
 from Qt import QtWidgets, QtCore, QtGui
 from openpype.vendor.python.common import qargparse
