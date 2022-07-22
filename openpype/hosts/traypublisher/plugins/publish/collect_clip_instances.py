@@ -13,13 +13,11 @@ class CollectClipInstance(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         creator_identifier = instance.data["creator_identifier"]
-        if (
-            creator_identifier not in [
-                "editorial_plate",
-                "editorial_audio",
-                "editorial_review"
-            ]
-        ):
+        if creator_identifier not in [
+            "editorial_plate",
+            "editorial_audio",
+            "editorial_review"
+        ]:
             return
 
         instance.data["families"].append("clip")
