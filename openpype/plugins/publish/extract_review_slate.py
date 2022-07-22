@@ -308,6 +308,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 ]
             concat_args = [
                 ffmpeg_path,
+                "-y",
                 "-i", slate_v_path,
                 "-i", input_path,
             ]
@@ -319,6 +320,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # - keep format of output
             if format_args:
                 concat_args.extend(format_args)
+
             # Use arguments from ffmpeg preset
             source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
             if source_ffmpeg_cmd:
@@ -334,7 +336,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         concat_args.append(arg)
                         # assumes arg has one parameter
                         concat_args.append(args[indx + 1])
-            concat_args.append("-y")
+
             # add final output path
             concat_args.append(output_path)
 
