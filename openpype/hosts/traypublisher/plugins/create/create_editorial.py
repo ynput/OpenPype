@@ -64,6 +64,11 @@ CLIP_ATTR_DEFS = [
 
 
 class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
+    """ Wrapper class for clip family creators
+
+    Args:
+        HiddenTrayPublishCreator (BaseCreator): hidden supporting class
+    """
     host_name = "traypublisher"
 
     def create(self, instance_data, source_data=None):
@@ -96,6 +101,13 @@ class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
 
 
 class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
+    """ Shot family class
+
+    The shot metadata instance carrier.
+
+    Args:
+        EditorialClipInstanceCreatorBase (BaseCreator): hidden supporting class
+    """
     identifier = "editorial_shot"
     family = "shot"
     label = "Editorial Shot"
@@ -112,24 +124,54 @@ class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
 
 
 class EditorialPlateInstanceCreator(EditorialClipInstanceCreatorBase):
+    """ Plate family class
+
+    Plate representation instance.
+
+    Args:
+        EditorialClipInstanceCreatorBase (BaseCreator): hidden supporting class
+    """
     identifier = "editorial_plate"
     family = "plate"
     label = "Editorial Plate"
 
 
 class EditorialAudioInstanceCreator(EditorialClipInstanceCreatorBase):
+    """ Audio family class
+
+    Audio representation instance.
+
+    Args:
+        EditorialClipInstanceCreatorBase (BaseCreator): hidden supporting class
+    """
     identifier = "editorial_audio"
     family = "audio"
     label = "Editorial Audio"
 
 
 class EditorialReviewInstanceCreator(EditorialClipInstanceCreatorBase):
+    """ Review family class
+
+    Review representation instance.
+
+    Args:
+        EditorialClipInstanceCreatorBase (BaseCreator): hidden supporting class
+    """
     identifier = "editorial_review"
     family = "review"
     label = "Editorial Review"
 
 
 class EditorialSimpleCreator(TrayPublishCreator):
+    """ Editorial creator class
+
+    Simple workflow creator. This creator only disecting input
+    video file into clip chunks and then converts each to
+    defined format defined Settings for each subset preset.
+
+    Args:
+        TrayPublishCreator (Creator): Tray publisher plugin class
+    """
 
     label = "Editorial Simple"
     family = "editorial"
@@ -242,6 +284,15 @@ or updating already created. Publishing will create OTIO file.
         media_path,
         otio_timeline
     ):
+        """Otio instance creating function
+
+        Args:
+            subset_name (str): name of subset
+            data (dict): instnance data
+            sequence_path (str): path to sequence file
+            media_path (str): path to media file
+            otio_timeline (otio.Timeline): otio timeline object
+        """
         # Pass precreate data to creator attributes
         data.update({
             "sequenceFilePath": sequence_path,
@@ -252,6 +303,15 @@ or updating already created. Publishing will create OTIO file.
         self._create_instance(self.family, subset_name, data)
 
     def _create_otio_timeline(self, sequence_path, fps):
+        """Creating otio timeline from sequence path
+
+        Args:
+            sequence_path (str): path to sequence file
+            fps (float): frame per second
+
+        Returns:
+            otio.Timeline: otio timeline object
+        """
         # get editorial sequence file into otio timeline object
         extension = os.path.splitext(sequence_path)[1]
 
@@ -266,6 +326,17 @@ or updating already created. Publishing will create OTIO file.
         return otio.adapters.read_from_file(sequence_path, **kwargs)
 
     def _get_path_from_file_data(self, file_path_data):
+        """Converting creator path data to single path string
+
+        Args:
+            file_path_data (FileDefItem): creator path data inputs
+
+        Raises:
+            FileExistsError: in case nothing had been set
+
+        Returns:
+            str: path string
+        """
         # TODO: just temporarly solving only one media file
         if isinstance(file_path_data, list):
             file_path_data = file_path_data.pop()
@@ -281,9 +352,17 @@ or updating already created. Publishing will create OTIO file.
         self,
         otio_timeline,
         media_path,
-        clip_instance_properties,
+        instance_data,
         family_presets
     ):
+        """Helping function fro creating clip instance
+
+        Args:
+            otio_timeline (otio.Timeline): otio timeline object
+            media_path (str): media file path string
+            instance_data (dict): clip instance data
+            family_presets (list): list of dict settings subset presets
+        """
         self.asset_name_check = []
 
         tracks = otio_timeline.each_child(
@@ -318,7 +397,7 @@ or updating already created. Publishing will create OTIO file.
 
                 base_instance_data = self._get_base_instance_data(
                     clip,
-                    clip_instance_properties,
+                    instance_data,
                     track_start_frame
                 )
 
@@ -348,6 +427,14 @@ or updating already created. Publishing will create OTIO file.
                     self.log.debug(f"{pformat(dict(instance.data))}")
 
     def _restore_otio_source_range(self, otio_clip):
+        """Infusing source range.
+
+        Otio clip is missing proper source clip range so
+        here we add them from from parent timeline frame range.
+
+        Args:
+            otio_clip (otio.Clip): otio clip object
+        """
         otio_clip.source_range = otio_clip.range_in_parent()
 
     def _create_otio_reference(
@@ -356,6 +443,13 @@ or updating already created. Publishing will create OTIO file.
         media_path,
         media_data
     ):
+        """Creating otio reference at otio clip.
+
+        Args:
+            otio_clip (otio.Clip): otio clip object
+            media_path (str): media file path string
+            media_data (dict): media metadata
+        """
         start_frame = media_data["start_frame"]
         frame_duration = media_data["duration"]
         fps = media_data["fps"]
@@ -374,12 +468,23 @@ or updating already created. Publishing will create OTIO file.
 
         otio_clip.media_reference = media_reference
 
-    def _get_media_source_metadata(self, full_input_path_single_file):
+    def _get_media_source_metadata(self, path):
+        """Get all available metadata from file
+
+        Args:
+            path (str): media file path string
+
+        Raises:
+            AssertionError: ffprobe couldn't read metadata
+
+        Returns:
+            dict: media file metadata
+        """
         return_data = {}
 
         try:
             media_data = get_ffprobe_data(
-                full_input_path_single_file, self.log
+                path, self.log
             )
             self.log.debug(f"__ media_data: {pformat(media_data)}")
 
@@ -408,44 +513,55 @@ or updating already created. Publishing will create OTIO file.
         except Exception as exc:
             raise AssertionError((
                 "FFprobe couldn't read information about input file: "
-                f"\"{full_input_path_single_file}\". Error message: {exc}"
+                f"\"{path}\". Error message: {exc}"
             ))
 
         return return_data
 
     def _make_subset_instance(
         self,
-        clip,
-        _fpreset,
-        future_instance_data,
+        otio_clip,
+        preset,
+        instance_data,
         parenting_data
     ):
-        family = _fpreset["family"]
+        """Making subset instance from input preset
+
+        Args:
+            otio_clip (otio.Clip): otio clip object
+            preset (dict): sigle family preset
+            instance_data (dict): instance data
+            parenting_data (dict): shot instance parent data
+
+        Returns:
+            CreatedInstance: creator instance object
+        """
+        family = preset["family"]
         label = self._make_subset_naming(
-            _fpreset,
-            future_instance_data
+            preset,
+            instance_data
         )
-        future_instance_data["label"] = label
+        instance_data["label"] = label
 
         # add file extension filter only if it is not shot family
         if family == "shot":
-            future_instance_data["otioClip"] = (
-                otio.adapters.write_to_string(clip))
+            instance_data["otioClip"] = (
+                otio.adapters.write_to_string(otio_clip))
             c_instance = self.create_context.creators[
                 "editorial_shot"].create(
-                    future_instance_data)
+                    instance_data)
             parenting_data.update({
                 "instance_label": label,
                 "instance_id": c_instance.data["instance_id"]
             })
         else:
             # add review family if defined
-            future_instance_data.update({
-                "outputFileType": _fpreset["output_file_type"],
+            instance_data.update({
+                "outputFileType": preset["output_file_type"],
                 "parent_instance_id": parenting_data["instance_id"],
                 "creator_attributes": {
                     "parent_instance": parenting_data["instance_label"],
-                    "add_review_family": _fpreset.get("review")
+                    "add_review_family": preset.get("review")
                 }
             })
 
@@ -453,24 +569,33 @@ or updating already created. Publishing will create OTIO file.
             editorial_clip_creator = self.create_context.creators[
                 creator_identifier]
             c_instance = editorial_clip_creator.create(
-                future_instance_data)
+                instance_data)
 
         return c_instance
 
     def _make_subset_naming(
         self,
-        _fpreset,
-        future_instance_data
+        preset,
+        instance_data
     ):
-        shot_name = future_instance_data["shotName"]
-        variant_name = future_instance_data["variant"]
-        family = _fpreset["family"]
+        """ Subset name maker
+
+        Args:
+            preset (dict): single preset item
+            instance_data (dict): instance data
+
+        Returns:
+            str: label string
+        """
+        shot_name = instance_data["shotName"]
+        variant_name = instance_data["variant"]
+        family = preset["family"]
 
         # get variant name from preset or from inharitance
-        _variant_name = _fpreset.get("variant") or variant_name
+        _variant_name = preset.get("variant") or variant_name
 
         self.log.debug(f"__ family: {family}")
-        self.log.debug(f"__ _fpreset: {_fpreset}")
+        self.log.debug(f"__ preset: {preset}")
 
         # subset name
         subset_name = "{}{}".format(
@@ -481,7 +606,7 @@ or updating already created. Publishing will create OTIO file.
             subset_name
         )
 
-        future_instance_data.update({
+        instance_data.update({
             "family": family,
             "label": label,
             "variant": _variant_name,
@@ -492,21 +617,31 @@ or updating already created. Publishing will create OTIO file.
 
     def _get_base_instance_data(
         self,
-        clip,
-        clip_instance_properties,
+        otio_clip,
+        instance_data,
         track_start_frame,
     ):
+        """ Factoring basic set of instance data.
+
+        Args:
+            otio_clip (otio.Clip): otio clip object
+            instance_data (dict): precreate instance data
+            track_start_frame (int): track start frame
+
+        Returns:
+            dict: instance data
+        """
         # get clip instance properties
-        parent_asset_name = clip_instance_properties["parent_asset_name"]
-        handle_start = clip_instance_properties["handle_start"]
-        handle_end = clip_instance_properties["handle_end"]
-        timeline_offset = clip_instance_properties["timeline_offset"]
-        workfile_start_frame = clip_instance_properties["workfile_start_frame"]
-        fps = clip_instance_properties["fps"]
-        variant_name = clip_instance_properties["variant"]
+        parent_asset_name = instance_data["parent_asset_name"]
+        handle_start = instance_data["handle_start"]
+        handle_end = instance_data["handle_end"]
+        timeline_offset = instance_data["timeline_offset"]
+        workfile_start_frame = instance_data["workfile_start_frame"]
+        fps = instance_data["fps"]
+        variant_name = instance_data["variant"]
 
         # basic unique asset name
-        clip_name = os.path.splitext(clip.name)[0].lower()
+        clip_name = os.path.splitext(otio_clip.name)[0].lower()
         project_doc = get_project(self.project_name)
 
         shot_name, shot_metadata = self._shot_metadata_solver.generate_data(
@@ -529,7 +664,7 @@ or updating already created. Publishing will create OTIO file.
         self._validate_name_uniqueness(shot_name)
 
         timing_data = self._get_timing_data(
-            clip,
+            otio_clip,
             timeline_offset,
             track_start_frame,
             workfile_start_frame
@@ -571,15 +706,26 @@ or updating already created. Publishing will create OTIO file.
 
     def _get_timing_data(
         self,
-        clip,
+        otio_clip,
         timeline_offset,
         track_start_frame,
         workfile_start_frame
     ):
+        """Returning available timing data
+
+        Args:
+            otio_clip (otio.Clip): otio clip object
+            timeline_offset (int): offset value
+            track_start_frame (int): starting frame input
+            workfile_start_frame (int): start frame for shot's workfiles
+
+        Returns:
+            dict: timing metadata
+        """
         # frame ranges data
-        clip_in = clip.range_in_parent().start_time.value
+        clip_in = otio_clip.range_in_parent().start_time.value
         clip_in += track_start_frame
-        clip_out = clip.range_in_parent().end_time_inclusive().value
+        clip_out = otio_clip.range_in_parent().end_time_inclusive().value
         clip_out += track_start_frame
         self.log.info(f"clip_in: {clip_in} | clip_out: {clip_out}")
 
@@ -589,10 +735,10 @@ or updating already created. Publishing will create OTIO file.
             clip_in += timeline_offset
             clip_out += timeline_offset
 
-        clip_duration = clip.duration().value
+        clip_duration = otio_clip.duration().value
         self.log.info(f"clip duration: {clip_duration}")
 
-        source_in = clip.trimmed_range().start_time.value
+        source_in = otio_clip.trimmed_range().start_time.value
         source_out = source_in + clip_duration
 
         # define starting frame for future shot
@@ -607,12 +753,20 @@ or updating already created. Publishing will create OTIO file.
             "frameEnd": int(frame_end),
             "clipIn": int(clip_in),
             "clipOut": int(clip_out),
-            "clipDuration": int(clip.duration().value),
+            "clipDuration": int(otio_clip.duration().value),
             "sourceIn": int(source_in),
             "sourceOut": int(source_out)
         }
 
     def _get_allowed_family_presets(self, pre_create_data):
+        """ Filter out allowed family presets.
+
+        Args:
+            pre_create_data (dict): precreate attributes inputs
+
+        Returns:
+            list: lit of dict with preset items
+        """
         self.log.debug(f"__ pre_create_data: {pre_create_data}")
         return [
             {"family": "shot"},
@@ -622,41 +776,73 @@ or updating already created. Publishing will create OTIO file.
             ]
         ]
 
-    def _validate_clip_for_processing(self, clip):
-        if clip.name is None:
+    def _validate_clip_for_processing(self, otio_clip):
+        """Validate otio clip attribues
+
+        Args:
+            otio_clip (otio.Clip): otio clip object
+
+        Returns:
+            bool: True if all passing conditions
+        """
+        if otio_clip.name is None:
             return False
 
-        if isinstance(clip, otio.schema.Gap):
+        if isinstance(otio_clip, otio.schema.Gap):
             return False
 
         # skip all generators like black empty
         if isinstance(
-            clip.media_reference,
+            otio_clip.media_reference,
                 otio.schema.GeneratorReference):
             return False
 
         # Transitions are ignored, because Clips have the full frame
         # range.
-        if isinstance(clip, otio.schema.Transition):
+        if isinstance(otio_clip, otio.schema.Transition):
             return False
 
         return True
 
     def _validate_name_uniqueness(self, name):
+        """ Validating name uniqueness.
+
+        In context of other clip names in sequence file.
+
+        Args:
+            name (str): shot name string
+        """
         if name not in self.asset_name_check:
             self.asset_name_check.append(name)
         else:
-            self.log.warning(f"duplicate shot name: {name}")
+            self.log.warning(
+                f"Duplicate shot name: {name}! "
+                "Please check names in the input sequence files."
+            )
 
-    def _create_instance(self, family, subset_name, data):
+    def _create_instance(self, family, subset_name, instance_data):
+        """ CreatedInstance object creator
+
+        Args:
+            family (str): family name
+            subset_name (str): subset name
+            instance_data (dict): instance data
+        """
         # Create new instance
-        new_instance = CreatedInstance(family, subset_name, data, self)
+        new_instance = CreatedInstance(
+            family, subset_name, instance_data, self
+        )
         # Host implementation of storing metadata about instance
         HostContext.add_instance(new_instance.data_to_store())
         # Add instance to current context
         self._add_instance_to_context(new_instance)
 
     def get_pre_create_attr_defs(self):
+        """ Creating pre-create attributes at creator plugin.
+
+        Returns:
+            list: list of attribute object instances
+        """
         # Use same attributes as for instance attrobites
         attr_defs = [
             FileDef(
