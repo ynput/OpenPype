@@ -1,5 +1,7 @@
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.tools.utils.delegates import PrettyTimeDelegate
+
 UNIQUE_ID_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
 FAMILY_ROLE = QtCore.Qt.UserRole + 3
@@ -33,8 +35,14 @@ class VersionsWidget(QtWidgets.QWidget):
         versions_view.setModel(proxy_model)
 
         versions_delegate = VersionDelegate(versions_view)
-        column = versions_model.column_labels.index("Version")
-        versions_view.setItemDelegateForColumn(column, versions_delegate)
+        version_column = versions_model.column_labels.index("Version")
+        versions_view.setItemDelegateForColumn(
+            version_column, versions_delegate
+        )
+
+        time_delegate = PrettyTimeDelegate(versions_view)
+        time_column = versions_model.column_labels.index("Time")
+        versions_view.setItemDelegateForColumn(time_column, time_delegate)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -45,6 +53,7 @@ class VersionsWidget(QtWidgets.QWidget):
         self._proxy_model = proxy_model
 
         self._versions_delegate = versions_delegate
+        self._time_delegate = time_delegate
 
         self._controller = controller
 
@@ -81,6 +90,7 @@ class VersionsModel(QtGui.QStandardItemModel):
         self._controller = controller
 
         self._items_by_id = {}
+        self._subset_items_by_id = {}
 
     def _on_versions_clear(self):
         self._versions_model.clear()
@@ -100,35 +110,41 @@ class VersionsModel(QtGui.QStandardItemModel):
                 item = QtGui.QStandardItem()
                 item.setData(item_id, UNIQUE_ID_ROLE)
                 self._items_by_id[item_id] = item
+                self._subset_items_by_id[item_id] = subset_item
                 new_items.append(item)
 
             # TODO Versions label is not enought!!!
             # - each version can have different thumbnail and infomation to
             #       show
             # - version change cause more changes
-            version_labels = subset_item.get_version_labels_by_id()
-            version_labels_dict = dict(version_labels)
+            sorted_versions = subset_item.get_sorted_versions()
+            version_labels = [
+                (version_item.id, version_item.label)
+                for version_item in sorted_versions
+            ]
+            version_items_by_id = {
+                version_item.id: version_item
+                for version_item in sorted_versions
+            }
             version_id = item.data(VERSION_ID_ROLE)
-            if version_id and version_id in version_labels_dict:
-                version_label = version_labels_dict[version_id]
+            if version_id and version_id in version_items_by_id:
+                version_item = version_items_by_id[version_id]
             else:
-                version_id, version_label = version_labels[0]
+                version_item = sorted_versions[0]
+                version_id = version_item.id
 
             item.setData(subset_item.subset_name, QtCore.Qt.DisplayRole)
             item.setData(subset_item.asset_name, ASSET_NAME_ROLE)
             item.setData(subset_item.family, FAMILY_ROLE)
             item.setData(None, FAMILY_ICON_ROLE)
-            item.setData(version_label, VERSION_ROLE)
+            item.setData(version_item.label, VERSION_ROLE)
             item.setData(version_id, VERSION_ID_ROLE)
             item.setData(version_labels, VERSION_EDIT_ROLE)
-            item.setData(None, TIME_ROLE)
-            item.setData(subset_item.author, AUTHOR_ROLE)
-            item.setData(subset_item.duration, DURATION_ROLE)
-            item.setData(subset_item.handles, HANDLES_ROLE)
-            item.setData(subset_item.step, STEP_ROLE)
+            self._set_item_version(item_id, version_id)
 
         items_to_remove = []
         for item_id in items_ids_to_remove:
+            self._subset_items_by_id.pop(item_id)
             items_to_remove.append(self._items_by_id.pop(item_id))
 
         root_item = self.invisibleRootItem()
@@ -158,6 +174,8 @@ class VersionsModel(QtGui.QStandardItemModel):
         elif col == 7:
             role = DURATION_ROLE
         elif col == 8:
+            role = HANDLES_ROLE
+        elif col == 9:
             role = STEP_ROLE
 
         if new_index:
@@ -206,14 +224,25 @@ class VersionsModel(QtGui.QStandardItemModel):
         if role is None:
             role = QtCore.Qt.EditRole
 
-        col = index.column()
-
-        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
-            if col == 3:
-                role = VERSION_ROLE
-
         index = self.index(index.row(), 0, index.parent())
+
+        if role == VERSION_ID_ROLE:
+            if index.data(VERSION_ID_ROLE) != value:
+                item_id = index.data(UNIQUE_ID_ROLE)
+                self._set_item_version(item_id, value)
         return super(VersionsModel, self).setData(index, value, role)
+
+    def _set_item_version(self, item_id, version_id):
+        subset_item = self._subset_items_by_id[item_id]
+        version_item = subset_item.get_version_by_id(version_id)
+
+        item = self._items_by_id[item_id]
+        item.setData(version_item.label, VERSION_ROLE)
+        item.setData(version_item.time, TIME_ROLE)
+        item.setData(version_item.author, AUTHOR_ROLE)
+        item.setData(version_item.duration, DURATION_ROLE)
+        item.setData(version_item.handles, HANDLES_ROLE)
+        item.setData(version_item.step, STEP_ROLE)
 
     def flags(self, index):
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
