@@ -10,6 +10,7 @@ from openpype.client import (
     get_subsets,
     get_assets,
 )
+from .common import convert_documents
 from .versions import VersionsModel
 from .containers import ContainersModel
 from .thumbnails import ThumbnailsModel
@@ -127,13 +128,15 @@ class AssignerToolModel(object):
         asset_docs = get_assets(self.project_name, asset_ids=asset_ids)
         self._asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
-            for asset_doc in asset_docs
+            for asset_doc in convert_documents(asset_docs)
         }
+
         subset_docs = get_subsets(self.project_name, asset_ids=asset_ids)
         self._subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
-            for subset_doc in subset_docs
+            for subset_doc in convert_documents(subset_docs)
         }
+
         version_docs = get_versions(
             self.project_name,
             subset_ids=self._subset_docs_by_id.keys(),

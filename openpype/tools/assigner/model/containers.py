@@ -9,7 +9,7 @@ from openpype.client import (
 )
 from openpype.pipeline import schema
 
-from .common import AssignerToolSubModel
+from .common import AssignerToolSubModel, convert_documents
 
 
 class ContainerGroupItem(object):
@@ -256,8 +256,8 @@ class ContainersModel(AssignerToolSubModel):
             fields=self._representation_fields
         )
         repre_docs_by_id = {
-            str(repre_doc["_id"]): repre_doc
-            for repre_doc in repre_docs
+            repre_doc["_id"]: repre_doc
+            for repre_doc in convert_documents(repre_docs)
         }
 
         # Query versions
@@ -272,7 +272,7 @@ class ContainersModel(AssignerToolSubModel):
         )
         version_docs_by_id = {
             version_doc["_id"]: version_doc
-            for version_doc in version_docs
+            for version_doc in convert_documents(version_docs)
         }
         version_ids_for_hero = {
             version_doc["version_id"]
@@ -286,7 +286,7 @@ class ContainersModel(AssignerToolSubModel):
                 version_ids=version_ids_for_hero,
                 fields=["_id", "name"]
             )
-            for version_doc_hero in version_docs_hero:
+            for version_doc_hero in convert_documents(version_docs_hero):
                 version_id = version_doc_hero["_id"]
                 version_names_for_hero[version_id] = version_doc_hero["name"]
 
@@ -301,7 +301,7 @@ class ContainersModel(AssignerToolSubModel):
         )
         subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
-            for subset_doc in subset_docs
+            for subset_doc in convert_documents(subset_docs)
         }
 
         # Query assets
@@ -315,7 +315,7 @@ class ContainersModel(AssignerToolSubModel):
         )
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
-            for asset_doc in asset_docs
+            for asset_doc in convert_documents(asset_docs)
         }
 
         # Store version ids by representation id (converted to string)
@@ -337,11 +337,11 @@ class ContainersModel(AssignerToolSubModel):
             family = self._extract_family(subset_doc, version_doc)
             version = None
             if version_doc:
-                if version_doc["type"] != "hero_version":
-                    version = version_doc.get("name")
-                else:
-                    version_id_hero = version_doc.get("version_id")
+                if version_doc["type"] == "hero_version":
+                    version_id_hero = version_doc["version_id"]
                     version = version_names_for_hero.get(version_id_hero)
+                else:
+                    version = version_doc.get("name")
 
             container_group_item = ContainerGroupItem(
                 asset_id,

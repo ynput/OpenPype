@@ -1,9 +1,10 @@
 import os
 
 from openpype.client import get_thumbnails
+from openpype.pipeline import legacy_io
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 
-from .common import AssignerToolSubModel
+from .common import AssignerToolSubModel, convert_documents
 
 
 class ThumbnailsModel(AssignerToolSubModel):
@@ -38,13 +39,22 @@ class ThumbnailsModel(AssignerToolSubModel):
             return [self.default_thumbnail_content]
 
         output = []
-        thumbnail_docs = get_thumbnails(self.project_name, thumbnail_ids)
-        for thumbnail_doc in thumbnail_docs:
-            image = get_thumbnail_binary(
-                thumbnail_doc, "thumbnail", self.dbcon
-            )
-            if image:
-                output.append(image)
+        remaining_ids = []
+        for thumbnail_id in thumbnail_ids:
+            if thumbnail_id not in self._cached_thumbnails_by_id:
+                remaining_ids.append(thumbnail_id)
+                continue
+            output.append(self._cached_thumbnails_by_id[thumbnail_id])
+
+        if remaining_ids:
+            thumbnail_docs = get_thumbnails(self.project_name, remaining_ids)
+            for thumbnail_doc in convert_documents(thumbnail_docs):
+                image = get_thumbnail_binary(
+                    thumbnail_doc, "thumbnail", legacy_io
+                )
+                if image:
+                    output.append(image)
+                    self._cached_thumbnails_by_id[thumbnail_doc["_id"]] = image
 
         if not output:
             output.append(self.default_thumbnail_content)
