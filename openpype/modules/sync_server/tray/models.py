@@ -1,6 +1,7 @@
 import os
 import attr
 from bson.objectid import ObjectId
+import datetime
 
 from Qt import QtCore
 from Qt.QtCore import Qt
@@ -413,6 +414,23 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                 return index
         return None
 
+    def _convert_date(self, date_value, current_date):
+        """Converts 'date_value' to string.
+
+        Value of date_value might contain date in the future, used for nicely
+        sort queued items next to last downloaded.
+        """
+        try:
+            converted_date = None
+            # ignore date in the future - for sorting only
+            if date_value and date_value < current_date:
+                converted_date = date_value.strftime("%Y%m%dT%H%M%SZ")
+        except (AttributeError, TypeError):
+            # ignore unparseable values
+            pass
+
+        return converted_date
+
 
 class SyncRepresentationSummaryModel(_SyncRepresentationModel):
     """
@@ -560,7 +578,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         remote_provider = lib.translate_provider_for_icon(self.sync_server,
                                                           self.project,
                                                           remote_site)
-
+        current_date = datetime.datetime.now()
         for repre in result.get("paginatedResults"):
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
@@ -570,14 +588,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             if not files:
                 continue
 
-            local_updated = remote_updated = None
-            if repre.get('updated_dt_local'):
-                local_updated = \
-                    repre.get('updated_dt_local').strftime("%Y%m%dT%H%M%SZ")
-
-            if repre.get('updated_dt_remote'):
-                remote_updated = \
-                    repre.get('updated_dt_remote').strftime("%Y%m%dT%H%M%SZ")
+            local_updated = self._convert_date(repre.get('updated_dt_local'),
+                                               current_date)
+            remote_updated = self._convert_date(repre.get('updated_dt_remote'),
+                                                current_date)
 
             avg_progress_remote = lib.convert_progress(
                 repre.get('avg_progress_remote', '0'))
@@ -645,6 +659,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if limit == 0:
             limit = SyncRepresentationSummaryModel.PAGE_SIZE
 
+        # replace null with value in the future for better sorting
+        dummy_max_date = datetime.datetime(2099, 1, 1)
         aggr = [
             {"$match": self.get_match_part()},
             {'$unwind': '$files'},
@@ -687,7 +703,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                               {'$cond': [
                                   {'$size': "$order_remote.last_failed_dt"},
                                   "$order_remote.last_failed_dt",
-                                  []
+                                  [dummy_max_date]
                               ]}
                               ]}},
                 'updated_dt_local': {'$first': {
@@ -696,7 +712,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                               {'$cond': [
                                   {'$size': "$order_local.last_failed_dt"},
                                   "$order_local.last_failed_dt",
-                                  []
+                                  [dummy_max_date]
                               ]}
                               ]}},
                 'files_size': {'$ifNull': ["$files.size", 0]},
@@ -1039,6 +1055,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                                                           self.project,
                                                           remote_site)
 
+        current_date = datetime.datetime.now()
         for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
@@ -1046,16 +1063,12 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                 files = [files]
 
             for file in files:
-                local_updated = remote_updated = None
-                if repre.get('updated_dt_local'):
-                    local_updated = \
-                        repre.get('updated_dt_local').strftime(
-                            "%Y%m%dT%H%M%SZ")
-
-                if repre.get('updated_dt_remote'):
-                    remote_updated = \
-                        repre.get('updated_dt_remote').strftime(
-                            "%Y%m%dT%H%M%SZ")
+                local_updated = self._convert_date(
+                    repre.get('updated_dt_local'),
+                    current_date)
+                remote_updated = self._convert_date(
+                    repre.get('updated_dt_remote'),
+                    current_date)
 
                 remote_progress = lib.convert_progress(
                     repre.get('progress_remote', '0'))
@@ -1104,6 +1117,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         if limit == 0:
             limit = SyncRepresentationSummaryModel.PAGE_SIZE
 
+        dummy_max_date = datetime.datetime(2099, 1, 1)
         aggr = [
             {"$match": self.get_match_part()},
             {"$unwind": "$files"},
@@ -1147,7 +1161,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                             '$cond': [
                                 {'$size': "$order_remote.last_failed_dt"},
                                 "$order_remote.last_failed_dt",
-                                []
+                                [dummy_max_date]
                             ]
                         }
                     ]
@@ -1160,7 +1174,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                             '$cond': [
                                 {'$size': "$order_local.last_failed_dt"},
                                 "$order_local.last_failed_dt",
-                                []
+                                [dummy_max_date]
                             ]
                         }
                     ]

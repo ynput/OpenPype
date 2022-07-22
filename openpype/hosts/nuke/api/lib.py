@@ -8,27 +8,37 @@ import contextlib
 from collections import OrderedDict
 
 import clique
-from bson.objectid import ObjectId
 
 import nuke
+from Qt import QtCore, QtWidgets
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+    get_versions,
+    get_last_versions,
+    get_representations,
+)
 from openpype.api import (
     Logger,
-    Anatomy,
     BuildWorkfile,
     get_version_from_path,
-    get_anatomy_settings,
     get_workdir_data,
     get_asset,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
+from openpype.lib import env_value_to_bool
 from openpype.lib.path_tools import HostDirmap
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_anatomy_settings,
+)
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
+    Anatomy,
 )
 
 from . import gizmo_menu
@@ -55,7 +65,10 @@ class Context:
     main_window = None
     context_label = None
     project_name = os.getenv("AVALON_PROJECT")
+    # Workfile related code
     workfiles_launched = False
+    workfiles_tool_timer = None
+
     # Seems unused
     _project_doc = None
 
@@ -749,47 +762,84 @@ def check_inventory_versions():
     from .pipeline import parse_container
 
     # get all Loader nodes by avalon attribute metadata
-    for each in nuke.allNodes():
-        container = parse_container(each)
+    node_with_repre_id = []
+    repre_ids = set()
+    # Find all containers and collect it's node and representation ids
+    for node in nuke.allNodes():
+        container = parse_container(node)
 
         if container:
             node = nuke.toNode(container["objectName"])
             avalon_knob_data = read_avalon_data(node)
+            repre_id = avalon_knob_data["representation"]
 
-            # get representation from io
-            representation = legacy_io.find_one({
-                "type": "representation",
-                "_id": ObjectId(avalon_knob_data["representation"])
-            })
+            repre_ids.add(repre_id)
+            node_with_repre_id.append((node, repre_id))
 
-            # Failsafe for not finding the representation.
-            if not representation:
-                log.warning(
-                    "Could not find the representation on "
-                    "node \"{}\"".format(node.name())
-                )
-                continue
+    # Skip if nothing was found
+    if not repre_ids:
+        return
 
-            # Get start frame from version data
-            version = legacy_io.find_one({
-                "type": "version",
-                "_id": representation["parent"]
-            })
+    project_name = legacy_io.active_project()
+    # Find representations based on found containers
+    repre_docs = get_representations(
+        project_name,
+        representation_ids=repre_ids,
+        fields=["_id", "parent"]
+    )
+    # Store representations by id and collect version ids
+    repre_docs_by_id = {}
+    version_ids = set()
+    for repre_doc in repre_docs:
+        # Use stringed representation id to match value in containers
+        repre_id = str(repre_doc["_id"])
+        repre_docs_by_id[repre_id] = repre_doc
+        version_ids.add(repre_doc["parent"])
 
-            # get all versions in list
-            versions = legacy_io.find({
-                "type": "version",
-                "parent": version["parent"]
-            }).distinct("name")
+    version_docs = get_versions(
+        project_name, version_ids, fields=["_id", "name", "parent"]
+    )
+    # Store versions by id and collect subset ids
+    version_docs_by_id = {}
+    subset_ids = set()
+    for version_doc in version_docs:
+        version_docs_by_id[version_doc["_id"]] = version_doc
+        subset_ids.add(version_doc["parent"])
 
-            max_version = max(versions)
+    # Query last versions based on subset ids
+    last_versions_by_subset_id = get_last_versions(
+        project_name, subset_ids=subset_ids, fields=["_id", "parent"]
+    )
 
-            # check the available version and do match
-            # change color of node if not max version
-            if version.get("name") not in [max_version]:
-                node["tile_color"].setValue(int("0xd84f20ff", 16))
-            else:
-                node["tile_color"].setValue(int("0x4ecd25ff", 16))
+    # Loop through collected container nodes and their representation ids
+    for item in node_with_repre_id:
+        # Some python versions of nuke can't unfold tuple in for loop
+        node, repre_id = item
+        repre_doc = repre_docs_by_id.get(repre_id)
+        # Failsafe for not finding the representation.
+        if not repre_doc:
+            log.warning((
+                "Could not find the representation on node \"{}\""
+            ).format(node.name()))
+            continue
+
+        version_id = repre_doc["parent"]
+        version_doc = version_docs_by_id.get(version_id)
+        if not version_doc:
+            log.warning((
+                "Could not find the version on node \"{}\""
+            ).format(node.name()))
+            continue
+
+        # Get last version based on subset id
+        subset_id = version_doc["parent"]
+        last_version = last_versions_by_subset_id[subset_id]
+        # Check if last version is same as current version
+        if last_version["_id"] == version_doc["_id"]:
+            color_value = "0x4ecd25ff"
+        else:
+            color_value = "0xd84f20ff"
+        node["tile_color"].setValue(int(color_value, 16))
 
 
 def writes_version_sync():
@@ -914,11 +964,9 @@ def format_anatomy(data):
         file = script_name()
         data["version"] = get_version_from_path(file)
 
-    project_doc = legacy_io.find_one({"type": "project"})
-    asset_doc = legacy_io.find_one({
-        "type": "asset",
-        "name": data["avalon"]["asset"]
-    })
+    project_name = anatomy.project_name
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, data["avalon"]["asset"])
     task_name = os.environ["AVALON_TASK"]
     host_name = os.environ["AVALON_APP"]
     context_data = get_workdir_data(
@@ -1707,12 +1755,13 @@ class WorkfileSettings(object):
 
     """
 
-    def __init__(self,
-                 root_node=None,
-                 nodes=None,
-                 **kwargs):
-        Context._project_doc = kwargs.get(
-            "project") or legacy_io.find_one({"type": "project"})
+    def __init__(self, root_node=None, nodes=None, **kwargs):
+        project_doc = kwargs.get("project")
+        if project_doc is None:
+            project_name = legacy_io.active_project()
+            project_doc = get_project(project_name)
+
+        Context._project_doc = project_doc
         self._asset = (
             kwargs.get("asset_name")
             or legacy_io.Session["AVALON_ASSET"]
@@ -2062,9 +2111,10 @@ class WorkfileSettings(object):
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
-        project = legacy_io.find_one({"type": "project"})
-        asset = legacy_io.Session["AVALON_ASSET"]
-        asset = legacy_io.find_one({"name": asset, "type": "asset"})
+        project_name = legacy_io.active_project()
+        project = get_project(project_name)
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        asset = get_asset_by_name(project_name, asset_name)
         asset_data = asset.get('data', {})
 
         data = {
@@ -2164,29 +2214,6 @@ class WorkfileSettings(object):
         favorite_items.update({"Work dir": work_dir.replace("\\", "/")})
 
         set_context_favorites(favorite_items)
-
-
-def get_hierarchical_attr(entity, attr, default=None):
-    attr_parts = attr.split('.')
-    value = entity
-    for part in attr_parts:
-        value = value.get(part)
-        if not value:
-            break
-
-    if value or entity["type"].lower() == "project":
-        return value
-
-    parent_id = entity["parent"]
-    if (
-        entity["type"].lower() == "asset"
-        and entity.get("data", {}).get("visualParent")
-    ):
-        parent_id = entity["data"]["visualParent"]
-
-    parent = legacy_io.find_one({"_id": parent_id})
-
-    return get_hierarchical_attr(parent, attr)
 
 
 def get_write_node_template_attr(node):
@@ -2362,12 +2389,19 @@ def select_nodes(nodes):
 
 
 def launch_workfiles_app():
-    '''Function letting start workfiles after start of host
-    '''
-    from openpype.lib import (
-        env_value_to_bool
-    )
-    from .pipeline import get_main_window
+    """Show workfiles tool on nuke launch.
+
+    Trigger to show workfiles tool on application launch. Can be executed only
+    once all other calls are ignored.
+
+    Workfiles tool show is deffered after application initialization using
+    QTimer.
+    """
+
+    if Context.workfiles_launched:
+        return
+
+    Context.workfiles_launched = True
 
     # get all imortant settings
     open_at_start = env_value_to_bool(
@@ -2378,10 +2412,40 @@ def launch_workfiles_app():
     if not open_at_start:
         return
 
-    if not Context.workfiles_launched:
-        Context.workfiles_launched = True
-        main_window = get_main_window()
-        host_tools.show_workfiles(parent=main_window)
+    # Show workfiles tool using timer
+    # - this will be probably triggered during initialization in that case
+    #   the application is not be able to show uis so it must be
+    #   deffered using timer
+    # - timer should be processed when initialization ends
+    #       When applications starts to process events.
+    timer = QtCore.QTimer()
+    timer.timeout.connect(_launch_workfile_app)
+    timer.setInterval(100)
+    Context.workfiles_tool_timer = timer
+    timer.start()
+
+
+def _launch_workfile_app():
+    # Safeguard to not show window when application is still starting up
+    #   or is already closing down.
+    closing_down = QtWidgets.QApplication.closingDown()
+    starting_up = QtWidgets.QApplication.startingUp()
+
+    # Stop the timer if application finished start up of is closing down
+    if closing_down or not starting_up:
+        Context.workfiles_tool_timer.stop()
+        Context.workfiles_tool_timer = None
+
+    # Skip if application is starting up or closing down
+    if starting_up or closing_down:
+        return
+
+    # Make sure on top is enabled on first show so the window is not hidden
+    #   under main nuke window
+    #   - this happened on Centos 7 and it is because the focus of nuke
+    #       changes to the main window after showing because of initialization
+    #       which moves workfiles tool under it
+    host_tools.show_workfiles(parent=None, on_top=True)
 
 
 def process_workfile_builder():

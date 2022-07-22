@@ -257,12 +257,14 @@
             ]
         },
         "CollectHierarchyInstance": {
+            "shot_rename": true,
             "shot_rename_template": "{project[code]}_{_sequence_}_{_shot_}",
             "shot_rename_search_patterns": {
-                "_sequence_": "(\\d{4})(?=_\\d{4})",
-                "_shot_": "(\\d{4})(?!_\\d{4})"
+                "_sequence_": "(sc\\d{3})",
+                "_shot_": "(sh\\d{3})"
             },
             "shot_add_hierarchy": {
+                "enabled": true,
                 "parents_path": "{project}/{folder}/{sequence}",
                 "parents": {
                     "project": "{project[name]}",

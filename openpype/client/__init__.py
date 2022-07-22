@@ -1,6 +1,7 @@
 from .entities import (
     get_projects,
     get_project,
+    get_whole_project,
 
     get_asset_by_id,
     get_asset_by_name,
@@ -29,15 +30,19 @@ from .entities import (
     get_representations,
     get_representation_parents,
     get_representations_parents,
+    get_archived_representations,
 
     get_thumbnail,
     get_thumbnails,
     get_thumbnail_id_from_source,
+
+    get_workfile_info,
 )
 
 __all__ = (
     "get_projects",
     "get_project",
+    "get_whole_project",
 
     "get_asset_by_id",
     "get_asset_by_name",
@@ -66,8 +71,11 @@ __all__ = (
     "get_representations",
     "get_representation_parents",
     "get_representations_parents",
+    "get_archived_representations",
 
     "get_thumbnail",
     "get_thumbnails",
     "get_thumbnail_id_from_source",
+
+    "get_workfile_info",
 )

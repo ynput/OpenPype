@@ -854,6 +854,9 @@ class ProjectWidget(SettingsCategoryWidget):
         project_list_widget.version_change_requested.connect(
             self._on_source_version_change
         )
+        project_list_widget.extract_to_file_requested.connect(
+            self._on_extract_to_file
+        )
 
         self.project_list_widget = project_list_widget
 

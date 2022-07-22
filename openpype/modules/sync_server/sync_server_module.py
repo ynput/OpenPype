@@ -9,14 +9,12 @@ from collections import deque, defaultdict
 
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
-from openpype.api import (
-    Anatomy,
+from openpype.settings import (
     get_project_settings,
     get_system_settings,
-    get_local_site_id
 )
-from openpype.lib import PypeLogger
-from openpype.pipeline import AvalonMongoDB
+from openpype.lib import PypeLogger, get_local_site_id
+from openpype.pipeline import AvalonMongoDB, Anatomy
 from openpype.settings.lib import (
     get_default_anatomy_settings,
     get_anatomy_settings
@@ -28,7 +26,7 @@ from .providers import lib
 from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 
 
-log = PypeLogger().get_logger("SyncServer")
+log = PypeLogger.get_logger("SyncServer")
 
 
 class SyncServerModule(OpenPypeModule, ITrayModule):
