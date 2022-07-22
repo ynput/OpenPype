@@ -11,6 +11,7 @@ import clique
 import pyblish.api
 
 import openpype.api
+from openpype.client import get_representations
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
@@ -18,15 +19,23 @@ from openpype.pipeline import (
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
-def get_resources(version, extension=None):
+def get_resources(project_name, version, extension=None):
     """Get the files from the specific version."""
-    query = {"type": "representation", "parent": version["_id"]}
+
+    # TODO this functions seems to be weird
+    #   - it's looking for representation with one extension or first (any)
+    #       representation from a version?
+    #  - not sure how this should work, maybe it does for specific use cases
+    #       but probably can't be used for all resources from 2D workflows
+    extensions = None
     if extension:
-        query["name"] = extension
+        extensions = [extension]
+    repre_docs = list(get_representations(
+        project_name, version_ids=[version["_id"]], extensions=extensions
+    ))
+    assert repre_docs, "This is a bug"
 
-    representation = legacy_io.find_one(query)
-    assert representation, "This is a bug"
-
+    representation = repre_docs[0]
     directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
@@ -330,13 +339,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Preparing to copy ...")
         start = instance.data.get("frameStart")
         end = instance.data.get("frameEnd")
+        project_name = legacy_io.active_project()
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
         version = openpype.api.get_latest_version(instance.data.get("asset"),
                                                   instance.data.get("subset"))
         # get its files based on extension
-        subset_resources = get_resources(version, representation.get("ext"))
+        subset_resources = get_resources(
+            project_name, version, representation.get("ext")
+        )
         r_col, _ = clique.assemble(subset_resources)
 
         # if override remove all frames we are expecting to be rendered
@@ -1045,7 +1057,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     get publish_path
 
         Args:
-            anatomy (pype.lib.anatomy.Anatomy):
+            anatomy (openpype.pipeline.anatomy.Anatomy):
             template_data (dict): pre-calculated collected data for process
             asset (string): asset name
             subset (string): subset name (actually group name of subset)

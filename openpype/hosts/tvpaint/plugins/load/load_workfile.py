@@ -10,8 +10,8 @@ from openpype.lib import (
 from openpype.pipeline import (
     registered_host,
     legacy_io,
+    Anatomy,
 )
-from openpype.api import Anatomy
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
 
 

@@ -27,6 +27,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 "yeticache"]
     optional = True
     actions = [openpype.api.RepairAction]
+    exclude_families = []
 
     def process(self, instance):
         context = instance.context
@@ -56,7 +57,9 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         # compare with data on instance
         errors = []
-
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
         if(inst_start != frame_start_handle):
             errors.append("Instance start frame [ {} ] doesn't "
                           "match the one set on instance [ {} ]: "

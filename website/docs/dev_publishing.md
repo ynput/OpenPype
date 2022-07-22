@@ -66,7 +66,7 @@ Another optional function is **get_current_context**. This function is handy in 
 Main responsibility of create plugin is to create, update, collect and remove instance metadata and propagate changes to create context. Has access to **CreateContext** (`self.create_context`) that discovered the plugin so has also access to other creators and instances. Create plugins have a lot of responsibility so it is recommended to implement common code per host.
 
 #### *BaseCreator*
-Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **AutoCreator** and **Creator** variants.
+Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **HiddenCreator**, **AutoCreator** and **Creator** variants.
 
 **Abstractions**
 - **`family`** (class attr) - Tells what kind of instance will be created.
@@ -92,7 +92,7 @@ def collect_instances(self):
             self._add_instance_to_context(instance)
 ```
 
-- **`create`** (method) - Create a new object of **CreatedInstance** store its metadata to the workfile and add the instance into the created context. Failed Creating should raise **CreatorError** if an error happens that artists can fix or give them some useful information. Triggers and implementation differs for **Creator** and **AutoCreator**.
+- **`create`** (method) - Create a new object of **CreatedInstance** store its metadata to the workfile and add the instance into the created context. Failed Creating should raise **CreatorError** if an error happens that artists can fix or give them some useful information. Triggers and implementation differs for **Creator**, **HiddenCreator** and **AutoCreator**.
 
 - **`update_instances`** (method) - Update data of instances. Receives tuple with **instance** and **changes**.
 ```python
@@ -172,11 +172,11 @@ class RenderLayerCreator(Creator):
     icon = "fa5.building"
 ```
 
-- **`get_instance_attr_defs`** (method) - Attribute definitions of instance. Creator can define attribute values with default values for each instance. These attributes may affect how instances will be instance processed during publishing. Attribute defiitions can be used from `openpype.pipeline.lib.attribute_definitions` (NOTE: Will be moved to `openpype.lib.attribute_definitions` soon). Attribute definitions define basic types of values for different cases e.g. boolean, number, string, enumerator, etc. Default implementation returns **instance_attr_defs**.
+- **`get_instance_attr_defs`** (method) - Attribute definitions of instance. Creator can define attribute values with default values for each instance. These attributes may affect how instances will be instance processed during publishing. Attribute defiitions can be used from `openpype.lib.attribute_definitions`. Attribute definitions define basic types of values for different cases e.g. boolean, number, string, enumerator, etc. Default implementation returns **instance_attr_defs**.
 - **`instance_attr_defs`** (attr) - Attribute for default implementation of **get_instance_attr_defs**.
 
 ```python
-from openpype.pipeline import attribute_definitions
+from openpype.lib import attribute_definitions
 
 
 class RenderLayerCreator(Creator):
@@ -197,6 +197,20 @@ class RenderLayerCreator(Creator):
 - **`get_subset_name`** (method) - Calculate subset name based on passed data. Data can be extended using the `get_dynamic_data` method. Default implementation is using `get_subset_name` from `openpype.lib` which is recommended.
 
 - **`get_dynamic_data`** (method) - Can be used to extend data for subset templates which may be required in some cases.
+
+
+#### *HiddenCreator*
+Creator which is not showed in UI so artist can't trigger it directly but is available for other creators. This creator is primarily meant for cases when creation should create different types of instances. For example during editorial publishing where input is single edl file but should create 2 or more kind of instances each with different family, attributes and abilities. Arguments for creation were limited to `instance_data` and `source_data`. Data of `instance_data` should follow what is sent to other creators and `source_data` can be used to send custom data defined by main creator. It is expected that `HiddenCreator` has specific main or "parent" creator.
+
+```python
+def create(self, instance_data, source_data):
+    variant = instance_data["variant"]
+    task_name = instance_data["task"]
+    asset_name = instance_data["asset"]
+    asset_doc = get_asset_by_name(self.project_name, asset_name)
+    self.get_subset_name(
+        variant, task_name, asset_doc, self.project_name, self.host_name)
+```
 
 
 #### *AutoCreator*
@@ -234,14 +248,14 @@ def create(self):
     # - variant can be filled from settings
     variant = self._variant_name
     # Only place where we can look for current context
-    project_name = io.Session["AVALON_PROJECT"]
-    asset_name = io.Session["AVALON_ASSET"]
-    task_name = io.Session["AVALON_TASK"]
-    host_name = io.Session["AVALON_APP"]
+    project_name = self.project_name
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
+    host_name = legacy_io.Session["AVALON_APP"]
 
     # Create new instance if does not exist yet
     if existing_instance is None:
-        asset_doc = io.find_one({"type": "asset", "name": asset_name})
+        asset_doc = get_asset_by_name(project_name, asset_name)
         subset_name = self.get_subset_name(
             variant, task_name, asset_doc, project_name, host_name
         )
@@ -264,7 +278,7 @@ def create(self):
         existing_instance["asset"] != asset_name
         or existing_instance["task"] != task_name
     ):
-        asset_doc = io.find_one({"type": "asset", "name": asset_name})
+        asset_doc = get_asset_by_name(project_name, asset_name)
         subset_name = self.get_subset_name(
             variant, task_name, asset_doc, project_name, host_name
         )
@@ -297,7 +311,8 @@ class BulkRenderCreator(Creator):
 - **`pre_create_attr_defs`** (attr) - Attribute for default implementation of **get_pre_create_attr_defs**.
 
 ```python
-from openpype.pipeline import Creator, attribute_definitions
+from openpype.lib import attribute_definitions
+from openpype.pipeline.create import Creator
 
 
 class CreateRender(Creator):
@@ -470,10 +485,8 @@ Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_
 
 ```python
 import pyblish.api
-from openpype.pipeline import (
-    OpenPypePyblishPluginMixin,
-    attribute_definitions,
-)
+from openpype.lib import attribute_definitions
+from openpype.pipeline import OpenPypePyblishPluginMixin
 
 
 # Example context plugin

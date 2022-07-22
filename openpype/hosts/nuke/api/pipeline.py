@@ -120,8 +120,9 @@ def install():
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
-    nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
     _install_menu()
+    launch_workfiles_app()
 
 
 def uninstall():
@@ -141,6 +142,14 @@ def uninstall():
     _uninstall_menu()
 
 
+def _show_workfiles():
+    # Make sure parent is not set
+    # - this makes Workfiles tool as separated window which
+    #   avoid issues with reopening
+    # - it is possible to explicitly change on top flag of the tool
+    host_tools.show_workfiles(parent=None, on_top=False)
+
+
 def _install_menu():
     # uninstall original avalon menu
     main_window = get_main_window()
@@ -157,7 +166,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Work Files...",
-        lambda: host_tools.show_workfiles(parent=main_window)
+        _show_workfiles
     )
 
     menu.addSeparator()

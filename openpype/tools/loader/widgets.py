@@ -17,8 +17,7 @@ from openpype.client import (
     get_thumbnail_id_from_source,
     get_thumbnail,
 )
-from openpype.api import Anatomy
-from openpype.pipeline import HeroVersionType
+from openpype.pipeline import HeroVersionType, Anatomy
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
     discover_loader_plugins,

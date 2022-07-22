@@ -506,7 +506,7 @@ class Creator(LegacyCreator):
         super(Creator, self).__init__(*args, **kwargs)
         from openpype.api import get_current_project_settings
         resolve_p_settings = get_current_project_settings().get("resolve")
-        self.presets = dict()
+        self.presets = {}
         if resolve_p_settings:
             self.presets = resolve_p_settings["create"].get(
                 self.__class__.__name__, {})

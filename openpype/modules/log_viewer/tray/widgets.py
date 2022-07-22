@@ -1,3 +1,4 @@
+import html
 from Qt import QtCore, QtWidgets
 import qtawesome
 from .models import LogModel, LogsFilterProxy
@@ -286,7 +287,7 @@ class OutputWidget(QtWidgets.QWidget):
             if level == "debug":
                 line_f = (
                     "<font color=\"Yellow\"> -"
-                    " <font color=\"Lime\">{{  {loggerName}  }}: ["
+                    " <font color=\"Lime\">{{  {logger_name}  }}: ["
                     " <font color=\"White\">{message}"
                     " <font color=\"Lime\">]"
                 )
@@ -299,7 +300,7 @@ class OutputWidget(QtWidgets.QWidget):
             elif level == "warning":
                 line_f = (
                     "<font color=\"Yellow\">*** WRN:"
-                    " <font color=\"Lime\"> >>> {{ {loggerName} }}: ["
+                    " <font color=\"Lime\"> >>> {{ {logger_name} }}: ["
                     " <font color=\"White\">{message}"
                     " <font color=\"Lime\">]"
                 )
@@ -307,16 +308,25 @@ class OutputWidget(QtWidgets.QWidget):
                 line_f = (
                     "<font color=\"Red\">!!! ERR:"
                     " <font color=\"White\">{timestamp}"
-                    " <font color=\"Lime\">>>> {{ {loggerName} }}: ["
+                    " <font color=\"Lime\">>>> {{ {logger_name} }}: ["
                     " <font color=\"White\">{message}"
                     " <font color=\"Lime\">]"
                 )
 
+            logger_name = log["loggerName"]
+            timestamp = ""
+            if not show_timecode:
+                timestamp = log["timestamp"]
+            message = log["message"]
             exc = log.get("exception")
             if exc:
-                log["message"] = exc["message"]
+                message = exc["message"]
 
-            line = line_f.format(**log)
+            line = line_f.format(
+                message=html.escape(message),
+                logger_name=logger_name,
+                timestamp=timestamp
+            )
 
             if show_timecode:
                 timestamp = log["timestamp"]

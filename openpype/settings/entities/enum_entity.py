@@ -167,7 +167,8 @@ class HostsEnumEntity(BaseEnumEntity):
         "tvpaint",
         "unreal",
         "standalonepublisher",
-        "webpublisher",
+        "traypublisher",
+        "webpublisher"
     ]
 
     def _item_initialization(self):

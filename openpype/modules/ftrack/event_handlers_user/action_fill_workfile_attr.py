@@ -11,13 +11,13 @@ from openpype.client import (
     get_project,
     get_assets,
 )
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.lib import (
     get_workfile_template_key,
     get_workdir_data,
-    Anatomy,
     StringTemplate,
 )
+from openpype.pipeline import Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 
