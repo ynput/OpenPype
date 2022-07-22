@@ -65,12 +65,16 @@ const collab = [
     image: '/img/clothcat.png',
     infoLink: 'https://www.clothcatanimation.com/'
   }, {
-    title: 'Ellipse Studio',
-    image: '/img/ellipse-studio.png',
-    infoLink: 'http://www.dargaudmedia.com'
+    title: 'Ellipse Animation',
+    image: '/img/ellipse_animation.svg',
+    infoLink: 'http://www.ellipseanimation.com'
   }, {
     title: 'J Cube Inc',
     image: '/img/jcube_logo_bw.png',
+    infoLink: 'https://j-cube.jp'
+  }, {
+    title: 'Normaal Animation',
+    image: '/img/logo_normaal.png',
     infoLink: 'https://j-cube.jp'
   }
 ];
@@ -191,10 +195,10 @@ function Service({imageUrl, title, description}) {
   );
 }
 
-function Client({title, image, infoLink}) {
+function Studio({title, image, infoLink}) {
   const imgUrl = useBaseUrl(image);
   return (
-    <a className="client" href={infoLink}>
+    <a className="studio" href={infoLink}>
       <img src={image} alt="" title={title}></img>
     </a>
   );
@@ -490,7 +494,7 @@ function Home() {
               <h2>Studios using openPype</h2>
               <div className="showcase">
                 {studios.map((props, idx) => (
-                  <Client key={idx} {...props} />
+                  <Studio key={idx} {...props} />
                 ))}
               </div>
             </div>
