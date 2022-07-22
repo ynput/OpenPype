@@ -17,6 +17,174 @@ HANDLES_ROLE = QtCore.Qt.UserRole + 12
 STEP_ROLE = QtCore.Qt.UserRole + 13
 
 
+class IconSubsetItemWidget(QtWidgets.QWidget):
+    def __init__(self, subset_item, parent):
+        super(IconSubsetItemWidget, self).__init__(parent)
+
+        label = QtWidgets.QLabel(subset_item.subset_name, self)
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.addWidget(label, 0)
+
+        self.setStyleSheet("background: #ff0000;")
+
+        # TODO Versions label is not enought!!!
+        # - each version can have different thumbnail and infomation to
+        #       show
+        # - version change cause more changes
+        # sorted_versions = subset_item.get_sorted_versions()
+        # version_labels = [
+        #     (version_item.id, version_item.label)
+        #     for version_item in sorted_versions
+        # ]
+        # version_items_by_id = {
+        #     version_item.id: version_item
+        #     for version_item in sorted_versions
+        # }
+        # version_id = item.data(VERSION_ID_ROLE)
+        # if version_id and version_id in version_items_by_id:
+        #     version_item = version_items_by_id[version_id]
+        # else:
+        #     version_item = sorted_versions[0]
+        #     version_id = version_item.id
+        #
+        # item.setData(subset_item.subset_name, QtCore.Qt.DisplayRole)
+        # item.setData(subset_item.asset_name, ASSET_NAME_ROLE)
+        # item.setData(subset_item.family, FAMILY_ROLE)
+        # item.setData(None, FAMILY_ICON_ROLE)
+        # item.setData(version_item.label, VERSION_ROLE)
+        # item.setData(version_id, VERSION_ID_ROLE)
+        # item.setData(version_labels, VERSION_EDIT_ROLE)
+        # self._set_item_version(item_id, version_id)
+
+
+class IconViewWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
+        super(IconViewWidget, self).__init__(parent)
+
+        self._size_hint = QtCore.QSize(100, 100)
+
+        test_decrease_btn = QtWidgets.QPushButton("-", self)
+        test_increase_btn = QtWidgets.QPushButton("+", self)
+        top_layout = QtWidgets.QHBoxLayout()
+        top_layout.addStretch(1)
+        top_layout.addWidget(test_decrease_btn, 0)
+        top_layout.addWidget(test_increase_btn, 0)
+
+        content_widget = QtWidgets.QWidget(self)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addLayout(top_layout, 0)
+        main_layout.addWidget(content_widget, 1)
+
+        controller.event_system.add_callback(
+            "versions.clear", self._on_versions_clear
+        )
+        controller.event_system.add_callback(
+            "versions.refresh.finished", self._on_version_refresh_finish
+        )
+
+        test_decrease_btn.clicked.connect(self._on_decrease)
+        test_increase_btn.clicked.connect(self._on_increase)
+
+        self._controller = controller
+
+        self._content_widget = content_widget
+        self._content_layout = content_layout
+
+        self._widgets = {}
+        self._items = {}
+        self._views = []
+
+    def _on_decrease(self):
+        new_size_hint = QtCore.QSize(self._size_hint)
+        new_size_hint.setWidth(new_size_hint.width() - 20)
+        new_size_hint.setHeight(new_size_hint.height() - 20)
+        self.set_item_size_hint(new_size_hint)
+
+    def _on_increase(self):
+        new_size_hint = QtCore.QSize(self._size_hint)
+        new_size_hint.setWidth(new_size_hint.width() + 20)
+        new_size_hint.setHeight(new_size_hint.height() + 20)
+        self.set_item_size_hint(new_size_hint)
+
+    def set_item_size_hint(self, new_size_hint):
+        if new_size_hint.width() < 20:
+            new_size_hint.setWidth(20)
+        if new_size_hint.height() < 20:
+            new_size_hint.setHeight(20)
+
+        if new_size_hint == self._size_hint:
+            return
+
+        self._size_hint = new_size_hint
+        for item in self._items.values():
+            item.setData(new_size_hint, QtCore.Qt.SizeHintRole)
+        for view in self._views:
+            view.setGridSize(new_size_hint)
+
+    def _on_versions_clear(self):
+        self._clear()
+
+    def _clear(self):
+        while self._content_layout.count():
+            item = self._content_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.setVisible(False)
+                widget.deleteLater()
+        self._widgets = {}
+        self._items = {}
+        self._views = []
+
+    def _on_version_refresh_finish(self):
+        self._clear()
+
+        view = QtWidgets.QListView(self._content_widget)
+        view.setSpacing(5)
+
+        view.setMouseTracking(True)
+        view.setGridSize(self._size_hint)
+        # view.setSelectionRectVisible(True)
+        view.setSelectionMode(view.ExtendedSelection)
+        view.setResizeMode(view.Adjust)
+        view.setFlow(view.LeftToRight)
+        view.setViewMode(view.IconMode)
+        view.setWrapping(True)
+        view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        subset_items = (
+            self._controller.get_current_containers_subset_items()
+        )
+        new_items = {}
+        widgets = {}
+        for subset_item in subset_items:
+            item_id = subset_item.id
+            item = QtGui.QStandardItem()
+            item.setData(item_id, UNIQUE_ID_ROLE)
+            item.setData(self._size_hint, QtCore.Qt.SizeHintRole)
+            new_items[item_id] = item
+            widgets[item_id] = IconSubsetItemWidget(subset_item, view)
+
+        model = QtGui.QStandardItemModel()
+        for item in new_items.values():
+            model.appendRow(item)
+
+        view.setModel(model)
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            item_id = index.data(UNIQUE_ID_ROLE)
+            widget = widgets[item_id]
+            view.setIndexWidget(index, widget)
+
+        self._widgets = widgets
+        self._views = [view]
+        self._items = new_items
+
+        self._content_layout.addWidget(view)
+
+
 class VersionsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(VersionsWidget, self).__init__(parent)
@@ -25,43 +193,48 @@ class VersionsWidget(QtWidgets.QWidget):
         proxy_model = QtCore.QSortFilterProxyModel()
         proxy_model.setSourceModel(versions_model)
 
-        versions_view = QtWidgets.QTreeView(self)
-        versions_view.setSelectionMode(
-            QtWidgets.QAbstractItemView.ExtendedSelection)
-        versions_view.setSortingEnabled(True)
-        versions_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
-        versions_view.setAlternatingRowColors(True)
-        versions_view.setIndentation(20)
-        versions_view.setModel(proxy_model)
+        icon_versions_view = IconViewWidget(controller, self)
 
-        versions_delegate = VersionDelegate(versions_view)
+        list_versions_view = QtWidgets.QTreeView(self)
+        list_versions_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
+        list_versions_view.setSortingEnabled(True)
+        list_versions_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
+        list_versions_view.setAlternatingRowColors(True)
+        list_versions_view.setIndentation(20)
+        list_versions_view.setModel(proxy_model)
+
+        versions_delegate = ListVersionDelegate(list_versions_view)
         version_column = versions_model.column_labels.index("Version")
-        versions_view.setItemDelegateForColumn(
+        list_versions_view.setItemDelegateForColumn(
             version_column, versions_delegate
         )
 
-        time_delegate = PrettyTimeDelegate(versions_view)
+        time_delegate = PrettyTimeDelegate(list_versions_view)
         time_column = versions_model.column_labels.index("Time")
-        versions_view.setItemDelegateForColumn(time_column, time_delegate)
+        list_versions_view.setItemDelegateForColumn(time_column, time_delegate)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(versions_view, 1)
+        layout.addWidget(list_versions_view, 1)
+        layout.addWidget(icon_versions_view, 1)
 
         selection_change_timer = QtCore.QTimer()
         selection_change_timer.setInterval(100)
         selection_change_timer.setSingleShot(True)
 
-        selection_model = versions_view.selectionModel()
+        selection_model = list_versions_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
         selection_change_timer.timeout.connect(self._on_selection_timer)
 
-        self._versions_view = versions_view
         self._versions_model = versions_model
         self._proxy_model = proxy_model
 
+        self._list_versions_view = list_versions_view
         self._versions_delegate = versions_delegate
         self._time_delegate = time_delegate
+
+        self._icon_versions_view = icon_versions_view
 
         self._selection_change_timer = selection_change_timer
 
@@ -71,7 +244,7 @@ class VersionsWidget(QtWidgets.QWidget):
         self._selection_change_timer.start()
 
     def _on_selection_timer(self):
-        selection_model = self._versions_view.selectionModel()
+        selection_model = self._list_versions_view.selectionModel()
         selected_ids = {
             index.data(VERSION_ID_ROLE)
             for index in selection_model.selectedIndexes()
@@ -283,7 +456,7 @@ class VersionsModel(QtGui.QStandardItemModel):
         )
 
 
-class VersionDelegate(QtWidgets.QStyledItemDelegate):
+class ListVersionDelegate(QtWidgets.QStyledItemDelegate):
     """A delegate that display version integer formatted as version string."""
 
     version_changed = QtCore.Signal()
@@ -303,7 +476,7 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
                 fg_color = None
 
         if not fg_color:
-            return super(VersionDelegate, self).paint(painter, option, index)
+            return super(ListVersionDelegate, self).paint(painter, option, index)
 
         if option.widget:
             style = option.widget.style()
