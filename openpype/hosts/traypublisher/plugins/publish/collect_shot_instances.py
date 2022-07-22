@@ -4,7 +4,11 @@ import opentimelineio as otio
 
 
 class CollectShotInstance(pyblish.api.InstancePlugin):
-    """Collect shot instances and resolve its parent"""
+    """ Collect shot instances
+
+    Resolving its user inputs from creator attributes
+    to instance data.
+    """
 
     label = "Collect Shot Instances"
     order = pyblish.api.CollectorOrder - 0.09
@@ -50,6 +54,19 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         self.log.debug(pformat(instance.data))
 
     def _get_otio_clip(self, instance):
+        """ Converts otio string data.
+
+        Convert them to proper otio object
+        and finds its equivalent at otio timeline.
+        This process is a hack to support also
+        resolving parent range.
+
+        Args:
+            instance (obj): publishing instance
+
+        Returns:
+            otio.Clip: otio clip object
+        """
         context = instance.context
         # convert otio clip from string to object
         otio_clip_string = instance.data.pop("otioClip")
@@ -63,8 +80,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
                 descended_from_type=otio.schema.Clip)
             if clip.name == otio_clip.name
         ]
-        self.log.debug(otio_timeline.each_child(
-            descended_from_type=otio.schema.Clip))
 
         otio_clip = clips.pop()
         self.log.debug(f"__ otioclip.parent: {otio_clip.parent}")
@@ -72,6 +87,14 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         return otio_clip
 
     def _distribute_shared_data(self, instance):
+        """ Distribute all defined keys.
+
+        All data are shared between all related
+        instances in context.
+
+        Args:
+            instance (obj): publishing instance
+        """
         context = instance.context
 
         instance_id = instance.data["instance_id"]
@@ -85,6 +108,14 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         }
 
     def _solve_inputs_to_data(self, instance):
+        """ Resolve all user inputs into instance data.
+
+        Args:
+            instance (obj): publishing instance
+
+        Returns:
+            dict: instance data updating data
+        """
         _cr_attrs = instance.data["creator_attributes"]
         workfile_start_frame = _cr_attrs["workfile_start_frame"]
         frame_start = _cr_attrs["frameStart"]
@@ -107,6 +138,11 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         }
 
     def _solve_hierarchy_context(self, instance):
+        """ Adding hierarchy data to context shared data.
+
+        Args:
+            instance (obj): publishing instance
+        """
         context = instance.context
 
         final_context = (
@@ -157,13 +193,21 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         self.log.debug(pformat(final_context))
 
     def _update_dict(self, ex_dict, new_dict):
+        """ Recursion function
+
+        Updating nested data with another nested data.
+
+        Args:
+            ex_dict (dict): nested data
+            new_dict (dict): nested data
+
+        Returns:
+            dict: updated nested data
+        """
         for key in ex_dict:
             if key in new_dict and isinstance(ex_dict[key], dict):
                 new_dict[key] = self._update_dict(ex_dict[key], new_dict[key])
-            else:
-                if ex_dict.get(key) and new_dict.get(key):
-                    continue
-                else:
-                    new_dict[key] = ex_dict[key]
+            elif not ex_dict.get(key) or not new_dict.get(key):
+                new_dict[key] = ex_dict[key]
 
         return new_dict
