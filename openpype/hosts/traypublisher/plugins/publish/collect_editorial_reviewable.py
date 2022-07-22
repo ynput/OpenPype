@@ -2,7 +2,9 @@ import pyblish.api
 
 
 class CollectEditorialReviewable(pyblish.api.InstancePlugin):
-    """Collect reviwiewable toggle to instance and representation data
+    """ Collect review input from user.
+
+    Adds the input to instance data.
     """
 
     label = "Collect Editorial Reviewable"
@@ -13,7 +15,11 @@ class CollectEditorialReviewable(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         creator_identifier = instance.data["creator_identifier"]
-        if "editorial" not in creator_identifier:
+        if creator_identifier not in [
+            "editorial_plate",
+            "editorial_audio",
+            "editorial_review"
+        ]:
             return
 
         creator_attributes = instance.data["creator_attributes"]
