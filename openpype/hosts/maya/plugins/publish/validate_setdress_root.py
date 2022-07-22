@@ -4,8 +4,7 @@ import openpype.api
 
 
 class ValidateSetdressRoot(pyblish.api.InstancePlugin):
-    """
-    """
+    """Validate if set dress top root node is published."""
 
     order = openpype.api.ValidateContentsOrder
     label = "SetDress Root"

@@ -22,6 +22,7 @@ Only one item can be selected at a time.
 
 import re
 import collections
+import html
 
 from Qt import QtWidgets, QtCore
 
@@ -98,6 +99,7 @@ class GroupWidget(QtWidgets.QWidget):
             instances(list<CreatedInstance>): List of instances in
                 CreateContext.
         """
+
         # Store instances by id and by subset name
         instances_by_id = {}
         instances_by_subset_name = collections.defaultdict(list)
@@ -142,6 +144,7 @@ class GroupWidget(QtWidgets.QWidget):
 
 class CardWidget(BaseClickableFrame):
     """Clickable card used as bigger button."""
+
     selected = QtCore.Signal(str, str)
     # Group identifier of card
     # - this must be set because if send when mouse is released with card id
@@ -178,6 +181,7 @@ class ContextCardWidget(CardWidget):
 
     Is not visually under group widget and is always at the top of card view.
     """
+
     def __init__(self, parent):
         super(ContextCardWidget, self).__init__(parent)
 
@@ -204,13 +208,14 @@ class ContextCardWidget(CardWidget):
 
 class InstanceCardWidget(CardWidget):
     """Card widget representing instance."""
+
     active_changed = QtCore.Signal()
 
     def __init__(self, instance, group_icon, parent):
         super(InstanceCardWidget, self).__init__(parent)
 
         self._id = instance.id
-        self._group_identifier = instance.creator_label
+        self._group_identifier = instance.group_label
         self._group_icon = group_icon
 
         self.instance = instance
@@ -303,7 +308,7 @@ class InstanceCardWidget(CardWidget):
         self._last_variant = variant
         self._last_subset_name = subset_name
         # Make `variant` bold
-        label = self.instance.label
+        label = html.escape(self.instance.label)
         found_parts = set(re.findall(variant, label, re.IGNORECASE))
         if found_parts:
             for part in found_parts:
