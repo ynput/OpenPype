@@ -229,6 +229,10 @@ class ThumbnailsWidget(QtWidgets.QLabel):
 
         self.update_sources()
 
+        controller.event_system.add_callback(
+            "model.context.changed", self._on_context_change
+        )
+
     def height(self):
         width = self.width()
         asp_w, asp_h = self.aspect_ratio
@@ -267,6 +271,9 @@ class ThumbnailsWidget(QtWidgets.QLabel):
         thumbnail.loadFromData(thumbnails[0])
 
         self._set_pixmap(thumbnail)
+
+    def _on_context_change(self, event):
+        self.update_sources()
 
 
 class VersionsInformationWidget(QtWidgets.QWidget):

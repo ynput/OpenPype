@@ -40,6 +40,11 @@ class AssignerToolModel(object):
             "container.selection.changed",
             self._on_container_selection_change
         )
+        self.event_system.add_callback(
+            "version.selection.changed",
+            self._on_version_selection_change
+        )
+
         self._containers_model = ContainersModel(self)
         self._versions_model = VersionsModel(self)
         self._thumbnails_model = ThumbnailsModel(self)
@@ -61,6 +66,9 @@ class AssignerToolModel(object):
 
     def _on_container_selection_change(self, event):
         self.set_current_containers(event["container_ids"])
+
+    def _on_version_selection_change(self, event):
+        self.set_current_versions(event["version_ids"])
 
     def get_host_containers(self):
         return self._controller.host.get_containers()
@@ -145,11 +153,35 @@ class AssignerToolModel(object):
         )
         self._version_docs_by_id = {
             version_doc["_id"]: version_doc
-            for version_doc in version_docs
+            for version_doc in convert_documents(version_docs)
         }
 
+        self._current_version_ids = {
+            version_id
+            for version_id in self._current_version_ids
+            if version_id in self._version_docs_by_id
+        }
         self._versions_model.set_asset_ids(
             set(self._asset_docs_by_id.keys())
+        )
+        self._context_changed("containers")
+
+    def set_current_versions(self, version_ids):
+        version_ids = set(version_ids)
+        if self._current_version_ids == version_ids:
+            return
+
+        self._current_version_ids = version_ids
+        self._context_changed("versions")
+
+    def _context_changed(self, source_context_type):
+        self.event_system.emit(
+            "model.context.changed",
+            {
+                "container_ids": list(self._current_container_ids),
+                "version_ids": list(self._current_version_ids),
+                "changed_type": source_context_type
+            }
         )
 
     def _get_thumbnail_ids_for_asset_ids(self, asset_ids):
@@ -161,7 +193,7 @@ class AssignerToolModel(object):
 
     def get_thumbnail_ids(self):
         if self._current_version_ids:
-            return self._version_model.get_thumbnail_ids_for_version_ids(
+            return self._versions_model.get_thumbnail_ids_for_version_ids(
                 self._current_version_ids
             )
 

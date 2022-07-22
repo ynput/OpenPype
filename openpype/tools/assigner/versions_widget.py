@@ -48,6 +48,14 @@ class VersionsWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(versions_view, 1)
 
+        selection_change_timer = QtCore.QTimer()
+        selection_change_timer.setInterval(100)
+        selection_change_timer.setSingleShot(True)
+
+        selection_model = versions_view.selectionModel()
+        selection_model.selectionChanged.connect(self._on_selection_change)
+        selection_change_timer.timeout.connect(self._on_selection_timer)
+
         self._versions_view = versions_view
         self._versions_model = versions_model
         self._proxy_model = proxy_model
@@ -55,7 +63,24 @@ class VersionsWidget(QtWidgets.QWidget):
         self._versions_delegate = versions_delegate
         self._time_delegate = time_delegate
 
+        self._selection_change_timer = selection_change_timer
+
         self._controller = controller
+
+    def _on_selection_change(self):
+        self._selection_change_timer.start()
+
+    def _on_selection_timer(self):
+        selection_model = self._versions_view.selectionModel()
+        selected_ids = {
+            index.data(VERSION_ID_ROLE)
+            for index in selection_model.selectedIndexes()
+        }
+
+        self._controller.event_system.emit(
+            "version.selection.changed",
+            {"version_ids": list(selected_ids)}
+        )
 
 
 class VersionsModel(QtGui.QStandardItemModel):
