@@ -248,11 +248,10 @@ class ContainersModel(AssignerToolSubModel):
             container["representation"]
             for container in host_containers
         }
-        project_name = self._main_model.project_name
 
         # Query representations
         repre_docs = get_representations(
-            project_name,
+            self.project_name,
             representation_ids=representation_ids,
             fields=self._representation_fields
         )
@@ -263,7 +262,7 @@ class ContainersModel(AssignerToolSubModel):
 
         # Query versions
         version_docs = get_versions(
-            project_name,
+            self.project_name,
             version_ids={
                 repre_doc["parent"]
                 for repre_doc in repre_docs_by_id.values()
@@ -283,7 +282,7 @@ class ContainersModel(AssignerToolSubModel):
         version_names_for_hero = {}
         if version_ids_for_hero:
             version_docs_hero = get_versions(
-                project_name,
+                self.project_name,
                 version_ids=version_ids_for_hero,
                 fields=["_id", "name"]
             )
@@ -293,7 +292,7 @@ class ContainersModel(AssignerToolSubModel):
 
         # Query subsets
         subset_docs = get_subsets(
-            project_name,
+            self.project_name,
             subset_ids={
                 version_doc["parent"]
                 for version_doc in version_docs_by_id.values()
@@ -307,7 +306,7 @@ class ContainersModel(AssignerToolSubModel):
 
         # Query assets
         asset_docs = get_assets(
-            project_name,
+            self.project_name,
             asset_ids={
                 subset_doc["parent"]
                 for subset_doc in subset_docs_by_id.values()

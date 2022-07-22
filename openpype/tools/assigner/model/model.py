@@ -12,18 +12,36 @@ from openpype.client import (
 )
 from .versions import VersionsModel
 from .containers import ContainersModel
+from .thumbnails import ThumbnailsModel
 
 
 class AssignerToolModel(object):
+    version_fields = [
+        "_id",
+        "name",
+        "parent",
+        "type",
+        "version_id",
+        "data.author",
+        "data.time",
+        "data.step",
+        "data.frameStart",
+        "data.frameEnd",
+        "data.handleStart",
+        "data.handleEnd",
+        "data.thumbnail_id",
+    ]
+
     def __init__(self, controller):
         self._controller = controller
 
         self._containers_model = ContainersModel(self)
         self._versions_model = VersionsModel(self)
+        self._thumbnails_model = ThumbnailsModel(self)
 
         self._current_container_ids = set()
-        # self._current_asset_ids = set()
-        # self._current_version_ids = set()
+        self._current_version_ids = set()
+
         self._asset_docs_by_id = {}
         self._subset_docs_by_id = {}
         self._version_docs_by_id = {}
@@ -72,7 +90,6 @@ class AssignerToolModel(object):
         )
 
     def refresh(self):
-        # self._asset_docs_by_id = {}
         self._containers_model.refresh_containers()
         available_container_ids = (
             self._containers_model.get_available_container_ids()
@@ -113,7 +130,8 @@ class AssignerToolModel(object):
         version_docs = get_versions(
             self.project_name,
             subset_ids=self._subset_docs_by_id.keys(),
-            hero=True
+            hero=True,
+            fields=self.version_fields
         )
         self._version_docs_by_id = {
             version_doc["_id"]: version_doc
@@ -123,3 +141,29 @@ class AssignerToolModel(object):
         self._versions_model.set_asset_ids(
             set(self._asset_docs_by_id.keys())
         )
+
+    def _get_thumbnail_ids_for_asset_ids(self, asset_ids):
+        thumbnail_ids = []
+        for asset_id in asset_ids:
+            asset_doc = self._asset_docs_by_id[asset_id]
+            thumbnail_ids.append(asset_doc["data"].get("thumbnail_id"))
+        return thumbnail_ids
+
+    def get_thumbnail_ids(self):
+        if self._current_version_ids:
+            return self._version_model.get_thumbnail_ids_for_version_ids(
+                self._current_version_ids
+            )
+
+        if self._current_container_ids:
+            return self._get_thumbnail_ids_for_asset_ids(
+                self._current_container_ids
+            )
+        return []
+
+    def get_thumbnail_source(self, thumbnail_id):
+        return self._thumbnails_model.get_thumbnail_source(thumbnail_id)
+
+    def get_context_thumbnail_sources(self):
+        thumbnail_ids = self.get_thumbnail_ids()
+        return self._thumbnails_model.get_thumbnail_sources(thumbnail_ids)

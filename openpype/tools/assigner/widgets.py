@@ -261,7 +261,7 @@ class ThumbnailsWidget(QtWidgets.QLabel):
         )
 
     def update_sources(self):
-        thumbnails = self._controller.get_thumbnail_sources()
+        thumbnails = self._controller.get_context_thumbnail_sources()
 
         thumbnail = QtGui.QPixmap()
         thumbnail.loadFromData(thumbnails[0])

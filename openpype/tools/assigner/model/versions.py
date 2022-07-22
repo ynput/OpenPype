@@ -96,12 +96,14 @@ class VersionItem(object):
         self._author = version_data.get("author")
         self._time = version_data.get("time")
         self._step = version_data.get("step")
+        self._thumbnail_id = version_data.get("thumbnail_id")
 
         frame_start = version_data.get("frameStart")
         frame_end = version_data.get("frameEnd")
 
         handle_start = version_data.get("handleStart")
         handle_end = version_data.get("handleEnd")
+
         handles = None
         frames = None
         duration = None
@@ -203,12 +205,17 @@ class VersionItem(object):
     def time(self):
         return self._time
 
+    @property
+    def thumbnail_id(self):
+        return self._thumbnail_id
+
 
 class VersionsModel(AssignerToolSubModel):
     def __init__(self, *args, **kwargs):
         super(VersionsModel, self).__init__(*args, **kwargs)
         self._asset_ids = set()
         self._subset_items = []
+        self._thumbnail_id_by_version_id = {}
 
     def refresh(self):
         self.event_system.emit("versions.refresh.started")
@@ -227,6 +234,7 @@ class VersionsModel(AssignerToolSubModel):
         )
 
         subset_items = []
+        thumbnail_id_by_version_id = {}
         subset_items_by_asset_id = collections.defaultdict(list)
         for asset_doc in asset_docs:
             asset_id = asset_doc["_id"]
@@ -276,6 +284,9 @@ class VersionsModel(AssignerToolSubModel):
                             is_hero,
                             version_data
                         )
+                        thumbnail_id_by_version_id[version_item.id] = (
+                            version_item.thumbnail_id
+                        )
                         version_items.append(version_item)
 
                 if not version_items:
@@ -299,8 +310,15 @@ class VersionsModel(AssignerToolSubModel):
                 subset_items.append(subset_item)
 
         self._subset_items = subset_items
+        self._thumbnail_id_by_version_id = thumbnail_id_by_version_id
 
         self.event_system.emit("versions.refresh.finished")
+
+    def get_thumbnail_ids_for_version_ids(self, version_ids):
+        return [
+            self._thumbnail_id_by_version_id.get(version_id)
+            for version_id in version_ids
+        ]
 
     def get_subset_items(self):
         return list(self._subset_items)
