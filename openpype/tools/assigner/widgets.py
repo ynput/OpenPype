@@ -215,20 +215,65 @@ class FamiliesWidget(QtWidgets.QWidget):
         self._families_view = families_view
 
 
-class ThumbnailsWidget(QtWidgets.QWidget):
-    def __init__(self, parent):
+class ThumbnailsWidget(QtWidgets.QLabel):
+    aspect_ratio = (16, 9)
+    max_width = 300
+
+    def __init__(self, controller, parent):
         super(ThumbnailsWidget, self).__init__(parent)
+        self.setAlignment(QtCore.Qt.AlignCenter)
 
-        thumbnail_label = QtWidgets.QLabel("Thumbnail", self)
+        self._controller = controller
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(thumbnail_label, 1)
+        self._current_pixmap = None
+
+        self.update_sources()
+
+    def height(self):
+        width = self.width()
+        asp_w, asp_h = self.aspect_ratio
+
+        return (width / asp_w) * asp_h
+
+    def width(self):
+        width = super(ThumbnailsWidget, self).width()
+        if width > self.max_width:
+            width = self.max_width
+        return width
+
+    def _set_pixmap(self, pixmap):
+        self._current_pixmap = pixmap
+        pixmap = self.scale_pixmap(pixmap)
+        self.setPixmap(pixmap)
+
+    def resizeEvent(self, _event):
+        if not self._current_pixmap:
+            return
+        cur_pix = self.scale_pixmap(self._current_pixmap)
+        self.setPixmap(cur_pix)
+
+    def scale_pixmap(self, pixmap):
+        return pixmap.scaled(
+            self.width(),
+            self.height(),
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+
+    def update_sources(self):
+        thumbnails = self._controller.get_thumbnail_sources()
+
+        thumbnail = QtGui.QPixmap()
+        thumbnail.loadFromData(thumbnails[0])
+
+        self._set_pixmap(thumbnail)
 
 
 class VersionsInformationWidget(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         super(VersionsInformationWidget, self).__init__(parent)
+
+        self._controller = controller
 
         version_label = QtWidgets.QLabel("Version info", self)
         layout = QtWidgets.QHBoxLayout(self)

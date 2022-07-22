@@ -1,6 +1,6 @@
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore, QtGui
 
-from openpype import style
+from openpype import style, resources
 from openpype.tools.utils import PlaceholderLineEdit
 
 from .controller import AssignerController
@@ -19,6 +19,16 @@ class ConnectionWindow(QtWidgets.QWidget):
 
         controller = AssignerController(host)
 
+        title = "Assigner"
+        project_name = controller.project_name
+        if project_name:
+            title += " - {}".format(project_name)
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+
+        self.setWindowTitle(title)
+        self.setWindowIcon(icon)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
         main_splitter = QtWidgets.QSplitter(self)
 
         # Left side widget
@@ -34,7 +44,7 @@ class ConnectionWindow(QtWidgets.QWidget):
         filtering_layout.setContentsMargins(0, 0, 0, 0)
         filtering_layout.addWidget(subset_name_filter_input, 1)
 
-        # Conteiners widget
+        # Containers widget
         containers_widget = ContainersWidget(controller, left_side_widget)
         # Families widget (for filtering of families in versions widget)
         families_widget = FamiliesWidget(left_side_widget)
@@ -49,20 +59,24 @@ class ConnectionWindow(QtWidgets.QWidget):
         versions_widget = VersionsWidget(controller, main_splitter)
 
         # Right side widget
-        #   - contains thumbnails and informations about selected version
-        right_side_widget = QtWidgets.QWidget(main_splitter)
-        thumbnails_widget = ThumbnailsWidget(right_side_widget)
-        version_info_widget = VersionsInformationWidget(right_side_widget)
+        #   - contains thumbnails and information about selected version
+        right_side_splitter = QtWidgets.QSplitter(main_splitter)
+        thumbnails_widget = ThumbnailsWidget(controller, right_side_splitter)
+        version_info_widget = VersionsInformationWidget(
+            controller, right_side_splitter
+        )
 
-        right_side_layout = QtWidgets.QVBoxLayout(right_side_widget)
-        right_side_layout.setContentsMargins(0, 0, 0, 0)
-        right_side_layout.addWidget(thumbnails_widget, 0)
-        right_side_layout.addWidget(version_info_widget, 0)
+        right_side_splitter.setOrientation(QtCore.Qt.Vertical)
+        right_side_splitter.addWidget(thumbnails_widget)
+        right_side_splitter.addWidget(version_info_widget)
+
+        right_side_splitter.setStretchFactor(0, 30)
+        right_side_splitter.setStretchFactor(1, 35)
 
         # Add widgets to splitter
         main_splitter.addWidget(left_side_widget)
         main_splitter.addWidget(versions_widget)
-        main_splitter.addWidget(right_side_widget)
+        main_splitter.addWidget(right_side_splitter)
 
         # Add splitter to layout of window
         layout = QtWidgets.QHBoxLayout(self)
