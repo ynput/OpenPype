@@ -229,7 +229,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         skip = False
         for item in self.skip_host_families:
-            if item["host"] != host_name:
+            if host_name not in item["host"]:
                 continue
 
             families = set(item["families"])
