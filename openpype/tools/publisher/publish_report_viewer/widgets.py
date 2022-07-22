@@ -1,3 +1,4 @@
+from math import ceil
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
@@ -137,13 +138,75 @@ class PluginLoadReportWidget(QtWidgets.QWidget):
         self._model.set_report(report)
 
 
+class ZoomPlainText(QtWidgets.QPlainTextEdit):
+    def __init__(self, *args, **kwargs):
+        super(ZoomPlainText, self).__init__(*args, **kwargs)
+
+        anim_timer = QtCore.QTimer()
+        anim_timer.setInterval(20)
+
+        anim_timer.timeout.connect(self._scaling_callback)
+
+        self._anim_timer = anim_timer
+        self._zoom_enabled = False
+        self._scheduled_scalings = 0
+        self._point_size = None
+
+    def wheelEvent(self, event):
+        if not self._zoom_enabled:
+            super(ZoomPlainText, self).wheelEvent(event)
+            return
+
+        degrees = float(event.delta()) / 8
+        steps = int(ceil(degrees / 5))
+        self._scheduled_scalings += steps
+        if (self._scheduled_scalings * steps < 0):
+            self._scheduled_scalings = steps
+
+        self._anim_timer.start()
+
+    def _scaling_callback(self):
+        if self._scheduled_scalings == 0:
+            self._anim_timer.stop()
+            return
+
+        factor = 1.0 + (self._scheduled_scalings / 300)
+        font = self.font()
+        if self._point_size is None:
+            self._point_size = font.pointSizeF()
+
+        self._point_size *= factor
+        if self._point_size < 1:
+            self._point_size = 1.0
+
+        font.setPointSizeF(self._point_size)
+        # Using 'self.setFont(font)' would not be propagated when stylesheets
+        #   are applied on this widget
+        self.setStyleSheet("font-size: {}pt".format(font.pointSize()))
+
+        if self._scheduled_scalings > 0:
+            self._scheduled_scalings -= 1
+        else:
+            self._scheduled_scalings += 1
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Control:
+            self._zoom_enabled = True
+        super(ZoomPlainText, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Control:
+            self._zoom_enabled = False
+        super(ZoomPlainText, self).keyReleaseEvent(event)
+
+
 class DetailsWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super(DetailsWidget, self).__init__(parent)
 
-        output_widget = QtWidgets.QPlainTextEdit(self)
-        output_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        output_widget = ZoomPlainText(self)
         output_widget.setObjectName("PublishLogConsole")
+        output_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

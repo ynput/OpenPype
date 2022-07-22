@@ -24,7 +24,10 @@ from bson.json_util import (
     dumps,
     CANONICAL_JSON_OPTIONS
 )
-
+from openpype.client import (
+    get_project,
+    get_whole_project,
+)
 from openpype.pipeline import AvalonMongoDB
 
 DOCUMENTS_FILE_NAME = "database"
@@ -50,14 +53,12 @@ def pack_project(project_name, destination_dir=None):
 
     Args:
         project_name(str): Project that should be packaged.
-        destination_dir(str): Optinal path where zip will be stored. Project's
+        destination_dir(str): Optional path where zip will be stored. Project's
             root is used if not passed.
     """
     print("Creating package of project \"{}\"".format(project_name))
     # Validate existence of project
-    dbcon = AvalonMongoDB()
-    dbcon.Session["AVALON_PROJECT"] = project_name
-    project_doc = dbcon.find_one({"type": "project"})
+    project_doc = get_project(project_name)
     if not project_doc:
         raise ValueError("Project \"{}\" was not found in database".format(
             project_name
@@ -118,7 +119,7 @@ def pack_project(project_name, destination_dir=None):
         temp_docs_json = s.name
 
     # Query all project documents and store them to temp json
-    docs = list(dbcon.find({}))
+    docs = list(get_whole_project(project_name))
     data = dumps(
         docs, json_options=CANONICAL_JSON_OPTIONS
     )
@@ -147,7 +148,7 @@ def pack_project(project_name, destination_dir=None):
     # Cleanup
     os.remove(temp_docs_json)
     os.remove(temp_metadata_json)
-    dbcon.uninstall()
+
     print("*** Packing finished ***")
 
 
@@ -207,7 +208,7 @@ def unpack_project(path_to_zip, new_root=None):
         print("Using different root path {}".format(new_root))
         root_path = new_root
 
-        project_doc = collection.find_one({"type": "project"})
+        project_doc = get_project(project_name)
         roots = project_doc["config"]["roots"]
         key = tuple(roots.keys())[0]
         update_key = "config.roots.{}.{}".format(key, low_platform)
