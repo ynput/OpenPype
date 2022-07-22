@@ -11,7 +11,8 @@ class SubsetItem(object):
         asset_name,
         subset_id,
         subset_name,
-        family
+        family,
+        subset_group,
     ):
         self._id = str(subset_id)
         self._versions_model = versions_model
@@ -20,6 +21,7 @@ class SubsetItem(object):
         self._subset_id = subset_id
         self._subset_name = subset_name
         self._family = family
+        self._subset_group = subset_group
 
         self._version_items_by_id = {}
         self._current_version_item = None
@@ -279,13 +281,15 @@ class VersionsModel(AssignerToolSubModel):
                 if not version_items:
                     continue
 
+                subset_group = subset_data.get("subsetGroup")
                 subset_item = SubsetItem(
                     self,
                     asset_id,
                     asset_name,
                     subset_id,
                     subset_name,
-                    family
+                    family,
+                    subset_group
                 )
                 subset_items_by_asset_id[asset_id].append(subset_item)
 
