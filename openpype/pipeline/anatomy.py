@@ -380,6 +380,19 @@ class AnatomyTemplateResult(TemplateResult):
         )
         return self.__class__(tmp, self.rootless)
 
+    def normalized(self):
+        """Convert to normalized path."""
+
+        tmp = TemplateResult(
+            os.path.normpath(self),
+            self.template,
+            self.solved,
+            self.used_values,
+            self.missing_keys,
+            self.invalid_types
+        )
+        return self.__class__(tmp, self.rootless)
+
 
 class AnatomyTemplates(TemplatesDict):
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
