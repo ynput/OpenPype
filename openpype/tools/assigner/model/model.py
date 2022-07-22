@@ -77,6 +77,7 @@ class AssignerToolModel(object):
         available_container_ids = (
             self._containers_model.get_available_container_ids()
         )
+        # Probably shoult restart current containers variable
         self.set_current_containers({
             container_id
             for container_id in self._current_container_ids

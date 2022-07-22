@@ -1,56 +1,13 @@
 import collections
-from uuid import uuid4
 
 from .common import AssignerToolSubModel
 
 
-class BaseSubsetItem(object):
-    _id = None
-    asset_name = None
-    subset_name = None
-    family = None
-    author = None
-    frames = None
-    duration = None
-    handles = None
-    step = None
-
-    @property
-    def id(self):
-        if self._id is None:
-            self._id = str(uuid4())
-        return self._id
-
-
-class SubsetGroupItem(BaseSubsetItem):
-    def __init__(self, asset_name, asset_id):
-        self._children_by_id = {}
-        self._id = str(asset_id)
-        self._label = asset_name
-        self._asset_name = asset_name
-
-    @property
-    def asset_name(self):
-        return self._asset_name
-
-    def __iter__(self):
-        for child in self._children_by_id.values():
-            yield child
-
-    def get_subset_items(self):
-        output = []
-        for child in self._children_by_id.values():
-            output.extend(child.get_subset_items())
-        return output
-
-    def add_children(self, child):
-        self._children_by_id[child.id] = child
-
-
-class SubsetItem(BaseSubsetItem):
+class SubsetItem(object):
     def __init__(
         self,
         versions_model,
+        asset_id,
         asset_name,
         subset_id,
         subset_name,
@@ -58,6 +15,7 @@ class SubsetItem(BaseSubsetItem):
     ):
         self._id = str(subset_id)
         self._versions_model = versions_model
+        self._asset_id = asset_id
         self._asset_name = asset_name
         self._subset_id = subset_id
         self._subset_name = subset_name
@@ -66,8 +24,10 @@ class SubsetItem(BaseSubsetItem):
         self._version_items_by_id = {}
         self._current_version_item = None
         self._sorted_versions = None
-        self._author = None
-        self._publish_time = None
+
+    @property
+    def id(self):
+        return self._id
 
     def get_subset_items(self):
         return [self]
@@ -80,27 +40,25 @@ class SubsetItem(BaseSubsetItem):
         self._sorted_versions = None
 
     def _sort_versions(self):
-        if self._sorted_versions is not None:
-            return
+        if self._sorted_versions is None:
+            sorted_versions = reversed(sorted(
+                self._version_items_by_id.values()
+            ))
+            self._sorted_versions = [
+                item.id
+                for item in sorted_versions
+            ]
 
-        self._sorted_versions = [
-            item.id
-            for item in sorted(self._version_items_by_id.values())
-        ]
+    def get_version_by_id(self, version_id):
+        return self._version_items_by_id[version_id]
 
-    def get_version_labels_by_id(self):
+    def get_sorted_versions(self):
         self._sort_versions()
 
-        output = []
-        for item_id in self._sorted_versions:
-            version_item = self._version_items_by_id[item_id]
-            output.append((item_id, version_item.label))
-        return output
-
-    def set_current_version(self, version_id):
-        if version_id not in self._version_items_by_id:
-            return
-        self._current_version_item = self._version_items_by_id[version_id]
+        return [
+            self._version_items_by_id[item_id]
+            for item_id in self._sorted_versions
+        ]
 
     @property
     def family(self):
@@ -114,39 +72,51 @@ class SubsetItem(BaseSubsetItem):
     def asset_name(self):
         return self._asset_name
 
-    # Properties looking into current version
     @property
-    def author(self):
-        if self._current_version_item:
-            return self._current_version_item.author
-
-    @property
-    def frames(self):
-        if self._current_version_item:
-            return self._current_version_item.frames
-
-    @property
-    def duration(self):
-        if self._current_version_item:
-            return self._current_version_item.duration
-
-    @property
-    def handles(self):
-        if self._current_version_item:
-            return self._current_version_item.handles
-
-    @property
-    def step(self):
-        if self._current_version_item:
-            return self._current_version_item.step
+    def asset_id(self):
+        return self._asset_id
 
 
 class VersionItem(object):
-    def __init__(self, subset_id, version_id, version, is_hero):
+    def __init__(
+        self,
+        subset_id,
+        version_id,
+        version,
+        is_hero,
+        version_data
+    ):
         self._subset_id = subset_id
         self._version_id = version_id
         self._version = version
         self._is_hero = is_hero
+
+        self._author = version_data.get("author")
+        self._time = version_data.get("time")
+        self._step = version_data.get("step")
+
+        frame_start = version_data.get("frameStart")
+        frame_end = version_data.get("frameEnd")
+
+        handle_start = version_data.get("handleStart")
+        handle_end = version_data.get("handleEnd")
+        handles = None
+        frames = None
+        duration = None
+        if handle_start is not None and handle_end is not None:
+            handles = "{}-{}".format(str(handle_start), str(handle_end))
+
+        if frame_start is not None and frame_end is not None:
+            # Remove superfluous zeros from numbers (3.0 -> 3) to improve
+            # readability for most frame ranges
+            frame_start = int(frame_start)
+            frame_end = int(frame_end)
+            frames = "{0}-{1}".format(frame_start, frame_end)
+            duration = frame_end - frame_start + 1
+
+        self._handles = handles
+        self._duration = duration
+        self._frames = frames
 
         label = "v{:0>3}".format(version)
         if is_hero:
@@ -209,30 +179,34 @@ class VersionItem(object):
 
     @property
     def step(self):
-        return None
+        return self._step
 
     @property
     def handles(self):
-        return None
+        return self._handles
 
     @property
     def duration(self):
-        return None
+        return self._duration
 
     @property
     def frames(self):
-        return None
+        return self._frames
 
     @property
     def author(self):
-        return None
+        return self._author
+
+    @property
+    def time(self):
+        return self._time
 
 
 class VersionsModel(AssignerToolSubModel):
     def __init__(self, *args, **kwargs):
         super(VersionsModel, self).__init__(*args, **kwargs)
         self._asset_ids = set()
-        self._group_items = []
+        self._subset_items = []
 
     def refresh(self):
         self.event_system.emit("versions.refresh.started")
@@ -250,7 +224,7 @@ class VersionsModel(AssignerToolSubModel):
             self._main_model.get_version_docs_by_subset_ids(subset_ids)
         )
 
-        group_items = []
+        subset_items = []
         subset_items_by_asset_id = collections.defaultdict(list)
         for asset_doc in asset_docs:
             asset_id = asset_doc["_id"]
@@ -281,17 +255,24 @@ class VersionsModel(AssignerToolSubModel):
                 for version_doc in versions_docs:
                     is_hero = version_doc["type"] == "hero_version"
                     version = None
+                    version_data = {}
                     if not is_hero:
                         version = version_doc["name"]
+                        version_data = version_doc["data"]
                     else:
                         version_id = version_doc["version_id"]
                         versioned_doc = versions_docs_by_id.get(version_id)
                         if versioned_doc:
                             version = versioned_doc["name"]
+                            version_data = versioned_doc["data"]
 
                     if version is not None:
                         version_item = VersionItem(
-                            subset_id, version_doc["_id"], version, is_hero
+                            subset_id,
+                            version_doc["_id"],
+                            version,
+                            is_hero,
+                            version_data
                         )
                         version_items.append(version_item)
 
@@ -300,6 +281,7 @@ class VersionsModel(AssignerToolSubModel):
 
                 subset_item = SubsetItem(
                     self,
+                    asset_id,
                     asset_name,
                     subset_id,
                     subset_name,
@@ -310,25 +292,14 @@ class VersionsModel(AssignerToolSubModel):
                 for version_item in version_items:
                     subset_item.add_version(version_item)
 
-            for subset_items in subset_items_by_asset_id.values():
-                group_item = SubsetGroupItem(asset_name, asset_id)
-                group_items.append(group_item)
+                subset_items.append(subset_item)
 
-                for subset_item in subset_items:
-                    group_item.add_children(subset_item)
-
-        self._group_items = group_items
+        self._subset_items = subset_items
 
         self.event_system.emit("versions.refresh.finished")
 
     def get_subset_items(self):
-        output = []
-        for group_item in self._group_items:
-            output.extend(group_item)
-        return output
-
-    def get_group_items(self):
-        return list(self._group_items)
+        return list(self._subset_items)
 
     def set_asset_ids(self, asset_ids):
         if asset_ids:
