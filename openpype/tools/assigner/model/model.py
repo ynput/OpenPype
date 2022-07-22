@@ -35,6 +35,10 @@ class AssignerToolModel(object):
     def __init__(self, controller):
         self._controller = controller
 
+        self.event_system.add_callback(
+            "container.selection.changed",
+            self._on_container_selection_change
+        )
         self._containers_model = ContainersModel(self)
         self._versions_model = VersionsModel(self)
         self._thumbnails_model = ThumbnailsModel(self)
@@ -53,6 +57,9 @@ class AssignerToolModel(object):
     @property
     def event_system(self):
         return self._controller.event_system
+
+    def _on_container_selection_change(self, event):
+        self.set_current_containers(event["container_ids"])
 
     def get_host_containers(self):
         return self._controller.host.get_containers()
