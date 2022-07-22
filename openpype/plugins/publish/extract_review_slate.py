@@ -295,12 +295,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # this will reencode the output
             if input_audio:
                 fmap = [
+                    "-filter_complex",
                     "[0:v] [0:a] [1:v] [1:a] concat=n=2:v=1:a=1 [v] [a]",
                     "-map", '[v]',
                     "-map", '[a]'
                 ]
             else:
                 fmap = [
+                    "-filter_complex",
                     "[0:v] [1:v] concat=n=2:v=1:a=0 [v]",
                     "-map", '[v]'
                 ]
@@ -308,7 +310,6 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 ffmpeg_path,
                 "-i", slate_v_path,
                 "-i", input_path,
-                "-filter_complex",
             ]
             concat_args.extend(fmap)
             if offset_timecode:
