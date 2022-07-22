@@ -1,11 +1,10 @@
-from openpype.api import Anatomy
 from openpype.lib import (
     PreLaunchHook,
     EnvironmentPrepData,
     prepare_app_environments,
     prepare_context_environments
 )
-from openpype.pipeline import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB, Anatomy
 
 
 class GlobalHostDataHook(PreLaunchHook):

@@ -51,5 +51,17 @@
             ]
         }
     },
-    "filters": {}
+    "filters": {},
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_hiero')",
+                "tooltip": "Open the OpenPype Hiero user doc page"
+            }
+        ]
+    }
 }

@@ -8,9 +8,10 @@
             "default_variants": [
                 "Main"
             ],
-            "description": "Publish workfile backup",
-            "detailed_description": "",
-            "allow_sequences": true,
+            "description": "Backup of a working scene",
+            "detailed_description": "Workfiles are full scenes from any application that are directly edited by artists. They represent a state of work on a task at a given point and are usually not directly referenced into other scenes.",
+            "allow_sequences": false,
+            "allow_multiple_items": false,
             "extensions": [
                 ".ma",
                 ".mb",
@@ -30,6 +31,216 @@
                 ".psb",
                 ".aep"
             ]
+        },
+        {
+            "family": "model",
+            "identifier": "",
+            "label": "Model",
+            "icon": "fa.cubes",
+            "default_variants": [
+                "Main",
+                "Proxy",
+                "Sculpt"
+            ],
+            "description": "Clean models",
+            "detailed_description": "Models should only contain geometry data, without any extras like cameras, locators or bones.\n\nKeep in mind that models published from tray publisher are not validated for correctness. ",
+            "allow_sequences": false,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".ma",
+                ".mb",
+                ".obj",
+                ".abc",
+                ".fbx",
+                ".bgeo",
+                ".bgeogz",
+                ".bgeosc",
+                ".usd",
+                ".blend"
+            ]
+        },
+        {
+            "family": "pointcache",
+            "identifier": "",
+            "label": "Pointcache",
+            "icon": "fa.gears",
+            "default_variants": [
+                "Main"
+            ],
+            "description": "Geometry Caches",
+            "detailed_description": "Alembic or bgeo cache of animated data",
+            "allow_sequences": true,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".abc",
+                ".bgeo",
+                ".bgeogz",
+                ".bgeosc"
+            ]
+        },
+        {
+            "family": "plate",
+            "identifier": "",
+            "label": "Plate",
+            "icon": "mdi.camera-image",
+            "default_variants": [
+                "Main",
+                "BG",
+                "Animatic",
+                "Reference",
+                "Offline"
+            ],
+            "description": "Footage Plates",
+            "detailed_description": "Any type of image seqeuence coming from outside of the studio. Usually camera footage, but could also be animatics used for reference.",
+            "allow_sequences": true,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".exr",
+                ".png",
+                ".dpx",
+                ".jpg",
+                ".tiff",
+                ".tif",
+                ".mov",
+                ".mp4",
+                ".avi"
+            ]
+        },
+        {
+            "family": "render",
+            "identifier": "",
+            "label": "Render",
+            "icon": "mdi.folder-multiple-image",
+            "default_variants": [],
+            "description": "Rendered images or video",
+            "detailed_description": "Sequence or single file renders",
+            "allow_sequences": true,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".exr",
+                ".png",
+                ".dpx",
+                ".jpg",
+                ".jpeg",
+                ".tiff",
+                ".tif",
+                ".mov",
+                ".mp4",
+                ".avi"
+            ]
+        },
+        {
+            "family": "camera",
+            "identifier": "",
+            "label": "Camera",
+            "icon": "fa.video-camera",
+            "default_variants": [],
+            "description": "3d Camera",
+            "detailed_description": "Ideally this should be only camera itself with baked animation, however, it can technically also include helper geometry.",
+            "allow_sequences": false,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".abc",
+                ".ma",
+                ".hip",
+                ".blend",
+                ".fbx",
+                ".usd"
+            ]
+        },
+        {
+            "family": "image",
+            "identifier": "",
+            "label": "Image",
+            "icon": "fa.image",
+            "default_variants": [
+                "Reference",
+                "Texture",
+                "Concept",
+                "Background"
+            ],
+            "description": "Single image",
+            "detailed_description": "Any image data can be published as image family. References, textures, concept art, matte paints. This is a fallback 2d family for everything that doesn't fit more specific family.",
+            "allow_sequences": false,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".exr",
+                ".jpg",
+                ".jpeg",
+                ".dpx",
+                ".bmp",
+                ".tif",
+                ".tiff",
+                ".png",
+                ".psb",
+                ".psd"
+            ]
+        },
+        {
+            "family": "vdb",
+            "identifier": "",
+            "label": "VDB Volumes",
+            "icon": "fa.cloud",
+            "default_variants": [],
+            "description": "Sparse volumetric data",
+            "detailed_description": "Hierarchical data structure for the efficient storage and manipulation of sparse volumetric data discretized on three-dimensional grids",
+            "allow_sequences": true,
+            "allow_multiple_items": true,
+            "extensions": [
+                ".vdb"
+            ]
+        },
+        {
+            "family": "matchmove",
+            "identifier": "",
+            "label": "Matchmove",
+            "icon": "fa.empire",
+            "default_variants": [
+                "Camera",
+                "Object",
+                "Mocap"
+            ],
+            "description": "Matchmoving script",
+            "detailed_description": "Script exported from matchmoving application to be later processed into a tracked camera with additional data",
+            "allow_sequences": false,
+            "allow_multiple_items": true,
+            "extensions": []
+        },
+        {
+            "family": "rig",
+            "identifier": "",
+            "label": "Rig",
+            "icon": "fa.wheelchair",
+            "default_variants": [],
+            "description": "CG rig file",
+            "detailed_description": "CG rigged character or prop. Rig should be clean of any extra data and directly loadable into it's respective application\t",
+            "allow_sequences": false,
+            "allow_multiple_items": false,
+            "extensions": [
+                ".ma",
+                ".blend",
+                ".hip",
+                ".hda"
+            ]
+        },
+        {
+            "family": "simpleUnrealTexture",
+            "identifier": "",
+            "label": "Simple UE texture",
+            "icon": "fa.image",
+            "default_variants": [],
+            "description": "Simple Unreal Engine texture",
+            "detailed_description": "Texture files with Unreal Engine naming conventions",
+            "allow_sequences": false,
+            "allow_multiple_items": true,
+            "extensions": []
         }
-    ]
+    ],
+    "BatchMovieCreator": {
+        "default_variants": ["Main"],
+        "default_tasks": ["Compositing"],
+        "extensions": [
+            ".mov"
+        ]
+    }
 }

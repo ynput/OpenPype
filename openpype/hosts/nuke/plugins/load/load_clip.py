@@ -1,6 +1,10 @@
 import nuke
 import qargparse
 
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
 from openpype.pipeline import (
     legacy_io,
     get_representation_path,
@@ -50,19 +54,27 @@ class LoadClip(plugin.NukeLoader):
     script_start = int(nuke.root()["first_frame"].value())
 
     # option gui
-    defaults = {
-        "start_at_workfile": True
+    options_defaults = {
+        "start_at_workfile": True,
+        "add_retime": True
     }
 
-    options = [
-        qargparse.Boolean(
-            "start_at_workfile",
-            help="Load at workfile start frame",
-            default=True
-        )
-    ]
-
     node_name_template = "{class_name}_{ext}"
+
+    @classmethod
+    def get_options(cls, *args):
+        return [
+            qargparse.Boolean(
+                "start_at_workfile",
+                help="Load at workfile start frame",
+                default=cls.options_defaults["start_at_workfile"]
+            ),
+            qargparse.Boolean(
+                "add_retime",
+                help="Load with retime",
+                default=cls.options_defaults["add_retime"]
+            )
+        ]
 
     @classmethod
     def get_representations(cls):
@@ -82,7 +94,10 @@ class LoadClip(plugin.NukeLoader):
         file = self.fname.replace("\\", "/")
 
         start_at_workfile = options.get(
-            "start_at_workfile", self.defaults["start_at_workfile"])
+            "start_at_workfile", self.options_defaults["start_at_workfile"])
+
+        add_retime = options.get(
+            "add_retime", self.options_defaults["add_retime"])
 
         version = context['version']
         version_data = version.get("data", {})
@@ -147,7 +162,7 @@ class LoadClip(plugin.NukeLoader):
             data_imprint = {}
             for k in add_keys:
                 if k == 'version':
-                    data_imprint.update({k: context["version"]['name']})
+                    data_imprint[k] = context["version"]['name']
                 elif k == 'colorspace':
                     colorspace = repre["data"].get(k)
                     colorspace = colorspace or version_data.get(k)
@@ -155,10 +170,13 @@ class LoadClip(plugin.NukeLoader):
                     if used_colorspace:
                         data_imprint["used_colorspace"] = used_colorspace
                 else:
-                    data_imprint.update(
-                        {k: context["version"]['data'].get(k, str(None))})
+                    data_imprint[k] = context["version"]['data'].get(
+                        k, str(None))
 
-            data_imprint.update({"objectName": read_name})
+            data_imprint["objectName"] = read_name
+
+            if add_retime and version_data.get("retime", None):
+                data_imprint["addRetime"] = True
 
             read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
@@ -170,7 +188,7 @@ class LoadClip(plugin.NukeLoader):
                 loader=self.__class__.__name__,
                 data=data_imprint)
 
-        if version_data.get("retime", None):
+        if add_retime and version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
 
         self.set_as_member(read_node)
@@ -194,13 +212,17 @@ class LoadClip(plugin.NukeLoader):
         read_node = nuke.toNode(container['objectName'])
         file = get_representation_path(representation).replace("\\", "/")
 
-        start_at_workfile = bool("start at" in read_node['frame_mode'].value())
+        start_at_workfile = "start at" in read_node['frame_mode'].value()
 
-        version = legacy_io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
-        version_data = version.get("data", {})
+        add_retime = [
+            key for key in read_node.knobs().keys()
+            if "addRetime" in key
+        ]
+
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
+        version_data = version_doc.get("data", {})
         repre_id = representation["_id"]
 
         repre_cont = representation["context"]
@@ -251,7 +273,7 @@ class LoadClip(plugin.NukeLoader):
                 "representation": str(representation["_id"]),
                 "frameStart": str(first),
                 "frameEnd": str(last),
-                "version": str(version.get("name")),
+                "version": str(version_doc.get("name")),
                 "db_colorspace": colorspace,
                 "source": version_data.get("source"),
                 "handleStart": str(self.handle_start),
@@ -264,28 +286,26 @@ class LoadClip(plugin.NukeLoader):
             if used_colorspace:
                 updated_dict["used_colorspace"] = used_colorspace
 
+            last_version_doc = get_last_version_by_subset_id(
+                project_name, version_doc["parent"], fields=["_id"]
+            )
             # change color of read_node
-            # get all versions in list
-            versions = legacy_io.find({
-                "type": "version",
-                "parent": version["parent"]
-            }).distinct('name')
-
-            max_version = max(versions)
-
-            if version.get("name") not in [max_version]:
-                read_node["tile_color"].setValue(int("0xd84f20ff", 16))
+            if version_doc["_id"] == last_version_doc["_id"]:
+                color_value = "0x4ecd25ff"
             else:
-                read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
+                color_value = "0xd84f20ff"
+            read_node["tile_color"].setValue(int(color_value, 16))
 
             # Update the imprinted representation
             update_container(
                 read_node,
                 updated_dict
             )
-            self.log.info("updated to version: {}".format(version.get("name")))
+            self.log.info(
+                "updated to version: {}".format(version_doc.get("name"))
+            )
 
-        if version_data.get("retime", None):
+        if add_retime and version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
         else:
             self.clear_members(read_node)

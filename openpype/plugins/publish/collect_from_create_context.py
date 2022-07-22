@@ -47,12 +47,11 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
             "label": subset,
             "name": subset,
             "family": in_data["family"],
-            "families": instance_families
+            "families": instance_families,
+            "representations": []
         })
         for key, value in in_data.items():
             if key not in instance.data:
                 instance.data[key] = value
         self.log.info("collected instance: {}".format(instance.data))
         self.log.info("parsing data: {}".format(in_data))
-
-        instance.data["representations"] = list()
