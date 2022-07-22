@@ -321,6 +321,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
             if format_args:
                 concat_args.extend(format_args)
 
+            if codec_args:
+                concat_args.extend(codec_args)
+
             # Use arguments from ffmpeg preset
             source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
             if source_ffmpeg_cmd:
