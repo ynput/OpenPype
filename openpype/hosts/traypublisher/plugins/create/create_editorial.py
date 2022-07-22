@@ -18,6 +18,7 @@ from openpype.pipeline import CreatedInstance
 
 from openpype.lib import (
     get_ffprobe_data,
+    convert_ffprobe_fps_value,
 
     FileDef,
     TextDef,
@@ -259,6 +260,7 @@ or updating already created. Publishing will create OTIO file.
             # EDL has no frame rate embedded so needs explicit
             # frame rate else 24 is asssumed.
             kwargs["rate"] = fps
+            kwargs["ignore_timecode_mismatch"] = True
 
         self.log.info(f"kwargs: {kwargs}")
         return otio.adapters.read_from_file(sequence_path, **kwargs)
@@ -387,7 +389,11 @@ or updating already created. Publishing will create OTIO file.
                 "video": True,
                 "start_frame": 0,
                 "duration": int(video_stream["nb_frames"]),
-                "fps": float(video_stream["r_frame_rate"][:-2])
+                "fps": float(
+                    convert_ffprobe_fps_value(
+                        video_stream["r_frame_rate"]
+                    )
+                )
             }
 
             # get audio  streams data
