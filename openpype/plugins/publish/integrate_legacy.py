@@ -69,8 +69,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "data": additional metadata for each representation.
     """
 
-    label = "Integrate Asset New"
-    order = pyblish.api.IntegratorOrder
+    label = "Integrate Asset (legacy)"
+    # Make sure it happens after new integrator
+    order = pyblish.api.IntegratorOrder + 0.00001
     families = ["workfile",
                 "pointcache",
                 "camera",
@@ -101,7 +102,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image",
-                "source",
                 "assembly",
                 "fbx",
                 "textures",
@@ -142,6 +142,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     subset_grouping_profiles = None
 
     def process(self, instance):
+        if instance.data.get("processedWithNewIntegrator"):
+            self.log.info("Instance was already processed with new integrator")
+            return
+
         for ef in self.exclude_families:
             if (
                     instance.data["family"] == ef or

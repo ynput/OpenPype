@@ -15,13 +15,13 @@ from openpype.hosts.maya.api import (
 from openpype.lib import requests_get
 from openpype.api import (
     get_system_settings,
-    get_project_settings,
-    get_asset)
+    get_project_settings)
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     CreatorError,
     legacy_io,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 
 
 class CreateRender(plugin.Creator):
@@ -413,7 +413,7 @@ class CreateRender(plugin.Creator):
                      prefix,
                      type="string")
 
-        asset = get_asset()
+        asset = get_current_project_asset()
 
         if renderer == "arnold":
             # set format to exr

@@ -236,7 +236,7 @@ def any_outdated():
     return False
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.get_current_project_asset")
 def get_asset(asset_name=None):
     """ Returning asset document from database by its name.
 
@@ -249,15 +249,9 @@ def get_asset(asset_name=None):
         (MongoDB document)
     """
 
-    project_name = legacy_io.active_project()
-    if not asset_name:
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+    from openpype.pipeline.context_tools import get_current_project_asset
 
-    asset_document = get_asset_by_name(project_name, asset_name)
-    if not asset_document:
-        raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
-
-    return asset_document
+    return get_current_project_asset(asset_name=asset_name)
 
 
 def get_system_general_anatomy_data(system_settings=None):
@@ -582,10 +576,10 @@ def get_workdir_with_workdir_data(
 
     anatomy_filled = anatomy.format(workdir_data)
     # Output is TemplateResult object which contain useful data
-    path = anatomy_filled[template_key]["folder"]
-    if path:
-        path = os.path.normpath(path)
-    return path
+    output = anatomy_filled[template_key]["folder"]
+    if output:
+        return output.normalized()
+    return output
 
 
 def get_workdir(
