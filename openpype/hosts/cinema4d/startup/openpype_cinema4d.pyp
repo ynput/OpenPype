@@ -25,12 +25,11 @@ from openpype.pipeline import install_host
 from openpype.hosts.cinema4d.api import Cinema4DHost
 from openpype.hosts.cinema4d.api.lib import get_main_window
 from openpype.hosts.cinema4d.api import lib
-from openpype.hosts.cinema4d.api.commands import reset_frame_range
+from openpype.hosts.cinema4d.api.commands import reset_frame_range, reset_colorspace, reset_resolution
 from openpype.api import BuildWorkfile
 from openpype.settings import get_current_project_settings
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
-
 
 
 loader_id = 1059864
@@ -95,14 +94,17 @@ class BuildWorkFile(c4d.plugins.CommandData):
 
 class ResetFrameRange(c4d.plugins.CommandData):
     def Execute(self, doc):
+        reset_frame_range()
         return True
 
 class ResetSceneResolution(c4d.plugins.CommandData):
     def Execute(self, doc):
+        reset_resolution()
         return True
 
 class ResetColorspace(c4d.plugins.CommandData):
     def Execute(self, doc):
+        reset_resolution()
         return True
 
 class ExperimentalTools(c4d.plugins.CommandData):
