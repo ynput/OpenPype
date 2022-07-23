@@ -1,11 +1,17 @@
 # Changelog
 
-## [3.12.2-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.2-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.1...HEAD)
 
+### 📖 Documentation
+
+- Update website with more studios [\#3554](https://github.com/pypeclub/OpenPype/pull/3554)
+- Documentation: Update publishing dev docs [\#3549](https://github.com/pypeclub/OpenPype/pull/3549)
+
 **🚀 Enhancements**
 
+- Maya: add additional validators to Settings [\#3540](https://github.com/pypeclub/OpenPype/pull/3540)
 - General: Interactive console in cli [\#3526](https://github.com/pypeclub/OpenPype/pull/3526)
 - Ftrack: Automatic daily review session creation can define trigger hour [\#3516](https://github.com/pypeclub/OpenPype/pull/3516)
 - Ftrack: add source into Note [\#3509](https://github.com/pypeclub/OpenPype/pull/3509)
@@ -20,8 +26,15 @@
 
 **🐛 Bug fixes**
 
+- Remove invalid submodules from `/vendor` [\#3557](https://github.com/pypeclub/OpenPype/pull/3557)
+- General: Remove hosts filter on integrator plugins [\#3556](https://github.com/pypeclub/OpenPype/pull/3556)
+- Settings: Clean default values of environments [\#3550](https://github.com/pypeclub/OpenPype/pull/3550)
+- Module interfaces: Fix import error [\#3547](https://github.com/pypeclub/OpenPype/pull/3547)
+- Workfiles tool: Show of tool and it's flags [\#3539](https://github.com/pypeclub/OpenPype/pull/3539)
+- General: Create workfile documents works again [\#3538](https://github.com/pypeclub/OpenPype/pull/3538)
 - Additional fixes for powershell scripts [\#3525](https://github.com/pypeclub/OpenPype/pull/3525)
 - Maya: Added wrapper around cmds.setAttr [\#3523](https://github.com/pypeclub/OpenPype/pull/3523)
+- Nuke: double slate [\#3521](https://github.com/pypeclub/OpenPype/pull/3521)
 - General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
 - Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
 - TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
@@ -31,8 +44,12 @@
 
 **🔀 Refactored code**
 
+- Refactor Integrate Asset [\#3530](https://github.com/pypeclub/OpenPype/pull/3530)
 - General: Client docstrings cleanup [\#3529](https://github.com/pypeclub/OpenPype/pull/3529)
+- General: Get current context document functions [\#3522](https://github.com/pypeclub/OpenPype/pull/3522)
+- Kitsu: Use query function from client [\#3496](https://github.com/pypeclub/OpenPype/pull/3496)
 - TimersManager: Use query functions [\#3495](https://github.com/pypeclub/OpenPype/pull/3495)
+- Deadline: Use query functions [\#3466](https://github.com/pypeclub/OpenPype/pull/3466)
 
 ## [3.12.1](https://github.com/pypeclub/OpenPype/tree/3.12.1) (2022-07-13)
 
@@ -57,7 +74,6 @@
 - Windows installer: Clean old files and add version subfolder [\#3445](https://github.com/pypeclub/OpenPype/pull/3445)
 - Blender: Bugfix - Set fps properly on open [\#3426](https://github.com/pypeclub/OpenPype/pull/3426)
 - Hiero: Add custom scripts menu [\#3425](https://github.com/pypeclub/OpenPype/pull/3425)
-- Blender: pre pyside install for all platforms [\#3400](https://github.com/pypeclub/OpenPype/pull/3400)
 
 **🐛 Bug fixes**
 
@@ -95,34 +111,19 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.12.0-nightly.3...3.12.0)
 
-### 📖 Documentation
-
-- Fix typo in documentation: pyenv on mac [\#3417](https://github.com/pypeclub/OpenPype/pull/3417)
-- Linux: update OIIO package [\#3401](https://github.com/pypeclub/OpenPype/pull/3401)
-
 **🚀 Enhancements**
 
 - Webserver: Added CORS middleware [\#3422](https://github.com/pypeclub/OpenPype/pull/3422)
-- Attribute Defs UI: Files widget show what is allowed to drop in [\#3411](https://github.com/pypeclub/OpenPype/pull/3411)
 
 **🐛 Bug fixes**
 
 - NewPublisher: Fix subset name change on change of creator plugin [\#3420](https://github.com/pypeclub/OpenPype/pull/3420)
 - Bug: fix invalid avalon import [\#3418](https://github.com/pypeclub/OpenPype/pull/3418)
-- Nuke: Fix keyword argument in query function [\#3414](https://github.com/pypeclub/OpenPype/pull/3414)
-- Houdini: fix loading and updating vbd/bgeo sequences [\#3408](https://github.com/pypeclub/OpenPype/pull/3408)
-- Nuke: Collect representation files based on Write [\#3407](https://github.com/pypeclub/OpenPype/pull/3407)
-- General: Filter representations before integration start [\#3398](https://github.com/pypeclub/OpenPype/pull/3398)
-- Maya: look collector typo [\#3392](https://github.com/pypeclub/OpenPype/pull/3392)
 
 **🔀 Refactored code**
 
 - Unreal: Use client query functions [\#3421](https://github.com/pypeclub/OpenPype/pull/3421)
 - General: Move editorial lib to pipeline [\#3419](https://github.com/pypeclub/OpenPype/pull/3419)
-- Kitsu: renaming to plural func sync\_all\_projects [\#3397](https://github.com/pypeclub/OpenPype/pull/3397)
-- Houdini: Use client query functions [\#3395](https://github.com/pypeclub/OpenPype/pull/3395)
-- Hiero: Use client query functions [\#3393](https://github.com/pypeclub/OpenPype/pull/3393)
-- Nuke: Use client query functions [\#3391](https://github.com/pypeclub/OpenPype/pull/3391)
 
 ## [3.11.1](https://github.com/pypeclub/OpenPype/tree/3.11.1) (2022-06-20)
 
