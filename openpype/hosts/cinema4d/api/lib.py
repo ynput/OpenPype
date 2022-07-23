@@ -42,6 +42,7 @@ class ObjectAttrs:
                             }
 
     def __getitem__(self, key):
+        self.get_attrs()
         if key in self.object_data.keys():
             return self.object_data[key]["value"]
 
@@ -66,12 +67,21 @@ class ObjectAttrs:
         if self.auto_update():
             c4d.EventAdd()
 
+    def __iter__(self):
+        for key, values in self.object_data.items():
+            yield key, values["value"]
+        
+        for key, values in self.user_data.items():
+            yield key, values["value"]
+
+        for key, values in self.tag_data.items():
+            yield key, values["value"]
+
     def get(self, key, default=None):
         try:
             self.__getitem__(key)
         except KeyError:
             return default
-        
-
+            
     def __repr__(self):
         return f'<ObjectAttrs: {self.op.GetName()}>'
