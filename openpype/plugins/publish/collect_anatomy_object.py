@@ -8,7 +8,7 @@ Provides:
 """
 
 import pyblish.api
-from openpype.pipeline import Anatomy
+from openpype.pipeline import Anatomy, KnownPublishError
 
 
 class CollectAnatomyObject(pyblish.api.ContextPlugin):
@@ -23,10 +23,10 @@ class CollectAnatomyObject(pyblish.api.ContextPlugin):
     def process(self, context):
         project_name = context.data.get("projectName")
         if project_name is None:
-            raise AssertionError(
-                "Environment `AVALON_PROJECT` is not set."
+            raise KnownPublishError((
+                "Project name is not set in 'projectName'."
                 "Could not initialize project's Anatomy."
-            )
+            ))
 
         context.data["anatomy"] = Anatomy(project_name)
 

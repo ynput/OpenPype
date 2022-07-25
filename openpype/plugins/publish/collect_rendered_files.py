@@ -12,7 +12,7 @@ import json
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, KnownPublishError
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -20,6 +20,10 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     This collector will try to find json files in provided
     `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
+    Note:
+        We should split this collector and move the part which handle reading
+            of file and it's context from session data before collect anatomy
+            and instance creation dependent on anatomy can be done here.
     """
 
     order = pyblish.api.CollectorOrder - 0.2
@@ -119,8 +123,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     def process(self, context):
         self._context = context
 
-        assert os.environ.get("OPENPYPE_PUBLISH_DATA"), (
-            "Missing `OPENPYPE_PUBLISH_DATA`")
+        if not os.environ.get("OPENPYPE_PUBLISH_DATA"):
+            raise KnownPublishError("Missing `OPENPYPE_PUBLISH_DATA`")
+
+        # QUESTION
+        #   Do we support (or want support) multiple files in the variable?
+        #   - what if they have different context?
         paths = os.environ["OPENPYPE_PUBLISH_DATA"].split(os.pathsep)
 
         # Using already collected Anatomy

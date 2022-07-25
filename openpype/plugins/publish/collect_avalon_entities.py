@@ -13,7 +13,7 @@ Provides:
 import pyblish.api
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, KnownPublishError
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
@@ -29,9 +29,10 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         task_name = legacy_io.Session["AVALON_TASK"]
 
         project_entity = get_project(project_name)
-        assert project_entity, (
-            "Project '{0}' was not found."
-        ).format(project_name)
+        if not project_entity:
+            raise KnownPublishError(
+                "Project '{0}' was not found.".format(project_name)
+            )
         self.log.debug("Collected Project \"{}\"".format(project_entity))
 
         context.data["projectEntity"] = project_entity
