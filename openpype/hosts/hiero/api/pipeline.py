@@ -48,6 +48,7 @@ def install():
 
     # install menu
     menu.menu_install()
+    menu.add_scripts_menu()
 
     # register hiero events
     events.register_hiero_events()

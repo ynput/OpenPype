@@ -409,6 +409,19 @@ class TemplateResult(str):
             self.invalid_types
         )
 
+    def normalized(self):
+        """Convert to normalized path."""
+
+        cls = self.__class__
+        return cls(
+            os.path.normpath(self),
+            self.template,
+            self.solved,
+            self.used_values,
+            self.missing_keys,
+            self.invalid_types
+        )
+
 
 class TemplatesResultDict(dict):
     """Holds and wrap TemplateResults for easy bug report."""

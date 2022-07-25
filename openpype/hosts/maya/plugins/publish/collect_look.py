@@ -40,7 +40,7 @@ FILE_NODES = {
 
     "aiImage": "filename",
 
-    "RedshiftNormalMap": "text0",
+    "RedshiftNormalMap": "tex0",
 
     "PxrBump": "filename",
     "PxrNormalMap": "filename",
@@ -109,16 +109,18 @@ def node_uses_image_sequence(node, node_path):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    # The following tokens imply a sequence
-    patterns = ["<udim>", "<tile>", "<uvtile>",
-                "u<u>_v<v>", "<frame0", "<f4>"]
     try:
         use_frame_extension = cmds.getAttr('%s.useFrameExtension' % node)
     except ValueError:
         use_frame_extension = False
+    if use_frame_extension:
+        return True
 
-    return (use_frame_extension or
-            any(pattern in node_path for pattern in patterns))
+    # The following tokens imply a sequence
+    patterns = ["<udim>", "<tile>", "<uvtile>",
+                "u<u>_v<v>", "<frame0", "<f4>"]
+    node_path_lowered = node_path.lower()
+    return any(pattern in node_path_lowered for pattern in patterns)
 
 
 def seq_to_glob(path):
@@ -601,6 +603,18 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                      source,
                                                      computed_source))
 
+            # renderman allows nodes to have filename attribute empty while
+            # you can have another incoming connection from different node.
+            pxr_nodes = set()
+            if cmds.pluginInfo("RenderMan_for_Maya", query=True, loaded=True):
+                pxr_nodes = set(
+                    cmds.pluginInfo("RenderMan_for_Maya",
+                                    query=True,
+                                    dependNode=True)
+                )
+            if not source and cmds.nodeType(node) in pxr_nodes:
+                self.log.info("Renderman: source is empty, skipping...")
+                continue
             # We replace backslashes with forward slashes because V-Ray
             # can't handle the UDIM files with the backslashes in the
             # paths as the computed patterns

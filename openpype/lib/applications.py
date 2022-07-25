@@ -11,6 +11,10 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
 from openpype.settings import (
     get_system_settings,
     get_project_settings,
@@ -20,10 +24,7 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import (
-    PypeLogger,
-    Anatomy
-)
+from . import PypeLogger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
@@ -664,7 +665,11 @@ class ApplicationExecutable:
             if os.path.exists(plist_filepath):
                 import plistlib
 
-                parsed_plist = plistlib.readPlist(plist_filepath)
+                if hasattr(plistlib, "load"):
+                    with open(plist_filepath, "rb") as stream:
+                        parsed_plist = plistlib.load(stream)
+                else:
+                    parsed_plist = plistlib.readPlist(plist_filepath)
                 executable_filename = parsed_plist.get("CFBundleExecutable")
 
             if executable_filename:
@@ -1305,7 +1310,7 @@ def get_app_environments_for_context(
         dict: Environments for passed context and application.
     """
 
-    from openpype.pipeline import AvalonMongoDB
+    from openpype.pipeline import AvalonMongoDB, Anatomy
 
     # Avalon database connection
     dbcon = AvalonMongoDB()
@@ -1313,11 +1318,8 @@ def get_app_environments_for_context(
     dbcon.install()
 
     # Project document
-    project_doc = dbcon.find_one({"type": "project"})
-    asset_doc = dbcon.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
 
     if modules_manager is None:
         from openpype.modules import ModulesManager
