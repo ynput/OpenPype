@@ -12,6 +12,7 @@ import pyblish.api
 import openpype.api
 from openpype.client import (
     get_representations,
+    get_subset_by_name,
 )
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
@@ -294,7 +295,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_name = self.get_template_name(instance)
 
-        subset, subset_writes = self.prepare_subset(instance)
+        subset, subset_writes = self.prepare_subset(instance, project_name)
         version, version_writes = self.prepare_version(instance, subset)
         instance.data["versionEntity"] = version
 
@@ -429,17 +430,15 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Registered {} representations"
                       "".format(len(prepared_representations)))
 
-    def prepare_subset(self, instance):
-        asset = instance.data.get("assetEntity")
+    def prepare_subset(self, instance, project_name):
+        asset_doc = instance.data.get("assetEntity")
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
         # Get existing subset if it exists
-        subset = legacy_io.find_one({
-            "type": "subset",
-            "parent": asset["_id"],
-            "name": subset_name
-        })
+        subset_doc = get_subset_by_name(
+            project_name, subset_name, asset_doc["_id"]
+        )
 
         # Define subset data
         data = {
@@ -451,33 +450,33 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             data["subsetGroup"] = subset_group
 
         bulk_writes = []
-        if subset is None:
+        if subset_doc is None:
             # Create a new subset
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
-            subset = {
+            subset_doc = {
                 "_id": ObjectId(),
                 "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": data,
-                "parent": asset["_id"]
+                "parent": asset_doc["_id"]
             }
-            bulk_writes.append(InsertOne(subset))
+            bulk_writes.append(InsertOne(subset_doc))
 
         else:
             # Update existing subset data with new data and set in database.
             # We also change the found subset in-place so we don't need to
             # re-query the subset afterwards
-            subset["data"].update(data)
+            subset_doc["data"].update(data)
             bulk_writes.append(UpdateOne(
-                {"type": "subset", "_id": subset["_id"]},
+                {"type": "subset", "_id": subset_doc["_id"]},
                 {"$set": {
-                    "data": subset["data"]
+                    "data": subset_doc["data"]
                 }}
             ))
 
         self.log.info("Prepared subset: {}".format(subset_name))
-        return subset, bulk_writes
+        return subset_doc, bulk_writes
 
     def prepare_version(self, instance, subset):
 
