@@ -41,9 +41,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             "Processing instance with subset name {}".format(subset_name)
         )
 
-        # Skip if instance does not have review
+        # Skip if instance have 'review' key in data set to 'False'
         if not self._is_review_instance(instance):
             self.log.info("Skipping - no review set on instance.")
+            return
+
+        # Check if already has thumbnail created
+        if self._already_has_thumbnail(instance_repres):
+            self.log.info("Thumbnail representation already present.")
             return
 
         # skip crypto passes.
@@ -56,9 +61,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             self.log.info("Skipping crypto passes.")
             return
 
-        if self._already_has_thumbnail(instance):
-            self.log.info("Thumbnail representation already present.")
-            return
 
         filtered_repres = self._get_filtered_repres(instance)
         for repre in filtered_repres:
@@ -123,12 +125,11 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             return True
         return False
 
-    def _already_has_thumbnail(self, instance):
-        for repre in instance.data.get("representations", []):
+    def _already_has_thumbnail(self, repres):
+        for repre in repres:
             self.log.info("repre {}".format(repre))
             if repre["name"] == "thumbnail":
                 return True
-
         return False
 
     def _get_filtered_repres(self, instance):
