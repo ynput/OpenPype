@@ -1,4 +1,5 @@
 from .widgets import (
+    CustomTextComboBox,
     PlaceholderLineEdit,
     BaseClickableFrame,
     ClickableFrame,
@@ -28,6 +29,7 @@ from .overlay_messages import (
 
 
 __all__ = (
+    "CustomTextComboBox",
     "PlaceholderLineEdit",
     "BaseClickableFrame",
     "ClickableFrame",

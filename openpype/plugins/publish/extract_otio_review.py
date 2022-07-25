@@ -19,6 +19,13 @@ import clique
 import opentimelineio as otio
 from pyblish import api
 import openpype
+from openpype.pipeline.editorial import (
+    otio_range_to_frame_range,
+    trim_media_range,
+    range_from_frames,
+    frames_to_seconds,
+    make_sequence_collection
+)
 
 
 class ExtractOTIOReview(openpype.api.Extractor):
@@ -161,7 +168,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
                         dirname = media_ref.target_url_base
                         head = media_ref.name_prefix
                         tail = media_ref.name_suffix
-                        first, last = openpype.lib.otio_range_to_frame_range(
+                        first, last = otio_range_to_frame_range(
                             available_range)
                         collection = clique.Collection(
                             head=head,
@@ -180,7 +187,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
                         # in case it is file sequence but not new OTIO schema
                         # `ImageSequenceReference`
                         path = media_ref.target_url
-                        collection_data = openpype.lib.make_sequence_collection(
+                        collection_data = make_sequence_collection(
                             path, available_range, metadata)
                         dir_path, collection = collection_data
 
@@ -305,8 +312,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
             duration = avl_durtation
 
         # return correct trimmed range
-        return openpype.lib.trim_media_range(
-            avl_range, openpype.lib.range_from_frames(start, duration, fps)
+        return trim_media_range(
+            avl_range, range_from_frames(start, duration, fps)
         )
 
     def _render_seqment(self, sequence=None,
@@ -357,8 +364,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
             frame_start = otio_range.start_time.value
             input_fps = otio_range.start_time.rate
             frame_duration = otio_range.duration.value
-            sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
-            sec_duration = openpype.lib.frames_to_secons(
+            sec_start = frames_to_seconds(frame_start, input_fps)
+            sec_duration = frames_to_seconds(
                 frame_duration, input_fps
             )
 
@@ -370,8 +377,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             ])
 
         elif gap:
-            sec_duration = openpype.lib.frames_to_secons(
-                gap, self.actual_fps)
+            sec_duration = frames_to_seconds(gap, self.actual_fps)
 
             # form command for rendering gap files
             command.extend([

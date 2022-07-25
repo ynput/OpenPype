@@ -15,7 +15,6 @@ from .lib import (
     run_subprocess,
     version_up,
     get_asset,
-    get_hierarchy,
     get_workdir_data,
     get_version_from_path,
     get_last_version_from_path,
@@ -101,7 +100,6 @@ __all__ = [
     # get contextual data
     "version_up",
     "get_asset",
-    "get_hierarchy",
     "get_workdir_data",
     "get_version_from_path",
     "get_last_version_from_path",

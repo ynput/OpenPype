@@ -1,6 +1,7 @@
 import os
 import contextlib
 
+from openpype.client import get_version_by_id
 from openpype.pipeline import (
     load,
     legacy_io,
@@ -123,7 +124,7 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review", "render"]
+    families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -211,10 +212,8 @@ class FusionLoadSequence(load.LoaderPlugin):
         path = self._get_first_image(root)
 
         # Get start frame from version data
-        version = legacy_io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
         start = version["data"].get("frameStart")
         if start is None:
             self.log.warning("Missing start frame for updated version"

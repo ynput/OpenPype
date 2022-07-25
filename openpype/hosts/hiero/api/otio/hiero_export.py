@@ -132,7 +132,7 @@ def create_time_effects(otio_clip, track_item):
         otio_effect = otio.schema.TimeEffect()
         otio_effect.name = name
         otio_effect.effect_name = effect_name
-        otio_effect.metadata = metadata
+        otio_effect.metadata.update(metadata)
 
         # add otio effect to clip effects
         otio_clip.effects.append(otio_effect)
@@ -151,7 +151,7 @@ def create_otio_reference(clip):
     padding = media_source.filenamePadding()
     file_head = media_source.filenameHead()
     is_sequence = not media_source.singleFile()
-    frame_duration = media_source.duration() - 1
+    frame_duration = media_source.duration()
     fps = utils.get_rate(clip) or self.project_fps
     extension = os.path.splitext(path)[-1]
 

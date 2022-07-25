@@ -3,6 +3,7 @@ from queue import Queue
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.client import get_project
 from .delegates import (
     NumberDelegate,
     NameDelegate,
@@ -47,12 +48,8 @@ class ProjectDocCache:
     def set_project(self, project_name):
         self.project_doc = None
 
-        if not project_name:
-            return
-
-        self.project_doc = self.dbcon.database[project_name].find_one(
-            {"type": "project"}
-        )
+        if project_name:
+            self.project_doc = get_project(project_name)
 
 
 class ToolsCache:
@@ -139,6 +136,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self.setAlternatingRowColors(True)
         self.setSelectionMode(HierarchyView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.setEditTriggers(HierarchyView.AllEditTriggers)
 
         column_delegates = {}
         column_key_to_index = {}
@@ -301,16 +299,6 @@ class HierarchyView(QtWidgets.QTreeView):
     def rowsInserted(self, parent_index, start, end):
         super(HierarchyView, self).rowsInserted(parent_index, start, end)
 
-        for row in range(start, end + 1):
-            for key, column in self._column_key_to_index.items():
-                if key not in self.persistent_columns:
-                    continue
-                col_index = self._source_model.index(row, column, parent_index)
-                if bool(
-                    self._source_model.flags(col_index)
-                    & QtCore.Qt.ItemIsEditable
-                ):
-                    self.openPersistentEditor(col_index)
 
         # Expand parent on insert
         if not self.isExpanded(parent_index):
@@ -390,7 +378,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model.delete_indexes(indexes)
 
     def _on_ctrl_shift_enter_pressed(self):
-        self._add_task_and_edit()
+        self.add_task_and_edit()
 
     def add_asset(self, parent_index=None):
         if parent_index is None:
@@ -432,9 +420,9 @@ class HierarchyView(QtWidgets.QTreeView):
         self.edit(new_index)
 
     def _add_task_action(self):
-        self._add_task_and_edit()
+        self.add_task_and_edit()
 
-    def _add_task_and_edit(self):
+    def add_task_and_edit(self):
         new_index = self.add_task()
         if new_index is None:
             return

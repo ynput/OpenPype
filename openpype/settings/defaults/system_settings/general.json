@@ -2,11 +2,7 @@
     "studio_name": "Studio name",
     "studio_code": "stu",
     "admin_password": "",
-    "environment": {
-        "__environment_keys__": {
-            "global": []
-        }
-    },
+    "environment": {},
     "log_to_server": true,
     "disk_mapping": {
         "windows": [],

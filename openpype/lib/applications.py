@@ -11,6 +11,10 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
 from openpype.settings import (
     get_system_settings,
     get_project_settings,
@@ -20,10 +24,7 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import (
-    PypeLogger,
-    Anatomy
-)
+from . import PypeLogger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
@@ -664,7 +665,11 @@ class ApplicationExecutable:
             if os.path.exists(plist_filepath):
                 import plistlib
 
-                parsed_plist = plistlib.readPlist(plist_filepath)
+                if hasattr(plistlib, "load"):
+                    with open(plist_filepath, "rb") as stream:
+                        parsed_plist = plistlib.load(stream)
+                else:
+                    parsed_plist = plistlib.readPlist(plist_filepath)
                 executable_filename = parsed_plist.get("CFBundleExecutable")
 
             if executable_filename:
@@ -1282,7 +1287,13 @@ class EnvironmentPrepData(dict):
 
 
 def get_app_environments_for_context(
-    project_name, asset_name, task_name, app_name, env_group=None, env=None
+    project_name,
+    asset_name,
+    task_name,
+    app_name,
+    env_group=None,
+    env=None,
+    modules_manager=None
 ):
     """Prepare environment variables by context.
     Args:
@@ -1293,11 +1304,13 @@ def get_app_environments_for_context(
             by ApplicationManager.
         env (dict): Initial environment variables. `os.environ` is used when
             not passed.
+        modules_manager (ModulesManager): Initialized modules manager.
 
     Returns:
         dict: Environments for passed context and application.
     """
-    from openpype.pipeline import AvalonMongoDB
+
+    from openpype.pipeline import AvalonMongoDB, Anatomy
 
     # Avalon database connection
     dbcon = AvalonMongoDB()
@@ -1305,11 +1318,13 @@ def get_app_environments_for_context(
     dbcon.install()
 
     # Project document
-    project_doc = dbcon.find_one({"type": "project"})
-    asset_doc = dbcon.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+
+    if modules_manager is None:
+        from openpype.modules import ModulesManager
+
+        modules_manager = ModulesManager()
 
     # Prepare app object which can be obtained only from ApplciationManager
     app_manager = ApplicationManager()
@@ -1334,7 +1349,7 @@ def get_app_environments_for_context(
         "env": env
     })
 
-    prepare_app_environments(data, env_group)
+    prepare_app_environments(data, env_group, modules_manager)
     prepare_context_environments(data, env_group)
 
     # Discard avalon connection
@@ -1355,8 +1370,11 @@ def _merge_env(env, current_env):
     return result
 
 
-def _add_python_version_paths(app, env, logger):
+def _add_python_version_paths(app, env, logger, modules_manager):
     """Add vendor packages specific for a Python version."""
+
+    for module in modules_manager.get_enabled_modules():
+        module.modify_application_launch_arguments(app, env)
 
     # Skip adding if host name is not set
     if not app.host_name:
@@ -1390,7 +1408,9 @@ def _add_python_version_paths(app, env, logger):
     env["PYTHONPATH"] = os.pathsep.join(python_paths)
 
 
-def prepare_app_environments(data, env_group=None, implementation_envs=True):
+def prepare_app_environments(
+    data, env_group=None, implementation_envs=True, modules_manager=None
+):
     """Modify launch environments based on launched app and context.
 
     Args:
@@ -1403,7 +1423,12 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
     log = data["log"]
     source_env = data["env"].copy()
 
-    _add_python_version_paths(app, source_env, log)
+    if modules_manager is None:
+        from openpype.modules import ModulesManager
+
+        modules_manager = ModulesManager()
+
+    _add_python_version_paths(app, source_env, log, modules_manager)
 
     # Use environments from local settings
     filtered_local_envs = {}

@@ -9,6 +9,8 @@ try:
 except Exception:
     commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
+
+from openpype.client import get_asset_by_name, get_subsets
 from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import (
     CreatorError,
@@ -340,7 +342,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         creators_view = QtWidgets.QListView(self)
         creators_model = QtGui.QStandardItemModel()
-        creators_view.setModel(creators_model)
+        creators_sort_model = QtCore.QSortFilterProxyModel()
+        creators_sort_model.setSourceModel(creators_model)
+        creators_view.setModel(creators_sort_model)
 
         variant_widget = VariantInputsWidget(self)
 
@@ -463,7 +467,7 @@ class CreateDialog(QtWidgets.QDialog):
         desc_width_anim_timer = QtCore.QTimer()
         desc_width_anim_timer.setInterval(10)
 
-        prereq_timer.timeout.connect(self._on_prereq_timer)
+        prereq_timer.timeout.connect(self._invalidate_prereq)
 
         desc_width_anim_timer.timeout.connect(self._on_desc_animation)
 
@@ -511,9 +515,10 @@ class CreateDialog(QtWidgets.QDialog):
         self.variant_hints_group = variant_hints_group
 
         self._creators_header_widget = creators_header_widget
-        self.creators_model = creators_model
-        self.creators_view = creators_view
-        self.create_btn = create_btn
+        self._creators_model = creators_model
+        self._creators_sort_model = creators_sort_model
+        self._creators_view = creators_view
+        self._create_btn = create_btn
 
         self._creator_short_desc_widget = creator_short_desc_widget
         self._pre_create_widget = pre_create_widget
@@ -571,7 +576,10 @@ class CreateDialog(QtWidgets.QDialog):
     def _set_context_enabled(self, enabled):
         self._assets_widget.set_enabled(enabled)
         self._tasks_widget.set_enabled(enabled)
+        check_prereq = self._context_widget.isEnabled() != enabled
         self._context_widget.setEnabled(enabled)
+        if check_prereq:
+            self._invalidate_prereq()
 
     def refresh(self):
         # Get context before refresh to keep selection of asset and
@@ -598,23 +606,28 @@ class CreateDialog(QtWidgets.QDialog):
         self._tasks_widget.set_asset_name(asset_name)
         self._tasks_widget.select_task_name(task_name)
 
-        self._invalidate_prereq()
+        self._invalidate_prereq_deffered()
 
-    def _invalidate_prereq(self):
+    def _invalidate_prereq_deffered(self):
         self._prereq_timer.start()
 
     def _on_asset_filter_height_change(self, height):
         self._creators_header_widget.setMinimumHeight(height)
         self._creators_header_widget.setMaximumHeight(height)
 
-    def _on_prereq_timer(self):
+    def _invalidate_prereq(self):
         prereq_available = True
         creator_btn_tooltips = []
-        if self.creators_model.rowCount() < 1:
+
+        available_creators = self._creators_model.rowCount() > 0
+        if available_creators != self._creators_view.isEnabled():
+            self._creators_view.setEnabled(available_creators)
+
+        if not available_creators:
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._asset_doc is None:
+        if self._context_change_is_enabled() and self._asset_doc is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -622,15 +635,15 @@ class CreateDialog(QtWidgets.QDialog):
         if prereq_available != self._prereq_available:
             self._prereq_available = prereq_available
 
-            self.create_btn.setEnabled(prereq_available)
-            self.creators_view.setEnabled(prereq_available)
+            self._create_btn.setEnabled(prereq_available)
+
             self.variant_input.setEnabled(prereq_available)
             self.variant_hints_btn.setEnabled(prereq_available)
 
         tooltip = ""
         if creator_btn_tooltips:
             tooltip = "\n".join(creator_btn_tooltips)
-        self.create_btn.setToolTip(tooltip)
+        self._create_btn.setToolTip(tooltip)
 
         self._on_variant_change()
 
@@ -647,21 +660,19 @@ class CreateDialog(QtWidgets.QDialog):
         if asset_name is None:
             return
 
-        asset_doc = self.dbcon.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
+        project_name = self.dbcon.active_project()
+        asset_doc = get_asset_by_name(project_name, asset_name)
         self._asset_doc = asset_doc
 
         if asset_doc:
-            subset_docs = self.dbcon.find(
-                {
-                    "type": "subset",
-                    "parent": asset_doc["_id"]
-                },
-                {"name": 1}
+            asset_id = asset_doc["_id"]
+            subset_docs = get_subsets(
+                project_name, asset_ids=[asset_id], fields=["name"]
             )
-            self._subset_names = set(subset_docs.distinct("name"))
+            self._subset_names = {
+                subset_doc["name"]
+                for subset_doc in subset_docs
+            }
 
         if not asset_doc:
             self.subset_name_input.setText("< Asset is not set >")
@@ -670,8 +681,8 @@ class CreateDialog(QtWidgets.QDialog):
         # Refresh creators and add their families to list
         existing_items = {}
         old_creators = set()
-        for row in range(self.creators_model.rowCount()):
-            item = self.creators_model.item(row, 0)
+        for row in range(self._creators_model.rowCount()):
+            item = self._creators_model.item(row, 0)
             identifier = item.data(CREATOR_IDENTIFIER_ROLE)
             existing_items[identifier] = item
             old_creators.add(identifier)
@@ -688,7 +699,7 @@ class CreateDialog(QtWidgets.QDialog):
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
                 )
-                self.creators_model.appendRow(item)
+                self._creators_model.appendRow(item)
 
             label = creator.label or identifier
             item.setData(label, QtCore.Qt.DisplayRole)
@@ -698,16 +709,17 @@ class CreateDialog(QtWidgets.QDialog):
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):
             item = existing_items[identifier]
-            self.creators_model.takeRow(item.row())
+            self._creators_model.takeRow(item.row())
 
-        if self.creators_model.rowCount() < 1:
+        if self._creators_model.rowCount() < 1:
             return
 
+        self._creators_sort_model.sort(0)
         # Make sure there is a selection
-        indexes = self.creators_view.selectedIndexes()
+        indexes = self._creators_view.selectedIndexes()
         if not indexes:
-            index = self.creators_model.index(0, 0)
-            self.creators_view.setCurrentIndex(index)
+            index = self._creators_sort_model.index(0, 0)
+            self._creators_view.setCurrentIndex(index)
         else:
             index = indexes[0]
 
@@ -726,11 +738,11 @@ class CreateDialog(QtWidgets.QDialog):
         asset_name = self._assets_widget.get_selected_asset_name()
         self._tasks_widget.set_asset_name(asset_name)
         if self._context_change_is_enabled():
-            self._invalidate_prereq()
+            self._invalidate_prereq_deffered()
 
     def _on_task_change(self):
         if self._context_change_is_enabled():
-            self._invalidate_prereq()
+            self._invalidate_prereq_deffered()
 
     def _on_current_session_context_request(self):
         self._assets_widget.set_current_session_asset()
@@ -977,7 +989,12 @@ class CreateDialog(QtWidgets.QDialog):
             elif variant:
                 self.variant_hints_menu.addAction(variant)
 
-        self.variant_input.setText(default_variant or "Main")
+        variant_text = default_variant or "Main"
+        # Make sure subset name is updated to new plugin
+        if variant_text == self.variant_input.text():
+            self._on_variant_change()
+        else:
+            self.variant_input.setText(variant_text)
 
     def _on_variant_widget_resize(self):
         self.variant_hints_btn.setFixedHeight(self.variant_input.height())
@@ -1005,11 +1022,16 @@ class CreateDialog(QtWidgets.QDialog):
         if variant_value is None:
             variant_value = self.variant_input.text()
 
-        self.create_btn.setEnabled(True)
         if not self._compiled_name_pattern.match(variant_value):
-            self.create_btn.setEnabled(False)
+            self._create_btn.setEnabled(False)
             self._set_variant_state_property("invalid")
             self.subset_name_input.setText("< Invalid variant >")
+            return
+
+        if not self._context_change_is_enabled():
+            self._create_btn.setEnabled(True)
+            self._set_variant_state_property("")
+            self.subset_name_input.setText("< Valid variant >")
             return
 
         project_name = self.controller.project_name
@@ -1022,13 +1044,14 @@ class CreateDialog(QtWidgets.QDialog):
                 variant_value, task_name, asset_doc, project_name
             )
         except TaskNotSetError:
-            self.create_btn.setEnabled(False)
+            self._create_btn.setEnabled(False)
             self._set_variant_state_property("invalid")
             self.subset_name_input.setText("< Missing task >")
             return
 
         self.subset_name_input.setText(subset_name)
 
+        self._create_btn.setEnabled(True)
         self._validate_subset_name(subset_name, variant_value)
 
     def _validate_subset_name(self, subset_name, variant_value):
@@ -1083,8 +1106,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._set_variant_state_property(property_value)
 
         variant_is_valid = variant_value.strip() != ""
-        if variant_is_valid != self.create_btn.isEnabled():
-            self.create_btn.setEnabled(variant_is_valid)
+        if variant_is_valid != self._create_btn.isEnabled():
+            self._create_btn.setEnabled(variant_is_valid)
 
     def _set_variant_state_property(self, state):
         current_value = self.variant_input.property("state")
@@ -1129,21 +1152,27 @@ class CreateDialog(QtWidgets.QDialog):
         self._update_help_btn()
 
     def _on_create(self):
-        indexes = self.creators_view.selectedIndexes()
+        indexes = self._creators_view.selectedIndexes()
         if not indexes or len(indexes) > 1:
             return
 
-        if not self.create_btn.isEnabled():
+        if not self._create_btn.isEnabled():
             return
 
         index = indexes[0]
         creator_label = index.data(QtCore.Qt.DisplayRole)
         creator_identifier = index.data(CREATOR_IDENTIFIER_ROLE)
         family = index.data(FAMILY_ROLE)
-        subset_name = self.subset_name_input.text()
         variant = self.variant_input.text()
-        asset_name = self._get_asset_name()
-        task_name = self._get_task_name()
+        # Care about subset name only if context change is enabled
+        subset_name = None
+        asset_name = None
+        task_name = None
+        if self._context_change_is_enabled():
+            subset_name = self.subset_name_input.text()
+            asset_name = self._get_asset_name()
+            task_name = self._get_task_name()
+
         pre_create_data = self._pre_create_widget.current_value()
         # Where to define these data?
         # - what data show be stored?

@@ -3,8 +3,9 @@ from collections import defaultdict
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.pipeline import load, AvalonMongoDB
-from openpype.api import Anatomy, config
+from openpype.client import get_representations
+from openpype.lib import config
+from openpype.pipeline import load, Anatomy
 from openpype import resources, style
 
 from openpype.lib.delivery import (
@@ -68,17 +69,13 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         self.setStyleSheet(style.load_stylesheet())
 
-        project = contexts[0]["project"]["name"]
-        self.anatomy = Anatomy(project)
+        project_name = contexts[0]["project"]["name"]
+        self.anatomy = Anatomy(project_name)
         self._representations = None
         self.log = log
         self.currently_uploaded = 0
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.Session["AVALON_PROJECT"] = project
-        self.dbcon.install()
-
-        self._set_representations(contexts)
+        self._set_representations(project_name, contexts)
 
         dropdown = QtWidgets.QComboBox()
         self.templates = self._get_templates(self.anatomy)
@@ -238,13 +235,12 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         return templates
 
-    def _set_representations(self, contexts):
+    def _set_representations(self, project_name, contexts):
         version_ids = [context["version"]["_id"] for context in contexts]
 
-        repres = list(self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        }))
+        repres = list(get_representations(
+            project_name, version_ids=version_ids
+        ))
 
         self._representations = repres
 

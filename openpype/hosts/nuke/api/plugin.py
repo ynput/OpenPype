@@ -14,11 +14,12 @@ from openpype.pipeline import (
 from .lib import (
     Knobby,
     check_subsetname_exists,
-    reset_selection,
     maintained_selection,
     set_avalon_knob_data,
     add_publish_knob,
-    get_nuke_imageio_settings
+    get_nuke_imageio_settings,
+    set_node_knobs_from_settings,
+    get_view_process_node
 )
 
 
@@ -215,37 +216,6 @@ class ExporterReview(object):
 
         self.data["representations"].append(repre)
 
-    def get_view_input_process_node(self):
-        """
-        Will get any active view process.
-
-        Arguments:
-            self (class): in object definition
-
-        Returns:
-            nuke.Node: copy node of Input Process node
-        """
-        reset_selection()
-        ipn_orig = None
-        for v in nuke.allNodes(filter="Viewer"):
-            ip = v["input_process"].getValue()
-            ipn = v["input_process_node"].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
-
-        if ipn_orig:
-            # copy selected to clipboard
-            nuke.nodeCopy("%clipboard%")
-            # reset selection
-            reset_selection()
-            # paste node and selection is on it only
-            nuke.nodePaste("%clipboard%")
-            # assign to variable
-            ipn = nuke.selectedNode()
-
-            return ipn
-
     def get_imageio_baking_profile(self):
         from . import lib as opnlib
         nuke_imageio = opnlib.get_nuke_imageio_settings()
@@ -310,7 +280,7 @@ class ExporterReviewLut(ExporterReview):
         self._temp_nodes = []
         self.log.info("Deleted nodes...")
 
-    def generate_lut(self):
+    def generate_lut(self, **kwargs):
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -328,7 +298,7 @@ class ExporterReviewLut(ExporterReview):
         if bake_viewer_process:
             # Node View Process
             if bake_viewer_input_process_node:
-                ipn = self.get_view_input_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -497,16 +467,7 @@ class ExporterReviewMov(ExporterReview):
             add_tags.append("reformated")
 
             rf_node = nuke.createNode("Reformat")
-            for kn_conf in reformat_node_config:
-                _type = kn_conf["type"]
-                k_name = str(kn_conf["name"])
-                k_value = kn_conf["value"]
-
-                # to remove unicode as nuke doesn't like it
-                if _type == "string":
-                    k_value = str(kn_conf["value"])
-
-                rf_node[k_name].setValue(k_value)
+            set_node_knobs_from_settings(rf_node, reformat_node_config)
 
             # connect
             rf_node.setInput(0, self.previous_node)
@@ -519,7 +480,7 @@ class ExporterReviewMov(ExporterReview):
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # View Process node
-                ipn = self.get_view_input_process_node()
+                ipn = get_view_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)

@@ -45,8 +45,15 @@ from .breadcrumbs_widget import (
     SystemSettingsBreadcrumbs,
     ProjectSettingsBreadcrumbs
 )
-
-from .base import GUIWidget
+from .constants import (
+    SETTINGS_PATH_KEY,
+    ROOT_KEY,
+    VALUE_KEY,
+)
+from .base import (
+    ExtractHelper,
+    GUIWidget,
+)
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget
 from .dict_mutable_widget import DictMutableKeysWidget
@@ -627,10 +634,34 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 self._on_context_version_trigger
             )
             submenu.addAction(action)
+
         menu.addMenu(submenu)
+
+        extract_action = QtWidgets.QAction("Extract to file", menu)
+        extract_action.triggered.connect(self._on_extract_to_file)
+
+        menu.addAction(extract_action)
 
     def _on_context_version_trigger(self, version):
         self._on_source_version_change(version)
+
+    def _on_extract_to_file(self):
+        filepath = ExtractHelper.ask_for_save_filepath(self)
+        if not filepath:
+            return
+
+        settings_data = {
+            SETTINGS_PATH_KEY: self.entity.root_key,
+            ROOT_KEY: self.entity.root_key,
+            VALUE_KEY: self.entity.value
+        }
+        project_name = 0
+        if hasattr(self, "project_name"):
+            project_name = self.project_name
+
+        ExtractHelper.extract_settings_to_json(
+            filepath, settings_data, project_name
+        )
 
     def _on_reset_crash(self):
         self.save_btn.setEnabled(False)
@@ -822,6 +853,9 @@ class ProjectWidget(SettingsCategoryWidget):
         project_list_widget.project_changed.connect(self._on_project_change)
         project_list_widget.version_change_requested.connect(
             self._on_source_version_change
+        )
+        project_list_widget.extract_to_file_requested.connect(
+            self._on_extract_to_file
         )
 
         self.project_list_widget = project_list_widget
