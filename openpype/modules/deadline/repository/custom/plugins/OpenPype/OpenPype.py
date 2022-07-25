@@ -79,8 +79,9 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         # lets go over all available and find compatible build.
         requested_version = job.GetJobEnvironmentKeyValue("OPENPYPE_VERSION")
         if requested_version:
-            self.LogInfo(
-                f"Scanning for compatible requested version {requested_version}")
+            self.LogInfo((
+                "Scanning for compatible requested "
+                f"version {requested_version}"))
             dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
             if dir:
@@ -108,7 +109,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             # sort detected versions
             if openpype_versions:
                 openpype_versions.sort(key=lambda ver: ver[0])
-            requested_major, requested_minor, _ = requested_version.split(".")[:3]
+            requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
             for version in openpype_versions:
                 v = version[0].split(".")[:3]

@@ -74,7 +74,7 @@ def inject_openpype_environment(deadlinePlugin):
             # sort detected versions
             if openpype_versions:
                 openpype_versions.sort(key=lambda ver: ver[0])
-            requested_major, requested_minor, _ = requested_version.split(".")[:3]
+            requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
             for version in openpype_versions:
                 v = version[0].split(".")[:3]
