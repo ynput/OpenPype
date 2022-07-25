@@ -63,6 +63,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
 
         filtered_repres = self._get_filtered_repres(instance)
+        if not filtered_repres:
+            self.log.info((
+                "Instance don't have representations"
+                " that can be used as source for thumbnail. Skipping"
+            ))
+            return
+
+        thumbnail_created = False
         for repre in filtered_repres:
             repre_files = repre["files"]
             if not isinstance(repre_files, (list, tuple)):
@@ -81,7 +89,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             jpeg_file = filename + "jpg"
             full_output_path = os.path.join(stagingdir, jpeg_file)
 
-            thumbnail_created = False
             # Try to use FFMPEG if OIIO is not supported (for cases when
             # oiiotool isn't available)
             if not is_oiio_supported():
@@ -96,10 +103,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     self.log.info("Converting with FFMPEG because input can't be read by OIIO.")    # noqa
                     thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
 
-            # Skip the rest of the process if the thumbnail wasn't created
+            # Skip representation and try next one if  wasn't created
             if not thumbnail_created:
-                self.log.warning("Thumbanil has not been created.")
-                return
+                continue
 
             new_repre = {
                 "name": "thumbnail",
@@ -117,6 +123,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             instance.data["representations"].append(new_repre)
             # There is no need to create more then one thumbnail
             break
+
+        if not thumbnail_created:
+            self.log.warning("Thumbanil has not been created.")
 
     def _is_review_instance(self, instance):
         # TODO: We should probably handle "not creating" of thumbnail
