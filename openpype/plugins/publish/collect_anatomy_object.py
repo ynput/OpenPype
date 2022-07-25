@@ -1,24 +1,27 @@
 """Collect Anatomy object.
 
 Requires:
-    os.environ -> AVALON_PROJECT
+    context -> projectName
 
 Provides:
     context -> anatomy (openpype.pipeline.anatomy.Anatomy)
 """
-import os
+
 import pyblish.api
 from openpype.pipeline import Anatomy
 
 
 class CollectAnatomyObject(pyblish.api.ContextPlugin):
-    """Collect Anatomy object into Context"""
+    """Collect Anatomy object into Context.
+
+    Order offset could be changed to '-0.45'.
+    """
 
     order = pyblish.api.CollectorOrder - 0.4
     label = "Collect Anatomy Object"
 
     def process(self, context):
-        project_name = os.environ.get("AVALON_PROJECT")
+        project_name = context.data.get("projectName")
         if project_name is None:
             raise AssertionError(
                 "Environment `AVALON_PROJECT` is not set."

@@ -71,7 +71,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         template_key = self._get_template_key(instance)
 
         anatomy = instance.context.data["anatomy"]
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = anatomy.project_name
         if template_key not in anatomy.templates:
             self.log.warning((
                 "!!! Anatomy of project \"{}\" does not have set"
@@ -454,7 +454,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     )
 
             if bulk_writes:
-                project_name = legacy_io.Session["AVALON_PROJECT"]
                 legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
@@ -517,11 +516,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
+            ).format(anatomy.project_name))
 
             file_path = anatomy_filled[template_key]["path"]
             # Directory

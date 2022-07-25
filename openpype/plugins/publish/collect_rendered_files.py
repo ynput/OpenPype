@@ -1,7 +1,7 @@
 """Loads publishing context from json and continues in publish process.
 
 Requires:
-    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
+    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.4)
 
 Provides:
     context, instances -> All data from previous publishing process.
@@ -21,6 +21,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
+
     order = pyblish.api.CollectorOrder - 0.2
     # Keep "filesequence" for backwards compatibility of older jobs
     targets = ["filesequence", "farm"]
@@ -122,19 +123,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             "Missing `OPENPYPE_PUBLISH_DATA`")
         paths = os.environ["OPENPYPE_PUBLISH_DATA"].split(os.pathsep)
 
-        project_name = os.environ.get("AVALON_PROJECT")
-        if project_name is None:
-            raise AssertionError(
-                "Environment `AVALON_PROJECT` was not found."
-                "Could not set project `root` which may cause issues."
-            )
-
-        # TODO root filling should happen after collect Anatomy
+        # Using already collected Anatomy
+        anatomy = context.data["anatomy"]
         self.log.info("Getting root setting for project \"{}\"".format(
-            project_name
+            anatomy.project_name
         ))
 
-        anatomy = context.data["anatomy"]
         self.log.info("anatomy: {}".format(anatomy.roots))
         try:
             session_is_set = False

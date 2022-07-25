@@ -1,11 +1,13 @@
 """Collect Anatomy and global anatomy data.
 
 Requires:
-    session -> AVALON_PROJECT, AVALON_ASSET
+    session -> AVALON_ASSET
+    context -> projectName
 
 Provides:
-    context -> projectEntity - project entity from database
-    context -> assetEntity - asset entity from database
+    context -> projectEntity - Project document from database.
+    context -> assetEntity - Asset document from database only if 'asset' is
+        set in context.
 """
 
 import pyblish.api
@@ -15,14 +17,14 @@ from openpype.pipeline import legacy_io
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
-    """Collect Anatomy into Context"""
+    """Collect Anatomy into Context."""
 
     order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Avalon Entities"
 
     def process(self, context):
         legacy_io.install()
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = context.data["projectName"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
         task_name = legacy_io.Session["AVALON_TASK"]
 
