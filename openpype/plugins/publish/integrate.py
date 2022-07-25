@@ -13,6 +13,7 @@ import openpype.api
 from openpype.client import (
     get_representations,
     get_subset_by_name,
+    get_version_by_name,
 )
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
@@ -478,40 +479,40 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Prepared subset: {}".format(subset_name))
         return subset_doc, bulk_writes
 
-    def prepare_version(self, instance, subset):
-
+    def prepare_version(self, instance, subset_doc, project_name):
         version_number = instance.data["version"]
 
-        version = {
+        version_doc = {
             "schema": "openpype:version-3.0",
             "type": "version",
-            "parent": subset["_id"],
+            "parent": subset_doc["_id"],
             "name": version_number,
             "data": self.create_version_data(instance)
         }
 
-        existing_version = legacy_io.find_one({
-            'type': 'version',
-            'parent': subset["_id"],
-            'name': version_number
-        }, projection={"_id": True})
+        existing_version = get_version_by_name(
+            project_name,
+            version_number,
+            subset_doc["_id"],
+            fields=["_id"]
+        )
 
         if existing_version:
             self.log.debug("Updating existing version ...")
-            version["_id"] = existing_version["_id"]
+            version_doc["_id"] = existing_version["_id"]
         else:
             self.log.debug("Creating new version ...")
-            version["_id"] = ObjectId()
+            version_doc["_id"] = ObjectId()
 
         bulk_writes = [ReplaceOne(
-            filter={"_id": version["_id"]},
-            replacement=version,
+            filter={"_id": version_doc["_id"]},
+            replacement=version_doc,
             upsert=True
         )]
 
-        self.log.info("Prepared version: v{0:03d}".format(version["name"]))
+        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
 
-        return version, bulk_writes
+        return version_doc, bulk_writes
 
     def prepare_representation(self, repre,
                                template_name,
