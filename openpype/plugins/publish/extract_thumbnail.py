@@ -78,6 +78,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         instance.context.data["cleanupFullPaths"].append(dst_staging)
 
         thumbnail_created = False
+        oiio_supported = is_oiio_supported()
         for repre in filtered_repres:
             repre_files = repre["files"]
             if not isinstance(repre_files, (list, tuple)):
@@ -93,19 +94,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             jpeg_file = filename + ".jpg"
             full_output_path = os.path.join(dst_staging, jpeg_file)
 
-            # Try to use FFMPEG if OIIO is not supported (for cases when
-            # oiiotool isn't available)
-            if not is_oiio_supported():
-                thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
-            else:
+            if oiio_supported:
+                self.log.info("Trying to convert with OIIO")
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                self.log.info("Trying to convert with OIIO")   # noqa
-                thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
+                thumbnail_created = self.create_thumbnail_oiio(
+                    full_input_path, full_output_path
+                )
 
-                if not thumbnail_created:
-                    self.log.info("Converting with FFMPEG because input can't be read by OIIO.")    # noqa
-                    thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
+            # Try to use FFMPEG if OIIO is not supported or for cases when
+            #    oiiotool isn't available
+            if not thumbnail_created:
+                if oiio_supported:
+                    self.log.info((
+                        "Converting with FFMPEG because input"
+                        " can't be read by OIIO."
+                    ))
+
+                thumbnail_created = self.create_thumbnail_ffmpeg(
+                    full_input_path, full_output_path
+                )
 
             # Skip representation and try next one if  wasn't created
             if not thumbnail_created:
