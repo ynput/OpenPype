@@ -29,7 +29,17 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     ffmpeg_args = None
 
     def process(self, instance):
-        self.log.info("subset {}".format(instance.data['subset']))
+        subset_name = instance.data["subset"]
+        instance_repres = instance.data.get("representations")
+        if not instance_repres:
+            self.log.debug((
+                "Instance {} does not have representations. Skipping"
+            ).format(subset_name))
+            return
+
+        self.log.info(
+            "Processing instance with subset name {}".format(subset_name)
+        )
 
         # skip crypto passes.
         # TODO: This is just a quick fix and has its own side-effects - it is
