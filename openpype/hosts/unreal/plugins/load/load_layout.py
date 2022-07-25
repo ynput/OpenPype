@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Loader for layouts."""
-import os
 import json
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
+from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
@@ -20,6 +20,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -87,16 +88,9 @@ class LayoutLoader(plugin.Loader):
 
         return None
 
-    def _get_data(self, asset_name):
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-
-        return asset_doc.get("data")
-
+    @staticmethod
     def _set_sequence_hierarchy(
-        self, seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
+        seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
     ):
         # Get existing sequencer tracks or create them if they don't exist
         tracks = seq_i.get_master_tracks()
@@ -165,8 +159,9 @@ class LayoutLoader(plugin.Loader):
             hid_section.set_row_index(index)
             hid_section.set_level_names(maps)
 
+    @staticmethod
     def _process_family(
-        self, assets, class_name, transform, sequence, inst_name=None
+        assets, class_name, transform, sequence, inst_name=None
     ):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -230,6 +225,7 @@ class LayoutLoader(plugin.Loader):
 
         anim_path = f"{asset_dir}/animations/{anim_file_name}"
 
+        asset_doc = get_current_project_asset()
         # Import animation
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
@@ -262,13 +258,15 @@ class LayoutLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'import_meshes_in_bone_hierarchy', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', True)
+            'use_default_sample_rate', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
             'import_bone_tracks', True)
         task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', True)
+            'remove_redundant_keys', False)
         task.options.anim_sequence_import_data.set_editor_property(
             'convert_scene', True)
 
@@ -311,11 +309,8 @@ class LayoutLoader(plugin.Loader):
             for binding in bindings:
                 tracks = binding.get_tracks()
                 track = None
-                if not tracks:
-                    track = binding.add_track(
-                        unreal.MovieSceneSkeletalAnimationTrack)
-                else:
-                    track = tracks[0]
+                track = tracks[0] if tracks else binding.add_track(
+                    unreal.MovieSceneSkeletalAnimationTrack)
 
                 sections = track.get_sections()
                 section = None
@@ -335,11 +330,11 @@ class LayoutLoader(plugin.Loader):
                             curr_anim.get_path_name()).parent
                         ).replace('\\', '/')
 
-                        filter = unreal.ARFilter(
+                        _filter = unreal.ARFilter(
                             class_names=["AssetContainer"],
                             package_paths=[anim_path],
                             recursive_paths=False)
-                        containers = ar.get_assets(filter)
+                        containers = ar.get_assets(_filter)
 
                         if len(containers) > 0:
                             return
@@ -350,6 +345,7 @@ class LayoutLoader(plugin.Loader):
                 sec_params = section.get_editor_property('params')
                 sec_params.set_editor_property('animation', animation)
 
+    @staticmethod
     def _generate_sequence(self, h, h_dir):
         tools = unreal.AssetToolsHelpers().get_asset_tools()
 
@@ -360,26 +356,30 @@ class LayoutLoader(plugin.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        asset_data = legacy_io.find_one({
-            "type": "asset",
-            "name": h_dir.split('/')[-1]
-        })
-
-        id = asset_data.get('_id')
+        project_name = legacy_io.active_project()
+        asset_data = get_asset_by_name(
+            project_name,
+            h_dir.split('/')[-1],
+            fields=["_id", "data.fps"]
+        )
 
         start_frames = []
         end_frames = []
 
-        elements = list(
-            legacy_io.find({"type": "asset", "data.visualParent": id}))
+        elements = list(get_assets(
+            project_name,
+            parent_ids=[asset_data["_id"]],
+            fields=["_id", "data.clipIn", "data.clipOut"]
+        ))
         for e in elements:
             start_frames.append(e.get('data').get('clipIn'))
             end_frames.append(e.get('data').get('clipOut'))
 
-            elements.extend(legacy_io.find({
-                "type": "asset",
-                "data.visualParent": e.get('_id')
-            }))
+            elements.extend(get_assets(
+                project_name,
+                parent_ids=[e["_id"]],
+                fields=["_id", "data.clipIn", "data.clipOut"]
+            ))
 
         min_frame = min(start_frames)
         max_frame = max(end_frames)
@@ -583,10 +583,7 @@ class LayoutLoader(plugin.Loader):
             hierarchy_dir_list.append(hierarchy_dir)
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
+        asset_name = f"{asset}_{name}" if asset else name
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
@@ -658,7 +655,8 @@ class LayoutLoader(plugin.Loader):
                 frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                 [level])
 
-        data = self._get_data(asset)
+        project_name = legacy_io.active_project()
+        data = get_asset_by_name(project_name, asset)["data"]
         shot.set_display_rate(
             unreal.FrameRate(data.get("fps"), 1.0))
         shot.set_playback_start(0)
@@ -800,7 +798,7 @@ class LayoutLoader(plugin.Loader):
                 lc for lc in layout_containers
                 if asset in lc.get('loaded_assets')]
 
-            if len(layouts) == 0:
+            if not layouts:
                 EditorAssetLibrary.delete_directory(str(Path(asset).parent))
 
         # Remove the Level Sequence from the parent.
@@ -810,17 +808,17 @@ class LayoutLoader(plugin.Loader):
         namespace = container.get('namespace').replace(f"{root}/", "")
         ms_asset = namespace.split('/')[0]
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["LevelSequence"],
             package_paths=[f"{root}/{ms_asset}"],
             recursive_paths=False)
-        sequences = ar.get_assets(filter)
+        sequences = ar.get_assets(_filter)
         master_sequence = sequences[0].get_asset()
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["World"],
             package_paths=[f"{root}/{ms_asset}"],
             recursive_paths=False)
-        levels = ar.get_assets(filter)
+        levels = ar.get_assets(_filter)
         master_level = levels[0].get_editor_property('object_path')
 
         sequences = [master_sequence]

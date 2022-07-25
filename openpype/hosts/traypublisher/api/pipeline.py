@@ -9,12 +9,43 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     legacy_io,
 )
+from openpype.host import HostBase, INewPublisher
+
 
 ROOT_DIR = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
 ))
 PUBLISH_PATH = os.path.join(ROOT_DIR, "plugins", "publish")
 CREATE_PATH = os.path.join(ROOT_DIR, "plugins", "create")
+
+
+class TrayPublisherHost(HostBase, INewPublisher):
+    name = "traypublisher"
+
+    def install(self):
+        os.environ["AVALON_APP"] = self.name
+        legacy_io.Session["AVALON_APP"] = self.name
+
+        pyblish.api.register_host("traypublisher")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+
+    def get_context_title(self):
+        return HostContext.get_project_name()
+
+    def get_context_data(self):
+        return HostContext.get_context_data()
+
+    def update_context_data(self, data, changes):
+        HostContext.save_context_data(data, changes)
+
+    def set_project_name(self, project_name):
+        # TODO Deregister project specific plugins and register new project
+        #   plugins
+        os.environ["AVALON_PROJECT"] = project_name
+        legacy_io.Session["AVALON_PROJECT"] = project_name
+        legacy_io.install()
+        HostContext.set_project_name(project_name)
 
 
 class HostContext:
@@ -150,32 +181,3 @@ def get_context_data():
 
 def update_context_data(data, changes):
     HostContext.save_context_data(data)
-
-
-def get_context_title():
-    return HostContext.get_project_name()
-
-
-def ls():
-    """Probably will never return loaded containers."""
-    return []
-
-
-def install():
-    """This is called before a project is known.
-
-    Project is defined with 'set_project_name'.
-    """
-    os.environ["AVALON_APP"] = "traypublisher"
-
-    pyblish.api.register_host("traypublisher")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_creator_plugin_path(CREATE_PATH)
-
-
-def set_project_name(project_name):
-    # TODO Deregister project specific plugins and register new project plugins
-    os.environ["AVALON_PROJECT"] = project_name
-    legacy_io.Session["AVALON_PROJECT"] = project_name
-    legacy_io.install()
-    HostContext.set_project_name(project_name)

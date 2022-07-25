@@ -12,12 +12,17 @@ import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
 from six import string_types
-import bson
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
-from openpype import lib
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+    get_subsets,
+    get_last_versions,
+    get_representation_by_name
+)
 from openpype.api import get_anatomy_settings
 from openpype.pipeline import (
     legacy_io,
@@ -27,6 +32,7 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 from .commands import reset_frame_range
 
 
@@ -1387,15 +1393,11 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        asset_data = legacy_io.find_one(
-            {
-                "type": "asset",
-                "name": legacy_io.Session["AVALON_ASSET"]
-            },
-            projection={"_id": True}
-        )
-        assert asset_data, "No current asset found in Session"
-        asset_id = asset_data['_id']
+        project_name = legacy_io.active_project()
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
+        assert asset_doc, "No current asset found in Session"
+        asset_id = asset_doc['_id']
 
     node_ids = []
     for node in nodes:
@@ -1548,13 +1550,15 @@ def list_looks(asset_id):
 
     # # get all subsets with look leading in
     # the name associated with the asset
-    subset = legacy_io.find({
-        "parent": bson.ObjectId(asset_id),
-        "type": "subset",
-        "name": {"$regex": "look*"}
-    })
-
-    return list(subset)
+    # TODO this should probably look for family 'look' instead of checking
+    #   subset name that can not start with family
+    project_name = legacy_io.active_project()
+    subset_docs = get_subsets(project_name, asset_ids=[asset_id])
+    return [
+        subset_doc
+        for subset_doc in subset_docs
+        if subset_doc["name"].startswith("look")
+    ]
 
 
 def assign_look_by_version(nodes, version_id):
@@ -1570,18 +1574,15 @@ def assign_look_by_version(nodes, version_id):
         None
     """
 
-    # Get representations of shader file and relationships
-    look_representation = legacy_io.find_one({
-        "type": "representation",
-        "parent": version_id,
-        "name": "ma"
-    })
+    project_name = legacy_io.active_project()
 
-    json_representation = legacy_io.find_one({
-        "type": "representation",
-        "parent": version_id,
-        "name": "json"
-    })
+    # Get representations of shader file and relationships
+    look_representation = get_representation_by_name(
+        project_name, "ma", version_id
+    )
+    json_representation = get_representation_by_name(
+        project_name, "json", version_id
+    )
 
     # See if representation is already loaded, if so reuse it.
     host = registered_host()
@@ -1639,42 +1640,54 @@ def assign_look(nodes, subset="lookDefault"):
         parts = pype_id.split(":", 1)
         grouped[parts[0]].append(node)
 
+    project_name = legacy_io.active_project()
+    subset_docs = get_subsets(
+        project_name, subset_names=[subset], asset_ids=grouped.keys()
+    )
+    subset_docs_by_asset_id = {
+        str(subset_doc["parent"]): subset_doc
+        for subset_doc in subset_docs
+    }
+    subset_ids = {
+        subset_doc["_id"]
+        for subset_doc in subset_docs_by_asset_id.values()
+    }
+    last_version_docs = get_last_versions(
+        project_name,
+        subset_ids=subset_ids,
+        fields=["_id", "name", "data.families"]
+    )
+    last_version_docs_by_subset_id = {
+        last_version_doc["parent"]: last_version_doc
+        for last_version_doc in last_version_docs
+    }
+
     for asset_id, asset_nodes in grouped.items():
         # create objectId for database
-        try:
-            asset_id = bson.ObjectId(asset_id)
-        except bson.errors.InvalidId:
-            log.warning("Asset ID is not compatible with bson")
-            continue
-        subset_data = legacy_io.find_one({
-            "type": "subset",
-            "name": subset,
-            "parent": asset_id
-        })
-
-        if not subset_data:
+        subset_doc = subset_docs_by_asset_id.get(asset_id)
+        if not subset_doc:
             log.warning("No subset '{}' found for {}".format(subset, asset_id))
             continue
 
-        # get last version
-        # with backwards compatibility
-        version = legacy_io.find_one(
-            {
-                "parent": subset_data['_id'],
-                "type": "version",
-                "data.families": {"$in": ["look"]}
-            },
-            sort=[("name", -1)],
-            projection={
-                "_id": True,
-                "name": True
-            }
-        )
+        last_version = last_version_docs_by_subset_id.get(subset_doc["_id"])
+        if not last_version:
+            log.warning((
+                "Not found last version for subset '{}' on asset with id {}"
+            ).format(subset, asset_id))
+            continue
 
-        log.debug("Assigning look '{}' <v{:03d}>".format(subset,
-                                                         version["name"]))
+        families = last_version.get("data", {}).get("families") or []
+        if "look" not in families:
+            log.warning((
+                "Last version for subset '{}' on asset with id {}"
+                " does not have look family"
+            ).format(subset, asset_id))
+            continue
 
-        assign_look_by_version(asset_nodes, version['_id'])
+        log.debug("Assigning look '{}' <v{:03d}>".format(
+            subset, last_version["name"]))
+
+        assign_look_by_version(asset_nodes, last_version["_id"])
 
 
 def apply_shaders(relationships, shadernodes, nodes):
@@ -1737,8 +1750,11 @@ def apply_shaders(relationships, shadernodes, nodes):
             log.warning("No nodes found for shading engine "
                         "'{0}'".format(id_shading_engines[0]))
             continue
+        try:
+            cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
+        except RuntimeError as rte:
+            log.error("Error during shader assignment: {}".format(rte))
 
-        cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
     # endregion
 
     apply_attributes(attributes, nodes_by_id)
@@ -1892,7 +1908,7 @@ def iter_parents(node):
     """
     while True:
         split = node.rsplit("|", 1)
-        if len(split) == 1:
+        if len(split) == 1 or not split[0]:
             return
 
         node = split[0]
@@ -2123,9 +2139,11 @@ def set_scene_resolution(width, height, pixelAspect):
 
     control_node = "defaultResolution"
     current_renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
+    aspect_ratio_attr = "deviceAspectRatio"
 
     # Give VRay a helping hand as it is slightly different from the rest
     if current_renderer == "vray":
+        aspect_ratio_attr = "aspectRatio"
         vray_node = "vraySettings"
         if cmds.objExists(vray_node):
             control_node = vray_node
@@ -2138,7 +2156,8 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.height" % control_node, height)
 
     deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
-    cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
+    cmds.setAttr(
+        "{}.{}".format(control_node, aspect_ratio_attr), deviceAspectRatio)
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
@@ -2152,9 +2171,10 @@ def reset_scene_resolution():
         None
     """
 
-    project_doc = legacy_io.find_one({"type": "project"})
+    project_name = legacy_io.active_project()
+    project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_data = get_current_project_asset()["data"]
 
     # Set project resolution
     width_key = "resolutionWidth"
@@ -2185,9 +2205,11 @@ def set_context_settings():
     """
 
     # Todo (Wijnand): apply renderer and resolution of project
-    project_doc = legacy_io.find_one({"type": "project"})
+    project_name = legacy_io.active_project()
+    project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset(fields=["data.fps"])
+    asset_data = asset_doc.get("data", {})
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
@@ -2212,7 +2234,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset()["data"]["fps"]
+    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
     # TODO(antirotor): This is hack as for framerates having multiple
     # decimal places. FTrack is ceiling decimal values on
     # fps to two decimal places but Maya 2019+ is reporting those fps
@@ -2501,11 +2523,29 @@ def load_capture_preset(data=None):
                 temp_options2['multiSampleEnable'] = False
                 temp_options2['multiSampleCount'] = preset[id][key]
 
+        if key == 'renderDepthOfField':
+            temp_options2['renderDepthOfField'] = preset[id][key]
+
         if key == 'ssaoEnable':
             if preset[id][key] is True:
                 temp_options2['ssaoEnable'] = True
             else:
                 temp_options2['ssaoEnable'] = False
+
+        if key == 'ssaoSamples':
+            temp_options2['ssaoSamples'] = preset[id][key]
+
+        if key == 'ssaoAmount':
+            temp_options2['ssaoAmount'] = preset[id][key]
+
+        if key == 'ssaoRadius':
+            temp_options2['ssaoRadius'] = preset[id][key]
+
+        if key == 'hwFogDensity':
+            temp_options2['hwFogDensity'] = preset[id][key]
+
+        if key == 'ssaoFilterRadius':
+            temp_options2['ssaoFilterRadius'] = preset[id][key]
 
         if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
@@ -2513,6 +2553,48 @@ def load_capture_preset(data=None):
 
         if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
+
+        if key == 'fogging':
+            temp_options['fogging'] = preset[id][key] or False
+
+        if key == 'hwFogStart':
+            temp_options2['hwFogStart'] = preset[id][key]
+
+        if key == 'hwFogEnd':
+            temp_options2['hwFogEnd'] = preset[id][key]
+
+        if key == 'hwFogAlpha':
+            temp_options2['hwFogAlpha'] = preset[id][key]
+
+        if key == 'hwFogFalloff':
+            temp_options2['hwFogFalloff'] = int(preset[id][key])
+
+        if key == 'hwFogColorR':
+            temp_options2['hwFogColorR'] = preset[id][key]
+
+        if key == 'hwFogColorG':
+            temp_options2['hwFogColorG'] = preset[id][key]
+
+        if key == 'hwFogColorB':
+            temp_options2['hwFogColorB'] = preset[id][key]
+
+        if key == 'motionBlurEnable':
+            if preset[id][key] is True:
+                temp_options2['motionBlurEnable'] = True
+            else:
+                temp_options2['motionBlurEnable'] = False
+
+        if key == 'motionBlurSampleCount':
+            temp_options2['motionBlurSampleCount'] = preset[id][key]
+
+        if key == 'motionBlurShutterOpenFraction':
+            temp_options2['motionBlurShutterOpenFraction'] = preset[id][key]
+
+        if key == 'lineAAEnable':
+            if preset[id][key] is True:
+                temp_options2['lineAAEnable'] = True
+            else:
+                temp_options2['lineAAEnable'] = False
 
         else:
             temp_options[str(key)] = preset[id][key]
@@ -2523,7 +2605,24 @@ def load_capture_preset(data=None):
                 'gpuCacheDisplayFilter',
                 'multiSample',
                 'ssaoEnable',
-                'textureMaxResolution'
+                'ssaoSamples',
+                'ssaoAmount',
+                'ssaoFilterRadius',
+                'ssaoRadius',
+                'hwFogStart',
+                'hwFogEnd',
+                'hwFogAlpha',
+                'hwFogFalloff',
+                'hwFogColorR',
+                'hwFogColorG',
+                'hwFogColorB',
+                'hwFogDensity',
+                'textureMaxResolution',
+                'motionBlurEnable',
+                'motionBlurSampleCount',
+                'motionBlurShutterOpenFraction',
+                'lineAAEnable',
+                'renderDepthOfField'
                 ]:
         temp_options.pop(key, None)
 
@@ -2953,8 +3052,9 @@ def update_content_on_context_change():
     This will update scene content to match new asset on context change
     """
     scene_sets = cmds.listSets(allSets=True)
-    new_asset = legacy_io.Session["AVALON_ASSET"]
-    new_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset()
+    new_asset = asset_doc["name"]
+    new_data = asset_doc["data"]
     for s in scene_sets:
         try:
             if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
@@ -3192,3 +3292,209 @@ def parent_nodes(nodes, parent=None):
                 node[0].setParent(node[1])
         if delete_parent:
             pm.delete(parent_node)
+
+
+@contextlib.contextmanager
+def maintained_time():
+    ct = cmds.currentTime(query=True)
+    try:
+        yield
+    finally:
+        cmds.currentTime(ct, edit=True)
+
+
+def iter_visible_nodes_in_range(nodes, start, end):
+    """Yield nodes that are visible in start-end frame range.
+
+    - Ignores intermediateObjects completely.
+    - Considers animated visibility attributes + upstream visibilities.
+
+    This is optimized for large scenes where some nodes in the parent
+    hierarchy might have some input connections to the visibilities,
+    e.g. key, driven keys, connections to other attributes, etc.
+
+    This only does a single time step to `start` if current frame is
+    not inside frame range since the assumption is made that changing
+    a frame isn't so slow that it beats querying all visibility
+    plugs through MDGContext on another frame.
+
+    Args:
+        nodes (list): List of node names to consider.
+        start (int, float): Start frame.
+        end (int, float): End frame.
+
+    Returns:
+        list: List of node names. These will be long full path names so
+            might have a longer name than the input nodes.
+
+    """
+    # States we consider per node
+    VISIBLE = 1  # always visible
+    INVISIBLE = 0  # always invisible
+    ANIMATED = -1  # animated visibility
+
+    # Ensure integers
+    start = int(start)
+    end = int(end)
+
+    # Consider only non-intermediate dag nodes and use the "long" names.
+    nodes = cmds.ls(nodes, long=True, noIntermediate=True, type="dagNode")
+    if not nodes:
+        return
+
+    with maintained_time():
+        # Go to first frame of the range if the current time is outside
+        # the queried range so can directly query all visible nodes on
+        # that frame.
+        current_time = cmds.currentTime(query=True)
+        if not (start <= current_time <= end):
+            cmds.currentTime(start)
+
+        visible = cmds.ls(nodes, long=True, visible=True)
+        for node in visible:
+            yield node
+        if len(visible) == len(nodes) or start == end:
+            # All are visible on frame one, so they are at least visible once
+            # inside the frame range.
+            return
+
+    # For the invisible ones check whether its visibility and/or
+    # any of its parents visibility attributes are animated. If so, it might
+    # get visible on other frames in the range.
+    def memodict(f):
+        """Memoization decorator for a function taking a single argument.
+
+        See: http://code.activestate.com/recipes/
+             578231-probably-the-fastest-memoization-decorator-in-the-/
+        """
+
+        class memodict(dict):
+            def __missing__(self, key):
+                ret = self[key] = f(key)
+                return ret
+
+        return memodict().__getitem__
+
+    @memodict
+    def get_state(node):
+        plug = node + ".visibility"
+        connections = cmds.listConnections(plug,
+                                           source=True,
+                                           destination=False)
+        if connections:
+            return ANIMATED
+        else:
+            return VISIBLE if cmds.getAttr(plug) else INVISIBLE
+
+    visible = set(visible)
+    invisible = [node for node in nodes if node not in visible]
+    always_invisible = set()
+    # Iterate over the nodes by short to long names to iterate the highest
+    # in hierarchy nodes first. So the collected data can be used from the
+    # cache for parent queries in next iterations.
+    node_dependencies = dict()
+    for node in sorted(invisible, key=len):
+
+        state = get_state(node)
+        if state == INVISIBLE:
+            always_invisible.add(node)
+            continue
+
+        # If not always invisible by itself we should go through and check
+        # the parents to see if any of them are always invisible. For those
+        # that are "ANIMATED" we consider that this node is dependent on
+        # that attribute, we store them as dependency.
+        dependencies = set()
+        if state == ANIMATED:
+            dependencies.add(node)
+
+        traversed_parents = list()
+        for parent in iter_parents(node):
+
+            if parent in always_invisible or get_state(parent) == INVISIBLE:
+                # When parent is always invisible then consider this parent,
+                # this node we started from and any of the parents we
+                # have traversed in-between to be *always invisible*
+                always_invisible.add(parent)
+                always_invisible.add(node)
+                always_invisible.update(traversed_parents)
+                break
+
+            # If we have traversed the parent before and its visibility
+            # was dependent on animated visibilities then we can just extend
+            # its dependencies for to those for this node and break further
+            # iteration upwards.
+            parent_dependencies = node_dependencies.get(parent, None)
+            if parent_dependencies is not None:
+                dependencies.update(parent_dependencies)
+                break
+
+            state = get_state(parent)
+            if state == ANIMATED:
+                dependencies.add(parent)
+
+            traversed_parents.append(parent)
+
+        if node not in always_invisible and dependencies:
+            node_dependencies[node] = dependencies
+
+    if not node_dependencies:
+        return
+
+    # Now we only have to check the visibilities for nodes that have animated
+    # visibility dependencies upstream. The fastest way to check these
+    # visibility attributes across different frames is with Python api 2.0
+    # so we do that.
+    @memodict
+    def get_visibility_mplug(node):
+        """Return api 2.0 MPlug with cached memoize decorator"""
+        sel = om.MSelectionList()
+        sel.add(node)
+        dag = sel.getDagPath(0)
+        return om.MFnDagNode(dag).findPlug("visibility", True)
+
+    @contextlib.contextmanager
+    def dgcontext(mtime):
+        """MDGContext context manager"""
+        context = om.MDGContext(mtime)
+        try:
+            previous = context.makeCurrent()
+            yield context
+        finally:
+            previous.makeCurrent()
+
+    # We skip the first frame as we already used that frame to check for
+    # overall visibilities. And end+1 to include the end frame.
+    scene_units = om.MTime.uiUnit()
+    for frame in range(start + 1, end + 1):
+        mtime = om.MTime(frame, unit=scene_units)
+
+        # Build little cache so we don't query the same MPlug's value
+        # again if it was checked on this frame and also is a dependency
+        # for another node
+        frame_visibilities = {}
+        with dgcontext(mtime) as context:
+            for node, dependencies in list(node_dependencies.items()):
+                for dependency in dependencies:
+                    dependency_visible = frame_visibilities.get(dependency,
+                                                                None)
+                    if dependency_visible is None:
+                        mplug = get_visibility_mplug(dependency)
+                        dependency_visible = mplug.asBool(context)
+                        frame_visibilities[dependency] = dependency_visible
+
+                    if not dependency_visible:
+                        # One dependency is not visible, thus the
+                        # node is not visible.
+                        break
+
+                else:
+                    # All dependencies are visible.
+                    yield node
+                    # Remove node with dependencies for next frame iterations
+                    # because it was visible at least once.
+                    node_dependencies.pop(node)
+
+        # If no more nodes to process break the frame iterations..
+        if not node_dependencies:
+            break

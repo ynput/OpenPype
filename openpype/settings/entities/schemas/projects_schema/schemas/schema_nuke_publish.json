@@ -41,6 +41,9 @@
                         },
                         {
                             "render": "render"
+                        },
+                        {
+                            "write": "write"
                         }
                     ]
                 }
@@ -132,9 +135,31 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "raw-json",
-                    "key": "nodes",
-                    "label": "Nodes"
+                    "type": "boolean",
+                    "key": "use_rendered",
+                    "label": "Use rendered images"
+                },
+                {
+                    "type": "boolean",
+                    "key": "bake_viewer_process",
+                    "label": "Bake viewer process"
+                },
+                {
+                    "type": "boolean",
+                    "key": "bake_viewer_input_process",
+                    "label": "Bake viewer input process"
+                },
+                {
+                    "type": "collapsible-wrap",
+                    "label": "Nodes",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "raw-json",
+                            "key": "nodes",
+                            "label": "Nodes"
+                        }
+                    ]
                 }
             ]
         },

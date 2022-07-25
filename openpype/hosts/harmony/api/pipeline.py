@@ -2,19 +2,18 @@ import os
 from pathlib import Path
 import logging
 
-from bson.objectid import ObjectId
 import pyblish.api
 
-from openpype import lib
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import get_outdated_containers
+from openpype.pipeline.context_tools import get_current_project_asset
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
 
@@ -50,7 +49,9 @@ def get_asset_settings():
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+
+    asset_doc = get_current_project_asset()
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
@@ -104,21 +105,10 @@ def check_inventory():
     If it does it will colorize outdated nodes and display warning message
     in Harmony.
     """
-    if not lib.any_outdated():
-        return
 
-    outdated_containers = []
-    for container in ls():
-        representation = container['representation']
-        representation_doc = legacy_io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
+    outdated_containers = get_outdated_containers()
+    if not outdated_containers:
+        return
 
     # Colour nodes.
     outdated_nodes = []

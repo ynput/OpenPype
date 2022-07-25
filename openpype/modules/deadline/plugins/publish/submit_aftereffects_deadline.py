@@ -33,6 +33,7 @@ class AfterEffectsSubmitDeadline(
     hosts = ["aftereffects"]
     families = ["render.farm"]  # cannot be "render' as that is integrated
     use_published = True
+    targets = ["local"]
 
     priority = 50
     chunk_size = 1000000

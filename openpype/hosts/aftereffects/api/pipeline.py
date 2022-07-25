@@ -1,5 +1,4 @@
 import os
-import sys
 
 from Qt import QtWidgets
 
@@ -15,6 +14,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
+from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
 
@@ -65,14 +65,14 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     instance[0].Visible = new_value
 
 
-def get_asset_settings():
+def get_asset_settings(asset_doc):
     """Get settings on current asset from database.
 
     Returns:
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
@@ -136,7 +136,7 @@ def ls():
 
 def check_inventory():
     """Checks loaded containers if they are of highest version"""
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
     # Warn about outdated containers.

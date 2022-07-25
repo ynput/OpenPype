@@ -1136,10 +1136,15 @@ class RenderProductsRenderman(ARenderProducts):
             "d_tiff": "tif"
         }
 
-        displays = get_displays()["displays"]
+        displays = get_displays(override_dst="render")["displays"]
         for name, display in displays.items():
             enabled = display["params"]["enable"]["value"]
             if not enabled:
+                continue
+
+            # Skip display types not producing any file output.
+            # Is there a better way to do it?
+            if not display_types.get(display["driverNode"]["type"]):
                 continue
 
             aov_name = name
@@ -1150,9 +1155,33 @@ class RenderProductsRenderman(ARenderProducts):
                 display["driverNode"]["type"], "exr")
 
             for camera in cameras:
-                product = RenderProduct(productName=aov_name,
-                                        ext=extensions,
-                                        camera=camera)
+                # Create render product and set it as multipart only on
+                # display types supporting it. In all other cases, Renderman
+                # will create separate output per channel.
+                if display["driverNode"]["type"] in ["d_openexr", "d_deepexr", "d_tiff"]:  # noqa
+                    product = RenderProduct(
+                        productName=aov_name,
+                        ext=extensions,
+                        camera=camera,
+                        multipart=True
+                    )
+                else:
+                    # this code should handle the case where no multipart
+                    # capable format is selected. But since it involves
+                    # shady logic to determine what channel become what
+                    # lets not do that as all productions will use exr anyway.
+                    """
+                    for channel in display['params']['displayChannels']['value']:  # noqa
+                        product = RenderProduct(
+                            productName="{}_{}".format(aov_name, channel),
+                            ext=extensions,
+                            camera=camera,
+                            multipart=False
+                        )
+                    """
+                    raise UnsupportedImageFormatException(
+                        "Only exr, deep exr and tiff formats are supported.")
+
                 products.append(product)
 
         return products
@@ -1245,3 +1274,7 @@ class UnsupportedRendererException(Exception):
 
     Raised when requesting data from unsupported renderer.
     """
+
+
+class UnsupportedImageFormatException(Exception):
+    """Custom exception to report unsupported output image format."""

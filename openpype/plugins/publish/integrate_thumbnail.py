@@ -8,6 +8,7 @@ import six
 import pyblish.api
 from bson.objectid import ObjectId
 
+from openpype.client import get_version_by_id
 from openpype.pipeline import legacy_io
 
 
@@ -70,7 +71,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
 
         thumbnail_template = anatomy.templates["publish"]["thumbnail"]
 
-        version = legacy_io.find_one({"_id": thumb_repre["parent"]})
+        version = get_version_by_id(project_name, thumb_repre["parent"])
         if not version:
             raise AssertionError(
                 "There does not exist version with id {}".format(

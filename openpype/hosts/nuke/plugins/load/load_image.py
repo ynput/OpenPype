@@ -2,6 +2,10 @@ import nuke
 
 import qargparse
 
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
 from openpype.pipeline import (
     legacy_io,
     load,
@@ -186,20 +190,13 @@ class LoadImage(load.LoaderPlugin):
                 format(frame_number, "0{}".format(padding)))
 
         # Get start frame from version data
-        version = legacy_io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
 
-        # get all versions in list
-        versions = legacy_io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
-
-        version_data = version.get("data", {})
+        version_data = version_doc.get("data", {})
 
         last = first = int(frame_number)
 
@@ -215,7 +212,7 @@ class LoadImage(load.LoaderPlugin):
             "representation": str(representation["_id"]),
             "frameStart": str(first),
             "frameEnd": str(last),
-            "version": str(version.get("name")),
+            "version": str(version_doc.get("name")),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "fps": str(version_data.get("fps")),
@@ -223,17 +220,18 @@ class LoadImage(load.LoaderPlugin):
         })
 
         # change color of node
-        if version.get("name") not in [max_version]:
-            node["tile_color"].setValue(int("0xd84f20ff", 16))
+        if version_doc["_id"] == last_version_doc["_id"]:
+            color_value = "0x4ecd25ff"
         else:
-            node["tile_color"].setValue(int("0x4ecd25ff", 16))
+            color_value = "0xd84f20ff"
+        node["tile_color"].setValue(int(color_value, 16))
 
         # Update the imprinted representation
         update_container(
             node,
             updated_dict
         )
-        self.log.info("updated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def remove(self, container):
         node = nuke.toNode(container['objectName'])

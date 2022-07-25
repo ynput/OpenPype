@@ -30,7 +30,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "asset": asset,
             "subset": "{}{}".format(asset, subset.capitalize()),
             "item": project,
-            "family": "workfile"
+            "family": "workfile",
+            "families": []
         }
 
         # create instance with workfile

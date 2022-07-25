@@ -123,6 +123,11 @@
                                 "type": "number",
                                 "key": "handleEnd",
                                 "label": "Handle end (tail)"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "includeHandles",
+                                "label": "Enable handles including"
                             }
                           ]
                         }
