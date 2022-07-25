@@ -41,6 +41,11 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             "Processing instance with subset name {}".format(subset_name)
         )
 
+        # Skip if instance does not have review
+        if not self._is_review_instance(instance):
+            self.log.info("Skipping - no review set on instance.")
+            return
+
         # skip crypto passes.
         # TODO: This is just a quick fix and has its own side-effects - it is
         #       affecting every subset name with `crypto` in its name.
@@ -49,11 +54,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         #       with better precision.
         if 'crypto' in instance.data['subset'].lower():
             self.log.info("Skipping crypto passes.")
-            return
-
-        # Skip if review not set.
-        if not instance.data.get("review", True):
-            self.log.info("Skipping - no review set on instance.")
             return
 
         if self._already_has_thumbnail(instance):
@@ -115,6 +115,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             instance.data["representations"].append(new_repre)
             # There is no need to create more then one thumbnail
             break
+
+    def _is_review_instance(self, instance):
+        # TODO: We should probably handle "not creating" of thumbnail
+        #   other way then checking for "review" key on instance data?
+        if instance.data.get("review", True):
+            return True
+        return False
 
     def _already_has_thumbnail(self, instance):
         for repre in instance.data.get("representations", []):
