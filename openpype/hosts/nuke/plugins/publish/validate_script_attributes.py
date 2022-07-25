@@ -37,11 +37,18 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     actions = [RepairScriptAttributes]
 
     def process(self, instance):
-        ctx_data = instance.context.data
+        root = nuke.root()
+        knob_data = get_avalon_knob_data(root)
         project_name = legacy_io.active_project()
-        asset_name = ctx_data["asset"]
-        asset = get_asset_by_name(project_name, asset_name)
-        asset_data = asset["data"]
+        asset = get_asset_by_name(
+            project_name,
+            instance.context.data["asset"]
+        )
+        # get asset data frame values
+        frame_start = asset["data"]["frameStart"]
+        frame_end = asset["data"]["frameEnd"]
+        handle_start = asset["data"]["handleStart"]
+        handle_end = asset["data"]["handleEnd"]
 
         # These attributes will be checked
         attributes = [
@@ -54,39 +61,36 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
             "handleEnd"
         ]
 
+        # get only defined attributes from asset data
         asset_attributes = {
-            attr: asset_data[attr]
+            attr: asset["data"][attr]
             for attr in attributes
-            if attr in asset_data
+            if attr in asset["data"]
         }
+        # fix float to max 4 digints (only for evaluating)
+        fps_data = float("{0:.4f}".format(
+            asset_attributes["fps"]))
+        # fix frame values to include handles
+        asset_attributes.update({
+            "frameStart": frame_start - handle_start,
+            "frameEnd": frame_end + handle_end,
+            "fps": fps_data
+        })
 
         self.log.debug(pformat(
             asset_attributes
         ))
-
-        asset_attributes["fps"] = float("{0:.4f}".format(
-            asset_attributes["fps"]))
-
-        root = nuke.root()
-        knob_data = get_avalon_knob_data(root)
-
-        # Get frame range
-        first_frame = int(root["first_frame"].getValue())
-        last_frame = int(root["last_frame"].getValue())
-
-        handle_start = int(knob_data["handleStart"])
-        handle_end = int(knob_data["handleEnd"])
 
         # Get format
         _format = root["format"].value()
 
         # Get values from nukescript
         script_attributes = {
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
+            "handleStart": int(knob_data["handleStart"]),
+            "handleEnd": int(knob_data["handleEnd"]),
             "fps": float("{0:.4f}".format(root['fps'].value())),
-            "frameStart": first_frame + handle_start,
-            "frameEnd": last_frame - handle_end,
+            "frameStart": int(root["first_frame"].getValue()),
+            "frameEnd": int(root["last_frame"].getValue()),
             "resolutionWidth": _format.width(),
             "resolutionHeight": _format.height(),
             "pixelAspect": _format.pixelAspect()
@@ -94,6 +98,7 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
         self.log.debug(pformat(
             script_attributes
         ))
+
         # Compare asset's values Nukescript X Database
         not_matching = []
         for attr in attributes:
@@ -113,46 +118,24 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
 
         # Raise error if not matching
         if not_matching:
-            msg = "Attributes '{}' are not set correctly"
-            # Alert user that handles are set if Frame start/end not match
-            message = msg.format(", ".join(
-                [at["name"] for at in not_matching]))
+            msg = "Following attributes are not set correctly: \n{}"
+            attrs_wrong_str = "\n".join([
+                (
+                    "`{0}` is set to `{1}`, "
+                    "but should be set to `{2}`"
+                ).format(at["name"], at["actual"], at["expected"])
+                for at in not_matching
+            ])
+            attrs_wrong_html = "<br/>".join([
+                (
+                    "-- __{0}__ is set to __{1}__, "
+                    "but should be set to __{2}__"
+                ).format(at["name"], at["actual"], at["expected"])
+                for at in not_matching
+            ])
             raise PublishXmlValidationError(
-                self, message,
+                self, msg.format(attrs_wrong_str),
                 formatting_data={
-                    "missing_attributes": not_matching
+                    "failed_attributes": attrs_wrong_html
                 }
             )
-
-    def check_parent_hierarchical(
-        self, project_name, parent_type, parent_id, attr
-    ):
-        if parent_id is None:
-            return None
-
-        doc = None
-        if parent_type == "project":
-            doc = get_project(project_name)
-        elif parent_type == "asset":
-            doc = get_asset_by_id(project_name, parent_id)
-
-        if not doc:
-            return None
-
-        doc_data = doc["data"]
-        if attr in doc_data:
-            self.log.info(attr)
-            return doc_data[attr]
-
-        if parent_type == "project":
-            return None
-
-        parent_id = doc_data.get("visualParent")
-        new_parent_type = "asset"
-        if parent_id is None:
-            parent_id = doc["parent"]
-            new_parent_type = "project"
-
-        return self.check_parent_hierarchical(
-            project_name, new_parent_type, parent_id, attr
-        )

@@ -6,13 +6,13 @@
 ## Invalid Script attributes
 
 Following script root attributes need to be fixed:
-{missing_attributes}
+
+{failed_attributes}
 
 ### How to repair?
 
-1. Either use Repair or Select button.
-2. If you chose Select then rename asset knob to correct name.
-3. Hit Reload button on the publisher.
+1. Use Repair.
+2. Hit Reload button on the publisher.
         </description>
     </error>
 </root>
