@@ -109,7 +109,7 @@ class ImageSequenceLoader(load.LoaderPlugin):
         )
 
         # Colour node.
-        if is_representation_from_latest(representation["parent"]):
+        if is_representation_from_latest(representation):
             harmony.send(
                 {
                     "function": "PypeHarmony.setColor",

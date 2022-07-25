@@ -300,7 +300,7 @@ class BackgroundLoader(load.LoaderPlugin):
 
         print(container)
 
-        is_latest = is_representation_from_latest(representation["parent"])
+        is_latest = is_representation_from_latest(representation)
         for layer in sorted(layers):
             file_to_import = [
                 os.path.join(bg_folder, layer).replace("\\", "/")
