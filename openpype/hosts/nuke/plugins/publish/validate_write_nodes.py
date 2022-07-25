@@ -1,10 +1,8 @@
 import pyblish.api
 from openpype.api import get_errored_instances_from_context
-import openpype.hosts.nuke.api.lib as nlib
 from openpype.hosts.nuke.api.lib import (
     get_write_node_template_attr,
     set_node_knobs_from_settings
-
 )
 from openpype.pipeline import PublishXmlValidationError
 
