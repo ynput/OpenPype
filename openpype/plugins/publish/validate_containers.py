@@ -19,7 +19,7 @@ class ValidateContainers(pyblish.api.ContextPlugin):
 
     label = "Validate Containers"
     order = pyblish.api.ValidatorOrder
-    hosts = ["maya", "houdini", "nuke", "harmony", "photoshop"]
+    hosts = ["maya", "houdini", "nuke", "harmony", "photoshop", "aftereffects"]
     optional = True
     actions = [ShowInventory]
 
