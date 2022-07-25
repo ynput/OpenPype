@@ -297,7 +297,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_name = self.get_template_name(instance)
 
         subset, subset_writes = self.prepare_subset(instance, project_name)
-        version, version_writes = self.prepare_version(instance, subset)
+        version, version_writes = self.prepare_version(
+            instance, subset, project_name
+        )
         instance.data["versionEntity"] = version
 
         # Get existing representations (if any)
