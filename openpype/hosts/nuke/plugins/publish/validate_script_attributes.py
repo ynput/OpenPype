@@ -1,28 +1,15 @@
 from pprint import pformat
 import pyblish.api
 
-from openpype.client import get_project, get_asset_by_id, get_asset_by_name
+import openpype.api
+from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
 from openpype.pipeline import PublishXmlValidationError
-from openpype.api import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
     get_avalon_knob_data,
     WorkfileSettings
 )
 import nuke
-
-
-@pyblish.api.log
-class RepairScriptAttributes(pyblish.api.Action):
-    label = "Repair"
-    on = "failed"
-    icon = "wrench"
-
-    def process(self, context, plugin):
-        instances = get_errored_instances_from_context(context)
-
-        self.log.debug(instances)
-        WorkfileSettings().set_context_settings()
 
 
 @pyblish.api.log
@@ -34,7 +21,7 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     label = "Validatte script attributes"
     hosts = ["nuke"]
     optional = True
-    actions = [RepairScriptAttributes]
+    actions = [openpype.api.RepairAction]
 
     def process(self, instance):
         root = nuke.root()
@@ -139,3 +126,8 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
                     "failed_attributes": attrs_wrong_html
                 }
             )
+
+    @classmethod
+    def repair(cls, instance):
+        cls.log.debug("__ repairing instance: {}".format(instance))
+        WorkfileSettings().set_context_settings()
