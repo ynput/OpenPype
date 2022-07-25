@@ -13,7 +13,7 @@ Label=Directories where OpenPype versions are installed
 Category=OpenPype Installation Directories
 CategoryOrder=0
 Index=0
-Default=
+Default=C:\Program Files (x86)\OpenPype
 Description=Path or paths to directories where multiple versions of OpenPype might be installed. Enter every such path on separate lines.
 
 [OpenPypeExecutable]

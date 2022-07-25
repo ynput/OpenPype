@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from System.IO import Path
 from System.Text.RegularExpressions import Regex
 
@@ -77,6 +79,8 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         # lets go over all available and find compatible build.
         requested_version = job.GetJobEnvironmentKeyValue("OPENPYPE_VERSION")
         if requested_version:
+            self.LogInfo(
+                f"Scanning for compatible requested version {requested_version}")
             dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
             if dir:
@@ -86,6 +90,8 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 ]
                 for subdir in sub_dirs:
                     version = self.get_openpype_version_from_path(subdir)
+                    if not version:
+                        continue
                     openpype_versions.append((version, subdir))
 
         exe_list = self.GetConfigEntry("OpenPypeExecutable")
@@ -95,14 +101,19 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             # add the implicitly specified to the list too.
             version = self.get_openpype_version_from_path(
                 os.path.dirname(exe))
-            openpype_versions.append((version, os.path.dirname(exe)))
+            if version:
+                openpype_versions.append((version, os.path.dirname(exe)))
 
         if requested_version:
             # sort detected versions
-            openpype_versions.sort(key=lambda v: v[0])
-            requested_major, requested_minor, _ = requested_version.split(".")
-            compatible_versions = [version for version in openpype_versions
-                                   if version[0][0] == requested_major and version[0][1] == requested_minor]  # noqa
+            if openpype_versions:
+                openpype_versions.sort(key=lambda ver: ver[0])
+            requested_major, requested_minor, _ = requested_version.split(".")[:3]
+            compatible_versions = []
+            for version in openpype_versions:
+                v = version[0].split(".")[:3]
+                if v[0] == requested_major and v[1] == requested_minor:
+                    compatible_versions.append(version)
             if not compatible_versions:
                 self.FailRender(("Cannot find compatible version available "
                                  "for version {} requested by the job. "
@@ -110,7 +121,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                                  "in Deadline or install it to configured "
                                  "directory.").format(requested_version))
             # sort compatible versions nad pick the last one
-            compatible_versions.sort(key=lambda v: v[0])
+            compatible_versions.sort(key=lambda ver: ver[0])
             # create list of executables for different platform and let
             # Deadline decide.
             exe_list = [
@@ -119,7 +130,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 os.path.join(
                     compatible_versions[-1][1], "openpype_console")
             ]
-            exe = FileUtils.SearchFileList(exe_list)
+            exe = FileUtils.SearchFileList(";".join(exe_list))
 
         if exe == "":
             self.FailRender(
