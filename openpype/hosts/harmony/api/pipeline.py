@@ -4,7 +4,6 @@ import logging
 
 import pyblish.api
 
-from openpype import lib
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
     register_loader_plugin_path,
@@ -14,6 +13,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import get_outdated_containers
+from openpype.pipeline.context_tools import get_current_project_asset
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
 
@@ -49,7 +49,9 @@ def get_asset_settings():
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+
+    asset_doc = get_current_project_asset()
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
