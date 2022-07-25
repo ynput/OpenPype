@@ -561,6 +561,42 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
+def version_is_latest(project_name, version_id):
+    """Is version the latest from it's subset.
+
+    Note:
+        Hero versions are considered as latest.
+
+    Todo:
+        Maybe raise exception when version was not found?
+
+    Args:
+        project_name (str):Name of project where to look for queried entities.
+        version_id (Union[str, ObjectId]): Version id which is checked.
+
+    Returns:
+        bool: True if is latest version from subset else False.
+    """
+
+    version_id = _convert_id(version_id)
+    if not version_id:
+        return False
+    version_doc = get_version_by_id(
+        project_name, version_id, fields=["_id", "type", "parent"]
+    )
+    # What to do when version is not found?
+    if not version_doc:
+        return False
+
+    if version_doc["type"] == "hero_version":
+        return True
+
+    last_version = get_last_version_by_subset_id(
+        project_name, version_doc["parent"], fields=["_id"]
+    )
+    return last_version["_id"] == version_id
+
+
 def _get_versions(
     project_name,
     subset_ids=None,
