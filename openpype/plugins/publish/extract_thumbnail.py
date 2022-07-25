@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import pyblish.api
 from openpype.lib import (
@@ -8,8 +9,6 @@ from openpype.lib import (
 
     run_subprocess,
     path_to_subprocess_arg,
-
-    execute,
 )
 
 
@@ -57,10 +56,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         #       This must be solved properly, maybe using tags on
         #       representation that can be determined much earlier and
         #       with better precision.
-        if 'crypto' in instance.data['subset'].lower():
+        if "crypto" in subset_name.lower():
             self.log.info("Skipping crypto passes.")
             return
-
 
         filtered_repres = self._get_filtered_repres(instance)
         if not filtered_repres:
@@ -69,6 +67,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 " that can be used as source for thumbnail. Skipping"
             ))
             return
+
+        # Create temp directory for thumbnail
+        # - this is to avoid "override" of source file
+        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        self.log.debug(
+            "Create temp directory {} for thumbnail".formap(dst_staging)
+        )
+        # Store new staging to cleanup paths
+        instance.context.data["cleanupFullPaths"].append(dst_staging)
 
         thumbnail_created = False
         for repre in filtered_repres:
@@ -79,15 +86,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 file_index = int(float(len(repre_files)) * 0.5)
                 input_file = repre_files[file_index]
 
-            stagingdir = os.path.normpath(repre["stagingDir"])
-
-            full_input_path = os.path.join(stagingdir, input_file)
+            src_staging = os.path.normpath(repre["stagingDir"])
+            full_input_path = os.path.join(src_staging, input_file)
             self.log.info("input {}".format(full_input_path))
             filename = os.path.splitext(input_file)[0]
-            if not filename.endswith('.'):
-                filename += "."
-            jpeg_file = filename + "jpg"
-            full_output_path = os.path.join(stagingdir, jpeg_file)
+            jpeg_file = filename + ".jpg"
+            full_output_path = os.path.join(dst_staging, jpeg_file)
 
             # Try to use FFMPEG if OIIO is not supported (for cases when
             # oiiotool isn't available)
@@ -111,7 +115,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 "name": "thumbnail",
                 "ext": "jpg",
                 "files": jpeg_file,
-                "stagingDir": stagingdir,
+                "stagingDir": dst_staging,
                 "thumbnail": True,
                 "tags": ["thumbnail"]
             }
