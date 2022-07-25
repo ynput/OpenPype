@@ -10,6 +10,9 @@ from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 
 import openpype.api
+from openpype.client import (
+    get_representations,
+)
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
@@ -274,6 +277,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
+        project_name = legacy_io.active_project()
+
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
             self.log.info((
@@ -295,13 +300,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Get existing representations (if any)
         existing_repres_by_name = {
-            repres["name"].lower(): repres for repres in legacy_io.find(
-                {
-                    "parent": version["_id"],
-                    "type": "representation"
-                },
-                # Only care about id and name of existing representations
-                projection={"_id": True, "name": True}
+            repre_doc["name"].lower(): repre_doc
+            for repre_doc in get_representations(
+                project_name,
+                version_ids=version["_id"],
+                fields=["_id", "name"]
             )
         }
 
