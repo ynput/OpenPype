@@ -307,7 +307,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             repre_doc["name"].lower(): repre_doc
             for repre_doc in get_representations(
                 project_name,
-                version_ids=version["_id"],
+                version_ids=[version["_id"]],
                 fields=["_id", "name"]
             )
         }
