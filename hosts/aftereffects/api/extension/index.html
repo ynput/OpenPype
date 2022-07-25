@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+        
+<link rel="stylesheet" href="css/topcoat-desktop-dark.min.css"/>
+<link  id="hostStyle" rel="stylesheet" href="css/styles.css"/>
+
+<style type="text/css">
+  html, body, iframe {
+    width: 100%;
+    height: 100%;
+    border: 0px;
+    margin: 0px;
+    overflow: hidden;
+  }
+  button {width: 100%;}
+</style>
+
+<style>
+  button {width: 100%;}
+  body {margin:0; padding:0; height: 100%;}
+  html {height: 100%;}
+</style>
+
+<title></title>
+    <script src="js/libs/jquery-2.0.2.min.js"></script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#workfiles-button").bind("click", function() {
+                
+                RPC.call('AfterEffects.workfiles_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#creator-button").bind("click", function() {
+                RPC.call('AfterEffects.creator_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#loader-button").bind("click", function() {
+                RPC.call('AfterEffects.loader_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#publish-button").bind("click", function() {
+                RPC.call('AfterEffects.publish_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#sceneinventory-button").bind("click", function() {
+                RPC.call('AfterEffects.sceneinventory_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#subsetmanager-button").bind("click", function() {
+                RPC.call('AfterEffects.subsetmanager_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script> 
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#experimental-button").bind("click", function() {
+                RPC.call('AfterEffects.experimental_tools_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>     
+    
+    
+</head>
+
+<body class="hostElt">
+
+    <div id="content">        
+        
+        <div>                
+            <div></div><a href=# id=workfiles-button><button class="hostFontSize">Workfiles...</button></a></div>
+            <div> <a href=# id=creator-button><button class="hostFontSize">Create...</button></a></div>
+            <div><a href=# id=loader-button><button class="hostFontSize">Load...</button></a></div>
+            <div><a href=# id=publish-button><button class="hostFontSize">Publish...</button></a></div>
+            <div><a href=# id=sceneinventory-button><button class="hostFontSize">Manage...</button></a></div>
+            <div><a href=# id=subsetmanager-button><button class="hostFontSize">Subset Manager...</button></a></div>
+            <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
+        </div>   
+        
+    </div>
+    
+    <!-- <script src="js/libs/PlayerDebugMode"></script> -->
+    <script src="js/libs/wsrpc.js"></script>
+    <script src="js/libs/loglevel.min.js"></script>
+    <script  src="js/libs/CSInterface.js"></script>
+
+    <script src="js/themeManager.js"></script>
+    <script src="js/main.js"></script>
+
+        
+</body>
+</html>

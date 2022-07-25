@@ -1,0 +1,1 @@
+openpype_console.exe eventserver
