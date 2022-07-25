@@ -19,7 +19,18 @@ module.exports = {
             items: [
                 "artist_hosts_hiero",
                 "artist_hosts_nuke_tut",
-                "artist_hosts_maya",
+                {
+                    type: "category",
+                    label: "Maya",
+                    items: [
+                        "artist_hosts_maya",
+                        "artist_hosts_maya_multiverse",
+                        "artist_hosts_maya_yeti",
+                        "artist_hosts_maya_xgen",
+                        "artist_hosts_maya_vray",
+                        "artist_hosts_maya_redshift",
+                    ],
+                },
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_houdini",
@@ -89,6 +100,7 @@ module.exports = {
             label: "Integrations",
             items: [
                 "admin_hosts_blender",
+                "admin_hosts_hiero",
                 "admin_hosts_maya",
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",
@@ -144,6 +156,7 @@ module.exports = {
             type: "category",
             label: "Hosts integrations",
             items: [
+                "dev_host_implementation",
                 "dev_publishing"
             ]
         }
