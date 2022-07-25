@@ -4,6 +4,9 @@ import pyblish.api
 from openpype.client import get_project, get_asset_by_id, get_asset_by_name
 from openpype.pipeline import legacy_io
 from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.nuke.api.lib import (
+    get_avalon_knob_data
+)
 import nuke
 
 
@@ -45,22 +48,32 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
             asset_attributes
         ))
 
-        handle_start = asset_attributes["handleStart"]
-        handle_end = asset_attributes["handleEnd"]
         asset_attributes["fps"] = float("{0:.4f}".format(
             asset_attributes["fps"]))
 
         root = nuke.root()
+        knob_data = get_avalon_knob_data(root)
+
+        # Get frame range
+        first_frame = int(root["first_frame"].getValue())
+        last_frame = int(root["last_frame"].getValue())
+
+        handle_start = int(knob_data["handleStart"])
+        handle_end = int(knob_data["handleEnd"])
+
+        # Get format
+        _format = root["format"].value()
+
         # Get values from nukescript
         script_attributes = {
-            "handleStart": ctx_data["handleStart"],
-            "handleEnd": ctx_data["handleEnd"],
-            "fps": float("{0:.4f}".format(ctx_data["fps"])),
-            "frameStart": int(root["first_frame"].getValue()),
-            "frameEnd": int(root["last_frame"].getValue()),
-            "resolutionWidth": ctx_data["resolutionWidth"],
-            "resolutionHeight": ctx_data["resolutionHeight"],
-            "pixelAspect": ctx_data["pixelAspect"]
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "fps": float("{0:.4f}".format(root['fps'].value())),
+            "frameStart": first_frame + handle_start,
+            "frameEnd": last_frame - handle_end,
+            "resolutionWidth": _format.width(),
+            "resolutionHeight": _format.height(),
+            "pixelAspect": _format.pixelAspect()
         }
         self.log.debug(pformat(
             script_attributes
