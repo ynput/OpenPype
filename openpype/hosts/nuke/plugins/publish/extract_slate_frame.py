@@ -13,6 +13,7 @@ from openpype.hosts.nuke.api import (
     get_view_process_node
 )
 
+
 class ExtractSlateFrame(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 

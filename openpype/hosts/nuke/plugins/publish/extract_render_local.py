@@ -31,10 +31,6 @@ class NukeRenderLocal(openpype.api.Extractor):
 
         first_frame = instance.data.get("frameStartHandle", None)
 
-        # exception for slate workflow
-        if "slate" in families:
-            first_frame -= 1
-
         last_frame = instance.data.get("frameEndHandle", None)
         node_subset_name = instance.data.get("name", None)
 
@@ -67,10 +63,6 @@ class NukeRenderLocal(openpype.api.Extractor):
             int(first_frame),
             int(last_frame)
         )
-
-        # exception for slate workflow
-        if "slate" in families:
-            first_frame += 1
 
         ext = node["file_type"].value()
 
