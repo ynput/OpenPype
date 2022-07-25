@@ -19,7 +19,10 @@ class CollectCurrentContext(pyblish.api.ContextPlugin):
     label = "Collect Current context"
 
     def process(self, context):
-        # Set project name in context data
+        # Make sure 'legacy_io' is intalled
+        legacy_io.install()
+
+        # Check if values are already set
         project_name = context.data.get("projectName")
         asset_name = context.data.get("asset")
         task_name = context.data.get("task")
