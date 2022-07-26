@@ -22,7 +22,7 @@ class CreateAnimation(plugin.Creator):
             self.data[key] = value
 
         # Write vertex colors with the geometry.
-        self.data["writeColorSets"] = False
+        self.data["writeColorSets"] = True
         self.data["writeFaceSets"] = False
 
         # Include only renderable visible shapes.
