@@ -10,7 +10,7 @@ from openpype.pipeline import legacy_io
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
-from openpype.lib.mongo import OpenPypeMongoConnection
+from openpype.client.mongo import OpenPypeMongoConnection
 import gridfs
 
 
