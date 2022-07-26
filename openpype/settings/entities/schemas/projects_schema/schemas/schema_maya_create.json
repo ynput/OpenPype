@@ -144,6 +144,31 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateAnimation",
+            "label": "Create Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "Write Color Sets"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [
@@ -158,10 +183,6 @@
                 {
                     "key": "CreateMultiverseUsdOver",
                     "label": "Create Multiverse USD Override"
-                },
-                {
-                    "key": "CreateAnimation",
-                    "label": "Create Animation"
                 },
                 {
                     "key": "CreateAss",

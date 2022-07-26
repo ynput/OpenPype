@@ -11,6 +11,7 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
+    write_color_sets = False 
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -22,7 +23,7 @@ class CreateAnimation(plugin.Creator):
             self.data[key] = value
 
         # Write vertex colors with the geometry.
-        self.data["writeColorSets"] = True
+        self.data["writeColorSets"] = self.write_color_sets
         self.data["writeFaceSets"] = False
 
         # Include only renderable visible shapes.
