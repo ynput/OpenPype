@@ -58,7 +58,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         version_number = int(instance_version)
 
         family = instance.data["family"]
-        family_low = instance.data["family"].lower()
+        family_low = family.lower()
 
         asset_type = instance.data.get("ftrackFamily")
         if not asset_type and family_low in self.family_mapping:
@@ -140,24 +140,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         first_thumbnail_component = None
         first_thumbnail_component_repre = None
         for repre in thumbnail_representations:
-            published_path = repre.get("published_path")
-            if not published_path:
-                comp_files = repre["files"]
-                if isinstance(comp_files, (tuple, list, set)):
-                    filename = comp_files[0]
-                else:
-                    filename = comp_files
-
-                published_path = os.path.join(
-                    repre["stagingDir"], filename
+            repre_path = self._get_repre_path(instance, repre, False)
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set and source was removed."
                 )
-                if not os.path.exists(published_path):
-                    continue
-                repre["published_path"] = published_path
+                continue
 
             # Create copy of base comp item and append it
             thumbnail_item = copy.deepcopy(base_component_item)
-            thumbnail_item["component_path"] = repre["published_path"]
+            thumbnail_item["component_path"] = repre_path
             thumbnail_item["component_data"] = {
                 "name": "thumbnail"
             }
@@ -216,6 +208,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         extended_asset_name = ""
         multiple_reviewable = len(review_representations) > 1
         for repre in review_representations:
+            repre_path = self._get_repre_path(instance, repre, False)
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set and source was removed."
+                )
+                continue
+
             # Create copy of base comp item and append it
             review_item = copy.deepcopy(base_component_item)
 
@@ -270,7 +269,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 fps = instance_fps
 
             # Change location
-            review_item["component_path"] = repre["published_path"]
+            review_item["component_path"] = repre_path
             # Change component data
             review_item["component_data"] = {
                 # Default component name is "main".
@@ -327,7 +326,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Add others representations as component
         for repre in other_representations:
-            published_path = repre.get("published_path")
+            published_path = self._get_repre_path(instance, repre, True)
             if not published_path:
                 continue
             # Create copy of base comp item and append it
@@ -368,7 +367,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 return published_path
 
         if only_published:
-            return None
+            return published_path
 
         comp_files = repre["files"]
         if isinstance(comp_files, (tuple, list, set)):
