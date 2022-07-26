@@ -184,6 +184,9 @@ def is_latest(representation):
 
     Returns:
         bool: Whether the representation is of latest version.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     from openpype.pipeline.context_tools import is_representation_from_latest
@@ -193,7 +196,11 @@ def is_latest(representation):
 
 @deprecated("openpype.pipeline.load.any_outdated_containers")
 def any_outdated():
-    """Return whether the current scene has any outdated content"""
+    """Return whether the current scene has any outdated content.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
 
     from openpype.pipeline.load import any_outdated_containers
 
@@ -211,6 +218,9 @@ def get_asset(asset_name=None):
 
     Returns:
         (MongoDB document)
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     from openpype.pipeline.context_tools import get_current_project_asset
@@ -220,6 +230,10 @@ def get_asset(asset_name=None):
 
 @deprecated("openpype.pipeline.template_data.get_general_template_data")
 def get_system_general_anatomy_data(system_settings=None):
+    """
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
     from openpype.pipeline.template_data import get_general_template_data
 
     return get_general_template_data(system_settings)
@@ -287,7 +301,10 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
     Returns:
         None: If asset, subset or version were not found.
-        dict: Last version document for entered .
+        dict: Last version document for entered.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     if not project_name:
@@ -428,6 +445,8 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     Returns:
         dict: Data prepared for filling workdir template.
 
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     from openpype.pipeline.template_data import get_template_data
@@ -540,6 +559,8 @@ def template_data_from_session(session=None):
     Returns:
         dict: All available data from session.
 
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     from openpype.pipeline.context_tools import get_template_data_from_session
