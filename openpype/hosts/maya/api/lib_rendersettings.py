@@ -7,11 +7,12 @@ import sys
 
 from openpype.api import (
     get_project_settings,
-    )
+)
 
 from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 from openpype.pipeline.context_tools import get_current_project_asset
+
 
 class RenderSettings(object):
 
