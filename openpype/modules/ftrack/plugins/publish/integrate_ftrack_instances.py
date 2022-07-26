@@ -360,6 +360,30 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         ))
         instance.data["ftrackComponentsList"] = component_list
 
+    def _get_repre_path(self, instance, repre, only_published):
+        published_path = repre.get("published_path")
+        if published_path:
+            published_path = os.path.normpath(published_path)
+            if os.path.exists(published_path):
+                return published_path
+
+        if only_published:
+            return None
+
+        comp_files = repre["files"]
+        if isinstance(comp_files, (tuple, list, set)):
+            filename = comp_files[0]
+        else:
+            filename = comp_files
+
+        staging_dir = repre.get("stagingDir")
+        if not staging_dir:
+            staging_dir = instance.data["stagingDir"]
+        src_path = os.path.normpath(os.path.join(staging_dir, filename))
+        if os.path.exists(src_path):
+            return src_path
+        return None
+
     def _get_asset_version_status_name(self, instance):
         if not self.asset_versions_status_profiles:
             return None
