@@ -20,7 +20,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
-from openpype.api import get_asset
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -225,6 +225,7 @@ class LayoutLoader(plugin.Loader):
 
         anim_path = f"{asset_dir}/animations/{anim_file_name}"
 
+        asset_doc = get_current_project_asset()
         # Import animation
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
@@ -259,7 +260,7 @@ class LayoutLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'use_default_sample_rate', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', get_asset()["data"].get("fps"))
+            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(

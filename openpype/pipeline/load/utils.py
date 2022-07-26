@@ -4,8 +4,10 @@ import copy
 import getpass
 import logging
 import inspect
+import collections
 import numbers
 
+from openpype.host import ILoadHost
 from openpype.client import (
     get_project,
     get_assets,
@@ -15,6 +17,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
     get_hero_version_by_subset_id,
     get_version_by_name,
+    get_last_versions,
     get_representations,
     get_representation_by_id,
     get_representation_by_name,
@@ -27,6 +30,11 @@ from openpype.pipeline import (
 )
 
 log = logging.getLogger(__name__)
+
+ContainersFilterResult = collections.namedtuple(
+    "ContainersFilterResult",
+    ["latest", "outdated", "not_foud", "invalid"]
+)
 
 
 class HeroVersionType(object):
@@ -685,3 +693,164 @@ def loaders_from_representation(loaders, representation):
 
     context = get_representation_context(representation)
     return loaders_from_repre_context(loaders, context)
+
+
+def any_outdated_containers(host=None, project_name=None):
+    """Check if there are any outdated containers in scene."""
+
+    if get_outdated_containers(host, project_name):
+        return True
+    return False
+
+
+def get_outdated_containers(host=None, project_name=None):
+    """Collect outdated containers from host scene.
+
+    Currently registered host and project in global session are used if
+    arguments are not passed.
+
+    Args:
+        host (ModuleType): Host implementation with 'ls' function available.
+        project_name (str): Name of project in which context we are.
+    """
+
+    if host is None:
+        from openpype.pipeline import registered_host
+        host = registered_host()
+
+    if project_name is None:
+        project_name = legacy_io.active_project()
+
+    if isinstance(host, ILoadHost):
+        containers = host.get_containers()
+    else:
+        containers = host.ls()
+    return filter_containers(containers, project_name).outdated
+
+
+def filter_containers(containers, project_name):
+    """Filter containers and split them into 4 categories.
+
+    Categories are 'latest', 'outdated', 'invalid' and 'not_found'.
+    The 'lastest' containers are from last version, 'outdated' are not,
+    'invalid' are invalid containers (invalid content) and 'not_foud' has
+    some missing entity in database.
+
+    Args:
+        containers (Iterable[dict]): List of containers referenced into scene.
+        project_name (str): Name of project in which context shoud look for
+            versions.
+
+    Returns:
+        ContainersFilterResult: Named tuple with 'latest', 'outdated',
+            'invalid' and 'not_found' containers.
+    """
+
+    # Make sure containers is list that won't change
+    containers = list(containers)
+
+    outdated_containers = []
+    uptodate_containers = []
+    not_found_containers = []
+    invalid_containers = []
+    output = ContainersFilterResult(
+        uptodate_containers,
+        outdated_containers,
+        not_found_containers,
+        invalid_containers
+    )
+    # Query representation docs to get it's version ids
+    repre_ids = {
+        container["representation"]
+        for container in containers
+        if container["representation"]
+    }
+    if not repre_ids:
+        if containers:
+            invalid_containers.extend(containers)
+        return output
+
+    repre_docs = get_representations(
+        project_name,
+        representation_ids=repre_ids,
+        fields=["_id", "parent"]
+    )
+    # Store representations by stringified representation id
+    repre_docs_by_str_id = {}
+    repre_docs_by_version_id = collections.defaultdict(list)
+    for repre_doc in repre_docs:
+        repre_id = str(repre_doc["_id"])
+        version_id = repre_doc["parent"]
+        repre_docs_by_str_id[repre_id] = repre_doc
+        repre_docs_by_version_id[version_id].append(repre_doc)
+
+    # Query version docs to get it's subset ids
+    # - also query hero version to be able identify if representation
+    #   belongs to existing version
+    version_docs = get_versions(
+        project_name,
+        version_ids=repre_docs_by_version_id.keys(),
+        hero=True,
+        fields=["_id", "parent", "type"]
+    )
+    verisons_by_id = {}
+    versions_by_subset_id = collections.defaultdict(list)
+    hero_version_ids = set()
+    for version_doc in version_docs:
+        version_id = version_doc["_id"]
+        # Store versions by their ids
+        verisons_by_id[version_id] = version_doc
+        # There's no need to query subsets for hero versions
+        #   - they are considered as latest?
+        if version_doc["type"] == "hero_version":
+            hero_version_ids.add(version_id)
+            continue
+        subset_id = version_doc["parent"]
+        versions_by_subset_id[subset_id].append(version_doc)
+
+    last_versions = get_last_versions(
+        project_name,
+        subset_ids=versions_by_subset_id.keys(),
+        fields=["_id"]
+    )
+    # Figure out which versions are outdated
+    outdated_version_ids = set()
+    for subset_id, last_version_doc in last_versions.items():
+        for version_doc in versions_by_subset_id[subset_id]:
+            version_id = version_doc["_id"]
+            if version_id != last_version_doc["_id"]:
+                outdated_version_ids.add(version_id)
+
+    # Based on all collected data figure out which containers are outdated
+    #   - log out if there are missing representation or version documents
+    for container in containers:
+        container_name = container["objectName"]
+        repre_id = container["representation"]
+        if not repre_id:
+            invalid_containers.append(container)
+            continue
+
+        repre_doc = repre_docs_by_str_id.get(repre_id)
+        if not repre_doc:
+            log.debug((
+                "Container '{}' has an invalid representation."
+                " It is missing in the database."
+            ).format(container_name))
+            not_found_containers.append(container)
+            continue
+
+        version_id = repre_doc["parent"]
+        if version_id in outdated_version_ids:
+            outdated_containers.append(container)
+
+        elif version_id not in verisons_by_id:
+            log.debug((
+                "Representation on container '{}' has an invalid version."
+                " It is missing in the database."
+            ).format(container_name))
+            not_found_containers.append(container)
+
+        else:
+            uptodate_containers.append(container)
+
+    return output

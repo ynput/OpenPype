@@ -1,7 +1,6 @@
 import pyblish.api
 
-from openpype.client import get_project, get_asset_by_id
-from openpype import lib
+from openpype.client import get_project, get_asset_by_id, get_asset_by_name
 from openpype.pipeline import legacy_io
 
 
@@ -17,10 +16,11 @@ class ValidateScript(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         ctx_data = instance.context.data
-        asset_name = ctx_data["asset"]
-        asset = lib.get_asset(asset_name)
-        asset_data = asset["data"]
         project_name = legacy_io.active_project()
+        asset_name = ctx_data["asset"]
+        # TODO repace query with using 'instance.data["assetEntity"]'
+        asset = get_asset_by_name(project_name, asset_name)
+        asset_data = asset["data"]
 
         # These attributes will be checked
         attributes = [

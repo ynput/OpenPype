@@ -24,7 +24,6 @@ from openpype.api import (
     BuildWorkfile,
     get_version_from_path,
     get_workdir_data,
-    get_asset,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
@@ -40,6 +39,7 @@ from openpype.pipeline import (
     legacy_io,
     Anatomy,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 
 from . import gizmo_menu
 
@@ -1766,7 +1766,7 @@ class WorkfileSettings(object):
             kwargs.get("asset_name")
             or legacy_io.Session["AVALON_ASSET"]
         )
-        self._asset_entity = get_asset(self._asset)
+        self._asset_entity = get_current_project_asset(self._asset)
         self._root_node = root_node or nuke.root()
         self._nodes = self.get_nodes(nodes=nodes)
 
