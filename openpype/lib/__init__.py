@@ -63,7 +63,7 @@ from .execute import (
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
-from .log import PypeLogger, timeit
+from .log import PypeLogger
 
 from .path_templates import (
     merge_dict,
@@ -374,8 +374,6 @@ __all__ = [
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
-
-    "timeit",
 
     "is_overlapping_otio_ranges",
     "otio_range_with_handles",
