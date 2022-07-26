@@ -1101,10 +1101,11 @@ class AssetLoader(LoaderPlugin):
 
         # Since Blender 3.2 property is_system_override need to be False
         # for editable override library.
-        if hasattr(override.override_library, "is_system_override"):
-            for obj in set(override.all_objects):
+        for obj in set(override.all_objects):
+            if hasattr(obj.override_library, "is_system_override"):
                 obj.override_library.is_system_override = False
-            for child in set(override.children):
+        for child in get_children_recursive(override):
+            if hasattr(child.override_library, "is_system_override"):
                 child.override_library.is_system_override = False
 
         # Move objects and child collections from override to asset_group.
