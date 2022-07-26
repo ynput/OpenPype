@@ -10,8 +10,10 @@ import clique
 
 import pyblish.api
 
-import openpype.api
-from openpype.client import get_representations
+from openpype.client import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
@@ -343,8 +345,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        version = openpype.api.get_latest_version(instance.data.get("asset"),
-                                                  instance.data.get("subset"))
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            instance.data.get("subset"),
+            asset_name=instance.data.get("asset")
+        )
+
         # get its files based on extension
         subset_resources = get_resources(
             project_name, version, representation.get("ext")
@@ -1025,9 +1032,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        version = openpype.api.get_latest_version(asset_name=asset,
-                                                  subset_name=subset
-                                                  )
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            subset,
+            asset_name=asset
+        )
 
         # Set prev start / end frames for comparison
         if not prev_start and not prev_end:
@@ -1072,7 +1082,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 based on 'publish' template
         """
         if not version:
-            version = openpype.api.get_latest_version(asset, subset)
+            project_name = legacy_io.active_project()
+            version = get_last_version_by_subset_name(
+                project_name,
+                subset,
+                asset_name=asset
+            )
             if version:
                 version = int(version["name"]) + 1
             else:

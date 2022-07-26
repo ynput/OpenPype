@@ -25,6 +25,8 @@ from .entities import (
     get_last_version_by_subset_name,
     get_output_link_versions,
 
+    version_is_latest,
+
     get_representation_by_id,
     get_representation_by_name,
     get_representations,
@@ -65,6 +67,8 @@ __all__ = (
     "get_last_version_by_subset_id",
     "get_last_version_by_subset_name",
     "get_output_link_versions",
+
+    "version_is_latest",
 
     "get_representation_by_id",
     "get_representation_by_name",

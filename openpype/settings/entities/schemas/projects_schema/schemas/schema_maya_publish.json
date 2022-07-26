@@ -108,6 +108,11 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
                     "type": "label",
                     "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
                 },
@@ -158,6 +163,11 @@
                     "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
                 },
                 {
                     "type": "boolean",
@@ -248,6 +258,11 @@
                 },
                 {
                     "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
                     "key": "validate_mesh",
                     "label": "Validate mesh Names "
                 },
@@ -329,6 +344,72 @@
                     "object_type": {
                         "type": "text"
                     }
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateCurrentRenderLayerIsRenderable",
+                    "label": "Validate Current Render Layer Has Renderable Camera"
+                },
+                {
+                    "key": "ValidateRenderImageRule",
+                    "label": "Validate Images File Rule (Workspace)"
+                },
+                {
+                    "key": "ValidateRenderNoDefaultCameras",
+                    "label": "Validate No Default Cameras Renderable"
+                },
+                {
+                    "key": "ValidateRenderSingleCamera",
+                    "label": "Validate Render Single Camera"
+                },
+                {
+                    "key": "ValidateRenderLayerAOVs",
+                    "label": "Validate Render Passes / AOVs Are Registered"
+                },
+                {
+                    "key": "ValidateStepSize",
+                    "label": "Validate Step Size"
+                },
+                {
+                    "key": "ValidateVRayDistributedRendering",
+                    "label": "VRay Distributed Rendering"
+                },
+                {
+                    "key": "ValidateVrayReferencedAOVs",
+                    "label": "VRay Referenced AOVs"
+                },
+                {
+                    "key": "ValidateVRayTranslatorEnabled",
+                    "label": "VRay Translator Settings"
+                },
+                {
+                    "key": "ValidateVrayProxy",
+                    "label": "VRay Proxy Settings"
+                },
+                {
+                    "key": "ValidateVrayProxyMembers",
+                    "label": "VRay Proxy Members"
+                },
+                {
+                    "key": "ValidateYetiRenderScriptCallbacks",
+                    "label": "Yeti Render Script Callbacks"
+                },
+                {
+                    "key": "ValidateYetiRigCacheState",
+                    "label": "Yeti Rig Cache State"
+                },
+                {
+                    "key": "ValidateYetiRigInputShapesInInstance",
+                    "label": "Yeti Rig Input Shapes In Instance"
+                },
+                {
+                    "key": "ValidateYetiRigSettings",
+                    "label": "Yeti Rig Settings"
                 }
             ]
         },
@@ -417,6 +498,11 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
                             "type": "label",
                             "label": "Validates transform suffix based on the type of its children shapes."
                         },
@@ -473,6 +559,14 @@
                             "label": "ValidateMeshNonManifold"
                         },
                         {
+                            "key": "ValidateMeshNoNegativeScale",
+                            "label": "Validate Mesh No Negative Scale"
+                        },
+                        {
+                            "key": "ValidateMeshNonZeroEdgeLength",
+                            "label": "Validate Mesh Edge Length Non Zero"
+                        },
+                        {
                             "key": "ValidateMeshNormalsUnlocked",
                             "label": "ValidateMeshNormalsUnlocked"
                         },
@@ -525,6 +619,18 @@
                         {
                             "key": "ValidateUniqueNames",
                             "label": "ValidateUniqueNames"
+                        },
+                        {
+                            "key": "ValidateNoVRayMesh",
+                            "label": "Validate No V-Ray Proxies (VRayMesh)"
+                        },
+                        {
+                            "key": "ValidateUnrealMeshTriangulated",
+                            "label": "Validate if Mesh is Triangulated"
+                        },
+                        {
+                            "key": "ValidateAlembicVisibleOnly",
+                            "label": "Validate Alembic visible node"
                         }
                     ]
                 },
@@ -573,6 +679,26 @@
                         {
                             "key": "ValidateRigControllers",
                             "label": "Validate Rig Controllers"
+                        },
+                        {
+                            "key": "ValidateAnimationContent",
+                            "label": "Validate Animation Content"
+                        },
+                        {
+                            "key": "ValidateOutRelatedNodeIds",
+                            "label": "Validate Animation Out Set Related Node Ids"
+                        },
+                        {
+                            "key": "ValidateRigControllersArnoldAttributes",
+                            "label": "Validate Rig Controllers (Arnold Attributes)"
+                        },
+                        {
+                            "key": "ValidateSkeletalMeshHierarchy",
+                            "label": "Validate Skeletal Mesh Top Node"
+                        },
+                         {
+                            "key": "ValidateSkinclusterDeformerSet",
+                            "label": "Validate Skincluster Deformer Relationships"
                         }
                     ]
                 },
@@ -588,6 +714,11 @@
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
                         },
                         {
                             "type": "boolean",
@@ -612,8 +743,32 @@
                     "label": "Validate Assembly Name"
                 },
                 {
+                    "key": "ValidateAssemblyNamespaces",
+                    "label": "Validate Assembly Namespaces"
+                },
+                {
+                    "key": "ValidateAssemblyModelTransforms",
+                    "label": "Validate Assembly Model Transforms"
+                },
+                {
                     "key": "ValidateAssRelativePaths",
                     "label": "ValidateAssRelativePaths"
+                },
+                {
+                    "key": "ValidateInstancerContent",
+                    "label": "Validate Instancer Content"
+                },
+                {
+                    "key": "ValidateInstancerFrameRanges",
+                    "label": "Validate Instancer Cache Frame Ranges"
+                },
+                {
+                    "key": "ValidateNoDefaultCameras",
+                    "label": "Validate No Default Cameras"
+                },
+                {
+                    "key": "ValidateUnrealUpAxis",
+                    "label": "Validate Unreal Up-Axis check"
                 }
             ]
         },

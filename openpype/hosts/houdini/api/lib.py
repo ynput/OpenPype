@@ -5,8 +5,8 @@ from contextlib import contextmanager
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.api import get_asset
 from openpype.pipeline import legacy_io
+from openpype.pipeline.context_tools import get_current_project_asset
 
 
 import hou
@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 def get_asset_fps():
     """Return current asset fps."""
-    return get_asset()["data"].get("fps")
+    return get_current_project_asset()["data"].get("fps")
 
 
 def set_id(node, unique_id, overwrite=False):
