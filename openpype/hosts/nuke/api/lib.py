@@ -910,19 +910,17 @@ def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     avalon_knob_data = read_avalon_data(node)
-    data = {'avalon': avalon_knob_data}
 
     nuke_imageio_writes = get_imageio_node_setting(
         node_class=avalon_knob_data["family"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
-    host_name = os.environ.get("AVALON_APP")
 
-    data.update({
-        "app": host_name,
+    data = {
+        "avalon": avalon_knob_data,
         "nuke_imageio_writes": nuke_imageio_writes
-    })
+    }
 
     anatomy_filled = format_anatomy(data)
     return anatomy_filled["render"]["path"].replace("\\", "/")
@@ -1127,10 +1125,8 @@ def create_write_node(
         if knob["name"] == "file_type":
             representation = knob["value"]
 
-    host_name = os.environ.get("AVALON_APP")
     try:
         data.update({
-            "app": host_name,
             "imageio_writes": imageio_writes,
             "representation": representation,
         })
