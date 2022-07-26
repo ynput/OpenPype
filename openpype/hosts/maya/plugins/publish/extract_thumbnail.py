@@ -100,6 +100,13 @@ class ExtractThumbnail(openpype.api.Extractor):
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
+        
+        #Show or Hide Image Plane
+        image_plane = instance.data.get("imagePlane", True)       
+        if "viewport_options" in preset:
+            preset["viewport_options"]["imagePlane"] = image_plane
+        else:
+            preset["viewport_options"] = {"imagePlane": image_plane}
 
         with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
@@ -116,11 +123,8 @@ class ExtractThumbnail(openpype.api.Extractor):
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
-        image_plane = instance.data.get("imagePlane")
-        if image_plane:
-            _, thumbnail = os.path.split(playblast)
-        else:
-            return
+        _, thumbnail = os.path.split(playblast)
+
 
         self.log.info("file list  {}".format(thumbnail))
 
