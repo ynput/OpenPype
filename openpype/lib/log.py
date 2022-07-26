@@ -41,13 +41,13 @@ except ImportError:
 USE_UNICODE = hasattr(__builtins__, "unicode")
 
 
-class PypeStreamHandler(logging.StreamHandler):
+class LogStreamHandler(logging.StreamHandler):
     """ StreamHandler class designed to handle utf errors in python 2.x hosts.
 
     """
 
     def __init__(self, stream=None):
-        super(PypeStreamHandler, self).__init__(stream)
+        super(LogStreamHandler, self).__init__(stream)
         self.enabled = True
 
     def enable(self):
@@ -56,7 +56,6 @@ class PypeStreamHandler(logging.StreamHandler):
             Used to silence output
         """
         self.enabled = True
-        pass
 
     def disable(self):
         """ Disable StreamHandler
@@ -107,13 +106,13 @@ class PypeStreamHandler(logging.StreamHandler):
             self.handleError(record)
 
 
-class PypeFormatter(logging.Formatter):
+class LogFormatter(logging.Formatter):
 
     DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ]'
     default_formatter = logging.Formatter(DFT)
 
     def __init__(self, formats):
-        super(PypeFormatter, self).__init__()
+        super(LogFormatter, self).__init__()
         self.formatters = {}
         for loglevel in formats:
             self.formatters[loglevel] = logging.Formatter(formats[loglevel])
@@ -141,7 +140,7 @@ class PypeFormatter(logging.Formatter):
         return out
 
 
-class PypeMongoFormatter(logging.Formatter):
+class MongoFormatter(logging.Formatter):
 
     DEFAULT_PROPERTIES = logging.LogRecord(
         '', '', '', '', '', '', '', '').__dict__.keys()
@@ -239,7 +238,7 @@ class PypeLogger:
         for handler in logger.handlers:
             if isinstance(handler, MongoHandler):
                 add_mongo_handler = False
-            elif isinstance(handler, PypeStreamHandler):
+            elif isinstance(handler, LogStreamHandler):
                 add_console_handler = False
 
         if add_console_handler:
@@ -292,7 +291,7 @@ class PypeLogger:
             "username": components["username"],
             "password": components["password"],
             "capped": True,
-            "formatter": PypeMongoFormatter()
+            "formatter": MongoFormatter()
         }
         if components["port"] is not None:
             kwargs["port"] = int(components["port"])
@@ -303,10 +302,10 @@ class PypeLogger:
 
     @classmethod
     def _get_console_handler(cls):
-        formatter = PypeFormatter(cls.FORMAT_FILE)
-        console_handler = PypeStreamHandler()
+        formatter = LogFormatter(cls.FORMAT_FILE)
+        console_handler = LogStreamHandler()
 
-        console_handler.set_name("PypeStreamHandler")
+        console_handler.set_name("LogStreamHandler")
         console_handler.setFormatter(formatter)
         return console_handler
 
@@ -417,9 +416,9 @@ class PypeLogger:
     def get_process_name(cls):
         """Process name that is like "label" of a process.
 
-        Pype's logging can be used from pype itseld of from hosts. Even in Pype
-        it's good to know if logs are from Pype tray or from pype's event
-        server. This should help to identify that information.
+        OpenPype's logging can be used from OpenPyppe itself of from hosts.
+        Even in OpenPype process it's good to know if logs are from tray or
+        from other cli commands. This should help to identify that information.
         """
         if cls._process_name is not None:
             return cls._process_name
