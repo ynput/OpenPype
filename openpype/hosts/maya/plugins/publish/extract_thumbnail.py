@@ -116,7 +116,11 @@ class ExtractThumbnail(openpype.api.Extractor):
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
-        _, thumbnail = os.path.split(playblast)
+        image_plane = instance.data.get("imagePlane")
+        if image_plane:
+            _, thumbnail = os.path.split(playblast)
+        else:
+            return
 
         self.log.info("file list  {}".format(thumbnail))
 
