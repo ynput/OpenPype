@@ -32,11 +32,17 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
         context.data["kitsu_project"] = kitsu_project
         self.log.debug("Collect kitsu project: {}".format(kitsu_project))
 
-        kitsu_asset = gazu.asset.get_asset(zou_asset_data["id"])
-        if not kitsu_asset:
-            raise AssertionError("Asset not found in kitsu!")
-        context.data["kitsu_asset"] = kitsu_asset
-        self.log.debug("Collect kitsu asset: {}".format(kitsu_asset))
+        entity_type = zou_asset_data["type"]
+        if entity_type == "Shot":
+            kitsu_entity = gazu.shot.get_shot(zou_asset_data["id"])
+        else:
+            kitsu_entity = gazu.asset.get_asset(zou_asset_data["id"])
+
+        if not kitsu_entity:
+            raise AssertionError(f"{entity_type} not found in kitsu!")
+
+        context.data["kitsu_entity"] = kitsu_entity
+        self.log.debug(f"Collect kitsu {entity_type}: {kitsu_entity}")
 
         if zou_task_data:
             kitsu_task = gazu.task.get_task(zou_task_data["id"])
@@ -57,7 +63,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
                 )
 
             kitsu_task = gazu.task.get_task_by_name(
-                kitsu_asset, kitsu_task_type
+                kitsu_entity, kitsu_task_type
             )
             if not kitsu_task:
                 raise AssertionError("Task not found in kitsu!")

@@ -443,6 +443,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.project_created = False
         self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
@@ -2214,6 +2215,7 @@ class SyncEntitiesFactory:
         self._avalon_ents_by_name[project_item["name"]] = str(new_id)
 
         self.create_list.append(project_item)
+        self.project_created = True
 
         # store mongo id to ftrack entity
         entity = self.entities_dict[self.ft_project_id]["entity"]

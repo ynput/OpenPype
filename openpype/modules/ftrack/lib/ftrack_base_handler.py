@@ -535,7 +535,7 @@ class BaseHandler(object):
         )
 
     def trigger_event(
-        self, topic, event_data={}, session=None, source=None,
+        self, topic, event_data=None, session=None, source=None,
         event=None, on_error="ignore"
     ):
         if session is None:
@@ -543,6 +543,9 @@ class BaseHandler(object):
 
         if not source and event:
             source = event.get("source")
+
+        if event_data is None:
+            event_data = {}
         # Create and trigger event
         event = ftrack_api.event.base.Event(
             topic=topic,

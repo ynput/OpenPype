@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.lib
+from openpype.pipeline.load import any_outdated_containers
 
 
 class ShowInventory(pyblish.api.Action):
@@ -19,10 +19,10 @@ class ValidateContainers(pyblish.api.ContextPlugin):
 
     label = "Validate Containers"
     order = pyblish.api.ValidatorOrder
-    hosts = ["maya", "houdini", "nuke", "harmony", "photoshop"]
+    hosts = ["maya", "houdini", "nuke", "harmony", "photoshop", "aftereffects"]
     optional = True
     actions = [ShowInventory]
 
     def process(self, context):
-        if openpype.lib.any_outdated():
+        if any_outdated_containers():
             raise ValueError("There are outdated containers in the scene.")
