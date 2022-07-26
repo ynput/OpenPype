@@ -380,6 +380,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             str: Path to representation file.
             None: Path is not filled or does not exists.
         """
+
         published_path = repre.get("published_path")
         if published_path:
             published_path = os.path.normpath(published_path)
