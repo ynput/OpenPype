@@ -172,7 +172,7 @@ class MakeTX(TextureProcessor):
         ]
 
         cmd.extend(args)
-        cmd.extend(["-o", escape_space(destination), escape_space(source)])
+        cmd.extend([escape_space(source), "-o", escape_space(destination)])
 
         cmd = " ".join(cmd)
 
@@ -188,6 +188,8 @@ class MakeTX(TextureProcessor):
             import traceback
 
             traceback.print_exc()
+            print(exc.returncode)
+            print(exc.output)
             raise
 
         return processed_filepath
@@ -565,9 +567,6 @@ class ExtractLook(openpype.api.Extractor):
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
         existing = find_paths_by_hash(texture_hash)
-        # if processors["do_maketx"]:
-            # Produce .tx file in staging if source file is not .tx
-
 
         if existing and not force:
             self.log.info("Found hash in database, preparing hardlink..")
@@ -583,8 +582,8 @@ class ExtractLook(openpype.api.Extractor):
         if bool(processors):
             for processor in processors:
                 if processor == MakeTX:
-                    converted = os.path.join(staging, "resources", fname + ".tx")
-                    processed_path = processor().process(converted, filepath)
+                    converted = os.path.join(staging, "resources", fname + ".tx") # noqa
+                    processed_path = processor().process(filepath, converted)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     return processed_path
                 elif processor == MakeRSTexBin:
