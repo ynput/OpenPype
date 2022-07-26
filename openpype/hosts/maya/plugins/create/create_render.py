@@ -164,8 +164,6 @@ class CreateRender(plugin.Creator):
                 collection = render_layer.createCollection("defaultCollection")
                 collection.getSelector().setPattern('*')
 
-            self.log.info("Applying default render settings..")
-            lib_rendersettings.RenderSettings.apply_defaults()
         return self.instance
 
     def _deadline_webservice_changed(self):

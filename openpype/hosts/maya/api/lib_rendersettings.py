@@ -49,18 +49,6 @@ class RenderSettings(object):
                 legacy_io.Session["AVALON_PROJECT"]
             )
 
-    @staticmethod
-    def apply_defaults(renderer=None, project_settings=None):
-        if renderer is None:
-            renderer = cmds.getAttr(
-                'defaultRenderGlobals.currentRenderer').lower()
-            # handle various renderman names
-            if renderer.startswith('renderman'):
-                renderer = 'renderman'
-
-        render_settings = RenderSettings(project_settings)
-        render_settings.set_default_renderer_settings(renderer)
-
     def set_default_renderer_settings(self, renderer=None):
         """Set basic settings based on renderer."""
         if not renderer:
