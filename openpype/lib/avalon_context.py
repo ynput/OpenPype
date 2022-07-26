@@ -533,11 +533,13 @@ def get_workdir(
         TemplateResult: Workdir path.
     """
 
+    from openpype.pipeline import Anatomy
+    from openpype.pipeline.template_data import get_template_data
+
     if not anatomy:
-        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
-    workdir_data = get_workdir_data(
+    workdir_data = get_template_data(
         project_doc, asset_doc, task_name, host_name
     )
     # Output is TemplateResult object which contain useful data
@@ -748,6 +750,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     """
 
     from openpype.pipeline import Anatomy
+    from openpype.pipeline.template_data import get_template_data
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
@@ -766,7 +769,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     # Prepare project for workdir data
     project_name = dbcon.active_project()
     project_doc = get_project(project_name)
-    workdir_data = get_workdir_data(
+    workdir_data = get_template_data(
         project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
     )
     # Prepare anatomy

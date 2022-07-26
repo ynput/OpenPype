@@ -23,7 +23,6 @@ from openpype.api import (
     Logger,
     BuildWorkfile,
     get_version_from_path,
-    get_workdir_data,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
@@ -34,6 +33,7 @@ from openpype.settings import (
     get_anatomy_settings,
 )
 from openpype.modules import ModulesManager
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
@@ -965,12 +965,11 @@ def format_anatomy(data):
         data["version"] = get_version_from_path(file)
 
     project_name = anatomy.project_name
-    project_doc = get_project(project_name)
-    asset_doc = get_asset_by_name(project_name, data["avalon"]["asset"])
+    asset_name = data["avalon"]["asset"]
     task_name = os.environ["AVALON_TASK"]
     host_name = os.environ["AVALON_APP"]
-    context_data = get_workdir_data(
-        project_doc, asset_doc, task_name, host_name
+    context_data = get_template_data_with_names(
+        project_name, asset_name, task_name, host_name
     )
     data.update(context_data)
     data.update({
