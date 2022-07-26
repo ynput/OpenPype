@@ -7,11 +7,13 @@ import sys
 
 from openpype.api import (
     get_project_settings,
+
 )
 
 from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.hosts.maya.api.commands import reset_frame_range
 
 
 class RenderSettings(object):
@@ -152,6 +154,7 @@ class RenderSettings(object):
                 cmds.setAttr(str(attribute), int(value), type = "Boolean") # noqa
             elif (cmds.setAttr(str(attribute), type=True)) == "string":
                 cmds.setAttr(str(attribute), str(value), type = "string") # noqa
+        reset_frame_range()
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
