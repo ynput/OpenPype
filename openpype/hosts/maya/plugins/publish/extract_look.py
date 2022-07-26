@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
 from abc import ABCMeta, abstractmethod
+import six
 import os
 import sys
 import json
@@ -67,9 +68,9 @@ def find_paths_by_hash(texture_hash):
     return legacy_io.distinct(key, {"type": "version"})
 
 
-class TextureProcessor(object):
-    __metaclass__ = ABCMeta
-
+@six.add_metaclass(ABCMeta)
+class TextureProcessor:
+    @abstractmethod
     def __init__(self):
         pass
 
@@ -80,7 +81,10 @@ class TextureProcessor(object):
 
 
 class MakeRSTexBin(TextureProcessor):
-    def process(source, *args):
+    def __init__(self):
+        super(TextureProcessor, self).__init__()
+
+    def process(self, source, *args):
         """Make `.rstexbin` using `redshiftTextureProcessor`
         with some default settings.
 
@@ -126,7 +130,10 @@ class MakeRSTexBin(TextureProcessor):
 
 
 class MakeTX(TextureProcessor):
-    def process(source, destination, *args):
+    def __init__(self):
+        super(TextureProcessor, self).__init__()
+
+    def process(self, source, destination, *args):
         """Make `.tx` using `maketx` with some default settings.
 
         The settings are based on default as used in Arnold's
@@ -558,6 +565,10 @@ class ExtractLook(openpype.api.Extractor):
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
         existing = find_paths_by_hash(texture_hash)
+        # if processors["do_maketx"]:
+            # Produce .tx file in staging if source file is not .tx
+
+
         if existing and not force:
             self.log.info("Found hash in database, preparing hardlink..")
             source = next((p for p in existing if os.path.exists(p)), None)
@@ -571,9 +582,15 @@ class ExtractLook(openpype.api.Extractor):
 
         if bool(processors):
             for processor in processors:
-                processed_path = processor().process(filepath)
-                self.log.info("Generating texture file for %s .." % filepath)
-                return processed_path
+                if processor == MakeTX:
+                    converted = os.path.join(staging, "resources", fname + ".tx")
+                    processed_path = processor().process(converted, filepath)
+                    self.log.info("Generating texture file for %s .." % filepath) # noqa
+                    return processed_path
+                elif processor == MakeRSTexBin:
+                    processed_path = processor().process(filepath)
+                    self.log.info("Generating texture file for %s .." % filepath) # noqa
+                    return processed_path
 
         return processed_path, COPY, texture_hash
 
