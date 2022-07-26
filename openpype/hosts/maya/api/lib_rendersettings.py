@@ -19,7 +19,6 @@ from openpype.hosts.maya.api.commands import reset_frame_range
 class RenderSettings(object):
 
     _image_prefix_nodes = {
-        'mentalray': 'defaultRenderGlobals.imageFilePrefix',
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'defaultRenderGlobals.imageFilePrefix',
@@ -27,7 +26,6 @@ class RenderSettings(object):
     }
 
     _image_prefixes = {
-        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
