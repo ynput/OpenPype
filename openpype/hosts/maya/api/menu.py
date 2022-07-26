@@ -98,7 +98,7 @@ def install():
         )
 
         cmds.menuItem(divider=True)
-        # project_settings/maya/RenderSettings/apply_render_settings
+
         render_settings_flag = get_current_project_settings()["maya"]["RenderSettings"]["apply_render_settings"] # noqa
         if render_settings_flag:
             cmds.menuItem(
