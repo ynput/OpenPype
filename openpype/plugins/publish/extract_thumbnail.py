@@ -72,7 +72,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # - this is to avoid "override" of source file
         dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
         self.log.debug(
-            "Create temp directory {} for thumbnail".formap(dst_staging)
+            "Create temp directory {} for thumbnail".format(dst_staging)
         )
         # Store new staging to cleanup paths
         instance.context.data["cleanupFullPaths"].append(dst_staging)
