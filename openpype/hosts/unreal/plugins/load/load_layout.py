@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Loader for layouts."""
-import os
 import json
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
+from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
@@ -20,7 +20,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
-from openpype.api import get_asset
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -87,15 +87,6 @@ class LayoutLoader(plugin.Loader):
                 return loader
 
         return None
-
-    @staticmethod
-    def _get_data(asset_name):
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-
-        return asset_doc.get("data")
 
     @staticmethod
     def _set_sequence_hierarchy(
@@ -234,6 +225,7 @@ class LayoutLoader(plugin.Loader):
 
         anim_path = f"{asset_dir}/animations/{anim_file_name}"
 
+        asset_doc = get_current_project_asset()
         # Import animation
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
@@ -268,7 +260,7 @@ class LayoutLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'use_default_sample_rate', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', get_asset()["data"].get("fps"))
+            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
@@ -364,26 +356,30 @@ class LayoutLoader(plugin.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        asset_data = legacy_io.find_one({
-            "type": "asset",
-            "name": h_dir.split('/')[-1]
-        })
-
-        id = asset_data.get('_id')
+        project_name = legacy_io.active_project()
+        asset_data = get_asset_by_name(
+            project_name,
+            h_dir.split('/')[-1],
+            fields=["_id", "data.fps"]
+        )
 
         start_frames = []
         end_frames = []
 
-        elements = list(
-            legacy_io.find({"type": "asset", "data.visualParent": id}))
+        elements = list(get_assets(
+            project_name,
+            parent_ids=[asset_data["_id"]],
+            fields=["_id", "data.clipIn", "data.clipOut"]
+        ))
         for e in elements:
             start_frames.append(e.get('data').get('clipIn'))
             end_frames.append(e.get('data').get('clipOut'))
 
-            elements.extend(legacy_io.find({
-                "type": "asset",
-                "data.visualParent": e.get('_id')
-            }))
+            elements.extend(get_assets(
+                project_name,
+                parent_ids=[e["_id"]],
+                fields=["_id", "data.clipIn", "data.clipOut"]
+            ))
 
         min_frame = min(start_frames)
         max_frame = max(end_frames)
@@ -659,7 +655,8 @@ class LayoutLoader(plugin.Loader):
                 frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                 [level])
 
-        data = self._get_data(asset)
+        project_name = legacy_io.active_project()
+        data = get_asset_by_name(project_name, asset)["data"]
         shot.set_display_rate(
             unreal.FrameRate(data.get("fps"), 1.0))
         shot.set_playback_start(0)

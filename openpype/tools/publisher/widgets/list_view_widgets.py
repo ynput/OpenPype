@@ -28,6 +28,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
+from openpype.tools.utils.lib import html_escape
 from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
@@ -113,7 +114,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance = instance
 
-        subset_name_label = QtWidgets.QLabel(instance["subset"], self)
+        instance_label = html_escape(instance.label)
+
+        subset_name_label = QtWidgets.QLabel(instance_label, self)
         subset_name_label.setObjectName("ListViewSubsetName")
 
         active_checkbox = NiceCheckbox(parent=self)
@@ -132,7 +135,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         active_checkbox.stateChanged.connect(self._on_active_change)
 
-        self._subset_name_label = subset_name_label
+        self._instance_label_widget = subset_name_label
         self._active_checkbox = active_checkbox
 
         self._has_valid_context = None
@@ -146,8 +149,8 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         state = ""
         if not valid:
             state = "invalid"
-        self._subset_name_label.setProperty("state", state)
-        self._subset_name_label.style().polish(self._subset_name_label)
+        self._instance_label_widget.setProperty("state", state)
+        self._instance_label_widget.style().polish(self._instance_label_widget)
 
     def is_active(self):
         """Instance is activated."""
@@ -176,9 +179,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
     def update_instance_values(self):
         """Update instance data propagated to widgets."""
         # Check subset name
-        subset_name = self.instance["subset"]
-        if subset_name != self._subset_name_label.text():
-            self._subset_name_label.setText(subset_name)
+        label = self.instance.label
+        if label != self._instance_label_widget.text():
+            self._instance_label_widget.setText(html_escape(label))
         # Check active state
         self.set_active(self.instance["active"])
         # Check valid states
@@ -519,7 +522,7 @@ class InstanceListView(AbstractInstanceView):
         instances_by_group_name = collections.defaultdict(list)
         group_names = set()
         for instance in self.controller.instances:
-            group_label = instance.creator_label
+            group_label = instance.group_label
             group_names.add(group_label)
             instances_by_group_name[group_label].append(instance)
 

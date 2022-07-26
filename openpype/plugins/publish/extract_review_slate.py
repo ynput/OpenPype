@@ -1,4 +1,6 @@
 import os
+from pprint import pformat
+import re
 import openpype.api
 import pyblish
 from openpype.lib import (
@@ -21,6 +23,8 @@ class ExtractReviewSlate(openpype.api.Extractor):
     families = ["slate", "review"]
     match = pyblish.api.Subset
 
+    SUFFIX = "_slate"
+
     hosts = ["nuke", "shell"]
     optional = True
 
@@ -29,27 +33,18 @@ class ExtractReviewSlate(openpype.api.Extractor):
         if "representations" not in inst_data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        suffix = "_slate"
-        slate_path = inst_data.get("slateFrame")
+        # get slates frame from upstream
+        slates_data = inst_data.get("slateFrames")
+        if not slates_data:
+            # make it backward compatible and open for slates generator
+            # premium plugin
+            slates_data = {
+                "*": inst_data["slateFrame"]
+            }
+
+        self.log.info("_ slates_data: {}".format(pformat(slates_data)))
+
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-
-        slate_streams = get_ffprobe_streams(slate_path, self.log)
-        # Try to find first stream with defined 'width' and 'height'
-        # - this is to avoid order of streams where audio can be as first
-        # - there may be a better way (checking `codec_type`?)+
-        slate_width = None
-        slate_height = None
-        for slate_stream in slate_streams:
-            if "width" in slate_stream and "height" in slate_stream:
-                slate_width = int(slate_stream["width"])
-                slate_height = int(slate_stream["height"])
-                break
-
-        # Raise exception of any stream didn't define input resolution
-        if slate_width is None:
-            raise AssertionError((
-                "FFprobe couldn't read resolution from input file: \"{}\""
-            ).format(slate_path))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -77,6 +72,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
             streams = get_ffprobe_streams(
                 input_path, self.log
             )
+            # get slate data
+            slate_path = self._get_slate_path(input_file, slates_data)
+            self.log.info("_ slate_path: {}".format(slate_path))
+
+            slate_width, slate_height = self._get_slates_resolution(slate_path)
+
             # Get video metadata
             (
                 input_width,
@@ -138,7 +139,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             _remove_at_end = []
 
             ext = os.path.splitext(input_file)[1]
-            output_file = input_file.replace(ext, "") + suffix + ext
+            output_file = input_file.replace(ext, "") + self.SUFFIX + ext
 
             _remove_at_end.append(input_path)
 
@@ -284,36 +285,34 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     audio_channels,
                     audio_sample_rate,
                     audio_channel_layout,
+                    input_frame_rate
                 )
 
                 # replace slate with silent slate for concat
                 slate_v_path = slate_silent_path
 
-            # create ffmpeg concat text file path
-            conc_text_file = input_file.replace(ext, "") + "_concat" + ".txt"
-            conc_text_path = os.path.join(
-                os.path.normpath(stagingdir), conc_text_file)
-            _remove_at_end.append(conc_text_path)
-            self.log.debug("__ conc_text_path: {}".format(conc_text_path))
-
-            new_line = "\n"
-            with open(conc_text_path, "w") as conc_text_f:
-                conc_text_f.writelines([
-                    "file {}".format(
-                        slate_v_path.replace("\\", "/")),
-                    new_line,
-                    "file {}".format(input_path.replace("\\", "/"))
-                ])
-
-            # concat slate and videos together
+            # concat slate and videos together with concat filter
+            # this will reencode the output
+            if input_audio:
+                fmap = [
+                    "-filter_complex",
+                    "[0:v] [0:a] [1:v] [1:a] concat=n=2:v=1:a=1 [v] [a]",
+                    "-map", '[v]',
+                    "-map", '[a]'
+                ]
+            else:
+                fmap = [
+                    "-filter_complex",
+                    "[0:v] [1:v] concat=n=2:v=1:a=0 [v]",
+                    "-map", '[v]'
+                ]
             concat_args = [
                 ffmpeg_path,
                 "-y",
-                "-f", "concat",
-                "-safe", "0",
-                "-i", conc_text_path,
-                "-c", "copy",
+                "-i", slate_v_path,
+                "-i", input_path,
             ]
+            concat_args.extend(fmap)
             if offset_timecode:
                 concat_args.extend(["-timecode", offset_timecode])
             # NOTE: Added because of OP Atom demuxers
@@ -321,12 +320,18 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # - keep format of output
             if format_args:
                 concat_args.extend(format_args)
+
+            if codec_args:
+                concat_args.extend(codec_args)
+
             # Use arguments from ffmpeg preset
             source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
             if source_ffmpeg_cmd:
                 copy_args = (
                     "-metadata",
                     "-metadata:s:v:0",
+                    "-b:v",
+                    "-b:a",
                 )
                 args = source_ffmpeg_cmd.split(" ")
                 for indx, arg in enumerate(args):
@@ -334,12 +339,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         concat_args.append(arg)
                         # assumes arg has one parameter
                         concat_args.append(args[indx + 1])
+
             # add final output path
             concat_args.append(output_path)
 
             # ffmpeg concat subprocess
             self.log.debug(
-                "Executing concat: {}".format(" ".join(concat_args))
+                "Executing concat filter: {}".format
+                (" ".join(concat_args))
             )
             openpype.api.run_subprocess(
                 concat_args, logger=self.log
@@ -368,6 +375,43 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 inst_data["representations"].remove(repre)
 
         self.log.debug(inst_data["representations"])
+
+    def _get_slate_path(self, input_file, slates_data):
+        slate_path = None
+        for sl_n, _slate_path in slates_data.items():
+            if "*" in sl_n:
+                slate_path = _slate_path
+                break
+            elif re.search(sl_n, input_file):
+                slate_path = _slate_path
+                break
+
+        if not slate_path:
+            raise AttributeError(
+                "Missing slates paths: {}".format(slates_data))
+
+        return slate_path
+
+    def _get_slates_resolution(self, slate_path):
+        slate_streams = get_ffprobe_streams(slate_path, self.log)
+        # Try to find first stream with defined 'width' and 'height'
+        # - this is to avoid order of streams where audio can be as first
+        # - there may be a better way (checking `codec_type`?)+
+        slate_width = None
+        slate_height = None
+        for slate_stream in slate_streams:
+            if "width" in slate_stream and "height" in slate_stream:
+                slate_width = int(slate_stream["width"])
+                slate_height = int(slate_stream["height"])
+                break
+
+        # Raise exception of any stream didn't define input resolution
+        if slate_width is None:
+            raise AssertionError((
+                "FFprobe couldn't read resolution from input file: \"{}\""
+            ).format(slate_path))
+
+        return (slate_width, slate_height)
 
     def _get_video_metadata(self, streams):
         input_timecode = ""
@@ -450,9 +494,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
         audio_channels,
         audio_sample_rate,
         audio_channel_layout,
+        input_frame_rate
     ):
         # Get duration of one frame in micro seconds
-        items = audio_sample_rate.split("/")
+        items = input_frame_rate.split("/")
         if len(items) == 1:
             one_frame_duration = 1.0 / float(items[0])
         elif len(items) == 2:

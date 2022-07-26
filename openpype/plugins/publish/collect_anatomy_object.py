@@ -4,11 +4,11 @@ Requires:
     os.environ -> AVALON_PROJECT
 
 Provides:
-    context -> anatomy (pype.api.Anatomy)
+    context -> anatomy (openpype.pipeline.anatomy.Anatomy)
 """
 import os
-from openpype.api import Anatomy
 import pyblish.api
+from openpype.pipeline import Anatomy
 
 
 class CollectAnatomyObject(pyblish.api.ContextPlugin):

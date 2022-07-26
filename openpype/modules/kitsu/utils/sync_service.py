@@ -2,11 +2,17 @@ import os
 
 import gazu
 
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_asset_by_name
+)
 from openpype.pipeline import AvalonMongoDB
 from .credentials import validate_credentials
 from .update_op_with_zou import (
     create_op_asset,
     set_op_project,
+    get_kitsu_project_name,
     write_project_to_op,
     update_op_assets,
 )
@@ -119,17 +125,16 @@ class Listener:
 
         # Write into DB
         if update_project:
-            self.dbcon = self.dbcon.database[project_name]
+            self.dbcon.Session["AVALON_PROJECT"] = project_name
             self.dbcon.bulk_write([update_project])
 
     def _delete_project(self, data):
         """Delete project."""
-        project_doc = self.dbcon.find_one(
-            {"type": "project", "data.zou_id": data["project_id"]}
-        )
+
+        project_name = get_kitsu_project_name(data["project_id"])
 
         # Delete project collection
-        self.dbcon.database[project_doc["name"]].drop()
+        self.dbcon.database[project_name].drop()
 
     # == Asset ==
 
@@ -150,7 +155,8 @@ class Listener:
     def _update_asset(self, data):
         """Update asset into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         asset = gazu.asset.get_asset(data["asset_id"])
@@ -159,16 +165,18 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[asset["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [asset], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_asset(self, data):
         """Delete asset of OP DB."""
@@ -197,7 +205,8 @@ class Listener:
     def _update_episode(self, data):
         """Update episode into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         episode = gazu.shot.get_episode(data["episode_id"])
@@ -206,16 +215,18 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[episode["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [episode], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_episode(self, data):
         """Delete shot of OP DB."""
@@ -245,7 +256,8 @@ class Listener:
     def _update_sequence(self, data):
         """Update sequence into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         sequence = gazu.shot.get_sequence(data["sequence_id"])
@@ -254,16 +266,18 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[sequence["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [sequence], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_sequence(self, data):
         """Delete sequence of OP DB."""
@@ -293,7 +307,8 @@ class Listener:
     def _update_shot(self, data):
         """Update shot into OP DB."""
         set_op_project(self.dbcon, data["project_id"])
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name)
 
         # Get gazu entity
         shot = gazu.shot.get_shot(data["shot_id"])
@@ -302,16 +317,18 @@ class Listener:
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
-            for asset_doc in self.dbcon.find({"type": "asset"})
+            for asset_doc in get_assets(project_name)
             if asset_doc["data"].get("zou", {}).get("id")
         }
         zou_ids_and_asset_docs[shot["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets(
+        update_op_result = update_op_assets(
             self.dbcon, project_doc, [shot], zou_ids_and_asset_docs
-        )[0]
-        self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
+        )
+        if update_op_result:
+            asset_doc_id, asset_update = update_op_result[0]
+            self.dbcon.update_one({"_id": asset_doc_id}, asset_update)
 
     def _delete_shot(self, data):
         """Delete shot of OP DB."""
@@ -327,14 +344,15 @@ class Listener:
         """Create new task into OP DB."""
         # Get project entity
         set_op_project(self.dbcon, data["project_id"])
+        project_name = self.dbcon.active_project()
 
         # Get gazu entity
         task = gazu.task.get_task(data["task_id"])
 
         # Find asset doc
-        asset_doc = self.dbcon.find_one(
-            {"type": "asset", "data.zou.id": task["entity"]["id"]}
-        )
+        parent_name = task["entity"]["name"]
+
+        asset_doc = get_asset_by_name(project_name, parent_name)
 
         # Update asset tasks with new one
         asset_tasks = asset_doc["data"].get("tasks")
@@ -351,10 +369,11 @@ class Listener:
 
     def _delete_task(self, data):
         """Delete task of OP DB."""
-        set_op_project(self.dbcon, data["project_id"])
 
+        set_op_project(self.dbcon, data["project_id"])
+        project_name = self.dbcon.active_project()
         # Find asset doc
-        asset_docs = [doc for doc in self.dbcon.find({"type": "asset"})]
+        asset_docs = list(get_assets(project_name))
         for doc in asset_docs:
             # Match task
             for name, task in doc["data"]["tasks"].items():

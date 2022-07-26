@@ -3,6 +3,7 @@ from queue import Queue
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.client import get_project
 from .delegates import (
     NumberDelegate,
     NameDelegate,
@@ -47,12 +48,8 @@ class ProjectDocCache:
     def set_project(self, project_name):
         self.project_doc = None
 
-        if not project_name:
-            return
-
-        self.project_doc = self.dbcon.database[project_name].find_one(
-            {"type": "project"}
-        )
+        if project_name:
+            self.project_doc = get_project(project_name)
 
 
 class ToolsCache:
@@ -381,7 +378,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model.delete_indexes(indexes)
 
     def _on_ctrl_shift_enter_pressed(self):
-        self._add_task_and_edit()
+        self.add_task_and_edit()
 
     def add_asset(self, parent_index=None):
         if parent_index is None:
@@ -423,9 +420,9 @@ class HierarchyView(QtWidgets.QTreeView):
         self.edit(new_index)
 
     def _add_task_action(self):
-        self._add_task_and_edit()
+        self.add_task_and_edit()
 
-    def _add_task_and_edit(self):
+    def add_task_and_edit(self):
         new_index = self.add_task()
         if new_index is None:
             return

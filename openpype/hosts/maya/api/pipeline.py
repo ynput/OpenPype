@@ -1,17 +1,18 @@
 import os
-import sys
 import errno
 import logging
+import contextlib
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
 
 import pyblish.api
 
+from openpype.settings import get_project_settings
+from openpype.host import HostBase, IWorkfileHost, ILoadHost
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import (
-    any_outdated,
     register_event_callback,
     emit_event
 )
@@ -26,8 +27,17 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
+from .workio import (
+    open_file,
+    save_file,
+    file_extensions,
+    has_unsaved_changes,
+    work_root,
+    current_file
+)
 
 log = logging.getLogger("openpype.hosts.maya")
 
@@ -40,49 +50,121 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
-self = sys.modules[__name__]
-self._ignore_lock = False
-self._events = {}
 
+class MayaHost(HostBase, IWorkfileHost, ILoadHost):
+    name = "maya"
 
-def install():
-    from openpype.settings import get_project_settings
+    def __init__(self):
+        super(MayaHost, self).__init__()
+        self._op_events = {}
 
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    # process path mapping
-    dirmap_processor = MayaDirmap("maya", project_settings)
-    dirmap_processor.process_dirmap()
+    def install(self):
+        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        # process path mapping
+        dirmap_processor = MayaDirmap("maya", project_settings)
+        dirmap_processor.process_dirmap()
 
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    pyblish.api.register_host("mayabatch")
-    pyblish.api.register_host("mayapy")
-    pyblish.api.register_host("maya")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        pyblish.api.register_host("mayabatch")
+        pyblish.api.register_host("mayapy")
+        pyblish.api.register_host("maya")
 
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
-    register_inventory_action_path(INVENTORY_PATH)
-    log.info(PUBLISH_PATH)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
+        self.log.info(PUBLISH_PATH)
 
-    log.info("Installing callbacks ... ")
-    register_event_callback("init", on_init)
+        self.log.info("Installing callbacks ... ")
+        register_event_callback("init", on_init)
 
-    if lib.IS_HEADLESS:
-        log.info(("Running in headless mode, skipping Maya "
-                 "save/open/new callback installation.."))
+        if lib.IS_HEADLESS:
+            self.log.info((
+                "Running in headless mode, skipping Maya save/open/new"
+                " callback installation.."
+            ))
 
-        return
+            return
 
-    _set_project()
-    _register_callbacks()
+        _set_project()
+        self._register_callbacks()
 
-    menu.install()
+        menu.install()
 
-    register_event_callback("save", on_save)
-    register_event_callback("open", on_open)
-    register_event_callback("new", on_new)
-    register_event_callback("before.save", on_before_save)
-    register_event_callback("taskChanged", on_task_changed)
-    register_event_callback("workfile.save.before", before_workfile_save)
+        register_event_callback("save", on_save)
+        register_event_callback("open", on_open)
+        register_event_callback("new", on_new)
+        register_event_callback("before.save", on_before_save)
+        register_event_callback("taskChanged", on_task_changed)
+        register_event_callback("workfile.save.before", before_workfile_save)
+
+    def open_workfile(self, filepath):
+        return open_file(filepath)
+
+    def save_workfile(self, filepath=None):
+        return save_file(filepath)
+
+    def work_root(self, session):
+        return work_root(session)
+
+    def get_current_workfile(self):
+        return current_file()
+
+    def workfile_has_unsaved_changes(self):
+        return has_unsaved_changes()
+
+    def get_workfile_extensions(self):
+        return file_extensions()
+
+    def get_containers(self):
+        return ls()
+
+    @contextlib.contextmanager
+    def maintained_selection(self):
+        with lib.maintained_selection():
+            yield
+
+    def _register_callbacks(self):
+        for handler, event in self._op_events.copy().items():
+            if event is None:
+                continue
+
+            try:
+                OpenMaya.MMessage.removeCallback(event)
+                self._op_events[handler] = None
+            except RuntimeError as exc:
+                self.log.info(exc)
+
+        self._op_events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
+        )
+
+        self._op_events[_before_scene_save] = (
+            OpenMaya.MSceneMessage.addCheckCallback(
+                OpenMaya.MSceneMessage.kBeforeSaveCheck,
+                _before_scene_save
+            )
+        )
+
+        self._op_events[_on_scene_new] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kAfterNew, _on_scene_new
+        )
+
+        self._op_events[_on_maya_initialized] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kMayaInitialized,
+                _on_maya_initialized
+            )
+        )
+
+        self._op_events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
+        )
+
+        self.log.info("Installed event handler _on_scene_save..")
+        self.log.info("Installed event handler _before_scene_save..")
+        self.log.info("Installed event handler _on_scene_new..")
+        self.log.info("Installed event handler _on_maya_initialized..")
+        self.log.info("Installed event handler _on_scene_open..")
 
 
 def _set_project():
@@ -104,44 +186,6 @@ def _set_project():
             raise
 
     cmds.workspace(workdir, openWorkspace=True)
-
-
-def _register_callbacks():
-    for handler, event in self._events.copy().items():
-        if event is None:
-            continue
-
-        try:
-            OpenMaya.MMessage.removeCallback(event)
-            self._events[handler] = None
-        except RuntimeError as e:
-            log.info(e)
-
-    self._events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
-    )
-
-    self._events[_before_scene_save] = OpenMaya.MSceneMessage.addCheckCallback(
-        OpenMaya.MSceneMessage.kBeforeSaveCheck, _before_scene_save
-    )
-
-    self._events[_on_scene_new] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kAfterNew, _on_scene_new
-    )
-
-    self._events[_on_maya_initialized] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kMayaInitialized, _on_maya_initialized
-    )
-
-    self._events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
-    )
-
-    log.info("Installed event handler _on_scene_save..")
-    log.info("Installed event handler _before_scene_save..")
-    log.info("Installed event handler _on_scene_new..")
-    log.info("Installed event handler _on_maya_initialized..")
-    log.info("Installed event handler _on_scene_open..")
 
 
 def _on_maya_initialized(*args):
@@ -426,7 +470,7 @@ def on_open():
     lib.validate_fps()
     lib.fix_incompatible_containers()
 
-    if any_outdated():
+    if any_outdated_containers():
         log.warning("Scene has outdated content.")
 
         # Find maya main window
@@ -475,7 +519,6 @@ def on_task_changed():
     workdir = legacy_io.Session["AVALON_WORKDIR"]
     if os.path.exists(workdir):
         log.info("Updating Maya workspace for task change to %s", workdir)
-
         _set_project()
 
         # Set Maya fileDialog's start-dir to /scenes

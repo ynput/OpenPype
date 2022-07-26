@@ -87,9 +87,11 @@ This can also be hosted on the cloud in fully distributed deployments.
 - [**Avalon**](https://github.com/getavalon)
 - [**Pyblish**](https://github.com/pyblish)
 - [**OpenTimelineIO**](https://github.com/PixarAnimationStudios/OpenTimelineIO)
-- [**OpenImageIO**](https://github.com/OpenImageIO/oiio)
+- [**OpenImageIO**](https://github.com/OpenImageIO/oiio) [^centos7]
 - [**FFmpeg**](https://github.com/FFmpeg/FFmpeg)
 
+[^centos7]: On Centos 7 you need to install additional libraries to support OIIO there - mainly boost
+and libraw (`sudo yum install boost-1.53.0` and `sudo yum install LibRaw`)
 
 ### Python modules we use and their licenses
 
