@@ -94,6 +94,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                         # Farm rendering
                         self.log.info("flagged for farm render")
                         instance.data["transfer"] = False
+                        instance.data["farm"] = True
                         families.append("{}.farm".format(family))
                         family = families_ak.lower()
 
