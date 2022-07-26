@@ -360,6 +360,26 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         instance.data["ftrackComponentsList"] = component_list
 
     def _get_repre_path(self, instance, repre, only_published):
+        """Get representation path that can be used for integration.
+
+        When 'only_published' is set to true the validation of path is not
+        relevant. In that case we just need what is set in 'published_path'
+        as "reference". The reference is not used to get or upload the file but
+        for reference where the file was published.
+
+        Args:
+            instance (pyblish.Instance): Processed instance object. Used
+                for source of staging dir if representation does not have
+                filled it.
+            repre (dict): Representation on instance which could be and
+                could not be integrated with main integrator.
+            only_published (bool): Care only about published paths and
+                ignore if filepath is not existing anymore.
+
+        Returns:
+            str: Path to representation file.
+            None: Path is not filled or does not exists.
+        """
         published_path = repre.get("published_path")
         if published_path:
             published_path = os.path.normpath(published_path)
