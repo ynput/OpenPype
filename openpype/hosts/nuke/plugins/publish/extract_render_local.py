@@ -80,8 +80,11 @@ class NukeRenderLocal(openpype.api.Extractor):
             repre = {
                 'name': ext,
                 'ext': ext,
-                'frameStart': "%0{}d".format(
-                    len(str(last_frame))) % first_frame,
+                'frameStart': (
+                    "{{:0>{}}}"
+                    .format(len(str(last_frame)))
+                    .format(first_frame)
+                ),
                 'files': filenames,
                 "stagingDir": out_dir
             }
