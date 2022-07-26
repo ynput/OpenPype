@@ -110,8 +110,10 @@ class ExtractThumbnail(openpype.api.Extractor):
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             if not override_viewport_options:
+                panel = cmds.getPanel(with_focus=True)
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
+                cmds.setFocus(panel)
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
