@@ -7,11 +7,11 @@ import sys
 
 from openpype.api import (
     get_project_settings,
-    get_asset)
+    )
 
 from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
-
+from openpype.pipeline.context_tools import get_current_project_asset
 
 class RenderSettings(object):
 
@@ -66,7 +66,7 @@ class RenderSettings(object):
             renderer = cmds.getAttr(
                 'defaultRenderGlobals.currentRenderer').lower()
 
-        asset_doc = get_asset()
+        asset_doc = get_current_project_asset()
         # project_settings/maya/create/CreateRender/aov_separator
         try:
             aov_separator = self._aov_chars[(
