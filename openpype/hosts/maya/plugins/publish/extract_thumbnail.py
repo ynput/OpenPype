@@ -101,7 +101,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
         
-        #Show or Hide Image Plane
+        # Show or Hide Image Plane
         image_plane = instance.data.get("imagePlane", True)       
         if "viewport_options" in preset:
             preset["viewport_options"]["imagePlane"] = image_plane
