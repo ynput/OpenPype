@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
-from abc import ABC, abstractmethod
+import abc
 import os
 import sys
 import json
@@ -67,11 +67,11 @@ def find_paths_by_hash(texture_hash):
     return legacy_io.distinct(key, {"type": "version"})
 
 
-class TextureProcessor(metaclass=ABC.ABCMeta):
+class TextureProcessor(abc.ABCMeta):
     def __init__(self):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def process(self, filepath):
 
         pass
