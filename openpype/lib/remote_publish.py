@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 import pyblish.util
 import pyblish.api
 
-from openpype.lib.mongo import OpenPypeMongoConnection
+from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
 ERROR_STATUS = "error"

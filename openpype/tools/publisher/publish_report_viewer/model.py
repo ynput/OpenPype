@@ -1,9 +1,9 @@
 import uuid
-import html
 from Qt import QtCore, QtGui
 
 import pyblish.api
 
+from openpype.tools.utils.lib import html_escape
 from .constants import (
     ITEM_ID_ROLE,
     ITEM_IS_GROUP_ROLE,
@@ -46,7 +46,7 @@ class InstancesModel(QtGui.QStandardItemModel):
             all_removed = True
             for instance_item in instance_items:
                 item = QtGui.QStandardItem(instance_item.label)
-                instance_label = html.escape(instance_item.label)
+                instance_label = html_escape(instance_item.label)
                 item.setData(instance_label, ITEM_LABEL_ROLE)
                 item.setData(instance_item.errored, ITEM_ERRORED_ROLE)
                 item.setData(instance_item.id, ITEM_ID_ROLE)
