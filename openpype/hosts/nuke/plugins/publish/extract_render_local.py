@@ -123,4 +123,4 @@ class NukeRenderLocal(openpype.api.Extractor):
 
         self.log.info('Finished render')
 
-        self.log.debug("instance extracted: {}".format(instance.data))
+        self.log.debug("_ instance.data: {}".format(instance.data))
