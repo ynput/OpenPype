@@ -148,11 +148,11 @@ class RenderSettings(object):
         # command accordingly.
         for item in additional_options:
             attribute, value = item
-            if (cmds.setAttr(str(attribute), type=True)) == "long":
+            if (cmds.getAttr(str(attribute), type=True)) == "long":
                 cmds.setAttr(str(attribute), int(value))
-            elif (cmds.setAttr(str(attribute), type=True)) == "bool":
+            elif (cmds.getAttr(str(attribute), type=True)) == "bool":
                 cmds.setAttr(str(attribute), int(value), type = "Boolean") # noqa
-            elif (cmds.setAttr(str(attribute), type=True)) == "string":
+            elif (cmds.getAttr(str(attribute), type=True)) == "string":
                 cmds.setAttr(str(attribute), str(value), type = "string") # noqa
         reset_frame_range()
 
