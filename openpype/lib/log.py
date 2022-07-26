@@ -160,7 +160,7 @@ class MongoFormatter(logging.Formatter):
             'method': record.funcName,
             'lineNumber': record.lineno
         }
-        document.update(PypeLogger.get_process_data())
+        document.update(Logger.get_process_data())
 
         # Standard document decorated with exception info
         if record.exc_info is not None:
@@ -180,7 +180,7 @@ class MongoFormatter(logging.Formatter):
         return document
 
 
-class PypeLogger:
+class Logger:
     DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ] '
     DBG = "  - { %(name)s }: [ %(message)s ] "
     INF = ">>> [ %(message)s ] "
@@ -482,3 +482,15 @@ class PypeLogger:
             cls.initialize()
 
         return OpenPypeMongoConnection.get_mongo_client()
+
+
+class PypeLogger(Logger):
+    @classmethod
+    def get_logger(cls, *args, **kwargs):
+        logger = Logger.get_logger(*args, **kwargs)
+        # TODO uncomment when replaced most of places
+        # logger.warning((
+        #     "'openpype.lib.PypeLogger' is deprecated class."
+        #     " Please use 'openpype.lib.Logger' instead."
+        # ))
+        return logger
