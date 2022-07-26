@@ -83,8 +83,9 @@ from .anatomy import (
     Anatomy
 )
 
-from .config import (
+from .dateutils import (
     get_datetime_data,
+    get_timestamp,
     get_formatted_current_time
 )
 
