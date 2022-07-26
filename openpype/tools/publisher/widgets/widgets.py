@@ -1225,6 +1225,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
     different creators. If creator have same (similar) definitions their
     widgets are merged into one (different label does not count).
     """
+
     def __init__(self, controller, parent):
         super(CreatorAttrsWidget, self).__init__(parent)
 
@@ -1275,6 +1276,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setColumnStretch(0, 0)
         content_layout.setColumnStretch(1, 1)
+        content_layout.setAlignment(QtCore.Qt.AlignTop)
 
         row = 0
         for attr_def, attr_instances, values in result:

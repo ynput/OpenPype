@@ -4,11 +4,10 @@ from pathlib import Path
 
 import attr
 
-import openpype.lib
-import openpype.lib.abstract_collect_render
-from openpype.lib.abstract_collect_render import RenderInstance
 from openpype.lib import get_formatted_current_time
 from openpype.pipeline import legacy_io
+from openpype.pipeline import publish
+from openpype.pipeline.publish import RenderInstance
 import openpype.hosts.harmony.api as harmony
 
 
@@ -20,8 +19,7 @@ class HarmonyRenderInstance(RenderInstance):
     leadingZeros = attr.ib(default=3)
 
 
-class CollectFarmRender(openpype.lib.abstract_collect_render.
-                        AbstractCollectRender):
+class CollectFarmRender(publish.AbstractCollectRender):
     """Gather all publishable renders."""
 
     # https://docs.toonboom.com/help/harmony-17/premium/reference/node/output/write-node-image-formats.html

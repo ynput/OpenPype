@@ -7,6 +7,7 @@ from pymongo import UpdateOne
 import qargparse
 from Qt import QtWidgets, QtCore
 
+from openpype.client import get_versions, get_representations
 from openpype import style
 from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.lib import StringTemplate
@@ -197,18 +198,10 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
     def get_data(self, context, versions_count):
         subset = context["subset"]
         asset = context["asset"]
-        anatomy = Anatomy(context["project"]["name"])
+        project_name = context["project"]["name"]
+        anatomy = Anatomy(project_name)
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.Session["AVALON_PROJECT"] = context["project"]["name"]
-        self.dbcon.install()
-
-        versions = list(
-            self.dbcon.find({
-                "type": "version",
-                "parent": {"$in": [subset["_id"]]}
-            })
-        )
+        versions = list(get_versions(project_name, subset_ids=[subset["_id"]]))
 
         versions_by_parent = collections.defaultdict(list)
         for ent in versions:
@@ -267,10 +260,9 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             print(msg)
             return
 
-        repres = list(self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        }))
+        repres = list(get_representations(
+            project_name, version_ids=version_ids
+        ))
 
         self.log.debug(
             "Collected representations to remove ({})".format(len(repres))
@@ -329,7 +321,7 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
         return data
 
-    def main(self, data, remove_publish_folder):
+    def main(self, project_name, data, remove_publish_folder):
         # Size of files.
         size = 0
         if not data:
@@ -366,9 +358,11 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             ))
 
         if mongo_changes_bulk:
-            self.dbcon.bulk_write(mongo_changes_bulk)
-
-        self.dbcon.uninstall()
+            dbcon = AvalonMongoDB()
+            dbcon.Session["AVALON_PROJECT"] = project_name
+            dbcon.install()
+            dbcon.bulk_write(mongo_changes_bulk)
+            dbcon.uninstall()
 
         self._ftrack_delete_versions(data)
 
@@ -458,7 +452,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                 if not data:
                     continue
 
-                size += self.main(data, remove_publish_folder)
+                project_name = context["project"]["name"]
+                size += self.main(project_name, data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))
 
             msg = "Total size of files: " + self.sizeof_fmt(size)
@@ -484,7 +479,7 @@ class CalculateOldVersions(DeleteOldVersions):
         )
     ]
 
-    def main(self, data, remove_publish_folder):
+    def main(self, project_name, data, remove_publish_folder):
         size = 0
 
         if not data:
