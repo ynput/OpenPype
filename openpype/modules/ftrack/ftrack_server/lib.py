@@ -24,7 +24,7 @@ except ImportError:
     from ftrack_api._weakref import WeakMethod
 from openpype_modules.ftrack.lib import get_ftrack_event_mongo_info
 
-from openpype.lib import OpenPypeMongoConnection
+from openpype.client import OpenPypeMongoConnection
 from openpype.api import Logger
 
 TOPIC_STATUS_SERVER = "openpype.event.server.status"

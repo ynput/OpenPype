@@ -15,11 +15,10 @@ from openpype.client import (
     get_asset_by_name,
     get_subset_by_name,
     get_subsets,
-    get_version_by_id,
     get_last_versions,
     get_last_version_by_subset_id,
+    get_last_version_by_subset_name,
     get_representations,
-    get_representation_by_id,
     get_workfile_info,
 )
 from openpype.settings import (
@@ -180,7 +179,7 @@ def with_pipeline_io(func):
     return wrapped
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.is_representation_from_latest")
 def is_latest(representation):
     """Return whether the representation is from latest version
 
@@ -191,49 +190,18 @@ def is_latest(representation):
         bool: Whether the representation is of latest version.
     """
 
-    project_name = legacy_io.active_project()
-    version = get_version_by_id(
-        project_name,
-        representation["parent"],
-        fields=["_id", "type", "parent"]
-    )
-    if version["type"] == "hero_version":
-        return True
+    from openpype.pipeline.context_tools import is_representation_from_latest
 
-    # Get highest version under the parent
-    last_version = get_last_version_by_subset_id(
-        project_name, version["parent"], fields=["_id"]
-    )
-
-    return version["_id"] == last_version["_id"]
+    return is_representation_from_latest(representation)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.load.any_outdated_containers")
 def any_outdated():
     """Return whether the current scene has any outdated content"""
-    from openpype.pipeline import registered_host
 
-    project_name = legacy_io.active_project()
-    checked = set()
-    host = registered_host()
-    for container in host.ls():
-        representation = container['representation']
-        if representation in checked:
-            continue
+    from openpype.pipeline.load import any_outdated_containers
 
-        representation_doc = get_representation_by_id(
-            project_name, representation, fields=["parent"]
-        )
-        if representation_doc and not is_latest(representation_doc):
-            return True
-        elif not representation_doc:
-            log.debug("Container '{objectName}' has an invalid "
-                      "representation, it is missing in the "
-                      "database".format(**container))
-
-        checked.add(representation)
-
-    return False
+    return any_outdated_containers()
 
 
 @deprecated("openpype.pipeline.context_tools.get_current_project_asset")
@@ -313,7 +281,7 @@ def get_linked_assets(asset_doc):
     return list(get_assets(project_name, link_ids))
 
 
-@with_pipeline_io
+@deprecated("openpype.client.get_last_version_by_subset_name")
 def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
@@ -334,6 +302,8 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
     if not project_name:
         if not dbcon:
+            from openpype.pipeline import legacy_io
+
             log.debug("Using `legacy_io` for query.")
             dbcon = legacy_io
             # Make sure is installed
@@ -341,37 +311,9 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
         project_name = dbcon.active_project()
 
-    log.debug((
-        "Getting latest version for Project: \"{}\" Asset: \"{}\""
-        " and Subset: \"{}\""
-    ).format(project_name, asset_name, subset_name))
-
-    # Query asset document id by asset name
-    asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
-    if not asset_doc:
-        log.info(
-            "Asset \"{}\" was not found in Database.".format(asset_name)
-        )
-        return None
-
-    subset_doc = get_subset_by_name(
-        project_name, subset_name, asset_doc["_id"]
+    return get_last_version_by_subset_name(
+        project_name, subset_name, asset_name=asset_name
     )
-    if not subset_doc:
-        log.info(
-            "Subset \"{}\" was not found in Database.".format(subset_name)
-        )
-        return None
-
-    version_doc = get_last_version_by_subset_id(
-        project_name, subset_doc["_id"]
-    )
-    if not version_doc:
-        log.info(
-            "Subset \"{}\" does not have any version yet.".format(subset_name)
-        )
-        return None
-    return version_doc
 
 
 def get_workfile_template_key_from_context(

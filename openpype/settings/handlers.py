@@ -7,6 +7,8 @@ from abc import ABCMeta, abstractmethod
 import six
 
 import openpype.version
+from openpype.client.mongo import OpenPypeMongoConnection
+from openpype.client.entities import get_project_connection, get_project
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -337,9 +339,6 @@ class MongoSettingsHandler(SettingsHandler):
 
     def __init__(self):
         # Get mongo connection
-        from openpype.lib import OpenPypeMongoConnection
-        from openpype.pipeline import AvalonMongoDB
-
         settings_collection = OpenPypeMongoConnection.get_mongo_client()
 
         self._anatomy_keys = None
@@ -362,7 +361,6 @@ class MongoSettingsHandler(SettingsHandler):
         self.collection_name = collection_name
 
         self.collection = settings_collection[database_name][collection_name]
-        self.avalon_db = AvalonMongoDB()
 
         self.system_settings_cache = CacheValues()
         self.project_settings_cache = collections.defaultdict(CacheValues)
@@ -607,16 +605,14 @@ class MongoSettingsHandler(SettingsHandler):
         new_data = data_cache.data_copy()
 
         # Prepare avalon project document
-        collection = self.avalon_db.database[project_name]
-        project_doc = collection.find_one({
-            "type": "project"
-        })
+        project_doc = get_project(project_name)
         if not project_doc:
             raise ValueError((
                 "Project document of project \"{}\" does not exists."
                 " Create project first."
             ).format(project_name))
 
+        collection = get_project_connection(project_name)
         # Project's data
         update_dict_data = {}
         project_doc_data = project_doc.get("data") or {}
@@ -1145,8 +1141,7 @@ class MongoSettingsHandler(SettingsHandler):
                     document, version
                 )
             else:
-                collection = self.avalon_db.database[project_name]
-                project_doc = collection.find_one({"type": "project"})
+                project_doc = get_project(project_name)
                 self.project_anatomy_cache[project_name].update_data(
                     self.project_doc_to_anatomy_data(project_doc),
                     self._current_version

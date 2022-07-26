@@ -104,10 +104,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    hosts = ["aftereffects", "blender", "celaction", "flame", "harmony",
-             "hiero", "houdini", "nuke", "photoshop", "resolve",
-             "standalonepublisher", "traypublisher", "tvpaint", "unreal",
-             "webpublisher"]
     families = ["workfile",
                 "pointcache",
                 "camera",
@@ -160,7 +156,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip", "render.farm"]
+
     default_template_name = "publish"
 
     # Representation context keys that should always be written to
@@ -192,14 +188,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Skipping, there are no representations"
                 " to integrate for instance {}"
             ).format(instance.data["family"]))
-            return
-
-        # Exclude instances that also contain families from exclude families
-        families = set(get_instance_families(instance))
-        exclude = families & set(self.exclude_families)
-        if exclude:
-            self.log.debug("Instance not integrated due to exclude "
-                           "families found: {}".format(", ".join(exclude)))
             return
 
         file_transactions = FileTransaction(log=self.log)
