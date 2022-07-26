@@ -116,12 +116,13 @@ class CreateShotClip(resolve.Creator):
                     "order": 0},
                 "vSyncTrack": {
                     "value": gui_tracks,  # noqa
-                   "type": "QComboBox",
-                   "label": "Hero track",
-                   "target": "ui",
-                   "toolTip": "Select driving track name which should be mastering all others",  # noqa
-                "order": 1}
+                    "type": "QComboBox",
+                    "label": "Hero track",
+                    "target": "ui",
+                    "toolTip": "Select driving track name which should be mastering all others",  # noqa
+                    "order": 1
                 }
+            }
         },
         "publishSettings": {
             "type": "section",
@@ -172,28 +173,31 @@ class CreateShotClip(resolve.Creator):
             "target": "ui",
             "order": 4,
             "value": {
-               "workfileFrameStart": {
-                   "value": 1001,
-                   "type": "QSpinBox",
-                   "label": "Workfiles Start Frame",
-                   "target": "tag",
-                   "toolTip": "Set workfile starting frame number",  # noqa
-                   "order": 0},
-               "handleStart": {
-                   "value": 0,
-                   "type": "QSpinBox",
-                   "label": "Handle start (head)",
-                   "target": "tag",
-                   "toolTip": "Handle at start of clip",  # noqa
-                   "order": 1},
-               "handleEnd": {
-                   "value": 0,
-                   "type": "QSpinBox",
-                   "label": "Handle end (tail)",
-                   "target": "tag",
-                   "toolTip": "Handle at end of clip",  # noqa
-                   "order": 2},
-           }
+                "workfileFrameStart": {
+                    "value": 1001,
+                    "type": "QSpinBox",
+                    "label": "Workfiles Start Frame",
+                    "target": "tag",
+                    "toolTip": "Set workfile starting frame number",  # noqa
+                    "order": 0
+                },
+                "handleStart": {
+                    "value": 0,
+                    "type": "QSpinBox",
+                    "label": "Handle start (head)",
+                    "target": "tag",
+                    "toolTip": "Handle at start of clip",  # noqa
+                    "order": 1
+                },
+                "handleEnd": {
+                    "value": 0,
+                    "type": "QSpinBox",
+                    "label": "Handle end (tail)",
+                    "target": "tag",
+                    "toolTip": "Handle at end of clip",  # noqa
+                    "order": 2
+                }
+            }
         }
     }
 
@@ -229,8 +233,10 @@ class CreateShotClip(resolve.Creator):
         v_sync_track = widget.result["vSyncTrack"]["value"]
 
         # sort selected trackItems by
-        sorted_selected_track_items = list()
-        unsorted_selected_track_items = list()
+        sorted_selected_track_items = []
+        unsorted_selected_track_items = []
+        print("_____ selected ______")
+        print(self.selected)
         for track_item_data in self.selected:
             if track_item_data["track"]["name"] in v_sync_track:
                 sorted_selected_track_items.append(track_item_data)
@@ -253,10 +259,10 @@ class CreateShotClip(resolve.Creator):
             "sq_frame_start": sq_frame_start,
             "sq_markers": sq_markers
         }
-
+        print(kwargs)
         for i, track_item_data in enumerate(sorted_selected_track_items):
             self.rename_index = i
-
+            self.log.info(track_item_data)
             # convert track item to timeline media pool item
             track_item = resolve.PublishClip(
                 self, track_item_data, **kwargs).convert()

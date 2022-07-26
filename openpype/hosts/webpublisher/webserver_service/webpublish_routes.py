@@ -10,9 +10,9 @@ from aiohttp.web_response import Response
 from openpype.client import (
     get_projects,
     get_assets,
+    OpenPypeMongoConnection,
 )
 from openpype.lib import (
-    OpenPypeMongoConnection,
     PypeLogger,
 )
 from openpype.lib.remote_publish import (

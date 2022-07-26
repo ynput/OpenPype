@@ -1,6 +1,5 @@
 import os
 from Qt import QtWidgets
-from bson.objectid import ObjectId
 
 import pyblish.api
 
@@ -13,8 +12,8 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    registered_host,
 )
+from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.photoshop
 
 from . import lib
@@ -30,7 +29,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def check_inventory():
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
     # Warn about outdated containers.

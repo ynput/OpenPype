@@ -17,11 +17,8 @@ class RenderCreator(Creator):
 
     create_allow_context_change = True
 
-    def __init__(
-        self, create_context, system_settings, project_settings, headless=False
-    ):
-        super(RenderCreator, self).__init__(create_context, system_settings,
-                                            project_settings, headless)
+    def __init__(self, project_settings, *args, **kwargs):
+        super(RenderCreator, self).__init__(project_settings, *args, **kwargs)
         self._default_variants = (project_settings["aftereffects"]
                                                   ["create"]
                                                   ["RenderCreator"]

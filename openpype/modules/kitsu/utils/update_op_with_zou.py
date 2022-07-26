@@ -10,6 +10,12 @@ from gazu.task import (
     all_tasks_for_shot,
 )
 
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_asset_by_id,
+    get_asset_by_name,
+)
 from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib import create_project
@@ -33,6 +39,20 @@ def create_op_asset(gazu_entity: dict) -> dict:
     }
 
 
+def get_kitsu_project_name(project_id: str) -> str:
+    """Get project name based on project id in kitsu.
+
+    Args:
+        project_id (str): UUID of project in Kitsu.
+
+    Returns:
+        str: Name of Kitsu project.
+    """
+
+    project = gazu.project.get_project(project_id)
+    return project["name"]
+
+
 def set_op_project(dbcon: AvalonMongoDB, project_id: str):
     """Set project context.
 
@@ -40,9 +60,8 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
         dbcon (AvalonMongoDB): Connection to DB
         project_id (str): Project zou ID
     """
-    project = gazu.project.get_project(project_id)
-    project_name = project["name"]
-    dbcon.Session["AVALON_PROJECT"] = project_name
+
+    dbcon.Session["AVALON_PROJECT"] = get_kitsu_project_name(project_id)
 
 
 def update_op_assets(
@@ -72,9 +91,7 @@ def update_op_assets(
         if not item_doc:  # Create asset
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
-            item_doc = dbcon.find_one(
-                {"type": "asset", "_id": insert_result.inserted_id}
-            )
+            item_doc = get_asset_by_id(project_name, insert_result.inserted_id)
 
         # Update asset
         item_data = deepcopy(item_doc["data"])
@@ -82,22 +99,37 @@ def update_op_assets(
         item_data["zou"] = item
 
         # == Asset settings ==
-        # Frame in, fallback on 0
-        frame_in = int(item_data.get("frame_in") or 0)
+        # Frame in, fallback to project's value or default value (1001)
+        # TODO: get default from settings/project_anatomy/attributes.json
+        try:
+            frame_in = int(
+                item_data.pop(
+                    "frame_in", project_doc["data"].get("frameStart")
+                )
+            )
+        except (TypeError, ValueError):
+            frame_in = 1001
         item_data["frameStart"] = frame_in
-        item_data.pop("frame_in", None)
-        # Frame out, fallback on frame_in + duration
-        frames_duration = int(item.get("nb_frames") or 1)
-        frame_out = (
-            item_data["frame_out"]
-            if item_data.get("frame_out")
-            else frame_in + frames_duration
-        )
-        item_data["frameEnd"] = int(frame_out)
-        item_data.pop("frame_out", None)
-        # Fps, fallback to project's value when entity fps is deleted
-        if not item_data.get("fps") and item_doc["data"].get("fps"):
-            item_data["fps"] = project_doc["data"]["fps"]
+        # Frames duration, fallback on 0
+        try:
+            frames_duration = int(item_data.pop("nb_frames", 0))
+        except (TypeError, ValueError):
+            frames_duration = 0
+        # Frame out, fallback on frame_in + duration or project's value or 1001
+        frame_out = item_data.pop("frame_out", None)
+        if not frame_out:
+            frame_out = frame_in + frames_duration
+        try:
+            frame_out = int(frame_out)
+        except (TypeError, ValueError):
+            frame_out = 1001
+        item_data["frameEnd"] = frame_out
+        # Fps, fallback to project's value or default value (25.0)
+        try:
+            fps = float(item_data.get("fps", project_doc["data"].get("fps")))
+        except (TypeError, ValueError):
+            fps = 25.0
+        item_data["fps"] = fps
 
         # Tasks
         tasks_list = []
@@ -106,9 +138,8 @@ def update_op_assets(
             tasks_list = all_tasks_for_asset(item)
         elif item_type == "Shot":
             tasks_list = all_tasks_for_shot(item)
-            # TODO frame in and out
         item_data["tasks"] = {
-            t["task_type_name"]: {"type": t["task_type_name"]}
+            t["task_type_name"]: {"type": t["task_type_name"], "zou": t}
             for t in tasks_list
         }
 
@@ -123,17 +154,23 @@ def update_op_assets(
             parent_zou_id = substitute_parent_item["parent_id"]
         else:
             parent_zou_id = (
-                item.get("parent_id")
+                # For Asset, put under asset type directory
+                item.get("entity_type_id")
+                if item_type == "Asset"
+                else None
+                # Else, fallback on usual hierarchy
+                or item.get("parent_id")
                 or item.get("episode_id")
                 or item.get("source_id")
-            )  # TODO check consistency
+            )
 
-        # Substitute Episode and Sequence by Shot
-        substitute_item_type = (
-            "shots"
-            if item_type in ["Episode", "Sequence"]
-            else f"{item_type.lower()}s"
-        )
+        # Substitute item type for general classification (assets or shots)
+        if item_type in ["Asset", "AssetType"]:
+            substitute_item_type = "assets"
+        elif item_type in ["Episode", "Sequence"]:
+            substitute_item_type = "shots"
+        else:
+            substitute_item_type = f"{item_type.lower()}s"
         entity_parent_folders = [
             f
             for f in project_module_settings["entities_root"]
@@ -147,15 +184,33 @@ def update_op_assets(
             asset_doc_ids[parent_zou_id]["_id"] if parent_zou_id else None
         )
         if visual_parent_doc_id is None:
-            # Find root folder doc
-            root_folder_doc = dbcon.find_one(
-                {
-                    "type": "asset",
-                    "name": entity_parent_folders[-1],
-                    "data.root_of": substitute_item_type,
-                },
-                ["_id"],
+            # Find root folder docs
+            root_folder_docs = get_assets(
+                project_name,
+                asset_names=[entity_parent_folders[-1]],
+                fields=["_id", "data.root_of"],
             )
+            # NOTE: Not sure why it's checking for entity type?
+            #   OP3 does not support multiple assets with same names so type
+            #       filtering is irelevant.
+            # This way mimics previous implementation:
+            # ```
+            # root_folder_doc = dbcon.find_one(
+            #     {
+            #         "type": "asset",
+            #         "name": entity_parent_folders[-1],
+            #         "data.root_of": substitute_item_type,
+            #     },
+            #     ["_id"],
+            # )
+            # ```
+            root_folder_doc = None
+            for folder_doc in root_folder_docs:
+                root_of = folder_doc.get("data", {}).get("root_of")
+                if root_of == substitute_item_type:
+                    root_folder_doc = folder_doc
+                    break
+
             if root_folder_doc:
                 visual_parent_doc_id = root_folder_doc["_id"]
 
@@ -170,7 +225,14 @@ def update_op_assets(
 
             # Get parent entity
             parent_entity = parent_doc["data"]["zou"]
-            parent_zou_id = parent_entity["parent_id"]
+            parent_zou_id = parent_entity.get("parent_id")
+
+        if item_type in ["Shot", "Sequence"]:
+            # Name with parents hierarchy "({episode}_){sequence}_{shot}"
+            # to avoid duplicate name issue
+            item_name = "_".join(item_data["parents"] + [item_doc["name"]])
+        else:
+            item_name = item_doc["name"]
 
         # Set root folders parents
         item_data["parents"] = entity_parent_folders + item_data["parents"]
@@ -185,9 +247,9 @@ def update_op_assets(
                     item_doc["_id"],
                     {
                         "$set": {
-                            "name": item["name"],
+                            "name": item_name,
                             "data": item_data,
-                            "parent": asset_doc_ids[item["project_id"]]["_id"],
+                            "parent": project_doc["_id"],
                         }
                     },
                 )
@@ -208,7 +270,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
-    project_doc = dbcon.database[project_name].find_one({"type": "project"})
+    project_doc = get_project(project_name)
     if not project_doc:
         print(f"Creating project '{project_name}'")
         project_doc = create_project(project_name, project_name, dbcon=dbcon)
@@ -229,9 +291,9 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_data.update(
         {
             "code": project_code,
-            "fps": project["fps"],
-            "resolutionWidth": project["resolution"].split("x")[0],
-            "resolutionHeight": project["resolution"].split("x")[1],
+            "fps": float(project["fps"]),
+            "resolutionWidth": int(project["resolution"].split("x")[0]),
+            "resolutionHeight": int(project["resolution"].split("x")[1]),
             "zou_id": project["id"],
         }
     )
@@ -278,6 +340,11 @@ def sync_all_projects(login: str, password: str):
 def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     """Update OP project in DB with Zou data.
 
+    `root_of` is meant to sort entities by type for a better readability in
+    the data tree. It puts all shot like (Shot and Episode and Sequence) and
+    asset entities under two different root folders or hierarchy, defined in
+    settings.
+
     Args:
         dbcon (AvalonMongoDB): MongoDB connection
         project (dict): Project dict got using gazu.
@@ -292,12 +359,17 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
+    all_asset_types = gazu.asset.all_asset_types_for_project(project)
     all_episodes = gazu.shot.all_episodes_for_project(project)
     all_seqs = gazu.shot.all_sequences_for_project(project)
     all_shots = gazu.shot.all_shots_for_project(project)
     all_entities = [
         item
-        for item in all_assets + all_episodes + all_seqs + all_shots
+        for item in all_assets
+        + all_asset_types
+        + all_episodes
+        + all_seqs
+        + all_shots
         if naming_pattern.match(item["name"])
     ]
 
@@ -305,26 +377,44 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     bulk_writes.append(write_project_to_op(project, dbcon))
 
     # Try to find project document
-    dbcon.Session["AVALON_PROJECT"] = project["name"]
-    project_doc = dbcon.find_one({"type": "project"})
+    project_name = project["name"]
+    dbcon.Session["AVALON_PROJECT"] = project_name
+    project_doc = get_project(project_name)
 
     # Query all assets of the local project
     zou_ids_and_asset_docs = {
         asset_doc["data"]["zou"]["id"]: asset_doc
-        for asset_doc in dbcon.find({"type": "asset"})
+        for asset_doc in get_assets(project_name)
         if asset_doc["data"].get("zou", {}).get("id")
     }
     zou_ids_and_asset_docs[project["id"]] = project_doc
 
     # Create entities root folders
-    project_module_settings = get_project_settings(project["name"])["kitsu"]
+    project_module_settings = get_project_settings(project_name)["kitsu"]
     for entity_type, root in project_module_settings["entities_root"].items():
         parent_folders = root.split("/")
         direct_parent_doc = None
         for i, folder in enumerate(parent_folders, 1):
-            parent_doc = dbcon.find_one(
-                {"type": "asset", "name": folder, "data.root_of": entity_type}
+            parent_doc = get_asset_by_name(
+                project_name, folder, fields=["_id", "data.root_of"]
             )
+            # NOTE: Not sure why it's checking for entity type?
+            #   OP3 does not support multiple assets with same names so type
+            #       filtering is irelevant.
+            #   Also all of the entities could find be queried at once using
+            #       'get_assets'.
+            # This way mimics previous implementation:
+            # ```
+            # parent_doc = dbcon.find_one(
+            #   {"type": "asset", "name": folder, "data.root_of": entity_type}
+            # )
+            # ```
+            if (
+                parent_doc
+                and parent_doc.get("data", {}).get("root_of") != entity_type
+            ):
+                parent_doc = None
+
             if not parent_doc:
                 direct_parent_doc = dbcon.insert_one(
                     {
@@ -334,21 +424,20 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
                         "data": {
                             "root_of": entity_type,
                             "parents": parent_folders[:i],
-                            "visualParent": direct_parent_doc,
+                            "visualParent": direct_parent_doc.inserted_id
+                            if direct_parent_doc
+                            else None,
                             "tasks": {},
                         },
                     }
                 )
 
     # Create
-    to_insert = []
-    to_insert.extend(
-        [
-            create_op_asset(item)
-            for item in all_entities
-            if item["id"] not in zou_ids_and_asset_docs.keys()
-        ]
-    )
+    to_insert = [
+        create_op_asset(item)
+        for item in all_entities
+        if item["id"] not in zou_ids_and_asset_docs.keys()
+    ]
     if to_insert:
         # Insert doc in DB
         dbcon.insert_many(to_insert)
@@ -357,7 +446,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         zou_ids_and_asset_docs.update(
             {
                 asset_doc["data"]["zou"]["id"]: asset_doc
-                for asset_doc in dbcon.find({"type": "asset"})
+                for asset_doc in get_assets(project_name)
                 if asset_doc["data"].get("zou")
             }
         )

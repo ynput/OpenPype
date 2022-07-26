@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import pyblish.api
 from openpype.lib import (
@@ -8,8 +9,6 @@ from openpype.lib import (
 
     run_subprocess,
     path_to_subprocess_arg,
-
-    execute,
 )
 
 
@@ -22,14 +21,34 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d", "prerender",
         "source", "plate", "take"
     ]
-    hosts = ["shell", "fusion", "resolve"]
+    hosts = ["shell", "fusion", "resolve", "traypublisher"]
     enabled = False
 
     # presetable attribute
     ffmpeg_args = None
 
     def process(self, instance):
-        self.log.info("subset {}".format(instance.data['subset']))
+        subset_name = instance.data["subset"]
+        instance_repres = instance.data.get("representations")
+        if not instance_repres:
+            self.log.debug((
+                "Instance {} does not have representations. Skipping"
+            ).format(subset_name))
+            return
+
+        self.log.info(
+            "Processing instance with subset name {}".format(subset_name)
+        )
+
+        # Skip if instance have 'review' key in data set to 'False'
+        if not self._is_review_instance(instance):
+            self.log.info("Skipping - no review set on instance.")
+            return
+
+        # Check if already has thumbnail created
+        if self._already_has_thumbnail(instance_repres):
+            self.log.info("Thumbnail representation already present.")
+            return
 
         # skip crypto passes.
         # TODO: This is just a quick fix and has its own side-effects - it is
@@ -37,16 +56,29 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         #       This must be solved properly, maybe using tags on
         #       representation that can be determined much earlier and
         #       with better precision.
-        if 'crypto' in instance.data['subset'].lower():
+        if "crypto" in subset_name.lower():
             self.log.info("Skipping crypto passes.")
             return
 
-        # Skip if review not set.
-        if not instance.data.get("review", True):
-            self.log.info("Skipping - no review set on instance.")
+        filtered_repres = self._get_filtered_repres(instance)
+        if not filtered_repres:
+            self.log.info((
+                "Instance don't have representations"
+                " that can be used as source for thumbnail. Skipping"
+            ))
             return
 
-        filtered_repres = self._get_filtered_repres(instance)
+        # Create temp directory for thumbnail
+        # - this is to avoid "override" of source file
+        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        self.log.debug(
+            "Create temp directory {} for thumbnail".format(dst_staging)
+        )
+        # Store new staging to cleanup paths
+        instance.context.data["cleanupFullPaths"].append(dst_staging)
+
+        thumbnail_created = False
+        oiio_supported = is_oiio_supported()
         for repre in filtered_repres:
             repre_files = repre["files"]
             if not isinstance(repre_files, (list, tuple)):
@@ -55,47 +87,43 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 file_index = int(float(len(repre_files)) * 0.5)
                 input_file = repre_files[file_index]
 
-            stagingdir = os.path.normpath(repre["stagingDir"])
-
-            full_input_path = os.path.join(stagingdir, input_file)
+            src_staging = os.path.normpath(repre["stagingDir"])
+            full_input_path = os.path.join(src_staging, input_file)
             self.log.info("input {}".format(full_input_path))
             filename = os.path.splitext(input_file)[0]
-            if not filename.endswith('.'):
-                filename += "."
-            jpeg_file = filename + "jpg"
-            full_output_path = os.path.join(stagingdir, jpeg_file)
+            jpeg_file = filename + ".jpg"
+            full_output_path = os.path.join(dst_staging, jpeg_file)
 
-            thumbnail_created = False
-            # Try to use FFMPEG if OIIO is not supported (for cases when
-            # oiiotool isn't available)
-            if not is_oiio_supported():
-                thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
-            else:
-                # Check if the file can be read by OIIO
-                oiio_tool_path = get_oiio_tools_path()
-                args = [
-                    oiio_tool_path, "--info", "-i", full_output_path
-                ]
-                returncode = execute(args, silent=True)
+            if oiio_supported:
+                self.log.info("Trying to convert with OIIO")
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                if returncode == 0:
-                    self.log.info("Input can be read by OIIO, converting with oiiotool now.")   # noqa
-                    thumbnail_created = self.create_thumbnail_oiio(full_input_path, full_output_path) # noqa
-                else:
-                    self.log.info("Converting with FFMPEG because input can't be read by OIIO.")    # noqa
-                    thumbnail_created = self.create_thumbnail_ffmpeg(full_input_path, full_output_path) # noqa
+                thumbnail_created = self.create_thumbnail_oiio(
+                    full_input_path, full_output_path
+                )
 
-            # Skip the rest of the process if the thumbnail wasn't created
+            # Try to use FFMPEG if OIIO is not supported or for cases when
+            #    oiiotool isn't available
             if not thumbnail_created:
-                self.log.warning("Thumbanil has not been created.")
-                return
+                if oiio_supported:
+                    self.log.info((
+                        "Converting with FFMPEG because input"
+                        " can't be read by OIIO."
+                    ))
+
+                thumbnail_created = self.create_thumbnail_ffmpeg(
+                    full_input_path, full_output_path
+                )
+
+            # Skip representation and try next one if  wasn't created
+            if not thumbnail_created:
+                continue
 
             new_repre = {
                 "name": "thumbnail",
                 "ext": "jpg",
                 "files": jpeg_file,
-                "stagingDir": stagingdir,
+                "stagingDir": dst_staging,
                 "thumbnail": True,
                 "tags": ["thumbnail"]
             }
@@ -107,6 +135,23 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             instance.data["representations"].append(new_repre)
             # There is no need to create more then one thumbnail
             break
+
+        if not thumbnail_created:
+            self.log.warning("Thumbanil has not been created.")
+
+    def _is_review_instance(self, instance):
+        # TODO: We should probably handle "not creating" of thumbnail
+        #   other way then checking for "review" key on instance data?
+        if instance.data.get("review", True):
+            return True
+        return False
+
+    def _already_has_thumbnail(self, repres):
+        for repre in repres:
+            self.log.info("repre {}".format(repre))
+            if repre["name"] == "thumbnail":
+                return True
+        return False
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
@@ -130,12 +175,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def create_thumbnail_oiio(self, src_path, dst_path):
         self.log.info("outputting {}".format(dst_path))
         oiio_tool_path = get_oiio_tools_path()
-        oiio_cmd = [oiio_tool_path, "-a",
-                    src_path, "-o",
-                    dst_path
-                    ]
-        subprocess_exr = " ".join(oiio_cmd)
-        self.log.info(f"running: {subprocess_exr}")
+        oiio_cmd = [
+            oiio_tool_path,
+            "-a", src_path,
+            "-o", dst_path
+        ]
+        self.log.info("running: {}".format(" ".join(oiio_cmd)))
         try:
             run_subprocess(oiio_cmd, logger=self.log)
             return True

@@ -1,7 +1,6 @@
-from bson.objectid import ObjectId
-
 import pyblish.api
 
+from openpype.client import get_representations
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -39,23 +38,29 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
             return
 
         loaded_versions = []
-        _containers = list(host.ls())
-        _repr_ids = [ObjectId(c["representation"]) for c in _containers]
-        repre_docs = legacy_io.find(
-            {"_id": {"$in": _repr_ids}},
-            projection={"_id": 1, "parent": 1}
+        containers = list(host.ls())
+        repre_ids = {
+            container["representation"]
+            for container in containers
+        }
+
+        project_name = legacy_io.active_project()
+        repre_docs = get_representations(
+            project_name,
+            representation_ids=repre_ids,
+            fields=["_id", "parent"]
         )
-        version_by_repr = {
-            str(doc["_id"]): doc["parent"]
+        repre_doc_by_str_id = {
+            str(doc["_id"]): doc
             for doc in repre_docs
         }
 
         # QUESTION should we add same representation id when loaded multiple
         #   times?
-        for con in _containers:
+        for con in containers:
             repre_id = con["representation"]
-            version_id = version_by_repr.get(repre_id)
-            if version_id is None:
+            repre_doc = repre_doc_by_str_id.get(repre_id)
+            if repre_doc is None:
                 self.log.warning((
                     "Skipping container,"
                     " did not find representation document. {}"
@@ -66,8 +71,8 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
             # may have more then one representation that are same version
             version = {
                 "subsetName": con["name"],
-                "representation": ObjectId(repre_id),
-                "version": version_id,
+                "representation": repre_doc["_id"],
+                "version": repre_doc["parent"],
             }
             loaded_versions.append(version)
 
