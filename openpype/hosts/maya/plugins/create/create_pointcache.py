@@ -11,7 +11,6 @@ class CreatePointCache(plugin.Creator):
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
-    
     write_color_sets = False
 
     def __init__(self, *args, **kwargs):
