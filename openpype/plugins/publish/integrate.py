@@ -621,6 +621,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             template_filled = anatomy_filled[template_name]["path"]
             repre_context = template_filled.used_values
+
+            # Make sure context contains frame
+            # NOTE: Frame would not be available only if template does not
+            #   contain '{frame}' in template -> Do we want support it?
+            if not is_udim:
+                repre_context["frame"] = first_index_padded
+
             self.log.debug("Template filled: {}".format(str(template_filled)))
             dst_collection = assemble([os.path.normpath(template_filled)])
 
@@ -717,9 +724,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # Imprint shortcut to context for performance reasons.
             "context": repre_context
         }
-
-        if is_sequence_representation and repre.get("frameStart") is not None:
-            representation["context"]["frame"] = template_data["frame"]
 
         return {
             "representation": representation,
