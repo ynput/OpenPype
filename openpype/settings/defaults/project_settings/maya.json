@@ -136,6 +136,7 @@
         },
         "CreatePointCache": {
             "enabled": true,
+            "write_color_sets": false,
             "defaults": [
                 "Main"
             ]

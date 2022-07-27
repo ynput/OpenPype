@@ -12,13 +12,16 @@ class CreatePointCache(plugin.Creator):
     family = "pointcache"
     icon = "gears"
 
+    write_color_sets = False 
+
+
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
 
         # Add animation data
         self.data.update(lib.collect_animation_data())
 
-        self.data["writeColorSets"] = False  # Vertex colors with the geometry.
+        self.data["writeColorSets"] = self.write_color_sets  # Vertex colors with the geometry.
         self.data["writeFaceSets"] = False  # Vertex colors with the geometry.
         self.data["renderableOnly"] = False  # Only renderable visible shapes
         self.data["visibleOnly"] = False     # only nodes that are visible
