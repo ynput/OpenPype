@@ -526,7 +526,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
         # required representation keys
-        files = repre['files']
+        files = repre["files"]
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
@@ -564,11 +564,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             )
 
         self.log.debug("Anatomy template name: {}".format(template_name))
-        anatomy = instance.context.data['anatomy']
+        anatomy = instance.context.data["anatomy"]
         publish_template_category = anatomy.templates[template_name]
         template = os.path.normpath(publish_template_category["path"])
 
         is_udim = bool(repre.get("udim"))
+
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
             # Collection of files (sequence)
@@ -704,13 +705,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       we should simplify/clarify difference between data above
         #       and the actual representation entity for the database
         data = repre.get("data", {})
-        data.update({'path': published_path, 'template': template})
+        data.update({"path": published_path, "template": template})
         representation = {
             "_id": repre_id,
             "schema": "openpype:representation-2.0",
             "type": "representation",
             "parent": version["_id"],
-            "name": repre['name'],
+            "name": repre["name"],
             "data": data,
 
             # Imprint shortcut to context for performance reasons.
@@ -718,7 +719,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         }
 
         if is_sequence_representation and repre.get("frameStart") is not None:
-            representation['context']['frame'] = template_data["frame"]
+            representation["context"]["frame"] = template_data["frame"]
 
         return {
             "representation": representation,
@@ -779,7 +780,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 version_data[key] = instance.data[key]
 
         # Include instance.data[versionData] directly
-        version_data_instance = instance.data.get('versionData')
+        version_data_instance = instance.data.get("versionData")
         if version_data_instance:
             version_data.update(version_data_instance)
 
