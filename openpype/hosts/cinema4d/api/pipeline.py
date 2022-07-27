@@ -3,6 +3,7 @@ import errno
 import logging
 import contextlib
 
+import c4d
 
 import pyblish.api
 
@@ -27,6 +28,8 @@ from .workio import (
     work_root,
     current_file
 )
+
+from . import lib
 
 log = logging.getLogger("openpype.hosts.cinema4d")
 
@@ -80,12 +83,108 @@ class Cinema4DHost(HostBase, IWorkfileHost, ILoadHost):
         return file_extensions()
 
     def get_containers(self):
-        return 
+        return ls()
 
     @contextlib.contextmanager
     def maintained_selection(self):
-        for x in []:
+        with lib.maintained_selection():
             yield
+
+def parse_container(container):
+    """Return the container node's full container data.
+
+    Args:
+        container (str): A container node name.
+
+    Returns:
+        dict: The container schema data for this container node.
+
+    """
+    data = lib.read(container)
+
+    # Backwards compatibility pre-schemas for containers
+    data["schema"] = data.get("schema", "openpype:container-1.0")
+
+    # Append transient data
+    data["objectName"] = container.GetName()
+
+    return data
+
+def ls(doc=None):
+    ids = {AVALON_CONTAINER_ID}
+    if not doc:
+        doc = c4d.documents.GetActiveDocument()
+    for obj in lib.recurse_hierarchy(doc.GetFirstObject()):
+        obj_attrs = lib.ObjectAttrs(obj)
+        print(obj_attrs.get("id"))
+        if obj_attrs.get("id") in ids:
+            yield obj
+
+
+def containerise(name,
+                 namespace,
+                 nodes,
+                 context,
+                 loader=None,
+                 suffix="CON"
+                 ):
+    """Bundle `nodes` into an assembly and imprint it with metadata
+
+    Containerisation enables a tracking of version, author and origin
+    for loaded assets.
+
+    Arguments:
+        name (str): Name of resulting assembly
+        namespace (str): Namespace under which to host container
+        nodes (list): Long names of nodes to containerise
+        context (dict): Asset information
+        loader (str, optional): Name of loader used to produce this container.
+        suffix (str, optional): Suffix of container, defaults to `_CON`.
+
+    Returns:
+        container (str): Name of container assembly
+
+    """
+    doc = nodes[0].GetDocument()
+
+    container = c4d.BaseObject(c4d.Oselection)
+    doc.InsertObject(container)
+    container_attrs = lib.ObjectAttrs(container)
+    container_attrs["SELECTIONOBJECT_LIST"] = nodes
+    container.SetName("%s_%s_%s" % (namespace, name, suffix))
+
+    data = [
+        ("schema", "openpype:container-2.0"),
+        ("id", AVALON_CONTAINER_ID),
+        ("name", name),
+        ("namespace", namespace),
+        ("loader", str(loader)),
+        ("representation", context["representation"]["_id"]),
+    ]
+
+    for key, value in data:
+        if not value:
+            continue
+
+        container_attrs.add_attr(key, value, exists_ok=True)
+
+    main_container = None
+    for path, obj in lib.recurse_hierarchy(doc.GetFirstObject()):
+        if path.match("*AVALON_CONTAINERS") and obj.GetType() == c4d.Oselection:
+            main_container = obj
+            break
+
+    if not main_container:
+        main_container = c4d.BaseObject(c4d.Oselection)
+        doc.InsertObject(main_container)
+        main_container.SetName("AVALON_CONTAINERS")
+        layer = lib.add_update_layer("__containers__", doc=doc, data={"manager":False})
+        lib.add_object_to_layer("__containers__", main_container)
+
+    main_container[c4d.SELECTIONOBJECT_LIST].InsertObject(container)
+    lib.add_object_to_layer("__containers__", container)
+    c4d.EventAdd()
+    return container
 
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
