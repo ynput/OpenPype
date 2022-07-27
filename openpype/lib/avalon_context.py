@@ -847,7 +847,7 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
 
 
 @with_pipeline_io
-def collect_last_version_repres(asset_entities):
+def collect_last_version_repres(asset_docs):
     """Collect subsets, versions and representations for asset_entities.
 
     Args:
@@ -880,64 +880,56 @@ def collect_last_version_repres(asset_entities):
     ```
     """
 
-    if not asset_entities:
-        return {}
+    output = {}
+    if not asset_docs:
+        return output
 
-    asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
+    asset_docs_by_ids = {asset["_id"]: asset for asset in asset_docs}
 
-    subsets = list(legacy_io.find({
-        "type": "subset",
-        "parent": {"$in": list(asset_entity_by_ids.keys())}
-    }))
+    project_name = legacy_io.active_project()
+    subsets = list(get_subsets(
+        project_name, asset_ids=asset_docs_by_ids.keys()
+    ))
     subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
 
-    sorted_versions = list(legacy_io.find({
-        "type": "version",
-        "parent": {"$in": list(subset_entity_by_ids.keys())}
-    }).sort("name", -1))
+    last_version_by_subset_id = get_last_versions(
+        project_name, subset_entity_by_ids.keys()
+    )
+    last_version_docs_by_id = {
+        version["_id"]: version
+        for version in last_version_by_subset_id.values()
+    }
+    repre_docs = get_representations(
+        project_name, version_ids=last_version_docs_by_id.keys()
+    )
 
-    subset_id_with_latest_version = []
-    last_versions_by_id = {}
-    for version in sorted_versions:
-        subset_id = version["parent"]
-        if subset_id in subset_id_with_latest_version:
-            continue
-        subset_id_with_latest_version.append(subset_id)
-        last_versions_by_id[version["_id"]] = version
+    for repre_doc in repre_docs:
+        version_id = repre_doc["parent"]
+        version_doc = last_version_docs_by_id[version_id]
 
-    repres = legacy_io.find({
-        "type": "representation",
-        "parent": {"$in": list(last_versions_by_id.keys())}
-    })
+        subset_id = version_doc["parent"]
+        subset_doc = subset_entity_by_ids[subset_id]
 
-    output = {}
-    for repre in repres:
-        version_id = repre["parent"]
-        version = last_versions_by_id[version_id]
-
-        subset_id = version["parent"]
-        subset = subset_entity_by_ids[subset_id]
-
-        asset_id = subset["parent"]
-        asset = asset_entity_by_ids[asset_id]
+        asset_id = subset_doc["parent"]
+        asset_doc = asset_docs_by_ids[asset_id]
 
         if asset_id not in output:
             output[asset_id] = {
-                "asset_entity": asset,
+                "asset_entity": asset_doc,
                 "subsets": {}
             }
 
         if subset_id not in output[asset_id]["subsets"]:
             output[asset_id]["subsets"][subset_id] = {
-                "subset_entity": subset,
+                "subset_entity": subset_doc,
                 "version": {
-                    "version_entity": version,
+                    "version_entity": version_doc,
                     "repres": []
                 }
             }
 
         output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-            repre
+            repre_doc
         )
 
     return output
