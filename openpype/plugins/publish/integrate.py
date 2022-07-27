@@ -10,6 +10,11 @@ from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 
 import openpype.api
+from openpype.client import (
+    get_representations,
+    get_subset_by_name,
+    get_version_by_name,
+)
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
@@ -156,7 +161,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsdOverride",
                 "simpleUnrealTexture"
                 ]
-    exclude_families = ["clip", "render.farm"]
+
     default_template_name = "publish"
 
     # Representation context keys that should always be written to
@@ -188,14 +193,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Skipping, there are no representations"
                 " to integrate for instance {}"
             ).format(instance.data["family"]))
-            return
-
-        # Exclude instances that also contain families from exclude families
-        families = set(get_instance_families(instance))
-        exclude = families & set(self.exclude_families)
-        if exclude:
-            self.log.debug("Instance not integrated due to exclude "
-                           "families found: {}".format(", ".join(exclude)))
             return
 
         file_transactions = FileTransaction(log=self.log)
@@ -274,6 +271,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
+        project_name = legacy_io.active_project()
+
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
             self.log.info((
@@ -289,19 +288,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_name = self.get_template_name(instance)
 
-        subset, subset_writes = self.prepare_subset(instance)
-        version, version_writes = self.prepare_version(instance, subset)
+        subset, subset_writes = self.prepare_subset(instance, project_name)
+        version, version_writes = self.prepare_version(
+            instance, subset, project_name
+        )
         instance.data["versionEntity"] = version
 
         # Get existing representations (if any)
         existing_repres_by_name = {
-            repres["name"].lower(): repres for repres in legacy_io.find(
-                {
-                    "parent": version["_id"],
-                    "type": "representation"
-                },
-                # Only care about id and name of existing representations
-                projection={"_id": True, "name": True}
+            repre_doc["name"].lower(): repre_doc
+            for repre_doc in get_representations(
+                project_name,
+                version_ids=[version["_id"]],
+                fields=["_id", "name"]
             )
         }
 
@@ -426,17 +425,15 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Registered {} representations"
                       "".format(len(prepared_representations)))
 
-    def prepare_subset(self, instance):
-        asset = instance.data.get("assetEntity")
+    def prepare_subset(self, instance, project_name):
+        asset_doc = instance.data.get("assetEntity")
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
         # Get existing subset if it exists
-        subset = legacy_io.find_one({
-            "type": "subset",
-            "parent": asset["_id"],
-            "name": subset_name
-        })
+        subset_doc = get_subset_by_name(
+            project_name, subset_name, asset_doc["_id"]
+        )
 
         # Define subset data
         data = {
@@ -448,68 +445,68 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             data["subsetGroup"] = subset_group
 
         bulk_writes = []
-        if subset is None:
+        if subset_doc is None:
             # Create a new subset
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
-            subset = {
+            subset_doc = {
                 "_id": ObjectId(),
                 "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": data,
-                "parent": asset["_id"]
+                "parent": asset_doc["_id"]
             }
-            bulk_writes.append(InsertOne(subset))
+            bulk_writes.append(InsertOne(subset_doc))
 
         else:
             # Update existing subset data with new data and set in database.
             # We also change the found subset in-place so we don't need to
             # re-query the subset afterwards
-            subset["data"].update(data)
+            subset_doc["data"].update(data)
             bulk_writes.append(UpdateOne(
-                {"type": "subset", "_id": subset["_id"]},
+                {"type": "subset", "_id": subset_doc["_id"]},
                 {"$set": {
-                    "data": subset["data"]
+                    "data": subset_doc["data"]
                 }}
             ))
 
         self.log.info("Prepared subset: {}".format(subset_name))
-        return subset, bulk_writes
+        return subset_doc, bulk_writes
 
-    def prepare_version(self, instance, subset):
-
+    def prepare_version(self, instance, subset_doc, project_name):
         version_number = instance.data["version"]
 
-        version = {
+        version_doc = {
             "schema": "openpype:version-3.0",
             "type": "version",
-            "parent": subset["_id"],
+            "parent": subset_doc["_id"],
             "name": version_number,
             "data": self.create_version_data(instance)
         }
 
-        existing_version = legacy_io.find_one({
-            'type': 'version',
-            'parent': subset["_id"],
-            'name': version_number
-        }, projection={"_id": True})
+        existing_version = get_version_by_name(
+            project_name,
+            version_number,
+            subset_doc["_id"],
+            fields=["_id"]
+        )
 
         if existing_version:
             self.log.debug("Updating existing version ...")
-            version["_id"] = existing_version["_id"]
+            version_doc["_id"] = existing_version["_id"]
         else:
             self.log.debug("Creating new version ...")
-            version["_id"] = ObjectId()
+            version_doc["_id"] = ObjectId()
 
         bulk_writes = [ReplaceOne(
-            filter={"_id": version["_id"]},
-            replacement=version,
+            filter={"_id": version_doc["_id"]},
+            replacement=version_doc,
             upsert=True
         )]
 
-        self.log.info("Prepared version: v{0:03d}".format(version["name"]))
+        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
 
-        return version, bulk_writes
+        return version_doc, bulk_writes
 
     def prepare_representation(self, repre,
                                template_name,
