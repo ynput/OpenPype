@@ -78,12 +78,6 @@ def get_frame_padded(frame, padding):
     return "{frame:0{padding}d}".format(padding=padding, frame=frame)
 
 
-def get_first_frame_padded(collection):
-    """Return first frame as padded number from `clique.Collection`"""
-    start_frame = next(iter(collection.indexes))
-    return get_frame_padded(start_frame, padding=collection.padding)
-
-
 class IntegrateAsset(pyblish.api.InstancePlugin):
     """Register publish in the database and transfer files to destinations.
 
@@ -588,7 +582,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # differs from the collection we want to shift the destination
             # frame indices from the source collection.
             destination_indexes = list(src_collection.indexes)
-            destination_padding = len(get_first_frame_padded(src_collection))
+            # Use last frame for minimum padding
+            #   - that should cover both 'udim' and 'frame' minimum padding
+            destination_padding = len(str(destination_indexes[-1]))
             if repre.get("frameStart") is not None and not is_udim:
                 index_frame_start = int(repre.get("frameStart"))
 
