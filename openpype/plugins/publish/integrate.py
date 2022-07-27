@@ -700,14 +700,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         else:
             repre_id = ObjectId()
 
-        # Backwards compatibility:
         # Store first transferred destination as published path data
-        # todo: can we remove this?
-        # todo: We shouldn't change data that makes its way back into
-        #       instance.data[] until we know the publish actually succeeded
-        #       otherwise `published_path` might not actually be valid?
+        # - used primarily for reviews that are integrated to custom modules
+        # TODO we should probably store all integrated files
+        #   related to the representation?
         published_path = transfers[0][1]
-        repre["published_path"] = published_path  # Backwards compatibility
+        repre["published_path"] = published_path
 
         # todo: `repre` is not the actual `representation` entity
         #       we should simplify/clarify difference between data above
