@@ -200,7 +200,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     parent_name = parents[-1]
 
                 # update avalon data on instance
-                instance.data["avalonData"].update({
+                instance.data["anatomyData"].update({
                     "hierarchy": "/".join(parents),
                     "task": {},
                     "parent": parent_name
