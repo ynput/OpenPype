@@ -186,6 +186,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     def _set_avalon_data_to_relative_instances(self, context, asset_doc):
         for instance in context:
+            # Skip instance if has filled asset entity
+            if instance.data.get("assetEntity"):
+                continue
             asset_name = asset_doc["name"]
             inst_asset_name = instance.data["asset"]
 
