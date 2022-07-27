@@ -565,7 +565,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         self.log.debug("Anatomy template name: {}".format(template_name))
         anatomy = instance.context.data['anatomy']
-        template = os.path.normpath(anatomy.templates[template_name]["path"])
+        publish_template_category = anatomy.templates[template_name]
+        template = os.path.normpath(publish_template_category["path"])
 
         is_udim = bool(repre.get("udim"))
         is_sequence_representation = isinstance(files, (list, tuple))
@@ -585,27 +586,25 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
             destination_padding = len(str(destination_indexes[-1]))
-            if repre.get("frameStart") is not None and not is_udim:
-                index_frame_start = int(repre.get("frameStart"))
-
-                render_template = anatomy.templates[template_name]
-                # todo: should we ALWAYS manage the frame padding even when not
-                #       having `frameStart` set?
-                frame_start_padding = int(
-                    render_template.get(
-                        "frame_padding",
-                        render_template.get("padding")
-                    )
+            if not is_udim:
+                # Change padding for frames if template has defined higher
+                #   padding.
+                template_padding = int(
+                    publish_template_category["frame_padding"]
                 )
+                if template_padding > destination_padding:
+                    destination_padding = template_padding
 
-                # Shift destination sequence to the start frame
-                src_start_frame = next(iter(src_collection.indexes))
-                shift = index_frame_start - src_start_frame
-                if shift:
-                    destination_indexes = [
-                        frame + shift for frame in destination_indexes
-                    ]
-                destination_padding = frame_start_padding
+                if repre.get("frameStart") is not None:
+                    index_frame_start = int(repre.get("frameStart"))
+
+                    # Shift destination sequence to the start frame
+                    src_start_frame = next(iter(src_collection.indexes))
+                    shift = index_frame_start - src_start_frame
+                    if shift:
+                        destination_indexes = [
+                            frame + shift for frame in destination_indexes
+                        ]
 
             # To construct the destination template with anatomy we require
             # a Frame or UDIM tile set for the template data. We use the first
