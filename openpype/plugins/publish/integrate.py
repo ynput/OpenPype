@@ -548,13 +548,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         }.items():
             # Allow to take value from representation
             # if not found also consider instance.data
-            if key in repre:
-                value = repre[key]
-            elif key in instance.data:
-                value = instance.data[key]
-            else:
-                continue
-            template_data[anatomy_key] = value
+            value = repre.get(key)
+            if value is None:
+                value = instance.data.get(key)
+
+            if value is not None:
+                template_data[anatomy_key] = value
 
         stagingdir = repre.get("stagingDir")
         if not stagingdir:
