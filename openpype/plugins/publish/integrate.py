@@ -577,11 +577,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
             src_collection = assemble(files)
 
-            # If the representation has `frameStart` set it renumbers the
-            # frame indices of the published collection. It will start from
-            # that `frameStart` index instead. Thus if that frame start
-            # differs from the collection we want to shift the destination
-            # frame indices from the source collection.
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
@@ -595,16 +590,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 if template_padding > destination_padding:
                     destination_padding = template_padding
 
-                if repre.get("frameStart") is not None:
-                    index_frame_start = int(repre.get("frameStart"))
-
+                # If the representation has `frameStart` set it renumbers the
+                # frame indices of the published collection. It will start from
+                # that `frameStart` index instead. Thus if that frame start
+                # differs from the collection we want to shift the destination
+                # frame indices from the source collection.
+                repre_frame_start = repre.get("frameStart")
+                if repre_frame_start is not None:
+                    index_frame_start = int(repre["frameStart"])
                     # Shift destination sequence to the start frame
-                    src_start_frame = next(iter(src_collection.indexes))
-                    shift = index_frame_start - src_start_frame
-                    if shift:
-                        destination_indexes = [
-                            frame + shift for frame in destination_indexes
-                        ]
+                    destination_indexes = [
+                        index_frame_start + idx
+                        for idx in range(len(destination_indexes))
+                    ]
 
             # To construct the destination template with anatomy we require
             # a Frame or UDIM tile set for the template data. We use the first
