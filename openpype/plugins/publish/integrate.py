@@ -686,9 +686,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # Also add these values to the context even if not used by the
             # destination template
             value = template_data.get(key)
-            if not value:
-                continue
-            repre_context[key] = template_data[key]
+            if value is not None:
+                repre_context[key] = value
 
         # Explicitly store the full list even though template data might
         # have a different value because it uses just a single udim tile
