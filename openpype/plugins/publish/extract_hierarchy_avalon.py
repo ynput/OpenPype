@@ -133,7 +133,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     if unarchive_entity is None:
                         # Create entity if doesn"t exist
                         entity = self.create_avalon_asset(
-                            project_name, name, data
+                            name, data
                         )
                     else:
                         # Unarchive if entity was archived
