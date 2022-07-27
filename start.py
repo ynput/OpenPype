@@ -1113,7 +1113,7 @@ def boot():
 
 def get_info(use_staging=None) -> list:
     """Print additional information to console."""
-    from openpype.lib.mongo import get_default_components
+    from openpype.client.mongo import get_default_components
     from openpype.lib.log import PypeLogger
 
     components = get_default_components()
