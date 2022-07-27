@@ -100,13 +100,16 @@ class NukeRenderLocal(openpype.api.Extractor):
             instance.data['family'] = 'render'
             families.remove('render.local')
             families.insert(0, "render2d")
+            instance.data["anatomyData"]["family"] = "render"
         elif "prerender.local" in families:
             instance.data['family'] = 'prerender'
             families.remove('prerender.local')
             families.insert(0, "prerender")
+            instance.data["anatomyData"]["family"] = "prerender"
         elif "still.local" in families:
             instance.data['family'] = 'image'
             families.remove('still.local')
+            instance.data["anatomyData"]["family"] = "image"
         instance.data["families"] = families
 
         collections, remainder = clique.assemble(filenames)
@@ -118,4 +121,4 @@ class NukeRenderLocal(openpype.api.Extractor):
 
         self.log.info('Finished render')
 
-        self.log.debug("instance extracted: {}".format(instance.data))
+        self.log.debug("_ instance.data: {}".format(instance.data))
