@@ -9,12 +9,12 @@ from bson.objectid import ObjectId
 from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 
-import openpype.api
 from openpype.client import (
     get_representations,
     get_subset_by_name,
     get_version_by_name,
 )
+from openype.lib import source_hash
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
@@ -834,6 +834,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def get_profile_filter_criteria(self, instance):
         """Return filter criteria for `filter_profiles`"""
+
         # Anatomy data is pre-filled by Collectors
         anatomy_data = instance.data["anatomyData"]
 
@@ -864,6 +865,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             path: modified path if possible, or unmodified path
             + warning logged
         """
+
         success, rootless_path = anatomy.find_root_template_from_path(path)
         if success:
             path = rootless_path
@@ -885,6 +887,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             output_resources: array of dictionaries to be added to 'files' key
             in representation
         """
+
         file_infos = []
         for file_path in destinations:
             file_info = self.prepare_file_info(file_path, anatomy, sites=sites)
@@ -904,10 +907,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         Returns:
             dict: file info dictionary
         """
+
         return {
             "_id": ObjectId(),
             "path": self.get_rootless_path(anatomy, path),
             "size": os.path.getsize(path),
-            "hash": openpype.api.source_hash(path),
+            "hash": source_hash(path),
             "sites": sites
         }
