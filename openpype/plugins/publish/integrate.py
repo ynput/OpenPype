@@ -517,14 +517,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # pre-flight validations
         if repre["ext"].startswith("."):
-            raise ValueError("Extension must not start with a dot '.': "
-                             "{}".format(repre["ext"]))
+            raise KnownPublishError((
+                "Extension must not start with a dot '.': {}"
+            ).format(repre["ext"]))
 
         if repre.get("transfers"):
-            raise ValueError("Representation is not allowed to have transfers"
-                             "data before integration. They are computed in "
-                             "the integrator"
-                             "Got: {}".format(repre["transfers"]))
+            raise KnownPublishError((
+                "Representation is not allowed to have transfers"
+                "data before integration. They are computed in "
+                "the integrator. Got: {}"
+            ).format(repre["transfers"]))
 
         # create template data for Anatomy
         template_data = copy.deepcopy(instance.data["anatomyData"])
@@ -563,8 +565,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                            "{}".format(instance_stagingdir))
             stagingdir = instance_stagingdir
         if not stagingdir:
-            raise ValueError("No staging directory set for representation: "
-                             "{}".format(repre))
+            raise KnownPublishError(
+                "No staging directory set for representation: {}".format(repre)
+            )
 
         self.log.debug("Anatomy template name: {}".format(template_name))
         anatomy = instance.context.data['anatomy']
@@ -574,9 +577,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
             # Collection of files (sequence)
-            assert not any(os.path.isabs(fname) for fname in files), (
-                "Given file names contain full paths"
-            )
+            if any(os.path.isabs(fname) for fname in files):
+                raise KnownPublishError("Given file names contain full paths")
 
             src_collection = assemble(files)
 
@@ -632,9 +634,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             dst_collection.indexes.clear()
             dst_collection.indexes.update(set(destination_indexes))
             dst_collection.padding = destination_padding
-            assert (
-                len(src_collection.indexes) == len(dst_collection.indexes)
-            ), "This is a bug"
+            if len(src_collection.indexes) != len(dst_collection.indexes):
+                raise KnownPublishError((
+                    "This is a bug. Source sequence frames length"
+                    " does not match integration frames length"
+                ))
 
             # Multiple file transfers
             transfers = []
@@ -645,9 +649,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         else:
             # Single file
             fname = files
-            assert not os.path.isabs(fname), (
-                "Given file name is a full path"
-            )
+            if os.path.isabs(fname):
+                self.log.error(
+                    "Filename in representation is filepath {}".format(fname)
+                )
+                raise KnownPublishError(
+                    "This is a bug. Representation file name is full path"
+                )
 
             # Manage anatomy template data
             template_data.pop("frame", None)
