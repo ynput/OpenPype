@@ -12,7 +12,6 @@
 # Stages run in sequential order, but jobs within stages run in parallel.
 #
 # For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
-image: centos7:latest
 
 stages:
   - build
@@ -33,18 +32,22 @@ build-centos:
         openssl-devel tk-devel libffi-devel qt5-qtbase-devel \
         patchelf  
   script:
-    - curl https://pyenv.run | bash
-    # you can add those to ~/.bashrc
-    - export PATH="$HOME/.pyenv/bin:$PATH"
-    - eval "$(pyenv init -)"
-    - eval "$(pyenv virtualenv-init -)"
+    # Add python from soft prod 
+    - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
     # reload shell
     - exec $SHELL
-    # install Python 3.7.10
-    # python will be downloaded and build so please make sure
-    # you have all necessary requirements installed (see below).
-    - pyenv install -v 3.7.10
-    # change path to pype 3
-    - cd /path/to/pype-3
-    # set local python version
-    - pyenv local 3.7.10
+
+
+build-windows:
+  stage: build
+  tags: 
+    - docker
+  image: windows10:latest
+  before_script:
+    # install python
+    - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
+    - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+  script:
+    - .\tools\create_env.ps1
+    - .\tools\fetch_thirdparty_libs.ps1
+    - .\tools\build.ps1
