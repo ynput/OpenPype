@@ -14,7 +14,7 @@ from openpype.client import (
     get_subset_by_name,
     get_version_by_name,
 )
-from openype.lib import source_hash
+from openpype.lib import source_hash
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
