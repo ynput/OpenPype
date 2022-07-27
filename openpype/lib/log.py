@@ -24,12 +24,13 @@ import traceback
 import threading
 import copy
 
-from . import Terminal
-from .mongo import (
+from openpype.client.mongo import (
     MongoEnvNotSet,
     get_default_components,
-    OpenPypeMongoConnection
+    OpenPypeMongoConnection,
 )
+from . import Terminal
+
 try:
     import log4mongo
     from log4mongo.handlers import MongoHandler

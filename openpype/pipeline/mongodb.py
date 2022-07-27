@@ -5,6 +5,8 @@ import logging
 import pymongo
 from uuid import uuid4
 
+from openpype.client import OpenPypeMongoConnection
+
 from . import schema
 
 
@@ -156,8 +158,6 @@ class AvalonMongoDB:
 
     @property
     def mongo_client(self):
-        from openpype.lib import OpenPypeMongoConnection
-
         return OpenPypeMongoConnection.get_mongo_client()
 
     @property
@@ -198,6 +198,10 @@ class AvalonMongoDB:
     def active_project(self):
         """Return the name of the active project"""
         return self.Session["AVALON_PROJECT"]
+
+    def current_project(self):
+        """Currently set project in Session without triggering installation."""
+        return self.Session.get("AVALON_PROJECT")
 
     @requires_install
     @auto_reconnect

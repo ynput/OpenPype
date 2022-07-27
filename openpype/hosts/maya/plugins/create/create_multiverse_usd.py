@@ -2,11 +2,11 @@ from openpype.hosts.maya.api import plugin, lib
 
 
 class CreateMultiverseUsd(plugin.Creator):
-    """Multiverse USD data"""
+    """Create Multiverse USD Asset"""
 
-    name = "usdMain"
-    label = "Multiverse USD"
-    family = "usd"
+    name = "mvUsdMain"
+    label = "Multiverse USD Asset"
+    family = "mvUsd"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):
@@ -15,7 +15,8 @@ class CreateMultiverseUsd(plugin.Creator):
         # Add animation data first, since it maintains order.
         self.data.update(lib.collect_animation_data(True))
 
-        self.data["stripNamespaces"] = False
+        self.data["fileFormat"] = ["usd", "usda", "usdz"]
+        self.data["stripNamespaces"] = True
         self.data["mergeTransformAndShape"] = False
         self.data["writeAncestors"] = True
         self.data["flattenParentXforms"] = False
@@ -36,15 +37,16 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data["writeUVs"] = True
         self.data["writeColorSets"] = False
         self.data["writeTangents"] = False
-        self.data["writeRefPositions"] = False
+        self.data["writeRefPositions"] = True
         self.data["writeBlendShapes"] = False
-        self.data["writeDisplayColor"] = False
+        self.data["writeDisplayColor"] = True
         self.data["writeSkinWeights"] = False
         self.data["writeMaterialAssignment"] = False
         self.data["writeHardwareShader"] = False
         self.data["writeShadingNetworks"] = False
         self.data["writeTransformMatrix"] = True
-        self.data["writeUsdAttributes"] = False
+        self.data["writeUsdAttributes"] = True
+        self.data["writeInstancesAsReferences"] = False
         self.data["timeVaryingTopology"] = False
         self.data["customMaterialNamespace"] = ''
         self.data["numTimeSamples"] = 1

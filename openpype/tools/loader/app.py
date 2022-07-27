@@ -3,6 +3,7 @@ import traceback
 
 from Qt import QtWidgets, QtCore
 
+from openpype.client import get_projects, get_project
 from openpype import style
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
@@ -39,7 +40,7 @@ class LoaderWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(LoaderWindow, self).__init__(parent)
         title = "Asset Loader 2.1"
-        project_name = legacy_io.Session.get("AVALON_PROJECT")
+        project_name = legacy_io.active_project()
         if project_name:
             title += " - {}".format(project_name)
         self.setWindowTitle(title)
@@ -274,8 +275,9 @@ class LoaderWindow(QtWidgets.QDialog):
         """Load assets from database"""
 
         # Ensure a project is loaded
-        project = legacy_io.find_one({"type": "project"}, {"type": 1})
-        assert project, "Project was not found! This is a bug"
+        project_name = legacy_io.active_project()
+        project_doc = get_project(project_name, fields=["_id"])
+        assert project_doc, "Project was not found! This is a bug"
 
         self._assets_widget.refresh()
         self._assets_widget.setFocus()
@@ -314,7 +316,7 @@ class LoaderWindow(QtWidgets.QDialog):
         )
 
         # Clear the version information on asset change
-        self._thumbnail_widget.set_thumbnail(asset_ids)
+        self._thumbnail_widget.set_thumbnail("asset", asset_ids)
         self._version_info_widget.set_version(None)
 
         self.data["state"]["assetIds"] = asset_ids
@@ -371,10 +373,12 @@ class LoaderWindow(QtWidgets.QDialog):
             version_doc["_id"]
             for version_doc in version_docs
         ]
+        source_type = "version"
         if not thumbnail_src_ids:
+            source_type = "asset"
             thumbnail_src_ids = self._assets_widget.get_selected_asset_ids()
 
-        self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
+        self._thumbnail_widget.set_thumbnail(source_type, thumbnail_src_ids)
 
         if self._repres_widget is not None:
             version_ids = [doc["_id"] for doc in version_docs]
@@ -576,8 +580,7 @@ def show(debug=False, parent=None, use_context=False):
         legacy_io.install()
 
         any_project = next(
-            project for project in legacy_io.projects()
-            if project.get("active", True) is not False
+            project for project in get_projects(fields=["name"])
         )
 
         legacy_io.Session["AVALON_PROJECT"] = any_project["name"]

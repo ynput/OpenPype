@@ -10,7 +10,7 @@ import openpype.api
 import pyblish.api
 
 
-class MayaSubmitRemotePublishDeadline(openpype.api.Integrator):
+class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
     """Submit Maya scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.
@@ -31,6 +31,7 @@ class MayaSubmitRemotePublishDeadline(openpype.api.Integrator):
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
     families = ["publish.farm"]
+    targets = ["local"]
 
     def process(self, instance):
         settings = get_project_settings(os.getenv("AVALON_PROJECT"))
@@ -115,7 +116,7 @@ class MayaSubmitRemotePublishDeadline(openpype.api.Integrator):
         environment["OPENPYPE_REMOTE_JOB"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_SUBSET"] = instance.data["subset"]
-        environment["HEADLESS_PUBLISH"] = "1"
+        environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(

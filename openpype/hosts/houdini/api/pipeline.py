@@ -12,13 +12,13 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib
 
 from openpype.lib import (
     register_event_callback,
     emit_event,
-    any_outdated,
 )
 
 from .lib import get_asset_fps
@@ -245,7 +245,7 @@ def on_open():
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
 
-    if any_outdated():
+    if any_outdated_containers():
         from openpype.widgets import popup
 
         log.warning("Scene has outdated content.")

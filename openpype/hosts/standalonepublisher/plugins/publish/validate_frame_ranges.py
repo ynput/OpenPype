@@ -3,8 +3,8 @@ import re
 import pyblish.api
 
 import openpype.api
-from openpype import lib
 from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.context_tools import get_current_project_asset
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -27,7 +27,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                for pattern in self.skip_timelines_check):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
-        asset_data = lib.get_asset(instance.data["asset"])["data"]
+        # TODO repace query with using 'instance.data["assetEntity"]'
+        asset_data = get_current_project_asset(instance.data["asset"])["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]
         handle_start = asset_data["handleStart"]

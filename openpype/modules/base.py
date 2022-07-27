@@ -49,6 +49,7 @@ class _ModuleClass(object):
     Object of this class can be stored to `sys.modules` and used for storing
     dynamically imported modules.
     """
+
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
@@ -116,12 +117,13 @@ class _InterfacesClass(_ModuleClass):
     - this is because interfaces must be available even if are missing
         implementation
     """
+
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__", "__file__"):
                 return None
 
-            raise ImportError((
+            raise AttributeError((
                 "cannot import name '{}' from 'openpype_interfaces'"
             ).format(attr_name))
 
@@ -459,6 +461,25 @@ class OpenPypeModule:
         Args:
             application (Application): Application that is launched.
             env (dict): Current environemnt variables.
+        """
+
+        pass
+
+    def on_host_install(self, host, host_name, project_name):
+        """Host was installed which gives option to handle in-host logic.
+
+        It is a good option to register in-host event callbacks which are
+        specific for the module. The module is kept in memory for rest of
+        the process.
+
+        Arguments may change in future. E.g. 'host_name' should be possible
+        to receive from 'host' object.
+
+        Args:
+            host (ModuleType): Access to installed/registered host object.
+            host_name (str): Name of host.
+            project_name (str): Project name which is main part of host
+                context.
         """
 
         pass

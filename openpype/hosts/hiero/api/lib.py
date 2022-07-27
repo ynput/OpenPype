@@ -12,10 +12,16 @@ import shutil
 import hiero
 
 from Qt import QtWidgets
-from bson.objectid import ObjectId
 
-from openpype.pipeline import legacy_io
-from openpype.api import (Logger, Anatomy, get_anatomy_settings)
+from openpype.client import (
+    get_project,
+    get_versions,
+    get_last_versions,
+    get_representations,
+)
+from openpype.settings import get_anatomy_settings
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.api import Logger
 from . import tags
 
 try:
@@ -477,7 +483,7 @@ def sync_avalon_data_to_workfile():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_doc = legacy_io.find_one({"type": "project"})
+    project_doc = get_project(project_name)
     project_data = project_doc["data"]
 
     log.debug("project_data: {}".format(project_data))
@@ -1065,35 +1071,63 @@ def check_inventory_versions(track_items=None):
     clip_color_last = "green"
     clip_color = "red"
 
-    # get all track items from current timeline
+    item_with_repre_id = []
+    repre_ids = set()
+    # Find all containers and collect it's node and representation ids
     for track_item in track_item:
         container = parse_container(track_item)
         if container:
-            # get representation from io
-            representation = legacy_io.find_one({
-                "type": "representation",
-                "_id": ObjectId(container["representation"])
-            })
+            repre_id = container["representation"]
+            repre_ids.add(repre_id)
+            item_with_repre_id.append((track_item, repre_id))
 
-            # Get start frame from version data
-            version = legacy_io.find_one({
-                "type": "version",
-                "_id": representation["parent"]
-            })
+    # Skip if nothing was found
+    if not repre_ids:
+        return
 
-            # get all versions in list
-            versions = legacy_io.find({
-                "type": "version",
-                "parent": version["parent"]
-            }).distinct('name')
+    project_name = legacy_io.active_project()
+    # Find representations based on found containers
+    repre_docs = get_representations(
+        project_name,
+        repre_ids=repre_ids,
+        fields=["_id", "parent"]
+    )
+    # Store representations by id and collect version ids
+    repre_docs_by_id = {}
+    version_ids = set()
+    for repre_doc in repre_docs:
+        # Use stringed representation id to match value in containers
+        repre_id = str(repre_doc["_id"])
+        repre_docs_by_id[repre_id] = repre_doc
+        version_ids.add(repre_doc["parent"])
 
-            max_version = max(versions)
+    version_docs = get_versions(
+        project_name, version_ids, fields=["_id", "name", "parent"]
+    )
+    # Store versions by id and collect subset ids
+    version_docs_by_id = {}
+    subset_ids = set()
+    for version_doc in version_docs:
+        version_docs_by_id[version_doc["_id"]] = version_doc
+        subset_ids.add(version_doc["parent"])
 
-            # set clip colour
-            if version.get("name") == max_version:
-                track_item.source().binItem().setColor(clip_color_last)
-            else:
-                track_item.source().binItem().setColor(clip_color)
+    # Query last versions based on subset ids
+    last_versions_by_subset_id = get_last_versions(
+        project_name, subset_ids=subset_ids, fields=["_id", "parent"]
+    )
+
+    for item in item_with_repre_id:
+        # Some python versions of nuke can't unfold tuple in for loop
+        track_item, repre_id = item
+
+        repre_doc = repre_docs_by_id[repre_id]
+        version_doc = version_docs_by_id[repre_doc["parent"]]
+        last_version_doc = last_versions_by_subset_id[version_doc["parent"]]
+        # Check if last version is same as current version
+        if version_doc["_id"] == last_version_doc["_id"]:
+            track_item.source().binItem().setColor(clip_color_last)
+        else:
+            track_item.source().binItem().setColor(clip_color)
 
 
 def selection_changed_timeline(event):

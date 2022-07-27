@@ -1,16 +1,9 @@
-from openpype.api import Logger
-from openpype.pipeline import (
-    legacy_io,
-    LauncherAction,
-)
+from openpype.client import get_asset_by_name
+from openpype.pipeline import LauncherAction
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
-log = Logger.get_logger(__name__)
-
-
 class ClockifyStart(LauncherAction):
-
     name = "clockify_start_timer"
     label = "Clockify - Start Timer"
     icon = "clockify_icon"
@@ -24,20 +17,19 @@ class ClockifyStart(LauncherAction):
         return False
 
     def process(self, session, **kwargs):
-        project_name = session['AVALON_PROJECT']
-        asset_name = session['AVALON_ASSET']
-        task_name = session['AVALON_TASK']
+        project_name = session["AVALON_PROJECT"]
+        asset_name = session["AVALON_ASSET"]
+        task_name = session["AVALON_TASK"]
 
         description = asset_name
-        asset = legacy_io.find_one({
-            'type': 'asset',
-            'name': asset_name
-        })
-        if asset is not None:
-            desc_items = asset.get('data', {}).get('parents', [])
+        asset_doc = get_asset_by_name(
+            project_name, asset_name, fields=["data.parents"]
+        )
+        if asset_doc is not None:
+            desc_items = asset_doc.get("data", {}).get("parents", [])
             desc_items.append(asset_name)
             desc_items.append(task_name)
-            description = '/'.join(desc_items)
+            description = "/".join(desc_items)
 
         project_id = self.clockapi.get_project_id(project_name)
         tag_ids = []

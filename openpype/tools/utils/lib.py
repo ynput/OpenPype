@@ -6,6 +6,10 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
 from openpype.style import (
     get_default_entity_icon_color,
     get_objected_colors,
@@ -31,6 +35,19 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def html_escape(text):
+    """Basic escape of html syntax symbols in text."""
+
+    return (
+        text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;")
+    )
 
 
 def set_style_property(widget, property_name, property_value):
@@ -430,9 +447,8 @@ class FamilyConfigCache:
             database = getattr(self.dbcon, "database", None)
             if database is None:
                 database = self.dbcon._database
-            asset_doc = database[project_name].find_one(
-                {"type": "asset", "name": asset_name},
-                {"data.tasks": True}
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["data.tasks"]
             ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")
@@ -500,10 +516,7 @@ class GroupsConfig:
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             # Get pre-defined group name and appearance from project config
-            project_doc = self.dbcon.find_one(
-                {"type": "project"},
-                projection={"config.groups": True}
-            )
+            project_doc = get_project(project_name, fields=["config.groups"])
 
             if project_doc:
                 group_configs = project_doc["config"].get("groups") or []

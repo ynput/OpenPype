@@ -7,7 +7,7 @@ import time
 
 from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
-from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
+from openpype.lib.plugin_tools import get_batch_asset_task_info
 from openpype.lib.remote_publish import (
     get_webpublish_conn,
     start_webpublish_log,

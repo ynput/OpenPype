@@ -116,6 +116,20 @@
                 "Administrator",
                 "Project manager"
             ]
+        },
+        "create_daily_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project Manager"
+            ],
+            "cycle_enabled": false,
+            "cycle_hour_start": [
+                0,
+                0,
+                0
+            ],
+            "review_session_template": "{yy}{mm}{dd}"
         }
     },
     "user_handlers": {
@@ -242,6 +256,49 @@
                 {
                     "hosts": [
                         "standalonepublisher"
+                    ],
+                    "families": [
+                        "plate"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
                     ],
                     "families": [
                         "plate"

@@ -12,9 +12,7 @@ from openpype.pipeline import (
     install_host,
     AvalonMongoDB,
 )
-from openpype.hosts.traypublisher import (
-    api as traypublisher
-)
+from openpype.hosts.traypublisher.api import TrayPublisherHost
 from openpype.tools.publisher import PublisherWindow
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
 from openpype.tools.utils.models import (
@@ -111,9 +109,13 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         if project_name:
             self._set_project(project_name)
 
+    @property
+    def host(self):
+        return self._publisher_window.controller.host
+
     def _set_project(self, project_name):
         self._project_name = project_name
-        traypublisher.set_project_name(project_name)
+        self.host.set_project_name(project_name)
         self.setVisible(False)
         self.project_selected.emit(project_name)
 
@@ -190,7 +192,8 @@ class TrayPublishWindow(PublisherWindow):
 
 
 def main():
-    install_host(traypublisher)
+    host = TrayPublisherHost()
+    install_host(host)
     app = QtWidgets.QApplication([])
     window = TrayPublishWindow()
     window.show()

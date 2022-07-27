@@ -116,6 +116,7 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
                 "app_name": app_name,
                 "app_label": app_label,
                 "published_paths": "<br/>".join(sorted(published_paths)),
+                "source": instance.data.get("source", '')
             }
             comment = template.format(**format_data)
             if not comment:

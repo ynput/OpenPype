@@ -1,5 +1,11 @@
 from copy import deepcopy
 import pyblish.api
+from openpype.client import (
+    get_project,
+    get_asset_by_id,
+    get_asset_by_name,
+    get_archived_assets
+)
 from openpype.pipeline import legacy_io
 
 
@@ -19,14 +25,14 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         if not legacy_io.Session:
             legacy_io.install()
 
+        project_name = legacy_io.active_project()
         hierarchy_context = self._get_active_assets(context)
         self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
 
         self.project = None
-        self.import_to_avalon(hierarchy_context)
+        self.import_to_avalon(project_name, hierarchy_context)
 
-
-    def import_to_avalon(self, input_data, parent=None):
+    def import_to_avalon(self, project_name, input_data, parent=None):
         for name in input_data:
             self.log.info("input_data[name]: {}".format(input_data[name]))
             entity_data = input_data[name]
@@ -62,7 +68,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             update_data = True
             # Process project
             if entity_type.lower() == "project":
-                entity = legacy_io.find_one({"type": "project"})
+                entity = get_project(project_name)
                 # TODO: should be in validator?
                 assert (entity is not None), "Did not find project in DB"
 
@@ -79,7 +85,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 )
             # Else process assset
             else:
-                entity = legacy_io.find_one({"type": "asset", "name": name})
+                entity = get_asset_by_name(project_name, name)
                 if entity:
                     # Do not override data, only update
                     cur_entity_data = entity.get("data") or {}
@@ -103,10 +109,10 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     # Skip updating data
                     update_data = False
 
-                    archived_entities = legacy_io.find({
-                        "type": "archived_asset",
-                        "name": name
-                    })
+                    archived_entities = get_archived_assets(
+                        project_name,
+                        asset_names=[name]
+                    )
                     unarchive_entity = None
                     for archived_entity in archived_entities:
                         archived_parents = (
@@ -120,7 +126,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
                     if unarchive_entity is None:
                         # Create entity if doesn"t exist
-                        entity = self.create_avalon_asset(name, data)
+                        entity = self.create_avalon_asset(
+                            project_name, name, data
+                        )
                     else:
                         # Unarchive if entity was archived
                         entity = self.unarchive_entity(unarchive_entity, data)
@@ -133,7 +141,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 )
 
             if "childs" in entity_data:
-                self.import_to_avalon(entity_data["childs"], entity)
+                self.import_to_avalon(
+                    project_name, entity_data["childs"], entity
+                )
 
     def unarchive_entity(self, entity, data):
         # Unarchived asset should not use same data
@@ -151,7 +161,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         )
         return new_entity
 
-    def create_avalon_asset(self, name, data):
+    def create_avalon_asset(self, project_name, name, data):
         item = {
             "schema": "openpype:asset-3.0",
             "name": name,
@@ -162,7 +172,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         self.log.debug("Creating asset: {}".format(item))
         entity_id = legacy_io.insert_one(item).inserted_id
 
-        return legacy_io.find_one({"_id": entity_id})
+        return get_asset_by_id(project_name, entity_id)
 
     def _get_active_assets(self, context):
         """ Returns only asset dictionary.

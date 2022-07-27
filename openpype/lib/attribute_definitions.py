@@ -14,6 +14,7 @@ class AbstractAttrDefMeta(ABCMeta):
 
     Each object of `AbtractAttrDef` mus have defined 'key' attribute.
     """
+
     def __call__(self, *args, **kwargs):
         obj = super(AbstractAttrDefMeta, self).__call__(*args, **kwargs)
         init_class = getattr(obj, "__init__class__", None)
@@ -45,6 +46,7 @@ class AbtractAttrDef:
         is_label_horizontal(bool): UI specific argument. Specify if label is
             next to value input or ahead.
     """
+
     is_value_def = True
 
     def __init__(
@@ -77,6 +79,7 @@ class AbtractAttrDef:
         Convert passed value to a valid type. Use default if value can't be
         converted.
         """
+
         pass
 
 
@@ -113,6 +116,7 @@ class UnknownDef(AbtractAttrDef):
     This attribute can be used to keep existing data unchanged but does not
     have known definition of type.
     """
+
     def __init__(self, key, default=None, **kwargs):
         kwargs["default"] = default
         super(UnknownDef, self).__init__(key, **kwargs)
@@ -204,6 +208,7 @@ class TextDef(AbtractAttrDef):
         placeholder(str): UI placeholder for attribute.
         default(str, None): Default value. Empty string used when not defined.
     """
+
     def __init__(
         self, key, multiline=None, regex=None, placeholder=None, default=None,
         **kwargs
@@ -531,14 +536,15 @@ class FileDef(AbtractAttrDef):
     Args:
         single_item(bool): Allow only single path item.
         folders(bool): Allow folder paths.
-        extensions(list<str>): Allow files with extensions. Empty list will
+        extensions(List[str]): Allow files with extensions. Empty list will
             allow all extensions and None will disable files completely.
-        default(str, list<str>): Defautl value.
+        extensions_label(str): Custom label shown instead of extensions in UI.
+        default(str, List[str]): Default value.
     """
 
     def __init__(
         self, key, single_item=True, folders=None, extensions=None,
-        allow_sequences=True, default=None, **kwargs
+        allow_sequences=True, extensions_label=None, default=None, **kwargs
     ):
         if folders is None and extensions is None:
             folders = True
@@ -578,6 +584,7 @@ class FileDef(AbtractAttrDef):
         self.folders = folders
         self.extensions = set(extensions)
         self.allow_sequences = allow_sequences
+        self.extensions_label = extensions_label
         super(FileDef, self).__init__(key, default=default, **kwargs)
 
     def __eq__(self, other):
