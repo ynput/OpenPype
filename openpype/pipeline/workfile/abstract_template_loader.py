@@ -72,6 +72,7 @@ class AbstractTemplateLoader:
     """
 
     def __init__(self, placeholder_class):
+        self._log = None
 
         self.loaders_by_name = get_loaders_by_name()
         self.current_asset = legacy_io.Session["AVALON_ASSET"]
@@ -91,8 +92,6 @@ class AbstractTemplateLoader:
             .get("type")
         )
 
-        self.log = Logger().get_logger("BUILD TEMPLATE")
-
         self.log.info(
             "BUILDING ASSET FROM TEMPLATE :\n"
             "Starting templated build for {asset} in {project}\n\n"
@@ -111,6 +110,12 @@ class AbstractTemplateLoader:
             self.log.warning(
                 "There is no registered loaders. No assets will be loaded")
             return
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
 
     def template_already_imported(self, err_msg):
         """In case template was already loaded.
