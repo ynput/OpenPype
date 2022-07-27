@@ -369,6 +369,25 @@
                             "key": "name_sorting"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "key": "transfer_values_of_hierarchical_attributes",
+                    "label": "Action to transfer hierarchical attribute values",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
                 }
             ]
         },

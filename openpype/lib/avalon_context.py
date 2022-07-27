@@ -15,6 +15,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings
 )
+
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .events import emit_event
@@ -922,6 +923,118 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     )
 
 
+@with_pipeline_io
+def collect_last_version_repres(asset_entities):
+    """Collect subsets, versions and representations for asset_entities.
+
+    Args:
+        asset_entities (list): Asset entities for which want to find data
+
+    Returns:
+        (dict): collected entities
+
+    Example output:
+    ```
+    {
+        {Asset ID}: {
+            "asset_entity": <AssetEntity>,
+            "subsets": {
+                {Subset ID}: {
+                    "subset_entity": <SubsetEntity>,
+                    "version": {
+                        "version_entity": <VersionEntity>,
+                        "repres": [
+                            <RepreEntity1>, <RepreEntity2>, ...
+                        ]
+                    }
+                },
+                ...
+            }
+        },
+        ...
+    }
+    output[asset_id]["subsets"][subset_id]["version"]["repres"]
+    ```
+    """
+
+    if not asset_entities:
+        return {}
+
+    asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
+
+    subsets = list(legacy_io.find({
+        "type": "subset",
+        "parent": {"$in": list(asset_entity_by_ids.keys())}
+    }))
+    subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
+
+    sorted_versions = list(legacy_io.find({
+        "type": "version",
+        "parent": {"$in": list(subset_entity_by_ids.keys())}
+    }).sort("name", -1))
+
+    subset_id_with_latest_version = []
+    last_versions_by_id = {}
+    for version in sorted_versions:
+        subset_id = version["parent"]
+        if subset_id in subset_id_with_latest_version:
+            continue
+        subset_id_with_latest_version.append(subset_id)
+        last_versions_by_id[version["_id"]] = version
+
+    repres = legacy_io.find({
+        "type": "representation",
+        "parent": {"$in": list(last_versions_by_id.keys())}
+    })
+
+    output = {}
+    for repre in repres:
+        version_id = repre["parent"]
+        version = last_versions_by_id[version_id]
+
+        subset_id = version["parent"]
+        subset = subset_entity_by_ids[subset_id]
+
+        asset_id = subset["parent"]
+        asset = asset_entity_by_ids[asset_id]
+
+        if asset_id not in output:
+            output[asset_id] = {
+                "asset_entity": asset,
+                "subsets": {}
+            }
+
+        if subset_id not in output[asset_id]["subsets"]:
+            output[asset_id]["subsets"][subset_id] = {
+                "subset_entity": subset,
+                "version": {
+                    "version_entity": version,
+                    "repres": []
+                }
+            }
+
+        output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
+            repre
+        )
+
+    return output
+
+
+@with_pipeline_io
+def get_loaders_by_name():
+    from openpype.pipeline import discover_loader_plugins
+
+    loaders_by_name = {}
+    for loader in discover_loader_plugins():
+        loader_name = loader.__name__
+        if loader_name in loaders_by_name:
+            raise KeyError(
+                "Duplicated loader name {} !".format(loader_name)
+            )
+        loaders_by_name[loader_name] = loader
+    return loaders_by_name
+
+
 class BuildWorkfile:
     """Wrapper for build workfile process.
 
@@ -979,8 +1092,6 @@ class BuildWorkfile:
             ...
         }]
         """
-        from openpype.pipeline import discover_loader_plugins
-
         # Get current asset name and entity
         current_asset_name = legacy_io.Session["AVALON_ASSET"]
         current_asset_entity = legacy_io.find_one({
@@ -996,14 +1107,7 @@ class BuildWorkfile:
             return
 
         # Prepare available loaders
-        loaders_by_name = {}
-        for loader in discover_loader_plugins():
-            loader_name = loader.__name__
-            if loader_name in loaders_by_name:
-                raise KeyError(
-                    "Duplicated loader name {0}!".format(loader_name)
-                )
-            loaders_by_name[loader_name] = loader
+        loaders_by_name = get_loaders_by_name()
 
         # Skip if there are any loaders
         if not loaders_by_name:
@@ -1075,7 +1179,7 @@ class BuildWorkfile:
             return
 
         # Prepare entities from database for assets
-        prepared_entities = self._collect_last_version_repres(assets)
+        prepared_entities = collect_last_version_repres(assets)
 
         # Load containers by prepared entities and presets
         loaded_containers = []
@@ -1490,102 +1594,6 @@ class BuildWorkfile:
                         self.log.info(msg)
 
         return loaded_containers
-
-    @with_pipeline_io
-    def _collect_last_version_repres(self, asset_entities):
-        """Collect subsets, versions and representations for asset_entities.
-
-        Args:
-            asset_entities (list): Asset entities for which want to find data
-
-        Returns:
-            (dict): collected entities
-
-        Example output:
-        ```
-        {
-            {Asset ID}: {
-                "asset_entity": <AssetEntity>,
-                "subsets": {
-                    {Subset ID}: {
-                        "subset_entity": <SubsetEntity>,
-                        "version": {
-                            "version_entity": <VersionEntity>,
-                            "repres": [
-                                <RepreEntity1>, <RepreEntity2>, ...
-                            ]
-                        }
-                    },
-                    ...
-                }
-            },
-            ...
-        }
-        output[asset_id]["subsets"][subset_id]["version"]["repres"]
-        ```
-        """
-
-        if not asset_entities:
-            return {}
-
-        asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
-
-        subsets = list(legacy_io.find({
-            "type": "subset",
-            "parent": {"$in": list(asset_entity_by_ids.keys())}
-        }))
-        subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
-
-        sorted_versions = list(legacy_io.find({
-            "type": "version",
-            "parent": {"$in": list(subset_entity_by_ids.keys())}
-        }).sort("name", -1))
-
-        subset_id_with_latest_version = []
-        last_versions_by_id = {}
-        for version in sorted_versions:
-            subset_id = version["parent"]
-            if subset_id in subset_id_with_latest_version:
-                continue
-            subset_id_with_latest_version.append(subset_id)
-            last_versions_by_id[version["_id"]] = version
-
-        repres = legacy_io.find({
-            "type": "representation",
-            "parent": {"$in": list(last_versions_by_id.keys())}
-        })
-
-        output = {}
-        for repre in repres:
-            version_id = repre["parent"]
-            version = last_versions_by_id[version_id]
-
-            subset_id = version["parent"]
-            subset = subset_entity_by_ids[subset_id]
-
-            asset_id = subset["parent"]
-            asset = asset_entity_by_ids[asset_id]
-
-            if asset_id not in output:
-                output[asset_id] = {
-                    "asset_entity": asset,
-                    "subsets": {}
-                }
-
-            if subset_id not in output[asset_id]["subsets"]:
-                output[asset_id]["subsets"][subset_id] = {
-                    "subset_entity": subset,
-                    "version": {
-                        "version_entity": version,
-                        "repres": []
-                    }
-                }
-
-            output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-                repre
-            )
-
-        return output
 
 
 @with_pipeline_io

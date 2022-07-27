@@ -8,7 +8,8 @@ from openpype.hosts.nuke.api.lib import (
     on_script_load,
     check_inventory_versions,
     WorkfileSettings,
-    dirmap_file_name_filter
+    dirmap_file_name_filter,
+    add_scripts_gizmo
 )
 from openpype.settings import get_project_settings
 
@@ -59,3 +60,5 @@ def add_scripts_menu():
 
 
 add_scripts_menu()
+
+add_scripts_gizmo()

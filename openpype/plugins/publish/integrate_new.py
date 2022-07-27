@@ -139,6 +139,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     ef, instance.data["family"], instance.data["families"]))
                 return
 
+        # instance should be published on a farm
+        if instance.data.get("farm"):
+            return
+
         self.integrated_file_sizes = {}
         try:
             self.register(instance)

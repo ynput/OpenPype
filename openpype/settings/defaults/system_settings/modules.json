@@ -137,6 +137,10 @@
             }
         }
     },
+    "kitsu": {
+        "enabled": false,
+        "server": ""
+    },
     "timers_manager": {
         "enabled": true,
         "auto_stop": true,

@@ -8,6 +8,7 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
+        "use_env_var_as_root": false,
         "enabled": false,
         "paths": {
             "source-path": [],
@@ -714,6 +715,15 @@
                         ]
                     }
                 ]
+            }
+        ]
+    },
+    "templated_workfile_build": {
+        "profiles": [
+            {
+                "task_types": [],
+                "tasks": [],
+                "path": "/path/to/your/template"
             }
         ]
     },

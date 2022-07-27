@@ -136,6 +136,7 @@ from .avalon_context import (
     create_workfile_doc,
     save_workfile_data_to_doc,
     get_workfile_doc,
+    get_loaders_by_name,
 
     BuildWorkfile,
 
@@ -308,6 +309,7 @@ __all__ = [
     "create_workfile_doc",
     "save_workfile_data_to_doc",
     "get_workfile_doc",
+    "get_loaders_by_name",
 
     "BuildWorkfile",
 
