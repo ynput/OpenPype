@@ -16,6 +16,7 @@ from .utils import (
     switch_container,
 
     get_loader_identifier,
+    get_loaders_by_name,
 
     get_representation_path_from_context,
     get_representation_path,
@@ -61,6 +62,7 @@ __all__ = (
     "switch_container",
 
     "get_loader_identifier",
+    "get_loaders_by_name",
 
     "get_representation_path_from_context",
     "get_representation_path",

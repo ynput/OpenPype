@@ -943,21 +943,6 @@ def collect_last_version_repres(asset_entities):
     return output
 
 
-@with_pipeline_io
-def get_loaders_by_name():
-    from openpype.pipeline import discover_loader_plugins
-
-    loaders_by_name = {}
-    for loader in discover_loader_plugins():
-        loader_name = loader.__name__
-        if loader_name in loaders_by_name:
-            raise KeyError(
-                "Duplicated loader name {} !".format(loader_name)
-            )
-        loaders_by_name[loader_name] = loader
-    return loaders_by_name
-
-
 class BuildWorkfile:
     """Wrapper for build workfile process.
 
