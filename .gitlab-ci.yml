@@ -21,7 +21,7 @@ stages:
 build-centos:
   stage: build
   tags: 
-    - docker
+    - pipe-admin
   image: centos7:latest
   before_script:
     - sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
