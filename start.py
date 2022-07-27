@@ -1114,7 +1114,11 @@ def boot():
 def get_info(use_staging=None) -> list:
     """Print additional information to console."""
     from openpype.client.mongo import get_default_components
-    from openpype.lib.log import PypeLogger
+    try:
+        from openpype.lib.log import Logger
+    except ImportError:
+        # Backwards compatibility for 'PypeLogger'
+        from openpype.lib.log import PypeLogger as Logger
 
     components = get_default_components()
 
@@ -1141,14 +1145,14 @@ def get_info(use_staging=None) -> list:
                     os.environ.get("MUSTER_REST_URL")))
 
     # Reinitialize
-    PypeLogger.initialize()
+    Logger.initialize()
 
     mongo_components = get_default_components()
     if mongo_components["host"]:
         inf.append(("Logging to MongoDB", mongo_components["host"]))
         inf.append(("  - port", mongo_components["port"] or "<N/A>"))
-        inf.append(("  - database", PypeLogger.log_database_name))
-        inf.append(("  - collection", PypeLogger.log_collection_name))
+        inf.append(("  - database", Logger.log_database_name))
+        inf.append(("  - collection", Logger.log_collection_name))
         inf.append(("  - user", mongo_components["username"] or "<N/A>"))
         if mongo_components["auth_db"]:
             inf.append(("  - auth source", mongo_components["auth_db"]))
