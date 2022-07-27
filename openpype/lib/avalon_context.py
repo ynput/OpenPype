@@ -992,6 +992,9 @@ class BuildWorkfile:
             ...
         }]
         """
+
+        from openpype.pipeline.load import get_loaders_by_name
+
         # Get current asset name and entity
         project_name = legacy_io.active_project()
         current_asset_name = legacy_io.Session["AVALON_ASSET"]
