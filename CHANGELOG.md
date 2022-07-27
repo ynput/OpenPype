@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.12.2-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.12.2](https://github.com/pypeclub/OpenPype/tree/3.12.2) (2022-07-27)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.1...3.12.2)
 
 ### 📖 Documentation
 
@@ -17,7 +17,6 @@
 - Ftrack: Automatic daily review session creation can define trigger hour [\#3516](https://github.com/pypeclub/OpenPype/pull/3516)
 - Ftrack: add source into Note [\#3509](https://github.com/pypeclub/OpenPype/pull/3509)
 - Add pack and unpack convenience scripts [\#3502](https://github.com/pypeclub/OpenPype/pull/3502)
-- General: Event system [\#3499](https://github.com/pypeclub/OpenPype/pull/3499)
 - NewPublisher: Keep plugins with mismatch target in report [\#3498](https://github.com/pypeclub/OpenPype/pull/3498)
 - Nuke: load clip with options from settings [\#3497](https://github.com/pypeclub/OpenPype/pull/3497)
 - TrayPublisher: implemented render\_mov\_batch  [\#3486](https://github.com/pypeclub/OpenPype/pull/3486)
