@@ -8,12 +8,12 @@ import maya.cmds as cmds
 
 from openpype.api import BuildWorkfile
 
-from openpype.lib.build_template import (
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile.build_template import (
     build_workfile_template,
     update_workfile_template
 )
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib
 

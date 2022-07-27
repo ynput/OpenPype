@@ -1,11 +1,13 @@
 from maya import cmds
 
 from openpype.pipeline import legacy_io
-from openpype.lib.abstract_template_loader import (
+from openpype.pipeline.workfile.abstract_template_loader import (
     AbstractPlaceholder,
     AbstractTemplateLoader
 )
-from openpype.lib.build_template_exceptions import TemplateAlreadyImported
+from openpype.pipeline.workfile.build_template_exceptions import (
+    TemplateAlreadyImported
+)
 
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
 
