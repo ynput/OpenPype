@@ -71,9 +71,9 @@ class AbstractTemplateLoader:
             as placeholders. Depending on current host
     """
 
-    def __init__(self, placeholder_class):
-        self._log = None
+    _log = None
 
+    def __init__(self, placeholder_class):
         self.loaders_by_name = get_loaders_by_name()
         self.current_asset = legacy_io.Session["AVALON_ASSET"]
         self.project_name = legacy_io.Session["AVALON_PROJECT"]
