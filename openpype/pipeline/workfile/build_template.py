@@ -1,6 +1,6 @@
-from openpype.pipeline import registered_host
-from openpype.lib import classes_from_module
 from importlib import import_module
+from openpype.lib import classes_from_module
+from openpype.pipeline import registered_host
 
 from .abstract_template_loader import (
     AbstractPlaceholder,

@@ -4,22 +4,24 @@ from abc import ABCMeta, abstractmethod
 import traceback
 
 import six
-
-from openpype.settings import get_project_settings
-from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name
-from openpype.api import PypeLogger as Logger
-from openpype.pipeline import legacy_io, load
-
+import logging
 from functools import reduce
 
-from openpype.lib.build_template_exceptions import (
+from openpype.settings import get_project_settings
+from openpype.lib import get_linked_assets, PypeLogger as Logger
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.load import (
+    get_loaders_by_name,
+    get_representation_context,
+    load_with_repre_context,
+)
+
+from .build_template_exceptions import (
     TemplateAlreadyImported,
     TemplateLoadingFailed,
     TemplateProfileNotFound,
     TemplateNotFound
 )
-
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -289,8 +291,8 @@ class AbstractTemplateLoader:
         pass
 
     def load(self, placeholder, loaders_by_name, last_representation):
-        repre = load.get_representation_context(last_representation)
-        return load.load_with_repre_context(
+        repre = get_representation_context(last_representation)
+        return load_with_repre_context(
             loaders_by_name[placeholder.loader],
             repre,
             options=parse_loader_args(placeholder.data['loader_args']))
