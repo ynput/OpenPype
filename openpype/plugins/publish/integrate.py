@@ -168,7 +168,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     # the database even if not used by the destination template
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
-        "family", "hierarchy", "username"
+        "family", "hierarchy", "username", "output"
     ]
     skip_host_families = []
 
@@ -726,11 +726,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # Imprint shortcut to context for performance reasons.
             "context": repre_context
         }
-
-        # todo: simplify/streamline which additional data makes its way into
-        #       the representation context
-        if repre.get("outputName"):
-            representation["context"]["output"] = repre['outputName']
 
         if is_sequence_representation and repre.get("frameStart") is not None:
             representation['context']['frame'] = template_data["frame"]
