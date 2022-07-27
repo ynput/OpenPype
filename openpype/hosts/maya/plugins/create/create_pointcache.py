@@ -21,7 +21,7 @@ class CreatePointCache(plugin.Creator):
         self.data.update(lib.collect_animation_data())
 
         # Vertex colors with the geometry.
-        self.data["writeColorSets"] = self.write_color_sets  
+        self.data["writeColorSets"] = self.write_color_sets
         self.data["writeFaceSets"] = False  # Vertex colors with the geometry.
         self.data["renderableOnly"] = False  # Only renderable visible shapes
         self.data["visibleOnly"] = False     # only nodes that are visible

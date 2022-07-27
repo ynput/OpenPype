@@ -11,7 +11,7 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-
+       
     write_color_sets = False
 
     def __init__(self, *args, **kwargs):
