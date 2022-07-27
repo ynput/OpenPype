@@ -13,7 +13,6 @@ from openpype.host import HostBase, IWorkfileHost, ILoadHost
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import (
-    any_outdated,
     register_event_callback,
     emit_event
 )
@@ -28,6 +27,7 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 from .workio import (
@@ -470,7 +470,7 @@ def on_open():
     lib.validate_fps()
     lib.fix_incompatible_containers()
 
-    if any_outdated():
+    if any_outdated_containers():
         log.warning("Scene has outdated content.")
 
         # Find maya main window

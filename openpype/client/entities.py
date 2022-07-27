@@ -12,7 +12,7 @@ import collections
 import six
 from bson.objectid import ObjectId
 
-from openpype.lib.mongo import OpenPypeMongoConnection
+from .mongo import OpenPypeMongoConnection
 
 
 def _get_project_database():
@@ -20,7 +20,21 @@ def _get_project_database():
     return OpenPypeMongoConnection.get_mongo_client()[db_name]
 
 
-def _get_project_connection(project_name):
+def get_project_connection(project_name):
+    """Direct access to mongo collection.
+
+    We're trying to avoid using direct access to mongo. This should be used
+    only for Create, Update and Remove operations until there are implemented
+    api calls for that.
+
+    Args:
+        project_name(str): Project name for which collection should be
+            returned.
+
+    Returns:
+        pymongo.Collection: Collection realated to passed project.
+    """
+
     if not project_name:
         raise ValueError("Invalid project name {}".format(str(project_name)))
     return _get_project_database()[project_name]
@@ -93,7 +107,7 @@ def get_project(project_name, active=True, inactive=False, fields=None):
             {"data.active": False},
         ]
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
@@ -108,7 +122,7 @@ def get_whole_project(project_name):
             project collection.
     """
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find({})
 
 
@@ -131,7 +145,7 @@ def get_asset_by_id(project_name, asset_id, fields=None):
         return None
 
     query_filter = {"type": "asset", "_id": asset_id}
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
@@ -153,7 +167,7 @@ def get_asset_by_name(project_name, asset_name, fields=None):
         return None
 
     query_filter = {"type": "asset", "name": asset_name}
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
@@ -223,7 +237,7 @@ def _get_assets(
             return []
         query_filter["data.visualParent"] = {"$in": parent_ids}
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
 
@@ -323,7 +337,7 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
             return []
         subset_query["parent"] = {"$in": asset_ids}
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     result = conn.aggregate([
         {
             "$match": subset_query
@@ -363,7 +377,7 @@ def get_subset_by_id(project_name, subset_id, fields=None):
         return None
 
     query_filters = {"type": "subset", "_id": subset_id}
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filters, _prepare_fields(fields))
 
 
@@ -394,7 +408,7 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
         "name": subset_name,
         "parent": asset_id
     }
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filters, _prepare_fields(fields))
 
 
@@ -467,7 +481,7 @@ def get_subsets(
             return []
         query_filter["$or"] = or_query
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find(query_filter, _prepare_fields(fields))
 
 
@@ -491,7 +505,7 @@ def get_subset_families(project_name, subset_ids=None):
             return set()
         subset_filter["_id"] = {"$in": list(subset_ids)}
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     result = list(conn.aggregate([
         {"$match": subset_filter},
         {"$project": {
@@ -529,7 +543,7 @@ def get_version_by_id(project_name, version_id, fields=None):
         "type": {"$in": ["version", "hero_version"]},
         "_id": version_id
     }
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
@@ -552,13 +566,49 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
     if not subset_id:
         return None
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     query_filter = {
         "type": "version",
         "parent": subset_id,
         "name": version
     }
     return conn.find_one(query_filter, _prepare_fields(fields))
+
+
+def version_is_latest(project_name, version_id):
+    """Is version the latest from it's subset.
+
+    Note:
+        Hero versions are considered as latest.
+
+    Todo:
+        Maybe raise exception when version was not found?
+
+    Args:
+        project_name (str):Name of project where to look for queried entities.
+        version_id (Union[str, ObjectId]): Version id which is checked.
+
+    Returns:
+        bool: True if is latest version from subset else False.
+    """
+
+    version_id = _convert_id(version_id)
+    if not version_id:
+        return False
+    version_doc = get_version_by_id(
+        project_name, version_id, fields=["_id", "type", "parent"]
+    )
+    # What to do when version is not found?
+    if not version_doc:
+        return False
+
+    if version_doc["type"] == "hero_version":
+        return True
+
+    last_version = get_last_version_by_subset_id(
+        project_name, version_doc["parent"], fields=["_id"]
+    )
+    return last_version["_id"] == version_id
 
 
 def _get_versions(
@@ -606,7 +656,7 @@ def _get_versions(
         else:
             query_filter["name"] = {"$in": versions}
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
 
@@ -765,7 +815,7 @@ def get_output_link_versions(project_name, version_id, fields=None):
     if not version_id:
         return []
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     # Does make sense to look for hero versions?
     query_filter = {
         "type": "version",
@@ -830,7 +880,7 @@ def get_last_versions(project_name, subset_ids, fields=None):
         {"$group": group_item}
     ]
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     aggregate_result = conn.aggregate(aggregation_pipeline)
     if limit_query:
         output = {}
@@ -948,7 +998,7 @@ def get_representation_by_id(project_name, representation_id, fields=None):
     if representation_id is not None:
         query_filter["_id"] = _convert_id(representation_id)
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
 
     return conn.find_one(query_filter, _prepare_fields(fields))
 
@@ -981,7 +1031,7 @@ def get_representation_by_name(
         "parent": version_id
     }
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
@@ -1044,7 +1094,7 @@ def _get_representations(
             return []
         query_filter["$or"] = or_query
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
 
     return conn.find(query_filter, _prepare_fields(fields))
 
@@ -1255,7 +1305,7 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
 
     query_filter = {"_id": _convert_id(src_id)}
 
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     src_doc = conn.find_one(query_filter, {"data.thumbnail_id"})
     if src_doc:
         return src_doc.get("data", {}).get("thumbnail_id")
@@ -1288,7 +1338,7 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
         "type": "thumbnail",
         "_id": {"$in": thumbnail_ids}
     }
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find(query_filter, _prepare_fields(fields))
 
 
@@ -1309,7 +1359,7 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     if not thumbnail_id:
         return None
     query_filter = {"type": "thumbnail", "_id": _convert_id(thumbnail_id)}
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
@@ -1340,7 +1390,7 @@ def get_workfile_info(
         "task_name": task_name,
         "filename": filename
     }
-    conn = _get_project_connection(project_name)
+    conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
