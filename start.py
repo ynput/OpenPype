@@ -270,8 +270,11 @@ def set_openpype_global_environments() -> None:
 
     general_env = get_general_environments()
 
+    # first resolve general environment because merge doesn't expect
+    # values to be list.
+    # TODO: switch to OpenPype environment functions
     merged_env = acre.merge(
-        acre.parse(general_env),
+        acre.compute(acre.parse(general_env), cleanup=False),
         dict(os.environ)
     )
     env = acre.compute(
