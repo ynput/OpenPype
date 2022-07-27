@@ -140,7 +140,11 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                         entity = self.unarchive_entity(unarchive_entity, data)
 
                 # make sure all relative instances have correct avalon data
-                self._set_avalon_data_to_relative_instances(context, entity)
+                self._set_avalon_data_to_relative_instances(
+                    context,
+                    project_name,
+                    entity
+                )
 
             if update_data:
                 # Update entity data with input data
@@ -184,8 +188,16 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
         return asset_doc
 
-    def _set_avalon_data_to_relative_instances(self, context, asset_doc):
+    def _set_avalon_data_to_relative_instances(
+        self,
+        context,
+        project_name,
+        asset_doc
+    ):
         for instance in context:
+            # Skip instance if has filled asset entity
+            if instance.data.get("assetEntity"):
+                continue
             asset_name = asset_doc["name"]
             inst_asset_name = instance.data["asset"]
 
@@ -196,11 +208,12 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 parents = asset_doc["data"].get("parents") or list()
 
                 # equire only relative parent
+                parent_name = project_name
                 if parents:
                     parent_name = parents[-1]
 
                 # update avalon data on instance
-                instance.data["avalonData"].update({
+                instance.data["anatomyData"].update({
                     "hierarchy": "/".join(parents),
                     "task": {},
                     "parent": parent_name

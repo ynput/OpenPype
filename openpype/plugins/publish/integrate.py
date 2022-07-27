@@ -12,7 +12,6 @@ import pyblish.api
 import openpype.api
 from openpype.client import (
     get_representations,
-    get_asset_by_name,
     get_subset_by_name,
     get_version_by_name,
 )
