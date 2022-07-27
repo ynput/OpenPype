@@ -556,14 +556,15 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 continue
             template_data[anatomy_key] = value
 
-        if repre.get('stagingDir'):
-            stagingdir = repre['stagingDir']
-        else:
+        stagingdir = repre.get("stagingDir")
+        if not stagingdir:
             # Fall back to instance staging dir if not explicitly
             # set for representation in the instance
-            self.log.debug("Representation uses instance staging dir: "
-                           "{}".format(instance_stagingdir))
+            self.log.debug((
+                "Representation uses instance staging dir: {}"
+            ).format(instance_stagingdir))
             stagingdir = instance_stagingdir
+
         if not stagingdir:
             raise KnownPublishError(
                 "No staging directory set for representation: {}".format(repre)
