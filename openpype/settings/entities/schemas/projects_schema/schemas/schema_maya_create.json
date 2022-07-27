@@ -172,7 +172,7 @@
             "type": "dict",
             "collapsible": true,
             "key": "CreatePointCache",
-            "label": "Create Cache",
+            "label": "Create Point Cache",
             "checkbox_key": "enabled",
             "children": [
                 {
