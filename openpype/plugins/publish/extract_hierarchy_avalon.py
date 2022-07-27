@@ -30,9 +30,15 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
 
         self.project = None
-        self.import_to_avalon(project_name, hierarchy_context)
+        self.import_to_avalon(context, project_name, hierarchy_context)
 
-    def import_to_avalon(self, project_name, input_data, parent=None):
+    def import_to_avalon(
+        self,
+        context,
+        project_name,
+        input_data,
+        parent=None,
+    ):
         for name in input_data:
             self.log.info("input_data[name]: {}".format(input_data[name]))
             entity_data = input_data[name]
@@ -133,6 +139,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                         # Unarchive if entity was archived
                         entity = self.unarchive_entity(unarchive_entity, data)
 
+                # make sure all relative instances have correct avalon data
+                self._set_avalon_data_to_relative_instances(context, entity)
+
             if update_data:
                 # Update entity data with input data
                 legacy_io.update_many(
@@ -142,7 +151,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
             if "childs" in entity_data:
                 self.import_to_avalon(
-                    project_name, entity_data["childs"], entity
+                    context, project_name, entity_data["childs"], entity
                 )
 
     def unarchive_entity(self, entity, data):
@@ -159,20 +168,43 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             {"_id": entity["_id"]},
             new_entity
         )
+
         return new_entity
 
-    def create_avalon_asset(self, project_name, name, data):
-        item = {
+    def create_avalon_asset(self, name, data):
+        asset_doc = {
             "schema": "openpype:asset-3.0",
             "name": name,
             "parent": self.project["_id"],
             "type": "asset",
             "data": data
         }
-        self.log.debug("Creating asset: {}".format(item))
-        entity_id = legacy_io.insert_one(item).inserted_id
+        self.log.debug("Creating asset: {}".format(asset_doc))
+        asset_doc["_id"] = legacy_io.insert_one(asset_doc).inserted_id
 
-        return get_asset_by_id(project_name, entity_id)
+        return asset_doc
+
+    def _set_avalon_data_to_relative_instances(self, context, asset_doc):
+        for instance in context:
+            asset_name = asset_doc["name"]
+            inst_asset_name = instance.data["asset"]
+
+            if asset_name == inst_asset_name:
+                instance.data["assetEntity"] = asset_doc
+
+                # get parenting data
+                parents = asset_doc["data"].get("parents") or list()
+
+                # equire only relative parent
+                if parents:
+                    parent_name = parents[-1]
+
+                # update avalon data on instance
+                instance.data["avalonData"].update({
+                    "hierarchy": "/".join(parents),
+                    "task": {},
+                    "parent": parent_name
+                })
 
     def _get_active_assets(self, context):
         """ Returns only asset dictionary.

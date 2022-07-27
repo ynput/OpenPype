@@ -274,14 +274,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     def register(self, instance, file_transactions, filtered_repres):
         project_name = legacy_io.active_project()
 
-        # making sure editorial instances have its `assetEntity`
-        if instance.data.get("newAssetPublishing"):
-            asset_doc = get_asset_by_name(
-                project_name,
-                instance.data["asset"]
-            )
-            instance.data["assetEntity"] = asset_doc
-
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
             self.log.info((
