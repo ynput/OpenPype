@@ -12,6 +12,7 @@ import pyblish.api
 import openpype.api
 from openpype.client import (
     get_representations,
+    get_asset_by_name,
     get_subset_by_name,
     get_version_by_name,
 )
@@ -273,6 +274,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     def register(self, instance, file_transactions, filtered_repres):
         project_name = legacy_io.active_project()
 
+        # making sure editorial instances have its `assetEntity`
+        if instance.data.get("newAssetPublishing"):
+            asset_doc = get_asset_by_name(
+                project_name,
+                instance.data["asset"]
+            )
+            instance.data["assetEntity"] = asset_doc
+
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
             self.log.info((
@@ -426,7 +435,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                       "".format(len(prepared_representations)))
 
     def prepare_subset(self, instance, project_name):
-        asset_doc = instance.data.get("assetEntity")
+        asset_doc = instance.data["assetEntity"]
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
