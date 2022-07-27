@@ -199,6 +199,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 parents = asset_doc["data"].get("parents") or list()
 
                 # equire only relative parent
+                parent_name = project_name
                 if parents:
                     parent_name = parents[-1]
 
