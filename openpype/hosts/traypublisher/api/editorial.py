@@ -55,7 +55,7 @@ class ShotMetadataSolver:
             return shot_rename_template.format(**data)
         except KeyError as _E:
             raise CreatorError((
-                "Make sure all keys are correct in settings: \n\n"
+                "Make sure all keys in settings are correct:: \n\n"
                 f"From template string {shot_rename_template} > "
                 f"`{_E}` has no equivalent in \n"
                 f"{list(data.keys())} input formating keys!"
@@ -91,10 +91,13 @@ class ShotMetadataSolver:
             match = p.findall(search_text)
             if not match:
                 raise CreatorError((
-                    "Make sure regex expression is correct: \n\n"
-                    f"From settings '{token_key}' key "
-                    f"with '{pattern}' expression, \n"
-                    f"is not able to find anything in '{search_text}'!"
+                    "Make sure regex expression works with your data: \n\n"
+                    f"'{token_key}' with regex '{pattern}' in your settings\n"
+                    "can't find any match in your clip name "
+                    f"'{search_text}'!\n\nLook to: "
+                    "'project_settings/traypublisher/editorial_creators"
+                    "/editorial_simple/clip_name_tokenizer'\n"
+                    "at your project settings..."
                 ))
 
             #  QUESTION:how to refactory `match[-1]` to some better way?
@@ -129,7 +132,7 @@ class ShotMetadataSolver:
             }
         except KeyError as _E:
             raise CreatorError((
-                "Make sure all keys are correct in settings: \n"
+                "Make sure all keys in settings are correct : \n"
                 f"`{_E}` has no equivalent in \n{list(data.keys())}"
             ))
 
@@ -146,9 +149,10 @@ class ShotMetadataSolver:
                     **_parent_tokens_formating_data)
             except KeyError as _E:
                 raise CreatorError((
-                    "Make sure all keys are correct in settings: \n\n"
-                    f"From template string {shot_hierarchy['parents_path']} > "
-                    f"`{_E}` has no equivalent in \n"
+                    "Make sure all keys in settings are correct : \n\n"
+                    f"`{_E}` from template string "
+                    f"{shot_hierarchy['parents_path']}, "
+                    f" has no equivalent in \n"
                     f"{list(_parent_tokens_formating_data.keys())} parents"
                 ))
 
