@@ -1129,7 +1129,6 @@ class MediaInfoFile(object):
 
 class TimeEffectMetadata(object):
     log = log
-    temp_setup_path = "/var/tmp/temp_timewarp_setup.timewarp_node"
     _data = {}
     _retime_modes = {
         0: "speed",
@@ -1137,23 +1136,34 @@ class TimeEffectMetadata(object):
         2: "duration"
     }
 
-    def __init__(self, segment=None, logger=None):
+    def __init__(self, segment, logger=None):
         if logger:
             self.log = logger
-        if segment:
-            self._data = self._get_metadata(segment)
+
+        self._data = self._get_metadata(segment)
+
+    @property
+    def data(self):
+        """ Returns timewarp effect data
+
+        Returns:
+            dict: retime data
+        """
+        return self._data
 
     def _get_metadata(self, segment):
         effects = segment.effects or []
         for effect in effects:
             if effect.type == "Timewarp":
-                effect.save_setup(self.temp_setup_path)
+                with maintained_temp_file_path(".timewarp_node") as tmp_path:
+                    self.log.info("Temp File: {}".format(tmp_path))
+                    effect.save_setup(tmp_path)
+                    return self._get_attributes_from_xml(tmp_path)
 
-                self._data = self._get_attributes_from_xml()
-                os.remove(self.temp_setup_path)
+        return {}
 
-    def _get_attributes_from_xml(self):
-        with open(self.temp_setup_path, "r") as tw_setup_file:
+    def _get_attributes_from_xml(self, tmp_path):
+        with open(tmp_path, "r") as tw_setup_file:
             tw_setup_string = tw_setup_file.read()
             tw_setup_file.close()
 
