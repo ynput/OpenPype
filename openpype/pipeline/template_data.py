@@ -213,7 +213,9 @@ def get_template_data_with_names(
         Dict[str, Any]: Data prepared for filling workdir template.
     """
 
-    project_doc = get_project(project_name, fields=["name", "data.code"])
+    project_doc = get_project(
+        project_name, fields=["name", "data.code", "config.tasks"]
+    )
     asset_doc = None
     if asset_name:
         asset_doc = get_asset_by_name(
