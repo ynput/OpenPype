@@ -2,7 +2,10 @@ from Qt import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
 
-from openpype.hosts.photoshop.api.plugin import get_subset_template, get_subset_name_for_multiple
+from openpype.hosts.photoshop.api.plugin import (
+    get_subset_template,
+    get_subset_name_for_multiple
+)
 
 
 class CreateImage(create.LegacyCreator):
