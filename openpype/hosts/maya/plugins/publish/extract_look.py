@@ -43,6 +43,7 @@ def get_ocio_config_path(profile_folder):
     return os.path.join(
         os.environ["OPENPYPE_ROOT"],
         "vendor",
+        "config",
         "OpenColorIO-Configs",
         profile_folder,
         "config.ocio"
