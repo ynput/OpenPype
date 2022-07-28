@@ -26,11 +26,7 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     def process(self, instance):
         root = nuke.root()
         knob_data = get_avalon_knob_data(root)
-        project_name = legacy_io.active_project()
-        asset = get_asset_by_name(
-            project_name,
-            instance.context.data["asset"]
-        )
+        asset = instance.data["assetEntity"]
         # get asset data frame values
         frame_start = asset["data"]["frameStart"]
         frame_end = asset["data"]["frameEnd"]
