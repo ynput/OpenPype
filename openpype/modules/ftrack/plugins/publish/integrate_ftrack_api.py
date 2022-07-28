@@ -26,8 +26,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     families = ["ftrack"]
 
     def process(self, instance):
-        session = instance.context.data["ftrackSession"]
-        context = instance.context
         component_list = instance.data.get("ftrackComponentsList")
         if not component_list:
             self.log.info(
@@ -36,8 +34,8 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             )
             return
 
-        session = instance.context.data["ftrackSession"]
         context = instance.context
+        session = context.data["ftrackSession"]
 
         parent_entity = None
         default_asset_name = None

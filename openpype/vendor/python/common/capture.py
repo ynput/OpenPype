@@ -665,7 +665,10 @@ def _applied_camera_options(options, panel):
 
     _iteritems = getattr(options, "iteritems", options.items)
     for opt, value in _iteritems():
-        _safe_setAttr(camera + "." + opt, value)
+        if cmds.getAttr(camera + "." + opt, lock=True):
+            continue
+        else:
+            _safe_setAttr(camera + "." + opt, value)
 
     try:
         yield
@@ -673,7 +676,11 @@ def _applied_camera_options(options, panel):
         if old_options:
             _iteritems = getattr(old_options, "iteritems", old_options.items)
             for opt, value in _iteritems():
-                _safe_setAttr(camera + "." + opt, value)
+                #
+                if cmds.getAttr(camera + "." + opt, lock=True):
+                    continue
+                else:
+                    _safe_setAttr(camera + "." + opt, value)
 
 
 @contextlib.contextmanager

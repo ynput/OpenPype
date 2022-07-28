@@ -5,7 +5,7 @@ Provides:
 """
 
 import pyblish.api
-from openpype.api import config
+from openpype.lib.dateutils import get_datetime_data
 
 
 class CollectDateTimeData(pyblish.api.ContextPlugin):
@@ -15,4 +15,4 @@ class CollectDateTimeData(pyblish.api.ContextPlugin):
     def process(self, context):
         key = "datetimeData"
         if key not in context.data:
-            context.data[key] = config.get_datetime_data()
+            context.data[key] = get_datetime_data()

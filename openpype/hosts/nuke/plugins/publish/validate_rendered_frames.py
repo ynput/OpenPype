@@ -98,7 +98,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                     self.log.error(msg)
                     raise ValidationException(msg)
 
-            collected_frames_len = int(len(collection.indexes))
+            collected_frames_len = len(collection.indexes)
             coll_start = min(collection.indexes)
             coll_end = max(collection.indexes)
 
