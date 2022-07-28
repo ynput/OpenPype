@@ -27,6 +27,28 @@ def escape_space(path):
     return '"{}"'.format(path) if " " in path else path
 
 
+def get_ocio_config_path(profile_folder):
+    """Path to OpenPype vendorized OCIO.
+
+    Vendorized OCIO config file path is grabbed from the specific path
+    hierarchy specified below.
+
+    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
+    Args:
+        profile_folder (str): Name of folder to grab config file from.
+
+    Returns:
+        str: Path to vendorized config file.
+    """
+    return os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "OpenColorIO-Configs",
+        profile_folder,
+        "config.ocio"
+    )
+
+
 def find_paths_by_hash(texture_hash):
     """Find the texture hash key in the dictionary.
 
@@ -492,7 +514,6 @@ class ExtractLook(openpype.api.Extractor):
                 colorconvert = "--colorconvert sRGB linear"
             else:
                 colorconvert = ""
-
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -534,25 +555,3 @@ class ExtractModelRenderSets(ExtractLook):
         self.scene_type = self.scene_type_prefix + self.scene_type
 
         return typ
-
-
-def get_ocio_config_path(profile_folder):
-    """Path to OpenPype vendorized OCIO.
-
-    Vendorized OCIO config file path is grabbed from the specific path
-    hierarchy specified below.
-
-    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
-    Args:
-        profile_folder (str): Name of folder to grab config file from.
-
-    Returns:
-        str: Path to vendorized config file.
-    """
-    return os.path.join(
-        os.environ["OPENPYPE_ROOT"],
-        "vendor",
-        "OpenColorIO-Configs",
-        profile_folder,
-        "config.ocio"
-    )
