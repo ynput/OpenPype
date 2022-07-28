@@ -1,11 +1,8 @@
 from Qt import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
-from openpype.pipeline import legacy_io
-from openpype.client import get_asset_by_name
-from openpype.settings import get_project_settings
-from openpype.lib import prepare_template_data
-from openpype.lib.profiles_filtering import filter_profiles
+
+from openpype.hosts.photoshop.api.plugin import get_subset_template, get_subset_name_for_multiple
 
 
 class CreateImage(create.LegacyCreator):
@@ -87,18 +84,12 @@ class CreateImage(create.LegacyCreator):
 
             subset_name = creator_subset_name
             if len(groups) > 1:
-                subset_template = self._get_subset_template(self.family)
-                if not subset_template or 'layer' not in subset_template.lower():
-                    subset_name += group.name.title().replace(" ", "")
-                else:
-                    fill_pairs = {
-                        "variant": self.data["variant"],
-                        "family": self.family,
-                        "task": legacy_io.Session["AVALON_TASK"],
-                        "layer": group.name
-                    }
-
-                    subset_name = subset_template.format(**prepare_template_data(fill_pairs))
+                subset_template = get_subset_template(self.family)
+                subset_name = get_subset_name_for_multiple(subset_name,
+                                                           subset_template,
+                                                           group,
+                                                           self.family,
+                                                           self.data["variant"])
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -120,28 +111,3 @@ class CreateImage(create.LegacyCreator):
         cls, variant, task_name, asset_id, project_name, host_name
     ):
         return {"layer": ""}
-
-    def _get_subset_template(self, family):
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-
-        asset_doc = get_asset_by_name(
-            project_name, asset_name, fields=["data.tasks"]
-        )
-        asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-        task_info = asset_tasks.get(task_name) or {}
-        task_type = task_info.get("type")
-
-        tools_settings = get_project_settings(project_name)["global"]["tools"]
-        profiles = tools_settings["creator"]["subset_name_profiles"]
-        filtering_criteria = {
-            "families": family,
-            "hosts": "photoshop",
-            "tasks": task_name,
-            "task_types": task_type
-        }
-
-        matching_profile = filter_profiles(profiles, filtering_criteria)
-        if matching_profile:
-            return matching_profile["template"]
