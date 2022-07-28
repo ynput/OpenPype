@@ -310,6 +310,7 @@ class NukePlaceholder(AbstractPlaceholder):
                 imprint(n, {'w_init': width, 'h_init': height})
                 n.knob('w_init').setVisible(False)
                 n.knob('h_init').setVisible(False)
+            refresh_node(n)
 
     def imprint_siblings(self):
         """
@@ -410,7 +411,7 @@ class NukePlaceholder(AbstractPlaceholder):
         return nodes_loaded
 
     def clean(self):
-
+        print("cleaaaaar")
         # deselect all selected nodes
         node = self.data['node']
 
