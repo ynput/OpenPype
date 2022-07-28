@@ -2,8 +2,6 @@ from pprint import pformat
 import pyblish.api
 
 import openpype.api
-from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
 from openpype.pipeline import PublishXmlValidationError
 from openpype.hosts.nuke.api.lib import (
     get_avalon_knob_data,
