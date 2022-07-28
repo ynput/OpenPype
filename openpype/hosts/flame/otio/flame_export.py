@@ -289,16 +289,20 @@ def create_otio_clip(clip_data):
     log.debug("__ tw_data: {}".format(tw_data))
 
     # define first frame
-    first_frame = media_timecode_start or utils.get_frame_from_filename(
-        clip_data["fpath"]) or 0
+    file_first_frame = utils.get_frame_from_filename(
+        clip_data["fpath"])
+    if file_first_frame:
+        file_first_frame = int(file_first_frame)
+
+    first_frame = media_timecode_start or file_first_frame or 0
 
     _clip_source_in = int(clip_data["source_in"])
     _clip_source_out = int(clip_data["source_out"])
-    _clip_source_duration = clip_data["source_duration"]
     _clip_record_in = clip_data["record_in"]
     _clip_record_out = clip_data["record_out"]
     _clip_record_duration = int(clip_data["record_duration"])
 
+    log.debug("_ file_first_frame: {}".format(file_first_frame))
     log.debug("_ first_frame: {}".format(first_frame))
     log.debug("_ _clip_source_in: {}".format(_clip_source_in))
     log.debug("_ _clip_source_out: {}".format(_clip_source_out))
@@ -315,6 +319,15 @@ def create_otio_clip(clip_data):
         source_in = _clip_source_in - int(first_frame)
         source_out = _clip_source_out - int(first_frame)
 
+    log.debug("_ source_in: {}".format(source_in))
+    log.debug("_ source_out: {}".format(source_out))
+
+    if file_first_frame:
+        log.debug("_ file_source_in: {}".format(
+            file_first_frame + source_in))
+        log.debug("_ file_source_in: {}".format(
+            file_first_frame + source_out))
+
     source_duration = (source_out - source_in + 1)
 
     # secondly check if any change of speed
@@ -330,7 +343,6 @@ def create_otio_clip(clip_data):
 
     log.debug("_ speed: {}".format(speed))
     log.debug("_ source_duration: {}".format(source_duration))
-    log.debug("_ _clip_source_duration: {}".format(_clip_source_duration))
     log.debug("_ _clip_record_duration: {}".format(_clip_record_duration))
 
     # create media reference
