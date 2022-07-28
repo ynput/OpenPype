@@ -1,3 +1,7 @@
+from .mongo import (
+    OpenPypeMongoConnection,
+)
+
 from .entities import (
     get_projects,
     get_project,
@@ -25,6 +29,8 @@ from .entities import (
     get_last_version_by_subset_name,
     get_output_link_versions,
 
+    version_is_latest,
+
     get_representation_by_id,
     get_representation_by_name,
     get_representations,
@@ -40,6 +46,8 @@ from .entities import (
 )
 
 __all__ = (
+    "OpenPypeMongoConnection",
+
     "get_projects",
     "get_project",
     "get_whole_project",
@@ -65,6 +73,8 @@ __all__ = (
     "get_last_version_by_subset_id",
     "get_last_version_by_subset_name",
     "get_output_link_versions",
+
+    "version_is_latest",
 
     "get_representation_by_id",
     "get_representation_by_name",

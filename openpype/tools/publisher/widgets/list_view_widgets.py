@@ -23,12 +23,12 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 ```
 """
 import collections
-import html
 
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
+from openpype.tools.utils.lib import html_escape
 from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
@@ -114,7 +114,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance = instance
 
-        instance_label = html.escape(instance.label)
+        instance_label = html_escape(instance.label)
 
         subset_name_label = QtWidgets.QLabel(instance_label, self)
         subset_name_label.setObjectName("ListViewSubsetName")
@@ -181,7 +181,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         # Check subset name
         label = self.instance.label
         if label != self._instance_label_widget.text():
-            self._instance_label_widget.setText(html.escape(label))
+            self._instance_label_widget.setText(html_escape(label))
         # Check active state
         self.set_active(self.instance["active"])
         # Check valid states

@@ -23,8 +23,6 @@ from openpype.api import (
     Logger,
     BuildWorkfile,
     get_version_from_path,
-    get_workdir_data,
-    get_asset,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
@@ -35,11 +33,13 @@ from openpype.settings import (
     get_anatomy_settings,
 )
 from openpype.modules import ModulesManager
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
     Anatomy,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 
 from . import gizmo_menu
 
@@ -910,19 +910,17 @@ def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     avalon_knob_data = read_avalon_data(node)
-    data = {'avalon': avalon_knob_data}
 
     nuke_imageio_writes = get_imageio_node_setting(
         node_class=avalon_knob_data["family"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
-    host_name = os.environ.get("AVALON_APP")
 
-    data.update({
-        "app": host_name,
+    data = {
+        "avalon": avalon_knob_data,
         "nuke_imageio_writes": nuke_imageio_writes
-    })
+    }
 
     anatomy_filled = format_anatomy(data)
     return anatomy_filled["render"]["path"].replace("\\", "/")
@@ -965,12 +963,11 @@ def format_anatomy(data):
         data["version"] = get_version_from_path(file)
 
     project_name = anatomy.project_name
-    project_doc = get_project(project_name)
-    asset_doc = get_asset_by_name(project_name, data["avalon"]["asset"])
+    asset_name = data["avalon"]["asset"]
     task_name = os.environ["AVALON_TASK"]
     host_name = os.environ["AVALON_APP"]
-    context_data = get_workdir_data(
-        project_doc, asset_doc, task_name, host_name
+    context_data = get_template_data_with_names(
+        project_name, asset_name, task_name, host_name
     )
     data.update(context_data)
     data.update({
@@ -1128,10 +1125,8 @@ def create_write_node(
         if knob["name"] == "file_type":
             representation = knob["value"]
 
-    host_name = os.environ.get("AVALON_APP")
     try:
         data.update({
-            "app": host_name,
             "imageio_writes": imageio_writes,
             "representation": representation,
         })
@@ -1766,7 +1761,7 @@ class WorkfileSettings(object):
             kwargs.get("asset_name")
             or legacy_io.Session["AVALON_ASSET"]
         )
-        self._asset_entity = get_asset(self._asset)
+        self._asset_entity = get_current_project_asset(self._asset)
         self._root_node = root_node or nuke.root()
         self._nodes = self.get_nodes(nodes=nodes)
 
