@@ -1,6 +1,6 @@
 import nuke
 
-from openpype.vendor.python.common import qargparse
+import qargparse
 
 from openpype.pipeline import (
     legacy_io,
