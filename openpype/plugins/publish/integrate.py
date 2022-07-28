@@ -420,7 +420,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                       "".format(len(prepared_representations)))
 
     def prepare_subset(self, instance, project_name):
-        asset_doc = instance.data.get("assetEntity")
+        asset_doc = instance.data["assetEntity"]
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
