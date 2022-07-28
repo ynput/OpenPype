@@ -44,7 +44,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
             "subset": subset,
             "asset": in_data["asset"],
             "task": in_data["task"],
-            "label": subset,
+            "label": in_data.get("label") or subset,
             "name": subset,
             "family": in_data["family"],
             "families": instance_families,
