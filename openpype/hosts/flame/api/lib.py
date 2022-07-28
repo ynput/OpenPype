@@ -1184,7 +1184,7 @@ class TimeEffectMetadata(object):
             }
 
             if mode == 0:  # speed
-                r_data[self._retime_modes[mode]] = int(
+                r_data[self._retime_modes[mode]] = float(
                     tw_setup_state["TW_Speed"]
                     [0]["Channel"][0]["Value"][0]["_text"]
                 ) / 100
