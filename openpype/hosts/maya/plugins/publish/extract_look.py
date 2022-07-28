@@ -514,6 +514,9 @@ class ExtractLook(openpype.api.Extractor):
                 colorconvert = "--colorconvert sRGB linear"
             else:
                 colorconvert = ""
+
+            config_path = get_ocio_config_path("nuke-default")
+            color_config = "--colorconfig {0}".format(config_path)
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -523,10 +526,11 @@ class ExtractLook(openpype.api.Extractor):
                 filepath,
                 converted,
                 # Include `source-hash` as string metadata
-                "-sattrib",
+                "--sattrib",
                 "sourceHash",
                 escape_space(texture_hash),
                 colorconvert,
+                color_config
             )
 
             return converted, COPY, texture_hash
