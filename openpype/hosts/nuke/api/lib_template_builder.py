@@ -18,7 +18,7 @@ def get_placeholder_attributes(node, enumerate=False):
     for attr in node.knobs().keys():
         if attr in list_atts:
             if enumerate:
-                try: 
+                try:
                     attributes[attr] = node.knob(attr).values()
                 except AttributeError:
                     attributes[attr] = node.knob(attr).getValue()
