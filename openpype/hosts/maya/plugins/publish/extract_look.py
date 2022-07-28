@@ -43,7 +43,7 @@ def get_ocio_config_path(profile_folder):
     return os.path.join(
         os.environ["OPENPYPE_ROOT"],
         "vendor",
-        "config",
+        "configs",
         "OpenColorIO-Configs",
         profile_folder,
         "config.ocio"
@@ -102,10 +102,11 @@ def maketx(source, destination, *args):
         # use oiio-optimized settings for tile-size, planarconfig, metadata
         "--oiio",
         "--filter lanczos3",
+        escape_space(source)
     ]
 
     cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination), escape_space(source)])
+    cmd.extend(["-o", escape_space(destination)])
 
     cmd = " ".join(cmd)
 
