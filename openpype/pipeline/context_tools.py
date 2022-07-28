@@ -19,7 +19,9 @@ from openpype.client import (
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 from openpype.lib import filter_pyblish_plugins
+
 from .anatomy import Anatomy
+from .template_data import get_template_data_with_names
 from . import (
     legacy_io,
     register_loader_plugin_path,
@@ -336,6 +338,7 @@ def get_current_project_asset(asset_name=None, asset_id=None, fields=None):
             return None
     return get_asset_by_name(project_name, asset_name, fields=fields)
 
+
 def is_representation_from_latest(representation):
     """Return whether the representation is from latest version
 
@@ -348,3 +351,29 @@ def is_representation_from_latest(representation):
 
     project_name = legacy_io.active_project()
     return version_is_latest(project_name, representation["parent"])
+
+
+def get_template_data_from_session(session=None, system_settings=None):
+    """Template data for template fill from session keys.
+
+    Args:
+        session (Union[Dict[str, str], None]): The Session to use. If not
+            provided use the currently active global Session.
+        system_settings (Union[Dict[str, Any], Any]): Prepared system settings.
+            Optional are auto received if not passed.
+
+    Returns:
+        Dict[str, Any]: All available data from session.
+    """
+
+    if session is None:
+        session = legacy_io.Session
+
+    project_name = session["AVALON_PROJECT"]
+    asset_name = session["AVALON_ASSET"]
+    task_name = session["AVALON_TASK"]
+    host_name = session["AVALON_APP"]
+
+    return get_template_data_with_names(
+        project_name, asset_name, task_name, host_name, system_settings
+    )
