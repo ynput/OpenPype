@@ -5,6 +5,10 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io
 )
+from openpype.hosts.photoshop.api.plugin import (
+    get_subset_template,
+    get_subset_name_for_multiple
+)
 
 
 class ImageCreator(Creator):
@@ -68,7 +72,12 @@ class ImageCreator(Creator):
 
             if creating_multiple_groups:
                 # concatenate with layer name to differentiate subsets
-                subset_name += group.name.title().replace(" ", "")
+                subset_template = get_subset_template(self.family)
+                subset_name = get_subset_name_for_multiple(subset_name,
+                                                           subset_template,
+                                                           group,
+                                                           self.family,
+                                                           data["variant"])
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -143,3 +152,9 @@ class ImageCreator(Creator):
     def _clean_highlights(self, stub, item):
         return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
                                                            '')
+    @classmethod
+    def get_dynamic_data(
+        cls, variant, task_name, asset_id, project_name, host_name
+    ):
+        """Called by UI, empty value for layer must be provided."""
+        return {"layer": ""}
