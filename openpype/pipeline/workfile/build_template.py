@@ -1,5 +1,6 @@
 from importlib import import_module
 from openpype.lib import classes_from_module
+from openpype.host import HostBase
 from openpype.pipeline import registered_host
 
 from .abstract_template_loader import (
@@ -35,7 +36,13 @@ def update_workfile_template(args):
 
 
 def build_template_loader():
-    host_name = registered_host().__name__.partition('.')[2]
+    # TODO refactor to use advantage of 'HostBase' and don't import dynamically
+    #   - hosts should have methods that gives option to return builders
+    host = registered_host()
+    if isinstance(host, HostBase):
+        host_name = host.name
+    else:
+        host_name = host.__name__.partition('.')[2]
     module_path = _module_path_format.format(host=host_name)
     module = import_module(module_path)
     if not module:

@@ -7,6 +7,7 @@ import six
 import logging
 from functools import reduce
 
+from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
 from openpype.lib import get_linked_assets, PypeLogger as Logger
 from openpype.pipeline import legacy_io, Anatomy
@@ -74,18 +75,25 @@ class AbstractTemplateLoader:
     _log = None
 
     def __init__(self, placeholder_class):
+        # TODO template loader should expect host as and argument
+        #   - host have all responsibility for most of code (also provide
+        #       placeholder class)
+        #   - also have responsibility for current context
+        #       - this won't work in DCCs where multiple workfiles with
+        #           different contexts can be opened at single time
+        #  - template loader should have ability to change context
+        project_name = legacy_io.active_project()
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+
         self.loaders_by_name = get_loaders_by_name()
-        self.current_asset = legacy_io.Session["AVALON_ASSET"]
-        self.project_name = legacy_io.Session["AVALON_PROJECT"]
+        self.current_asset = asset_name
+        self.project_name = project_name
         self.host_name = legacy_io.Session["AVALON_APP"]
         self.task_name = legacy_io.Session["AVALON_TASK"]
         self.placeholder_class = placeholder_class
-        self.current_asset_docs = legacy_io.find_one({
-            "type": "asset",
-            "name": self.current_asset
-        })
+        self.current_asset_doc = get_asset_by_name(project_name, asset_name)
         self.task_type = (
-            self.current_asset_docs
+            self.current_asset_doc
             .get("data", {})
             .get("tasks", {})
             .get(self.task_name, {})
@@ -218,7 +226,7 @@ class AbstractTemplateLoader:
         loaders_by_name = self.loaders_by_name
         current_asset = self.current_asset
         linked_assets = [asset['name'] for asset
-                         in get_linked_assets(self.current_asset_docs)]
+                         in get_linked_assets(self.current_asset_doc)]
 
         ignored_ids = ignored_ids or []
         placeholders = self.get_placeholders()
@@ -270,7 +278,11 @@ class AbstractTemplateLoader:
                     self.postload(placeholder)
 
     def get_placeholder_representations(
-            self, placeholder, current_asset, linked_assets):
+        self, placeholder, current_asset, linked_assets
+    ):
+        # TODO This approach must be changed. Placeholders should return
+        #   already prepared data and not query them here.
+        #   - this is impossible to handle using query functions
         placeholder_db_filters = placeholder.convert_to_db_filters(
             current_asset,
             linked_assets)
