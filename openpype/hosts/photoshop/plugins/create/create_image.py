@@ -5,10 +5,7 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io
 )
-from openpype.hosts.photoshop.api.plugin import (
-    get_subset_template,
-    get_subset_name_for_multiple
-)
+from openpype.lib import prepare_template_data
 
 
 class ImageCreator(Creator):
@@ -71,6 +68,7 @@ class ImageCreator(Creator):
             group = stub.group_selected_layers(layer.name)
             groups_to_create.append(group)
 
+        layer_name = ''
         creating_multiple_groups = len(groups_to_create) > 1
         for group in groups_to_create:
             subset_name = subset_name_from_ui  # reset to name from creator UI
@@ -78,13 +76,12 @@ class ImageCreator(Creator):
             created_group_name = self._clean_highlights(stub, group.name)
 
             if creating_multiple_groups:
-                # concatenate with layer name to differentiate subsets
-                subset_template = get_subset_template(self.family)
-                subset_name = get_subset_name_for_multiple(subset_name,
-                                                           subset_template,
-                                                           group,
-                                                           self.family,
-                                                           data["variant"])
+                layer_name = group.name
+                if "{layer}" not in subset_name.lower():
+                    subset_name += "{Layer}"
+
+            layer_fill = prepare_template_data({"layer": layer_name})
+            subset_name = subset_name.format(**layer_fill)
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -160,7 +157,5 @@ class ImageCreator(Creator):
         return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
                                                            '')
     @classmethod
-    def get_dynamic_data(
-        cls, variant, task_name, asset_id, project_name, host_name
-    ):
-        return {"layer": ""}
+    def get_dynamic_data(cls, *args, **kwargs):
+        return {"layer": "{layer}"}

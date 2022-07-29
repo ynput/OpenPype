@@ -2,10 +2,7 @@ from Qt import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
 
-from openpype.hosts.photoshop.api.plugin import (
-    get_subset_template,
-    get_subset_name_for_multiple
-)
+from openpype.lib import prepare_template_data
 
 
 class CreateImage(create.LegacyCreator):
@@ -80,6 +77,7 @@ class CreateImage(create.LegacyCreator):
             groups.append(group)
 
         creator_subset_name = self.data["subset"]
+        layer_name = ''
         for group in groups:
             long_names = []
             group.name = group.name.replace(stub.PUBLISH_ICON, ''). \
@@ -87,12 +85,12 @@ class CreateImage(create.LegacyCreator):
 
             subset_name = creator_subset_name
             if len(groups) > 1:
-                subset_template = get_subset_template(self.family)
-                subset_name = get_subset_name_for_multiple(subset_name,
-                                                           subset_template,
-                                                           group,
-                                                           self.family,
-                                                           self.data["variant"])
+                layer_name = group.name
+                if "{layer}" not in subset_name.lower():
+                    subset_name += "{Layer}"
+
+            layer_fill = prepare_template_data({"layer": layer_name})
+            subset_name = subset_name.format(**layer_fill)
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -110,7 +108,5 @@ class CreateImage(create.LegacyCreator):
                 stub.rename_layer(group.id, stub.PUBLISH_ICON + group.name)
 
     @classmethod
-    def get_dynamic_data(
-        cls, variant, task_name, asset_id, project_name, host_name
-    ):
-        return {"layer": ""}
+    def get_dynamic_data(cls, *args, **kwargs):
+        return {"layer": "{layer}"}
