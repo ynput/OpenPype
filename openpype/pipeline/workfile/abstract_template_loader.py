@@ -280,19 +280,16 @@ class AbstractTemplateLoader:
     def get_placeholder_representations(
         self, placeholder, current_asset, linked_assets
     ):
-        # TODO This approach must be changed. Placeholders should return
-        #   already prepared data and not query them here.
-        #   - this is impossible to handle using query functions
-        placeholder_db_filters = placeholder.convert_to_db_filters(
+        placeholder_representations = placeholder.get_representations(
             current_asset,
-            linked_assets)
-        # get representation by assets
-        for db_filter in placeholder_db_filters:
-            placeholder_representations = list(legacy_io.find(db_filter))
-            for representation in reduce(update_representations,
-                                         placeholder_representations,
-                                         dict()).values():
-                yield representation
+            linked_assets
+        )
+        for repre_doc in reduce(
+            update_representations,
+            placeholder_representations,
+            dict()
+        ).values():
+            yield repre_doc
 
     def load_data_is_incorrect(
             self, placeholder, last_representation, ignored_ids):
