@@ -11,6 +11,7 @@ from openpype.tools.utils.delegates import pretty_timestamp
 
 from openpype.lib import PypeLogger
 from openpype.api import get_local_site_id
+from openpype.client import get_representation_by_id
 
 from . import lib
 
@@ -919,8 +920,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
         repre_id = self.data(index, Qt.UserRole)
 
-        representation = list(self.dbcon.find({"type": "representation",
-                                               "_id": repre_id}))
+        representation = get_representation_by_id(self.project, repre_id)
         if representation:
             self.sync_server.update_db(self.project, None, None,
                                        representation.pop(),
@@ -1357,11 +1357,10 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         file_id = self.data(index, Qt.UserRole)
 
         updated_file = None
-        # conversion from cursor to list
-        representations = list(self.dbcon.find({"type": "representation",
-                                               "_id": self._id}))
+        representation = get_representation_by_id(self.project, self._id)
+        if not representation:
+            return
 
-        representation = representations.pop()
         for repre_file in representation["files"]:
             if repre_file["_id"] == file_id:
                 updated_file = repre_file
