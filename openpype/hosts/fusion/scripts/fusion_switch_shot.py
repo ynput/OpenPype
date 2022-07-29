@@ -3,9 +3,7 @@ import re
 import sys
 import logging
 
-# Pipeline imports
 from openpype.client import (
-    get_project,
     get_asset_by_name,
     get_versions,
 )
@@ -20,9 +18,6 @@ from openpype.hosts.fusion.api import lib
 from openpype.lib.avalon_context import get_workdir_from_session
 
 log = logging.getLogger("Update Slap Comp")
-
-self = sys.modules[__name__]
-self._project = None
 
 
 def _format_version_folder(folder):
@@ -211,9 +206,6 @@ def switch(asset_name, filepath=None, new=True):
     project_name = legacy_io.active_project()
     asset = get_asset_by_name(project_name, asset_name)
     assert asset, "Could not find '%s' in the database" % asset_name
-
-    # Get current project
-    self._project = get_project(project_name)
 
     # Go to comp
     if not filepath:
