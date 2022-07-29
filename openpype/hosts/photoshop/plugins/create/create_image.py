@@ -1,3 +1,5 @@
+import re
+
 from openpype.hosts.photoshop import api
 from openpype.lib import BoolDef
 from openpype.pipeline import (
@@ -6,6 +8,7 @@ from openpype.pipeline import (
     legacy_io
 )
 from openpype.lib import prepare_template_data
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class ImageCreator(Creator):
@@ -76,7 +79,11 @@ class ImageCreator(Creator):
             created_group_name = self._clean_highlights(stub, group.name)
 
             if creating_multiple_groups:
-                layer_name = group.name
+                layer_name = re.sub(
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                    "",
+                    group.name
+                )
                 if "{layer}" not in subset_name.lower():
                     subset_name += "{Layer}"
 

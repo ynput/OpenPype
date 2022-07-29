@@ -1,8 +1,11 @@
+import re
+
 from Qt import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
 
 from openpype.lib import prepare_template_data
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class CreateImage(create.LegacyCreator):
@@ -85,7 +88,11 @@ class CreateImage(create.LegacyCreator):
 
             subset_name = creator_subset_name
             if len(groups) > 1:
-                layer_name = group.name
+                layer_name = re.sub(
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                    "",
+                    group.name
+                )
                 if "{layer}" not in subset_name.lower():
                     subset_name += "{Layer}"
 
