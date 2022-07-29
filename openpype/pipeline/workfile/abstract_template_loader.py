@@ -223,10 +223,10 @@ class AbstractTemplateLoader:
         Returns:
             None
         """
+
         loaders_by_name = self.loaders_by_name
-        current_asset = self.current_asset
-        linked_assets = [asset['name'] for asset
-                         in get_linked_assets(self.current_asset_doc)]
+        current_asset_doc = self.current_asset_doc
+        linked_assets = get_linked_assets(current_asset_doc)
 
         ignored_ids = ignored_ids or []
         placeholders = self.get_placeholders()
@@ -239,7 +239,7 @@ class AbstractTemplateLoader:
             ))
             placeholder_representations = self.get_placeholder_representations(
                 placeholder,
-                current_asset,
+                current_asset_doc,
                 linked_assets
             )
 
@@ -278,11 +278,11 @@ class AbstractTemplateLoader:
                     self.postload(placeholder)
 
     def get_placeholder_representations(
-        self, placeholder, current_asset, linked_assets
+        self, placeholder, current_asset_doc, linked_asset_docs
     ):
         placeholder_representations = placeholder.get_representations(
-            current_asset,
-            linked_assets
+            current_asset_doc,
+            linked_asset_docs
         )
         for repre_doc in reduce(
             update_representations,
@@ -458,13 +458,13 @@ class AbstractPlaceholder:
         pass
 
     @abstractmethod
-    def get_representations(self, current_asset, linked_assets):
+    def get_representations(self, current_asset_doc, linked_asset_docs):
         """Query representations based on placeholder data.
 
         Args:
-            current_asset (str): Name of current
+            current_asset_doc (Dict[str, Any]): Document of current
                 context asset.
-            linked_assets (List[str]): Names of assets
+            linked_asset_docs (List[Dict[str, Any]]): Documents of assets
                 linked to current context asset.
 
         Returns:
