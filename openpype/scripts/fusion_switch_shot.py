@@ -3,7 +3,7 @@ import re
 import sys
 import logging
 
-from openpype.client import get_project, get_asset_by_name, get_versions
+from openpype.client import get_asset_by_name, get_versions
 
 # Pipeline imports
 from openpype.hosts.fusion import api
