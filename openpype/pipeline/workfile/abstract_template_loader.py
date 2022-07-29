@@ -397,7 +397,18 @@ class AbstractPlaceholder:
     optional_attributes = {}
 
     def __init__(self, node):
+        self._log = None
         self.get_data(node)
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(repr(self))
+        return self._log
+
+    def __repr__(self):
+        return "< {} {} >".format(self.__class__.__name__, self.name)
+
 
     def order(self):
         """Get placeholder order.
@@ -436,9 +447,9 @@ class AbstractPlaceholder:
             Bool: True if every attributes are a key of data
         """
         if set(self.attributes).issubset(self.data.keys()):
-            print("Valid placeholder : {}".format(self.data["node"]))
+            self.log.debug("Valid placeholder: {}".format(self.data["node"]))
             return True
-        print("Placeholder is not valid : {}".format(self.data["node"]))
+        self.log.info("Placeholder is not valid: {}".format(self.data["node"]))
         return False
 
     @abstractmethod
