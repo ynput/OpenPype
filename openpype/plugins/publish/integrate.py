@@ -9,7 +9,12 @@ from bson.objectid import ObjectId
 from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 
-import openpype.api
+from openpype.client import (
+    get_representations,
+    get_subset_by_name,
+    get_version_by_name,
+)
+from openpype.lib import source_hash
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
@@ -71,12 +76,6 @@ def get_instance_families(instance):
 def get_frame_padded(frame, padding):
     """Return frame number as string with `padding` amount of padded zeros"""
     return "{frame:0{padding}d}".format(padding=padding, frame=frame)
-
-
-def get_first_frame_padded(collection):
-    """Return first frame as padded number from `clique.Collection`"""
-    start_frame = next(iter(collection.indexes))
-    return get_frame_padded(start_frame, padding=collection.padding)
 
 
 class IntegrateAsset(pyblish.api.InstancePlugin):
@@ -163,7 +162,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     # the database even if not used by the destination template
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
-        "family", "hierarchy", "username"
+        "family", "hierarchy", "username", "output"
     ]
     skip_host_families = []
 
@@ -266,6 +265,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
+        project_name = legacy_io.active_project()
+
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
             self.log.info((
@@ -281,19 +282,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_name = self.get_template_name(instance)
 
-        subset, subset_writes = self.prepare_subset(instance)
-        version, version_writes = self.prepare_version(instance, subset)
+        subset, subset_writes = self.prepare_subset(instance, project_name)
+        version, version_writes = self.prepare_version(
+            instance, subset, project_name
+        )
         instance.data["versionEntity"] = version
 
         # Get existing representations (if any)
         existing_repres_by_name = {
-            repres["name"].lower(): repres for repres in legacy_io.find(
-                {
-                    "parent": version["_id"],
-                    "type": "representation"
-                },
-                # Only care about id and name of existing representations
-                projection={"_id": True, "name": True}
+            repre_doc["name"].lower(): repre_doc
+            for repre_doc in get_representations(
+                project_name,
+                version_ids=[version["_id"]],
+                fields=["_id", "name"]
             )
         }
 
@@ -418,17 +419,15 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Registered {} representations"
                       "".format(len(prepared_representations)))
 
-    def prepare_subset(self, instance):
-        asset = instance.data.get("assetEntity")
+    def prepare_subset(self, instance, project_name):
+        asset_doc = instance.data["assetEntity"]
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
         # Get existing subset if it exists
-        subset = legacy_io.find_one({
-            "type": "subset",
-            "parent": asset["_id"],
-            "name": subset_name
-        })
+        subset_doc = get_subset_by_name(
+            project_name, subset_name, asset_doc["_id"]
+        )
 
         # Define subset data
         data = {
@@ -440,68 +439,68 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             data["subsetGroup"] = subset_group
 
         bulk_writes = []
-        if subset is None:
+        if subset_doc is None:
             # Create a new subset
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
-            subset = {
+            subset_doc = {
                 "_id": ObjectId(),
                 "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": data,
-                "parent": asset["_id"]
+                "parent": asset_doc["_id"]
             }
-            bulk_writes.append(InsertOne(subset))
+            bulk_writes.append(InsertOne(subset_doc))
 
         else:
             # Update existing subset data with new data and set in database.
             # We also change the found subset in-place so we don't need to
             # re-query the subset afterwards
-            subset["data"].update(data)
+            subset_doc["data"].update(data)
             bulk_writes.append(UpdateOne(
-                {"type": "subset", "_id": subset["_id"]},
+                {"type": "subset", "_id": subset_doc["_id"]},
                 {"$set": {
-                    "data": subset["data"]
+                    "data": subset_doc["data"]
                 }}
             ))
 
         self.log.info("Prepared subset: {}".format(subset_name))
-        return subset, bulk_writes
+        return subset_doc, bulk_writes
 
-    def prepare_version(self, instance, subset):
-
+    def prepare_version(self, instance, subset_doc, project_name):
         version_number = instance.data["version"]
 
-        version = {
+        version_doc = {
             "schema": "openpype:version-3.0",
             "type": "version",
-            "parent": subset["_id"],
+            "parent": subset_doc["_id"],
             "name": version_number,
             "data": self.create_version_data(instance)
         }
 
-        existing_version = legacy_io.find_one({
-            'type': 'version',
-            'parent': subset["_id"],
-            'name': version_number
-        }, projection={"_id": True})
+        existing_version = get_version_by_name(
+            project_name,
+            version_number,
+            subset_doc["_id"],
+            fields=["_id"]
+        )
 
         if existing_version:
             self.log.debug("Updating existing version ...")
-            version["_id"] = existing_version["_id"]
+            version_doc["_id"] = existing_version["_id"]
         else:
             self.log.debug("Creating new version ...")
-            version["_id"] = ObjectId()
+            version_doc["_id"] = ObjectId()
 
         bulk_writes = [ReplaceOne(
-            filter={"_id": version["_id"]},
-            replacement=version,
+            filter={"_id": version_doc["_id"]},
+            replacement=version_doc,
             upsert=True
         )]
 
-        self.log.info("Prepared version: v{0:03d}".format(version["name"]))
+        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
 
-        return version, bulk_writes
+        return version_doc, bulk_writes
 
     def prepare_representation(self, repre,
                                template_name,
@@ -512,20 +511,22 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # pre-flight validations
         if repre["ext"].startswith("."):
-            raise ValueError("Extension must not start with a dot '.': "
-                             "{}".format(repre["ext"]))
+            raise KnownPublishError((
+                "Extension must not start with a dot '.': {}"
+            ).format(repre["ext"]))
 
         if repre.get("transfers"):
-            raise ValueError("Representation is not allowed to have transfers"
-                             "data before integration. They are computed in "
-                             "the integrator"
-                             "Got: {}".format(repre["transfers"]))
+            raise KnownPublishError((
+                "Representation is not allowed to have transfers"
+                "data before integration. They are computed in "
+                "the integrator. Got: {}"
+            ).format(repre["transfers"]))
 
         # create template data for Anatomy
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
         # required representation keys
-        files = repre['files']
+        files = repre["files"]
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
@@ -541,68 +542,68 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         }.items():
             # Allow to take value from representation
             # if not found also consider instance.data
-            if key in repre:
-                value = repre[key]
-            elif key in instance.data:
-                value = instance.data[key]
-            else:
-                continue
-            template_data[anatomy_key] = value
+            value = repre.get(key)
+            if value is None:
+                value = instance.data.get(key)
 
-        if repre.get('stagingDir'):
-            stagingdir = repre['stagingDir']
-        else:
+            if value is not None:
+                template_data[anatomy_key] = value
+
+        stagingdir = repre.get("stagingDir")
+        if not stagingdir:
             # Fall back to instance staging dir if not explicitly
             # set for representation in the instance
-            self.log.debug("Representation uses instance staging dir: "
-                           "{}".format(instance_stagingdir))
+            self.log.debug((
+                "Representation uses instance staging dir: {}"
+            ).format(instance_stagingdir))
             stagingdir = instance_stagingdir
+
         if not stagingdir:
-            raise ValueError("No staging directory set for representation: "
-                             "{}".format(repre))
+            raise KnownPublishError(
+                "No staging directory set for representation: {}".format(repre)
+            )
 
         self.log.debug("Anatomy template name: {}".format(template_name))
-        anatomy = instance.context.data['anatomy']
-        template = os.path.normpath(anatomy.templates[template_name]["path"])
+        anatomy = instance.context.data["anatomy"]
+        publish_template_category = anatomy.templates[template_name]
+        template = os.path.normpath(publish_template_category["path"])
 
         is_udim = bool(repre.get("udim"))
+
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
             # Collection of files (sequence)
-            assert not any(os.path.isabs(fname) for fname in files), (
-                "Given file names contain full paths"
-            )
+            if any(os.path.isabs(fname) for fname in files):
+                raise KnownPublishError("Given file names contain full paths")
 
             src_collection = assemble(files)
 
-            # If the representation has `frameStart` set it renumbers the
-            # frame indices of the published collection. It will start from
-            # that `frameStart` index instead. Thus if that frame start
-            # differs from the collection we want to shift the destination
-            # frame indices from the source collection.
             destination_indexes = list(src_collection.indexes)
-            destination_padding = len(get_first_frame_padded(src_collection))
-            if repre.get("frameStart") is not None and not is_udim:
-                index_frame_start = int(repre.get("frameStart"))
-
-                render_template = anatomy.templates[template_name]
-                # todo: should we ALWAYS manage the frame padding even when not
-                #       having `frameStart` set?
-                frame_start_padding = int(
-                    render_template.get(
-                        "frame_padding",
-                        render_template.get("padding")
-                    )
+            # Use last frame for minimum padding
+            #   - that should cover both 'udim' and 'frame' minimum padding
+            destination_padding = len(str(destination_indexes[-1]))
+            if not is_udim:
+                # Change padding for frames if template has defined higher
+                #   padding.
+                template_padding = int(
+                    publish_template_category["frame_padding"]
                 )
+                if template_padding > destination_padding:
+                    destination_padding = template_padding
 
-                # Shift destination sequence to the start frame
-                src_start_frame = next(iter(src_collection.indexes))
-                shift = index_frame_start - src_start_frame
-                if shift:
+                # If the representation has `frameStart` set it renumbers the
+                # frame indices of the published collection. It will start from
+                # that `frameStart` index instead. Thus if that frame start
+                # differs from the collection we want to shift the destination
+                # frame indices from the source collection.
+                repre_frame_start = repre.get("frameStart")
+                if repre_frame_start is not None:
+                    index_frame_start = int(repre["frameStart"])
+                    # Shift destination sequence to the start frame
                     destination_indexes = [
-                        frame + shift for frame in destination_indexes
+                        index_frame_start + idx
+                        for idx in range(len(destination_indexes))
                     ]
-                destination_padding = frame_start_padding
 
             # To construct the destination template with anatomy we require
             # a Frame or UDIM tile set for the template data. We use the first
@@ -620,6 +621,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             template_filled = anatomy_filled[template_name]["path"]
             repre_context = template_filled.used_values
+
+            # Make sure context contains frame
+            # NOTE: Frame would not be available only if template does not
+            #   contain '{frame}' in template -> Do we want support it?
+            if not is_udim:
+                repre_context["frame"] = first_index_padded
+
             self.log.debug("Template filled: {}".format(str(template_filled)))
             dst_collection = assemble([os.path.normpath(template_filled)])
 
@@ -627,9 +635,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             dst_collection.indexes.clear()
             dst_collection.indexes.update(set(destination_indexes))
             dst_collection.padding = destination_padding
-            assert (
-                len(src_collection.indexes) == len(dst_collection.indexes)
-            ), "This is a bug"
+            if len(src_collection.indexes) != len(dst_collection.indexes):
+                raise KnownPublishError((
+                    "This is a bug. Source sequence frames length"
+                    " does not match integration frames length"
+                ))
 
             # Multiple file transfers
             transfers = []
@@ -640,9 +650,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         else:
             # Single file
             fname = files
-            assert not os.path.isabs(fname), (
-                "Given file name is a full path"
-            )
+            if os.path.isabs(fname):
+                self.log.error(
+                    "Filename in representation is filepath {}".format(fname)
+                )
+                raise KnownPublishError(
+                    "This is a bug. Representation file name is full path"
+                )
 
             # Manage anatomy template data
             template_data.pop("frame", None)
@@ -672,9 +686,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # Also add these values to the context even if not used by the
             # destination template
             value = template_data.get(key)
-            if not value:
-                continue
-            repre_context[key] = template_data[key]
+            if value is not None:
+                repre_context[key] = value
 
         # Explicitly store the full list even though template data might
         # have a different value because it uses just a single udim tile
@@ -688,39 +701,29 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         else:
             repre_id = ObjectId()
 
-        # Backwards compatibility:
         # Store first transferred destination as published path data
-        # todo: can we remove this?
-        # todo: We shouldn't change data that makes its way back into
-        #       instance.data[] until we know the publish actually succeeded
-        #       otherwise `published_path` might not actually be valid?
+        # - used primarily for reviews that are integrated to custom modules
+        # TODO we should probably store all integrated files
+        #   related to the representation?
         published_path = transfers[0][1]
-        repre["published_path"] = published_path  # Backwards compatibility
+        repre["published_path"] = published_path
 
         # todo: `repre` is not the actual `representation` entity
         #       we should simplify/clarify difference between data above
         #       and the actual representation entity for the database
         data = repre.get("data", {})
-        data.update({'path': published_path, 'template': template})
+        data.update({"path": published_path, "template": template})
         representation = {
             "_id": repre_id,
             "schema": "openpype:representation-2.0",
             "type": "representation",
             "parent": version["_id"],
-            "name": repre['name'],
+            "name": repre["name"],
             "data": data,
 
             # Imprint shortcut to context for performance reasons.
             "context": repre_context
         }
-
-        # todo: simplify/streamline which additional data makes its way into
-        #       the representation context
-        if repre.get("outputName"):
-            representation["context"]["output"] = repre['outputName']
-
-        if is_sequence_representation and repre.get("frameStart") is not None:
-            representation['context']['frame'] = template_data["frame"]
 
         return {
             "representation": representation,
@@ -781,7 +784,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 version_data[key] = instance.data[key]
 
         # Include instance.data[versionData] directly
-        version_data_instance = instance.data.get('versionData')
+        version_data_instance = instance.data.get("versionData")
         if version_data_instance:
             version_data.update(version_data_instance)
 
@@ -821,6 +824,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def get_profile_filter_criteria(self, instance):
         """Return filter criteria for `filter_profiles`"""
+
         # Anatomy data is pre-filled by Collectors
         anatomy_data = instance.data["anatomyData"]
 
@@ -851,6 +855,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             path: modified path if possible, or unmodified path
             + warning logged
         """
+
         success, rootless_path = anatomy.find_root_template_from_path(path)
         if success:
             path = rootless_path
@@ -872,6 +877,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             output_resources: array of dictionaries to be added to 'files' key
             in representation
         """
+
         file_infos = []
         for file_path in destinations:
             file_info = self.prepare_file_info(file_path, anatomy, sites=sites)
@@ -891,10 +897,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         Returns:
             dict: file info dictionary
         """
+
         return {
             "_id": ObjectId(),
             "path": self.get_rootless_path(anatomy, path),
             "size": os.path.getsize(path),
-            "hash": openpype.api.source_hash(path),
+            "hash": source_hash(path),
             "sites": sites
         }

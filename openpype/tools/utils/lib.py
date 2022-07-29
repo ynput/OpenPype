@@ -37,6 +37,19 @@ def center_window(window):
     window.move(geo.topLeft())
 
 
+def html_escape(text):
+    """Basic escape of html syntax symbols in text."""
+
+    return (
+        text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;")
+    )
+
+
 def set_style_property(widget, property_name, property_value):
     """Set widget's property that may affect style.
 
