@@ -76,10 +76,9 @@ class RenderSettings(object):
             prefix = self._image_prefixes[renderer]
             prefix = prefix.replace("{aov_separator}", aov_separator)
             cmds.setAttr(self._image_prefix_nodes[renderer],
-                        prefix,
-                        type="string")
+                        prefix, type="string")  # noqa
         else:
-            print("{0} isn't a supported renderer to autoset settings.".format(renderer))
+            print("{0} isn't a supported renderer to autoset settings.".format(renderer)) # noqa
 
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
