@@ -231,11 +231,11 @@ class AbstractTemplateLoader:
         ignored_ids = ignored_ids or []
         placeholders = self.get_placeholders()
         self.log.debug("Placeholders found in template: {}".format(
-            [placeholder.data['node'] for placeholder in placeholders]
+            [placeholder.name] for placeholder in placeholders]
         ))
         for placeholder in placeholders:
             self.log.debug("Start to processing placeholder {}".format(
-                placeholder.data['node']
+                placeholder.name
             ))
             placeholder_representations = self.get_placeholder_representations(
                 placeholder,
@@ -246,7 +246,7 @@ class AbstractTemplateLoader:
             if not placeholder_representations:
                 self.log.info(
                     "There's no representation for this placeholder: "
-                    "{}".format(placeholder.data['node'])
+                    "{}".format(placeholder.name)
                 )
                 continue
 
@@ -264,8 +264,8 @@ class AbstractTemplateLoader:
                     "Loader arguments used : {}".format(
                         representation['context']['asset'],
                         representation['context']['subset'],
-                        placeholder.loader,
-                        placeholder.data['loader_args']))
+                        placeholder.loader_name,
+                        placeholder.loader_args))
 
                 try:
                     container = self.load(
@@ -307,19 +307,22 @@ class AbstractTemplateLoader:
     def load(self, placeholder, loaders_by_name, last_representation):
         repre = get_representation_context(last_representation)
         return load_with_repre_context(
-            loaders_by_name[placeholder.loader],
+            loaders_by_name[placeholder.loader_name],
             repre,
-            options=parse_loader_args(placeholder.data['loader_args']))
+            options=parse_loader_args(placeholder.loader_args))
 
     def load_succeed(self, placeholder, container):
         placeholder.parent_in_hierarchy(container)
 
     def load_failed(self, placeholder, last_representation):
-        self.log.warning("Got error trying to load {}:{} with {}\n\n"
-                         "{}".format(last_representation['context']['asset'],
-                                     last_representation['context']['subset'],
-                                     placeholder.loader,
-                                     traceback.format_exc()))
+        self.log.warning(
+            "Got error trying to load {}:{} with {}".format(
+                last_representation['context']['asset'],
+                last_representation['context']['subset'],
+                placeholder.loader_name
+            ),
+            exc_info=True
+        )
 
     def postload(self, placeholder):
         placeholder.clean()
@@ -398,6 +401,7 @@ class AbstractPlaceholder:
 
     def __init__(self, node):
         self._log = None
+        self._name = node
         self.get_data(node)
 
     @property
@@ -409,6 +413,17 @@ class AbstractPlaceholder:
     def __repr__(self):
         return "< {} {} >".format(self.__class__.__name__, self.name)
 
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def loader_args(self):
+        return self.data["loader_args"]
+
+    @property
+    def builder_type(self):
+        return self.data["builder_type"]
 
     def order(self):
         """Get placeholder order.
@@ -423,12 +438,15 @@ class AbstractPlaceholder:
         return self.data.get('order')
 
     @property
-    def loader(self):
-        """Return placeholder loader type
+    def loader_name(self):
+        """Return placeholder loader type.
+
         Returns:
-            string: Loader name
+            str: Loader name that will be used to load placeholder
+                representations.
         """
-        return self.data.get('loader')
+
+        return self.data["loader"]
 
     @property
     def is_context(self):
