@@ -1,5 +1,7 @@
+import re
 from maya import cmds
 
+from openpype.client import get_representations
 from openpype.pipeline import legacy_io
 from openpype.pipeline.workfile.abstract_template_loader import (
     AbstractPlaceholder,
@@ -191,48 +193,48 @@ class MayaPlaceholder(AbstractPlaceholder):
         cmds.hide(node)
         cmds.setAttr(node + '.hiddenInOutliner', True)
 
-    def convert_to_db_filters(self, current_asset, linked_asset):
-        if self.data['builder_type'] == "context_asset":
-            return [
-                {
-                    "type": "representation",
-                    "context.asset": {
-                        "$eq": current_asset,
-                        "$regex": self.data['asset']
-                    },
-                    "context.subset": {"$regex": self.data['subset']},
-                    "context.hierarchy": {"$regex": self.data['hierarchy']},
-                    "context.representation": self.data['representation'],
-                    "context.family": self.data['family'],
-                }
-            ]
+    def get_representations(self, current_asset_doc, linked_asset_docs):
+        project_name = legacy_io.active_project()
 
-        elif self.data['builder_type'] == "linked_asset":
-            return [
-                {
-                    "type": "representation",
-                    "context.asset": {
-                        "$eq": asset_name,
-                        "$regex": self.data['asset']
-                    },
-                    "context.subset": {"$regex": self.data['subset']},
-                    "context.hierarchy": {"$regex": self.data['hierarchy']},
-                    "context.representation": self.data['representation'],
-                    "context.family": self.data['family'],
-                } for asset_name in linked_asset
-            ]
+        builder_type = self.data["builder_type"]
+        if builder_type == "context_asset":
+            context_filters = {
+                "asset": [current_asset_doc["name"]],
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representations": [self.data["representation"]],
+                "family": [self.data["family"]]
+            }
+
+        elif builder_type != "linked_asset":
+            context_filters = {
+                "asset": [re.compile(self.data["asset"])],
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representation": [self.data["representation"]],
+                "family": [self.data["family"]]
+            }
 
         else:
-            return [
-                {
-                    "type": "representation",
-                    "context.asset": {"$regex": self.data['asset']},
-                    "context.subset": {"$regex": self.data['subset']},
-                    "context.hierarchy": {"$regex": self.data['hierarchy']},
-                    "context.representation": self.data['representation'],
-                    "context.family": self.data['family'],
-                }
-            ]
+            asset_regex = re.compile(self.data["asset"])
+            linked_asset_names = []
+            for asset_doc in linked_asset_docs:
+                asset_name = asset_doc["name"]
+                if asset_regex.match(asset_name):
+                    linked_asset_names.append(asset_name)
+
+            context_filters = {
+                "asset": linked_asset_names,
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representation": [self.data["representation"]],
+                "family": [self.data["family"]],
+            }
+
+        return list(get_representations(
+            project_name,
+            context_filters=context_filters
+        ))
 
     def err_message(self):
         return (
