@@ -29,8 +29,6 @@ from openpype.lib import (
     UILabelDef
 )
 
-from openpype.hosts.traypublisher.api.pipeline import HostContext
-
 
 CLIP_ATTR_DEFS = [
     EnumDef(
