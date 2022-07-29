@@ -6,7 +6,7 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.api import BuildWorkfile, get_current_project_settings
+from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
@@ -99,17 +99,11 @@ def install():
 
         cmds.menuItem(divider=True)
 
-        render_settings_flag = get_current_project_settings()["maya"]["RenderSettings"]["apply_render_settings"] # noqa
-        if render_settings_flag:
-            cmds.menuItem(
-                "Set Render Settings",
-                command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings(),    # noqa
-            enable=True)
-        else:
-            cmds.menuItem(
-                "Set Render Settings",
-                command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings(),    # noqa
-            enable=False)
+        cmds.menuItem(
+            "Set Render Settings",
+            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
+        )
+
         cmds.menuItem(divider=True)
 
         cmds.menuItem(
