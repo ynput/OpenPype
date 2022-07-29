@@ -25,7 +25,7 @@ from .providers import lib
 
 from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 
-from openpype.client import get_representations
+from openpype.client import get_representations, get_representation_by_id
 
 
 log = PypeLogger.get_logger("SyncServer")
@@ -1591,11 +1591,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 not 'force'
             ValueError - other errors (repre not found, misconfiguration)
         """
-        representations = get_representations(collection, [representation_id])
-        if not representations:
+        representation = get_representation_by_id(collection,
+                                                  representation_id)
+        if not representation:
             raise ValueError("Representation {} not found in {}".
                              format(representation_id, collection))
-        representation = representations[0]
+
         if side and site_name:
             raise ValueError("Misconfiguration, only one of side and " +
                              "site_name arguments should be passed.")
@@ -1807,15 +1808,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(site=site_name)
 
         if provider_name == 'local_drive':
-            representations = list(get_representations(collection,
-                                                       [representation_id],
-                                                       fields=["files"]))
-            if not representations:
+            representation = get_representation_by_id(collection,
+                                                      representation_id,
+                                                      fields=["files"])
+            if not representation:
                 self.log.debug("No repre {} found".format(
                     representation_id))
                 return
 
-            representation = representations.pop()
             local_file_path = ''
             for file in representation.get("files"):
                 local_file_path = self.get_local_file_path(collection,
