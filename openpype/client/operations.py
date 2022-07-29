@@ -1,6 +1,8 @@
+import re
 import uuid
 import copy
-from abc import ABCMeta, abstractmethod
+import collections
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 from bson.objectid import ObjectId
@@ -9,6 +11,128 @@ from pymongo import DeleteOne, InsertOne, UpdateOne
 from .mongo import get_project_connection
 
 REMOVED_VALUE = object()
+
+CURRENT_PROJECT_SCHEMA = "openpype:project-3.0"
+CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
+CURRENT_ASSET_DOC_SCHEMA = "openpype:asset-3.0"
+CURRENT_SUBSET_SCHEMA = "openpype:subset-3.0"
+CURRENT_VERSION_SCHEMA = "openpype:version-3.0"
+CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
+
+
+def _create_or_convert_to_mongo_id(mongo_id):
+    if mongo_id is None:
+        return ObjectId()
+    return ObjectId(mongo_id)
+
+
+def new_project_document(
+    project_name, project_code, config, data=None, entity_id=None
+):
+    if data is None:
+        data = {}
+
+    data["code"] = project_code
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "name": project_name,
+        "type": CURRENT_PROJECT_SCHEMA,
+        "data": data,
+        "config": config
+    }
+
+
+def new_asset_document(
+    name, project_id, parent_id, parents, data=None, entity_id=None
+):
+    if data is None:
+        data = {}
+    if parent_id is not None:
+        parent_id = ObjectId(parent_id)
+    data["visualParent"] = parent_id
+    data["parents"] = parents
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "type": "asset",
+        "name": name,
+        "parent": ObjectId(project_id),
+        "data": data,
+        "schema": CURRENT_ASSET_DOC_SCHEMA
+    }
+
+
+def new_subset_document(name, family, asset_id, data=None, entity_id=None):
+    if data is None:
+        data = {}
+    data["family"] = family
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "schema": CURRENT_SUBSET_SCHEMA,
+        "type": "subset",
+        "name": name,
+        "data": data,
+        "parent": asset_id
+    }
+
+
+def new_version_doc(version, subset_id, data=None, entity_id=None):
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "schema": CURRENT_VERSION_SCHEMA,
+        "type": "version",
+        "name": int(version),
+        "parent": subset_id,
+        "data": data
+    }
+
+
+def new_representation_doc(
+    name, version_id, context, data=None, entity_id=None
+):
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "schema": CURRENT_REPRESENTATION_SCHEMA,
+        "type": "representation",
+        "parent": version_id,
+        "name": name,
+        "data": data,
+
+        # Imprint shortcut to context for performance reasons.
+        "context": context
+    }
+
+
+def _prepare_update_data(old_doc, new_doc, replace):
+    changes = {}
+    for key, value in new_doc.items():
+        if key not in old_doc or value != old_doc[key]:
+            changes[key] = value
+
+    if replace:
+        for key in old_doc.keys():
+            if key not in new_doc:
+                changes[key] = REMOVED_VALUE
+    return changes
+
+
+def prepare_subset_update_data(old_doc, new_doc, replace=True):
+    return _prepare_update_data(old_doc, new_doc, replace)
+
+
+def prepare_version_update_data(old_doc, new_doc, replace=True):
+    return _prepare_update_data(old_doc, new_doc, replace)
+
+
+def prepare_representation_update_data(old_doc, new_doc, replace=True):
+    return _prepare_update_data(old_doc, new_doc, replace)
 
 
 @six.add_metaclass(ABCMeta)
