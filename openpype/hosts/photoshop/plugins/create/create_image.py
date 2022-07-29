@@ -42,17 +42,17 @@ class ImageCreator(Creator):
         top_level_selected_items = stub.get_selected_layers()
         if pre_create_data.get("use_selection"):
             only_single_item_selected = len(top_level_selected_items) == 1
-            for selected_item in top_level_selected_items:
-                if (
-                        only_single_item_selected or
-                        pre_create_data.get("create_multiple")):
+            if (
+                    only_single_item_selected or
+                    pre_create_data.get("create_multiple")):
+                for selected_item in top_level_selected_items:
                     if selected_item.group:
                         groups_to_create.append(selected_item)
                     else:
                         top_layers_to_wrap.append(selected_item)
-                else:
-                    group = stub.group_selected_layers(subset_name_from_ui)
-                    groups_to_create.append(group)
+            else:
+                group = stub.group_selected_layers(subset_name_from_ui)
+                groups_to_create.append(group)
 
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(subset_name_from_ui)
@@ -156,5 +156,4 @@ class ImageCreator(Creator):
     def get_dynamic_data(
         cls, variant, task_name, asset_id, project_name, host_name
     ):
-        """Called by UI, empty value for layer must be provided."""
         return {"layer": ""}
