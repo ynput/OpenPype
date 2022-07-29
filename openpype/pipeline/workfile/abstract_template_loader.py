@@ -456,8 +456,25 @@ class AbstractPlaceholder:
 
     @abstractmethod
     def clean(self):
-        """Clean placeholder from hierarchy after loading assets.
+        """Clean placeholder from hierarchy after loading assets."""
+
+        pass
+
+    @abstractmethod
+    def get_representations(self, current_asset, linked_assets):
+        """Query representations based on placeholder data.
+
+        Args:
+            current_asset (str): Name of current
+                context asset.
+            linked_assets (List[str]): Names of assets
+                linked to current context asset.
+
+        Returns:
+            Iterable[Dict[str, Any]]: Representations that are matching
+                placeholder filters.
         """
+
         pass
 
     @abstractmethod
