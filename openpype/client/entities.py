@@ -7,6 +7,7 @@ that has project name as a context (e.g. on 'ProjectEntity'?).
 """
 
 import os
+import re
 import collections
 
 import six
@@ -1035,17 +1036,70 @@ def get_representation_by_name(
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
+def _flatten_dict(data):
+    flatten_queue = collections.deque()
+    flatten_queue.append(data)
+    output = {}
+    while flatten_queue:
+        item = flatten_queue.popleft()
+        for key, value in item.items():
+            if not isinstance(value, dict):
+                output[key] = value
+                continue
+
+            tmp = {}
+            for subkey, subvalue in value.items():
+                new_key = "{}.{}".format(key, subkey)
+                tmp[new_key] = subvalue
+            flatten_queue.append(tmp)
+    return output
+
+
+def _regex_filters(filters):
+    output = []
+    for key, value in filters.items():
+        regexes = []
+        a_values = []
+        if isinstance(value, re.Pattern):
+            regexes.append(value)
+        elif isinstance(value, (list, tuple, set)):
+            for item in value:
+                if isinstance(item, re.Pattern):
+                    regexes.append(item)
+                else:
+                    a_values.append(item)
+        else:
+            a_values.append(value)
+
+        key_filters = []
+        if len(a_values) == 1:
+            key_filters.append({key: a_values[0]})
+        elif a_values:
+            key_filters.append({key: {"$in": a_values}})
+
+        for regex in regexes:
+            key_filters.append({key: {"$regex": regex}})
+
+        if len(key_filters) == 1:
+            output.append(key_filters[0])
+        else:
+            output.append({"$or": key_filters})
+
+    return output
+
+
 def _get_representations(
     project_name,
     representation_ids,
     representation_names,
     version_ids,
-    extensions,
+    context_filters,
     names_by_version_ids,
     standard,
     archived,
     fields
 ):
+    default_output = []
     repre_types = []
     if standard:
         repre_types.append("representation")
@@ -1053,7 +1107,7 @@ def _get_representations(
         repre_types.append("archived_representation")
 
     if not repre_types:
-        return []
+        return default_output
 
     if len(repre_types) == 1:
         query_filter = {"type": repre_types[0]}
@@ -1063,25 +1117,21 @@ def _get_representations(
     if representation_ids is not None:
         representation_ids = _convert_ids(representation_ids)
         if not representation_ids:
-            return []
+            return default_output
         query_filter["_id"] = {"$in": representation_ids}
 
     if representation_names is not None:
         if not representation_names:
-            return []
+            return default_output
         query_filter["name"] = {"$in": list(representation_names)}
 
     if version_ids is not None:
         version_ids = _convert_ids(version_ids)
         if not version_ids:
-            return []
+            return default_output
         query_filter["parent"] = {"$in": version_ids}
 
-    if extensions is not None:
-        if not extensions:
-            return []
-        query_filter["context.ext"] = {"$in": list(extensions)}
-
+    or_queries = []
     if names_by_version_ids is not None:
         or_query = []
         for version_id, names in names_by_version_ids.items():
@@ -1091,8 +1141,35 @@ def _get_representations(
                     "name": {"$in": list(names)}
                 })
         if not or_query:
+            return default_output
+        or_queries.append(or_query)
+
+    if context_filters is not None:
+        if not context_filters:
             return []
-        query_filter["$or"] = or_query
+        _flatten_filters = _flatten_dict(context_filters)
+        flatten_filters = {}
+        for key, value in _flatten_filters.items():
+            if not key.startswith("context"):
+                key = "context.{}".format(key)
+            flatten_filters[key] = value
+
+        for item in _regex_filters(flatten_filters):
+            for key, value in item.items():
+                if key == "$or":
+                    or_queries.append(value)
+                else:
+                    query_filter[key] = value
+
+    if len(or_queries) == 1:
+        query_filter["$or"] = or_queries[0]
+    elif or_queries:
+        and_query = []
+        for or_query in or_queries:
+            if isinstance(or_query, list):
+                or_query = {"$or": or_query}
+            and_query.append(or_query)
+        query_filter["$and"] = and_query
 
     conn = get_project_connection(project_name)
 
@@ -1104,7 +1181,7 @@ def get_representations(
     representation_ids=None,
     representation_names=None,
     version_ids=None,
-    extensions=None,
+    context_filters=None,
     names_by_version_ids=None,
     archived=False,
     standard=True,
@@ -1122,8 +1199,8 @@ def get_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        extensions (Iterable[str]): Filter by extension of main representation
-            file (without dot).
+        context_filters (Dict[str, List[str, re.Pattern]]): Filter by
+            representation context fields.
         names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
             using version ids and list of names under the version.
         archived (bool): Output will also contain archived representations.
@@ -1140,6 +1217,7 @@ def get_representations(
         representation_names=representation_names,
         version_ids=version_ids,
         extensions=extensions,
+        context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
         standard=True,
         archived=archived,
@@ -1153,6 +1231,7 @@ def get_archived_representations(
     representation_names=None,
     version_ids=None,
     extensions=None,
+    context_filters=None,
     names_by_version_ids=None,
     fields=None
 ):
@@ -1185,6 +1264,7 @@ def get_archived_representations(
         representation_names=representation_names,
         version_ids=version_ids,
         extensions=extensions,
+        context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
         standard=False,
         archived=True,
