@@ -25,6 +25,8 @@ from .providers import lib
 
 from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 
+from openpype.client import get_representations
+
 
 log = PypeLogger.get_logger("SyncServer")
 
@@ -344,6 +346,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             "files.sites.name": site_name
         }
 
+        # TODO currently not possible to replace with get_representations
         representations = list(
             self.connection.database[collection].find(query))
         if not representations:
@@ -391,12 +394,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         self.log.debug("Validation of {} for {} started".format(collection,
                                                                 site_name))
-        query = {
-            "type": "representation"
-        }
-
-        representations = list(
-            self.connection.database[collection].find(query))
+        representations = list(get_representations(collection))
         if not representations:
             self.log.debug("No repre found")
             return
@@ -1593,14 +1591,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 not 'force'
             ValueError - other errors (repre not found, misconfiguration)
         """
-        query = {
-            "_id": ObjectId(representation_id)
-        }
-
-        representation = self.connection.database[collection].find_one(query)
-        if not representation:
+        representations = get_representations(collection, [representation_id])
+        if not representations:
             raise ValueError("Representation {} not found in {}".
                              format(representation_id, collection))
+        representation = representations[0]
         if side and site_name:
             raise ValueError("Misconfiguration, only one of side and " +
                              "site_name arguments should be passed.")
@@ -1808,18 +1803,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(site=site_name)
 
         if provider_name == 'local_drive':
-            query = {
-                "_id": ObjectId(representation_id)
-            }
-
-            representation = list(
-                self.connection.database[collection].find(query))
-            if not representation:
+            representations = list(get_representations(collection,
+                                                       [representation_id],
+                                                       fields=["files"]))
+            if not representations:
                 self.log.debug("No repre {} found".format(
                     representation_id))
                 return
 
-            representation = representation.pop()
+            representation = representations.pop()
             local_file_path = ''
             for file in representation.get("files"):
                 local_file_path = self.get_local_file_path(collection,
