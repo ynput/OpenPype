@@ -98,11 +98,11 @@ class MayaPlaceholder(AbstractPlaceholder):
     """Concrete implementation of AbstractPlaceholder for maya
     """
 
-    optional_attributes = {'asset', 'subset', 'hierarchy'}
+    optional_keys = {'asset', 'subset', 'hierarchy'}
 
     def get_data(self, node):
         user_data = dict()
-        for attr in self.attributes.union(self.optional_attributes):
+        for attr in self.required_keys.union(self.optional_keys):
             attribute_name = '{}.{}'.format(node, attr)
             if not cmds.attributeQuery(attr, node=node, exists=True):
                 print("{} not found".format(attribute_name))
@@ -112,7 +112,9 @@ class MayaPlaceholder(AbstractPlaceholder):
                 asString=True)
         user_data['parent'] = (
             cmds.getAttr(node + '.parent', asString=True)
-            or node.rpartition('|')[0] or "")
+            or node.rpartition('|')[0]
+            or ""
+        )
         user_data['node'] = node
         if user_data['parent']:
             siblings = cmds.listRelatives(user_data['parent'], children=True)

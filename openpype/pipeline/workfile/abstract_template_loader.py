@@ -377,15 +377,17 @@ class AbstractTemplateLoader:
 
 @six.add_metaclass(ABCMeta)
 class AbstractPlaceholder:
-    """Abstraction of placeholders logic
+    """Abstraction of placeholders logic.
+
     Properties:
-        attributes: A list of mandatory attribute to decribe placeholder
+        required_keys: A list of mandatory keys to decribe placeholder
             and assets to load.
-        optional_attributes: A list of optional attribute to decribe
+        optional_keys: A list of optional keys to decribe
             placeholder and assets to load
         loader: Name of linked loader to use while loading assets
         is_context: Is placeholder linked
             to context asset (or to linked assets)
+
     Methods:
         is_repres_valid:
         loader:
@@ -395,9 +397,15 @@ class AbstractPlaceholder:
         parent_in_hierachy:
     """
 
-    attributes = {'builder_type', 'family', 'representation',
-                  'order', 'loader', 'loader_args'}
-    optional_attributes = {}
+    required_keys = {
+        "builder_type",
+        "family",
+        "representation",
+        "order",
+        "loader",
+        "loader_args"
+    }
+    optional_keys = {}
 
     def __init__(self, node):
         self._log = None
@@ -459,15 +467,18 @@ class AbstractPlaceholder:
         return self.data.get('builder_type') == 'context_asset'
 
     def is_valid(self):
-        """Test validity of placeholder
-        i.e.: every attributes exists in placeholder data
+        """Test validity of placeholder.
+
+        i.e.: every required key exists in placeholder data
+
         Returns:
-            Bool: True if every attributes are a key of data
+            bool: True if every key is in data
         """
-        if set(self.attributes).issubset(self.data.keys()):
-            self.log.debug("Valid placeholder: {}".format(self.data["node"]))
+
+        if set(self.required_keys).issubset(self.data.keys()):
+            self.log.debug("Valid placeholder : {}".format(self.name))
             return True
-        self.log.info("Placeholder is not valid: {}".format(self.data["node"]))
+        self.log.info("Placeholder is not valid : {}".format(self.name))
         return False
 
     @abstractmethod
