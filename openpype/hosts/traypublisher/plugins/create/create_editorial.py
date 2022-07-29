@@ -75,20 +75,13 @@ class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
         self.log.info(f"instance_data: {instance_data}")
         subset_name = instance_data["subset"]
 
-        return self._create_instance(subset_name, instance_data)
-
-    def _create_instance(self, subset_name, data):
-
         # Create new instance
-        new_instance = CreatedInstance(self.family, subset_name, data, self)
+        new_instance = CreatedInstance(
+            self.family, subset_name, instance_data, self
+        )
         self.log.info(f"instance_data: {pformat(new_instance.data)}")
 
-        # Host implementation of storing metadata about instance
-        HostContext.add_instance(new_instance.data_to_store())
-        # Add instance to current context
-        self._add_instance_to_context(new_instance)
-
-        return new_instance
+        self._store_new_instance(new_instance)
 
     def get_instance_attr_defs(self):
         return [
@@ -299,8 +292,10 @@ or updating already created. Publishing will create OTIO file.
             "editorialSourcePath": media_path,
             "otioTimeline": otio.adapters.write_to_string(otio_timeline)
         })
-
-        self._create_instance(self.family, subset_name, data)
+        new_instance = CreatedInstance(
+            self.family, subset_name, data, self
+        )
+        self._store_new_instance(new_instance)
 
     def _create_otio_timeline(self, sequence_path, fps):
         """Creating otio timeline from sequence path
@@ -819,23 +814,6 @@ or updating already created. Publishing will create OTIO file.
                 f"Duplicate shot name: {name}! "
                 "Please check names in the input sequence files."
             )
-
-    def _create_instance(self, family, subset_name, instance_data):
-        """ CreatedInstance object creator
-
-        Args:
-            family (str): family name
-            subset_name (str): subset name
-            instance_data (dict): instance data
-        """
-        # Create new instance
-        new_instance = CreatedInstance(
-            family, subset_name, instance_data, self
-        )
-        # Host implementation of storing metadata about instance
-        HostContext.add_instance(new_instance.data_to_store())
-        # Add instance to current context
-        self._add_instance_to_context(new_instance)
 
     def get_pre_create_attr_defs(self):
         """ Creating pre-create attributes at creator plugin.
