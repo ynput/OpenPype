@@ -53,6 +53,13 @@ class ImageCreator(Creator):
             else:
                 group = stub.group_selected_layers(subset_name_from_ui)
                 groups_to_create.append(group)
+        else:
+            stub.select_layers(stub.get_layers())
+            try:
+                group = stub.group_selected_layers(subset_name_from_ui)
+            except:
+                raise ValueError("Cannot group locked Bakcground layer!")
+            groups_to_create.append(group)
 
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(subset_name_from_ui)
