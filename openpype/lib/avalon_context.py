@@ -13,22 +13,16 @@ from openpype.client import (
     get_project,
     get_assets,
     get_asset_by_name,
-    get_subset_by_name,
     get_subsets,
     get_last_versions,
-    get_last_version_by_subset_id,
     get_last_version_by_subset_name,
     get_representations,
     get_workfile_info,
 )
-from openpype.settings import (
-    get_project_settings,
-    get_system_settings
-)
+from openpype.settings import get_project_settings
 from .profiles_filtering import filter_profiles
 from .events import emit_event
 from .path_templates import StringTemplate
-from .local_settings import get_openpype_username
 
 legacy_io = None
 
@@ -188,6 +182,9 @@ def is_latest(representation):
 
     Returns:
         bool: Whether the representation is of latest version.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     from openpype.pipeline.context_tools import is_representation_from_latest
@@ -197,7 +194,11 @@ def is_latest(representation):
 
 @deprecated("openpype.pipeline.load.any_outdated_containers")
 def any_outdated():
-    """Return whether the current scene has any outdated content"""
+    """Return whether the current scene has any outdated content.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
 
     from openpype.pipeline.load import any_outdated_containers
 
@@ -215,6 +216,9 @@ def get_asset(asset_name=None):
 
     Returns:
         (MongoDB document)
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     from openpype.pipeline.context_tools import get_current_project_asset
@@ -222,17 +226,15 @@ def get_asset(asset_name=None):
     return get_current_project_asset(asset_name=asset_name)
 
 
+@deprecated("openpype.pipeline.template_data.get_general_template_data")
 def get_system_general_anatomy_data(system_settings=None):
-    if not system_settings:
-        system_settings = get_system_settings()
-    studio_name = system_settings["general"]["studio_name"]
-    studio_code = system_settings["general"]["studio_code"]
-    return {
-        "studio": {
-            "name": studio_name,
-            "code": studio_code
-        }
-    }
+    """
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
+    from openpype.pipeline.template_data import get_general_template_data
+
+    return get_general_template_data(system_settings)
 
 
 def get_linked_asset_ids(asset_doc):
@@ -297,7 +299,10 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
     Returns:
         None: If asset, subset or version were not found.
-        dict: Last version document for entered .
+        dict: Last version document for entered.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
     if not project_name:
@@ -424,7 +429,7 @@ def get_workfile_template_key(
     return default
 
 
-# TODO rename function as is not just "work" specific
+@deprecated("openpype.pipeline.template_data.get_template_data")
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
 
@@ -437,40 +442,16 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
     Returns:
         dict: Data prepared for filling workdir template.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
-    task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
 
-    project_task_types = project_doc["config"]["tasks"]
-    task_code = project_task_types.get(task_type, {}).get("short_name")
+    from openpype.pipeline.template_data import get_template_data
 
-    asset_parents = asset_doc["data"]["parents"]
-    hierarchy = "/".join(asset_parents)
-
-    parent_name = project_doc["name"]
-    if asset_parents:
-        parent_name = asset_parents[-1]
-
-    data = {
-        "project": {
-            "name": project_doc["name"],
-            "code": project_doc["data"].get("code")
-        },
-        "task": {
-            "name": task_name,
-            "type": task_type,
-            "short": task_code,
-        },
-        "asset": asset_doc["name"],
-        "parent": parent_name,
-        "app": host_name,
-        "user": get_openpype_username(),
-        "hierarchy": hierarchy,
-    }
-
-    system_general_data = get_system_general_anatomy_data()
-    data.update(system_general_data)
-
-    return data
+    return get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
 
 
 def get_workdir_with_workdir_data(
@@ -552,11 +533,13 @@ def get_workdir(
         TemplateResult: Workdir path.
     """
 
+    from openpype.pipeline import Anatomy
+    from openpype.pipeline.template_data import get_template_data
+
     if not anatomy:
-        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
-    workdir_data = get_workdir_data(
+    workdir_data = get_template_data(
         project_doc, asset_doc, task_name, host_name
     )
     # Output is TemplateResult object which contain useful data
@@ -565,27 +548,23 @@ def get_workdir(
     )
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.get_template_data_from_session")
 def template_data_from_session(session=None):
     """ Return dictionary with template from session keys.
 
     Args:
         session (dict, Optional): The Session to use. If not provided use the
             currently active global Session.
+
     Returns:
         dict: All available data from session.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
-    if session is None:
-        session = legacy_io.Session
-
-    project_name = session["AVALON_PROJECT"]
-    asset_name = session["AVALON_ASSET"]
-    task_name = session["AVALON_TASK"]
-    host_name = session["AVALON_APP"]
-    project_doc = get_project(project_name)
-    asset_doc = get_asset_by_name(project_name, asset_name)
-    return get_workdir_data(project_doc, asset_doc, task_name, host_name)
+    from openpype.pipeline.context_tools import get_template_data_from_session
+    return get_template_data_from_session(session)
 
 
 @with_pipeline_io
@@ -660,13 +639,14 @@ def compute_session_changes(
 @with_pipeline_io
 def get_workdir_from_session(session=None, template_key=None):
     from openpype.pipeline import Anatomy
+    from openpype.pipeline.context_tools import get_template_data_from_session
 
     if session is None:
         session = legacy_io.Session
     project_name = session["AVALON_PROJECT"]
     host_name = session["AVALON_APP"]
     anatomy = Anatomy(project_name)
-    template_data = template_data_from_session(session)
+    template_data = get_template_data_from_session(session)
     anatomy_filled = anatomy.format(template_data)
 
     if not template_key:
@@ -695,8 +675,8 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
     Returns:
         dict: The changed key, values in the current Session.
-
     """
+
     changes = compute_session_changes(
         legacy_io.Session,
         task=task,
@@ -768,7 +748,9 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
         dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
             `legacy_io` is used if not entered.
     """
+
     from openpype.pipeline import Anatomy
+    from openpype.pipeline.template_data import get_template_data
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
@@ -787,7 +769,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     # Prepare project for workdir data
     project_name = dbcon.active_project()
     project_doc = get_project(project_name)
-    workdir_data = get_workdir_data(
+    workdir_data = get_template_data(
         project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
     )
     # Prepare anatomy

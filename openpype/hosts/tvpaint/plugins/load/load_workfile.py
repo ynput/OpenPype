@@ -1,10 +1,8 @@
 import os
 
-from openpype.client import get_project, get_asset_by_name
 from openpype.lib import (
     StringTemplate,
     get_workfile_template_key_from_context,
-    get_workdir_data,
     get_last_workfile_with_version,
 )
 from openpype.pipeline import (
@@ -12,6 +10,7 @@ from openpype.pipeline import (
     legacy_io,
     Anatomy,
 )
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
 
 
@@ -54,9 +53,6 @@ class LoadWorkfile(plugin.Loader):
             asset_name = legacy_io.Session["AVALON_ASSET"]
             task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_doc = get_project(project_name)
-        asset_doc = get_asset_by_name(project_name, asset_name)
-
         template_key = get_workfile_template_key_from_context(
             asset_name,
             task_name,
@@ -66,7 +62,9 @@ class LoadWorkfile(plugin.Loader):
         )
         anatomy = Anatomy(project_name)
 
-        data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
+        data = get_template_data_with_names(
+            project_name, asset_name, task_name, host_name
+        )
         data["root"] = anatomy.roots
 
         file_template = anatomy.templates[template_key]["file"]

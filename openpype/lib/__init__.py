@@ -63,7 +63,10 @@ from .execute import (
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
-from .log import PypeLogger, timeit
+from .log import (
+    Logger,
+    PypeLogger,
+)
 
 from .path_templates import (
     merge_dict,
@@ -83,8 +86,9 @@ from .anatomy import (
     Anatomy
 )
 
-from .config import (
+from .dateutils import (
     get_datetime_data,
+    get_timestamp,
     get_formatted_current_time
 )
 
@@ -370,12 +374,12 @@ __all__ = [
     "get_datetime_data",
     "get_formatted_current_time",
 
+    "Logger",
     "PypeLogger",
+
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
-
-    "timeit",
 
     "is_overlapping_otio_ranges",
     "otio_range_with_handles",
