@@ -87,7 +87,7 @@ class CreateRender(plugin.Creator):
             return
         self._project_settings = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"])
-        if self._project_settings["maya"]["RenderSettings"]["apply_render_settings"]:
+        if self._project_settings["maya"]["RenderSettings"]["apply_render_settings"]: # noqa
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
         manager = ModulesManager()
         self.deadline_module = manager.modules_by_name["deadline"]
