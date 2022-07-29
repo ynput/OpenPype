@@ -1611,6 +1611,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         elem = {"name": site_name}
 
+        query = {
+            "_id": ObjectId(representation_id)
+        }
+
         if file_id:  # reset site for particular file
             self._reset_site_for_file(collection, query,
                                       elem, file_id, site_name)
