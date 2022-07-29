@@ -66,12 +66,20 @@ class RenderSettings(object):
             )]
         except KeyError:
             aov_separator = "_"
+        reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
 
-        prefix = self._image_prefixes[renderer]
-        prefix = prefix.replace("{aov_separator}", aov_separator)
-        cmds.setAttr(self._image_prefix_nodes[renderer],
-                     prefix,
-                     type="string")
+        if reset_frame:
+            start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
+            cmds.currentTime(start_frame, edit=True)
+
+        if renderer in self._image_prefix_nodes:
+            prefix = self._image_prefixes[renderer]
+            prefix = prefix.replace("{aov_separator}", aov_separator)
+            cmds.setAttr(self._image_prefix_nodes[renderer],
+                        prefix,
+                        type="string")
+        else:
+            print("{0} isn't a supported renderer to autoset settings.".format(renderer))
 
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")

@@ -27,6 +27,11 @@
             ]
         },
         {
+          "key": "reset_current_frame",
+          "label": "Reset Current Frame",
+          "type": "boolean"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "arnold_renderer",
