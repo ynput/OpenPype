@@ -416,6 +416,12 @@ class Creator(BaseCreator):
         return self.pre_create_attr_defs
 
 
+class HiddenCreator(BaseCreator):
+    @abstractmethod
+    def create(self, instance_data, source_data):
+        pass
+
+
 class AutoCreator(BaseCreator):
     """Creator which is automatically triggered without user interaction.
 

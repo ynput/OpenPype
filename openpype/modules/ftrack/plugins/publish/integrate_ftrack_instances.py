@@ -58,7 +58,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         version_number = int(instance_version)
 
         family = instance.data["family"]
-        family_low = instance.data["family"].lower()
+        family_low = family.lower()
 
         asset_type = instance.data.get("ftrackFamily")
         if not asset_type and family_low in self.family_mapping:
@@ -140,24 +140,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         first_thumbnail_component = None
         first_thumbnail_component_repre = None
         for repre in thumbnail_representations:
-            published_path = repre.get("published_path")
-            if not published_path:
-                comp_files = repre["files"]
-                if isinstance(comp_files, (tuple, list, set)):
-                    filename = comp_files[0]
-                else:
-                    filename = comp_files
-
-                published_path = os.path.join(
-                    repre["stagingDir"], filename
+            repre_path = self._get_repre_path(instance, repre, False)
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set and source was removed."
                 )
-                if not os.path.exists(published_path):
-                    continue
-                repre["published_path"] = published_path
+                continue
 
             # Create copy of base comp item and append it
             thumbnail_item = copy.deepcopy(base_component_item)
-            thumbnail_item["component_path"] = repre["published_path"]
+            thumbnail_item["component_path"] = repre_path
             thumbnail_item["component_data"] = {
                 "name": "thumbnail"
             }
@@ -216,6 +208,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         extended_asset_name = ""
         multiple_reviewable = len(review_representations) > 1
         for repre in review_representations:
+            repre_path = self._get_repre_path(instance, repre, False)
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set and source was removed."
+                )
+                continue
+
             # Create copy of base comp item and append it
             review_item = copy.deepcopy(base_component_item)
 
@@ -270,7 +269,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 fps = instance_fps
 
             # Change location
-            review_item["component_path"] = repre["published_path"]
+            review_item["component_path"] = repre_path
             # Change component data
             review_item["component_data"] = {
                 # Default component name is "main".
@@ -327,7 +326,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Add others representations as component
         for repre in other_representations:
-            published_path = repre.get("published_path")
+            published_path = self._get_repre_path(instance, repre, True)
             if not published_path:
                 continue
             # Create copy of base comp item and append it
@@ -359,6 +358,51 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
         ))
         instance.data["ftrackComponentsList"] = component_list
+
+    def _get_repre_path(self, instance, repre, only_published):
+        """Get representation path that can be used for integration.
+
+        When 'only_published' is set to true the validation of path is not
+        relevant. In that case we just need what is set in 'published_path'
+        as "reference". The reference is not used to get or upload the file but
+        for reference where the file was published.
+
+        Args:
+            instance (pyblish.Instance): Processed instance object. Used
+                for source of staging dir if representation does not have
+                filled it.
+            repre (dict): Representation on instance which could be and
+                could not be integrated with main integrator.
+            only_published (bool): Care only about published paths and
+                ignore if filepath is not existing anymore.
+
+        Returns:
+            str: Path to representation file.
+            None: Path is not filled or does not exists.
+        """
+
+        published_path = repre.get("published_path")
+        if published_path:
+            published_path = os.path.normpath(published_path)
+            if os.path.exists(published_path):
+                return published_path
+
+        if only_published:
+            return published_path
+
+        comp_files = repre["files"]
+        if isinstance(comp_files, (tuple, list, set)):
+            filename = comp_files[0]
+        else:
+            filename = comp_files
+
+        staging_dir = repre.get("stagingDir")
+        if not staging_dir:
+            staging_dir = instance.data["stagingDir"]
+        src_path = os.path.normpath(os.path.join(staging_dir, filename))
+        if os.path.exists(src_path):
+            return src_path
+        return None
 
     def _get_asset_version_status_name(self, instance):
         if not self.asset_versions_status_profiles:

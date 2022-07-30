@@ -236,6 +236,63 @@
             "extensions": []
         }
     ],
+    "editorial_creators": {
+        "editorial_simple": {
+            "default_variants": [
+                "Main"
+            ],
+            "clip_name_tokenizer": {
+                "_sequence_": "(sc\\d{3})",
+                "_shot_": "(sh\\d{3})"
+            },
+            "shot_rename": {
+                "enabled": true,
+                "shot_rename_template": "{project[code]}_{_sequence_}_{_shot_}"
+            },
+            "shot_hierarchy": {
+                "enabled": true,
+                "parents_path": "{project}/{folder}/{sequence}",
+                "parents": [
+                    {
+                        "type": "Project",
+                        "name": "project",
+                        "value": "{project[name]}"
+                    },
+                    {
+                        "type": "Folder",
+                        "name": "folder",
+                        "value": "shots"
+                    },
+                    {
+                        "type": "Sequence",
+                        "name": "sequence",
+                        "value": "{_sequence_}"
+                    }
+                ]
+            },
+            "shot_add_tasks": {},
+            "family_presets": [
+                {
+                    "family": "review",
+                    "variant": "Reference",
+                    "review": true,
+                    "output_file_type": ".mp4"
+                },
+                {
+                    "family": "plate",
+                    "variant": "",
+                    "review": false,
+                    "output_file_type": ".mov"
+                },
+                {
+                    "family": "audio",
+                    "variant": "",
+                    "review": false,
+                    "output_file_type": ".wav"
+                }
+            ]
+        }
+    },
     "BatchMovieCreator": {
         "default_variants": ["Main"],
         "default_tasks": ["Compositing"],
