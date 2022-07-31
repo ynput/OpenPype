@@ -28,7 +28,6 @@ from . import PypeLogger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
-    get_workdir_data,
     get_workdir_with_workdir_data,
     get_workfile_template_key,
     get_last_workfile
@@ -1576,6 +1575,9 @@ def prepare_context_environments(data, env_group=None):
         data (EnvironmentPrepData): Dictionary where result and intermediate
             result will be stored.
     """
+
+    from openpype.pipeline.template_data import get_template_data
+
     # Context environments
     log = data["log"]
 
@@ -1596,7 +1598,9 @@ def prepare_context_environments(data, env_group=None):
     # Load project specific environments
     project_name = project_doc["name"]
     project_settings = get_project_settings(project_name)
+    system_settings = get_system_settings()
     data["project_settings"] = project_settings
+    data["system_settings"] = system_settings
     # Apply project specific environments on current env value
     apply_project_environments_value(
         project_name, data["env"], project_settings, env_group
@@ -1619,8 +1623,8 @@ def prepare_context_environments(data, env_group=None):
     if not app.is_host:
         return
 
-    workdir_data = get_workdir_data(
-        project_doc, asset_doc, task_name, app.host_name
+    workdir_data = get_template_data(
+        project_doc, asset_doc, task_name, app.host_name, system_settings
     )
     data["workdir_data"] = workdir_data
 

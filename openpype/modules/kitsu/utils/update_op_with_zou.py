@@ -230,9 +230,9 @@ def update_op_assets(
         if item_type in ["Shot", "Sequence"]:
             # Name with parents hierarchy "({episode}_){sequence}_{shot}"
             # to avoid duplicate name issue
-            item_name = "_".join(item_data["parents"] + [item_doc["name"]])
+            item_name = f"{item_data['parents'][-1]}_{item['name']}"
         else:
-            item_name = item_doc["name"]
+            item_name = item["name"]
 
         # Set root folders parents
         item_data["parents"] = entity_parent_folders + item_data["parents"]

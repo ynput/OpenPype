@@ -52,6 +52,29 @@ def escape_space(path):
     return '"{}"'.format(path) if " " in path else path
 
 
+def get_ocio_config_path(profile_folder):
+    """Path to OpenPype vendorized OCIO.
+
+    Vendorized OCIO config file path is grabbed from the specific path
+    hierarchy specified below.
+
+    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
+    Args:
+        profile_folder (str): Name of folder to grab config file from.
+
+    Returns:
+        str: Path to vendorized config file.
+    """
+    return os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "configs",
+        "OpenColorIO-Configs",
+        profile_folder,
+        "config.ocio"
+    )
+
+
 def find_paths_by_hash(texture_hash):
     """Find the texture hash key in the dictionary.
 
@@ -91,10 +114,24 @@ class MakeRSTexBin(TextureProcessor):
         This function requires the `REDSHIFT_COREDATAPATH`
         to be in `PATH`.
 
+    cmd = [
+        maketx_path,
+        "-v",  # verbose
+        "-u",  # update mode
+        # unpremultiply before conversion (recommended when alpha present)
+        "--unpremult",
+        "--checknan",
+        # use oiio-optimized settings for tile-size, planarconfig, metadata
+        "--oiio",
+        "--filter lanczos3",
+        escape_space(source)
+    ]
         Args:
             source (str): Path to source file.
             *args: Additional arguments for `redshiftTextureProcessor`.
 
+    cmd.extend(args)
+    cmd.extend(["-o", escape_space(destination)])
         Returns:
             str: Output of `redshiftTextureProcessor` command.
 
@@ -592,6 +629,28 @@ class ExtractLook(openpype.api.Extractor):
                     return processed_path
 
         return processed_path, COPY, texture_hash
+
+            config_path = get_ocio_config_path("nuke-default")
+            color_config = "--colorconfig {0}".format(config_path)
+            # Ensure folder exists
+            if not os.path.exists(os.path.dirname(converted)):
+                os.makedirs(os.path.dirname(converted))
+
+            self.log.info("Generating .tx file for %s .." % filepath)
+            maketx(
+                filepath,
+                converted,
+                # Include `source-hash` as string metadata
+                "--sattrib",
+                "sourceHash",
+                escape_space(texture_hash),
+                colorconvert,
+                color_config
+            )
+
+            return converted, COPY, texture_hash
+
+        return filepath, COPY, texture_hash
 
 
 class ExtractModelRenderSets(ExtractLook):
