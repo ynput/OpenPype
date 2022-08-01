@@ -1,6 +1,7 @@
+import os
 import logging
 
-from openpype.lib import set_plugin_attributes_from_settings
+from openpype.settings import get_system_settings, get_project_settings
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -36,6 +37,46 @@ class LoaderPlugin(list):
 
     def __init__(self, context):
         self.fname = self.filepath_from_context(context)
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        host_name = os.environ.get("AVALON_APP")
+        plugin_type = "load"
+        plugin_type_settings = (
+            project_settings
+            .get(host_name, {})
+            .get(plugin_type, {})
+        )
+        global_type_settings = (
+            project_settings
+            .get("global", {})
+            .get(plugin_type, {})
+        )
+        if not global_type_settings and not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        # Look for plugin settings in global settings
+        elif plugin_name in global_type_settings:
+            plugin_settings = global_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                setattr(cls, "active", False)
+                print("  - is disabled by preset")
+            else:
+                setattr(cls, option, value)
+                print("  - setting `{}`: `{}`".format(option, value))
 
     @classmethod
     def get_representations(cls):
@@ -112,7 +153,11 @@ class SubsetLoaderPlugin(LoaderPlugin):
 
 def discover_loader_plugins():
     plugins = discover(LoaderPlugin)
-    set_plugin_attributes_from_settings(plugins, LoaderPlugin)
+    project_name = os.environ.get("AVALON_PROJECT")
+    system_settings = get_system_settings()
+    project_settings = get_project_settings(project_name)
+    for plugin in plugins:
+        plugin.apply_settings(project_settings, system_settings)
     return plugins
 
 
