@@ -55,23 +55,23 @@ build-centos:
 
 deploy-centos-staged:
   stage: staged
-  dependencies:
-    - build-centos
   tags: 
     - shell
     - centos
   script:
+    - export
     - tar xzfp ./build.tar.gz
     - ls ./build/
-    - version=$(git describe --match v?.* --all --always | sed -e 's/tags\///g')
+    - version=$(git describe --match ?.* --all --always | sed -e 's/tags\///g')
+    - echo $version
     - mkdir -p /prod/softprod/apps/openpype/$version/linux/
     - rsync -rptl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
 
 deploy-centos-prod:
-  when: manual
   stage: prod
-  dependencies:
-    - deploy-centos-staged
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
   tags: 
     - shell
     - centos
