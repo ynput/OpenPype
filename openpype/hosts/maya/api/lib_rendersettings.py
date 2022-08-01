@@ -139,6 +139,7 @@ class RenderSettings(object):
         # allow fullstops in custom attributes. Then checks for
         # type of MtoA attribute passed to adjust the `setAttr`
         # command accordingly.
+        self._additional_attribs_setter(additional_options)
         for item in additional_options:
             attribute, value = item
             if (cmds.getAttr(str(attribute), type=True)) == "long":
@@ -157,18 +158,28 @@ class RenderSettings(object):
             ["RenderSettings"]
             ["redshift_renderer"]
         )
-        img_ext = redshift_render_presets.get("image_format")
+        additional_options = redshift_render_presets["additional_options"]
+        ext = redshift_render_presets["image_format"]
+        img_exts = ["iff", "exr", "tif", "png", "tga", "jpg"]
+        img_ext = img_exts.index(ext)
+
         self._set_global_output_settings()
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
+        self._additional_attribs_setter(additional_options)
 
     def _set_vray_settings(self, aov_separator, width, height):
         # type: (str, int, int) -> None
         """Sets important settings for Vray."""
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
-
+        vray_render_presets = (
+            self._project_settings
+            ["maya"]
+            ["RenderSettings"]
+            ["vray_renderer"]
+        )
         # Set aov separator
         # First we need to explicitly set the UI items in Render Settings
         # because that is also what V-Ray updates to when that Render Settings
@@ -207,6 +218,10 @@ class RenderSettings(object):
         cmds.setAttr("{}.width".format(node), width)
         cmds.setAttr("{}.height".format(node), height)
 
+        additional_options = vray_render_presets["additional_options"]
+
+        self._additional_attribs_setter(additional_options)
+
     @staticmethod
     def _set_global_output_settings():
         # enable animation
@@ -214,3 +229,14 @@ class RenderSettings(object):
         cmds.setAttr("defaultRenderGlobals.animation", 1)
         cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
         cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
+
+    def _additional_attribs_setter(self, additional_attribs):
+        print(additional_attribs)
+        for item in additional_attribs:
+            attribute, value = item
+            if (cmds.getAttr(str(attribute), type=True)) == "long":
+                cmds.setAttr(str(attribute), int(value))
+            elif (cmds.getAttr(str(attribute), type=True)) == "bool":
+                cmds.setAttr(str(attribute), int(value)) # noqa
+            elif (cmds.getAttr(str(attribute), type=True)) == "string":
+                cmds.setAttr(str(attribute), str(value), type = "string") # noqa
