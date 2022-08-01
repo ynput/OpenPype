@@ -27,6 +27,7 @@ build-centos:
     # Add python from soft prod 
     - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
     # Create virtual environment in ./venv
+    - ls /prod/softprod/apps/python/3.7.9/linux/bin
     - python --version
     - ./tools/create_env.sh
     # Get PySide2, ffmpeg, oiio and other tools needed
