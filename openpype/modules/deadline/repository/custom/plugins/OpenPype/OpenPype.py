@@ -1,10 +1,18 @@
+#!/usr/bin/env python3
+
 from System.IO import Path
 from System.Text.RegularExpressions import Regex
 
 from Deadline.Plugins import PluginType, DeadlinePlugin
-from Deadline.Scripting import StringUtils, FileUtils, RepositoryUtils
+from Deadline.Scripting import (
+    StringUtils,
+    FileUtils,
+    DirectoryUtils,
+    RepositoryUtils
+)
 
 import re
+import os
 
 
 ######################################################################
@@ -52,13 +60,83 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         self.AddStdoutHandlerCallback(
             ".*Progress: (\d+)%.*").HandleCallback += self.HandleProgress
 
+    @staticmethod
+    def get_openpype_version_from_path(path):
+        version_file = os.path.join(path, "openpype", "version.py")
+        if not os.path.isfile(version_file):
+            return None
+        version = {}
+        with open(version_file, "r") as vf:
+            exec(vf.read(), version)
+
+        version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
+        return version_match[1]
+
     def RenderExecutable(self):
-        exeList = self.GetConfigEntry("OpenPypeExecutable")
-        exe = FileUtils.SearchFileList(exeList)
+        job = self.GetJob()
+        openpype_versions = []
+        # if the job requires specific OpenPype version,
+        # lets go over all available and find compatible build.
+        requested_version = job.GetJobEnvironmentKeyValue("OPENPYPE_VERSION")
+        if requested_version:
+            self.LogInfo((
+                "Scanning for compatible requested "
+                f"version {requested_version}"))
+            dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
+            install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
+            if dir:
+                sub_dirs = [
+                    f.path for f in os.scandir(install_dir)
+                    if f.is_dir()
+                ]
+                for subdir in sub_dirs:
+                    version = self.get_openpype_version_from_path(subdir)
+                    if not version:
+                        continue
+                    openpype_versions.append((version, subdir))
+
+        exe_list = self.GetConfigEntry("OpenPypeExecutable")
+        exe = FileUtils.SearchFileList(exe_list)
+        if openpype_versions:
+            # if looking for requested compatible version,
+            # add the implicitly specified to the list too.
+            version = self.get_openpype_version_from_path(
+                os.path.dirname(exe))
+            if version:
+                openpype_versions.append((version, os.path.dirname(exe)))
+
+        if requested_version:
+            # sort detected versions
+            if openpype_versions:
+                openpype_versions.sort(key=lambda ver: ver[0])
+            requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
+            compatible_versions = []
+            for version in openpype_versions:
+                v = version[0].split(".")[:3]
+                if v[0] == requested_major and v[1] == requested_minor:
+                    compatible_versions.append(version)
+            if not compatible_versions:
+                self.FailRender(("Cannot find compatible version available "
+                                 "for version {} requested by the job. "
+                                 "Please add it through plugin configuration "
+                                 "in Deadline or install it to configured "
+                                 "directory.").format(requested_version))
+            # sort compatible versions nad pick the last one
+            compatible_versions.sort(key=lambda ver: ver[0])
+            # create list of executables for different platform and let
+            # Deadline decide.
+            exe_list = [
+                os.path.join(
+                    compatible_versions[-1][1], "openpype_console.exe"),
+                os.path.join(
+                    compatible_versions[-1][1], "openpype_console")
+            ]
+            exe = FileUtils.SearchFileList(";".join(exe_list))
+
         if exe == "":
             self.FailRender(
                 "OpenPype executable was not found " +
-                "in the semicolon separated list \"" + exeList + "\". " +
+                "in the semicolon separated list \"" + exe_list + "\". " +
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")
         return exe
