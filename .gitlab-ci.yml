@@ -19,7 +19,7 @@ stages:
   - staged
   - prod
 
-build-centos:
+build.centos:
   stage: build
   only:
     - tags
@@ -41,31 +41,30 @@ build-centos:
       - ./build.tar.gz
     expire_in: 1 day
 
-build-windows:
-  stage: build
-  only:
-    - tags
-  tags: 
-    - docker
-  image: windows10:latest
-  before_script:
-    # install python
-    - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
-    - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-  script:
-    - .\tools\create_env.ps1
-    - .\tools\fetch_thirdparty_libs.ps1
-    - .\tools\build.ps1
+# build windows:
+#   stage: build
+#   only:
+#     - tags
+#   tags: 
+#     - docker
+#   image: windows10:latest
+#   before_script:
+#     # install python
+#     - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
+#     - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+#   script:
+#     - .\tools\create_env.ps1
+#     - .\tools\fetch_thirdparty_libs.ps1
+#     - .\tools\build.ps1
 
-deploy-centos-staged:
+deploy.centos.staged:
   stage: staged
-  only:
-    - tags
   needs:
-    - build-centos
-  tags: 
-    - shell
-    - centos
+    - build centos
+  inherit:
+    build.centos:
+      - tags
+      - only
   script:
     - tar xzfp ./build.tar.gz
     - ls ./build/
@@ -76,12 +75,11 @@ deploy-centos-staged:
 deploy-centos-prod:
   when: manual
   stage: prod
-  only:
-    - tags
   needs:
-    - deploy-centos-staged
-  tags: 
-    - shell
-    - centos
+    - deploy.centos.staged
+  inherit:
+    build.centos:
+      - tags
+      - only
   script:
     - pwd
