@@ -62,8 +62,7 @@ deploy-centos-staged:
     - tar xvzfp ./build.tar.gz
     - ls ./build/
     - version=$(git describe --match v?.* --all --always | sed -e 's/tags\///g')
-    - ls -d ./build/ | wc -l
-    - cp -R ./build/exe.linux-x86_64-3.7 /prod/softprod/apps/openpype/$version 
+    - rsync -rpPtl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
 
 deploy-centos-prod:
   stage: prod
