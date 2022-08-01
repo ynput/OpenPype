@@ -1,3 +1,4 @@
+import os
 import copy
 
 from abc import (
@@ -7,10 +8,8 @@ from abc import (
 )
 import six
 
-from openpype.lib import (
-    get_subset_name_with_asset_doc,
-    set_plugin_attributes_from_settings,
-)
+from openpype.settings import get_system_settings, get_project_settings
+from openpype.lib import get_subset_name_with_asset_doc
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -439,7 +438,11 @@ def discover_creator_plugins():
 
 def discover_legacy_creator_plugins():
     plugins = discover(LegacyCreator)
-    set_plugin_attributes_from_settings(plugins, LegacyCreator)
+    project_name = os.environ.get("AVALON_PROJECT")
+    system_settings = get_system_settings()
+    project_settings = get_project_settings(project_name)
+    for plugin in plugins:
+        plugin.apply_settings(project_settings, system_settings)
     return plugins
 
 
