@@ -33,6 +33,9 @@ build-centos:
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
     - ./tools/build.sh
+    - version=9.9.9 #python ./openpype/version.py 
+    - ls -d ./build/ | wc -l
+    - cp -R ./build/exe.linux-x86_64-3.7 /prod/softprod/apps/openpype/$version
   artifacts:
     paths:
       - ./build/build.log
@@ -52,19 +55,22 @@ build-centos:
 #     - .\tools\build.ps1
 
 
-deploy-centos-staged:
-  stage: staged
-  tags: 
-    - shell
-    - centos
-  script:
-    - ls ./build/
-    - version=9.9.9 #python ./openpype/version.py 
-    - ls -d ./build/ | wc -l
-    - cp -R ./build/exe.linux-x86_64-3.7 /prod/softprod/apps/openpype/$version 
+# deploy-centos-staged:
+#   stage: staged
+#   tags: 
+#     - shell
+#     - centos
+#   script:
+#     - ls ./build/
+#     - version=9.9.9 #python ./openpype/version.py 
+#     - ls -d ./build/ | wc -l
+#     - cp -R ./build/exe.linux-x86_64-3.7 /prod/softprod/apps/openpype/$version 
 
 deploy-centos-prod:
   stage: prod
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
   tags: 
     - shell
     - centos
