@@ -622,11 +622,11 @@ class ExtractLook(openpype.api.Extractor):
                                                          colorconvert,
                                                          color_config)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
-                    return processed_path
+                    return processed_path, COPY, texture_hash
                 elif processor == MakeRSTexBin:
                     processed_path = processor().process(filepath)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
-                    return processed_path
+                    return processed_path, COPY, texture_hash
 
         return filepath, COPY, texture_hash
 
