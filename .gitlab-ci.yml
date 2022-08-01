@@ -28,7 +28,9 @@ build-centos:
     - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
     # reload shell
     - exec $SHELL
-
+    - ./tools/create_env.sh
+    - ./tools/fetch_thirdparty_libs.sh
+    - ./tools/build.sh
 
 build-windows:
   stage: build
