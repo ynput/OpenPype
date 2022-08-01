@@ -9,6 +9,7 @@ from .settings import (
 )
 from .lib import (
     PypeLogger,
+    Logger,
     Anatomy,
     config,
     execute,
@@ -58,8 +59,6 @@ from .action import (
     RepairContextAction
 )
 
-# for backward compatibility with Pype 2
-Logger = PypeLogger
 
 __all__ = [
     "get_system_settings",

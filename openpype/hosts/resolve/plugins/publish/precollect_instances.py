@@ -70,7 +70,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "publish": resolve.get_publish_attribute(timeline_item),
                 "fps": context.data["fps"],
                 "handleStart": handle_start,
-                "handleEnd": handle_end
+                "handleEnd": handle_end,
+                "newAssetPublishing": True
             })
 
             # otio clip data

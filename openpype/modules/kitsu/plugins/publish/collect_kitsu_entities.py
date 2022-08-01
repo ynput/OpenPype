@@ -39,10 +39,12 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
             kitsu_entity = gazu.asset.get_asset(zou_asset_data["id"])
 
         if not kitsu_entity:
-            raise AssertionError(f"{entity_type} not found in kitsu!")
+            raise AssertionError("{} not found in kitsu!".format(entity_type))
 
         context.data["kitsu_entity"] = kitsu_entity
-        self.log.debug(f"Collect kitsu {entity_type}: {kitsu_entity}")
+        self.log.debug(
+            "Collect kitsu {}: {}".format(entity_type, kitsu_entity)
+        )
 
         if zou_task_data:
             kitsu_task = gazu.task.get_task(zou_task_data["id"])

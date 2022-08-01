@@ -65,7 +65,13 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
     families = ["shot"]
-    hosts = ["hiero", "resolve", "standalonepublisher", "flame"]
+    hosts = [
+        "hiero",
+        "resolve",
+        "standalonepublisher",
+        "flame",
+        "traypublisher"
+    ]
     optional = False
 
     def process(self, context):

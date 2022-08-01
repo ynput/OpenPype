@@ -27,6 +27,29 @@ def escape_space(path):
     return '"{}"'.format(path) if " " in path else path
 
 
+def get_ocio_config_path(profile_folder):
+    """Path to OpenPype vendorized OCIO.
+
+    Vendorized OCIO config file path is grabbed from the specific path
+    hierarchy specified below.
+
+    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
+    Args:
+        profile_folder (str): Name of folder to grab config file from.
+
+    Returns:
+        str: Path to vendorized config file.
+    """
+    return os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "configs",
+        "OpenColorIO-Configs",
+        profile_folder,
+        "config.ocio"
+    )
+
+
 def find_paths_by_hash(texture_hash):
     """Find the texture hash key in the dictionary.
 
@@ -79,10 +102,11 @@ def maketx(source, destination, *args):
         # use oiio-optimized settings for tile-size, planarconfig, metadata
         "--oiio",
         "--filter lanczos3",
+        escape_space(source)
     ]
 
     cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination), escape_space(source)])
+    cmd.extend(["-o", escape_space(destination)])
 
     cmd = " ".join(cmd)
 
@@ -493,6 +517,8 @@ class ExtractLook(openpype.api.Extractor):
             else:
                 colorconvert = ""
 
+            config_path = get_ocio_config_path("nuke-default")
+            color_config = "--colorconfig {0}".format(config_path)
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -502,10 +528,11 @@ class ExtractLook(openpype.api.Extractor):
                 filepath,
                 converted,
                 # Include `source-hash` as string metadata
-                "-sattrib",
+                "--sattrib",
                 "sourceHash",
                 escape_space(texture_hash),
                 colorconvert,
+                color_config
             )
 
             return converted, COPY, texture_hash

@@ -90,9 +90,11 @@
         },
         "CreateAnimation": {
             "enabled": true,
+            "write_color_sets": false,
             "defaults": [
                 "Main"
             ]
+          
         },
         "CreateAss": {
             "enabled": true,
@@ -134,6 +136,7 @@
         },
         "CreatePointCache": {
             "enabled": true,
+            "write_color_sets": false,
             "defaults": [
                 "Main"
             ]
