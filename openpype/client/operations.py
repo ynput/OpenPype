@@ -29,6 +29,24 @@ def _create_or_convert_to_mongo_id(mongo_id):
 def new_project_document(
     project_name, project_code, config, data=None, entity_id=None
 ):
+    """Create skeleton data of project document.
+
+    Args:
+        project_name (str): Name of project. Used as identifier of a project.
+        project_code (str): Shorter version of projet without spaces and
+            special characters (in most of cases). Should be also considered
+            as unique name across projects.
+        config (Dic[str, Any]): Project config consist of roots, templates,
+            applications and other project Anatomy related data.
+        data (Dict[str, Any]): Project data with information about it's
+            attributes (e.g. 'fps' etc.) or integration specific keys.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of project document.
+    """
+
     if data is None:
         data = {}
 
@@ -46,6 +64,22 @@ def new_project_document(
 def new_asset_document(
     name, project_id, parent_id, parents, data=None, entity_id=None
 ):
+    """Create skeleton data of asset document.
+
+    Args:
+        name (str): Is considered as unique identifier of asset in project.
+        project_id (Union[str, ObjectId]): Id of project doument.
+        parent_id (Union[str, ObjectId]): Id of parent asset.
+        parents (List[str]): List of parent assets names.
+        data (Dict[str, Any]): Asset document data. Empty dictionary is used
+            if not passed. Value of 'parent_id' is used to fill 'visualParent'.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of asset document.
+    """
+
     if data is None:
         data = {}
     if parent_id is not None:
@@ -64,6 +98,21 @@ def new_asset_document(
 
 
 def new_subset_document(name, family, asset_id, data=None, entity_id=None):
+    """Create skeleton data of subset document.
+
+    Args:
+        name (str): Is considered as unique identifier of subset under asset.
+        family (str): Subset's family.
+        asset_id (Union[str, ObjectId]): Id of parent asset.
+        data (Dict[str, Any]): Subset document data. Empty dictionary is used
+            if not passed. Value of 'family' is used to fill 'family'.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of subset document.
+    """
+
     if data is None:
         data = {}
     data["family"] = family
@@ -78,6 +127,20 @@ def new_subset_document(name, family, asset_id, data=None, entity_id=None):
 
 
 def new_version_doc(version, subset_id, data=None, entity_id=None):
+    """Create skeleton data of version document.
+
+    Args:
+        version (int): Is considered as unique identifier of version
+            under subset.
+        subset_id (Union[str, ObjectId]): Id of parent subset.
+        data (Dict[str, Any]): Version document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of version document.
+    """
+
     if data is None:
         data = {}
 
@@ -94,6 +157,22 @@ def new_version_doc(version, subset_id, data=None, entity_id=None):
 def new_representation_doc(
     name, version_id, context, data=None, entity_id=None
 ):
+    """Create skeleton data of asset document.
+
+    Args:
+        version (int): Is considered as unique identifier of version
+            under subset.
+        version_id (Union[str, ObjectId]): Id of parent version.
+        context (Dict[str, Any]): Representation context used for fill template
+            of to query.
+        data (Dict[str, Any]): Representation document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of version document.
+    """
+
     if data is None:
         data = {}
 
@@ -124,20 +203,59 @@ def _prepare_update_data(old_doc, new_doc, replace):
 
 
 def prepare_subset_update_data(old_doc, new_doc, replace=True):
+    """Compare two subset documents and prepare update data.
+
+    Based on compared values will create update data for 'UpdateOperation'.
+
+    Empty output means that documents are identical.
+
+    Returns:
+        Dict[str, Any]: Changes between old and new document.
+    """
+
     return _prepare_update_data(old_doc, new_doc, replace)
 
 
 def prepare_version_update_data(old_doc, new_doc, replace=True):
+    """Compare two version documents and prepare update data.
+
+    Based on compared values will create update data for 'UpdateOperation'.
+
+    Empty output means that documents are identical.
+
+    Returns:
+        Dict[str, Any]: Changes between old and new document.
+    """
+
     return _prepare_update_data(old_doc, new_doc, replace)
 
 
 def prepare_representation_update_data(old_doc, new_doc, replace=True):
+    """Compare two representation documents and prepare update data.
+
+    Based on compared values will create update data for 'UpdateOperation'.
+
+    Empty output means that documents are identical.
+
+    Returns:
+        Dict[str, Any]: Changes between old and new document.
+    """
+
     return _prepare_update_data(old_doc, new_doc, replace)
 
 
 @six.add_metaclass(ABCMeta)
 class AbstractOperation(object):
-    """Base operation class."""
+    """Base operation class.
+
+    Opration represent a call into database. The call can create, change or
+    remove data.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+    """
 
     def __init__(self, project_name, entity_type):
         self._project_name = project_name
@@ -150,6 +268,8 @@ class AbstractOperation(object):
 
     @property
     def id(self):
+        """Identifier of operation."""
+
         return self._id
 
     @property
@@ -158,13 +278,23 @@ class AbstractOperation(object):
 
     @abstractproperty
     def operation_name(self):
+        """Stringified type of operation."""
+
         pass
 
     @abstractmethod
     def to_mongo_operation(self):
+        """Convert operation to Mongo batch operation."""
+
         pass
 
     def to_data(self):
+        """Convert opration to data that can be converted to json or others.
+
+        Returns:
+            Dict[str, Any]: Description of operation.
+        """
+
         return {
             "id": self._id,
             "entity_type": self.entity_type,
@@ -174,6 +304,15 @@ class AbstractOperation(object):
 
 
 class CreateOperation(AbstractOperation):
+    """Opeartion to create an entity.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+        data (Dict[str, Any]): Data of entity that will be created.
+    """
+
     operation_name = "create"
 
     def __init__(self, project_name, entity_type, data):
@@ -222,6 +361,18 @@ class CreateOperation(AbstractOperation):
 
 
 class UpdateOperation(AbstractOperation):
+    """Opeartion to update an entity.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+        entity_id (Union[str, ObjectId]): Identifier of an entity.
+        update_data (Dict[str, Any]): Key -> value changes that will be set in
+            database. If value is set to 'REMOVED_VALUE' the key will be
+            removed. Only first level of dictionary is checked (on purpose).
+    """
+
     operation_name = "update"
 
     def __init__(self, project_name, entity_type, entity_id, update_data):
@@ -277,6 +428,15 @@ class UpdateOperation(AbstractOperation):
 
 
 class DeleteOperation(AbstractOperation):
+    """Opeartion to delete an entity.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+        entity_id (Union[str, ObjectId]): Entity id that will be removed.
+    """
+
     operation_name = "delete"
 
     def __init__(self, project_name, entity_type, entity_id):
@@ -389,11 +549,23 @@ class OperationsSession(object):
                 collection.bulk_write(bulk_writes)
 
     def create_entity(self, project_name, entity_type, data):
+        """Fast access to 'CreateOperation'.
+
+        Returns:
+            CreateOperation: Object of update operation.
+        """
+
         operation = CreateOperation(project_name, entity_type, data)
         self.add(operation)
         return operation
 
     def update_entity(self, project_name, entity_type, entity_id, update_data):
+        """Fast access to 'UpdateOperation'.
+
+        Returns:
+            UpdateOperation: Object of update operation.
+        """
+
         operation = UpdateOperation(
             project_name, entity_type, entity_id, update_data
         )
@@ -401,6 +573,12 @@ class OperationsSession(object):
         return operation
 
     def delete_entity(self, project_name, entity_type, entity_id):
+        """Fast access to 'DeleteOperation'.
+
+        Returns:
+            DeleteOperation: Object of delete operation.
+        """
+
         operation = DeleteOperation(project_name, entity_type, entity_id)
         self.add(operation)
         return operation
