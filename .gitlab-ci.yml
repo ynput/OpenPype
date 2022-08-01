@@ -33,7 +33,7 @@ build-centos:
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
     - ./tools/build.sh
-  artifact:
+  artifacts:
     paths:
       - ./build/build.log
 
@@ -61,10 +61,10 @@ deploy-centos:
     - ls ./build/ 
     - ls -d ./build/ | wc -l
     - cp
-    - /prod/softprod/apps/openpype/latest
+    # - /prod/softprod/apps/openpype/latest
 
-# deploy-centos:
-#   stage: prod
-#   tags: 
-#     - shell
-#     - centos
+deploy-centos:
+  stage: prod
+  tags: 
+    - shell
+    - centos
