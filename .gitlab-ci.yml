@@ -33,9 +33,11 @@ build-centos:
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
     - ./tools/build.sh
+    - tar cvzfp ./build.tar.gz ./build
   artifacts:
     paths:
-      - ./build/
+      - ./build.tar.gz
+    expire_in: 1 day
 
 # build-windows:
 #   stage: build
