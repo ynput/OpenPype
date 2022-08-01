@@ -43,6 +43,8 @@ build-centos:
 
 build-windows:
   stage: build
+  only:
+    - tags
   tags: 
     - docker
   image: windows10:latest
