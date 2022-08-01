@@ -59,7 +59,7 @@ deploy-centos-staged:
     - centos
   script:
     - ls ./build/
-    - version = 9.9.9 #python ./openpype/version.py 
+    - version=9.9.9 #python ./openpype/version.py 
     - ls -d ./build/ | wc -l
     - cp -R ./build/exe.linux-x86_64-3.7 /prod/softprod/apps/openpype/$version 
 
