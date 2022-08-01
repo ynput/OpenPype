@@ -59,11 +59,11 @@ deploy-centos-staged:
     - shell
     - centos
   script:
-    - tar xvzfp ./build.tar.gz
+    - tar xzfp ./build.tar.gz
     - ls ./build/
     - version=$(git describe --match v?.* --all --always | sed -e 's/tags\///g')
     - mkdir -p /prod/softprod/apps/openpype/$version/linux/
-    - rsync -rpPtl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
+    - rsync -rptl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
 
 deploy-centos-prod:
   stage: prod
