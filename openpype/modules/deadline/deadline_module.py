@@ -45,7 +45,7 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
         }
 
     @staticmethod
-    def get_deadline_pools(webservice, log=None):
+    def get_deadline_pools(webservice, mode="pools", log=None):
         # type: (str) -> list
         """Get pools from Deadline.
         Args:
@@ -57,19 +57,28 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
             RuntimeError: If deadline webservice is unreachable.
 
         """
+        retries = 5
         if not log:
             log = PypeLogger.get_logger(__name__)
 
         argument = "{}/api/pools?NamesOnly=true".format(webservice)
-        try:
-            response = requests_get(argument)
-        except requests.exceptions.ConnectionError as exc:
-            msg = 'Cannot connect to DL web service {}'.format(webservice)
-            log.error(msg)
-            six.reraise(
-                DeadlineWebserviceError,
-                DeadlineWebserviceError('{} - {}'.format(msg, exc)),
-                sys.exc_info()[2])
+        if mode == 'groups':
+            argument = "{}/api/groups?NamesOnly=true".format(webservice)
+        
+        for n in range(retries):
+            try:
+                response = requests_get(argument)
+                break
+            except requests.exceptions.ConnectionError as exc:
+                if n < retries-1:
+                    continue
+                else:
+                    msg = 'Cannot connect to DL web service {}'.format(webservice)
+                    log.error(msg)
+                    six.reraise(
+                        DeadlineWebserviceError,
+                        DeadlineWebserviceError('{} - {}'.format(msg, exc)),
+                        sys.exc_info()[2])
         if not response.ok:
             log.warning("No pools retrieved")
             return []
