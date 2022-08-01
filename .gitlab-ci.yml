@@ -22,15 +22,7 @@ build-centos:
   stage: build
   tags: 
     - shell
-  image: centos7:latest
-  before_script:
-    - sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    - sudo yum install centos-release-scl
-    - sudo yum install bash which git devtoolset-7-gcc* \
-        make cmake curl wget gcc zlib-devel bzip2 \
-        bzip2-devel readline-devel sqlite sqlite-devel \
-        openssl-devel tk-devel libffi-devel qt5-qtbase-devel \
-        patchelf  
+    - centos
   script:
     # Add python from soft prod 
     - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
