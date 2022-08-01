@@ -59,7 +59,7 @@ build-windows:
 
 deploy-centos-staged:
   stage: staged
-  dependencies:
+  needs:
     - build-centos
   tags: 
     - shell
@@ -74,7 +74,7 @@ deploy-centos-staged:
 deploy-centos-prod:
   when: manual
   stage: prod
-  dependencies:
+  needs:
     - deploy-centos-staged
   tags: 
     - shell
