@@ -16,7 +16,8 @@
 stages:
   - build
   - test
-  - deploy
+  - staged
+  - prod
 
 build-centos:
   stage: build
@@ -32,24 +33,27 @@ build-centos:
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
     - ./tools/build.sh
+  artifact:
+    paths:
+      - ./build/build.log
 
-build-windows:
-  stage: build
-  tags: 
-    - docker
-  image: windows10:latest
-  before_script:
-    # install python
-    - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
-    - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-  script:
-    - .\tools\create_env.ps1
-    - .\tools\fetch_thirdparty_libs.ps1
-    - .\tools\build.ps1
+# build-windows:
+#   stage: build
+#   tags: 
+#     - docker
+#   image: windows10:latest
+#   before_script:
+#     # install python
+#     - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
+#     - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+#   script:
+#     - .\tools\create_env.ps1
+#     - .\tools\fetch_thirdparty_libs.ps1
+#     - .\tools\build.ps1
 
 
 deploy-centos:
-  stage: deploy
+  stage: staged
   tags: 
     - shell
     - centos
@@ -58,3 +62,9 @@ deploy-centos:
     - ls -d ./build/ | wc -l
     - cp
     - /prod/softprod/apps/openpype/latest
+
+deploy-centos:
+  stage: prod
+  tags: 
+    - shell
+    - centos
