@@ -21,7 +21,9 @@ stages:
 
 build-centos:
   stage: build
-  tags:  
+  only:
+    - tags
+  tags: 
     - shell
     - centos
   script:
@@ -39,39 +41,39 @@ build-centos:
       - ./build.tar.gz
     expire_in: 1 day
 
-# build-windows:
-#   stage: build
-#   tags: 
-#     - docker
-#   image: windows10:latest
-#   before_script:
-#     # install python
-#     - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
-#     - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-#   script:
-#     - .\tools\create_env.ps1
-#     - .\tools\fetch_thirdparty_libs.ps1
-#     - .\tools\build.ps1
+build-windows:
+  stage: build
+  tags: 
+    - docker
+  image: windows10:latest
+  before_script:
+    # install python
+    - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
+    - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+  script:
+    - .\tools\create_env.ps1
+    - .\tools\fetch_thirdparty_libs.ps1
+    - .\tools\build.ps1
 
 deploy-centos-staged:
   stage: staged
+  dependencies:
+    - build-centos
   tags: 
     - shell
     - centos
   script:
-    - export
     - tar xzfp ./build.tar.gz
     - ls ./build/
-    - version=$(git describe --match ?.* --all --always | sed -e 's/tags\///g')
-    - echo $version
+    - version=$(git describe --match v?.* --all --always | sed -e 's/tags\///g')
     - mkdir -p /prod/softprod/apps/openpype/$version/linux/
     - rsync -rptl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
 
 deploy-centos-prod:
+  when: manual
   stage: prod
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
+  dependencies:
+    - deploy-centos-staged
   tags: 
     - shell
     - centos
