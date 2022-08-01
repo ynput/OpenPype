@@ -32,7 +32,6 @@ build-centos:
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
     - ./tools/build.sh
-    - ls ./build/
 
 build-windows:
   stage: build
@@ -47,3 +46,15 @@ build-windows:
     - .\tools\create_env.ps1
     - .\tools\fetch_thirdparty_libs.ps1
     - .\tools\build.ps1
+
+
+deploy-centos:
+  stage: deploy
+  tags: 
+    - shell
+    - centos
+  script:
+    - ls ./build/ 
+    - ls -d ./build/ | wc -l
+    - cp
+    - /prod/softprod/apps/openpype/latest
