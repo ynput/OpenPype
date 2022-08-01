@@ -19,7 +19,7 @@ stages:
   - staged
   - prod
 
-build.centos:
+build-centos:
   stage: build
   only:
     - tags
@@ -62,7 +62,7 @@ deploy.centos.staged:
   needs:
     - build centos
   inherit:
-    build.centos:
+    build-centos:
       - tags
       - only
   script:
@@ -78,7 +78,7 @@ deploy-centos-prod:
   needs:
     - deploy.centos.staged
   inherit:
-    build.centos:
+    build-centos:
       - tags
       - only
   script:
