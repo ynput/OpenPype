@@ -21,7 +21,7 @@ stages:
 
 build-centos:
   stage: build
-  tags: 
+  tags:  
     - shell
     - centos
   script:
