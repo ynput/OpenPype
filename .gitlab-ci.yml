@@ -55,6 +55,8 @@ build-centos:
 
 deploy-centos-staged:
   stage: staged
+  dependencies:
+    - build-centos
   tags: 
     - shell
     - centos
@@ -66,10 +68,10 @@ deploy-centos-staged:
     - rsync -rptl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
 
 deploy-centos-prod:
+  when: manual
   stage: prod
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
+  dependencies:
+    - deploy-centos-staged
   tags: 
     - shell
     - centos
