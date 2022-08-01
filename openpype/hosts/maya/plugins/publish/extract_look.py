@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
 from abc import ABCMeta, abstractmethod
+
 import six
 import os
 import sys
@@ -189,10 +190,11 @@ class MakeTX(TextureProcessor):
             # use oiio-optimized settings for tile-size, planarconfig, metadata
             "--oiio",
             "--filter lanczos3",
+            escape_space(source)
         ]
 
         cmd.extend(args)
-        cmd.extend([escape_space(source), "-o", escape_space(destination)])
+        cmd.extend(["-o", escape_space(destination)])
 
         cmd = " ".join(cmd)
 
@@ -620,13 +622,21 @@ class ExtractLook(openpype.api.Extractor):
                                                          "sourceHash",
                                                          escape_space(texture_hash), # noqa
                                                          colorconvert,
-                                                         color_config)
+                                                         color_config,
+                                                         )
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
-                    return processed_path, COPY, texture_hash
+                    self.log.info(converted)
+                    if processed_path:
+                        return processed_path
+                    else:
+                        self.log.info("maketx has returned nothing")
                 elif processor == MakeRSTexBin:
                     processed_path = processor().process(filepath)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
-                    return processed_path, COPY, texture_hash
+                    if processed_path:
+                        return processed_path
+                    else:
+                        self.log.info("redshift texture converter has returned nothing") # noqa
 
         return filepath, COPY, texture_hash
 
