@@ -31,7 +31,7 @@ build-centos:
     - ./tools/create_env.sh
     - ./tools/fetch_thirdparty_libs.sh
     - ./tools/build.sh
-    - ls .\build\
+    - ls ./build/
 
 build-windows:
   stage: build
