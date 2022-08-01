@@ -615,12 +615,29 @@ class ExtractLook(openpype.api.Extractor):
                     ("Paths not found on disk, "
                      "skipping hardlink: %s") % (existing,)
                 )
+        config_path = get_ocio_config_path("nuke-default")
+        color_config = "--colorconfig {0}".format(config_path)
+        # Ensure folder exists
+        if linearize:
+            self.log.info("tx: converting sRGB -> linear")
+            colorconvert = "--colorconvert sRGB linear"
+        else:
+            colorconvert = ""
+
+        converted = os.path.join(staging, "resources", fname + ".tx")
+        if not os.path.exists(os.path.dirname(converted)):
+            os.makedirs(os.path.dirname(converted))
 
         if bool(processors):
             for processor in processors:
                 if processor == MakeTX:
-                    converted = os.path.join(staging, "resources", fname + ".tx") # noqa
-                    processed_path = processor().process(filepath, converted)
+                    processed_path = processor().process(filepath,
+                                                         converted,
+                                                         "--sattrib",
+                                                         "sourceHash %",
+                                                         escape_space(texture_hash), # noqa
+                                                         colorconvert,
+                                                         color_config)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     return processed_path
                 elif processor == MakeRSTexBin:
@@ -628,27 +645,18 @@ class ExtractLook(openpype.api.Extractor):
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     return processed_path
 
-        return processed_path, COPY, texture_hash
 
-            config_path = get_ocio_config_path("nuke-default")
-            color_config = "--colorconfig {0}".format(config_path)
-            # Ensure folder exists
-            if not os.path.exists(os.path.dirname(converted)):
-                os.makedirs(os.path.dirname(converted))
-
-            self.log.info("Generating .tx file for %s .." % filepath)
-            maketx(
-                filepath,
-                converted,
-                # Include `source-hash` as string metadata
-                "--sattrib",
-                "sourceHash",
-                escape_space(texture_hash),
-                colorconvert,
-                color_config
-            )
-
-            return converted, COPY, texture_hash
+            # self.log.info("Generating .tx file for %s .." % filepath)
+            # maketx(
+            #     filepath,
+            #     converted,
+            #     # Include `source-hash` as string metadata
+            #     "--sattrib",
+            #     "sourceHash",
+            #     escape_space(texture_hash),
+            #     colorconvert,
+            #     color_config
+            # )
 
         return filepath, COPY, texture_hash
 
