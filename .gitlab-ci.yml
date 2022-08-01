@@ -60,7 +60,7 @@ build-centos:
 deploy.centos.staged:
   stage: staged
   needs:
-    - build centos
+    - build-centos
   inherit:
     build-centos:
       - tags
