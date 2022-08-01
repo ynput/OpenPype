@@ -103,6 +103,9 @@ import site
 import distutils.spawn
 from pathlib import Path
 
+
+silent_mode = False
+
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
 # - igniter changes cwd which cause that filepath of this script won't lead
@@ -138,40 +141,44 @@ if sys.__stdout__:
     term = blessed.Terminal()
 
     def _print(message: str):
+        if silent_mode:
+            return
         if message.startswith("!!! "):
-            print("{}{}".format(term.orangered2("!!! "), message[4:]))
+            print(f'{term.orangered2("!!! ")}{message[4:]}')
             return
         if message.startswith(">>> "):
-            print("{}{}".format(term.aquamarine3(">>> "), message[4:]))
+            print(f'{term.aquamarine3(">>> ")}{message[4:]}')
             return
         if message.startswith("--- "):
-            print("{}{}".format(term.darkolivegreen3("--- "), message[4:]))
+            print(f'{term.darkolivegreen3("--- ")}{message[4:]}')
             return
         if message.startswith("*** "):
-            print("{}{}".format(term.gold("*** "), message[4:]))
+            print(f'{term.gold("*** ")}{message[4:]}')
             return
         if message.startswith("  - "):
-            print("{}{}".format(term.wheat("  - "), message[4:]))
+            print(f'{term.wheat("  - ")}{message[4:]}')
             return
         if message.startswith("  . "):
-            print("{}{}".format(term.tan("  . "), message[4:]))
+            print(f'{term.tan("  . ")}{message[4:]}')
             return
         if message.startswith("     - "):
-            print("{}{}".format(term.seagreen3("     - "), message[7:]))
+            print(f'{term.seagreen3("     - ")}{message[7:]}')
             return
         if message.startswith("     ! "):
-            print("{}{}".format(term.goldenrod("     ! "), message[7:]))
+            print(f'{term.goldenrod("     ! ")}{message[7:]}')
             return
         if message.startswith("     * "):
-            print("{}{}".format(term.aquamarine1("     * "), message[7:]))
+            print(f'{term.aquamarine1("     * ")}{message[7:]}')
             return
         if message.startswith("    "):
-            print("{}{}".format(term.darkseagreen3("    "), message[4:]))
+            print(f'{term.darkseagreen3("    ")}{message[4:]}')
             return
 
         print(message)
 else:
     def _print(message: str):
+        if silent_mode:
+            return
         print(message)
 
 
@@ -242,13 +249,14 @@ from igniter.tools import (
     get_openpype_global_settings,
     get_openpype_path_from_settings,
     validate_mongo_connection,
-    OpenPypeVersionNotFound
+    OpenPypeVersionNotFound,
+    OpenPypeVersionIncompatible
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
 silent_commands = {"run", "igniter", "standalonepublisher",
-                   "extractenvironments"}
+                   "extractenvironments", "version"}
 
 
 def list_versions(openpype_versions: list, local_version=None) -> None:
@@ -686,40 +694,47 @@ def _find_frozen_openpype(use_version: str = None,
         # Specific version is defined
         if use_version.lower() == "latest":
             # Version says to use latest version
-            _print("Finding latest version defined by use version")
+            _print(">>> Finding latest version defined by use version")
             openpype_version = bootstrap.find_latest_openpype_version(
-                use_staging
+                use_staging, compatible_with=installed_version
             )
         else:
-            _print("Finding specified version \"{}\"".format(use_version))
+            _print(f">>> Finding specified version \"{use_version}\"")
             openpype_version = bootstrap.find_openpype_version(
                 use_version, use_staging
             )
 
         if openpype_version is None:
             raise OpenPypeVersionNotFound(
-                "Requested version \"{}\" was not found.".format(
-                    use_version
-                )
+                f"Requested version \"{use_version}\" was not found."
             )
+
+        if not openpype_version.is_compatible(installed_version):
+            raise OpenPypeVersionIncompatible((
+                f"Requested version \"{use_version}\" is not compatible "
+                f"with installed version \"{installed_version}\""
+            ))
 
     elif studio_version is not None:
         # Studio has defined a version to use
-        _print("Finding studio version \"{}\"".format(studio_version))
+        _print(f">>> Finding studio version \"{studio_version}\"")
         openpype_version = bootstrap.find_openpype_version(
-            studio_version, use_staging
+            studio_version, use_staging, compatible_with=installed_version
         )
         if openpype_version is None:
             raise OpenPypeVersionNotFound((
-                "Requested OpenPype version \"{}\" defined by settings"
+                "Requested OpenPype version "
+                f"\"{studio_version}\" defined by settings"
                 " was not found."
-            ).format(studio_version))
+            ))
 
     else:
         # Default behavior to use latest version
-        _print("Finding latest version")
+        _print((
+            ">>> Finding latest version compatible "
+            f"with [ {installed_version} ]"))
         openpype_version = bootstrap.find_latest_openpype_version(
-            use_staging
+            use_staging, compatible_with=installed_version
         )
         if openpype_version is None:
             if use_staging:
@@ -800,7 +815,7 @@ def _bootstrap_from_code(use_version, use_staging):
 
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(_openpype_root))
-        switch_str = f" - will switch to {use_version}" if use_version else ""
+        switch_str = f" - will switch to {use_version}" if use_version and use_version != local_version else ""  # noqa
         _print(f"  - booting version: {local_version}{switch_str}")
         assert local_version
     else:
@@ -913,12 +928,23 @@ def _boot_print_versions(use_staging, local_version, openpype_root):
         _print("--- This will list only staging versions detected.")
         _print("    To see other version, omit --use-staging argument.")
 
-    openpype_versions = bootstrap.find_openpype(include_zips=True,
-                                                staging=use_staging)
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(openpype_root))
     else:
         local_version = OpenPypeVersion.get_installed_version_str()
+
+    compatible_with = OpenPypeVersion(version=local_version)
+    if "--all" in sys.argv:
+        compatible_with = None
+        _print("--- Showing all version (even those not compatible).")
+    else:
+        _print(("--- Showing only compatible versions "
+                f"with [ {compatible_with.major}.{compatible_with.minor} ]"))
+
+    openpype_versions = bootstrap.find_openpype(
+        include_zips=True,
+        staging=use_staging,
+        compatible_with=compatible_with)
 
     list_versions(openpype_versions, local_version)
 
@@ -936,6 +962,9 @@ def _boot_handle_missing_version(local_version, use_staging, message):
 
 def boot():
     """Bootstrap OpenPype."""
+    global silent_mode
+    if any(arg in silent_commands for arg in sys.argv):
+        silent_mode = True
 
     # ------------------------------------------------------------------------
     # Set environment to OpenPype root path
