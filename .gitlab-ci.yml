@@ -68,3 +68,5 @@ deploy-centos:
   tags: 
     - shell
     - centos
+  script:
+    - pwd
