@@ -114,26 +114,9 @@ class MakeRSTexBin(TextureProcessor):
         This function requires the `REDSHIFT_COREDATAPATH`
         to be in `PATH`.
 
-    cmd = [
-        maketx_path,
-        "-v",  # verbose
-        "-u",  # update mode
-        # unpremultiply before conversion (recommended when alpha present)
-        "--unpremult",
-        "--checknan",
-        # use oiio-optimized settings for tile-size, planarconfig, metadata
-        "--oiio",
-        "--filter lanczos3",
-        escape_space(source)
-    ]
         Args:
             source (str): Path to source file.
             *args: Additional arguments for `redshiftTextureProcessor`.
-
-    cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination)])
-        Returns:
-            str: Output of `redshiftTextureProcessor` command.
 
         """
         if "REDSHIFT_COREDATAPATH" not in os.environ:
@@ -634,7 +617,7 @@ class ExtractLook(openpype.api.Extractor):
                     processed_path = processor().process(filepath,
                                                          converted,
                                                          "--sattrib",
-                                                         "sourceHash %",
+                                                         "sourceHash",
                                                          escape_space(texture_hash), # noqa
                                                          colorconvert,
                                                          color_config)
@@ -644,19 +627,6 @@ class ExtractLook(openpype.api.Extractor):
                     processed_path = processor().process(filepath)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     return processed_path
-
-
-            # self.log.info("Generating .tx file for %s .." % filepath)
-            # maketx(
-            #     filepath,
-            #     converted,
-            #     # Include `source-hash` as string metadata
-            #     "--sattrib",
-            #     "sourceHash",
-            #     escape_space(texture_hash),
-            #     colorconvert,
-            #     color_config
-            # )
 
         return filepath, COPY, texture_hash
 
