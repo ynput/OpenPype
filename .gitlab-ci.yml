@@ -63,8 +63,8 @@ deploy-centos:
     - cp
     - /prod/softprod/apps/openpype/latest
 
-deploy-centos:
-  stage: prod
-  tags: 
-    - shell
-    - centos
+# deploy-centos:
+#   stage: prod
+#   tags: 
+#     - shell
+#     - centos
