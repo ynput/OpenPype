@@ -122,7 +122,7 @@ class OpenPypeVersion(semver.VersionInfo):
         if self.staging:
             if kwargs.get("build"):
                 if "staging" not in kwargs.get("build"):
-                    kwargs["build"] = "{}-staging".format(kwargs.get("build"))
+                    kwargs["build"] = f"{kwargs.get('build')}-staging"
             else:
                 kwargs["build"] = "staging"
 
@@ -136,8 +136,7 @@ class OpenPypeVersion(semver.VersionInfo):
         return bool(result and self.staging == other.staging)
 
     def __repr__(self):
-        return "<{}: {} - path={}>".format(
-            self.__class__.__name__, str(self), self.path)
+        return f"<{self.__class__.__name__}: {str(self)} - path={self.path}>"
 
     def __lt__(self, other: OpenPypeVersion):
         result = super().__lt__(other)
@@ -232,10 +231,7 @@ class OpenPypeVersion(semver.VersionInfo):
         return openpype_version
 
     def __hash__(self):
-        if self.path:
-            return hash(self.path)
-        else:
-            return hash(str(self))
+        return hash(self.path) if self.path else hash(str(self))
 
     @staticmethod
     def is_version_in_dir(

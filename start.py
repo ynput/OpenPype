@@ -187,9 +187,8 @@ else:
 if "--headless" in sys.argv:
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
     sys.argv.remove("--headless")
-else:
-    if os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
-        os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
+elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
+    os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
@@ -203,8 +202,8 @@ if "--verbose" in sys.argv:
         value = sys.argv.pop(idx)
     else:
         raise RuntimeError((
-            "Expect value after \"--verbose\" argument. {}"
-        ).format(expected_values))
+            f"Expect value after \"--verbose\" argument. {expected_values}"
+        ))
 
     log_level = None
     low_value = value.lower()
@@ -225,8 +224,9 @@ if "--verbose" in sys.argv:
 
     if log_level is None:
         raise RuntimeError((
-            "Unexpected value after \"--verbose\" argument \"{}\". {}"
-        ).format(value, expected_values))
+            "Unexpected value after \"--verbose\" "
+            f"argument \"{value}\". {expected_values}"
+        ))
 
     os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
 
@@ -336,34 +336,33 @@ def run_disk_mapping_commands(settings):
         destination = destination.rstrip('/')
         source = source.rstrip('/')
 
-        if low_platform == "windows":
-            args = ["subst", destination, source]
-        elif low_platform == "darwin":
-            scr = "do shell script \"ln -s {} {}\" with administrator privileges".format(source, destination)  # noqa: E501
+        if low_platform == "darwin":
+            scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'  # noqa
+
             args = ["osascript", "-e", scr]
+        elif low_platform == "windows":
+            args = ["subst", destination, source]
         else:
             args = ["sudo", "ln", "-s", source, destination]
 
-        _print("disk mapping args:: {}".format(args))
+        _print(f"*** disk mapping arguments: {args}")
         try:
             if not os.path.exists(destination):
                 output = subprocess.Popen(args)
                 if output.returncode and output.returncode != 0:
-                    exc_msg = "Executing was not successful: \"{}\"".format(
-                        args)
+                    exc_msg = f'Executing was not successful: "{args}"'
 
                     raise RuntimeError(exc_msg)
         except TypeError as exc:
-            _print("Error {} in mapping drive {}, {}".format(str(exc),
-                                                             source,
-                                                             destination))
+            _print(
+                f"Error {str(exc)} in mapping drive {source}, {destination}")
             raise
 
 
 def set_avalon_environments():
     """Set avalon specific environments.
 
-    These are non modifiable environments for avalon workflow that must be set
+    These are non-modifiable environments for avalon workflow that must be set
     before avalon module is imported because avalon works with globals set with
     environment variables.
     """
@@ -508,7 +507,7 @@ def _process_arguments() -> tuple:
                 )
                 if m and m.group('version'):
                     use_version = m.group('version')
-                    _print(">>> Requested version [ {} ]".format(use_version))
+                    _print(f">>> Requested version [ {use_version} ]")
                     if "+staging" in use_version:
                         use_staging = True
                     break
@@ -614,8 +613,8 @@ def _determine_mongodb() -> str:
             try:
                 openpype_mongo = bootstrap.secure_registry.get_item(
                     "openPypeMongo")
-            except ValueError:
-                raise RuntimeError("Missing MongoDB url")
+            except ValueError as e:
+                raise RuntimeError("Missing MongoDB url") from e
 
     return openpype_mongo
 
@@ -816,11 +815,8 @@ def _bootstrap_from_code(use_version, use_staging):
                 use_version, use_staging
             )
             if version_to_use is None:
-                raise OpenPypeVersionNotFound(
-                    "Requested version \"{}\" was not found.".format(
-                        use_version
-                    )
-                )
+                raise OpenPypeVersionIncompatible(
+                    f"Requested version \"{use_version}\" was not found.")
         else:
             # Staging version should be used
             version_to_use = bootstrap.find_latest_openpype_version(
@@ -906,7 +902,7 @@ def _boot_validate_versions(use_version, local_version):
         use_version, openpype_versions
     )
     valid, message = bootstrap.validate_openpype_version(version_path)
-    _print("{}{}".format(">>> " if valid else "!!! ", message))
+    _print(f'{">>> " if valid else "!!! "}{message}')
 
 
 def _boot_print_versions(use_staging, local_version, openpype_root):
@@ -1043,7 +1039,7 @@ def boot():
         if not result[0]:
             _print(f"!!! Invalid version: {result[1]}")
             sys.exit(1)
-        _print(f"--- version is valid")
+        _print("--- version is valid")
     else:
         try:
             version_path = _bootstrap_from_code(use_version, use_staging)
@@ -1164,8 +1160,7 @@ def get_info(use_staging=None) -> list:
     formatted = []
     for info in inf:
         padding = (maximum - len(info[0])) + 1
-        formatted.append(
-            "... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
+        formatted.append(f'... {info[0]}:{" " * padding}[ {info[1]} ]')
     return formatted
 
 
