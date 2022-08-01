@@ -81,6 +81,8 @@ class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
 
         self._store_new_instance(new_instance)
 
+        return new_instance
+
     def get_instance_attr_defs(self):
         return [
             BoolDef(
