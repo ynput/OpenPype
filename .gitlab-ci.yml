@@ -52,18 +52,18 @@ build-centos:
 #     - .\tools\build.ps1
 
 
-deploy-centos:
+deploy-centos-staged:
   stage: staged
   tags: 
     - shell
     - centos
   script:
-    - ls ./build/ 
+    - ls ./build/
+    - $version = 9.9.9 #python ./openpype/version.py 
     - ls -d ./build/ | wc -l
-    - cp
-    # - /prod/softprod/apps/openpype/latest
+    - cp -R ./build/exe.linux-x86_64-3.7 /prod/softprod/apps/openpype/$version 
 
-deploy-centos:
+deploy-centos-prod:
   stage: prod
   tags: 
     - shell
