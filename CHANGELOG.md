@@ -1,8 +1,34 @@
 # Changelog
 
+## [3.12.3-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.2...HEAD)
+
+**🆕 New features**
+
+- Traypublisher: simple editorial publishing [\#3492](https://github.com/pypeclub/OpenPype/pull/3492)
+
+**🚀 Enhancements**
+
+- Kitsu: Shot&Sequence name with prefix over appends [\#3593](https://github.com/pypeclub/OpenPype/pull/3593)
+- Ftrack: Update ftrack api to 2.3.3 [\#3588](https://github.com/pypeclub/OpenPype/pull/3588)
+- General: New Integrator small fixes [\#3583](https://github.com/pypeclub/OpenPype/pull/3583)
+
+**🐛 Bug fixes**
+
+- Editorial publishing workflow improvements [\#3580](https://github.com/pypeclub/OpenPype/pull/3580)
+- Nuke: render family integration consistency  [\#3576](https://github.com/pypeclub/OpenPype/pull/3576)
+- Ftrack: Handle missing published path in integrator [\#3570](https://github.com/pypeclub/OpenPype/pull/3570)
+- Nuke: publish existing frames with slate with correct range [\#3555](https://github.com/pypeclub/OpenPype/pull/3555)
+
+**🔀 Refactored code**
+
+- General: Separate extraction of template data into more functions [\#3574](https://github.com/pypeclub/OpenPype/pull/3574)
+- General: Lib cleanup [\#3571](https://github.com/pypeclub/OpenPype/pull/3571)
+
 ## [3.12.2](https://github.com/pypeclub/OpenPype/tree/3.12.2) (2022-07-27)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.1...3.12.2)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.12.2-nightly.4...3.12.2)
 
 ### 📖 Documentation
 
@@ -38,9 +64,9 @@
 - General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
 - Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
 - TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
-- NewPublisher: Publish attributes are properly collected [\#3510](https://github.com/pypeclub/OpenPype/pull/3510)
 - TrayPublisher: Make sure host name is filled [\#3504](https://github.com/pypeclub/OpenPype/pull/3504)
 - NewPublisher: Groups work and enum multivalue [\#3501](https://github.com/pypeclub/OpenPype/pull/3501)
+- Resolve: removed few bugs [\#3464](https://github.com/pypeclub/OpenPype/pull/3464)
 
 **🔀 Refactored code**
 
@@ -61,10 +87,6 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.12.1-nightly.6...3.12.1)
 
-### 📖 Documentation
-
-- Docs: Added minimal permissions for MongoDB [\#3441](https://github.com/pypeclub/OpenPype/pull/3441)
-
 **🚀 Enhancements**
 
 - TrayPublisher: Added more options for grouping of instances [\#3494](https://github.com/pypeclub/OpenPype/pull/3494)
@@ -73,7 +95,6 @@
 - General: Creator Plugins have access to project [\#3476](https://github.com/pypeclub/OpenPype/pull/3476)
 - General: Better arguments order in creator init [\#3475](https://github.com/pypeclub/OpenPype/pull/3475)
 - Ftrack: Trigger custom ftrack events on project creation and preparation [\#3465](https://github.com/pypeclub/OpenPype/pull/3465)
-- Windows installer: Clean old files and add version subfolder [\#3445](https://github.com/pypeclub/OpenPype/pull/3445)
 
 **🐛 Bug fixes**
 
@@ -86,25 +107,12 @@
 - Kitsu: bugfix with sync-service ans publish plugins [\#3473](https://github.com/pypeclub/OpenPype/pull/3473)
 - Flame: solved problem with multi-selected loading [\#3470](https://github.com/pypeclub/OpenPype/pull/3470)
 - General: Fix query function in update logic [\#3468](https://github.com/pypeclub/OpenPype/pull/3468)
-- Resolve: removed few bugs [\#3464](https://github.com/pypeclub/OpenPype/pull/3464)
 - General: Delete old versions is safer when ftrack is disabled [\#3462](https://github.com/pypeclub/OpenPype/pull/3462)
-- Nuke: fixing metadata slate TC difference [\#3455](https://github.com/pypeclub/OpenPype/pull/3455)
-- Nuke: prerender reviewable fails [\#3450](https://github.com/pypeclub/OpenPype/pull/3450)
-- Maya: fix hashing in Python 3 for tile rendering [\#3447](https://github.com/pypeclub/OpenPype/pull/3447)
-- LogViewer: Escape html characters in log message [\#3443](https://github.com/pypeclub/OpenPype/pull/3443)
 
 **🔀 Refactored code**
 
 - Maya: Merge animation + pointcache extractor logic [\#3461](https://github.com/pypeclub/OpenPype/pull/3461)
 - Maya: Re-use `maintained\_time` from lib [\#3460](https://github.com/pypeclub/OpenPype/pull/3460)
-- General: Use query functions in global plugins [\#3459](https://github.com/pypeclub/OpenPype/pull/3459)
-- Clockify: Use query functions in clockify actions [\#3458](https://github.com/pypeclub/OpenPype/pull/3458)
-- General: Use query functions in rest api calls [\#3457](https://github.com/pypeclub/OpenPype/pull/3457)
-- General: Use query functions in openpype lib functions [\#3454](https://github.com/pypeclub/OpenPype/pull/3454)
-- General: Use query functions in load utils [\#3446](https://github.com/pypeclub/OpenPype/pull/3446)
-- General: Move publish plugin and publish render abstractions [\#3442](https://github.com/pypeclub/OpenPype/pull/3442)
-- General: Use Anatomy after move to pipeline [\#3436](https://github.com/pypeclub/OpenPype/pull/3436)
-- General: Anatomy moved to pipeline [\#3435](https://github.com/pypeclub/OpenPype/pull/3435)
 
 ## [3.12.0](https://github.com/pypeclub/OpenPype/tree/3.12.0) (2022-06-28)
 
