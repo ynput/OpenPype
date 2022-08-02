@@ -4,7 +4,7 @@ import c4d
 import contextlib
 from collections import OrderedDict
 import random
-from pathlib import PurePosixPath as ObjectPath
+from pathlib import PurePosixPath 
 
 from six import string_types
 
@@ -44,6 +44,9 @@ def maintained_selection(doc=None):
         else:
             for select in doc.GetSelection():
                 doc.SetSelection(select, c4d.SELECTION_SUB)
+
+###### Method for addressing objects in C4D
+
 
 
 class ObjectAttrs:
