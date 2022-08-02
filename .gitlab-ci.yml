@@ -54,7 +54,7 @@ build-windows:
     - shell
     - windows
   script:
-    - $env:PATH=c:\prod\softprod\apps\python\3.7.9\windows,$PATH
+    - $env:PATH=c:\prod\softprod\apps\python\3.7.9\windows;$PATH
     - python -v
     - .\tools\create_env.ps1
     - .\tools\fetch_thirdparty_libs.ps1
