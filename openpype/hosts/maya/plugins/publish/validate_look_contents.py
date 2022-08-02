@@ -76,9 +76,9 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
                           "`relationships`" % instance.name)
             invalid.add(instance.name)
 
-        # Check if attributes are on a node with a name and an ID, crucial for rebuild!
+        # Check if attributes are on a node with an ID, crucial for rebuild!
         for attr_changes in lookdata["attributes"]:
-            if not attr_changes["uuid"] and not attr_changes["name"]:
+            if not attr_changes["uuid"] and not attr_changes["attributes"]:
                 cls.log.error("Node '%s' has no cbId, please set the "
                             "attributes to its children if it has any"
                             % attr_changes["name"])
