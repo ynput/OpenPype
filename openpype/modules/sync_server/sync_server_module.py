@@ -988,6 +988,95 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                            representation, elem,
                            alt_site, file_id=file_id, force=True)
 
+    def get_repre_info_for_versions(self, project_name, version_ids,
+                                    active_site, remote_site):
+        """Returns representation documents for versions and sites combi
+
+        Args:
+            project_name (str)
+            version_ids (list): of version[_id]
+            active_site (string): 'local', 'studio' etc
+            remote_site (string): dtto
+        Returns:
+
+        """
+        self.connection.Session["AVALON_PROJECT"] = project_name
+        query = [
+            {"$match": {"parent": {"$in": version_ids},
+                        "type": "representation",
+                        "files.sites.name": {"$exists": 1}}},
+            {"$unwind": "$files"},
+            {'$addFields': {
+                'order_local': {
+                    '$filter': {
+                        'input': '$files.sites', 'as': 'p',
+                        'cond': {'$eq': ['$$p.name', active_site]}
+                    }
+                }
+            }},
+            {'$addFields': {
+                'order_remote': {
+                    '$filter': {
+                        'input': '$files.sites', 'as': 'p',
+                        'cond': {'$eq': ['$$p.name', remote_site]}
+                    }
+                }
+            }},
+            {'$addFields': {
+                'progress_local': {"$arrayElemAt": [{
+                    '$cond': [
+                        {'$size': "$order_local.progress"},
+                        "$order_local.progress",
+                        # if exists created_dt count is as available
+                        {'$cond': [
+                            {'$size': "$order_local.created_dt"},
+                            [1],
+                            [0]
+                        ]}
+                    ]},
+                    0
+                ]}
+            }},
+            {'$addFields': {
+                'progress_remote': {"$arrayElemAt": [{
+                    '$cond': [
+                        {'$size': "$order_remote.progress"},
+                        "$order_remote.progress",
+                        # if exists created_dt count is as available
+                        {'$cond': [
+                            {'$size': "$order_remote.created_dt"},
+                            [1],
+                            [0]
+                        ]}
+                    ]},
+                    0
+                ]}
+            }},
+            {'$group': {  # first group by repre
+                '_id': '$_id',
+                'parent': {'$first': '$parent'},
+                'avail_ratio_local': {
+                    '$first': {
+                        '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]
+                    }
+                },
+                'avail_ratio_remote': {
+                    '$first': {
+                        '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]
+                    }
+                }
+            }},
+            {'$group': {  # second group by parent, eg version_id
+                '_id': '$parent',
+                'repre_count': {'$sum': 1},  # total representations
+                # fully available representation for site
+                'avail_repre_local': {'$sum': "$avail_ratio_local"},
+                'avail_repre_remote': {'$sum': "$avail_ratio_remote"},
+            }},
+        ]
+        # docs = list(self.connection.aggregate(query))
+        return self.connection.aggregate(query)
+
     """ End of Public API """
 
     def get_local_file_path(self, project_name, site_name, file_path):
