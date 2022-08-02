@@ -881,15 +881,6 @@ class Creator(LegacyCreator):
         for collection in get_collections_by_objects(selected_objects):
             selected_collections.add(collection)
             selected_objects -= set(collection.all_objects)
-        # Get collection from selected armature.
-        selected_armatures = [
-            obj
-            for obj in selected_objects if obj.type == "ARMATURE"
-        ]
-        for armature in selected_armatures:
-            for collection in get_collections_by_armature(armature):
-                selected_collections.add(collection)
-                selected_objects -= set(collection.all_objects)
 
         # Link Selected
         link_to_collection(selected_objects, container)
