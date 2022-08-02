@@ -54,8 +54,9 @@ async def upload(module, project_name, file, representation, provider_name,
 
         file_path = file.get("path", "")
         try:
-            local_file_path, remote_file_path = resolve_paths(module,
-                file_path, project_name, remote_site_name, remote_handler
+            local_file_path, remote_file_path = resolve_paths(
+                module, file_path, project_name,
+                remote_site_name, remote_handler
             )
         except Exception as exp:
             print(exp)
@@ -270,8 +271,8 @@ class SyncServerThread(threading.Thread):
                 - gets list of collections in DB
                 - gets list of active remote providers (has configuration,
                     credentials)
-                - for each project_name it looks for representations that should
-                    be synced
+                - for each project_name it looks for representations that
+                  should be synced
                 - synchronize found collections
                 - update representations - fills error messages for exceptions
                 - waits X seconds and repeat

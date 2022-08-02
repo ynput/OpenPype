@@ -111,7 +111,8 @@ class LocalDriveHandler(AbstractProvider):
             Download a file form 'source_path' to 'local_path'
         """
         return self.upload_file(source_path, local_path,
-                                server, project_name, file, representation, site,
+                                server, project_name, file,
+                                representation, site,
                                 overwrite, direction="Download")
 
     def delete_file(self, path):
