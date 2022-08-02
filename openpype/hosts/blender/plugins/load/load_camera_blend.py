@@ -28,4 +28,4 @@ class BlendCameraLoader(plugin.AssetLoader):
     ]
 
     def _process(self, libpath, asset_group):
-        self._load_blend(libpath, asset_group)
+        self._link_blend(libpath, asset_group)

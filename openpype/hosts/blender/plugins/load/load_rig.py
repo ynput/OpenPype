@@ -134,7 +134,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
     def _process(self, libpath, asset_group):
         # Load blend from from libpath library.
-        self._load_blend(libpath, asset_group)
+        self._link_blend(libpath, asset_group)
 
         # Disable selection for modeling container.
         for child in set(plugin.get_children_recursive(asset_group)):
