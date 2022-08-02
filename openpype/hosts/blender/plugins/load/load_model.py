@@ -9,13 +9,43 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import MODEL_DOWNSTREAM
 
 
-class BlendModelLoader(plugin.AssetLoader):
-    """Load models from a .blend file."""
+class LinkBlendModelLoader(plugin.AssetLoader):
+    """Link models from a .blend file."""
 
     families = ["model"]
     representations = ["blend"]
 
     label = "Link Model"
+    icon = "code-fork"
+    color = "orange"
+    color_tag = "COLOR_04"
+
+    def _process(self, libpath, asset_group):
+        self._link_blend(libpath, asset_group)
+
+
+class AppendBlendModelLoader(plugin.AssetLoader):
+    """Append models from a .blend file."""
+
+    families = ["model"]
+    representations = ["blend"]
+
+    label = "Append Model"
+    icon = "code-fork"
+    color = "orange"
+    color_tag = "COLOR_04"
+
+    def _process(self, libpath, asset_group):
+        self._append_blend(libpath, asset_group)
+
+
+class InstanceBlendModelLoader(plugin.AssetLoader):
+    """Instaniate collection models from a .blend file."""
+
+    families = ["model"]
+    representations = ["blend"]
+
+    label = "Instance Collection"
     icon = "code-fork"
     color = "orange"
     color_tag = "COLOR_04"
@@ -26,51 +56,32 @@ class BlendModelLoader(plugin.AssetLoader):
         transform = options.get("transform")
         parent = options.get("parent")
 
-        if isinstance(asset_group, bpy.types.Object):
-            if transform:
-                location = transform.get("translation")
-                rotation = transform.get("rotation")
-                scale = transform.get("scale")
+        if transform:
+            location = transform.get("translation")
+            rotation = transform.get("rotation")
+            scale = transform.get("scale")
 
-                asset_group.location = [location[n] for n in "xyz"]
-                asset_group.rotation_euler = [rotation[n] for n in "xyz"]
-                asset_group.scale = [scale[n] for n in "xyz"]
+            asset_group.location = [location[n] for n in "xyz"]
+            asset_group.rotation_euler = [rotation[n] for n in "xyz"]
+            asset_group.scale = [scale[n] for n in "xyz"]
 
-            if isinstance(parent, bpy.types.Object):
-                bpy.ops.object.parent_set(
-                    plugin.create_blender_context(
-                        active=bpy.context.scene.objects.get(parent),
-                        selected=[asset_group]
-                    ),
-                    keep_transform=True
-                )
-            elif isinstance(parent, bpy.types.Collection):
-                for current_parent in asset_group.users_collection:
-                    current_parent.children.unlink(asset_group)
-                plugin.link_to_collection(asset_group, parent)
-
-        elif (
-            isinstance(asset_group, bpy.types.Collection)
-            and isinstance(parent, bpy.types.Collection)
-        ):
-            # clear collection parenting
-            for collection in bpy.data.collections:
-                if asset_group in collection.children.values():
-                    collection.children.unlink(asset_group)
-            # reparenting with the option value
+        if isinstance(parent, bpy.types.Object):
+            bpy.ops.object.parent_set(
+                plugin.create_blender_context(
+                    active=bpy.context.scene.objects.get(parent),
+                    selected=[asset_group]
+                ),
+                keep_transform=True
+            )
+        elif isinstance(parent, bpy.types.Collection):
+            for current_parent in asset_group.users_collection:
+                current_parent.children.unlink(asset_group)
             plugin.link_to_collection(asset_group, parent)
 
     def _process(self, libpath, asset_group):
-
-        # If asset_group is a Collection, we proceed with usual load blend.
-        if isinstance(asset_group, bpy.types.Collection):
-            self._load_blend(libpath, asset_group)
-
-        # If asset_group is an Empty, set instance collection with container.
-        elif isinstance(asset_group, bpy.types.Object):
-            container = self._load_library_collection(libpath)
-            asset_group.instance_collection = container
-            asset_group.instance_type = "COLLECTION"
+        container = self._load_library_collection(libpath)
+        asset_group.instance_collection = container
+        asset_group.instance_type = "COLLECTION"
 
     def process_asset(
         self,
@@ -91,23 +102,12 @@ class BlendModelLoader(plugin.AssetLoader):
         subset = context["subset"]["name"]
         asset_name = plugin.asset_name(asset, subset)
 
-        # Get the main collection to parent asset group.
-        parent_collection = plugin.get_main_collection()
 
-        # Create override library if current task needed it.
-        if legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM:
-            group_name = plugin.asset_name(asset, subset)
-            namespace = None
-            asset_group = bpy.data.collections.new(group_name)
-            if hasattr(asset_group, "color_tag"):
-                asset_group.color_tag = self.color_tag
-            parent_collection.children.link(asset_group)
-        else:
-            unique_number = plugin.get_unique_number(asset, subset)
-            group_name = plugin.asset_name(asset, subset, unique_number)
-            namespace = namespace or f"{asset}_{unique_number}"
-            asset_group = bpy.data.objects.new(group_name, object_data=None)
-            parent_collection.objects.link(asset_group)
+        unique_number = plugin.get_unique_number(asset, subset)
+        group_name = plugin.asset_name(asset, subset, unique_number)
+        namespace = namespace or f"{asset}_{unique_number}"
+        asset_group = bpy.data.objects.new(group_name, object_data=None)
+        plugin.get_main_collection().objects.link(asset_group)
 
         self._process(libpath, asset_group)
 

@@ -30,7 +30,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
                 return obj.animation_data.action
 
     def _process(self, libpath: str, asset_group: bpy.types.Collection):
-        self._load_blend(libpath, asset_group)
+        self._link_blend(libpath, asset_group)
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""

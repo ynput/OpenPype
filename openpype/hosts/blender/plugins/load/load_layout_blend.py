@@ -69,7 +69,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     families = ["layout"]
     representations = ["blend"]
 
-    label = "Link Layout"
+    label = "Load Layout"
     icon = "code-fork"
     color = "orange"
     color_tag = "COLOR_02"
@@ -153,7 +153,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         )
 
     def _process(self, libpath, asset_group):
-        self._load_blend(libpath, asset_group)
+        self._append_blend(libpath, asset_group)
 
         # Make local action only if task not Lighting.
         if legacy_io.Session.get("AVALON_TASK") != "Lighting":
