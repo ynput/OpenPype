@@ -14,7 +14,7 @@ from .utils import SyncStatus, ResumableError
 log = PypeLogger().get_logger("SyncServer")
 
 
-async def upload(module, collection, file, representation, provider_name,
+async def upload(module, project_name, file, representation, provider_name,
                  remote_site_name, tree=None, preset=None):
     """
         Upload single 'file' of a 'representation' to 'provider'.
@@ -31,7 +31,7 @@ async def upload(module, collection, file, representation, provider_name,
 
     Args:
         module(SyncServerModule): object to run SyncServerModule API
-        collection (str): source collection
+        project_name (str): source db
         file (dictionary): of file from representation in Mongo
         representation (dictionary): of representation
         provider_name (string): gdrive, gdc etc.
@@ -47,7 +47,7 @@ async def upload(module, collection, file, representation, provider_name,
         # thread can do that at a time, upload/download to prepared
         # structure should be run in parallel
         remote_handler = lib.factory.get_provider(provider_name,
-                                                  collection,
+                                                  project_name,
                                                   remote_site_name,
                                                   tree=tree,
                                                   presets=preset)
@@ -55,7 +55,7 @@ async def upload(module, collection, file, representation, provider_name,
         file_path = file.get("path", "")
         try:
             local_file_path, remote_file_path = resolve_paths(module,
-                file_path, collection, remote_site_name, remote_handler
+                file_path, project_name, remote_site_name, remote_handler
             )
         except Exception as exp:
             print(exp)
@@ -74,27 +74,28 @@ async def upload(module, collection, file, representation, provider_name,
                                          local_file_path,
                                          remote_file_path,
                                          module,
-                                         collection,
+                                         project_name,
                                          file,
                                          representation,
                                          remote_site_name,
                                          True
                                          )
 
-    module.handle_alternate_site(collection, representation, remote_site_name,
+    module.handle_alternate_site(project_name, representation,
+                                 remote_site_name,
                                  file["_id"], file_id)
 
     return file_id
 
 
-async def download(module, collection, file, representation, provider_name,
+async def download(module, project_name, file, representation, provider_name,
                    remote_site_name, tree=None, preset=None):
     """
         Downloads file to local folder denoted in representation.Context.
 
     Args:
         module(SyncServerModule): object to run SyncServerModule API
-        collection (str): source collection
+        project_name (str): source
         file (dictionary) : info about processed file
         representation (dictionary):  repr that 'file' belongs to
         provider_name (string):  'gdrive' etc
@@ -108,20 +109,20 @@ async def download(module, collection, file, representation, provider_name,
     """
     with module.lock:
         remote_handler = lib.factory.get_provider(provider_name,
-                                                  collection,
+                                                  project_name,
                                                   remote_site_name,
                                                   tree=tree,
                                                   presets=preset)
 
         file_path = file.get("path", "")
         local_file_path, remote_file_path = resolve_paths(
-            module, file_path, collection, remote_site_name, remote_handler
+            module, file_path, project_name, remote_site_name, remote_handler
         )
 
         local_folder = os.path.dirname(local_file_path)
         os.makedirs(local_folder, exist_ok=True)
 
-    local_site = module.get_active_site(collection)
+    local_site = module.get_active_site(project_name)
 
     loop = asyncio.get_running_loop()
     file_id = await loop.run_in_executor(None,
@@ -129,20 +130,20 @@ async def download(module, collection, file, representation, provider_name,
                                          remote_file_path,
                                          local_file_path,
                                          module,
-                                         collection,
+                                         project_name,
                                          file,
                                          representation,
                                          local_site,
                                          True
                                          )
 
-    module.handle_alternate_site(collection, representation, local_site,
+    module.handle_alternate_site(project_name, representation, local_site,
                                  file["_id"], file_id)
 
     return file_id
 
 
-def resolve_paths(module, file_path, collection,
+def resolve_paths(module, file_path, project_name,
                   remote_site_name=None, remote_handler=None):
     """
         Returns tuple of local and remote file paths with {root}
@@ -153,7 +154,7 @@ def resolve_paths(module, file_path, collection,
         Args:
             module(SyncServerModule): object to run SyncServerModule API
             file_path(string): path with {root}
-            collection(string): project name
+            project_name(string): project name
             remote_site_name(string): remote site
             remote_handler(AbstractProvider): implementation
         Returns:
@@ -164,7 +165,7 @@ def resolve_paths(module, file_path, collection,
         remote_file_path = remote_handler.resolve_path(file_path)
 
     local_handler = lib.factory.get_provider(
-        'local_drive', collection, module.get_active_site(collection))
+        'local_drive', project_name, module.get_active_site(project_name))
     local_file_path = local_handler.resolve_path(file_path)
 
     return local_file_path, remote_file_path
@@ -269,7 +270,7 @@ class SyncServerThread(threading.Thread):
                 - gets list of collections in DB
                 - gets list of active remote providers (has configuration,
                     credentials)
-                - for each collection it looks for representations that should
+                - for each project_name it looks for representations that should
                     be synced
                 - synchronize found collections
                 - update representations - fills error messages for exceptions
@@ -282,17 +283,17 @@ class SyncServerThread(threading.Thread):
                 import time
                 start_time = time.time()
                 self.module.set_sync_project_settings()  # clean cache
-                collection = None
+                project_name = None
                 enabled_projects = self.module.get_enabled_projects()
-                for collection in enabled_projects:
-                    preset = self.module.sync_project_settings[collection]
+                for project_name in enabled_projects:
+                    preset = self.module.sync_project_settings[project_name]
 
-                    local_site, remote_site = self._working_sites(collection)
+                    local_site, remote_site = self._working_sites(project_name)
                     if not all([local_site, remote_site]):
                         continue
 
                     sync_repres = self.module.get_sync_representations(
-                        collection,
+                        project_name,
                         local_site,
                         remote_site
                     )
@@ -310,7 +311,7 @@ class SyncServerThread(threading.Thread):
                     remote_provider = \
                         self.module.get_provider_for_site(site=remote_site)
                     handler = lib.factory.get_provider(remote_provider,
-                                                       collection,
+                                                       project_name,
                                                        remote_site,
                                                        presets=site_preset)
                     limit = lib.factory.get_provider_batch_limit(
@@ -341,7 +342,7 @@ class SyncServerThread(threading.Thread):
                                     limit -= 1
                                     task = asyncio.create_task(
                                         upload(self.module,
-                                               collection,
+                                               project_name,
                                                file,
                                                sync,
                                                remote_provider,
@@ -353,7 +354,7 @@ class SyncServerThread(threading.Thread):
                                     files_processed_info.append((file,
                                                                  sync,
                                                                  remote_site,
-                                                                 collection
+                                                                 project_name
                                                                  ))
                                     processed_file_path.add(file_path)
                                 if status == SyncStatus.DO_DOWNLOAD:
@@ -361,7 +362,7 @@ class SyncServerThread(threading.Thread):
                                     limit -= 1
                                     task = asyncio.create_task(
                                         download(self.module,
-                                                 collection,
+                                                 project_name,
                                                  file,
                                                  sync,
                                                  remote_provider,
@@ -373,7 +374,7 @@ class SyncServerThread(threading.Thread):
                                     files_processed_info.append((file,
                                                                  sync,
                                                                  local_site,
-                                                                 collection
+                                                                 project_name
                                                                  ))
                                     processed_file_path.add(file_path)
 
@@ -384,12 +385,12 @@ class SyncServerThread(threading.Thread):
                         return_exceptions=True)
                     for file_id, info in zip(files_created,
                                              files_processed_info):
-                        file, representation, site, collection = info
+                        file, representation, site, project_name = info
                         error = None
                         if isinstance(file_id, BaseException):
                             error = str(file_id)
                             file_id = None
-                        self.module.update_db(collection,
+                        self.module.update_db(project_name,
                                               file_id,
                                               file,
                                               representation,
@@ -399,7 +400,7 @@ class SyncServerThread(threading.Thread):
                 duration = time.time() - start_time
                 log.debug("One loop took {:.2f}s".format(duration))
 
-                delay = self.module.get_loop_delay(collection)
+                delay = self.module.get_loop_delay(project_name)
                 log.debug("Waiting for {} seconds to new loop".format(delay))
                 self.timer = asyncio.create_task(self.run_timer(delay))
                 await asyncio.gather(self.timer)
@@ -458,19 +459,19 @@ class SyncServerThread(threading.Thread):
             self.timer.cancel()
             self.timer = None
 
-    def _working_sites(self, collection):
-        if self.module.is_project_paused(collection):
+    def _working_sites(self, project_name):
+        if self.module.is_project_paused(project_name):
             log.debug("Both sites same, skipping")
             return None, None
 
-        local_site = self.module.get_active_site(collection)
-        remote_site = self.module.get_remote_site(collection)
+        local_site = self.module.get_active_site(project_name)
+        remote_site = self.module.get_remote_site(project_name)
         if local_site == remote_site:
             log.debug("{}-{} sites same, skipping".format(local_site,
                                                           remote_site))
             return None, None
 
-        configured_sites = _get_configured_sites(self.module, collection)
+        configured_sites = _get_configured_sites(self.module, project_name)
         if not all([local_site in configured_sites,
                     remote_site in configured_sites]):
             log.debug("Some of the sites {} - {} is not ".format(local_site,

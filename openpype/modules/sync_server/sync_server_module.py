@@ -130,12 +130,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.projects_processed = set()
 
     """ Start of Public API """
-    def add_site(self, collection, representation_id, site_name=None,
+    def add_site(self, project_name, representation_id, site_name=None,
                  force=False):
         """
         Adds new site to representation to be synced.
 
-        'collection' must have synchronization enabled (globally or
+        'project_name' must have synchronization enabled (globally or
         project only)
 
         Used as a API endpoint from outside applications (Loader etc).
@@ -143,7 +143,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Use 'force' to reset existing site.
 
         Args:
-            collection (string): project name (must match DB)
+            project_name (string): project name (must match DB)
             representation_id (string): MongoDB _id value
             site_name (string): name of configured and active site
             force (bool): reset site if exists
@@ -153,25 +153,25 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 not 'force'
             ValueError - other errors (repre not found, misconfiguration)
         """
-        if not self.get_sync_project_setting(collection):
+        if not self.get_sync_project_setting(project_name):
             raise ValueError("Project not configured")
 
         if not site_name:
             site_name = self.DEFAULT_SITE
 
-        self.reset_site_on_representation(collection,
+        self.reset_site_on_representation(project_name,
                                           representation_id,
                                           site_name=site_name,
                                           force=force)
 
-    def remove_site(self, collection, representation_id, site_name,
+    def remove_site(self, project_name, representation_id, site_name,
                     remove_local_files=False):
         """
             Removes 'site_name' for particular 'representation_id' on
-            'collection'
+            'project_name'
 
             Args:
-                collection (string): project name (must match DB)
+                project_name (string): project name (must match DB)
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
                 remove_local_files (bool): remove only files for 'local_id'
@@ -180,15 +180,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Returns:
                 throws ValueError if any issue
         """
-        if not self.get_sync_project_setting(collection):
+        if not self.get_sync_project_setting(project_name):
             raise ValueError("Project not configured")
 
-        self.reset_site_on_representation(collection,
+        self.reset_site_on_representation(project_name,
                                           representation_id,
                                           site_name=site_name,
                                           remove=True)
         if remove_local_files:
-            self._remove_local_file(collection, representation_id, site_name)
+            self._remove_local_file(project_name, representation_id, site_name)
 
     def compute_resource_sync_sites(self, project_name):
         """Get available resource sync sites state for publish process.
@@ -335,9 +335,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return alt_site_pairs
 
-    def clear_project(self, collection, site_name):
+    def clear_project(self, project_name, site_name):
         """
-            Clear 'collection' of 'site_name' and its local files
+            Clear 'project_name' of 'site_name' and its local files
 
             Works only on real local sites, not on 'studio'
         """
@@ -348,15 +348,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         # TODO currently not possible to replace with get_representations
         representations = list(
-            self.connection.database[collection].find(query))
+            self.connection.database[project_name].find(query))
         if not representations:
             self.log.debug("No repre found")
             return
 
         for repre in representations:
-            self.remove_site(collection, repre.get("_id"), site_name, True)
+            self.remove_site(project_name, repre.get("_id"), site_name, True)
 
-    def create_validate_project_task(self, collection, site_name):
+    def create_validate_project_task(self, project_name, site_name):
         """Adds metadata about project files validation on a queue.
 
         This process will loop through all representation and check if
@@ -373,28 +373,28 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         task = {
             "type": "validate",
-            "project_name": collection,
-            "func": lambda: self.validate_project(collection, site_name,
+            "project_name": project_name,
+            "func": lambda: self.validate_project(project_name, site_name,
                                                   reset_missing=True)
         }
-        self.projects_processed.add(collection)
+        self.projects_processed.add(project_name)
         self.long_running_tasks.append(task)
 
-    def validate_project(self, collection, site_name, reset_missing=False):
-        """Validate 'collection' of 'site_name' and its local files
+    def validate_project(self, project_name, site_name, reset_missing=False):
+        """Validate 'project_name' of 'site_name' and its local files
 
         If file present and not marked with a 'site_name' in DB, DB is
         updated with site name and file modified date.
 
         Args:
-            collection (string): project name
+            project_name (string): project name
             site_name (string): active site name
             reset_missing (bool): if True reset site in DB if missing
                 physically
         """
-        self.log.debug("Validation of {} for {} started".format(collection,
+        self.log.debug("Validation of {} for {} started".format(project_name,
                                                                 site_name))
-        representations = list(get_representations(collection))
+        representations = list(get_representations(project_name))
         if not representations:
             self.log.debug("No repre found")
             return
@@ -414,7 +414,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     continue
 
                 file_path = repre_file.get("path", "")
-                local_file_path = self.get_local_file_path(collection,
+                local_file_path = self.get_local_file_path(project_name,
                                                            site_name,
                                                            file_path)
 
@@ -426,14 +426,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "Adding site {} for {}".format(site_name,
                                                            repre_id))
 
-                        query = {
-                            "_id": repre_id
-                        }
                         created_dt = datetime.fromtimestamp(
                             os.path.getmtime(local_file_path))
                         elem = {"name": site_name,
                                 "created_dt": created_dt}
-                        self._add_site(collection, query, repre, elem,
+                        self._add_site(project_name, repre, elem,
                                        site_name=site_name,
                                        file_id=repre_file["_id"],
                                        force=True)
@@ -443,41 +440,42 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                         self.log.debug("Resetting site {} for {}".
                                        format(site_name, repre_id))
                         self.reset_site_on_representation(
-                            collection, repre_id, site_name=site_name,
+                            project_name, repre_id, site_name=site_name,
                             file_id=repre_file["_id"])
                         sites_reset += 1
 
         if sites_added % 100 == 0:
             self.log.debug("Sites added {}".format(sites_added))
 
-        self.log.debug("Validation of {} for {} ended".format(collection,
+        self.log.debug("Validation of {} for {} ended".format(project_name,
                                                               site_name))
         self.log.info("Sites added {}, sites reset {}".format(sites_added,
                                                               reset_missing))
 
-    def pause_representation(self, collection, representation_id, site_name):
+    def pause_representation(self, project_name, representation_id, site_name):
         """
             Sets 'representation_id' as paused, eg. no syncing should be
             happening on it.
 
             Args:
-                collection (string): project name
+                project_name (string): project name
                 representation_id (string): MongoDB objectId value
                 site_name (string): 'gdrive', 'studio' etc.
         """
         log.info("Pausing SyncServer for {}".format(representation_id))
         self._paused_representations.add(representation_id)
-        self.reset_site_on_representation(collection, representation_id,
+        self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=True)
 
-    def unpause_representation(self, collection, representation_id, site_name):
+    def unpause_representation(self, project_name,
+                               representation_id, site_name):
         """
             Sets 'representation_id' as unpaused.
 
             Does not fail or warn if repre wasn't paused.
 
             Args:
-                collection (string): project name
+                project_name (string): project name
                 representation_id (string): MongoDB objectId value
                 site_name (string): 'gdrive', 'studio' etc.
         """
@@ -487,7 +485,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         except KeyError:
             pass
         # self.paused_representations is not persistent
-        self.reset_site_on_representation(collection, representation_id,
+        self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=False)
 
     def is_representation_paused(self, representation_id,
@@ -518,7 +516,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             happening on all representation inside.
 
             Args:
-                project_name (string): collection name
+                project_name (string): project_name name
         """
         log.info("Pausing SyncServer for {}".format(project_name))
         self._paused_projects.add(project_name)
@@ -530,7 +528,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Does not fail or warn if project wasn't paused.
 
             Args:
-                project_name (string): collection name
+                project_name (string):
         """
         log.info("Unpausing SyncServer for {}".format(project_name))
         try:
@@ -543,7 +541,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Returns if 'project_name' is paused or not.
 
             Args:
-                project_name (string): collection name
+                project_name (string):
                 check_parents (bool): check if server itself
                     is not paused
             Returns:
@@ -942,8 +940,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 return True
         return False
 
-    def handle_alternate_site(self, collection, representation, processed_site,
-                              file_id, synced_file_id):
+    def handle_alternate_site(self, project_name, representation,
+                              processed_site, file_id, synced_file_id):
         """
             For special use cases where one site vendors another.
 
@@ -956,7 +954,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             same location >> file is accesible on 'sftp' site right away.
 
             Args:
-                collection (str): name of project
+                project_name (str): name of project
                 representation (dict)
                 processed_site (str): real site_name of published/uploaded file
                 file_id (ObjectId): DB id of file handled
@@ -980,26 +978,23 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         alternate_sites = set(alternate_sites)
 
         for alt_site in alternate_sites:
-            query = {
-                "_id": representation["_id"]
-            }
             elem = {"name": alt_site,
                     "created_dt": datetime.now(),
                     "id": synced_file_id}
 
             self.log.debug("Adding alternate {} to {}".format(
                 alt_site, representation["_id"]))
-            self._add_site(collection, query,
+            self._add_site(project_name,
                            representation, elem,
                            alt_site, file_id=file_id, force=True)
 
     """ End of Public API """
 
-    def get_local_file_path(self, collection, site_name, file_path):
+    def get_local_file_path(self, project_name, site_name, file_path):
         """
             Externalized for app
         """
-        handler = LocalDriveHandler(collection, site_name)
+        handler = LocalDriveHandler(project_name, site_name)
         local_file_path = handler.resolve_path(file_path)
 
         return local_file_path
@@ -1286,7 +1281,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return sites.get(site, 'N/A')
 
     @time_function
-    def get_sync_representations(self, collection, active_site, remote_site):
+    def get_sync_representations(self, project_name, active_site, remote_site):
         """
             Get representations that should be synced, these could be
             recognised by presence of document in 'files.sites', where key is
@@ -1297,8 +1292,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             better performance. Goal is to get as few representations as
             possible.
         Args:
-            collection (string): name of collection (in most cases matches
-                project name
+            project_name (string):
             active_site (string): identifier of current active site (could be
                 'local_0' when working from home, 'studio' when working in the
                 studio (default)
@@ -1307,10 +1301,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (list) of dictionaries
         """
-        log.debug("Check representations for : {}".format(collection))
-        self.connection.Session["AVALON_PROJECT"] = collection
+        log.debug("Check representations for : {}".format(project_name))
+        self.connection.Session["AVALON_PROJECT"] = project_name
         # retry_cnt - number of attempts to sync specific file before giving up
-        retries_arr = self._get_retries_arr(collection)
+        retries_arr = self._get_retries_arr(project_name)
         match = {
             "type": "representation",
             "$or": [
@@ -1447,14 +1441,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return SyncStatus.DO_NOTHING
 
-    def update_db(self, collection, new_file_id, file, representation,
+    def update_db(self, project_name, new_file_id, file, representation,
                   site, error=None, progress=None, priority=None):
         """
             Update 'provider' portion of records in DB with success (file_id)
             or error (exception)
 
         Args:
-            collection (string): name of project - force to db connection as
+            project_name (string): name of project - force to db connection as
               each file might come from different collection
             new_file_id (string):
             file (dictionary): info about processed file (pulled from DB)
@@ -1497,7 +1491,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if file_id:
             arr_filter.append({'f._id': ObjectId(file_id)})
 
-        self.connection.database[collection].update_one(
+        self.connection.database[project_name].update_one(
             query,
             update,
             upsert=True,
@@ -1560,7 +1554,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return -1, None
 
-    def reset_site_on_representation(self, collection, representation_id,
+    def reset_site_on_representation(self, project_name, representation_id,
                                      side=None, file_id=None, site_name=None,
                                      remove=False, pause=None, force=False):
         """
@@ -1577,7 +1571,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Should be used when repre should be synced to new site.
 
         Args:
-            collection (string): name of project (eg. collection) in DB
+            project_name (string): name of project (eg. collection) in DB
             representation_id(string): _id of representation
             file_id (string):  file _id in representation
             side (string): local or remote side
@@ -1591,18 +1585,18 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 not 'force'
             ValueError - other errors (repre not found, misconfiguration)
         """
-        representation = get_representation_by_id(collection,
+        representation = get_representation_by_id(project_name,
                                                   representation_id)
         if not representation:
             raise ValueError("Representation {} not found in {}".
-                             format(representation_id, collection))
+                             format(representation_id, project_name))
 
         if side and site_name:
             raise ValueError("Misconfiguration, only one of side and " +
                              "site_name arguments should be passed.")
 
-        local_site = self.get_active_site(collection)
-        remote_site = self.get_remote_site(collection)
+        local_site = self.get_active_site(project_name)
+        remote_site = self.get_remote_site(project_name)
 
         if side:
             if side == 'local':
@@ -1612,42 +1606,44 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         elem = {"name": site_name}
 
-        query = {
-            "_id": ObjectId(representation_id)
-        }
-
         if file_id:  # reset site for particular file
-            self._reset_site_for_file(collection, query,
+            self._reset_site_for_file(project_name, representation_id,
                                       elem, file_id, site_name)
         elif side:  # reset site for whole representation
-            self._reset_site(collection, query, elem, site_name)
+            self._reset_site(project_name, representation_id, elem, site_name)
         elif remove:  # remove site for whole representation
-            self._remove_site(collection, query, representation, site_name)
+            self._remove_site(project_name,
+                              representation, site_name)
         elif pause is not None:
-            self._pause_unpause_site(collection, query,
+            self._pause_unpause_site(project_name,
                                      representation, site_name, pause)
         else:  # add new site to all files for representation
-            self._add_site(collection, query, representation, elem, site_name,
+            self._add_site(project_name, representation, elem, site_name,
                            force=force)
 
-    def _update_site(self, collection, query, update, arr_filter):
+    def _update_site(self, project_name, representation_id,
+                     update, arr_filter):
         """
             Auxiliary method to call update_one function on DB
 
             Used for refactoring ugly reset_provider_for_file
         """
-        self.connection.database[collection].update_one(
+        query = {
+            "_id": ObjectId(representation_id)
+        }
+
+        self.connection.database[project_name].update_one(
             query,
             update,
             upsert=True,
             array_filters=arr_filter
         )
 
-    def _reset_site_for_file(self, collection, query,
+    def _reset_site_for_file(self, project_name, representation_id,
                              elem, file_id, site_name):
         """
             Resets 'site_name' for 'file_id' on representation in 'query' on
-            'collection'
+            'project_name'
         """
         update = {
             "$set": {"files.$[f].sites.$[s]": elem}
@@ -1660,9 +1656,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             {'f._id': file_id}
         ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation_id, update, arr_filter)
 
-    def _reset_site(self, collection, query, elem, site_name):
+    def _reset_site(self, project_name, representation_id, elem, site_name):
         """
             Resets 'site_name' for all files of representation in 'query'
         """
@@ -1674,9 +1670,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             {'s.name': site_name}
         ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation_id, update, arr_filter)
 
-    def _remove_site(self, collection, query, representation, site_name):
+    def _remove_site(self, project_name, representation, site_name):
         """
             Removes 'site_name' for 'representation' in 'query'
 
@@ -1698,10 +1694,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         }
         arr_filter = []
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation["_id"],
+                          update, arr_filter)
 
-    def _pause_unpause_site(self, collection, query,
-                            representation, site_name, pause):
+    def _pause_unpause_site(self, project_name, representation,
+                            site_name, pause):
         """
             Pauses/unpauses all files for 'representation' based on 'pause'
 
@@ -1733,12 +1730,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             {'s.name': site_name}
         ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation["_id"],
+                          update, arr_filter)
 
-    def _add_site(self, collection, query, representation, elem, site_name,
+    def _add_site(self, project_name, representation, elem, site_name,
                   force=False, file_id=None):
         """
-            Adds 'site_name' to 'representation' on 'collection'
+            Adds 'site_name' to 'representation' on 'project_name'
 
             Args:
                 representation (dict)
@@ -1746,10 +1744,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Use 'force' to remove existing or raises ValueError
         """
+        representation_id = representation["_id"]
         reset_existing = False
         files = representation.get("files", [])
         if not files:
-            log.debug("No files for {}".format(representation["_id"]))
+            log.debug("No files for {}".format(representation_id))
             return
 
         for repre_file in files:
@@ -1759,7 +1758,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     if force or site.get("error"):
-                        self._reset_site_for_file(collection, query,
+                        self._reset_site_for_file(project_name,
+                                                  representation_id,
                                                   elem, repre_file["_id"],
                                                   site_name)
                         reset_existing = True
@@ -1785,14 +1785,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 {'f._id': file_id}
             ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation_id,
+                          update, arr_filter)
 
-    def _remove_local_file(self, collection, representation_id, site_name):
+    def _remove_local_file(self, project_name, representation_id, site_name):
         """
             Removes all local files for 'site_name' of 'representation_id'
 
             Args:
-                collection (string): project name (must match DB)
+                project_name (string): project name (must match DB)
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
 
@@ -1808,7 +1809,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(site=site_name)
 
         if provider_name == 'local_drive':
-            representation = get_representation_by_id(collection,
+            representation = get_representation_by_id(project_name,
                                                       representation_id,
                                                       fields=["files"])
             if not representation:
@@ -1818,7 +1819,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             local_file_path = ''
             for file in representation.get("files"):
-                local_file_path = self.get_local_file_path(collection,
+                local_file_path = self.get_local_file_path(project_name,
                                                            site_name,
                                                            file.get("path", "")
                                                            )

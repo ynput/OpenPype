@@ -441,7 +441,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         full text filtering.
 
         Allows pagination, most of heavy lifting is being done on DB side.
-        Single model matches to single collection. When project is changed,
+        Single model matches to single project. When project is changed,
         model is reset and refreshed.
 
         Args:
