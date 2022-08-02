@@ -1035,11 +1035,13 @@ class AssetLoader(LoaderPlugin):
             for child in set(get_children_recursive(asset_group)):
                 child.name = f"{namespace}:{child.name}"
 
-    def _load_library_collection(self, libpath: str) -> bpy.types.Collection:
+    def _load_library_collection(
+        self, libpath: str, link: Optional[bool] = True
+    ) -> bpy.types.Collection:
         """Load library from libpath and return the valid collection."""
         # Load collections from libpath library.
         with bpy.data.libraries.load(
-            libpath, link=True, relative=False
+            libpath, link=link, relative=False
         ) as (data_from, data_to):
             data_to.collections = data_from.collections
 
@@ -1069,8 +1071,8 @@ class AssetLoader(LoaderPlugin):
         orphans_purge()
         deselect_all()
 
-    def _load_blend(self, libpath, asset_group):
-        """Load blend process."""
+    def _link_blend(self, libpath, asset_group):
+        """Link blend process."""
         # Load collections from libpath library.
         library_collection = self._load_library_collection(libpath)
 
@@ -1114,6 +1116,22 @@ class AssetLoader(LoaderPlugin):
 
         # Clear and purge useless datablocks.
         bpy.data.collections.remove(override)
+        orphans_purge()
+
+        # Clear selection.
+        deselect_all()
+
+    def _append_blend(self, libpath, asset_group):
+        """Append blend process."""
+        # Load collections from libpath library.
+        library_collection = self._load_library_collection(libpath, link=False)
+
+        # Move objects and child collections from override to asset_group.
+        link_to_collection(library_collection.objects, asset_group)
+        link_to_collection(library_collection.children, asset_group)
+
+        # Clear and purge useless datablocks.
+        bpy.data.collections.remove(library_collection)
         orphans_purge()
 
         # Clear selection.

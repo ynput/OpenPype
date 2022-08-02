@@ -3,8 +3,8 @@
 from openpype.hosts.blender.api import plugin
 
 
-class BlendSetdressLoader(plugin.AssetLoader):
-    """Load setdress from a .blend file."""
+class LinkBlendSetdressLoader(plugin.AssetLoader):
+    """Link setdress from a .blend file."""
 
     families = ["setdress"]
     representations = ["blend"]
@@ -15,4 +15,19 @@ class BlendSetdressLoader(plugin.AssetLoader):
     color_tag = "COLOR_06"
 
     def _process(self, libpath, asset_group):
-        self._load_blend(libpath, asset_group)
+        self._link_blend(libpath, asset_group)
+
+
+class AppendBlendSetdressLoader(plugin.AssetLoader):
+    """Append setdress from a .blend file."""
+
+    families = ["setdress"]
+    representations = ["blend"]
+
+    label = "Append SetDress"
+    icon = "code-fork"
+    color = "orange"
+    color_tag = "COLOR_06"
+
+    def _process(self, libpath, asset_group):
+        self._append_blend(libpath, asset_group)
