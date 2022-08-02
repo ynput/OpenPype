@@ -16,8 +16,7 @@
 stages:
   - build
   - test
-  - staged
-  - prod
+  - deploy
 
 build-centos:
   stage: build
@@ -58,7 +57,9 @@ build-windows:
     - .\tools\build.ps1
 
 deploy-centos-staged:
-  stage: staged
+  stage: deploy
+  environment:
+    name: staging
   only:
     - tags
   needs:
@@ -75,7 +76,9 @@ deploy-centos-staged:
 
 deploy-centos-prod:
   when: manual
-  stage: prod
+  stage: deploy
+  environment:
+    name: production
   only:
     - tags
   needs:
