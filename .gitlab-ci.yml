@@ -27,7 +27,6 @@ build-centos:
     - shell
     - centos
   script:
-    - ls -la ./build || true
     # Add python from soft prod 
     - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
     # Create virtual environment in ./venv
@@ -35,9 +34,13 @@ build-centos:
     # Get PySide2, ffmpeg, oiio and other tools needed
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
-    - ls -la ./build || true
     - ./tools/build.sh
     # - tar cvzfp ./build.tar.gz ./build
+  # cache:
+  #   key: "$CI_COMMIT_REF_SLUG"
+  #   paths:
+  #     - ./build
+
   # artifacts:
   #   paths:
   #     - ./build.tar.gz
@@ -48,13 +51,11 @@ build-windows:
   only:
     - tags
   tags: 
-    - docker
-  image: windows10:latest
-  before_script:
-    # install python
-    - curl https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe -o python_install.exe
-    - python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+    - shell
+    - windows
   script:
+    - $env:PATH=c:\prod\softprod\apps\python\3.7.9\windows,$PATH
+    - python -v
     - .\tools\create_env.ps1
     - .\tools\fetch_thirdparty_libs.ps1
     - .\tools\build.ps1
@@ -66,8 +67,7 @@ deploy-centos-staged:
     name: staging
   only:
     - tags
-  needs:
-    - build-centos
+  needs: [build-centos]
   tags: 
     - shell
     - centos
@@ -85,8 +85,7 @@ deploy-centos-prod:
     name: production
   only:
     - tags
-  needs:
-    - deploy-centos-staged
+  needs: [deploy-centos-staged]
   tags: 
     - shell
     - centos
