@@ -514,10 +514,10 @@ class OpenPypeVersion(semver.VersionInfo):
             ValueError: if invalid path is specified.
 
         """
-        if not openpype_dir.exists() and not openpype_dir.is_dir():
-            raise ValueError("specified directory is invalid")
-
         _openpype_versions = []
+        if not openpype_dir.exists() and not openpype_dir.is_dir():
+            return _openpype_versions
+
         # iterate over directory in first level and find all that might
         # contain OpenPype.
         for item in openpype_dir.iterdir():
