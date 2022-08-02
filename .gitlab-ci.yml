@@ -27,6 +27,7 @@ build-centos:
     - shell
     - centos
   script:
+    - ls -la ./build
     # Add python from soft prod 
     - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
     # Create virtual environment in ./venv
@@ -34,6 +35,7 @@ build-centos:
     # Get PySide2, ffmpeg, oiio and other tools needed
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
+    - ls -la ./build
     - ./tools/build.sh
     # - tar cvzfp ./build.tar.gz ./build
   # artifacts:
