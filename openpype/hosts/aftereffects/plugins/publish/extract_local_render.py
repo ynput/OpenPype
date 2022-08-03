@@ -1,8 +1,7 @@
 import os
 import sys
 import six
-import re
-import shutil
+
 import openpype.api
 from openpype.hosts.aftereffects.api import get_stub
 
@@ -23,26 +22,15 @@ class ExtractLocalRender(openpype.api.Extractor):
         # pull file name from Render Queue Output module
         render_q = stub.get_render_info()
         stub.render(staging_dir)
-        render_q_file_name = render_q.file_name
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
-        _, ext = os.path.splitext(os.path.basename(render_q_file_name))
+        _, ext = os.path.splitext(os.path.basename(render_q.file_name))
         ext = ext[1:]
-
-        replace_frames_format = self._get_replace_format(render_q_file_name)
 
         first_file_path = None
         files = []
+        self.log.info("files::{}".format(os.listdir(staging_dir)))
         for file_name in os.listdir(staging_dir):
-            _, found_ext = os.path.splitext(file_name)
-            if found_ext[1:] != ext:
-                continue
-
-            if replace_frames_format:
-                file_name = self._translate_frames(file_name,
-                                                   replace_frames_format,
-                                                   staging_dir)
-
             files.append(file_name)
             if first_file_path is None:
                 first_file_path = os.path.join(staging_dir,
@@ -90,23 +78,3 @@ class ExtractLocalRender(openpype.api.Extractor):
             "stagingDir": staging_dir,
             "tags": ["thumbnail"]
         })
-
-    def _translate_frames(self, file_name, replace_frames_format, staging_dir):
-        orig_file_name = file_name
-
-        found_frames = re.search(replace_frames_format, file_name)
-        if found_frames:
-            new_frames = found_frames.group(0).replace('_', '.')
-            file_name = file_name.replace(found_frames.group(0), new_frames)
-            shutil.move(os.path.join(staging_dir, orig_file_name),
-                        os.path.join(staging_dir, file_name))
-
-        return file_name
-
-    def _get_replace_format(self, file_name):
-        # replace delimiter for frames to one integrate is expecting (.0000.)
-        # returns frame format to be replaced
-        hashes_found = re.search(r"(_%5B[#]*%5D.)", file_name)
-        if hashes_found:
-            hashes = re.sub("[^#]", '', hashes_found.group(0))
-            return "_[0-9]{{{0}}}.".format(len(hashes))
