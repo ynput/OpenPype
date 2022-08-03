@@ -21,8 +21,7 @@ stages:
 
 build-centos:
   stage: build
-  only:
-    - tags
+
   tags: 
     - shell
     - centos
@@ -45,6 +44,16 @@ build-centos:
   #   paths:
   #     - ./build.tar.gz
   #   expire_in: 1 day
+
+build-centos-on-tags:
+  extends: build-centos
+  only:
+    - tags
+
+build-centos-manual:
+  extends: build-centos
+  when:
+    - manual
 
 build-windows:
   stage: build
