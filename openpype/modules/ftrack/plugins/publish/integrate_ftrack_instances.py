@@ -302,6 +302,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             component_data = copy_src_item["component_data"]
             component_name = component_data["name"]
             component_data["name"] = component_name + "_src"
+            component_meta = self._prepare_component_metadata(
+                instance, repre, copy_src_item["component_path"], False
+            )
+            if component_meta:
+                component_data["metadata"] = {
+                    "ftr_meta": json.dumps(component_meta)
+                }
             component_list.append(copy_src_item)
 
         # Add others representations as component
@@ -442,14 +449,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         stream_fps = None
         frame_out = None
         for video_stream in video_streams:
-            input_framerate = video_stream.get("r_frame_rate")
-            duration = video_stream.get("duration")
             tmp_width = video_stream.get("width")
             tmp_height = video_stream.get("height")
+            if tmp_width and tmp_height:
+                stream_width = tmp_width
+                stream_height = tmp_height
+
+            input_framerate = video_stream.get("r_frame_rate")
+            duration = video_stream.get("duration")
             if input_framerate is None or duration is None:
-                if tmp_width and tmp_height:
-                    stream_width = int(tmp_width)
-                    stream_height = int(tmp_height)
                 continue
             try:
                 stream_fps = convert_ffprobe_fps_to_float(
