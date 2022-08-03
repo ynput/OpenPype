@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Not up-to-date assets</title>
+<description>
+## Obsolete containers found
+
+Scene contains one or more obsolete loaded containers, eg. items loaded into scene by Loader.
+
+### How to repair?
+
+Use 'Scene Inventory' and update all highlighted old container to latest OR
+    refresh Publish and switch 'Validate Containers' toggle on 'Options' tab.
+
+    WARNING: Skipping this validator will result in publishing (and probably rendering) old version of loaded assets.
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+This validator protects you from rendering obsolete content, someone modified some referenced asset in this scene, eg.
+    by skipping this you would ignore changes to that asset.
+</detail>
+</error>
+</root>
