@@ -18,7 +18,7 @@ class BlendRigLoader(plugin.AssetLoader):
     representations = ["blend"]
 
     label = "Link Rig"
-    icon = "code-fork"
+    icon = "link"
     color = "orange"
     color_tag = "COLOR_03"
 

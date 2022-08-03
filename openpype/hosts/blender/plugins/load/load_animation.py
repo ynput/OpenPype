@@ -7,8 +7,8 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class BlendAnimationLoader(plugin.AssetLoader):
-    """Load animations from a .blend file.
+class LinkAnimationLoader(plugin.AssetLoader):
+    """Link animations from a .blend file.
 
     Warning:
         Loading the same asset more then once is not properly supported at the
@@ -19,9 +19,10 @@ class BlendAnimationLoader(plugin.AssetLoader):
     representations = ["blend"]
 
     label = "Link Animation"
-    icon = "code-fork"
+    icon = "link"
     color = "orange"
     color_tag = "COLOR_01"
+    order = 0
 
     def _restor_actions_from_library(self, objects):
         """Restor action from override library reference animation data"""
@@ -37,6 +38,15 @@ class BlendAnimationLoader(plugin.AssetLoader):
                     obj.override_library.reference.animation_data.action
                 )
 
+    def _load_actions_from_library(self, libpath):
+        """Load and link actions from libpath library."""
+        with bpy.data.libraries.load(
+            libpath, link=True, relative=False
+        ) as (data_from, data_to):
+            data_to.actions = data_from.actions
+
+        return data_to.actions
+
     def _remove_container(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
@@ -46,40 +56,31 @@ class BlendAnimationLoader(plugin.AssetLoader):
         Returns:
             bool: Whether the container was deleted.
         """
-        object_name = container["objectName"]
-        asset_group = bpy.data.collections.get(object_name)
+        asset_group = self._get_asset_group_container(container)
 
-        if not asset_group:
-            return False
+        if asset_group:
 
-        # Restor action from override library reference animation data.
-        self._restor_actions_from_library(asset_group.all_objects)
+            # Restor action from override library reference animation data.
+            self._restor_actions_from_library(asset_group.all_objects)
 
-        # Unlink all child objects and collections.
-        for obj in asset_group.objects:
-            asset_group.objects.unlink(obj)
-        for child in asset_group.children:
-            asset_group.children.unlink(child)
+            # Unlink all child objects and collections.
+            for obj in asset_group.objects:
+                asset_group.objects.unlink(obj)
+            for child in asset_group.children:
+                asset_group.children.unlink(child)
 
-        plugin.remove_container(asset_group)
-        plugin.orphans_purge()
+        return super()._remove_container(container)
 
-        return True
-
-    def _process(self, libpath, asset_group):
-        # Load actions from libpath library.
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=False
-        ) as (data_from, data_to):
-            data_to.actions = data_from.actions
-
-        assert data_to.actions, "No actions found"
+    def _process(self, libpath: str, asset_group: bpy.types.Collection):
 
         scene = bpy.context.scene
         scene_collections = plugin.get_children_recursive(scene.collection)
+        actions = self._load_actions_from_library(libpath)
+
+        assert actions, "No actions found"
 
         # Try to assign linked actions with parsing their name.
-        for action in data_to.actions:
+        for action in actions:
 
             collection_name = action.get("collection", "NONE")
             armature_name = action.get("armature", "NONE")
@@ -111,3 +112,20 @@ class BlendAnimationLoader(plugin.AssetLoader):
                 plugin.link_to_collection(armature, asset_group)
 
         plugin.orphans_purge()
+
+
+class AppendAnimationLoader(plugin.AssetLoader):
+    """Append animations from a .blend file."""
+
+    label = "Append Animation"
+    icon = "paperclip"
+    order = 1
+
+    def _load_actions_from_library(self, libpath):
+        """Load and append actions from libpath library."""
+        with bpy.data.libraries.load(
+            libpath, link=False, relative=False
+        ) as (data_from, data_to):
+            data_to.actions = data_from.actions
+
+        return data_to.actions

@@ -18,9 +18,10 @@ class JsonLayoutLoader(plugin.AssetLoader):
     representations = ["json"]
 
     label = "Load Layout"
-    icon = "code-fork"
+    icon = "download"
     color = "orange"
     color_tag = "COLOR_02"
+    order = 4
 
     def _get_loader(self, loaders, family):
         name = ""
