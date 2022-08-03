@@ -4,51 +4,52 @@ from typing import Dict, Optional, Union
 
 import bpy
 
-from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import MODEL_DOWNSTREAM
 
 
-class LinkBlendModelLoader(plugin.AssetLoader):
+class LinkModelLoader(plugin.AssetLoader):
     """Link models from a .blend file."""
 
     families = ["model"]
     representations = ["blend"]
 
     label = "Link Model"
-    icon = "code-fork"
+    icon = "link"
     color = "orange"
     color_tag = "COLOR_04"
+    order = 0
 
     def _process(self, libpath, asset_group):
         self._link_blend(libpath, asset_group)
 
 
-class AppendBlendModelLoader(plugin.AssetLoader):
+class AppendModelLoader(plugin.AssetLoader):
     """Append models from a .blend file."""
 
     families = ["model"]
     representations = ["blend"]
 
     label = "Append Model"
-    icon = "code-fork"
+    icon = "paperclip"
     color = "orange"
     color_tag = "COLOR_04"
+    order = 1
 
     def _process(self, libpath, asset_group):
         self._append_blend(libpath, asset_group)
 
 
-class InstanceBlendModelLoader(plugin.AssetLoader):
-    """Instaniate collection models from a .blend file."""
+class InstanceModelLoader(plugin.AssetLoader):
+    """load models from a .blend file as instance collection."""
 
     families = ["model"]
     representations = ["blend"]
 
-    label = "Instance Collection"
-    icon = "code-fork"
+    label = "Instantiate Collection"
+    icon = "archive"
     color = "orange"
     color_tag = "COLOR_04"
+    order = 2
 
     def _apply_options(self, asset_group, options):
         """Apply load options fro asset_group."""
@@ -101,7 +102,6 @@ class InstanceBlendModelLoader(plugin.AssetLoader):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
         asset_name = plugin.asset_name(asset, subset)
-
 
         unique_number = plugin.get_unique_number(asset, subset)
         group_name = plugin.asset_name(asset, subset, unique_number)

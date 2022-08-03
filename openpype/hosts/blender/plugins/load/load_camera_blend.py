@@ -3,21 +3,17 @@
 from openpype.hosts.blender.api import plugin
 
 
-class BlendCameraLoader(plugin.AssetLoader):
-    """Load a camera from a .blend file.
-
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
-    """
+class LinkCameraLoader(plugin.AssetLoader):
+    """Link a camera from a .blend file."""
 
     families = ["camera"]
     representations = ["blend"]
 
     label = "Link Camera"
-    icon = "code-fork"
+    icon = "link"
     color = "orange"
     color_tag = "COLOR_05"
+    order = 0
 
     maintained_parameters = [
         "parent",
@@ -29,3 +25,14 @@ class BlendCameraLoader(plugin.AssetLoader):
 
     def _process(self, libpath, asset_group):
         self._link_blend(libpath, asset_group)
+
+
+class AppendCameraLoader(LinkCameraLoader):
+    """Append a camera from a .blend file."""
+
+    label = "Append Camera"
+    icon = "paperclip"
+    order = 1
+
+    def _process(self, libpath, asset_group):
+        self._append_blend(libpath, asset_group)

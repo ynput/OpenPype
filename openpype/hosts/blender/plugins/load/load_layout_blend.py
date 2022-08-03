@@ -63,16 +63,17 @@ class LayoutMaintainer(plugin.ContainerMaintainer):
                         plugin.link_to_collection(obj, anim_instance)
 
 
-class BlendLayoutLoader(plugin.AssetLoader):
-    """Load layout from a .blend file."""
+class LinkLayoutLoader(plugin.AssetLoader):
+    """Link layout from a .blend file."""
 
     families = ["layout"]
     representations = ["blend"]
 
-    label = "Load Layout"
-    icon = "code-fork"
+    label = "Link Layout"
+    icon = "link"
     color = "orange"
     color_tag = "COLOR_02"
+    order = 0
 
     update_maintainer = LayoutMaintainer
     maintained_parameters = [
@@ -153,11 +154,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         )
 
     def _process(self, libpath, asset_group):
-        self._append_blend(libpath, asset_group)
-
-        # Make local action only if task not Lighting.
-        if legacy_io.Session.get("AVALON_TASK") != "Lighting":
-            self._make_local_actions(asset_group)
+        self._link_blend(libpath, asset_group)
+        self._make_local_actions(asset_group)
 
     def process_asset(self, context, *args, **kwargs) -> bpy.types.Collection:
         """Asset loading Process"""
@@ -182,3 +180,16 @@ class BlendLayoutLoader(plugin.AssetLoader):
             animation_collection = self._get_animation_collection()
             if rig_assets and animation_collection:
                 plugin.link_to_collection(rig_assets, animation_collection)
+
+        return asset_group
+
+
+class AppendLayoutLoader(LinkLayoutLoader):
+    """Append layout from a .blend file."""
+
+    label = "Append Layout"
+    icon = "paperclip"
+    order = 2
+
+    def _process(self, libpath, asset_group):
+        self._link_blend(libpath, asset_group)
