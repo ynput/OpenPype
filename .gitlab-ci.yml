@@ -32,7 +32,7 @@ stages:
     # Get PySide2, ffmpeg, oiio and other tools needed
     - ./tools/fetch_thirdparty_libs.sh
     # build pype executables in .\build\
-    - ./tools/build.sh
+    - sudo ./tools/build.sh
     # - tar cvzfp ./build.tar.gz ./build
   # cache:
   #   key: "$CI_COMMIT_REF_SLUG"
@@ -67,13 +67,13 @@ build-windows:
     - .\tools\build.ps1
 
 deploy-centos-staged:
-  extends: build-centos
+  extends: build-centos-on-tags
   stage: deploy
   environment:
     name: staging
   only:
     - tags
-  needs: [build-centos]
+  needs: [build-centos-on-tags]
   tags: 
     - shell
     - centos
