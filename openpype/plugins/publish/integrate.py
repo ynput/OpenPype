@@ -601,9 +601,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_filled = anatomy_filled[template_name]["path"]
                 dst_filepaths.append(template_filled)
                 if repre_context is None:
-                    repre_context = template_filled.used_value
+                    self.log.debug(
+                        "Template filled: {}".format(str(template_filled))
+                    )
+                    repre_context = template_filled.used_values
 
-            self.log.debug("Template filled: {}".format(str(template_filled)))
             # Make sure context contains frame
             # NOTE: Frame would not be available only if template does not
             #   contain '{frame}' in template -> Do we want support it?
