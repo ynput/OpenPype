@@ -45,11 +45,11 @@ stages:
   #   expire_in: 1 day
 
 build-centos-on-tags:
-  extends: build-centos
+  extends: .build-centos
   only: [tags]
 
 build-centos-manual:
-  extends: build-centos
+  extends: .build-centos
   when: manual
 
 build-windows:
