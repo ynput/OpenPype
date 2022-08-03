@@ -87,6 +87,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
         asset_versions_data_by_id = {}
         used_asset_versions = []
+
         # Iterate over components and publish
         for data in component_list:
             self.log.debug("data: {}".format(data))
@@ -116,9 +117,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 asset_version_status_ids_by_name
             )
 
-            # Component
-            self.create_component(session, asset_version_entity, data)
-
             # Store asset version and components items that were
             version_id = asset_version_entity["id"]
             if version_id not in asset_versions_data_by_id:
@@ -134,6 +132,8 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Backwards compatibility
             if asset_version_entity not in used_asset_versions:
                 used_asset_versions.append(asset_version_entity)
+
+        self._create_components(session, asset_versions_data_by_id)
 
         instance.data["ftrackIntegratedAssetVersionsData"] = (
             asset_versions_data_by_id
@@ -623,3 +623,40 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 session.rollback()
                 session._configure_locations()
                 six.reraise(tp, value, tb)
+
+    def _create_components(self, session, asset_versions_data_by_id):
+        for item in asset_versions_data_by_id.values():
+            asset_version_entity = item["asset_version"]
+            component_items = item["component_items"]
+
+            component_entities = session.query(
+                (
+                    "select id, name from Component where version_id is \"{}\""
+                ).format(asset_version_entity["id"])
+            ).all()
+
+            existing_component_names = {
+                component["name"]
+                for component in component_entities
+            }
+
+            contain_review = "ftrackreview-mp4" in existing_component_names
+            thumbnail_component_item = None
+            for component_item in component_items:
+                component_data = component_item.get("component_data") or {}
+                component_name = component_data.get("name")
+                if component_name == "ftrackreview-mp4":
+                    contain_review = True
+                elif component_name == "ftrackreview-image":
+                    thumbnail_component_item = component_item
+
+            if contain_review and thumbnail_component_item:
+                thumbnail_component_item["component_data"]["name"] = (
+                    "thumbnail"
+                )
+
+            # Component
+            for component_item in component_items:
+                self.create_component(
+                    session, asset_version_entity, component_item
+                )
