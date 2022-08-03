@@ -6,7 +6,7 @@ from openpype.hosts.blender.api import plugin
 
 
 class CacheModelLoader(plugin.AssetLoader):
-    """Load cache models.
+    """Import cache models.
 
     Stores the imported asset in a collection named after the asset.
 
@@ -17,10 +17,11 @@ class CacheModelLoader(plugin.AssetLoader):
     families = ["model", "pointcache"]
     representations = ["abc"]
 
-    label = "Load Alembic"
-    icon = "code-fork"
+    label = "Import Alembic"
+    icon = "download"
     color = "orange"
     color_tag = "COLOR_04"
+    order = 4
 
     def _process(self, libpath, asset_group):
 

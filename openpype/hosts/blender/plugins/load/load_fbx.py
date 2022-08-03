@@ -4,7 +4,7 @@ from openpype.hosts.blender.api import plugin
 
 
 class FbxModelLoader(plugin.AssetLoader):
-    """Load FBX models.
+    """Import FBX models.
 
     Stores the imported asset in a collection named after the asset.
     """
@@ -12,10 +12,11 @@ class FbxModelLoader(plugin.AssetLoader):
     families = ["model", "rig"]
     representations = ["fbx"]
 
-    label = "Load FBX"
-    icon = "code-fork"
+    label = "Import FBX"
+    icon = "download"
     color = "orange"
     color_tag = "COLOR_04"
+    order = 4
 
     def _process(self, libpath, asset_group):
         self._load_fbx(libpath, asset_group)

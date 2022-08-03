@@ -1433,7 +1433,7 @@ class AssetLoader(LoaderPlugin):
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
-        self._update_process(container, representation)
+        return self._update_process(container, representation)
 
     def update(self, container: Dict, representation: Dict) -> MainThreadItem:
         """Run the update on Blender main thread"""
