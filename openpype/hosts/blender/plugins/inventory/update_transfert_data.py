@@ -20,7 +20,7 @@ class UpdateTransfertData(InventoryAction):
     def is_compatible(container):
         current_task = legacy_io.Session.get("AVALON_TASK")
         return (
-            container.get("loader") == "BlendModelLoader"
+            container.get("loader") == "LinkModelLoader"
             and current_task in MODEL_DOWNSTREAM
         )
 
