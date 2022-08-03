@@ -318,17 +318,18 @@ class PublishTest(ModuleUnitTest):
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
-        print("Comparing published:'{}' : expected:'{}'".format(published_dir_base,
-                                                                expected_dir_base))
+        print("Comparing published:'{}' : expected:'{}'".format(
+            published_dir_base, expected_dir_base))
         published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir_base + "\\**", recursive=True) if
-                        f != published_dir_base and os.path.exists(f))
+                        glob.glob(published_dir_base + "\\**", recursive=True)
+                        if f != published_dir_base and os.path.exists(f))
         expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir_base + "\\**", recursive=True) if
-                       f != expected_dir_base and os.path.exists(f))
+                       glob.glob(expected_dir_base + "\\**", recursive=True)
+                       if f != expected_dir_base and os.path.exists(f))
 
         not_matched = expected.symmetric_difference(published)
-        assert not not_matched, "Missing {} files".format("\n".join(sorted(not_matched)))
+        assert not not_matched, "Missing {} files".format(
+            "\n".join(sorted(not_matched)))
 
 
 class HostFixtures(PublishTest):
