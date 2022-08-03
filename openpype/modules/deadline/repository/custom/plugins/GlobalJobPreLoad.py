@@ -10,9 +10,22 @@ import re
 from Deadline.Scripting import RepositoryUtils, FileUtils, DirectoryUtils
 
 
-def get_openpype_version_from_path(path):
+def get_openpype_version_from_path(path, build=True):
+    """Get OpenPype version from provided path.
+         path (str): Path to scan.
+         build (bool, optional): Get only builds, not sources
+
+    Returns:
+        str or None: version of OpenPype if found.
+
+    """
     version_file = os.path.join(path, "openpype", "version.py")
     if not os.path.isfile(version_file):
+        return None
+    # skip if the version is not build
+    if not build and \
+            (not os.path.isfile(os.path.join(path, "openpype_console")) or
+             not os.path.isfile(os.path.join(path, "openpype_console.exe"))):
         return None
     version = {}
     with open(version_file, "r") as vf:
@@ -101,7 +114,8 @@ def inject_openpype_environment(deadlinePlugin):
         if exe == "":
             raise RuntimeError(
                 "OpenPype executable was not found " +
-                "in the semicolon separated list \"" + exe_list + "\". " +
+                "in the semicolon separated list " +
+                "\"" + ";".join(exe_list) + "\". " +
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")
 
