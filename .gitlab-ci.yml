@@ -19,9 +19,8 @@ stages:
   - deploy
 
 
-build-centos:
+.build-centos:
   stage: build
-  when: never
   tags: 
     - shell
     - centos
@@ -47,7 +46,6 @@ build-centos:
 
 build-centos-on-tags:
   extends: build-centos
-  when: always
   only: [tags]
 
 build-centos-manual:
