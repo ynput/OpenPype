@@ -21,7 +21,7 @@ stages:
 
 build-centos:
   stage: build
-
+  when: never
   tags: 
     - shell
     - centos
@@ -47,13 +47,12 @@ build-centos:
 
 build-centos-on-tags:
   extends: build-centos
-  only:
-    - tags
+  when: always
+  only: [tags]
 
 build-centos-manual:
   extends: build-centos
-  when:
-    - manual
+  when: manual
 
 build-windows:
   stage: build
