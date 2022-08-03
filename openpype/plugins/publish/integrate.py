@@ -541,8 +541,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if any(os.path.isabs(fname) for fname in files):
                 raise KnownPublishError("Given file names contain full paths")
 
-            src_collection = clique.assemble(files)
+            src_collections, remainders = clique.assemble(files)
+            if len(files) < 2 or len(src_collections) != 1 or remainders:
+                raise KnownPublishError((
+                    "Files of representation does not contain proper"
+                    " sequence files.\nCollected collections: {}"
+                    "\nCollected remainders: {}"
+                ).format(
+                    ", ".join([str(col) for col in src_collections]),
+                    ", ".join([str(rem) for rem in remainders])
+                ))
 
+            src_collection = src_collections[0]
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
