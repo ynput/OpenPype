@@ -24,9 +24,10 @@ class CollectReview(pyblish.api.InstancePlugin):
             if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA"
         ]
 
-        assert len(cameras) == 1, (
-            f"Not a single camera found in extraction: {cameras}"
-        )
+        assert cameras, "No camera found in review collection"
+
+        # TODO (kaamaurice): manage multiple cameras.
+
         camera = cameras[0].name
         self.log.debug(f"camera: {camera}")
 
@@ -46,9 +47,10 @@ class CollectReview(pyblish.api.InstancePlugin):
         ]
 
         if reviewable_instances:
-            assert len(reviewable_instances) == 1, (
-                f"Multiple subsets for review {reviewable_instances}"
-            )
+            if len(reviewable_instances) > 1:
+                self.log.warning(
+                    f"Multiple subsets for review {reviewable_instances}"
+                )
 
             reviewable_instance = reviewable_instances[0]
             self.log.debug(f"Subset for review: {reviewable_instance}")
