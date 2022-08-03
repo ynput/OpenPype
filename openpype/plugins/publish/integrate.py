@@ -167,7 +167,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     skip_host_families = []
 
     def process(self, instance):
-        if self.skip_instance_by_settings(instance):
+        if self._temp_skip_instance_by_settings(instance):
             return
 
         # Mark instance as processed for legacy integrator
@@ -203,12 +203,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # the try, except.
         file_transactions.finalize()
 
-    def skip_instance_by_settings(self, instance):
-        """Decide if instance will be processed with new integrator.
+    def _temp_skip_instance_by_settings(self, instance):
+        """Decide if instance will be processed with new or legacy integrator.
 
-        This might be temporary solution for broken publishing for any families
-        (therefore it should fallback into legacy publish plugin) OR this
-        could replace 'exclude_families' in legacy plugin (host is required).
+        This is temporary solution until we test all usecases with new (this)
+        integrator plugin.
         """
 
         host_name = instance.context.data["hostName"]

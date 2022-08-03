@@ -225,16 +225,7 @@
             ]
         },
         "IntegrateAsset": {
-            "skip_host_families": [
-                {
-                    "host": [
-                        "aftereffects"
-                    ],
-                    "families": [
-                        "render.farm"
-                    ]
-                }
-            ]
+            "skip_host_families": []
         },
         "IntegrateHeroVersion": {
             "enabled": true,
