@@ -923,7 +923,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         representation = get_representation_by_id(self.project, repre_id)
         if representation:
             self.sync_server.update_db(self.project, None, None,
-                                       representation.pop(),
+                                       representation,
                                        get_local_site_id(),
                                        priority=value)
         self.is_editing = False
