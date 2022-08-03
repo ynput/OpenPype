@@ -613,7 +613,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 repre_context["frame"] = first_index_padded
 
             # Update the destination indexes and padding
-            dst_collection = clique.assemble(dst_filepaths)
+            dst_collection = clique.assemble(dst_filepaths)[0][0]
             dst_collection.padding = destination_padding
             if len(src_collection.indexes) != len(dst_collection.indexes):
                 raise KnownPublishError((
