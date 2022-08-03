@@ -76,7 +76,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         # skip if the version is not build
         if not build and \
                 (not os.path.isfile(os.path.join(path, "openpype_console")) or
-                 not os.path.isfile(os.path.join(path, "openpype_console.exe"))):
+                 not os.path.isfile(os.path.join(path, "openpype_console.exe"))):  # noqa: E501
             return None
         version = {}
         with open(version_file, "r") as vf:
