@@ -204,7 +204,7 @@ class FtrackTrayWrapper:
                     failed_count = 0
 
             # If thread failed test Ftrack and Mongo connection
-            elif not self.thread_socket_server.isAlive():
+            elif not self.thread_socket_server.is_alive():
                 self.thread_socket_server.join()
                 self.thread_socket_server = None
                 ftrack_accessible = False
