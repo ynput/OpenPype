@@ -15,8 +15,7 @@ from openpype.pipeline.workfile.build_template import (
     update_workfile_template
 )
 from openpype.tools.utils import host_tools
-from openpype.hosts.maya.api import lib
-
+from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
 from .lib_template_builder import create_placeholder, update_placeholder
@@ -51,6 +50,7 @@ def install():
             parent="MayaWindow"
         )
 
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             legacy_io.Session["AVALON_ASSET"],
@@ -101,6 +101,13 @@ def install():
             command=lambda *args: host_tools.show_library_loader(
                 parent=parent_widget
             )
+        )
+
+        cmds.menuItem(divider=True)
+
+        cmds.menuItem(
+            "Set Render Settings",
+            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
         )
 
         cmds.menuItem(divider=True)
