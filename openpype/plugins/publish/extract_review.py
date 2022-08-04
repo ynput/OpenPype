@@ -41,6 +41,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     hosts = [
         "nuke",
         "maya",
+        "blender",
         "shell",
         "hiero",
         "premiere",
