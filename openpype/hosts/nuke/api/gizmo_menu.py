@@ -56,7 +56,7 @@ class GizmoMenu():
                 if item_type == ("python" or "file"):
                     parent.addCommand(
                         item["title"],
-                        command=str(item["command"]),
+                        command=str(item["command"].format(**os.environ)),
                         icon=item.get("icon"),
                         shortcut=item.get("hotkey")
                     )
