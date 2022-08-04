@@ -114,6 +114,17 @@ Template `{project[code]}_{asset}_{subset}<_{output}><.{@frame}>.{ext}` can hand
 
 ## Attributes
 
+Project attributes are used as default values for new assets under project, except `Applications` and `Active project` which are project specific. Values of attributes that are **not** project specific are always used from assets. So if `tools` are not loading as expected it is because the asset have different value.
+
+![anatomy_attributes](assets/settings/anatomy_attributes.png)
+
+**Most of attributes don't need detailed explanation.**
+
+| Attribute | Description |
+| --- | --- |
+| `Applications` | List of applications that can be used in the project. At the moment only possible filter of applications. |
+| `Tools` | List of application tools. This value can be overridden per asset. |
+| `Active project` | Project won't be visible in tools if enabled.<br/> - To revert check `Show Inactive projects` checkbox in project settings. |
 
 
 ## Task Types
