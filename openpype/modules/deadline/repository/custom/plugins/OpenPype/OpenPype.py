@@ -132,7 +132,11 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         if requested_version:
             # sort detected versions
             if openpype_versions:
-                openpype_versions.sort(key=lambda ver: ver[0])
+                openpype_versions.sort(
+                    key=lambda ver: [
+                        int(t) if t.isdigit() else t.lower()
+                        for t in re.split('(\d+)', ver[0])
+                    ])
             requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
             for version in openpype_versions:
@@ -146,7 +150,11 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                                  "in Deadline or install it to configured "
                                  "directory.").format(requested_version))
             # sort compatible versions nad pick the last one
-            compatible_versions.sort(key=lambda ver: ver[0])
+            compatible_versions.sort(
+                    key=lambda ver: [
+                        int(t) if t.isdigit() else t.lower()
+                        for t in re.split('(\d+)', ver[0])
+                    ])
             # create list of executables for different platform and let
             # Deadline decide.
             exe_list = [
