@@ -5,7 +5,6 @@ from maya import cmds
 
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.settings import get_project_settings
-import openpype.api
 
 import pyblish.api
 
@@ -34,7 +33,9 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
     targets = ["local"]
 
     def process(self, instance):
-        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        project_name = instance.context.data["projectName"]
+        # TODO settings can be received from 'context.data["project_settings"]'
+        settings = get_project_settings(project_name)
         # use setting for publish job on farm, no reason to have it separately
         deadline_publish_job_sett = (settings["deadline"]
                                      ["publish"]
@@ -52,9 +53,6 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
 
         scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
-
-        # Get project code
-        project_name = legacy_io.Session["AVALON_PROJECT"]
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=project_name,
@@ -107,8 +105,8 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        # TODO replace legacy_io with context.data ?
-        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
+        # TODO replace legacy_io with context.data
+        environment["AVALON_PROJECT"] = project_name
         environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
         environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
