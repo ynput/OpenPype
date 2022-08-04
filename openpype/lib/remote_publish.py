@@ -1,5 +1,4 @@
 import os
-import sys
 from datetime import datetime
 import collections
 
@@ -179,7 +178,11 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
 
 
 def fail_batch(_id, dbcon, msg):
-    """Set current batch as failed as there is some problem."""
+    """Set current batch as failed as there is some problem.
+
+    Raises:
+        ValueError
+    """
     dbcon.update_one(
         {"_id": _id},
         {"$set":
@@ -267,7 +270,7 @@ def get_timeout(project_name, host_name, task_type):
     timeout_profiles = (get_project_settings(project_name)["webpublisher"]
                                                           ["timeout_profiles"])
     matching_item = filter_profiles(timeout_profiles, filter_data)
-    timeout = sys.maxsize
+    timeout = 3600
     if matching_item:
         timeout = matching_item["timeout"]
 

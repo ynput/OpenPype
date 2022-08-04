@@ -286,8 +286,6 @@ class PypeCommands:
                 launched_app.terminate()
                 msg = "Timeout reached"
                 fail_batch(_id, dbcon, msg)
-                raise ValueError("Timeout reached")
-
 
     @staticmethod
     def remotepublish(project, batch_path, user_email, targets=None):
