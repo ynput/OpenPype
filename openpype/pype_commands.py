@@ -15,6 +15,7 @@ from openpype.lib.remote_publish import (
     fail_batch,
     find_variant_key,
     get_task_data,
+    get_timeout,
     IN_PROGRESS_STATUS
 )
 
@@ -222,10 +223,17 @@ class PypeCommands:
 
         batches_in_progress = list(dbcon.find({"status": IN_PROGRESS_STATUS}))
         if len(batches_in_progress) > 1:
-            fail_batch(_id, batches_in_progress, dbcon)
+            running_batches = [str(batch["_id"])
+                               for batch in batches_in_progress
+                               if batch["_id"] != _id]
+            msg = "There are still running batches {}\n". \
+                format("\n".join(running_batches))
+            msg += "Ask admin to check them and reprocess current batch"
+            fail_batch(_id, dbcon, msg)
             print("Another batch running, probably stuck, ask admin for help")
 
-        asset, task_name, _ = get_batch_asset_task_info(task_data["context"])
+        asset, task_name, task_type = get_batch_asset_task_info(
+            task_data["context"])
 
         application_manager = ApplicationManager()
         found_variant_key = find_variant_key(application_manager, host_name)
@@ -269,8 +277,17 @@ class PypeCommands:
 
         launched_app = application_manager.launch(app_name, **data)
 
+        timeout = get_timeout(project, host_name, task_type)
+
+        time_start = time.time()
         while launched_app.poll() is None:
             time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                launched_app.terminate()
+                msg = "Timeout reached"
+                fail_batch(_id, dbcon, msg)
+                raise ValueError("Timeout reached")
+
 
     @staticmethod
     def remotepublish(project, batch_path, user_email, targets=None):

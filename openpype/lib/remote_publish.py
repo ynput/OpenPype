@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 import collections
 
@@ -9,6 +10,8 @@ import pyblish.api
 
 from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
+from openpype.lib.profiles_filtering import filter_profiles
+from openpype.api import get_project_settings
 
 ERROR_STATUS = "error"
 IN_PROGRESS_STATUS = "in_progress"
@@ -175,14 +178,8 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     )
 
 
-def fail_batch(_id, batches_in_progress, dbcon):
-    """Set current batch as failed as there are some stuck batches."""
-    running_batches = [str(batch["_id"])
-                       for batch in batches_in_progress
-                       if batch["_id"] != _id]
-    msg = "There are still running batches {}\n". \
-        format("\n".join(running_batches))
-    msg += "Ask admin to check them and reprocess current batch"
+def fail_batch(_id, dbcon, msg):
+    """Set current batch as failed as there is some problem."""
     dbcon.update_one(
         {"_id": _id},
         {"$set":
@@ -259,3 +256,19 @@ def get_task_data(batch_dir):
             "Cannot parse batch meta in {} folder".format(task_data))
 
     return task_data
+
+
+def get_timeout(project_name, host_name, task_type):
+    """Returns timeout(seconds) from Setting profile."""
+    filter_data = {
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    timeout_profiles = (get_project_settings(project_name)["webpublisher"]
+                                                          ["timeout_profiles"])
+    matching_item = filter_profiles(timeout_profiles, filter_data)
+    timeout = sys.maxsize
+    if matching_item:
+        timeout = matching_item["timeout"]
+
+    return timeout
