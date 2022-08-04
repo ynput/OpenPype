@@ -380,31 +380,47 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         uncommited_changes = False
         for idx, item in enumerate(changes):
             new_value = item["new_value"]
+            old_value = item["old_value"]
             attr_id = item["attr_id"]
             entity_id = item["entity_id"]
             attr_key = item["attr_key"]
 
-            entity_key = collections.OrderedDict()
-            entity_key["configuration_id"] = attr_id
-            entity_key["entity_id"] = entity_id
+            entity_key = collections.OrderedDict((
+                ("configuration_id", attr_id),
+                ("entity_id", entity_id)
+            ))
             self._cached_changes.append({
                 "attr_key": attr_key,
                 "entity_id": entity_id,
                 "value": new_value,
                 "time": datetime.datetime.now()
             })
+            old_value_is_set = (
+                old_value is not ftrack_api.symbol.NOT_SET
+                and old_value is not None
+            )
             if new_value is None:
+                if not old_value_is_set:
+                    continue
                 op = ftrack_api.operation.DeleteEntityOperation(
                     "CustomAttributeValue",
                     entity_key
                 )
-            else:
+
+            elif old_value_is_set:
                 op = ftrack_api.operation.UpdateEntityOperation(
-                    "ContextCustomAttributeValue",
+                    "CustomAttributeValue",
                     entity_key,
                     "value",
-                    ftrack_api.symbol.NOT_SET,
+                    old_value,
                     new_value
+                )
+
+            else:
+                op = ftrack_api.operation.CreateEntityOperation(
+                    "CustomAttributeValue",
+                    entity_key,
+                    {"value": new_value}
                 )
 
             session.recorded_operations.push(op)
@@ -550,7 +566,11 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         attr_ids = set(attr_id_to_key.keys())
 
         current_values_by_id = self.get_current_values(
-            session, attr_ids, entity_ids, task_entity_ids, hier_attrs
+            session,
+            attr_ids,
+            entity_ids,
+            task_entity_ids,
+            hier_attrs
         )
 
         changes = []
@@ -567,7 +587,12 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
                 # Convert new value from string
                 new_value = values.get(attr_key)
-                if new_value is not None and old_value is not None:
+                new_value_is_valid = (
+                    old_value is not ftrack_api.symbol.NOT_SET
+                    and new_value is not None
+                )
+
+                if new_value is not None and new_value_is_valid:
                     try:
                         new_value = type(old_value)(new_value)
                     except Exception:
@@ -581,6 +606,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 changes.append({
                     "new_value": new_value,
                     "attr_id": attr_id,
+                    "old_value": old_value,
                     "entity_id": entity_id,
                     "attr_key": attr_key
                 })
@@ -645,15 +671,28 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         return interesting_data, changed_keys_by_object_id
 
     def get_current_values(
-        self, session, attr_ids, entity_ids, task_entity_ids, hier_attrs
+        self,
+        session,
+        attr_ids,
+        entity_ids,
+        task_entity_ids,
+        hier_attrs
     ):
         current_values_by_id = {}
         if not attr_ids or not entity_ids:
             return current_values_by_id
 
+        for entity_id in entity_ids:
+            current_values_by_id[entity_id] = {}
+            for attr_id in attr_ids:
+                current_values_by_id[entity_id][attr_id] = (
+                    ftrack_api.symbol.NOT_SET
+                )
+
         values = query_custom_attributes(
             session, attr_ids, entity_ids, True
         )
+
         for item in values:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
