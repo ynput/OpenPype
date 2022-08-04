@@ -19,14 +19,24 @@ def get_openpype_version_from_path(path, build=True):
         str or None: version of OpenPype if found.
 
     """
+    # fix path for application bundle on macos
+    if platform.system().lower() == "darwin":
+        path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
+
     version_file = os.path.join(path, "openpype", "version.py")
     if not os.path.isfile(version_file):
         return None
+
     # skip if the version is not build
-    if build and \
-            (not os.path.isfile(os.path.join(path, "openpype_console")) or
-             not os.path.isfile(os.path.join(path, "openpype_console.exe"))):
+    exe = os.path.join(path, "openpype_console.exe")
+    if platform.system().lower() in ["linux", "darwin"]:
+        exe = os.path.join(path, "openpype_console")
+
+    # if only builds are requested
+    if build and not os.path.isfile(exe):  # noqa: E501
+        print(f"   ! path is not a build: {path}")
         return None
+
     version = {}
     with open(version_file, "r") as vf:
         exec(vf.read(), version)
@@ -64,6 +74,7 @@ def inject_openpype_environment(deadlinePlugin):
                   f"version {requested_version}"))
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
             if install_dir:
+                print(f"Looking for OpenPype at: {install_dir}")
                 sub_dirs = [
                     f.path for f in os.scandir(install_dir)
                     if f.is_dir()
@@ -79,6 +90,7 @@ def inject_openpype_environment(deadlinePlugin):
         if openpype_versions:
             # if looking for requested compatible version,
             # add the implicitly specified to the list too.
+            print(f"Looking for OpenPype at: {os.path.dirname(exe)}")
             version = get_openpype_version_from_path(
                 os.path.dirname(exe))
             if version:
@@ -89,8 +101,8 @@ def inject_openpype_environment(deadlinePlugin):
             # sort detected versions
             if openpype_versions:
                 openpype_versions.sort(key=lambda ver: ver[0])
-            print(("Latest available version found is "
-                   f"{openpype_versions[-1][0]}"))
+                print(("Latest available version found is "
+                       f"{openpype_versions[-1][0]}"))
             requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
             for version in openpype_versions:
@@ -166,7 +178,7 @@ def inject_openpype_environment(deadlinePlugin):
         env["OPENPYPE_HEADLESS_MODE"] = "1"
         env["AVALON_TIMEOUT"] = "5000"
 
-        print(">>> Executing: {}".format(args))
+        print(">>> Executing: {}".format(" ".join(args)))
         std_output = subprocess.check_output(args,
                                              cwd=os.path.dirname(exe),
                                              env=env)

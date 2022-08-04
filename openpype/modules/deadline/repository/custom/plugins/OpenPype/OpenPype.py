@@ -13,6 +13,7 @@ from Deadline.Scripting import (
 
 import re
 import os
+import platform
 
 
 ######################################################################
@@ -70,14 +71,24 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             str or None: version of OpenPype if found.
 
         """
+        # fix path for application bundle on macos
+        if platform.system().lower() == "darwin":
+            path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
+
         version_file = os.path.join(path, "openpype", "version.py")
         if not os.path.isfile(version_file):
             return None
+
         # skip if the version is not build
-        if build and \
-                (not os.path.isfile(os.path.join(path, "openpype_console")) or
-                 not os.path.isfile(os.path.join(path, "openpype_console.exe"))):  # noqa: E501
+        exe = os.path.join(path, "openpype_console.exe")
+        if platform.system().lower() in ["linux", "darwin"]:
+            exe = os.path.join(path, "openpype_console")
+
+        # if only builds are requested
+        if build and not os.path.isfile(exe):  # noqa: E501
+            print(f"   ! path is not a build: {path}")
             return None
+
         version = {}
         with open(version_file, "r") as vf:
             exec(vf.read(), version)
