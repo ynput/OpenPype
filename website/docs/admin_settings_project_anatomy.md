@@ -129,7 +129,7 @@ Project attributes are used as default values for new assets under project, exce
 
 ## Task Types
 
-Current state of default Task descriptors.
+Available task types on a project. Each task on an asset is referencing to a task type on project which allows access to task type attributes. At this moment only `short_name` is available (can be used in templates as `{task[short_name]}`).
 
 ![tasks](assets/settings/anatomy_tasks.png)
 
