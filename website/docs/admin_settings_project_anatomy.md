@@ -106,6 +106,12 @@ Anatomy templates have ability to use "referenced keys". Best example is `path` 
 
 So if you set `project_anatomy/templates/defaults/version_padding` to `5` the `{@version}` key will be transformed to `v{version:0>5}` and version number in paths will have 5 numbers -> `v00001`.
 
+### Optional keys
+
+In some cases are not all keys available and should be just ignored. For example `{frame}` should be available only for sequences but we have single publish template. To handle these cases it is possible to use optional marks which will ignore segment of template if can't be filled because of missing keys. To mark these segments use `<` and `>`.
+.
+Template `{project[code]}_{asset}_{subset}<_{output}><.{@frame}>.{ext}` can handle all 4 possible situations when `output` and `frame` keys are available or not. The optional segments can contain additional text, like in the example dot (`.`) for frame and underscore (`_`) for output, those are also ignored if the keys are not available. Optional segments without formatting keys are kept untouched: `<br/>` -> stays as `<br/>`. It is possible to nest optional segments inside optional segments `<{asset}<.{@frame}><br/>>` which may result in empty string if `asset` key is not available.
+
 ## Attributes
 
 
