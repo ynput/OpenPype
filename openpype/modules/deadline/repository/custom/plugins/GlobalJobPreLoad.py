@@ -23,7 +23,7 @@ def get_openpype_version_from_path(path, build=True):
     if not os.path.isfile(version_file):
         return None
     # skip if the version is not build
-    if not build and \
+    if build and \
             (not os.path.isfile(os.path.join(path, "openpype_console")) or
              not os.path.isfile(os.path.join(path, "openpype_console.exe"))):
         return None
