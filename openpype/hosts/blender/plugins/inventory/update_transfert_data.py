@@ -18,10 +18,9 @@ class UpdateTransfertData(InventoryAction):
 
     @staticmethod
     def is_compatible(container):
-        current_task = legacy_io.Session.get("AVALON_TASK")
         return (
-            container.get("loader") == "LinkModelLoader"
-            and current_task in MODEL_DOWNSTREAM
+            container.get("loader") in ("LinkModelLoader", "AppendModelLoader")
+            and legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM
         )
 
     def process(self, containers):
