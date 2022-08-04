@@ -171,7 +171,7 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def remotepublishfromapp(project, batch_path, host_name,
+    def remotepublishfromapp(project_name, batch_path, host_name,
                              user_email, targets=None):
         """Opens installed variant of 'host' and run remote publish there.
 
@@ -190,8 +190,8 @@ class PypeCommands:
         Runs publish process as user would, in automatic fashion.
 
         Args:
-            project (str): project to publish (only single context is expected
-                per call of remotepublish
+            project_name (str): project to publish (only single context is
+                expected per call of remotepublish
             batch_path (str): Path batch folder. Contains subfolders with
                 resources (workfile, another subfolder 'renders' etc.)
             host_name (str): 'photoshop'
@@ -232,7 +232,7 @@ class PypeCommands:
             fail_batch(_id, dbcon, msg)
             print("Another batch running, probably stuck, ask admin for help")
 
-        asset, task_name, task_type = get_batch_asset_task_info(
+        asset_name, task_name, task_type = get_batch_asset_task_info(
             task_data["context"])
 
         application_manager = ApplicationManager()
@@ -241,8 +241,8 @@ class PypeCommands:
 
         # must have for proper launch of app
         env = get_app_environments_for_context(
-            project,
-            asset,
+            project_name,
+            asset_name,
             task_name,
             app_name
         )
@@ -270,14 +270,14 @@ class PypeCommands:
         data = {
             "last_workfile_path": workfile_path,
             "start_last_workfile": True,
-            "project_name": project,
-            "asset_name": asset,
+            "project_name": project_name,
+            "asset_name": asset_name,
             "task_name": task_name
         }
 
         launched_app = application_manager.launch(app_name, **data)
 
-        timeout = get_timeout(project, host_name, task_type)
+        timeout = get_timeout(project_name, host_name, task_type)
 
         time_start = time.time()
         while launched_app.poll() is None:
