@@ -104,7 +104,7 @@ def inject_openpype_environment(deadlinePlugin):
                 openpype_versions.sort(
                     key=lambda ver: [
                         int(t) if t.isdigit() else t.lower()
-                        for t in re.split('(\d+)', ver[0])
+                        for t in re.split(r"(\d+)", ver[0])
                     ])
                 print(("*** Latest available version found is "
                        f"{openpype_versions[-1][0]}"))
@@ -125,7 +125,7 @@ def inject_openpype_environment(deadlinePlugin):
             compatible_versions.sort(
                     key=lambda ver: [
                         int(t) if t.isdigit() else t.lower()
-                        for t in re.split('(\d+)', ver[0])
+                        for t in re.split(r"(\d+)", ver[0])
                     ])
             print(("*** Latest compatible version found is "
                    f"{compatible_versions[-1][0]}"))

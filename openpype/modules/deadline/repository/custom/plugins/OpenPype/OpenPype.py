@@ -135,7 +135,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 openpype_versions.sort(
                     key=lambda ver: [
                         int(t) if t.isdigit() else t.lower()
-                        for t in re.split('(\d+)', ver[0])
+                        for t in re.split(r"(\d+)", ver[0])
                     ])
             requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
@@ -153,7 +153,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             compatible_versions.sort(
                     key=lambda ver: [
                         int(t) if t.isdigit() else t.lower()
-                        for t in re.split('(\d+)', ver[0])
+                        for t in re.split(r"(\d+)", ver[0])
                     ])
             # create list of executables for different platform and let
             # Deadline decide.
