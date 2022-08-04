@@ -100,6 +100,11 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 </div>
 </div>
 
+### Anatomy reference keys
+
+Anatomy templates have ability to use "referenced keys". Best example is `path` in publish or work templates which are just referencing to `folder` and `file` (`{@folder}/{@file}`) so any changes in folder or file template are propagated to the path template. The other advantage is to simplify version and frame formatting with paddings. In default templates you can notice that keys `{@version}` or `{@frame}` are used in templates. They are referencing to `Anatomy` -> `Templates` -> `Version` or `Frame` which handle version and frame formatting with padding.
+
+So if you set `project_anatomy/templates/defaults/version_padding` to `5` the `{@version}` key will be transformed to `v{version:0>5}` and version number in paths will have 5 numbers -> `v00001`.
 
 ## Attributes
 
