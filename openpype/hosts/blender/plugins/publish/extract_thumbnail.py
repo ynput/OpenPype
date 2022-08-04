@@ -50,6 +50,7 @@ class ExtractThumbnail(openpype.api.Extractor):
             "overwrite": True,
             "isolate": isolate,
         })
+        preset.setdefault("height", preset.setdefault("width", 512))
         preset.setdefault(
             "image_settings",
             {
