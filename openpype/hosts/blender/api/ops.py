@@ -220,12 +220,9 @@ class LaunchQtApp(bpy.types.Operator):
                 self._app.store_window(self.bl_idname, window)
             self._window = window
 
-        if not isinstance(
-            self._window,
-            (QtWidgets.QMainWindow, QtWidgets.QDialog, ModuleType)
-        ):
+        if not isinstance(self._window, (QtWidgets.QWidget, ModuleType)):
             raise AttributeError(
-                "`window` should be a `QDialog or module`. Got: {}".format(
+                "`window` should be a `QWidget or module`. Got: {}".format(
                     str(type(window))
                 )
             )
@@ -249,9 +246,9 @@ class LaunchQtApp(bpy.types.Operator):
             self._window.setWindowFlags(on_top_flags)
             self._window.show()
 
-            if on_top_flags != origin_flags:
-                self._window.setWindowFlags(origin_flags)
-                self._window.show()
+            # if on_top_flags != origin_flags:
+            #     self._window.setWindowFlags(origin_flags)
+            #     self._window.show()
 
         return {'FINISHED'}
 

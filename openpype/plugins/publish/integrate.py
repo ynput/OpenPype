@@ -23,41 +23,6 @@ from openpype.pipeline.publish import KnownPublishError
 log = logging.getLogger(__name__)
 
 
-def assemble(files):
-    """Convenience `clique.assemble` wrapper for files of a single collection.
-
-    Unlike `clique.assemble` this wrapper does not allow more than a single
-    Collection nor any remainder files. Errors will be raised when not only
-    a single collection is assembled.
-
-    Returns:
-        clique.Collection: A single sequence Collection
-
-    Raises:
-        ValueError: Error is raised when files do not result in a single
-                    collected Collection.
-
-    """
-    # todo: move this to lib?
-    # Get the sequence as a collection. The files must be of a single
-    # sequence and have no remainder outside of the collections.
-    patterns = [clique.PATTERNS["frames"]]
-    collections, remainder = clique.assemble(files,
-                                             minimum_items=1,
-                                             patterns=patterns)
-    if not collections:
-        raise ValueError("No collections found in files: "
-                         "{}".format(files))
-    if remainder:
-        raise ValueError("Files found not detected as part"
-                         " of a sequence: {}".format(remainder))
-    if len(collections) > 1:
-        raise ValueError("Files in sequence are not part of a"
-                         " single sequence collection: "
-                         "{}".format(collections))
-    return collections[0]
-
-
 def get_instance_families(instance):
     """Get all families of the instance"""
     # todo: move this to lib?
@@ -576,8 +541,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if any(os.path.isabs(fname) for fname in files):
                 raise KnownPublishError("Given file names contain full paths")
 
-            src_collection = assemble(files)
+            src_collections, remainders = clique.assemble(files)
+            if len(files) < 2 or len(src_collections) != 1 or remainders:
+                raise KnownPublishError((
+                    "Files of representation does not contain proper"
+                    " sequence files.\nCollected collections: {}"
+                    "\nCollected remainders: {}"
+                ).format(
+                    ", ".join([str(col) for col in src_collections]),
+                    ", ".join([str(rem) for rem in remainders])
+                ))
 
+            src_collection = src_collections[0]
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
@@ -609,18 +584,27 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # a Frame or UDIM tile set for the template data. We use the first
             # index of the destination for that because that could've shifted
             # from the source indexes, etc.
-            first_index_padded = get_frame_padded(frame=destination_indexes[0],
-                                                  padding=destination_padding)
-            if is_udim:
-                # UDIM representations handle ranges in a different manner
-                template_data["udim"] = first_index_padded
-            else:
-                template_data["frame"] = first_index_padded
+            first_index_padded = get_frame_padded(
+                frame=destination_indexes[0],
+                padding=destination_padding
+            )
 
             # Construct destination collection from template
-            anatomy_filled = anatomy.format(template_data)
-            template_filled = anatomy_filled[template_name]["path"]
-            repre_context = template_filled.used_values
+            repre_context = None
+            dst_filepaths = []
+            for index in destination_indexes:
+                if is_udim:
+                    template_data["udim"] = index
+                else:
+                    template_data["frame"] = index
+                anatomy_filled = anatomy.format(template_data)
+                template_filled = anatomy_filled[template_name]["path"]
+                dst_filepaths.append(template_filled)
+                if repre_context is None:
+                    self.log.debug(
+                        "Template filled: {}".format(str(template_filled))
+                    )
+                    repre_context = template_filled.used_values
 
             # Make sure context contains frame
             # NOTE: Frame would not be available only if template does not
@@ -628,12 +612,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if not is_udim:
                 repre_context["frame"] = first_index_padded
 
-            self.log.debug("Template filled: {}".format(str(template_filled)))
-            dst_collection = assemble([os.path.normpath(template_filled)])
-
             # Update the destination indexes and padding
-            dst_collection.indexes.clear()
-            dst_collection.indexes.update(set(destination_indexes))
+            dst_collection = clique.assemble(dst_filepaths)[0][0]
             dst_collection.padding = destination_padding
             if len(src_collection.indexes) != len(dst_collection.indexes):
                 raise KnownPublishError((
