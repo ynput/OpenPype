@@ -1,10 +1,11 @@
 import collections
 import datetime
+import copy
 
 import ftrack_api
 from openpype_modules.ftrack.lib import (
     BaseEvent,
-    query_custom_attributes
+    query_custom_attributes,
 )
 
 
@@ -124,10 +125,15 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
         # Separate value changes and task parent changes
         _entities_info = []
+        added_entities = []
+        added_entity_ids = set()
         task_parent_changes = []
         for entity_info in entities_info:
             if entity_info["entity_type"].lower() == "task":
                 task_parent_changes.append(entity_info)
+            elif entity_info.get("action") == "add":
+                added_entities.append(entity_info)
+                added_entity_ids.add(entity_info["entityId"])
             else:
                 _entities_info.append(entity_info)
         entities_info = _entities_info
@@ -135,6 +141,13 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         # Filter entities info with changes
         interesting_data, changed_keys_by_object_id = self.filter_changes(
             session, event, entities_info, interest_attributes
+        )
+        self.interesting_data_for_added(
+            session,
+            added_entities,
+            interest_attributes,
+            interesting_data,
+            changed_keys_by_object_id
         )
         if not interesting_data and not task_parent_changes:
             return
@@ -151,9 +164,13 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         # - it is a complex way how to find out
         if interesting_data:
             self.process_attribute_changes(
-                session, object_types_by_name,
-                interesting_data, changed_keys_by_object_id,
-                interest_entity_types, interest_attributes
+                session,
+                object_types_by_name,
+                interesting_data,
+                changed_keys_by_object_id,
+                interest_entity_types,
+                interest_attributes,
+                added_entity_ids
             )
 
         if task_parent_changes:
@@ -163,8 +180,12 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             )
 
     def process_task_parent_change(
-        self, session, object_types_by_name, task_parent_changes,
-        interest_entity_types, interest_attributes
+        self,
+        session,
+        object_types_by_name,
+        task_parent_changes,
+        interest_entity_types,
+        interest_attributes
     ):
         """Push custom attribute values if task parent has changed.
 
@@ -176,6 +197,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         real hierarchical value and non hierarchical custom attribute value
         should be set to hierarchical value.
         """
+
         # Store task ids which were created or moved under parent with entity
         #   type defined in settings (interest_entity_types).
         task_ids = set()
@@ -448,9 +470,14 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 self.log.warning("Changing of values failed.", exc_info=True)
 
     def process_attribute_changes(
-        self, session, object_types_by_name,
-        interesting_data, changed_keys_by_object_id,
-        interest_entity_types, interest_attributes
+        self,
+        session,
+        object_types_by_name,
+        interesting_data,
+        changed_keys_by_object_id,
+        interest_entity_types,
+        interest_attributes,
+        added_entity_ids
     ):
         # Prepare task object id
         task_object_id = object_types_by_name["task"]["id"]
@@ -538,15 +565,26 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             parent_id_by_task_id[task_id] = task_entity["parent_id"]
 
         self.finalize_attribute_changes(
-            session, interesting_data,
-            changed_keys, attrs_by_obj_id, hier_attrs,
-            task_entity_ids, parent_id_by_task_id
+            session,
+            interesting_data,
+            changed_keys,
+            attrs_by_obj_id,
+            hier_attrs,
+            task_entity_ids,
+            parent_id_by_task_id,
+            added_entity_ids
         )
 
     def finalize_attribute_changes(
-        self, session, interesting_data,
-        changed_keys, attrs_by_obj_id, hier_attrs,
-        task_entity_ids, parent_id_by_task_id
+        self,
+        session,
+        interesting_data,
+        changed_keys,
+        attrs_by_obj_id,
+        hier_attrs,
+        task_entity_ids,
+        parent_id_by_task_id,
+        added_entity_ids
     ):
         attr_id_to_key = {}
         for attr_confs in attrs_by_obj_id.values():
@@ -580,7 +618,11 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 parent_id = entity_id
             values = interesting_data[parent_id]
 
+            added_entity = entity_id in added_entity_ids
             for attr_id, old_value in current_values.items():
+                if added_entity and attr_id in hier_attrs:
+                    continue
+
                 attr_key = attr_id_to_key.get(attr_id)
                 if not attr_key:
                     continue
@@ -591,6 +633,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                     old_value is not ftrack_api.symbol.NOT_SET
                     and new_value is not None
                 )
+                if added_entity and not new_value_is_valid:
+                    continue
 
                 if new_value is not None and new_value_is_valid:
                     try:
@@ -625,6 +669,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
         interesting_data = {}
         changed_keys_by_object_id = {}
+
         for entity_info in entities_info:
             # Care only about changes if specific keys
             entity_changes = {}
@@ -669,6 +714,100 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             changed_keys_by_object_id[object_id] |= set(entity_changes.keys())
 
         return interesting_data, changed_keys_by_object_id
+
+    def interesting_data_for_added(
+        self,
+        session,
+        added_entities,
+        interest_attributes,
+        interesting_data,
+        changed_keys_by_object_id
+    ):
+        if not added_entities or not interest_attributes:
+            return
+
+        object_type_ids = set()
+        entity_ids = set()
+        all_entity_ids = set()
+        object_id_by_entity_id = {}
+        project_id = None
+        entity_ids_by_parent_id = collections.defaultdict(set)
+        for entity_info in added_entities:
+            object_id = entity_info["objectTypeId"]
+            entity_id = entity_info["entityId"]
+            object_type_ids.add(object_id)
+            entity_ids.add(entity_id)
+            object_id_by_entity_id[entity_id] = object_id
+
+            for item in entity_info["parents"]:
+                entity_id = item["entityId"]
+                all_entity_ids.add(entity_id)
+                parent_id = item["parentId"]
+                if not parent_id:
+                    project_id = entity_id
+                else:
+                    entity_ids_by_parent_id[parent_id].add(entity_id)
+
+        hier_attrs = self.get_hierarchical_configurations(
+            session, interest_attributes
+        )
+        if not hier_attrs:
+            return
+
+        hier_attrs_key_by_id = {
+            attr_conf["id"]: attr_conf["key"]
+            for attr_conf in hier_attrs
+        }
+        default_values_by_key = {
+            attr_conf["key"]: attr_conf["default"]
+            for attr_conf in hier_attrs
+        }
+
+        values = query_custom_attributes(
+            session, list(hier_attrs_key_by_id.keys()), all_entity_ids, True
+        )
+        values_per_entity_id = {}
+        for entity_id in all_entity_ids:
+            values_per_entity_id[entity_id] = {}
+            for attr_name in interest_attributes:
+                values_per_entity_id[entity_id][attr_name] = None
+
+        for item in values:
+            entity_id = item["entity_id"]
+            key = hier_attrs_key_by_id[item["configuration_id"]]
+            values_per_entity_id[entity_id][key] = item["value"]
+
+        fill_queue = collections.deque()
+        fill_queue.append((project_id, default_values_by_key))
+        while fill_queue:
+            item = fill_queue.popleft()
+            entity_id, values_by_key = item
+            entity_values = values_per_entity_id[entity_id]
+            new_values_by_key = copy.deepcopy(values_by_key)
+            for key, value in values_by_key.items():
+                current_value = entity_values[key]
+                if current_value is None:
+                    entity_values[key] = value
+                else:
+                    new_values_by_key[key] = current_value
+
+            for child_id in entity_ids_by_parent_id[entity_id]:
+                fill_queue.append((child_id, new_values_by_key))
+
+        for entity_id in entity_ids:
+            entity_changes = {}
+            for key, value in values_per_entity_id[entity_id].items():
+                if value is not None:
+                    entity_changes[key] = value
+
+            if not entity_changes:
+                continue
+
+            interesting_data[entity_id] = entity_changes
+            object_id = object_id_by_entity_id[entity_id]
+            if object_id not in changed_keys_by_object_id:
+                changed_keys_by_object_id[object_id] = set()
+            changed_keys_by_object_id[object_id] |= set(entity_changes.keys())
 
     def get_current_values(
         self,
@@ -737,6 +876,18 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 output[obj_id] = {}
             output[obj_id][attr["key"]] = attr["id"]
         return output, hiearchical
+
+    def get_hierarchical_configurations(self, session, interest_attributes):
+        hier_attr_query = (
+            "select id, key, object_type_id, is_hierarchical, default"
+            " from CustomAttributeConfiguration"
+            " where key in ({}) and is_hierarchical is true"
+        )
+        if not interest_attributes:
+            return []
+        return list(session.query(hier_attr_query.format(
+            self.join_query_keys(interest_attributes),
+        )).all())
 
 
 def register(session):
