@@ -42,14 +42,14 @@
             "multilayer_exr": true,
             "tiled": true,
             "aov_list": [],
-            "additional_options": {}
+            "additional_options": []
         },
         "vray_renderer": {
             "image_prefix": "maya/<scene>/<Layer>/<Layer>",
             "engine": "1",
             "image_format": "png",
             "aov_list": [],
-            "additional_options": {}
+            "additional_options": []
         },
         "redshift_renderer": {
             "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
@@ -59,7 +59,7 @@
             "multilayer_exr": true,
             "force_combine": true,
             "aov_list": [],
-            "additional_options": {}
+            "additional_options": []
         }
     },
     "create": {
