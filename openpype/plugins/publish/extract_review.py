@@ -1390,9 +1390,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             self.log.debug("height_half_pad: `{}`".format(height_half_pad))
 
             filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    width_scale, height_scale
-                ),
+                (
+                    "scale={}x{}"
+                    ":flags=lanczos"
+                    ":force_original_aspect_ratio=decrease"
+                ).format(output_width, output_height),
                 "pad={}:{}:{}:{}:{}".format(
                     output_width, output_height,
                     width_half_pad, height_half_pad,
