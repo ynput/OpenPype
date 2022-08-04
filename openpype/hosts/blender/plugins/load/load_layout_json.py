@@ -26,18 +26,15 @@ class JsonLayoutLoader(plugin.AssetLoader):
     def _get_loader(self, loaders, family):
         name = ""
         if family == "rig":
-            name = "BlendRigLoader"
+            name = "LinkRigLoader"
         elif family == "model":
-            name = "BlendModelLoader"
-
-        if name == "":
+            name = "LinkModelLoader"
+        else:
             return None
 
         for loader in loaders:
             if loader.__name__ == name:
                 return loader
-
-        return None
 
     def _process(self, libpath, asset_group):
         plugin.deselect_all()

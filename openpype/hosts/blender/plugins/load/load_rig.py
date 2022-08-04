@@ -1,7 +1,6 @@
 """Load a rig asset in Blender."""
 
 from pathlib import Path
-from typing import Dict, Optional
 
 import bpy
 
@@ -11,8 +10,8 @@ from openpype.hosts.blender.api import plugin, get_selection
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class BlendRigLoader(plugin.AssetLoader):
-    """Load rigs from a .blend file."""
+class LinkRigLoader(plugin.AssetLoader):
+    """Link rigs from a .blend file."""
 
     families = ["rig"]
     representations = ["blend"]
@@ -21,6 +20,7 @@ class BlendRigLoader(plugin.AssetLoader):
     icon = "link"
     color = "orange"
     color_tag = "COLOR_03"
+    order = 0
 
     def _assign_actions(self, asset_group):
         """Assign new action for all objects from linked rig."""
@@ -28,13 +28,13 @@ class BlendRigLoader(plugin.AssetLoader):
         task = legacy_io.Session.get("AVALON_TASK")
         asset = legacy_io.Session.get("AVALON_ASSET")
         namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace", "")
-
-        # If rig contain only one armature.
         armatures = [
             obj
             for obj in asset_group.all_objects
             if obj.type == "ARMATURE"
         ]
+
+        # If rig contain only one armature.
         if len(armatures) == 1:
             armature = armatures[0]
             if armature.animation_data is None:
@@ -42,7 +42,6 @@ class BlendRigLoader(plugin.AssetLoader):
                 armature.animation_data.action = bpy.data.actions.new(
                     f"{asset}_{task}:{namespace}_action"
                 )
-
         # If rig contain multiple armatures, we generate actions for
         # each armature.
         elif armatures:
@@ -53,23 +52,14 @@ class BlendRigLoader(plugin.AssetLoader):
                     armature.animation_data.action = bpy.data.actions.new(
                         f"{asset}_{task}:{namespace}_{action_name}_action"
                     )
-
-        # If rig contain no armature we generate actions for each object.
-        else:
-            for obj in asset_group.all_objects:
-                if obj.animation_data is None:
-                    obj.animation_data_create()
-                    action_name = obj.name.replace(":", "_")
-                    obj.animation_data.action = bpy.data.actions.new(
-                        f"{asset}_{task}:{namespace}_{action_name}_action"
-                    )
         plugin.orphans_purge()
 
-    def _apply_options(self, asset_group, options, namespace):
+    def _apply_options(self, asset_group, options):
         """Apply load options fro asset_group."""
 
         task = legacy_io.Session.get("AVALON_TASK")
         asset = legacy_io.Session.get("AVALON_ASSET")
+        namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace", "")
 
         if options.get("create_animation"):
             creator_plugin = get_legacy_creator_by_name("CreateAnimation")
@@ -136,33 +126,20 @@ class BlendRigLoader(plugin.AssetLoader):
         # Load blend from from libpath library.
         self._link_blend(libpath, asset_group)
 
-        # Disable selection for modeling container.
-        for child in set(plugin.get_children_recursive(asset_group)):
-            if plugin.is_container(child, family="model"):
-                child.hide_select = True
-
-        return asset_group
-
-    def process_asset(
-        self,
-        context: dict,
-        name: str,
-        namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> bpy.types.Collection:
-        """Asset loading Process"""
-        asset_group = super().process_asset(context, name, namespace)
-
+        # Ensure loaded rig has action.
         self._assign_actions(asset_group)
 
-        if options is not None:
-            self._apply_options(asset_group, options, namespace)
 
-        return asset_group
+class AppendRigLoader(LinkRigLoader):
+    """Append rigs from a .blend file."""
 
-    def exec_update(self, container: Dict, representation: Dict):
-        """Update the loaded asset"""
-        asset_group = self._update_process(container, representation)
+    label = "Append Rig"
+    icon = "paperclip"
+    order = 1
 
-        # Ensure updated rig has action.
+    def _process(self, libpath, asset_group):
+        # Load blend from from libpath library.
+        self._append_blend(libpath, asset_group)
+
+        # Ensure loaded rig has action.
         self._assign_actions(asset_group)
