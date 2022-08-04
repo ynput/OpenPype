@@ -123,10 +123,10 @@ def inject_openpype_environment(deadlinePlugin):
                      "directory.").format(requested_version))
             # sort compatible versions nad pick the last one
             compatible_versions.sort(
-                    key=lambda ver: [
-                        int(t) if t.isdigit() else t.lower()
-                        for t in re.split(r"(\d+)", ver[0])
-                    ])
+                key=lambda ver: [
+                    int(t) if t.isdigit() else t.lower()
+                    for t in re.split(r"(\d+)", ver[0])
+                ])
             print(("*** Latest compatible version found is "
                    f"{compatible_versions[-1][0]}"))
             # create list of executables for different platform and let
