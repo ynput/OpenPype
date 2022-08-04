@@ -63,7 +63,7 @@ def inject_openpype_environment(deadlinePlugin):
             print(("Scanning for compatible requested "
                   f"version {requested_version}"))
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
-            if dir:
+            if install_dir:
                 sub_dirs = [
                     f.path for f in os.scandir(install_dir)
                     if f.is_dir()
@@ -72,6 +72,7 @@ def inject_openpype_environment(deadlinePlugin):
                     version = get_openpype_version_from_path(subdir)
                     if not version:
                         continue
+                    print(f" - found: {version} - {subdir}")
                     openpype_versions.append((version, subdir))
 
         exe = FileUtils.SearchFileList(exe_list)
@@ -81,12 +82,15 @@ def inject_openpype_environment(deadlinePlugin):
             version = get_openpype_version_from_path(
                 os.path.dirname(exe))
             if version:
+                print(f" - found: {version} - {os.path.dirname(exe)}")
                 openpype_versions.append((version, os.path.dirname(exe)))
 
         if requested_version:
             # sort detected versions
             if openpype_versions:
                 openpype_versions.sort(key=lambda ver: ver[0])
+            print(("Latest available version found is "
+                   f"{openpype_versions[-1][0]}"))
             requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
             for version in openpype_versions:
@@ -102,6 +106,8 @@ def inject_openpype_environment(deadlinePlugin):
                      "directory.").format(requested_version))
             # sort compatible versions nad pick the last one
             compatible_versions.sort(key=lambda ver: ver[0])
+            print(("Latest compatible version found is "
+                   f"{compatible_versions[-1][0]}"))
             # create list of executables for different platform and let
             # Deadline decide.
             exe_list = [
