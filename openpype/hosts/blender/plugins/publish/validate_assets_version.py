@@ -8,14 +8,14 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.action import UpdateContainer
 
 
-class ValidateLinkedVersion(pyblish.api.InstancePlugin):
-    """Validate that containers are up to date."""
+class ValidateAssetsVersion(pyblish.api.InstancePlugin):
+    """Validate that asset containers are up to date."""
 
     order = ValidateContentsOrder - 0.011
     hosts = ["blender"]
     families = ["model", "rig", "layout", "animation", "setdress"]
     category = "geometry"
-    label = "Validate Linked Version"
+    label = "Assets Version"
     actions = [UpdateContainer]
     optional = True
 

@@ -1128,6 +1128,10 @@ class AssetLoader(LoaderPlugin):
         # Clear selection.
         deselect_all()
 
+    def _apply_options(self, asset_group, options):
+        """Must be implemented by a sub-class"""
+        pass
+
     def _process(*args, **kwargs):
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -1176,6 +1180,9 @@ class AssetLoader(LoaderPlugin):
             asset_name(asset, subset),
             libpath
         )
+
+        if options is not None:
+            self._apply_options(asset_group, options)
 
         self[:] = list(asset_group.all_objects)
         return asset_group
