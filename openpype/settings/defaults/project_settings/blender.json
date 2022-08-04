@@ -57,6 +57,7 @@
             "enabled": true,
             "optional": true,
             "active": true,
+            "pack_images": true,
             "families": [
                 "model",
                 "camera",
@@ -79,7 +80,8 @@
         "ExtractBlendAnimation": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": false,
+            "scale_length": 0
         },
         "ExtractAnimationFBX": {
             "enabled": true,
@@ -89,7 +91,7 @@
         "ExtractCamera": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": false
         },
         "ExtractLayout": {
             "enabled": true,

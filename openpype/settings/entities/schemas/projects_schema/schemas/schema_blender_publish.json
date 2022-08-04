@@ -57,29 +57,22 @@
             ]
         },
         {
-            "type": "splitter"
-        },
-        {
-            "type": "label",
-            "label": "Extractors"
-        },
-        {
             "type": "dict",
             "collapsible": true,
-            "key": "ExtractBlend",
-            "label": "Extract Blend",
+            "key": "ValidateLinkedVersion",
+            "label": "Validate Linked Version",
             "checkbox_key": "enabled",
             "children": [
                 {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
-                },
+                    "key": "ValidateAssetsVersion",
+                    "label": "Validate Assets Version"
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
                 {
                     "type": "boolean",
                     "key": "active",
