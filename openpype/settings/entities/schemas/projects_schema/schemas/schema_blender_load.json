@@ -1,0 +1,49 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "load",
+    "label": "Loader plugins",
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "LayoutLoader",
+            "label": "Layout Loader",
+            "children": [
+                {
+                    "type": "enum",
+                    "key": "animation_instance_mode",
+                    "label": "Generate animation instances",
+                    "multiselection": false,
+                    "enum_items": [
+                        {
+                            "disabled": "Disabled"
+                        },
+                        {
+                            "global": "Global"
+                        },
+                        {
+                            "rig": "For each rig assets"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "FbxModelLoader",
+            "label": "Fbx Model Loader",
+            "children": [
+                {
+                    "type": "number",
+                    "key": "scale_length",
+                    "label": "Scale length",
+                    "decimal": 3,
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            ]
+        }
+    ]
+}
