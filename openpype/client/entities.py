@@ -1216,7 +1216,6 @@ def get_representations(
         representation_ids=representation_ids,
         representation_names=representation_names,
         version_ids=version_ids,
-        extensions=extensions,
         context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
         standard=True,
@@ -1230,7 +1229,6 @@ def get_archived_representations(
     representation_ids=None,
     representation_names=None,
     version_ids=None,
-    extensions=None,
     context_filters=None,
     names_by_version_ids=None,
     fields=None
@@ -1247,8 +1245,6 @@ def get_archived_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        extensions (Iterable[str]): Filter by extension of main representation
-            file (without dot).
         names_by_version_ids (dict[ObjectId, List[str]]): Complex filtering
             using version ids and list of names under the version.
         fields (Iterable[str]): Fields that should be returned. All fields are
@@ -1263,7 +1259,6 @@ def get_archived_representations(
         representation_ids=representation_ids,
         representation_names=representation_names,
         version_ids=version_ids,
-        extensions=extensions,
         context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
         standard=False,
