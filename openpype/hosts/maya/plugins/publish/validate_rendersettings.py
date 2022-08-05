@@ -69,6 +69,15 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         "underscore": "_"
     }
 
+    _required_globals = {
+        "outFormatControl": 0,
+        "animation": 1,
+        "putFrameBeforeExt": 1,
+        # 0: No period, 1: Period `.`, 2: Underscore `_`
+        "periodInExt": 1,
+        "extensionPadding": 4
+    }
+
     redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>{aov_separator}<RenderPass>"  # noqa: E501
 
     renderman_dir_prefix = "maya/<scene>/<layer>"
@@ -231,6 +240,15 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.warning("warning: prefix differs from "
                             "recommended {}".format(
                                 default_prefix))
+            invalid = True
+
+        for attr, value in cls._required_globals.items():
+            plug = "defaultRenderGlobals.{}".format(attr)
+            current = cmds.getAttr(plug)
+            if current != value:
+                invalid = True
+                cls.log.error("Invalid default render globals set for {}: {} "
+                              "(should be: {})".format(plug, value, current))
 
         if padding != cls.DEFAULT_PADDING:
             invalid = True
@@ -342,3 +360,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         "redshiftOptions.imageFormat", asString=True)
                     cmds.setAttr(
                         "{}.fileFormat".format(aov), default_ext)
+
+            for attr, value in cls._required_globals.items():
+                plug = "defaultRenderGlobals.{}".format(attr)
+                cls.log.info("Setting {}: {}".format(plug, value))
+                cmds.setAttr(plug, value)

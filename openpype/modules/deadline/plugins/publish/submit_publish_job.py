@@ -277,7 +277,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Pool": instance.data.get("primaryPool"),
                 "SecondaryPool": instance.data.get("secondaryPool"),
 
-                "OutputDirectory0": output_dir
+                "OutputDirectory0": output_dir,
+
+                # Error out early on this job since it's unlikely
+                # a subsequent publish will suddenly succeed and
+                # this avoids trying to create tons of publishes
+                # todo(roy): Expose this in settings
+                "OverrideJobFailureDetection": True,
+                "FailureDetectionJobErrors": 3
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,

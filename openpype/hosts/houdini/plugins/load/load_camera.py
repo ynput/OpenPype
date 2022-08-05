@@ -9,6 +9,22 @@ ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'
                       '.alembicGetCameraDict')
 
 
+def get_resolution_from_document(doc):
+    if not doc or "data" not in doc:
+        print("Entered document is not valid. \"{}\"".format(str(doc)))
+        return None
+
+    resolution_width = doc["data"].get("resolutionWidth")
+    resolution_height = doc["data"].get("resolutionHeight")
+
+    # Make sure both width and height are set
+    if resolution_width is None or resolution_height is None:
+        print("No resolution information found for \"{}\"".format(doc["name"]))
+        return None
+
+    return int(resolution_width), int(resolution_height)
+
+
 def transfer_non_default_values(src, dest, ignore=None):
     """Copy parm from src to dest.
 
@@ -26,6 +42,15 @@ def transfer_non_default_values(src, dest, ignore=None):
 
     """
     import hou
+
+    ignore_types = {
+        hou.parmTemplateType.Toggle,
+        hou.parmTemplateType.Menu,
+        hou.parmTemplateType.Button,
+        hou.parmTemplateType.FolderSet,
+        hou.parmTemplateType.Separator,
+        hou.parmTemplateType.Label,
+    }
 
     src.updateParmStates()
 
@@ -62,14 +87,6 @@ def transfer_non_default_values(src, dest, ignore=None):
             continue
 
         # Ignore folders, separators, etc.
-        ignore_types = {
-            hou.parmTemplateType.Toggle,
-            hou.parmTemplateType.Menu,
-            hou.parmTemplateType.Button,
-            hou.parmTemplateType.FolderSet,
-            hou.parmTemplateType.Separator,
-            hou.parmTemplateType.Label,
-        }
         if parm.parmTemplate().type() in ignore_types:
             continue
 
@@ -105,18 +122,21 @@ class CameraLoader(load.LoaderPlugin):
         node_name = "{}_{}".format(namespace, name) if namespace else name
 
         # Create a archive node
-        container = self.create_and_connect(obj, "alembicarchive", node_name)
+        node = self.create_and_connect(obj, "alembicarchive", node_name)
 
         # TODO: add FPS of project / asset
-        container.setParms({"fileName": file_path,
-                            "channelRef": True})
+        node.setParms({"fileName": file_path, "channelRef": True})
 
         # Apply some magic
-        container.parm("buildHierarchy").pressButton()
-        container.moveToGoodPosition()
+        node.parm("buildHierarchy").pressButton()
+        node.moveToGoodPosition()
 
         # Create an alembic xform node
-        nodes = [container]
+        nodes = [node]
+
+        camera = self._get_camera(node)
+        self._match_maya_render_mask(camera)
+        self._set_asset_resolution(camera, asset=context["asset"])
 
         self[:] = nodes
 
@@ -157,6 +177,8 @@ class CameraLoader(load.LoaderPlugin):
                                     # "icon_scale" just skip that completely
                                     ignore={"scale"})
 
+        self._match_maya_render_mask(new_camera)
+
         temp_camera.destroy()
 
     def remove(self, container):
@@ -192,3 +214,32 @@ class CameraLoader(load.LoaderPlugin):
 
         new_node.moveToGoodPosition()
         return new_node
+
+    def _match_maya_render_mask(self, camera):
+        """Workaround to match Maya render mask in Houdini"""
+        import hou
+
+        parm = camera.parm("aperture")
+        expression = parm.expression()
+        expression = expression.replace("return ", "aperture = ")
+        expression += """
+# Match maya render mask (logic from Houdini's own FBX importer)
+node = hou.pwd()
+resx = node.evalParm('resx')
+resy = node.evalParm('resy')
+aspect = node.evalParm('aspect')
+aperture *= min(1, (resx / resy * aspect) / 1.5)
+return aperture
+"""
+        parm.setExpression(expression, language=hou.exprLanguage.Python)
+
+    def _set_asset_resolution(self, camera, asset):
+        """Apply resolution to camera from asset document of the publish"""
+
+        resolution = get_resolution_from_document(asset)
+        if resolution:
+            print("Setting camera resolution: {} -> {}x{}".format(
+                camera.name(), resolution[0], resolution[1]
+            ))
+            camera.parm("resx").set(resolution[0])
+            camera.parm("resy").set(resolution[1])

@@ -62,6 +62,10 @@ payload_skeleton_template = {
         "RenderLayer": None,  # Render only this layer
         "Renderer": None,
         "ProjectPath": None,  # Resolve relative references
+        # TODO: Match this logic with User scene settings instead
+        # NOTE: However it's recommended to set this globally for the pipeline
+        #       because this setting is saved in user prefs and not per scene.
+        "RenderSetupIncludeLights": False    # Don't include all lights
     },
     "AuxFiles": []  # Mandatory for Deadline, may be empty
 }

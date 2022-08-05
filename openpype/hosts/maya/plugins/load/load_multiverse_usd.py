@@ -17,11 +17,12 @@ class MultiverseUsdLoader(load.LoaderPlugin):
     """Read USD data in a Multiverse Compound"""
 
     families = ["model", "mvUsd", "mvUsdComposition", "mvUsdOverride",
+                "usd", "usdComposition", "usdOverride",
                 "pointcache", "animation"]
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
     label = "Load USD to Multiverse"
-    order = -10
+    order = -1
     icon = "code-fork"
     color = "orange"
 
@@ -89,6 +90,11 @@ class MultiverseUsdLoader(load.LoaderPlugin):
         # Delete container and its contents
         if cmds.objExists(container['objectName']):
             members = cmds.sets(container['objectName'], query=True) or []
+
+            shapes = cmds.ls(members, type="mvUsdCompoundShape")
+            for shape in shapes:
+                cmds.lockNode(shape, lock=False)
+
             cmds.delete([container['objectName']] + members)
 
         # Remove the namespace, if empty

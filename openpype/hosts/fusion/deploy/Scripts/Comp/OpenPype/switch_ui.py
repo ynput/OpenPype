@@ -159,7 +159,7 @@ class App(QtWidgets.QWidget):
 
         asset = self._assets.currentText()
 
-        import colorbleed.scripts.fusion_switch_shot as switch_shot
+        import openpype.scripts.fusion_switch_shot as switch_shot
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
 
     def collect_slap_comps(self, directory):

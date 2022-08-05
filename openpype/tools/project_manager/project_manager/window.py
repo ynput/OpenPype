@@ -83,6 +83,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         )
         remove_projects_btn.setIcon(ResourceCache.get_icon("remove"))
         remove_projects_btn.setObjectName("IconBtn")
+        # HACK: For now force remove this button
+        remove_projects_btn.setVisible(False)
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)

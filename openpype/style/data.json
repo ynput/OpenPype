@@ -58,7 +58,7 @@
 
         "icon-tools": "#ffffff",
         "icon-alert-tools": "#AA5050",
-        "icon-entity-default": "#bfccd6",
+        "icon-entity-default": "#65bbc5",
         "icon-entity-disabled": "#808080",
         "font-entity-deprecated": "#666666",
         "overlay-messages": {

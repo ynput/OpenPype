@@ -1,26 +1,21 @@
-import os
 import sys
 
 from Qt import QtWidgets, QtCore
 
-from openpype import style
 from openpype.tools.utils import host_tools
 
+from openpype.style import load_stylesheet
+from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )
+from openpype.hosts.fusion.api import (
+    set_framerange
+)
+from openpype.pipeline import legacy_io
 
-
-def load_stylesheet():
-    path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
-    if not os.path.exists(path):
-        print("Unable to load stylesheet, file not found in resources")
-        return ""
-
-    with open(path, "r") as file_stream:
-        stylesheet = file_stream.read()
-    return stylesheet
+from .pulse import FusionPulse
 
 
 class Spacer(QtWidgets.QWidget):
@@ -55,27 +50,43 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
         self.render_mode_widget = None
         self.setWindowTitle("OpenPype")
+
+        asset_label = QtWidgets.QLabel("Context", self)
+        asset_label.setStyleSheet("""QLabel {
+            font-size: 14px;
+            font-weight: 600;
+            color: #5f9fb8;
+        }""")
+        asset_label.setAlignment(QtCore.Qt.AlignHCenter)
+
         workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
         create_btn = QtWidgets.QPushButton("Create...", self)
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
+        saver_manager_btn = QtWidgets.QPushButton("Saver Manager...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
+        set_framerange_btn = QtWidgets.QPushButton("Set Frame Range", self)
+        set_resolution_btn = QtWidgets.QPushButton("Set Resolution", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
-        )
-        reset_resolution_btn = QtWidgets.QPushButton(
-            "Reset Resolution from project", self
         )
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 20, 10, 20)
 
+        layout.addWidget(asset_label)
+
+        layout.addWidget(Spacer(15, self))
+
         layout.addWidget(workfiles_btn)
+
+        layout.addWidget(Spacer(15, self))
+
         layout.addWidget(create_btn)
-        layout.addWidget(publish_btn)
         layout.addWidget(load_btn)
+        layout.addWidget(publish_btn)
         layout.addWidget(manager_btn)
 
         layout.addWidget(Spacer(15, self))
@@ -84,14 +95,19 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
+        layout.addWidget(saver_manager_btn)
+        layout.addWidget(set_framerange_btn)
+        layout.addWidget(set_resolution_btn)
         layout.addWidget(rendermode_btn)
 
         layout.addWidget(Spacer(15, self))
 
         layout.addWidget(duplicate_with_inputs_btn)
-        layout.addWidget(reset_resolution_btn)
 
         self.setLayout(layout)
+
+        # Store reference so we can update the label
+        self.asset_label = asset_label
 
         workfiles_btn.clicked.connect(self.on_workfile_clicked)
         create_btn.clicked.connect(self.on_create_clicked)
@@ -99,10 +115,38 @@ class OpenPypeMenu(QtWidgets.QWidget):
         load_btn.clicked.connect(self.on_load_clicked)
         manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
-        rendermode_btn.clicked.connect(self.on_rendernode_clicked)
+        rendermode_btn.clicked.connect(self.on_rendermode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked)
-        reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        set_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
+        set_framerange_btn.clicked.connect(self.on_set_framerange_clicked)
+        saver_manager_btn.clicked.connect(self.on_saver_manager_clicked)
+
+        self._callbacks = []
+        self.register_callback("taskChanged", self.on_task_changed)
+        self.on_task_changed()
+
+        # Force close current process if Fusion is closed
+        self._pulse = FusionPulse(parent=self)
+        self._pulse.start()
+
+    def on_task_changed(self):
+        # Update current context label
+        label = legacy_io.Session["AVALON_ASSET"]
+        self.asset_label.setText(label)
+
+    def register_callback(self, name, fn):
+
+        # Create a wrapper callback that we only store
+        # for as long as we want it to persist as callback
+        def _callback(*args):
+            fn()
+
+        self._callbacks.append(_callback)
+        register_event_callback(name, _callback)
+
+    def deregister_all_callbacks(self):
+        self._callbacks[:] = []
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
@@ -128,27 +172,37 @@ class OpenPypeMenu(QtWidgets.QWidget):
         print("Clicked Library")
         host_tools.show_library_loader()
 
-    def on_rendernode_clicked(self):
+    def on_saver_manager_clicked(self):
+        print("Clicked Saver Manager")
+        from .saver_manager import FusionSaverManager
+        manager = FusionSaverManager(parent=self)
+        manager.setStyleSheet(load_stylesheet())
+        manager.show()
+
+    def on_rendermode_clicked(self):
         print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()
-            window.setStyleSheet(style.load_stylesheet())
+            window.setStyleSheet(load_stylesheet())
             window.show()
             self.render_mode_widget = window
         else:
             self.render_mode_widget.show()
 
     def on_duplicate_with_inputs_clicked(self):
+        print("Clicked Duplicate with input connections")
         duplicate_with_inputs.duplicate_with_input_connections()
-        print("Clicked Set Colorspace")
 
-    def on_reset_resolution_clicked(self):
+    def on_set_resolution_clicked(self):
         print("Clicked Reset Resolution")
+
+    def on_set_framerange_clicked(self):
+        print("Clicked Reset Framerange")
+        set_framerange()
 
 
 def launch_openpype_menu():
     app = QtWidgets.QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)
 
     pype_menu = OpenPypeMenu()
 
@@ -157,4 +211,6 @@ def launch_openpype_menu():
 
     pype_menu.show()
 
-    sys.exit(app.exec_())
+    result = app.exec_()
+    print("Shutting down..")
+    sys.exit(result)

@@ -1,8 +1,6 @@
 import os
-import shutil
-
-import openpype.hosts.fusion
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
+from openpype.hosts.fusion import HOST_DIR
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -14,101 +12,33 @@ class FusionPrelaunch(PreLaunchHook):
 
     def execute(self):
         # making sure python 3.6 is installed at provided path
-        py36_dir = self.launch_context.env.get("PYTHON36")
-        if not py36_dir:
-            raise ApplicationLaunchFailed(
-                "Required environment variable \"PYTHON36\" is not set."
-                "\n\nFusion implementation requires to have"
-                " installed Python 3.6"
-            )
+        py36_var = "FUSION16_PYTHON36_HOME"
+        fusion_python36_home = self.launch_context.env.get(py36_var, "")
 
-        py36_dir = os.path.normpath(py36_dir)
-        if not os.path.isdir(py36_dir):
+        self.log.info(f"Looking for Python 3.6 in: {fusion_python36_home}")
+        for path in fusion_python36_home.split(os.pathsep):
+            # Allow defining multiple paths to allow "fallback" to other
+            # path. But make to set only a single path as final variable.
+            py36_dir = os.path.normpath(path)
+            if os.path.isdir(py36_dir):
+                break
+        else:
             raise ApplicationLaunchFailed(
                 "Python 3.6 is not installed at the provided path.\n"
                 "Either make sure the environments in fusion settings has"
                 " 'PYTHON36' set corectly or make sure Python 3.6 is installed"
-                f" in the given path.\n\nPYTHON36: {py36_dir}"
-            )
-        self.log.info(f"Path to Fusion Python folder: '{py36_dir}'...")
-        self.launch_context.env["PYTHON36"] = py36_dir
-
-        utility_dir = self.launch_context.env.get("FUSION_UTILITY_SCRIPTS_DIR")
-        if not utility_dir:
-            raise ApplicationLaunchFailed(
-                "Required Fusion utility script dir environment variable"
-                " \"FUSION_UTILITY_SCRIPTS_DIR\" is not set."
+                f" in the given path.\n\nPYTHON36: {fusion_python36_home}"
             )
 
-        # setting utility scripts dir for scripts syncing
-        utility_dir = os.path.normpath(utility_dir)
-        if not os.path.isdir(utility_dir):
-            raise ApplicationLaunchFailed(
-                "Fusion utility script dir does not exist. Either make sure "
-                "the environments in fusion settings has"
-                " 'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
-                f"Fusion.\n\nFUSION_UTILITY_SCRIPTS_DIR: '{utility_dir}'"
-            )
+        self.log.info(f"Setting {py36_var}: '{py36_dir}'...")
+        self.launch_context.env[py36_var] = py36_dir
 
-        self._sync_utility_scripts(self.launch_context.env)
-        self.log.info("Fusion Pype wrapper has been installed")
+        # Add our Fusion Master Prefs which is the only way to customize
+        # Fusion to define where it can read custom scripts and tools from
+        self.log.info(f"Setting OPENPYPE_FUSION: {HOST_DIR}")
+        self.launch_context.env["OPENPYPE_FUSION"] = HOST_DIR
 
-    def _sync_utility_scripts(self, env):
-        """ Synchronizing basic utlility scripts for resolve.
-
-        To be able to run scripts from inside `Fusion/Workspace/Scripts` menu
-        all scripts has to be accessible from defined folder.
-        """
-        if not env:
-            env = {k: v for k, v in os.environ.items()}
-
-        # initiate inputs
-        scripts = {}
-        us_env = env.get("FUSION_UTILITY_SCRIPTS_SOURCE_DIR")
-        us_dir = env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
-        us_paths = [os.path.join(
-            os.path.dirname(os.path.abspath(openpype.hosts.fusion.__file__)),
-            "utility_scripts"
-        )]
-
-        # collect script dirs
-        if us_env:
-            self.log.info(f"Utility Scripts Env: `{us_env}`")
-            us_paths = us_env.split(
-                os.pathsep) + us_paths
-
-        # collect scripts from dirs
-        for path in us_paths:
-            scripts.update({path: os.listdir(path)})
-
-        self.log.info(f"Utility Scripts Dir: `{us_paths}`")
-        self.log.info(f"Utility Scripts: `{scripts}`")
-
-        # make sure no script file is in folder
-        if next((s for s in os.listdir(us_dir)), None):
-            for s in os.listdir(us_dir):
-                path = os.path.normpath(
-                    os.path.join(us_dir, s))
-                self.log.info(f"Removing `{path}`...")
-
-                # remove file or directory if not in our folders
-                if not os.path.isdir(path):
-                    os.remove(path)
-                else:
-                    shutil.rmtree(path)
-
-        # copy scripts into Resolve's utility scripts dir
-        for d, sl in scripts.items():
-            # directory and scripts list
-            for s in sl:
-                # script in script list
-                src = os.path.normpath(os.path.join(d, s))
-                dst = os.path.normpath(os.path.join(us_dir, s))
-
-                self.log.info(f"Copying `{src}` to `{dst}`...")
-
-                # copy file or directory from our folders to fusion's folder
-                if not os.path.isdir(src):
-                    shutil.copy2(src, dst)
-                else:
-                    shutil.copytree(src, dst)
+        pref_var = "FUSION16_MasterPrefs"   # used by both Fu16 and Fu17
+        prefs = os.path.join(HOST_DIR, "deploy", "fusion_shared.prefs")
+        self.log.info(f"Setting {pref_var}: {prefs}")
+        self.launch_context.env[pref_var] = prefs

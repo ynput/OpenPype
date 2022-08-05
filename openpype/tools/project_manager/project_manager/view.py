@@ -136,7 +136,9 @@ class HierarchyView(QtWidgets.QTreeView):
         self.setAlternatingRowColors(True)
         self.setSelectionMode(HierarchyView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.setEditTriggers(HierarchyView.AllEditTriggers)
+        # TODO: Remove colorbleed usability fix
+        #       (team didn't like all edit triggers)
+        #self.setEditTriggers(HierarchyView.AllEditTriggers)
 
         column_delegates = {}
         column_key_to_index = {}

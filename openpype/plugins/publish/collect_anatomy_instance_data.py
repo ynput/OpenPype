@@ -21,6 +21,7 @@ Provides:
     instance    -> latestVersion
 """
 
+import os
 import copy
 import json
 import collections
@@ -291,7 +292,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             instance_label = instance.data.get("label")
             if instance_label:
                 instance_name += "({})".format(instance_label)
-            self.log.debug("Anatomy data for instance {}: {}".format(
-                instance_name,
-                json.dumps(anatomy_data, indent=4)
-            ))
+
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.debug("Anatomy data for instance {}: {}".format(
+                    instance_name,
+                    json.dumps(anatomy_data, indent=4)
+                ))

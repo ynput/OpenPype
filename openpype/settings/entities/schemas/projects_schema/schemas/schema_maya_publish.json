@@ -864,6 +864,16 @@
                     "is_list": true
                 }
             ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ExtractModel",
+                    "label": "Extract Model (.mayaAscii)"
+                }
+            ]
         }
     ]
 }

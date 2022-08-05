@@ -12,9 +12,13 @@ from openpype.hosts.maya.api.lib import (
 class SetFrameRangeLoader(load.LoaderPlugin):
     """Set frame range excluding pre- and post-handles"""
 
-    families = ["animation",
-                "camera",
-                "pointcache"]
+    families = [
+        "animation",
+        "camera",
+        "pointcache",
+        "vdbcache",
+        "usd",
+    ]
     representations = ["abc"]
 
     label = "Set frame range"
@@ -46,9 +50,13 @@ class SetFrameRangeLoader(load.LoaderPlugin):
 class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
     """Set frame range including pre- and post-handles"""
 
-    families = ["animation",
-                "camera",
-                "pointcache"]
+    families = [
+        "animation",
+        "camera",
+        "pointcache",
+        "vdbcache",
+        "usd",
+    ]
     representations = ["abc"]
 
     label = "Set frame range (with handles)"

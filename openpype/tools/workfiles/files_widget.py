@@ -40,6 +40,19 @@ class FilesView(QtWidgets.QTreeView):
     doubleClickedLeft = QtCore.Signal()
     doubleClickedRight = QtCore.Signal()
 
+    def __init__(self, *args, **kwargs):
+        super(FilesView, self).__init__(*args, **kwargs)
+
+        # Force entries to always be resized automatically with some padding
+        # between the columns
+        header = self.header()
+        header.setSectionResizeMode(
+            QtWidgets.QHeaderView.ResizeToContents
+        )
+        header.setStretchLastSection(True)
+        style = "QTreeView::item {  border: 0px;  padding: 0 3px; }"
+        self.setStyleSheet(style)
+
     def mouseDoubleClickEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.doubleClickedLeft.emit()
