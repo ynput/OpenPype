@@ -1,31 +1,28 @@
 from Qt import QtWidgets, QtCore, QtGui
 
 
-class NiceSlider(QtWidgets.QSlider):
+class ClickableSlider(QtWidgets.QSlider):
     def __init__(self, *args, **kwargs):
-        super(NiceSlider, self).__init__(*args, **kwargs)
-        self._mouse_clicked = False
+        super(ClickableSlider, self).__init__(*args, **kwargs)
         self._handle_size = 0
-
-        self._bg_brush = QtGui.QBrush(QtGui.QColor("#21252B"))
-        self._fill_brush = QtGui.QBrush(QtGui.QColor("#5cadd6"))
+        self._mouse_clicked = False
 
     def mousePressEvent(self, event):
         self._mouse_clicked = True
         if event.button() == QtCore.Qt.LeftButton:
             self._set_value_to_pos(event.pos())
             return event.accept()
-        return super(NiceSlider, self).mousePressEvent(event)
+        return super(ClickableSlider, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._mouse_clicked = True
+        super(ClickableSlider, self).mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
         if self._mouse_clicked:
             self._set_value_to_pos(event.pos())
 
-        super(NiceSlider, self).mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        self._mouse_clicked = True
-        super(NiceSlider, self).mouseReleaseEvent(event)
+        super(ClickableSlider, self).mouseMoveEvent(event)
 
     def _set_value_to_pos(self, pos):
         if self.orientation() == QtCore.Qt.Horizontal:
@@ -50,6 +47,33 @@ class NiceSlider(QtWidgets.QSlider):
         height = self.height() - handle_size
         value = (_range * pos_y / height) + self.minimum()
         self.setValue(value)
+
+    def paintEvent(self, event):
+        opt = QtWidgets.QStyleOptionSlider()
+        self.initStyleOption(opt)
+
+        rect = self.style().subControlRect(
+            QtWidgets.QStyle.CC_Slider,
+            opt,
+            QtWidgets.QStyle.SC_SliderGroove,
+            self
+        )
+
+        if self.orientation() == QtCore.Qt.Horizontal:
+            handle_size = rect.height()
+        else:
+            handle_size = rect.width()
+
+        self._handle_size = handle_size
+        super(ClickableSlider, self).paintEvent(event)
+
+
+class NiceSlider(ClickableSlider):
+    def __init__(self, *args, **kwargs):
+        super(NiceSlider, self).__init__(*args, **kwargs)
+
+        self._bg_brush = QtGui.QBrush(QtGui.QColor("#21252B"))
+        self._fill_brush = QtGui.QBrush(QtGui.QColor("#5cadd6"))
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
