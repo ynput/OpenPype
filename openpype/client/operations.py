@@ -55,7 +55,7 @@ def new_project_document(
         "_id": _create_or_convert_to_mongo_id(entity_id),
         "name": project_name,
         "type": CURRENT_PROJECT_SCHEMA,
-        "data": data,
+        "entity_data": data,
         "config": config
     }
 
@@ -290,6 +290,10 @@ class AbstractOperation(object):
     def to_data(self):
         """Convert opration to data that can be converted to json or others.
 
+        Warning:
+            Current state returns ObjectId objects which cannot be parsed by
+                json.
+
         Returns:
             Dict[str, Any]: Description of operation.
         """
@@ -412,16 +416,16 @@ class UpdateOperation(AbstractOperation):
         )
 
     def to_data(self):
-        fields = {}
+        changes = {}
         for key, value in self._update_data.items():
             if value is REMOVED_VALUE:
                 value = None
-            fields[key] = value
+            changes[key] = value
 
         output = super(UpdateOperation, self).to_data()
         output.update({
-            "entity_id": str(self.entity_id),
-            "fields": fields
+            "entity_id": self.entity_id,
+            "changes": changes
         })
         return output
 
