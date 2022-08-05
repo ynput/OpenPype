@@ -1,35 +1,38 @@
 """Collect Anatomy and global anatomy data.
 
 Requires:
-    session -> AVALON_PROJECT, AVALON_ASSET
+    session -> AVALON_ASSET
+    context -> projectName
 
 Provides:
-    context -> projectEntity - project entity from database
-    context -> assetEntity - asset entity from database
+    context -> projectEntity - Project document from database.
+    context -> assetEntity - Asset document from database only if 'asset' is
+        set in context.
 """
 
 import pyblish.api
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, KnownPublishError
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
-    """Collect Anatomy into Context"""
+    """Collect Anatomy into Context."""
 
     order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Avalon Entities"
 
     def process(self, context):
         legacy_io.install()
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = context.data["projectName"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
         task_name = legacy_io.Session["AVALON_TASK"]
 
         project_entity = get_project(project_name)
-        assert project_entity, (
-            "Project '{0}' was not found."
-        ).format(project_name)
+        if not project_entity:
+            raise KnownPublishError(
+                "Project '{0}' was not found.".format(project_name)
+            )
         self.log.debug("Collected Project \"{}\"".format(project_entity))
 
         context.data["projectEntity"] = project_entity

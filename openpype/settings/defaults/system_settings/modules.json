@@ -26,13 +26,14 @@
             "linux": []
         },
         "intent": {
+            "allow_empty_intent": true,
+            "empty_intent_label": "",
             "items": {
-                "-": "-",
                 "wip": "WIP",
                 "final": "Final",
                 "test": "Test"
             },
-            "default": "-"
+            "default": ""
         },
         "custom_attributes": {
             "show": {

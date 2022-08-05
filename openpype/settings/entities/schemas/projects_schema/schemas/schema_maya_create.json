@@ -29,42 +29,9 @@
                 }
             ]
         },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "CreateRender",
-            "label": "Create Render",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
-                    "object_type": "text"
-                },
-                {
-                    "key": "aov_separator",
-                    "label": "AOV Separator character",
-                    "type": "enum",
-                    "multiselection": false,
-                    "default": "underscore",
-                    "enum_items": [
-                        {"dash":  "- (dash)"},
-                        {"underscore":  "_ (underscore)"},
-                        {"dot": ". (dot)"}
-                    ]
-                },
-                {
-                    "type": "text",
-                    "key": "default_render_image_folder",
-                    "label": "Default render image folder"
-                }
-            ]
+            {
+            "type": "schema",
+            "name": "schema_maya_create_render"
         },
         {
             "type": "dict",
