@@ -1,7 +1,7 @@
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.sliders import ClickableSlider
-from openpype.tools.utils.delegates import PrettyTimeDelegate
+from openpype.tools.utils.delegates import pretty_timestamp, PrettyTimeDelegate
 
 UNIQUE_ID_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
@@ -27,10 +27,10 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
         #     (version_item.id, version_item.label)
         #     for version_item in sorted_versions
         # ]
-        # version_items_by_id = {
-        #     version_item.id: version_item
-        #     for version_item in sorted_versions
-        # }
+        version_items_by_id = {
+            version_item.id: version_item
+            for version_item in sorted_versions
+        }
         version_item = sorted_versions[0]
 
         thumbnail_content = controller.get_thumbnail_for_version(
@@ -44,22 +44,34 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
         subset_name_label = QtWidgets.QLabel(subset_item.subset_name, self)
 
         info_widget = QtWidgets.QWidget(self)
-        family_label = QtWidgets.QLabel(subset_item.family, info_widget)
-        created_label = QtWidgets.QLabel(version_item.time, info_widget)
+        family_label = QtWidgets.QLabel(
+            "<b>{}</b>".format(subset_item.family), info_widget
+        )
+        created_label = QtWidgets.QLabel(
+            pretty_timestamp(version_item.time), info_widget
+        )
         version_label = QtWidgets.QLabel(version_item.label, info_widget)
+        info_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        family_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        created_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        version_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         info_layout = QtWidgets.QGridLayout(info_widget)
+        info_layout.setContentsMargins(0, 0, 0, 0)
         info_layout.addWidget(family_label, 0, 0, 1, 1, QtCore.Qt.AlignLeft)
-        info_layout.addWidget(created_label, 1, 0, 1, 1, QtCore.Qt.AlignLeft)
-        info_layout.addWidget(version_label, 1, 1, 1, 1, QtCore.Qt.AlignRight)
+        info_layout.addWidget(version_label, 0, 1, 1, 1, QtCore.Qt.AlignRight)
+        info_layout.addWidget(created_label, 1, 0, 1, 2, QtCore.Qt.AlignLeft)
 
         main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(5, 5, 5, 5)
         main_layout.addWidget(thumbnail_label, 0)
         main_layout.addWidget(subset_name_label, 0)
         main_layout.addStretch(1)
         main_layout.addWidget(info_widget, 0)
 
         self._controller = controller
+        self._version_items_by_id = version_items_by_id
+        self._current_version_item = version_item
 
         self._thumbnail_label = thumbnail_label
         self._subset_name_label = subset_name_label
@@ -69,6 +81,15 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
         self._version_label = version_label
 
         self._current_thumbnail = thumbnail
+
+    def set_version_id(self, version_id):
+        if self._current_version_item.id == version_id:
+            return
+
+        version_item = self._version_items_by_id[version_id]
+        self._created_label.setText(pretty_timestamp(version_item.time))
+        self._version_label.setText(version_item.label)
+        self._current_version_item = version_item
 
     def resizeEvent(self, event):
         super(IconSubsetItemWidget, self).resizeEvent(event)
@@ -97,34 +118,15 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
 
 
 class IconViewWidget(QtWidgets.QWidget):
-    min_width = 100
-    max_width = 300
-    default_width = 200
-    single_step = 20
-
-    def __init__(self, controller, parent):
+    def __init__(self, controller, default_icon_width, parent):
         super(IconViewWidget, self).__init__(parent)
-
-        self._size_hint = QtCore.QSize(self.default_width, self.default_width)
-
-        # size_slider = QtWidgets.QSlider(self)
-        size_slider = ClickableSlider(self)
-        size_slider.setOrientation(QtCore.Qt.Horizontal)
-        size_slider.setMinimum(self.min_width)
-        size_slider.setMaximum(self.max_width)
-        size_slider.setSingleStep(self.single_step)
-        size_slider.setValue(self.default_width)
-
-        top_layout = QtWidgets.QHBoxLayout()
-        top_layout.addStretch(1)
-        top_layout.addWidget(size_slider, 0)
 
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addLayout(top_layout, 0)
+
         main_layout.addWidget(content_widget, 1)
 
         controller.event_system.add_callback(
@@ -134,11 +136,11 @@ class IconViewWidget(QtWidgets.QWidget):
             "versions.refresh.finished", self._on_version_refresh_finish
         )
 
-        size_slider.valueChanged.connect(self._on_size_slider_change)
-
         self._controller = controller
 
-        self._size_slider = size_slider
+        self._size_hint = QtCore.QSize(
+            default_icon_width, default_icon_width
+        )
 
         self._content_widget = content_widget
         self._content_layout = content_layout
@@ -148,10 +150,13 @@ class IconViewWidget(QtWidgets.QWidget):
         self._views = []
 
     def _on_size_slider_change(self, value):
-        size_hint = QtCore.QSize(value, value)
-        self.set_item_size_hint(size_hint)
+        self.set_item_width(value)
 
-    def set_item_size_hint(self, new_size_hint):
+    def set_item_width(self, width):
+        size_hint = QtCore.QSize(width, width)
+        self._set_item_size_hint(size_hint)
+
+    def _set_item_size_hint(self, new_size_hint):
         if new_size_hint == self._size_hint:
             return
 
@@ -225,16 +230,42 @@ class IconViewWidget(QtWidgets.QWidget):
 
 
 class VersionsWidget(QtWidgets.QWidget):
+    min_icon_width = 100
+    max_icon_width = 300
+    default_icon_width = min_icon_width
+    icon_single_step = 20
+
     def __init__(self, controller, parent):
         super(VersionsWidget, self).__init__(parent)
+
+        # Top part
+        top_widget = QtWidgets.QWidget(self)
+
+        icon_width = self.default_icon_width
+        icon_size_slider = ClickableSlider(self)
+        icon_size_slider.setOrientation(QtCore.Qt.Horizontal)
+        icon_size_slider.setMinimum(self.min_icon_width)
+        icon_size_slider.setMaximum(self.max_icon_width)
+        icon_size_slider.setSingleStep(self.icon_single_step)
+        icon_size_slider.setValue(icon_width)
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addStretch(1)
+        top_layout.addWidget(icon_size_slider, 0)
+
+        # Views part
+        views_widget = QtWidgets.QWidget(self)
 
         versions_model = VersionsModel(controller)
         proxy_model = QtCore.QSortFilterProxyModel()
         proxy_model.setSourceModel(versions_model)
 
-        icon_versions_view = IconViewWidget(controller, self)
+        icon_versions_view = IconViewWidget(
+            controller, icon_width, views_widget
+        )
 
-        list_versions_view = QtWidgets.QTreeView(self)
+        list_versions_view = QtWidgets.QTreeView(views_widget)
         list_versions_view.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection)
         list_versions_view.setSortingEnabled(True)
@@ -253,10 +284,15 @@ class VersionsWidget(QtWidgets.QWidget):
         time_column = versions_model.column_labels.index("Time")
         list_versions_view.setItemDelegateForColumn(time_column, time_delegate)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(list_versions_view, 1)
-        layout.addWidget(icon_versions_view, 1)
+        views_layout = QtWidgets.QHBoxLayout(views_widget)
+        views_layout.setContentsMargins(0, 0, 0, 0)
+        views_layout.addWidget(list_versions_view, 1)
+        views_layout.addWidget(icon_versions_view, 1)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(top_widget, 0)
+        main_layout.addWidget(views_widget, 1)
 
         selection_change_timer = QtCore.QTimer()
         selection_change_timer.setInterval(100)
@@ -265,6 +301,8 @@ class VersionsWidget(QtWidgets.QWidget):
         selection_model = list_versions_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
         selection_change_timer.timeout.connect(self._on_selection_timer)
+
+        icon_size_slider.valueChanged.connect(self._on_size_slider_change)
 
         self._versions_model = versions_model
         self._proxy_model = proxy_model
@@ -278,6 +316,32 @@ class VersionsWidget(QtWidgets.QWidget):
         self._selection_change_timer = selection_change_timer
 
         self._controller = controller
+
+        self._current_icon_width = icon_width
+
+        if self._current_icon_width > self.min_icon_width:
+            self._list_versions_view.setVisible(False)
+        else:
+            self._icon_versions_view.setVisible(False)
+
+    def _check_views_visibility(self):
+        list_visible = True
+        icons_visible = True
+        if self._current_icon_width > self.min_icon_width:
+            list_visible = False
+        else:
+            icons_visible = False
+
+        if self._list_versions_view.isVisible() != list_visible:
+            self._list_versions_view.setVisible(list_visible)
+
+        if self._icon_versions_view.isVisible() != icons_visible:
+            self._icon_versions_view.setVisible(icons_visible)
+
+    def _on_size_slider_change(self, value):
+        self._current_icon_width = value
+        self._icon_versions_view.set_item_width(value)
+        self._check_views_visibility()
 
     def _on_selection_change(self):
         self._selection_change_timer.start()
