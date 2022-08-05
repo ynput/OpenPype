@@ -206,6 +206,15 @@ class AssignerToolModel(object):
     def get_thumbnail_source(self, thumbnail_id):
         return self._thumbnails_model.get_thumbnail_source(thumbnail_id)
 
+    def get_thumbnail_for_version(self, version_id):
+        thumbnail_ids = self._versions_model.get_thumbnail_ids_for_version_ids(
+            [version_id]
+        )
+        thumbnail_id = None
+        if thumbnail_ids:
+            thumbnail_id = thumbnail_ids[0]
+        return self.get_thumbnail_source(thumbnail_id)
+
     def get_context_thumbnail_sources(self):
         thumbnail_ids = self.get_thumbnail_ids()
         return self._thumbnails_model.get_thumbnail_sources(thumbnail_ids)

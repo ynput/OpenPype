@@ -35,5 +35,8 @@ class AssignerController(object):
     def get_current_containers_subset_items(self):
         return self._model.get_current_containers_subset_items()
 
+    def get_thumbnail_for_version(self, version_id):
+        return self._model.get_thumbnail_for_version(version_id)
+
     def get_context_thumbnail_sources(self):
         return self._model.get_context_thumbnail_sources()

@@ -1,5 +1,6 @@
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.widgets.sliders import ClickableSlider
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
 UNIQUE_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -18,20 +19,10 @@ STEP_ROLE = QtCore.Qt.UserRole + 13
 
 
 class IconSubsetItemWidget(QtWidgets.QWidget):
-    def __init__(self, subset_item, parent):
+    def __init__(self, controller, subset_item, parent):
         super(IconSubsetItemWidget, self).__init__(parent)
 
-        label = QtWidgets.QLabel(subset_item.subset_name, self)
-        main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.addWidget(label, 0)
-
-        self.setStyleSheet("background: #ff0000;")
-
-        # TODO Versions label is not enought!!!
-        # - each version can have different thumbnail and infomation to
-        #       show
-        # - version change cause more changes
-        # sorted_versions = subset_item.get_sorted_versions()
+        sorted_versions = subset_item.get_sorted_versions()
         # version_labels = [
         #     (version_item.id, version_item.label)
         #     for version_item in sorted_versions
@@ -40,35 +31,93 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
         #     version_item.id: version_item
         #     for version_item in sorted_versions
         # }
-        # version_id = item.data(VERSION_ID_ROLE)
-        # if version_id and version_id in version_items_by_id:
-        #     version_item = version_items_by_id[version_id]
-        # else:
-        #     version_item = sorted_versions[0]
-        #     version_id = version_item.id
-        #
-        # item.setData(subset_item.subset_name, QtCore.Qt.DisplayRole)
-        # item.setData(subset_item.asset_name, ASSET_NAME_ROLE)
-        # item.setData(subset_item.family, FAMILY_ROLE)
-        # item.setData(None, FAMILY_ICON_ROLE)
-        # item.setData(version_item.label, VERSION_ROLE)
-        # item.setData(version_id, VERSION_ID_ROLE)
-        # item.setData(version_labels, VERSION_EDIT_ROLE)
-        # self._set_item_version(item_id, version_id)
+        version_item = sorted_versions[0]
+
+        thumbnail_content = controller.get_thumbnail_for_version(
+            version_item.id
+        )
+        thumbnail = QtGui.QPixmap()
+        thumbnail.loadFromData(thumbnail_content)
+        thumbnail_label = QtWidgets.QLabel(self)
+        thumbnail_label.setPixmap(thumbnail)
+
+        subset_name_label = QtWidgets.QLabel(subset_item.subset_name, self)
+
+        info_widget = QtWidgets.QWidget(self)
+        family_label = QtWidgets.QLabel(subset_item.family, info_widget)
+        created_label = QtWidgets.QLabel(version_item.time, info_widget)
+        version_label = QtWidgets.QLabel(version_item.label, info_widget)
+
+        info_layout = QtWidgets.QGridLayout(info_widget)
+        info_layout.addWidget(family_label, 0, 0, 1, 1, QtCore.Qt.AlignLeft)
+        info_layout.addWidget(created_label, 1, 0, 1, 1, QtCore.Qt.AlignLeft)
+        info_layout.addWidget(version_label, 1, 1, 1, 1, QtCore.Qt.AlignRight)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(thumbnail_label, 0)
+        main_layout.addWidget(subset_name_label, 0)
+        main_layout.addStretch(1)
+        main_layout.addWidget(info_widget, 0)
+
+        self._controller = controller
+
+        self._thumbnail_label = thumbnail_label
+        self._subset_name_label = subset_name_label
+
+        self._family_label = family_label
+        self._created_label = created_label
+        self._version_label = version_label
+
+        self._current_thumbnail = thumbnail
+
+    def resizeEvent(self, event):
+        super(IconSubsetItemWidget, self).resizeEvent(event)
+        self._update_sizes()
+
+    def showEvent(self, event):
+        super(IconSubsetItemWidget, self).showEvent(event)
+        self._update_sizes()
+
+    def _update_sizes(self):
+        self._update_pix_size()
+
+    def _update_pix_size(self):
+        pixmap = self._scale_pixmap(self._current_thumbnail)
+        self._thumbnail_label.setPixmap(pixmap)
+
+    def _scale_pixmap(self, pixmap):
+        width = self._thumbnail_label.width()
+        height = (width / 16) * 9
+        return pixmap.scaled(
+            width,
+            height,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
 
 
 class IconViewWidget(QtWidgets.QWidget):
+    min_width = 100
+    max_width = 300
+    default_width = 200
+    single_step = 20
+
     def __init__(self, controller, parent):
         super(IconViewWidget, self).__init__(parent)
 
-        self._size_hint = QtCore.QSize(100, 100)
+        self._size_hint = QtCore.QSize(self.default_width, self.default_width)
 
-        test_decrease_btn = QtWidgets.QPushButton("-", self)
-        test_increase_btn = QtWidgets.QPushButton("+", self)
+        # size_slider = QtWidgets.QSlider(self)
+        size_slider = ClickableSlider(self)
+        size_slider.setOrientation(QtCore.Qt.Horizontal)
+        size_slider.setMinimum(self.min_width)
+        size_slider.setMaximum(self.max_width)
+        size_slider.setSingleStep(self.single_step)
+        size_slider.setValue(self.default_width)
+
         top_layout = QtWidgets.QHBoxLayout()
         top_layout.addStretch(1)
-        top_layout.addWidget(test_decrease_btn, 0)
-        top_layout.addWidget(test_increase_btn, 0)
+        top_layout.addWidget(size_slider, 0)
 
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -85,10 +134,11 @@ class IconViewWidget(QtWidgets.QWidget):
             "versions.refresh.finished", self._on_version_refresh_finish
         )
 
-        test_decrease_btn.clicked.connect(self._on_decrease)
-        test_increase_btn.clicked.connect(self._on_increase)
+        size_slider.valueChanged.connect(self._on_size_slider_change)
 
         self._controller = controller
+
+        self._size_slider = size_slider
 
         self._content_widget = content_widget
         self._content_layout = content_layout
@@ -97,24 +147,11 @@ class IconViewWidget(QtWidgets.QWidget):
         self._items = {}
         self._views = []
 
-    def _on_decrease(self):
-        new_size_hint = QtCore.QSize(self._size_hint)
-        new_size_hint.setWidth(new_size_hint.width() - 20)
-        new_size_hint.setHeight(new_size_hint.height() - 20)
-        self.set_item_size_hint(new_size_hint)
-
-    def _on_increase(self):
-        new_size_hint = QtCore.QSize(self._size_hint)
-        new_size_hint.setWidth(new_size_hint.width() + 20)
-        new_size_hint.setHeight(new_size_hint.height() + 20)
-        self.set_item_size_hint(new_size_hint)
+    def _on_size_slider_change(self, value):
+        size_hint = QtCore.QSize(value, value)
+        self.set_item_size_hint(size_hint)
 
     def set_item_size_hint(self, new_size_hint):
-        if new_size_hint.width() < 20:
-            new_size_hint.setWidth(20)
-        if new_size_hint.height() < 20:
-            new_size_hint.setHeight(20)
-
         if new_size_hint == self._size_hint:
             return
 
@@ -165,7 +202,9 @@ class IconViewWidget(QtWidgets.QWidget):
             item.setData(item_id, UNIQUE_ID_ROLE)
             item.setData(self._size_hint, QtCore.Qt.SizeHintRole)
             new_items[item_id] = item
-            widgets[item_id] = IconSubsetItemWidget(subset_item, view)
+            widgets[item_id] = IconSubsetItemWidget(
+                self._controller, subset_item, view
+            )
 
         model = QtGui.QStandardItemModel()
         for item in new_items.values():
