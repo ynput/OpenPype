@@ -15,23 +15,13 @@ class ExtractFBX(publish.Extractor):
     families = ["model", "rig"]
     optional = True
 
+    scale_length = 0
+
     def process(self, instance):
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
-
-        # Get project settings
-        project_settings = api.get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
-        scale_length = (
-            project_settings
-            ["blender"]
-            ["publish"]
-            ["ExtractFBX"]
-            ["scale_length"]
-        )
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -60,8 +50,8 @@ class ExtractFBX(publish.Extractor):
         )
 
         kept_scale_length = bpy.context.scene.unit_settings.scale_length
-        if scale_length > 0:
-            bpy.context.scene.unit_settings.scale_length = scale_length
+        if self.scale_length > 0:
+            bpy.context.scene.unit_settings.scale_length = self.scale_length
 
         # We export the fbx
         bpy.ops.export_scene.fbx(

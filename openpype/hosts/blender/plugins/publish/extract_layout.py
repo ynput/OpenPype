@@ -16,7 +16,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 class ExtractLayout(publish.Extractor):
     """Extract a layout as json."""
 
-    label = "Extract Layout"
+    label = "Extract JSON Layout"
     hosts = ["blender"]
     families = ["layout"]
     optional = True

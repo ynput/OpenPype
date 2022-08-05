@@ -32,6 +32,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_blender_load"
+        },
+        {
+            "type": "schema",
             "name": "schema_blender_publish"
         }
     ]

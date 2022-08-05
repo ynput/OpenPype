@@ -13,7 +13,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 class ExtractAnimationFBX(publish.Extractor):
     """Extract animation as FBX."""
 
-    label = "Extract FBX"
+    label = "Extract Anim FBX"
     hosts = ["blender"]
     families = ["animation"]
     optional = True

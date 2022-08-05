@@ -7,45 +7,28 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class LinkAnimationLoader(plugin.AssetLoader):
-    """Link animations from a .blend file.
+class AnimationLoader(plugin.AssetLoader):
+    """Load animations from a .blend file."""
 
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
-    """
-
-    families = ["animation"]
-    representations = ["blend"]
-
-    label = "Link Animation"
-    icon = "link"
     color = "orange"
-    color_tag = "COLOR_01"
-    order = 0
+    color_tag = "COLOR_07"
 
-    def _restor_actions_from_library(self, objects):
-        """Restor action from override library reference animation data"""
-        for obj in objects:
-            if (
-                obj.animation_data
-                and obj.override_library
-                and obj.override_library.reference
-                and obj.override_library.reference.animation_data
-                and obj.override_library.reference.animation_data.action
-            ):
-                obj.animation_data.action = (
-                    obj.override_library.reference.animation_data.action
-                )
+    linked_library = None
 
     def _load_actions_from_library(self, libpath):
         """Load and link actions from libpath library."""
         with bpy.data.libraries.load(
-            libpath, link=True, relative=False
+            libpath, link=self.linked_library, relative=False
         ) as (data_from, data_to):
             data_to.actions = data_from.actions
 
         return data_to.actions
+
+    def _remove_actions_from_library(self, asset_group):
+        """Remove action from all objects in asset_group"""
+        for obj in asset_group.all_objects:
+            if obj.animation_data and obj.animation_data.action:
+                obj.animation_data.action = None
 
     def _remove_container(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -60,8 +43,8 @@ class LinkAnimationLoader(plugin.AssetLoader):
 
         if asset_group:
 
-            # Restor action from override library reference animation data.
-            self._restor_actions_from_library(asset_group.all_objects)
+            # Remove actions from asset_group container.
+            self._remove_actions_from_library(asset_group)
 
             # Unlink all child objects and collections.
             for obj in asset_group.objects:
@@ -94,12 +77,14 @@ class LinkAnimationLoader(plugin.AssetLoader):
                 armature = bpy.context.scene.objects.get(armature_name)
             else:
                 assert collection, (
-                    f"invalid collection name for action: {action.name}"
+                    f"invalid collection name '{collection_name}' "
+                    f"for action: {action.name}"
                 )
                 armature = collection.all_objects.get(armature_name)
 
             assert armature, (
-                f"invalid armature name for action: {armature.name}"
+                f"invalid armature name '{armature_name}' "
+                f"for action: {action.name}"
             )
 
             if not armature.animation_data:
@@ -114,18 +99,41 @@ class LinkAnimationLoader(plugin.AssetLoader):
         plugin.orphans_purge()
 
 
-class AppendAnimationLoader(plugin.AssetLoader):
+class LinkAnimationLoader(AnimationLoader):
+    """Link animations from a .blend file."""
+
+    families = ["animation"]
+    representations = ["blend"]
+
+    label = "Link Animation"
+    icon = "link"
+    order = 0
+
+    linked_library = True
+
+    def _remove_actions_from_library(self, asset_group):
+        """Restor action from override library reference animation data"""
+        for obj in asset_group.all_objects:
+            if (
+                obj.animation_data
+                and obj.override_library
+                and obj.override_library.reference
+                and obj.override_library.reference.animation_data
+                and obj.override_library.reference.animation_data.action
+            ):
+                obj.animation_data.action = (
+                    obj.override_library.reference.animation_data.action
+                )
+
+
+class AppendAnimationLoader(AnimationLoader):
     """Append animations from a .blend file."""
+
+    families = ["animation"]
+    representations = ["blend"]
 
     label = "Append Animation"
     icon = "paperclip"
     order = 1
 
-    def _load_actions_from_library(self, libpath):
-        """Load and append actions from libpath library."""
-        with bpy.data.libraries.load(
-            libpath, link=False, relative=False
-        ) as (data_from, data_to):
-            data_to.actions = data_from.actions
-
-        return data_to.actions
+    linked_library = False
