@@ -13,7 +13,7 @@ class CreateAction(plugin.Creator):
     label = "Action"
     family = "action"
     icon = "male"
-    color_tag = "COLOR_01"
+    color_tag = "COLOR_07"
 
     def _use_selection(self, container):
         for obj in get_selection():

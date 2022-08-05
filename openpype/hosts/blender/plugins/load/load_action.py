@@ -7,22 +7,11 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class LinkActionLoader(plugin.AssetLoader):
-    """Load action from a .blend file.
+class ActionLoader(plugin.AssetLoader):
+    """Load action from a .blend file."""
 
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
-    """
-
-    families = ["action"]
-    representations = ["blend"]
-
-    label = "Link Action"
-    icon = "link"
     color = "orange"
-    color_tag = "COLOR_01"
-    order = 0
+    color_tag = "COLOR_07"
 
     def _get_action(
         self, asset_group: bpy.types.Collection
@@ -49,9 +38,6 @@ class LinkActionLoader(plugin.AssetLoader):
                     bpy.data.actions.remove(obj.animation_data.action)
 
         return super()._remove_container(container)
-
-    def _process(self, libpath: str, asset_group: bpy.types.Collection):
-        self._link_blend(libpath, asset_group)
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset"""
@@ -80,8 +66,25 @@ class LinkActionLoader(plugin.AssetLoader):
         return asset_group
 
 
-class AppendActionLoader(plugin.AssetLoader):
+class LinkActionLoader(ActionLoader):
+    """Link action from a .blend file."""
+
+    families = ["action"]
+    representations = ["blend"]
+
+    label = "Link Action"
+    icon = "link"
+    order = 0
+
+    def _process(self, libpath: str, asset_group: bpy.types.Collection):
+        self._link_blend(libpath, asset_group)
+
+
+class AppendActionLoader(ActionLoader):
     """Append action from a .blend file."""
+
+    families = ["action"]
+    representations = ["blend"]
 
     label = "Append Action"
     icon = "paperclip"

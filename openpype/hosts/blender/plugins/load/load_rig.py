@@ -10,17 +10,11 @@ from openpype.hosts.blender.api import plugin, get_selection
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class LinkRigLoader(plugin.AssetLoader):
-    """Link rigs from a .blend file."""
+class RigLoader(plugin.AssetLoader):
+    """Load rigs from a .blend file."""
 
-    families = ["rig"]
-    representations = ["blend"]
-
-    label = "Link Rig"
-    icon = "link"
     color = "orange"
     color_tag = "COLOR_03"
-    order = 0
 
     def _assign_actions(self, asset_group):
         """Assign new action for all objects from linked rig."""
@@ -122,16 +116,36 @@ class LinkRigLoader(plugin.AssetLoader):
             # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
-    def _process(self, libpath, asset_group):
-        # Load blend from from libpath library.
-        self._link_blend(libpath, asset_group)
+    def process_asset(self, *args, **kwargs) -> bpy.types.Collection:
+        """Asset loading Process"""
+        asset_group = super().process_asset(*args, **kwargs)
 
         # Ensure loaded rig has action.
         self._assign_actions(asset_group)
 
+        return asset_group
 
-class AppendRigLoader(LinkRigLoader):
+
+class LinkRigLoader(RigLoader):
+    """Link rigs from a .blend file."""
+
+    families = ["rig"]
+    representations = ["blend"]
+
+    label = "Link Rig"
+    icon = "link"
+    order = 0
+
+    def _process(self, libpath, asset_group):
+        # Load blend from from libpath library.
+        self._link_blend(libpath, asset_group)
+
+
+class AppendRigLoader(RigLoader):
     """Append rigs from a .blend file."""
+
+    families = ["rig"]
+    representations = ["blend"]
 
     label = "Append Rig"
     icon = "paperclip"
@@ -140,6 +154,3 @@ class AppendRigLoader(LinkRigLoader):
     def _process(self, libpath, asset_group):
         # Load blend from from libpath library.
         self._append_blend(libpath, asset_group)
-
-        # Ensure loaded rig has action.
-        self._assign_actions(asset_group)
