@@ -153,13 +153,24 @@ class SubsetLoaderPlugin(LoaderPlugin):
 
 
 def discover_loader_plugins(project_name=None):
+    from openpype.lib import Logger
+
+    log = Logger.get_logger("LoaderDiscover")
     plugins = discover(LoaderPlugin)
     if not project_name:
         project_name = legacy_io.active_project()
     system_settings = get_system_settings()
     project_settings = get_project_settings(project_name)
     for plugin in plugins:
-        plugin.apply_settings(project_settings, system_settings)
+        try:
+            plugin.apply_settings(project_settings, system_settings)
+        except Exception:
+            log.warning(
+                "Failed to apply settings to loader {}".format(
+                    plugin.__name__
+                ),
+                exc_info=True
+            )
     return plugins
 
 
