@@ -91,15 +91,19 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
         self._version_label.setText(version_item.label)
         self._current_version_item = version_item
 
+    def size_without_thumbnail(self):
+        size_hint = self.sizeHint()
+        return QtCore.QSize(
+            size_hint.width() - self._thumbnail_label.width(),
+            size_hint.height() - self._thumbnail_label.height()
+        )
+
     def resizeEvent(self, event):
         super(IconSubsetItemWidget, self).resizeEvent(event)
-        self._update_sizes()
+        self._update_pix_size()
 
     def showEvent(self, event):
         super(IconSubsetItemWidget, self).showEvent(event)
-        self._update_sizes()
-
-    def _update_sizes(self):
         self._update_pix_size()
 
     def _update_pix_size(self):
@@ -118,7 +122,7 @@ class IconSubsetItemWidget(QtWidgets.QWidget):
 
 
 class IconViewWidget(QtWidgets.QWidget):
-    def __init__(self, controller, default_icon_width, parent):
+    def __init__(self, controller, default_thumbnail_height, parent):
         super(IconViewWidget, self).__init__(parent)
 
         content_widget = QtWidgets.QWidget(self)
@@ -129,6 +133,12 @@ class IconViewWidget(QtWidgets.QWidget):
 
         main_layout.addWidget(content_widget, 1)
 
+        recalculate_size_timer = QtCore.QTimer()
+        recalculate_size_timer.setSingleShot(True)
+        recalculate_size_timer.setInterval(20)
+
+        recalculate_size_timer.timeout.connect(self._on_resize_timer_timeout)
+
         controller.event_system.add_callback(
             "versions.clear", self._on_versions_clear
         )
@@ -137,10 +147,12 @@ class IconViewWidget(QtWidgets.QWidget):
         )
 
         self._controller = controller
+        self._recalculate_size_timer = recalculate_size_timer
 
         self._size_hint = QtCore.QSize(
-            default_icon_width, default_icon_width
+            default_thumbnail_height, default_thumbnail_height
         )
+        self._thumbnail_height = default_thumbnail_height
 
         self._content_widget = content_widget
         self._content_layout = content_layout
@@ -149,11 +161,33 @@ class IconViewWidget(QtWidgets.QWidget):
         self._items = {}
         self._views = []
 
-    def _on_size_slider_change(self, value):
-        self.set_item_width(value)
+    def _on_resize_timer_timeout(self):
+        self._recalculate_size_hint()
 
-    def set_item_width(self, width):
-        size_hint = QtCore.QSize(width, width)
+    def set_item_width(self, height):
+        self._thumbnail_height = height
+        self._recalculate_size_hint()
+
+    def showEvent(self, event):
+        super(IconViewWidget, self).showEvent(event)
+        self._recalculate_size_timer.start()
+
+    def resizeEvent(self, event):
+        super(IconViewWidget, self).resizeEvent(event)
+        self._recalculate_size_timer.start()
+
+    def _recalculate_size_hint(self):
+        width = self._size_hint.width()
+        height = self._size_hint.height()
+        for widget in self._widgets.values():
+            thumbnailess_size = widget.size_without_thumbnail()
+            height = thumbnailess_size.height() + self._thumbnail_height
+            width = thumbnailess_size.width() + int(
+                (self._thumbnail_height / 9) * 16
+            )
+            break
+
+        size_hint = QtCore.QSize(width, height)
         self._set_item_size_hint(size_hint)
 
     def _set_item_size_hint(self, new_size_hint):
@@ -227,11 +261,12 @@ class IconViewWidget(QtWidgets.QWidget):
         self._items = new_items
 
         self._content_layout.addWidget(view)
+        self._recalculate_size_timer.start()
 
 
 class VersionsWidget(QtWidgets.QWidget):
-    min_icon_width = 100
-    max_icon_width = 300
+    min_icon_width = 60
+    max_icon_width = 200
     default_icon_width = min_icon_width
     icon_single_step = 20
 
