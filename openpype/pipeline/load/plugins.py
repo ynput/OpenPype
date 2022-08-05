@@ -2,6 +2,7 @@ import os
 import logging
 
 from openpype.settings import get_system_settings, get_project_settings
+from openpype.pipeline import legacy_io
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -151,9 +152,10 @@ class SubsetLoaderPlugin(LoaderPlugin):
         pass
 
 
-def discover_loader_plugins():
+def discover_loader_plugins(project_name=None):
     plugins = discover(LoaderPlugin)
-    project_name = os.environ.get("AVALON_PROJECT")
+    if not project_name:
+        project_name = legacy_io.active_project()
     system_settings = get_system_settings()
     project_settings = get_project_settings(project_name)
     for plugin in plugins:
