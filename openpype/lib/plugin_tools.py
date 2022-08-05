@@ -57,7 +57,7 @@ def deprecated(new_destination):
                 stacklevel=4
             )
             return decorated_func(*args, **kwargs)
-        return wrapper-
+        return wrapper
 
     if func is None:
         return _decorator
