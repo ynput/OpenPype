@@ -11,7 +11,7 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    color_tag = "COLOR_01"
+    color_tag = "COLOR_07"
 
     def _use_selection(self, container):
         selected_objects = set(get_selection())

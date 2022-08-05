@@ -27,6 +27,7 @@ class ExtractBlendAnimation(publish.Extractor):
         data_blocks = set()
         collections = set()
         animated_objects = set()
+        extracted_actions = set()
 
         for obj in instance:
             if plugin.is_container(obj, family="rig"):
@@ -40,21 +41,30 @@ class ExtractBlendAnimation(publish.Extractor):
 
         for collection in collections:
             for obj in collection.all_objects:
-                if obj.animation_data and obj.animation_data.action:
+                if (
+                    obj.animation_data
+                    and obj.animation_data.action
+                    and obj.animation_data.action not in extracted_actions
+                ):
                     action = obj.animation_data.action.copy()
                     action_name = obj.animation_data.action.name.split(":")[-1]
                     action.name = f"{instance.name}:{action_name}"
                     action["collection"] = collection.name
                     action["armature"] = obj.name
                     data_blocks.add(action)
+                    extracted_actions.add(obj.animation_data.action)
+                if obj in animated_objects:
+                    animated_objects.remove(obj)
 
         for obj in animated_objects:
-            action = obj.animation_data.action.copy()
-            action_name = obj.animation_data.action.name.split(":")[-1]
-            action.name = f"{instance.name}:{action_name}"
-            action["collection"] = "NONE"
-            action["armature"] = obj.name
-            data_blocks.add(action)
+            if obj.animation_data.action not in extracted_actions:
+                action = obj.animation_data.action.copy()
+                action_name = obj.animation_data.action.name.split(":")[-1]
+                action.name = f"{instance.name}:{action_name}"
+                action["collection"] = "NONE"
+                action["armature"] = obj.name
+                data_blocks.add(action)
+                extracted_actions.add(obj.animation_data.action)
 
         bpy.data.libraries.write(filepath, data_blocks)
 
