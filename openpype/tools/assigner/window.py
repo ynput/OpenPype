@@ -77,6 +77,7 @@ class ConnectionWindow(QtWidgets.QWidget):
         main_splitter.addWidget(left_side_widget)
         main_splitter.addWidget(versions_widget)
         main_splitter.addWidget(right_side_splitter)
+        main_splitter.setSizes([250, 850, 200])
 
         # Add splitter to layout of window
         layout = QtWidgets.QHBoxLayout(self)
