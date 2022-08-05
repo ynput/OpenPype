@@ -98,7 +98,16 @@ class ConnectionWindow(QtWidgets.QWidget):
         if self._first_show:
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
+            center_pos = self.mapToGlobal(self.rect().center())
             self.resize(1600, 850)
+            new_center_pos = self.mapToGlobal(self.rect().center())
+            new_pos = self.pos() - (new_center_pos - center_pos)
+            desktop = QtWidgets.QApplication.desktop()
+            screen_idx = desktop.screenNumber(self)
+            screen_geo = desktop.screenGeometry(screen_idx)
+            if new_pos.y() < screen_geo.y():
+                new_pos.setY(screen_geo.y())
+            self.move(new_pos)
             self.refresh()
 
     def refresh(self):
