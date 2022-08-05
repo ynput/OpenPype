@@ -309,6 +309,42 @@ class ARenderProducts:
 
         return lib.get_attr_in_layer(plug, layer=self.layer)
 
+    @staticmethod
+    def extract_separator(file_prefix):
+        """Extract AOV separator character from the prefix.
+
+        Default behavior extracts the part between
+        last occurrences of <RenderLayer> and <RenderPass>
+
+        Todo:
+            This code also triggers for V-Ray which overrides it explicitly
+            so this code will invalidly debug log it couldn't extract the
+            AOV separator even though it does set it in RenderProductsVray.
+
+        Args:
+            file_prefix (str): File prefix with tokens.
+
+        Returns:
+            str or None: prefix character if it can be extracted.
+        """
+        layer_tokens = ["<renderlayer>", "<layer>"]
+        aov_tokens = ["<aov>", "<renderpass>"]
+
+        def match_last(tokens, text):
+            """regex match the last occurence from a list of tokens"""
+            pattern = "(?:.*)({})".format("|".join(tokens))
+            return re.search(pattern, text, re.IGNORECASE)
+
+        layer_match = match_last(layer_tokens, file_prefix)
+        aov_match = match_last(aov_tokens, file_prefix)
+        separator = None
+        if layer_match and aov_match:
+            matches = sorted((layer_match, aov_match),
+                             key=lambda match: match.end(1))
+            separator = file_prefix[matches[0].end(1):matches[1].start(1)]
+        return separator
+
+
     def _get_layer_data(self):
         # type: () -> LayerMetadata
         #                      ______________________________________________
@@ -317,7 +353,7 @@ class ARenderProducts:
         # ____________________/
         _, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-
+        kwargs = {}
         file_prefix = self.get_renderer_prefix()
 
         # If the Render Layer belongs to a Render Setup layer then the
@@ -332,26 +368,8 @@ class ARenderProducts:
             # defaultRenderLayer renders as masterLayer
             layer_name = "masterLayer"
 
-        # AOV separator - default behavior extracts the part between
-        # last occurences of <RenderLayer> and <RenderPass>
-        # todo: This code also triggers for V-Ray which overrides it explicitly
-        #       so this code will invalidly debug log it couldn't extract the
-        #       aov separator even though it does set it in RenderProductsVray
-        layer_tokens = ["<renderlayer>", "<layer>"]
-        aov_tokens = ["<aov>", "<renderpass>"]
-
-        def match_last(tokens, text):
-            """regex match the last occurence from a list of tokens"""
-            pattern = "(?:.*)({})".format("|".join(tokens))
-            return re.search(pattern, text, re.IGNORECASE)
-
-        layer_match = match_last(layer_tokens, file_prefix)
-        aov_match = match_last(aov_tokens, file_prefix)
-        kwargs = {}
-        if layer_match and aov_match:
-            matches = sorted((layer_match, aov_match),
-                             key=lambda match: match.end(1))
-            separator = file_prefix[matches[0].end(1):matches[1].start(1)]
+        separator = self.extract_separator(file_prefix)
+        if separator:
             kwargs["aov_separator"] = separator
         else:
             log.debug("Couldn't extract aov separator from "
@@ -962,8 +980,9 @@ class RenderProductsRedshift(ARenderProducts):
             :func:`ARenderProducts.get_renderer_prefix()`
 
         """
-        prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
-        prefix = "{}{}<aov>".format(prefix, self.layer_data["aov_separator"])
+        file_prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
+        separator = self.extract_separator(file_prefix)
+        prefix = "{}{}<aov>".format(file_prefix, separator or "_")
         return prefix
 
     def get_render_products(self):
