@@ -276,7 +276,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         project_doc = create_project(project_name, project_name, dbcon=dbcon)
 
     # Project data and tasks
-    project_data = project["data"] or {}
+    project_data = project_doc["data"] or {}
 
     # Build project code and update Kitsu
     project_code = project.get("code")
@@ -305,6 +305,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
                 "config.tasks": {
                     t["name"]: {"short_name": t.get("short_name", t["name"])}
                     for t in gazu.task.all_task_types_for_project(project)
+                    or gazu.task.all_task_types()
                 },
                 "data": project_data,
             }

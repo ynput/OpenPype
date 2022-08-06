@@ -39,9 +39,8 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             )
             return
 
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-
         anatomy = instance.context.data["anatomy"]
+        project_name = anatomy.project_name
         if "publish" not in anatomy.templates:
             self.log.warning("Anatomy is missing the \"publish\" key!")
             return

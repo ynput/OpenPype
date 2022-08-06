@@ -1,5 +1,9 @@
 import pyblish.api
 from openpype.pipeline.load import any_outdated_containers
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 
 
 class ShowInventory(pyblish.api.Action):
@@ -14,7 +18,9 @@ class ShowInventory(pyblish.api.Action):
         host_tools.show_scene_inventory()
 
 
-class ValidateContainers(pyblish.api.ContextPlugin):
+class ValidateContainers(OptionalPyblishPluginMixin,
+                         pyblish.api.ContextPlugin):
+
     """Containers are must be updated to latest version on publish."""
 
     label = "Validate Containers"
@@ -24,5 +30,9 @@ class ValidateContainers(pyblish.api.ContextPlugin):
     actions = [ShowInventory]
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
+
         if any_outdated_containers():
-            raise ValueError("There are outdated containers in the scene.")
+            msg = "There are outdated containers in the scene."
+            raise PublishXmlValidationError(self, msg)
