@@ -912,7 +912,7 @@ def get_render_path(node):
     avalon_knob_data = read_avalon_data(node)
 
     nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["family"],
+        node_class=avalon_knob_data["families"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
@@ -1920,7 +1920,7 @@ class WorkfileSettings(object):
                 families.append(avalon_knob_data.get("families"))
 
             nuke_imageio_writes = get_imageio_node_setting(
-                node_class=avalon_knob_data["family"],
+                node_class=avalon_knob_data["families"],
                 plugin_name=avalon_knob_data["creator"],
                 subset=avalon_knob_data["subset"]
             )
@@ -2219,7 +2219,7 @@ def get_write_node_template_attr(node):
     avalon_knob_data = read_avalon_data(node)
     # get template data
     nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["family"],
+        node_class=avalon_knob_data["families"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
