@@ -211,4 +211,3 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
             containers = collect_input_containers(scene_containers, members)
 
         return containers
-
