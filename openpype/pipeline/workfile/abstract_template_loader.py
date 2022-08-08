@@ -336,7 +336,7 @@ class AbstractTemplateLoader:
         placeholders = map(placeholder_class, self.get_template_nodes())
         valid_placeholders = filter(placeholder_class.is_valid, placeholders)
         sorted_placeholders = sorted(valid_placeholders,
-                                     key=placeholder_class.order)
+                                     key=placeholder_class.get_order)
         return sorted_placeholders
 
     @abstractmethod
@@ -427,17 +427,24 @@ class AbstractPlaceholder:
     def builder_type(self):
         return self.data["builder_type"]
 
+    @property
     def order(self):
-        """Get placeholder order.
+        return self.data["order"]
+
+    def get_order(self):
+        """Placeholder order.
+
         Order is used to sort them by priority
         Priority is lowset first, highest last
         (ex:
             1: First to load
             100: Last to load)
+
         Returns:
-            Int: Order priority
+            int: Order priority
         """
-        return self.data.get('order')
+
+        return self.order
 
     @property
     def loader_name(self):
