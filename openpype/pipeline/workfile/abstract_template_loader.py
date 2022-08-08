@@ -537,10 +537,12 @@ class AbstractPlaceholder:
         pass
 
     @abstractmethod
-    def get_data(self, node):
-        """
-        Collect placeholders information.
+    def get_data(self, identifier):
+        """Collect information about placeholder by identifier.
+
         Args:
-            node (AnyNode): A unique node decided by Placeholder implementation
+            identifier (str): A unique placeholder identifier defined by
+                implementation.
         """
+
         pass
