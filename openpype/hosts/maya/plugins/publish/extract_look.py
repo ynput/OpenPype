@@ -434,7 +434,7 @@ class ExtractLook(openpype.api.Extractor):
                     # set color space to raw if we linearized it
                         color_space = "Raw"
                 except KeyError:
-                    # set color space to Raw if the attribute of the color space is raw.
+                    # set color space to Raw if its attribute is raw.
                     if cmds.getAttr(color_space_attr) == "Raw":
                         color_space = "Raw"
                 # Remap file node filename to destination
