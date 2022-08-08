@@ -348,3 +348,71 @@ def get_attr_overrides(node_attr, layer,
             break
 
     return reversed(plug_overrides)
+
+
+def get_shader_in_layer(node, layer):
+    """Return the assigned shader in a renderlayer without switching layers.
+
+    This has been developed and tested for Legacy Renderlayers and *not* for
+    Render Setup.
+
+    Note: This will also return the shader for any face assignments, however
+        it will *not* return the components they are assigned to. This could
+        be implemented, but since Maya's renderlayers are famous for breaking
+        with face assignments there has been no need for this function to
+        support that.
+
+    Returns:
+        list: The list of assigned shaders in the given layer.
+
+    """
+
+    def _get_connected_shader(shape):
+        """Return current shader"""
+        return cmds.listConnections(shape + ".instObjGroups",
+                                    source=False,
+                                    destination=True,
+                                    plugs=False,
+                                    connections=False,
+                                    type="shadingEngine") or []
+
+    # We check the instObjGroups (shader connection) for layer overrides.
+    plug = node + ".instObjGroups"
+
+    # Ignore complex query if we're in the layer anyway (optimization)
+    current_layer = cmds.editRenderLayerGlobals(query=True,
+                                                currentRenderLayer=True)
+    if layer == current_layer:
+        return _get_connected_shader(plug)
+
+    connections = cmds.listConnections(plug,
+                                       plugs=True,
+                                       source=False,
+                                       destination=True,
+                                       type="renderLayer") or []
+    connections = filter(lambda x: x.endswith(".outPlug"), connections)
+    if not connections:
+        # If no overrides anywhere on the shader, just get the current shader
+        return _get_connected_shader(plug)
+
+    def _get_override(connections, layer):
+        """Return the overridden connection for that layer in connections"""
+        # If there's an override on that layer, return that.
+        for connection in connections:
+            if (connection.startswith(layer + ".outAdjustments") and
+                    connection.endswith(".outPlug")):
+
+                # This is a shader override on that layer so get the shader
+                # connected to .outValue of the .outAdjustment[i]
+                out_adjustment = connection.rsplit(".", 1)[0]
+                connection_attr = out_adjustment + ".outValue"
+                override = cmds.listConnections(connection_attr) or []
+
+                return override
+
+    override_shader = _get_override(connections, layer)
+    if override_shader is not None:
+        return override_shader
+    else:
+        # Get the override for "defaultRenderLayer" (=masterLayer)
+        return _get_override(connections, layer="defaultRenderLayer")
