@@ -1,8 +1,6 @@
 import os
 from abc import ABCMeta, abstractmethod
 
-import traceback
-
 import six
 import logging
 from functools import reduce
