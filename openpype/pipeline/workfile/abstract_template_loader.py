@@ -491,13 +491,13 @@ class AbstractPlaceholder:
         return False
 
     @abstractmethod
-    def parent_in_hierarchy(self, containers):
-        """Place container in correct hierarchy
-        given by placeholder
+    def parent_in_hierarchy(self, container):
+        """Place loaded container in correct hierarchy given by placeholder
+
         Args:
-            containers (String): Container name returned back by
-                placeholder's loader.
+            container (Dict[str, Any]): Loaded container created by loader.
         """
+
         pass
 
     @abstractmethod
