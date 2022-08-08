@@ -60,7 +60,7 @@ def iter_history(nodes,
 
             if node_hash in traversed:
                 it.prune()
-                it.next()
+                it.next()  # noqa: B305
                 continue
 
             traversed.add(node_hash)
@@ -72,7 +72,7 @@ def iter_history(nodes,
                 fn_dep.setObject(node)
                 yield fn_dep.name()
 
-            it.next()
+            it.next()  # noqa: B305
 
 
 def collect_input_containers(containers, nodes):
