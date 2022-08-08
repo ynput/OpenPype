@@ -206,7 +206,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 .get('maya')\
                 .get('create')\
                 .get('CreateRender')\
-                .get('default_render_image_folder')
+                .get('default_render_image_folder') or ""
             # replace relative paths with absolute. Render products are
             # returned as list of dictionaries.
             publish_meta_path = None
@@ -320,7 +320,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False,
-                "aovSeparator": aov_separator
+                "aovSeparator": layer_render_products.layer_data.aov_separator  # noqa: E501
             }
 
             # Collect Deadline url if Deadline module is enabled
