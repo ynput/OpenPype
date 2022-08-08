@@ -524,19 +524,6 @@ class AbstractPlaceholder:
         pass
 
     @abstractmethod
-    def convert_to_db_filters(self, current_asset, linked_asset):
-        """map current placeholder data as a db filter
-        args:
-            current_asset (String): Name of current asset in context
-            linked asset (list[String]) : Names of assets linked to
-                current asset in context
-        Returns:
-            dict: a dictionnary describing a filter to look for asset in
-                a database
-        """
-        pass
-
-    @abstractmethod
     def get_data(self, identifier):
         """Collect information about placeholder by identifier.
 
