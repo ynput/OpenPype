@@ -384,17 +384,11 @@ class AbstractPlaceholder:
             and assets to load.
         optional_keys: A list of optional keys to decribe
             placeholder and assets to load
-        loader: Name of linked loader to use while loading assets
-        is_context: Is placeholder linked
-            to context asset (or to linked assets)
+        loader_name: Name of linked loader to use while loading assets
 
-    Methods:
-        is_repres_valid:
-        loader:
-        order:
-        is_valid:
-        get_data:
-        parent_in_hierachy:
+    Args:
+        identifier (str): Placeholder identifier. Should be possible to be
+            used as identifier in "a scene" (e.g. unique node name).
     """
 
     required_keys = {
@@ -407,10 +401,10 @@ class AbstractPlaceholder:
     }
     optional_keys = {}
 
-    def __init__(self, node):
+    def __init__(self, identifier):
         self._log = None
-        self._name = node
-        self.get_data(node)
+        self._name = identifier
+        self.get_data(identifier)
 
     @property
     def log(self):
