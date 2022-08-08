@@ -208,7 +208,8 @@ class ReferenceLoader(Loader):
         file_type = {
             "ma": "mayaAscii",
             "mb": "mayaBinary",
-            "abc": "Alembic"
+            "abc": "Alembic",
+            "fbx": "fbx"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation
