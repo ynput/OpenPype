@@ -8,6 +8,8 @@ from .path_resolving import (
     get_last_workfile,
 )
 
+from .build_workfile import BuildWorkfile
+
 
 __all__ = (
     "get_workfile_template_key_from_context",
@@ -17,4 +19,6 @@ __all__ = (
 
     "get_last_workfile_with_version",
     "get_last_workfile",
+
+    "BuildWorkfile",
 )
