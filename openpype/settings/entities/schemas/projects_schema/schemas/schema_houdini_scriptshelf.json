@@ -1,0 +1,81 @@
+{
+    "type": "list",
+    "key": "shelves",
+    "label": "Shelves Manager",
+    "is_group": true,
+    "use_label_wrap": true,
+    "object_type": {
+        "type": "dict",
+        "children": [
+            {
+                "type": "text",
+                "key": "shelf_set_name",
+                "label": "Shelf Set Name"
+            },
+            {
+                "type": "path",
+                "key": "shelf_set_source_path",
+                "label": "Shelf Set Path",
+                "multipath": true,
+                "multiplatform": true
+            },
+            {
+                "type": "list",
+                "key": "shelf_definition",
+                "label": "Shelves",
+                "use_label_wrap": true,
+                "object_type": {
+                    "type": "dict",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "shelf_name",
+                            "label": "Shelf Name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "shelf_file_path",
+                            "label": "Shelf File Path"
+                        },
+                        {
+                            "type": "list",
+                            "key": "tools_list",
+                            "label": "Tools",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "name",
+                                        "label": "Name"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "filepath",
+                                        "label": "File Path"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "script",
+                                        "label": "Script"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "icon",
+                                        "label": "Icon"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "help",
+                                        "label": "Help"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

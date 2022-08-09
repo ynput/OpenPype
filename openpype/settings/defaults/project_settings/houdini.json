@@ -1,4 +1,25 @@
 {
+    "shelves": [
+        {
+            "shelf_set_name": "OpenPype Shelves",
+            "shelf_set_source_path": "/path/to/your/shelf_set_file",
+            "shelf_definition": [
+                {
+                    "shelf_name": "OpenPype Shelf",
+                    "shelf_file_path": "/path/to/your/shelf_file",
+                    "tools_list": [
+                        {
+                            "name": "OpenPype Tool",
+                            "filepath": "/path/to/your/tool_file",
+                            "script": "/path/to/your/tool_script",
+                            "icon": "/path/to/your/icon",
+                            "help": "Help message for your tool"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
