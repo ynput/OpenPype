@@ -415,6 +415,36 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
 
         return requests.post(rest_api_url, json=data)
 
+    @staticmethod
+    def stop_timer_with_webserver(logger=None):
+        """Prepared method for calling stop timers on REST api.
+
+        Args:
+            logger (logging.Logger): Logger used for logging messages.
+        """
+
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            msg = "Couldn't find webserver url"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
+            return
+
+        rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
+        try:
+            import requests
+        except Exception:
+            msg = "Couldn't start timer ('requests' is not available)"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
+            return
+
+        return requests.post(rest_api_url)
+
     def on_host_install(self, host, host_name, project_name):
         self.log.debug("Installing task changed callback")
         register_event_callback("taskChanged", self._on_host_task_change)
