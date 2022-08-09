@@ -236,10 +236,16 @@ class ReferenceLoader(Loader):
                                            representation["context"]
                                                          ["project"]
                                                          ["name"])
+
+            params = {
+                "loadReference": reference_node,
+                "returnNewNodes": True
+            }
+            if file_type != "fbx":
+                params["type"] = file_type
+
             content = cmds.file(path,
-                                loadReference=reference_node,
-                                type=file_type,
-                                returnNewNodes=True)
+                                **params)
         except RuntimeError as exc:
             # When changing a reference to a file that has load errors the
             # command will raise an error even if the file is still loaded
