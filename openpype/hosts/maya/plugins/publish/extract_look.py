@@ -429,7 +429,17 @@ class ExtractLook(openpype.api.Extractor):
                 # node doesn't have color space attribute
                 color_space = "Raw"
             else:
-                color_space = "Raw"
+                #get all the resolved files 
+                src = files_metadata.get(source)
+                if src:
+                    if files_metadata[source]["color_space"] == "Raw":
+                        # set color space to raw if we linearized it
+                        color_space = "Raw"
+                else:
+                    # if the files are unresolved
+                    if files_metadata[filepath]["color_space"] == "Raw":
+                    # set color space to raw if we linearized it
+                        color_space = "Raw"
                 # Remap file node filename to destination
                 remap[color_space_attr] = color_space
             attr = resource["attribute"]
