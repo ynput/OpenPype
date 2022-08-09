@@ -22,6 +22,7 @@ from openpype.settings import get_project_settings
 from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
 from .template_data import get_template_data_with_names
+from .workfile import get_workfile_template_key
 from . import (
     legacy_io,
     register_loader_plugin_path,
@@ -377,3 +378,37 @@ def get_template_data_from_session(session=None, system_settings=None):
     return get_template_data_with_names(
         project_name, asset_name, task_name, host_name, system_settings
     )
+
+
+def get_workdir_from_session(session=None, template_key=None):
+    """Template data for template fill from session keys.
+
+    Args:
+        session (Union[Dict[str, str], None]): The Session to use. If not
+            provided use the currently active global Session.
+        template_key (str): Prepared template key from which workdir is
+            calculated.
+
+    Returns:
+        str: Workdir path.
+    """
+
+    if session is None:
+        session = legacy_io.Session
+    project_name = session["AVALON_PROJECT"]
+    host_name = session["AVALON_APP"]
+    anatomy = Anatomy(project_name)
+    template_data = get_template_data_from_session(session)
+    anatomy_filled = anatomy.format(template_data)
+
+    if not template_key:
+        task_type = template_data["task"]["type"]
+        template_key = get_workfile_template_key(
+            task_type,
+            host_name,
+            project_name=project_name
+        )
+    path = anatomy_filled[template_key]["folder"]
+    if path:
+        path = os.path.normpath(path)
+    return path

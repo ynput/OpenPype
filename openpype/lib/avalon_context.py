@@ -554,6 +554,8 @@ def compute_session_changes(
         dict: The required changes in the Session dictionary.
     """
 
+    from openpype.pipeline.context_tools import get_workdir_from_session
+
     changes = dict()
 
     # If no changes, return directly
@@ -600,30 +602,11 @@ def compute_session_changes(
     return changes
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.get_workdir_from_session")
 def get_workdir_from_session(session=None, template_key=None):
-    from openpype.pipeline import Anatomy
-    from openpype.pipeline.context_tools import get_template_data_from_session
+    from openpype.pipeline.context_tools import get_workdir_from_session
 
-    if session is None:
-        session = legacy_io.Session
-    project_name = session["AVALON_PROJECT"]
-    host_name = session["AVALON_APP"]
-    anatomy = Anatomy(project_name)
-    template_data = get_template_data_from_session(session)
-    anatomy_filled = anatomy.format(template_data)
-
-    if not template_key:
-        task_type = template_data["task"]["type"]
-        template_key = get_workfile_template_key(
-            task_type,
-            host_name,
-            project_name=project_name
-        )
-    path = anatomy_filled[template_key]["folder"]
-    if path:
-        path = os.path.normpath(path)
-    return path
+    return get_workdir_from_session(session, template_key)
 
 
 @with_pipeline_io
