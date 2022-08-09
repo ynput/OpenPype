@@ -13,6 +13,8 @@ from openpype.lib.events import register_event_callback
 
 from .exceptions import InvalidContextError
 
+TIMER_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class ExampleTimersManagerConnector:
     """Timers manager can handle timers of multiple modules/addons.
@@ -34,6 +36,7 @@ class ExampleTimersManagerConnector:
     }
     ```
     """
+
     # Not needed at all
     def __init__(self, module):
         # Store timer manager module to be able call it's methods when needed
@@ -185,17 +188,15 @@ class TimersManager(
         """Implementation of `ILaunchHookPaths`."""
 
         return os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            TIMER_MODULE_DIR,
             "launch_hooks"
         )
 
     def get_plugin_paths(self):
         """Implementation of `IPluginPaths`."""
 
-        timer_module_dir = os.path.dirname(os.path.abspath(__file__))
-
         return {
-            "publish": [os.path.join(timer_module_dir, "plugins", "publish")]
+            "publish": [os.path.join(TIMER_MODULE_DIR, "plugins", "publish")]
         }
 
     @staticmethod
