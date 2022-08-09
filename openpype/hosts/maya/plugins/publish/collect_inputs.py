@@ -1,4 +1,6 @@
 import copy
+from bson.objectid import ObjectId
+
 from maya import cmds
 import maya.api.OpenMaya as om
 import pyblish.api
@@ -163,8 +165,8 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
             containers = collect_input_containers(scene_containers,
                                                   nodes)
 
-        inputs = [c["representation"] for c in containers]
-        instance.data["inputs"] = inputs
+        inputs = [ObjectId(c["representation"]) for c in containers]
+        instance.data["inputRepresentations"] = inputs
 
         self.log.info("Collected inputs: %s" % inputs)
 
