@@ -45,4 +45,3 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
                 version_id = representation_id_to_version_id[repre_id]
                 input_versions.append(version_id)
             instance.data["inputVersions"] = input_versions
-
