@@ -321,6 +321,8 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     )
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_workfile_template_key_from_context")
 def get_workfile_template_key_from_context(
     asset_name, task_name, host_name, project_name=None,
     dbcon=None, project_settings=None
@@ -349,27 +351,26 @@ def get_workfile_template_key_from_context(
         ValueError: When both 'dbcon' and 'project_name' were not
             passed.
     """
+
+    from openpype.pipeline.workfile import (
+        get_workfile_template_key_from_context
+    )
+
     if not project_name:
         if not dbcon:
             raise ValueError((
                 "`get_workfile_template_key_from_context` requires to pass"
                 " one of 'dbcon' or 'project_name' arguments."
             ))
-
         project_name = dbcon.active_project()
 
-    asset_doc = get_asset_by_name(
-        project_name, asset_name, fields=["data.tasks"]
-    )
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
-
-    return get_workfile_template_key(
-        task_type, host_name, project_name, project_settings
+    return get_workfile_template_key_from_context(
+        asset_name, task_name, host_name, project_name, project_settings
     )
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_workfile_template_key")
 def get_workfile_template_key(
     task_type, host_name, project_name=None, project_settings=None
 ):
@@ -393,40 +394,12 @@ def get_workfile_template_key(
         ValueError: When both 'project_name' and 'project_settings' were not
             passed.
     """
-    default = "work"
-    if not task_type or not host_name:
-        return default
 
-    if not project_settings:
-        if not project_name:
-            raise ValueError((
-                "`get_workfile_template_key` requires to pass"
-                " one of 'project_name' or 'project_settings' arguments."
-            ))
-        project_settings = get_project_settings(project_name)
+    from openpype.pipeline.workfile import get_workfile_template_key
 
-    try:
-        profiles = (
-            project_settings
-            ["global"]
-            ["tools"]
-            ["Workfiles"]
-            ["workfile_template_profiles"]
-        )
-    except Exception:
-        profiles = []
-
-    if not profiles:
-        return default
-
-    profile_filter = {
-        "task_types": task_type,
-        "hosts": host_name
-    }
-    profile = filter_profiles(profiles, profile_filter)
-    if profile:
-        return profile["workfile_template"] or default
-    return default
+    return get_workfile_template_key(
+        task_type, host_name, project_name, project_settings
+    )
 
 
 @deprecated("openpype.pipeline.template_data.get_template_data")
@@ -454,6 +427,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     )
 
 
+@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
 def get_workdir_with_workdir_data(
     workdir_data, anatomy=None, project_name=None, template_key=None
 ):
@@ -480,31 +454,24 @@ def get_workdir_with_workdir_data(
     Raises:
         ValueError: When both `anatomy` and `project_name` are set to None.
     """
+
     if not anatomy and not project_name:
         raise ValueError((
             "Missing required arguments one of `project_name` or `anatomy`"
             " must be entered."
         ))
 
-    if not anatomy:
-        from openpype.pipeline import Anatomy
-        anatomy = Anatomy(project_name)
+    if not project_name:
+        project_name = anatomy.project_name
 
-    if not template_key:
-        template_key = get_workfile_template_key(
-            workdir_data["task"]["type"],
-            workdir_data["app"],
-            project_name=workdir_data["project"]["name"]
-        )
+    from openpype.pipeline.workfile import get_workdir_with_workdir_data
 
-    anatomy_filled = anatomy.format(workdir_data)
-    # Output is TemplateResult object which contain useful data
-    output = anatomy_filled[template_key]["folder"]
-    if output:
-        return output.normalized()
-    return output
+    return get_workdir_with_workdir_data(
+        workdir_data, project_name, anatomy, template_key
+    )
 
 
+@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
 def get_workdir(
     project_doc,
     asset_doc,
@@ -533,18 +500,15 @@ def get_workdir(
         TemplateResult: Workdir path.
     """
 
-    from openpype.pipeline import Anatomy
-    from openpype.pipeline.template_data import get_template_data
-
-    if not anatomy:
-        anatomy = Anatomy(project_doc["name"])
-
-    workdir_data = get_template_data(
-        project_doc, asset_doc, task_name, host_name
-    )
+    from openpype.pipeline.workfile import get_workdir
     # Output is TemplateResult object which contain useful data
-    return get_workdir_with_workdir_data(
-        workdir_data, anatomy, template_key=template_key
+    return get_workdir(
+        project_doc,
+        asset_doc,
+        task_name,
+        host_name,
+        anatomy,
+        template_key
     )
 
 
