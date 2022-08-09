@@ -100,7 +100,8 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         keys = [
             "FTRACK_API_USER",
             "FTRACK_API_KEY",
-            "FTRACK_SERVER"
+            "FTRACK_SERVER",
+            "OPENPYPE_VERSION"
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
