@@ -2,13 +2,15 @@ import os
 
 from openpype.lib import (
     StringTemplate,
-    get_workfile_template_key_from_context,
     get_last_workfile_with_version,
 )
 from openpype.pipeline import (
     registered_host,
     legacy_io,
     Anatomy,
+)
+from openpype.pipeline.workfile import (
+    get_workfile_template_key_from_context,
 )
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
@@ -57,8 +59,7 @@ class LoadWorkfile(plugin.Loader):
             asset_name,
             task_name,
             host_name,
-            project_name=project_name,
-            dbcon=legacy_io
+            project_name=project_name
         )
         anatomy = Anatomy(project_name)
 
