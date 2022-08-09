@@ -13,17 +13,13 @@ def get_workfile_template_key_from_context(
     Do the same as `get_workfile_template_key` but returns value for "session
     context".
 
-    It is required to pass one of 'dbcon' with already set project name or
-    'project_name' arguments.
-
     Args:
         asset_name(str): Name of asset document.
         task_name(str): Task name for which is template key retrieved.
             Must be available on asset document under `data.tasks`.
         host_name(str): Name of host implementation for which is workfile
             used.
-        project_name(str): Project name where asset and task is. Not required
-            when 'dbcon' is passed.
+        project_name(str): Project name where asset and task is.
         project_settings(Dict[str, Any]): Project settings for passed
             'project_name'. Not required at all but makes function faster.
     """
@@ -104,7 +100,6 @@ def get_workdir_with_workdir_data(
     Args:
         workdir_data (Dict[str, Any]): Data to fill workdir template.
         project_name (str): Project's name.
-            otherwise Anatomy object is created with using the project name.
         anatomy (Anatomy): Anatomy object for specific project. Faster
             processing if is passed.
         template_key (str): Key of work templates in anatomy templates. If not
