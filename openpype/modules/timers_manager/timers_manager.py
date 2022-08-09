@@ -6,7 +6,8 @@ from openpype.client import get_asset_by_name
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
-    ILaunchHookPaths
+    ILaunchHookPaths,
+    IPluginPaths
 )
 from openpype.lib.events import register_event_callback
 
@@ -72,7 +73,12 @@ class ExampleTimersManagerConnector:
             self._timers_manager_module.timer_stopped(self._module.id)
 
 
-class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
+class TimersManager(
+    OpenPypeModule,
+    ITrayService,
+    ILaunchHookPaths,
+    IPluginPaths
+):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -177,10 +183,20 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
 
     def get_launch_hook_paths(self):
         """Implementation of `ILaunchHookPaths`."""
+
         return os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "launch_hooks"
         )
+
+    def get_plugin_paths(self):
+        """Implementation of `IPluginPaths`."""
+
+        timer_module_dir = os.path.dirname(os.path.abspath(__file__))
+
+        return {
+            "publish": [os.path.join(timer_module_dir, "plugins", "publish")]
+        }
 
     @staticmethod
     def get_timer_data_for_context(
@@ -388,6 +404,7 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
             logger (logging.Logger): Logger object. Using 'print' if not
                 passed.
         """
+
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
             msg = "Couldn't find webserver url"
