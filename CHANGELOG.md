@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.13.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.13.0](https://github.com/pypeclub/OpenPype/tree/3.13.0) (2022-08-09)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.2...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.12.2...3.13.0)
 
 **🆕 New features**
 
@@ -44,6 +44,7 @@
 - General: Plugin settings handled by plugins [\#3623](https://github.com/pypeclub/OpenPype/pull/3623)
 - General: Naive implementation of document create, update, delete [\#3601](https://github.com/pypeclub/OpenPype/pull/3601)
 - General: Use query functions in general code [\#3596](https://github.com/pypeclub/OpenPype/pull/3596)
+- General: Separate extraction of template data into more functions [\#3574](https://github.com/pypeclub/OpenPype/pull/3574)
 - General: Lib cleanup [\#3571](https://github.com/pypeclub/OpenPype/pull/3571)
 
 **Merged pull requests:**
@@ -88,12 +89,12 @@
 - General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
 - Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
 - TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
+- NewPublisher: Publish attributes are properly collected [\#3510](https://github.com/pypeclub/OpenPype/pull/3510)
 - TrayPublisher: Make sure host name is filled [\#3504](https://github.com/pypeclub/OpenPype/pull/3504)
 - NewPublisher: Groups work and enum multivalue [\#3501](https://github.com/pypeclub/OpenPype/pull/3501)
 
 **🔀 Refactored code**
 
-- General: Separate extraction of template data into more functions [\#3574](https://github.com/pypeclub/OpenPype/pull/3574)
 - General: Use query functions in integrator [\#3563](https://github.com/pypeclub/OpenPype/pull/3563)
 - General: Mongo core connection moved to client [\#3531](https://github.com/pypeclub/OpenPype/pull/3531)
 - Refactor Integrate Asset [\#3530](https://github.com/pypeclub/OpenPype/pull/3530)
