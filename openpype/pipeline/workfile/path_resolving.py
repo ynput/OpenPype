@@ -3,9 +3,13 @@ import re
 import copy
 import platform
 
-from openpype.client import get_asset_by_name
+from openpype.client import get_project, get_asset_by_name
 from openpype.settings import get_project_settings
-from openpype.lib import filter_profiles, StringTemplate
+from openpype.lib import (
+    filter_profiles,
+    Logger,
+    StringTemplate,
+)
 from openpype.pipeline import Anatomy
 from openpype.pipeline.template_data import get_template_data
 
@@ -189,11 +193,20 @@ def get_last_workfile_with_version(
 ):
     """Return last workfile version.
 
+    Usign workfile template and it's filling data find most possible last
+    version of workfile which was created for the context.
+
+    Functionality is fully based on knowing which keys are optional or what
+    values are expected as value.
+
+    The last modified file is used if more files can be considered as
+    last workfile.
+
     Args:
-        workdir(str): Path to dir where workfiles are stored.
-        file_template(str): Template of file name.
-        fill_data(Dict[str, Any]): Data for filling template.
-        extensions(Iterable[str]): All allowed file extensions of workfile.
+        workdir (str): Path to dir where workfiles are stored.
+        file_template (str): Template of file name.
+        fill_data (Dict[str, Any]): Data for filling template.
+        extensions (Iterable[str]): All allowed file extensions of workfile.
 
     Returns:
         Tuple[Union[str, None], Union[int, None]]: Last workfile with version
@@ -203,23 +216,26 @@ def get_last_workfile_with_version(
     if not os.path.exists(workdir):
         return None, None
 
+    dotted_extensions = {
+        ".{}".format(ext)
+        for ext in extensions
+        if not ext.startswith(".")
+    }
     # Fast match on extension
     filenames = [
         filename
         for filename in os.listdir(workdir)
-        if os.path.splitext(filename)[1] in extensions
+        if os.path.splitext(filename)[1] in dotted_extensions
     ]
 
     # Build template without optionals, version to digits only regex
     # and comment to any definable value.
-    _ext = []
-    for ext in extensions:
-        if not ext.startswith("."):
-            ext = "." + ext
-        # Escape dot for regex
-        ext = "\\" + ext
-        _ext.append(ext)
-    ext_expression = "(?:" + "|".join(_ext) + ")"
+    # Escape extensions dot for regex
+    regex_exts = [
+        "\\" + ext
+        for ext in dotted_extensions
+    ]
+    ext_expression = "(?:" + "|".join(regex_exts) + ")"
 
     # Replace `.{ext}` with `{ext}` so we are sure there is not dot at the end
     file_template = re.sub(r"\.?{ext}", ext_expression, file_template)
@@ -306,3 +322,142 @@ def get_last_workfile(
         return os.path.normpath(os.path.join(workdir, filename))
 
     return filename
+
+
+def get_custom_workfile_template(
+    project_doc,
+    asset_doc,
+    task_name,
+    host_name,
+    anatomy=None,
+    project_settings=None
+):
+    """Filter and fill workfile template profiles by passed context.
+
+    Custom workfile template can be used as first version of workfiles.
+    Template is a file on a disk which is set in settings. Expected settings
+    structure to have this feature enabled is:
+    project settings
+    |- <host name>
+      |- workfile_builder
+        |- create_first_version   - a bool which must be set to 'True'
+        |- custom_templates       - profiles based on task name/type which
+                                    points to a file which is copied as
+                                    first workfile
+
+    It is expected that passed argument are already queried documents of
+    project and asset as parents of processing task name.
+
+    Args:
+        project_doc (Dict[str, Any]): Project document from MongoDB.
+        asset_doc (Dict[str, Any]): Asset document from MongoDB.
+        task_name (str): Name of task for which templates are filtered.
+        host_name (str): Name of host.
+        anatomy (Anatomy): Optionally passed anatomy object for passed project
+            name.
+        project_settings(Dict[str, Any]): Preloaded project settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. Existence of formatted path is not validated.
+        None: If no profile is matching context.
+    """
+
+    log = Logger.get_logger("CustomWorkfileResolve")
+
+    project_name = project_doc["name"]
+    if project_settings is None:
+        project_settings = get_project_settings(project_name)
+
+    host_settings = project_settings.get(host_name)
+    if not host_settings:
+        log.info("Host \"{}\" doesn't have settings".format(host_name))
+        return None
+
+    workfile_builder_settings = host_settings.get("workfile_builder")
+    if not workfile_builder_settings:
+        log.info((
+            "Seems like old version of settings is used."
+            " Can't access custom templates in host \"{}\"."
+        ).format(host_name))
+        return
+
+    if not workfile_builder_settings["create_first_version"]:
+        log.info((
+            "Project \"{}\" has turned off to create first workfile for"
+            " host \"{}\""
+        ).format(project_name, host_name))
+        return
+
+    # Backwards compatibility
+    template_profiles = workfile_builder_settings.get("custom_templates")
+    if not template_profiles:
+        log.info(
+            "Custom templates are not filled. Skipping template copy."
+        )
+        return
+
+    if anatomy is None:
+        anatomy = Anatomy(project_name)
+
+    # get project, asset, task anatomy context data
+    anatomy_context_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    # add root dict
+    anatomy_context_data["root"] = anatomy.roots
+
+    # get task type for the task in context
+    current_task_type = anatomy_context_data["task"]["type"]
+
+    # get path from matching profile
+    matching_item = filter_profiles(
+        template_profiles,
+        {"task_types": current_task_type}
+    )
+    # when path is available try to format it in case
+    # there are some anatomy template strings
+    if matching_item:
+        template = matching_item["path"][platform.system().lower()]
+        return StringTemplate.format_strict_template(
+            template, anatomy_context_data
+        ).normalized()
+
+    return None
+
+
+def get_custom_workfile_template_by_string_context(
+    project_name,
+    asset_name,
+    task_name,
+    host_name,
+    anatomy=None,
+    project_settings=None
+):
+    """Filter and fill workfile template profiles by passed context.
+
+    Passed context are string representations of project, asset and task.
+    Function will query documents of project and asset to be able use
+    `get_custom_workfile_template` for rest of logic.
+
+    Args:
+        project_name(str): Project name.
+        asset_name(str): Asset name.
+        task_name(str): Task name.
+        host_name (str): Name of host.
+        anatomy(Anatomy): Optionally prepared anatomy object for passed
+            project.
+        project_settings(Dict[str, Any]): Preloaded project settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+        None: If no profile is matching context.
+    """
+
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+
+    return get_custom_workfile_template(
+        project_doc, asset_doc, task_name, host_name, anatomy, project_settings
+    )
