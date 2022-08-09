@@ -1,9 +1,6 @@
 import os
 
-from openpype.lib import (
-    StringTemplate,
-    get_last_workfile_with_version,
-)
+from openpype.lib import StringTemplate
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -11,6 +8,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.workfile import (
     get_workfile_template_key_from_context,
+    get_last_workfile_with_version,
 )
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin

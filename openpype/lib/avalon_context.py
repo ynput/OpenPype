@@ -1696,6 +1696,7 @@ def get_custom_workfile_template(template_profiles):
     )
 
 
+@deprecated("openpype.pipeline.workfile.get_last_workfile_with_version")
 def get_last_workfile_with_version(
     workdir, file_template, fill_data, extensions
 ):
@@ -1711,78 +1712,15 @@ def get_last_workfile_with_version(
         tuple: Last workfile<str> with version<int> if there is any otherwise
             returns (None, None).
     """
-    if not os.path.exists(workdir):
-        return None, None
 
-    # Fast match on extension
-    filenames = [
-        filename
-        for filename in os.listdir(workdir)
-        if os.path.splitext(filename)[1] in extensions
-    ]
+    from openpype.pipeline.workfile import get_last_workfile_with_version
 
-    # Build template without optionals, version to digits only regex
-    # and comment to any definable value.
-    _ext = []
-    for ext in extensions:
-        if not ext.startswith("."):
-            ext = "." + ext
-        # Escape dot for regex
-        ext = "\\" + ext
-        _ext.append(ext)
-    ext_expression = "(?:" + "|".join(_ext) + ")"
-
-    # Replace `.{ext}` with `{ext}` so we are sure there is not dot at the end
-    file_template = re.sub(r"\.?{ext}", ext_expression, file_template)
-    # Replace optional keys with optional content regex
-    file_template = re.sub(r"<.*?>", r".*?", file_template)
-    # Replace `{version}` with group regex
-    file_template = re.sub(r"{version.*?}", r"([0-9]+)", file_template)
-    file_template = re.sub(r"{comment.*?}", r".+?", file_template)
-    file_template = StringTemplate.format_strict_template(
-        file_template, fill_data
+    return get_last_workfile_with_version(
+        workdir, file_template, fill_data, extensions
     )
 
-    # Match with ignore case on Windows due to the Windows
-    # OS not being case-sensitive. This avoids later running
-    # into the error that the file did exist if it existed
-    # with a different upper/lower-case.
-    kwargs = {}
-    if platform.system().lower() == "windows":
-        kwargs["flags"] = re.IGNORECASE
 
-    # Get highest version among existing matching files
-    version = None
-    output_filenames = []
-    for filename in sorted(filenames):
-        match = re.match(file_template, filename, **kwargs)
-        if not match:
-            continue
-
-        file_version = int(match.group(1))
-        if version is None or file_version > version:
-            output_filenames[:] = []
-            version = file_version
-
-        if file_version == version:
-            output_filenames.append(filename)
-
-    output_filename = None
-    if output_filenames:
-        if len(output_filenames) == 1:
-            output_filename = output_filenames[0]
-        else:
-            last_time = None
-            for _output_filename in output_filenames:
-                full_path = os.path.join(workdir, _output_filename)
-                mod_time = os.path.getmtime(full_path)
-                if last_time is None or last_time < mod_time:
-                    output_filename = _output_filename
-                    last_time = mod_time
-
-    return output_filename, version
-
-
+@deprecated("openpype.pipeline.workfile.get_last_workfile")
 def get_last_workfile(
     workdir, file_template, fill_data, extensions, full_path=False
 ):
@@ -1800,22 +1738,12 @@ def get_last_workfile(
     Returns:
         str: Last or first workfile as filename of full path to filename.
     """
-    filename, version = get_last_workfile_with_version(
-        workdir, file_template, fill_data, extensions
+
+    from openpype.pipeline.workfile import get_last_workfile
+
+    return get_last_workfile(
+        workdir, file_template, fill_data, extensions, full_path
     )
-    if filename is None:
-        data = copy.deepcopy(fill_data)
-        data["version"] = 1
-        data.pop("comment", None)
-        if not data.get("ext"):
-            data["ext"] = extensions[0]
-        data["ext"] = data["ext"].replace('.', '')
-        filename = StringTemplate.format_strict_template(file_template, data)
-
-    if full_path:
-        return os.path.normpath(os.path.join(workdir, filename))
-
-    return filename
 
 
 @with_pipeline_io

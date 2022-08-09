@@ -27,7 +27,6 @@ from openpype.settings.constants import (
 from . import PypeLogger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
-from .avalon_context import get_last_workfile
 
 from .python_module_tools import (
     modules_from_path,
@@ -1728,7 +1727,10 @@ def _prepare_last_workfile(data, workdir):
     if not last_workfile_path:
         extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
         if extensions:
-            from openpype.pipeline import get_workfile_template_key
+            from openpype.pipeline.workfile import (
+                get_workfile_template_key,
+                get_last_workfile
+            )
 
             anatomy = data["anatomy"]
             project_settings = data["project_settings"]
