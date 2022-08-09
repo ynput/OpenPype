@@ -670,7 +670,6 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
     return changes
 
 
-@with_pipeline_io
 @deprecated("openpype.client.get_workfile_info")
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
@@ -691,13 +690,14 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
+        from openpype.pipeline import legacy_io
         dbcon = legacy_io
 
     project_name = dbcon.active_project()
     return get_workfile_info(project_name, asset_id, task_name, filename)
 
 
-@with_pipeline_io
+@deprecated
 def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     """Creates or replace workfile document in mongo.
 
@@ -718,6 +718,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
+        from openpype.pipeline import legacy_io
         dbcon = legacy_io
 
     # Filter of workfile document
@@ -764,7 +765,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     )
 
 
-@with_pipeline_io
+@deprecated
 def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     if not workfile_doc:
         # TODO add log message
@@ -775,6 +776,7 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
+        from openpype.pipeline import legacy_io
         dbcon = legacy_io
 
     # Convert data to mongo modification keys/values
