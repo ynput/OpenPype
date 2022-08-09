@@ -429,7 +429,7 @@ class ExtractLook(openpype.api.Extractor):
                 # node doesn't have color space attribute
                 color_space = "Raw"
             else:
-                # get all the resolved files 
+                # get all the resolved files in Maya File Path Editor 
                 src = files_metadata.get(source)
                 if src:
                     if files_metadata[source]["color_space"] == "Raw":
