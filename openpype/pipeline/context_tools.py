@@ -22,7 +22,10 @@ from openpype.settings import get_project_settings
 from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
 from .template_data import get_template_data_with_names
-from .workfile import get_workfile_template_key
+from .workfile import (
+    get_workfile_template_key,
+    get_custom_workfile_template_by_string_context,
+)
 from . import (
     legacy_io,
     register_loader_plugin_path,
@@ -412,3 +415,33 @@ def get_workdir_from_session(session=None, template_key=None):
     if path:
         path = os.path.normpath(path)
     return path
+
+
+def get_custom_workfile_template_from_session(
+    session=None, project_settings=None
+):
+    """Filter and fill workfile template profiles by current context.
+
+    Current context is defined by `legacy_io.Session`. That's why this
+    function should be used only inside host where context is set and stable.
+
+    Args:
+        session (Union[None, Dict[str, str]]): Session from which are taken
+            data.
+        project_settings(Dict[str, Any]): Template profiles from settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    if session is None:
+        session = legacy_io.Session
+
+    return get_custom_workfile_template_by_string_context(
+        session["AVALON_PROJECT"],
+        session["AVALON_ASSET"],
+        session["AVALON_TASK"],
+        session["AVALON_APP"],
+        project_settings=project_settings
+    )
