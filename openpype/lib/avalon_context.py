@@ -528,6 +528,7 @@ def template_data_from_session(session=None):
     """
 
     from openpype.pipeline.context_tools import get_template_data_from_session
+
     return get_template_data_from_session(session)
 
 
@@ -908,6 +909,8 @@ def _get_task_context_data_for_anatomy(
     return data
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_custom_workfile_template_by_context")
 def get_custom_workfile_template_by_context(
     template_profiles, project_doc, asset_doc, task_name, anatomy=None
 ):
@@ -961,6 +964,9 @@ def get_custom_workfile_template_by_context(
     return None
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_custom_workfile_template_by_string_context"
+)
 def get_custom_workfile_template_by_string_context(
     template_profiles, project_name, asset_name, task_name,
     dbcon=None, anatomy=None
@@ -1005,7 +1011,7 @@ def get_custom_workfile_template_by_string_context(
     )
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.get_custom_workfile_template")
 def get_custom_workfile_template(template_profiles):
     """Filter and fill workfile template profiles by current context.
 
@@ -1019,6 +1025,8 @@ def get_custom_workfile_template(template_profiles):
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
     """
+
+    from openpype.pipeline import legacy_io
 
     return get_custom_workfile_template_by_string_context(
         template_profiles,
