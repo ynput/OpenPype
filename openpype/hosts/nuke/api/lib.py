@@ -21,7 +21,6 @@ from openpype.client import (
 )
 from openpype.api import (
     Logger,
-    BuildWorkfile,
     get_version_from_path,
     get_current_project_settings,
 )
@@ -40,6 +39,7 @@ from openpype.pipeline import (
     Anatomy,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.workfile import BuildWorkfile
 
 from . import gizmo_menu
 
