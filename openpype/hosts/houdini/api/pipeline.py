@@ -309,6 +309,7 @@ def _set_context_settings():
         fps
         resolution
         renderer
+        shelves
 
     Returns:
         None
@@ -320,6 +321,7 @@ def _set_context_settings():
     lib.set_scene_fps(fps)
 
     lib.reset_framerange()
+    lib.create_shelf()
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):
