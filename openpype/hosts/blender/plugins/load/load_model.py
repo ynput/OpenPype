@@ -101,7 +101,6 @@ class InstanceModelLoader(plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        asset_name = plugin.asset_name(asset, subset)
 
         unique_number = plugin.get_unique_number(asset, subset)
         group_name = plugin.asset_name(asset, subset, unique_number)
@@ -114,9 +113,7 @@ class InstanceModelLoader(plugin.AssetLoader):
         if options is not None:
             self._apply_options(asset_group, options)
 
-        self._update_metadata(
-            asset_group, context, name, namespace, asset_name, libpath
-        )
+        self._update_metadata(asset_group, context, namespace, libpath)
 
         self[:] = plugin.get_container_objects(asset_group)
 
