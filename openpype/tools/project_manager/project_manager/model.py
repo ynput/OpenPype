@@ -144,6 +144,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     # - order is important as column names are used as keys for column indexes
     _columns_def = [
         ("name", "Name"),
+        ("label", "Label"),
         ("type", "Type"),
         ("fps", "FPS"),
         ("frameStart", "Frame start"),
@@ -1819,6 +1820,7 @@ class AssetItem(BaseItem):
 
     columns = {
         "name",
+        "label",
         "type",
         "fps",
         "frameStart",
@@ -1834,6 +1836,7 @@ class AssetItem(BaseItem):
     }
     editable_columns = {
         "name",
+        "label",
         "frameStart",
         "frameEnd",
         "fps",
@@ -1858,6 +1861,7 @@ class AssetItem(BaseItem):
 
         "data.tasks": 1,
 
+        "data.label": 1,
         "data.frameStart": 1,
         "data.frameEnd": 1,
         "data.fps": 1,
