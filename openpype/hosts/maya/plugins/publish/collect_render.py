@@ -204,8 +204,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             aov_dict = {}
             default_render_file = context.data.get('project_settings')\
                 .get('maya')\
-                .get('create')\
-                .get('CreateRender')\
+                .get('RenderSettings')\
                 .get('default_render_image_folder') or ""
             # replace relative paths with absolute. Render products are
             # returned as list of dictionaries.
