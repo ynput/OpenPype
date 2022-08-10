@@ -16,7 +16,7 @@
                 "type": "path",
                 "key": "shelf_set_source_path",
                 "label": "Shelf Set Path",
-                "multipath": true,
+                "multipath": false,
                 "multiplatform": true
             },
             {
@@ -33,7 +33,7 @@
                             "label": "Shelf Name"
                         },
                         {
-                            "type": "text",
+                            "type": "path",
                             "key": "shelf_file_path",
                             "label": "Shelf File Path"
                         },
@@ -51,17 +51,17 @@
                                         "label": "Name"
                                     },
                                     {
-                                        "type": "text",
+                                        "type": "path",
                                         "key": "filepath",
                                         "label": "File Path"
                                     },
                                     {
-                                        "type": "text",
+                                        "type": "path",
                                         "key": "script",
                                         "label": "Script"
                                     },
                                     {
-                                        "type": "text",
+                                        "type": "path",
                                         "key": "icon",
                                         "label": "Icon"
                                     },

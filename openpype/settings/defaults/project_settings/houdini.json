@@ -2,7 +2,11 @@
     "shelves": [
         {
             "shelf_set_name": "OpenPype Shelves",
-            "shelf_set_source_path": "/path/to/your/shelf_set_file",
+            "shelf_set_source_path": {
+                "windows": "",
+                "darwin": "",
+                "linux": "/path/to/your/shelf_set_file"
+            },
             "shelf_definition": [
                 {
                     "shelf_name": "OpenPype Shelf",
