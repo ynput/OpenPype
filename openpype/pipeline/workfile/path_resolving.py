@@ -216,11 +216,13 @@ def get_last_workfile_with_version(
     if not os.path.exists(workdir):
         return None, None
 
-    dotted_extensions = {
-        ".{}".format(ext)
-        for ext in extensions
-        if not ext.startswith(".")
-    }
+
+    dotted_extensions = set()
+    for ext in extensions:
+        if not ext.startswith("."):
+            ext = ".{}".format(ext)
+        dotted_extensions.add(ext)
+
     # Fast match on extension
     filenames = [
         filename
