@@ -116,10 +116,7 @@ class ExtractBlend(publish.Extractor):
                 "name": instance_metadata["subset"],
                 "loader": loader_module.__name__,
                 "representation": repre_id,
-                "asset_name": plugin.asset_name(
-                    instance_metadata["asset"],
-                    instance_metadata["subset"],
-                ),
+                "asset_name": instance_metadata["asset"],
                 "parent": str(instance.data["assetEntity"]["parent"]),
                 "family": instance.data["family"],
             },

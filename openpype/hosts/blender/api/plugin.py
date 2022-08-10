@@ -1178,14 +1178,7 @@ class AssetLoader(LoaderPlugin):
         if namespace:
             self._rename_with_namespace(asset_group, namespace)
 
-        self._update_metadata(
-            asset_group,
-            context,
-            name,
-            namespace,
-            asset_name(asset, subset),
-            libpath
-        )
+        self._update_metadata(asset_group, name, context, namespace, libpath)
 
         if options is not None:
             self._apply_options(asset_group, options)
@@ -1414,10 +1407,7 @@ class AssetLoader(LoaderPlugin):
                 "loader": str(self.__class__.__name__),
                 "libpath": libpath,
                 "representation": str(representation["_id"]),
-                "asset_name": asset_name(
-                    representation["context"]["asset"],
-                    representation["context"]["subset"],
-                ),
+                "asset_name": representation["context"]["asset"],
                 "parent": str(representation["parent"]),
                 "family": representation["context"]["family"],
             }
@@ -1429,9 +1419,7 @@ class AssetLoader(LoaderPlugin):
         self,
         asset_group: Union[bpy.types.Collection, bpy.types.Object],
         context: dict,
-        name: str,
         namespace: str,
-        asset_name: str,
         libpath: str
     ):
         """Update the asset group metadata with the given arguments and some
@@ -1442,12 +1430,12 @@ class AssetLoader(LoaderPlugin):
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
-                "name": name,
+                "name": context["subset"]["name"],
                 "namespace": namespace or "",
                 "loader": str(self.__class__.__name__),
                 "representation": str(context["representation"]["_id"]),
                 "libpath": libpath,
-                "asset_name": asset_name,
+                "asset_name": context["asset"]["name"],
                 "parent": str(context["representation"]["parent"]),
                 "family": context["representation"]["context"]["family"],
                 "objectName": asset_group.name
@@ -1468,14 +1456,10 @@ class AssetLoader(LoaderPlugin):
         """Switch the asset using update"""
         if (
             container["loader"] == str(self.__class__.__name__)
-            or (
-                container["family"] == representation["context"]["family"]
-                and container["loader"] != "InstanceModelLoader"
-            )
-            or (
-                container["parent"] == representation["context"]["parent"]
-                and container["family"] in ("model", "rig")
-            )
+            or (container["family"] == representation["context"]["family"]
+                and container["loader"] != "InstanceModelLoader")
+            or (container["asset_name"] == representation["context"]["asset"]
+                and container["family"] in ("model", "rig"))
         ):
             asset_group = self._update_process(container, representation)
 
