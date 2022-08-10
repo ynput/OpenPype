@@ -94,7 +94,7 @@ class HierarchyView(QtWidgets.QTreeView):
         },
         "label": {
             "stretch": QtWidgets.QHeaderView.Interactive,
-            "width": 100
+            "width": 150
         },
         "type": {
             "stretch": QtWidgets.QHeaderView.Interactive,
@@ -439,7 +439,7 @@ class HierarchyView(QtWidgets.QTreeView):
 
         # TODO change hardcoded column index to coded
         task_type_index = self._source_model.index(
-            new_index.row(), 1, new_index.parent()
+            new_index.row(), 2, new_index.parent()
         )
         # Change current index
         self.selectionModel().setCurrentIndex(
