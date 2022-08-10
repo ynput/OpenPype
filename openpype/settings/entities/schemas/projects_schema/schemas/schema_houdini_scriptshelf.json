@@ -15,7 +15,7 @@
             {
                 "type": "path",
                 "key": "shelf_set_source_path",
-                "label": "Shelf Set Path",
+                "label": "Shelf Set Path (optional)",
                 "multipath": false,
                 "multiplatform": true
             },
@@ -33,11 +33,6 @@
                             "label": "Shelf Name"
                         },
                         {
-                            "type": "path",
-                            "key": "shelf_file_path",
-                            "label": "Shelf File Path"
-                        },
-                        {
                             "type": "list",
                             "key": "tools_list",
                             "label": "Tools",
@@ -49,11 +44,6 @@
                                         "type": "text",
                                         "key": "name",
                                         "label": "Name"
-                                    },
-                                    {
-                                        "type": "path",
-                                        "key": "filepath",
-                                        "label": "File Path"
                                     },
                                     {
                                         "type": "path",
