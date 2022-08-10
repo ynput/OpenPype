@@ -144,6 +144,5 @@ def cli(args):
 
     print(update_addon_state(get_addons_info(), addon_folder,
                              downloader_factory))
-    print(sha256sum("c:/projects/openpype_slack_1.0.0.zip"))
 
 
