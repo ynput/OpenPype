@@ -92,6 +92,10 @@ class HierarchyView(QtWidgets.QTreeView):
             "stretch": QtWidgets.QHeaderView.Interactive,
             "width": 260
         },
+        "label": {
+            "stretch": QtWidgets.QHeaderView.Interactive,
+            "width": 100
+        },
         "type": {
             "stretch": QtWidgets.QHeaderView.Interactive,
             "width": 140
