@@ -1188,7 +1188,7 @@ class AssetLoader(LoaderPlugin):
         if namespace:
             self._rename_with_namespace(asset_group, namespace)
 
-        self._update_metadata(asset_group, name, context, namespace, libpath)
+        self._update_metadata(asset_group, context, namespace, libpath)
 
         if options is not None:
             self._apply_options(asset_group, options)
