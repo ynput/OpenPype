@@ -118,3 +118,14 @@ class InstanceModelLoader(plugin.AssetLoader):
         self[:] = plugin.get_container_objects(asset_group)
 
         return asset_group
+
+    def exec_switch(self, container: Dict, representation: Dict):
+        """Switch the asset using update"""
+        if container["loader"] != "InstanceModelLoader":
+            raise NotImplementedError("Not implemented yet")
+
+        asset_group = self._update_process(container, representation)
+
+        # Update namespace if needed
+
+        return asset_group
