@@ -38,6 +38,10 @@ class ExtractBlend(publish.Extractor):
 
         assert loaders, f"No loader modules found for {instance.name}"
 
+        for loader_type in ("Instance", "Link", "Append"):
+            for loader in loaders:
+                if loader_type in loader.__name__:
+                    return loader
         return loaders[0]
 
     def _pack_images_from_objects(self, objects):
@@ -109,12 +113,13 @@ class ExtractBlend(publish.Extractor):
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
-                "name": instance.name,
-                "namespace": instance.data.get("namespace", ""),
+                "name": instance_metadata["subset"],
                 "loader": loader_module.__name__,
                 "representation": repre_id,
-                "libpath": filepath,
-                "asset_name": instance.name,
+                "asset_name": plugin.asset_name(
+                    instance_metadata["asset"],
+                    instance_metadata["subset"],
+                ),
                 "parent": str(instance.data["assetEntity"]["parent"]),
                 "family": instance.data["family"],
             },
