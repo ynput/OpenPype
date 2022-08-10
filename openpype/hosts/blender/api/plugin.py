@@ -781,11 +781,19 @@ class ContainerMaintainer(ExitStack):
     def maintained_actions(self):
         """Maintain action during context."""
         actions = {}
+        rig_action = None
         # Store actions from objects.
         for obj in self.container_objects:
             if obj.animation_data and obj.animation_data.action:
                 actions[obj.name] = obj.animation_data.action
                 obj.animation_data.action.use_fake_user = True
+                # Keep action if armature from Rig asset.
+                if (
+                    rig_action is None
+                    and obj.type == "ARMATURE"
+                    and is_container(self.container, "rig")
+                ):
+                    rig_action = obj.animation_data.action
         try:
             yield
         finally:
@@ -796,6 +804,14 @@ class ContainerMaintainer(ExitStack):
                     if obj.animation_data is None:
                         obj.animation_data_create()
                     obj.animation_data.action = action
+            # Force restor action for armature from Rig asset
+            if rig_action:
+                for obj in self.container.all_objects:
+                    if obj.type == "ARMATURE":
+                        if obj.animation_data is None:
+                            obj.animation_data_create()
+                        if not obj.animation_data.action:
+                            obj.animation_data.action = rig_action
             # Clear fake user.
             for action in actions.values():
                 action.use_fake_user = False
@@ -1220,7 +1236,7 @@ class AssetLoader(LoaderPlugin):
         subset = context["subset"]["name"]
         unique_number = get_unique_number(asset, subset)
         namespace = namespace or f"{asset}_{unique_number}"
-        name = name or asset_name(asset, subset, unique_number)
+        name = name or subset
 
         return self.process_asset(
             context=context,
@@ -1240,6 +1256,9 @@ class AssetLoader(LoaderPlugin):
         )
 
         asset_metadata = asset_group.get(AVALON_PROPERTY, {})
+
+        if asset_metadata.get("loader") != str(self.__class__.__name__):
+            return False
 
         group_libpath = asset_metadata.get("libpath", "")
 
@@ -1401,9 +1420,16 @@ class AssetLoader(LoaderPlugin):
         metadata_update(
             asset_group,
             {
+                "name": representation["context"]["subset"],
+                "loader": str(self.__class__.__name__),
                 "libpath": libpath,
                 "representation": str(representation["_id"]),
+                "asset_name": asset_name(
+                    representation["context"]["asset"],
+                    representation["context"]["subset"],
+                ),
                 "parent": str(representation["parent"]),
+                "family": representation["context"]["family"],
             }
         )
 
@@ -1445,6 +1471,33 @@ class AssetLoader(LoaderPlugin):
     def update(self, container: Dict, representation: Dict) -> MainThreadItem:
         """Run the update on Blender main thread"""
         mti = MainThreadItem(self.exec_update, container, representation)
+        execute_in_main_thread(mti)
+        return mti
+
+    def exec_switch(self, container: Dict, representation: Dict):
+        """Switch the asset using update"""
+        if (
+            container["loader"] == str(self.__class__.__name__)
+            or (
+                container["family"] == representation["context"]["family"]
+                and container["loader"] != "InstanceModelLoader"
+            )
+            or (
+                container["parent"] == representation["context"]["parent"]
+                and container["family"] in ("model", "rig")
+            )
+        ):
+            asset_group = self._update_process(container, representation)
+
+            # Update namespace if needed
+
+            return asset_group
+        else:
+            raise NotImplementedError("Not implemented yet")
+
+    def switch(self, container: Dict, representation: Dict) -> MainThreadItem:
+        """Run the switch on Blender main thread"""
+        mti = MainThreadItem(self.exec_switch, container, representation)
         execute_in_main_thread(mti)
         return mti
 

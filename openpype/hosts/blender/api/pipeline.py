@@ -390,20 +390,22 @@ def parse_container(
     """
 
     data = lib.read(container)
+
+    # NOTE (kaamaurice): experimental for the internal Asset browser.
     if (
-        isinstance(container, bpy.types.Object)
+        not data
+        and isinstance(container, bpy.types.Object)
         and container.is_instancer
         and container.instance_collection
     ):
         data.update(lib.read(container.instance_collection))
+        # Fix namespace if empty
+        if not data.get("namespace"):
+            match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
+            data["namespace"] = match.group(1) if match else container.name
 
     # Append transient data
     data["objectName"] = container.name
-
-    # Fix namespace if empty
-    if not data.get("namespace"):
-        re_match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
-        data["namespace"] = re_match.group(1) if re_match else container.name
 
     if validate:
         schema.validate(data)
