@@ -1,3 +1,4 @@
+from cProfile import label
 import os
 import logging
 import platform
@@ -17,14 +18,13 @@ def generate_shelves():
 
     if not shelves_set_config:
         log.warning(
-            "SHELF ERROR: No custom shelves found in project settings."
+            "SHELF WARNGING: No custom shelves found in project settings."
         )
         return
 
     for shelf_set_config in shelves_set_config:
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
 
-        # if shelf_set_source_path is not None we load the source path and continue
         if shelf_set_filepath[current_os]:
             if not os.path.isfile(shelf_set_filepath[current_os]):
                 raise FileNotFoundError(
@@ -36,13 +36,33 @@ def generate_shelves():
             hou.shelves.newShelfSet(file_path=shelf_set_filepath[current_os])
             continue
 
-        # if the shelf set name already exists, do nothing, else, create a new one
         shelf_set_name = shelf_set_config.get('shelf_set_name')
+        if not shelf_set_name:
+            log.warning(
+                "SHELF WARNGING: No name found in shelf set definition."
+            )
+            return
+
         shelf_set = get_or_create_shelf_set(shelf_set_name)
 
-        # go through each shelf
-        # if shelf_file_path exists, load the shelf and return
-        # if the shelf name already exists, do nothing, else, create a new one
+        shelves_definition = shelf_set_config.get('shelf_definition')
+
+        if not shelves_definition:
+            log.warning(
+                "SHELF WARNING: \
+No shelf definition found for shelf set named '{}'".format(shelf_set_name)
+            )
+            return
+
+        for shelf_definition in shelves_definition:
+            shelf_name = shelf_definition.get('shelf_name')
+            if not shelf_name:
+                log.warning(
+                    "SHELF WARNGING: No name found in shelf set definition."
+                )
+                return
+
+            shelf = get_or_create_shelf(shelf_name)
 
         # go through each tool
         # if filepath exists, load the tool, add it to the shelf and continue
@@ -54,10 +74,10 @@ def generate_shelves():
 
 
 def get_or_create_shelf_set(shelf_set_label):
-    all_shelves = hou.shelves.shelfSets().values()
+    all_shelves_sets = hou.shelves.shelfSets().values()
 
     shelf_set = [
-        shelf for shelf in all_shelves if shelf.label() == shelf_set_label
+        shelf for shelf in all_shelves_sets if shelf.label() == shelf_set_label
     ]
 
     if shelf_set:
@@ -71,8 +91,20 @@ def get_or_create_shelf_set(shelf_set_label):
     return new_shelf_set
 
 
-def get_or_create_shelf():
-    pass
+def get_or_create_shelf(shelf_label):
+    all_shelves = hou.shelves.shelves().values()
+
+    shelf = [s for s in all_shelves if s.label() == shelf_label]
+
+    if shelf:
+        return shelf[0]
+
+    shelf_name = shelf_label.replace(' ', '_').lower()
+    new_shelf = hou.shelves.newShelf(
+        name=shelf_name,
+        label=shelf_label
+    )
+    return new_shelf
 
 
 def get_or_create_tool():
