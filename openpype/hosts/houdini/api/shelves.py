@@ -21,13 +21,19 @@ def generate_shelves():
         )
         return
 
-    # run the shelf generator for Houdini
     for shelf_set_config in shelves_set_config:
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
+
         # if shelf_set_source_path is not None we load the source path and continue
         if shelf_set_filepath[current_os]:
+            if not os.path.isfile(shelf_set_filepath[current_os]):
+                raise FileNotFoundError(
+                    "SHELF ERROR: This path doesn't exist - {}".format(
+                        shelf_set_filepath[current_os]
+                    )
+                )
+
             hou.shelves.newShelfSet(file_path=shelf_set_filepath[current_os])
-            # hou.ShelfSet.setFilePath(file_path=shelf_set_filepath[operating_system])
             continue
 
         # if the shelf set name already exists, do nothing, else, create a new one
@@ -47,9 +53,22 @@ def generate_shelves():
         # add the shelf to the shelf set with the shelfs already in it
 
 
-def get_or_create_shelf_set(shelf_set_name):
-    log.warning("IN GET OR CREATE SHELF SET: {}".format(shelf_set_name))
-    hou.shelves.shelves()
+def get_or_create_shelf_set(shelf_set_label):
+    all_shelves = hou.shelves.shelfSets().values()
+
+    shelf_set = [
+        shelf for shelf in all_shelves if shelf.label() == shelf_set_label
+    ]
+
+    if shelf_set:
+        return shelf_set[0]
+
+    shelf_set_name = shelf_set_label.replace(' ', '_').lower()
+    new_shelf_set = hou.shelves.newShelfSet(
+        name=shelf_set_name,
+        label=shelf_set_label
+    )
+    return new_shelf_set
 
 
 def get_or_create_shelf():
