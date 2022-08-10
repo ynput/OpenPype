@@ -216,7 +216,6 @@ def get_last_workfile_with_version(
     if not os.path.exists(workdir):
         return None, None
 
-
     dotted_extensions = set()
     for ext in extensions:
         if not ext.startswith("."):
@@ -227,7 +226,7 @@ def get_last_workfile_with_version(
     filenames = [
         filename
         for filename in os.listdir(workdir)
-        if os.path.splitext(filename)[1] in dotted_extensions
+        if os.path.splitext(filename)[-1] in dotted_extensions
     ]
 
     # Build template without optionals, version to digits only regex
