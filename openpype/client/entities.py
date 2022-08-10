@@ -793,7 +793,7 @@ def get_output_link_versions(project_name, version_id, fields=None):
     # Does make sense to look for hero versions?
     query_filter = {
         "type": "version",
-        "data.inputLinks.input": version_id
+        "data.inputLinks.id": version_id
     }
     return conn.find(query_filter, _prepare_fields(fields))
 
