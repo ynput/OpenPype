@@ -7,9 +7,10 @@ from pathlib import Path
 import platform
 from zipfile import ZipFile
 from typing import List
-import hashlib
 import sys
 from igniter.bootstrap_repos import OpenPypeVersion
+
+from openpype.lib.path_tools import sha256sum
 
 
 class VersionRepacker:
@@ -44,25 +45,6 @@ class VersionRepacker:
             header = self._term.darkolivegreen3("--- ")
 
         print("{}{}".format(header, msg))
-
-    @staticmethod
-    def sha256sum(filename):
-        """Calculate sha256 for content of the file.
-
-        Args:
-             filename (str): Path to file.
-
-        Returns:
-            str: hex encoded sha256
-
-        """
-        h = hashlib.sha256()
-        b = bytearray(128 * 1024)
-        mv = memoryview(b)
-        with open(filename, 'rb', buffering=0) as f:
-            for n in iter(lambda: f.readinto(mv), 0):
-                h.update(mv[:n])
-        return h.hexdigest()
 
     @staticmethod
     def _filter_dir(path: Path, path_filter: List) -> List[Path]:
@@ -104,7 +86,7 @@ class VersionRepacker:
             nits="%", color="green")
         for file in file_list:
             checksums.append((
-                VersionRepacker.sha256sum(file.as_posix()),
+                sha256sum(file.as_posix()),
                 file.resolve().relative_to(self.version_path),
                 file
             ))
