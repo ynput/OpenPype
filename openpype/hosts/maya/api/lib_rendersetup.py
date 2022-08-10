@@ -367,9 +367,9 @@ def get_shader_in_layer(node, layer):
 
     """
 
-    def _get_connected_shader(shape):
+    def _get_connected_shader(plug):
         """Return current shader"""
-        return cmds.listConnections(shape + ".instObjGroups",
+        return cmds.listConnections(plug,
                                     source=False,
                                     destination=True,
                                     plugs=False,
