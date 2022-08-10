@@ -154,12 +154,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             layer_name = "rs_{}".format(expected_layer_name)
 
             # collect all frames we are expecting to be rendered
-            renderer = self.get_render_attribute("currentRenderer",
-                                                 layer=layer_name)
-            # handle various renderman names
-            if renderer.startswith("renderman"):
-                renderer = "renderman"
-
             # return all expected files for all cameras and aovs in given
             # frame range
             layer_render_products = get_layer_render_products(layer_name)
