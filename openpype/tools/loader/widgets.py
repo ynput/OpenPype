@@ -168,7 +168,8 @@ class SubsetWidget(QtWidgets.QWidget):
         ("duration", 60),
         ("handles", 55),
         ("step", 10),
-        ("repre_info", 65)
+        ("repre_info", 65),
+        ("loaded_in_scene", 20)
     )
 
     def __init__(

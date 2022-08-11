@@ -14,9 +14,11 @@ from openpype.client import (
     get_versions,
     get_hero_versions,
     get_version_by_name,
-    get_representations
+    get_representations,
+    get_representations_parents
 )
 from openpype.pipeline import (
+    registered_host,
     HeroVersionType,
     schema,
 )
@@ -136,7 +138,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "duration",
         "handles",
         "step",
-        "repre_info"
+        "repre_info",
+        "loaded_in_scene"
     ]
 
     column_labels_mapping = {
@@ -150,7 +153,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "duration": "Duration",
         "handles": "Handles",
         "step": "Step",
-        "repre_info": "Availability"
+        "repre_info": "Availability",
+        "loaded_in_scene": "In scene"
     }
 
     SortAscendingRole = QtCore.Qt.UserRole + 2
@@ -231,8 +235,14 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._doc_fetching_stop = False
         self._doc_payload = {}
 
-        self.doc_fetched.connect(self._on_doc_fetched)
+        self._host = registered_host()
+        self._loaded_representation_ids = set()
 
+        # Refresh loaded scene containers only every 3 seconds at most
+        self._host_loaded_refresh_timeout = 3
+        self._host_loaded_refresh_time = 0
+
+        self.doc_fetched.connect(self._on_doc_fetched)
         self.refresh()
 
     def get_item_by_id(self, item_id):
@@ -472,6 +482,29 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
             last_versions_by_subset_id[subset_id] = hero_version
 
+        # Check loaded subsets
+        subsets_loaded_by_id = set()
+        ids = self._loaded_representation_ids
+        if ids:
+            if self._doc_fetching_stop:
+                return
+
+            # Get subsets from representations
+            # todo: optimize with aggregation query to distinct subset id
+            representations = get_representations(project_name,
+                                                  representation_ids=ids,
+                                                  fields=["parent"])
+            parents_by_repre_id = get_representations_parents(
+                project_name,
+                representations=representations
+            )
+            for repre_id, repre_parents in parents_by_repre_id.items():
+                _, repre_subset, _, _ = repre_parents
+                subsets_loaded_by_id.add(repre_subset["_id"])
+
+        if self._doc_fetching_stop:
+            return
+
         repre_info = {}
         if self.sync_server.enabled:
             version_ids = set()
@@ -494,7 +527,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             "subset_docs_by_id": subset_docs_by_id,
             "subset_families": subset_families,
             "last_versions_by_subset_id": last_versions_by_subset_id,
-            "repre_info_by_version_id": repre_info
+            "repre_info_by_version_id": repre_info,
+            "subsets_loaded_by_id": subsets_loaded_by_id
         }
 
         self.doc_fetched.emit()
@@ -526,6 +560,17 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             self.doc_fetched.emit()
             return
 
+        # Collect scene container representations to compare loaded state
+        # This runs in the main thread because it involves the host DCC
+        if self._host:
+            time_since_refresh = time.time() - self._host_loaded_refresh_time
+            print(time_since_refresh)
+            if time_since_refresh > self._host_loaded_refresh_timeout:
+                repre_ids = {con.get("representation")
+                             for con in self._host.ls()}
+                self._loaded_representation_ids = repre_ids
+                self._host_loaded_refresh_time = time.time()
+
         self.fetch_subset_and_version()
 
     def _on_doc_fetched(self):
@@ -547,6 +592,10 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             "repre_info_by_version_id"
         )
 
+        subsets_loaded_by_id = self._doc_payload.get(
+            "subsets_loaded_by_id"
+        )
+
         if (
             asset_docs_by_id is None
             or subset_docs_by_id is None
@@ -561,7 +610,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             asset_docs_by_id,
             subset_docs_by_id,
             last_versions_by_subset_id,
-            repre_info_by_version_id
+            repre_info_by_version_id,
+            subsets_loaded_by_id
         )
         self.endResetModel()
         self.refreshed.emit(True)
@@ -589,8 +639,12 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         return merge_group
 
     def _fill_subset_items(
-        self, asset_docs_by_id, subset_docs_by_id, last_versions_by_subset_id,
-        repre_info_by_version_id
+        self,
+        asset_docs_by_id,
+        subset_docs_by_id,
+        last_versions_by_subset_id,
+        repre_info_by_version_id,
+        subsets_loaded_by_id
     ):
         _groups_tuple = self.groups_config.split_subsets_for_groups(
             subset_docs_by_id.values(), self._grouping
@@ -614,6 +668,37 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 "index": self.index(group_item.row(), 0)
             }
 
+        def _add_subset_item(subset_doc, parent_item, parent_index):
+            last_version = last_versions_by_subset_id.get(
+                subset_doc["_id"]
+            )
+            # do not show subset without version
+            if not last_version:
+                return
+
+            data = copy.deepcopy(subset_doc)
+            data["subset"] = subset_doc["name"]
+
+            asset_id = subset_doc["parent"]
+            data["asset"] = asset_docs_by_id[asset_id]["name"]
+
+            data["last_version"] = last_version
+
+            loaded = subset_doc["_id"] in subsets_loaded_by_id
+            data["loaded_in_scene"] = "yes" if loaded else "no"
+
+            # Sync server data
+            data.update(
+                self._get_last_repre_info(repre_info_by_version_id,
+                                          last_version["_id"]))
+
+            item = Item()
+            item.update(data)
+            self.add_child(item, parent_item)
+
+            index = self.index(item.row(), 0, parent_index)
+            self.set_version(index, last_version)
+
         subset_counter = 0
         for group_name, subset_docs_by_name in subset_docs_by_group.items():
             parent_item = group_item_by_name[group_name]["item"]
@@ -636,31 +721,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                     _parent_index = parent_index
 
                 for subset_doc in subset_docs:
-                    asset_id = subset_doc["parent"]
-
-                    data = copy.deepcopy(subset_doc)
-                    data["subset"] = subset_name
-                    data["asset"] = asset_docs_by_id[asset_id]["name"]
-
-                    last_version = last_versions_by_subset_id.get(
-                        subset_doc["_id"]
-                    )
-                    data["last_version"] = last_version
-
-                    # do not show subset without version
-                    if not last_version:
-                        continue
-
-                    data.update(
-                        self._get_last_repre_info(repre_info_by_version_id,
-                                                  last_version["_id"]))
-
-                    item = Item()
-                    item.update(data)
-                    self.add_child(item, _parent_item)
-
-                    index = self.index(item.row(), 0, _parent_index)
-                    self.set_version(index, last_version)
+                    _add_subset_item(subset_doc,
+                                     parent_item=_parent_item,
+                                     parent_index=_parent_index)
 
         for subset_name in sorted(subset_docs_without_group.keys()):
             subset_docs = subset_docs_without_group[subset_name]
@@ -675,31 +738,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 subset_counter += 1
 
             for subset_doc in subset_docs:
-                asset_id = subset_doc["parent"]
-
-                data = copy.deepcopy(subset_doc)
-                data["subset"] = subset_name
-                data["asset"] = asset_docs_by_id[asset_id]["name"]
-
-                last_version = last_versions_by_subset_id.get(
-                    subset_doc["_id"]
-                )
-                data["last_version"] = last_version
-
-                # do not show subset without version
-                if not last_version:
-                    continue
-
-                data.update(
-                    self._get_last_repre_info(repre_info_by_version_id,
-                                              last_version["_id"]))
-
-                item = Item()
-                item.update(data)
-                self.add_child(item, parent_item)
-
-                index = self.index(item.row(), 0, parent_index)
-                self.set_version(index, last_version)
+                _add_subset_item(subset_doc,
+                                 parent_item=parent_item,
+                                 parent_index=parent_index)
 
     def data(self, index, role):
         if not index.isValid():
