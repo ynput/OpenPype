@@ -140,7 +140,7 @@ class _LoadCache:
 def get_default_modules_dir():
     """Path to default OpenPype modules."""
 
-    current_dir = os.path.abspath(os.path.dirname(__file__))
+    current_dir = os.path.dirname(os.path.abspath(__file__))
 
     output = []
     for folder_name in ("default_modules", ):
@@ -298,6 +298,8 @@ def _load_modules():
     # Add current directory at first place
     #   - has small differences in import logic
     current_dir = os.path.abspath(os.path.dirname(__file__))
+    hosts_dir = os.path.join(os.path.dirname(current_dir), "hosts")
+    module_dirs.insert(0, hosts_dir)
     module_dirs.insert(0, current_dir)
 
     processed_paths = set()
@@ -314,6 +316,7 @@ def _load_modules():
             continue
 
         is_in_current_dir = dirpath == current_dir
+        is_in_host_dir = dirpath == hosts_dir
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
@@ -352,6 +355,24 @@ def _load_modules():
                     default_module = __import__(import_str, fromlist=("", ))
                     sys.modules[new_import_str] = default_module
                     setattr(openpype_modules, basename, default_module)
+
+                elif is_in_host_dir:
+                    import_str = "openpype.hosts.{}".format(basename)
+                    new_import_str = "{}.{}".format(modules_key, basename)
+                    # Until all hosts are converted to be able use them as
+                    #   modules is this error check needed
+                    try:
+                        default_module = __import__(
+                            import_str, fromlist=("", )
+                        )
+                        sys.modules[new_import_str] = default_module
+                        setattr(openpype_modules, basename, default_module)
+
+                    except Exception:
+                        log.warning(
+                            "Failed to import host folder {}".format(basename),
+                            exc_info=True
+                        )
 
                 elif os.path.isdir(fullpath):
                     import_module_from_dirpath(dirpath, filename, modules_key)
