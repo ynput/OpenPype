@@ -2,5 +2,65 @@
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []
+    },
+    "publish": {
+        "ValidateCameraZeroKeyframe": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshHasUvs": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateTransformZero": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
+        "ExtractBlend": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "pack_images": true,
+            "families": [
+                "model",
+                "camera",
+                "rig",
+                "action",
+                "layout"
+            ]
+        },
+        "ExtractBlendAnimation": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractCamera": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractFBX": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractAnimationFBX": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractABC": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractLayout": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        }
     }
 }
