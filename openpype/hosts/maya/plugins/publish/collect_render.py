@@ -199,7 +199,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 )
 
             # append full path
-            full_exp_files = []
             aov_dict = {}
             default_render_file = context.data.get('project_settings')\
                 .get('maya')\
