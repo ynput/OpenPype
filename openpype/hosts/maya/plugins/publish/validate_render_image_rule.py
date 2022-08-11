@@ -11,7 +11,11 @@ def get_file_rule(rule):
 
 
 class ValidateRenderImageRule(pyblish.api.InstancePlugin):
-    """Validates "images" file rule is set to "renders/"
+    """Validates Maya Workpace "images" file rule matches project settings.
+
+    This validates against the configured default render image folder:
+        Studio Settings > Project > Maya >
+        Render Settings > Default render image folder.
 
     """
 
@@ -23,11 +27,13 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        default_render_file = self.get_default_render_image_folder(instance)
+        required_images_rule = self.get_default_render_image_folder(instance)
+        current_images_rule = get_file_rule("images")
 
-        assert get_file_rule("images") == default_render_file, (
-            "Workspace's `images` file rule must be set to: {}".format(
-                default_render_file
+        assert current_images_rule == required_images_rule, (
+            "Invalid workspace `images` file rule value: '{}'. "
+            "Must be set to: '{}'".format(
+                current_images_rule, required_images_rule
             )
         )
 
