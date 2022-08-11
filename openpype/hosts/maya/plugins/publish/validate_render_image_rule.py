@@ -1,17 +1,15 @@
-import maya.mel as mel
-import pymel.core as pm
+from maya import cmds
 
 import pyblish.api
 import openpype.api
 
 
-def get_file_rule(rule):
-    """Workaround for a bug in python with cmds.workspace"""
-    return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))
-
-
 class ValidateRenderImageRule(pyblish.api.InstancePlugin):
-    """Validates "images" file rule is set to "renders/"
+    """Validates Maya Workpace "images" file rule matches project settings.
+
+    This validates against the configured default render image folder:
+        Studio Settings > Project > Maya >
+        Render Settings > Default render image folder.
 
     """
 
@@ -23,19 +21,25 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        default_render_file = self.get_default_render_image_folder(instance)
+        required_images_rule = self.get_default_render_image_folder(instance)
+        current_images_rule = cmds.workspace(fileRuleEntry="images")
 
-        assert get_file_rule("images") == default_render_file, (
-            "Workspace's `images` file rule must be set to: {}".format(
-                default_render_file
+        assert current_images_rule == required_images_rule, (
+            "Invalid workspace `images` file rule value: '{}'. "
+            "Must be set to: '{}'".format(
+                current_images_rule, required_images_rule
             )
         )
 
     @classmethod
     def repair(cls, instance):
-        default = cls.get_default_render_image_folder(instance)
-        pm.workspace.fileRules["images"] = default
-        pm.system.Workspace.save()
+
+        required_images_rule = cls.get_default_render_image_folder(instance)
+        current_images_rule = cmds.workspace(fileRuleEntry="images")
+
+        if current_images_rule != required_images_rule:
+            cmds.workspace(fileRule=("images", required_images_rule))
+            cmds.workspace(saveWorkspace=True)
 
     @staticmethod
     def get_default_render_image_folder(instance):
