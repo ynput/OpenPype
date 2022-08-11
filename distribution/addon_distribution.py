@@ -4,8 +4,7 @@ from abc import abstractmethod
 import attr
 import logging
 
-from openpype.lib.path_tools import sha256sum
-from openpype.lib.file_handler import RemoteFileHandler
+from distribution.file_handler import RemoteFileHandler
 
 
 class UrlType(Enum):
@@ -65,7 +64,7 @@ class AddonDownloader:
         """
         if not os.path.exists(addon_path):
             raise ValueError(f"{addon_path} doesn't exist.")
-        if addon_hash != sha256sum(addon_path):
+        if addon_hash != RemoteFileHandler.calculate_md5(addon_path):
             raise ValueError(f"{addon_path} doesn't match expected hash.")
 
     @classmethod

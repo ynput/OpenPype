@@ -21,7 +21,7 @@ class RemoteFileHandler:
                                'tar.gz', 'tar.xz', 'tar.bz2']
 
     @staticmethod
-    def calculate_md5(fpath, chunk_size):
+    def calculate_md5(fpath, chunk_size=10000):
         md5 = hashlib.md5()
         with open(fpath, 'rb') as f:
             for chunk in iter(lambda: f.read(chunk_size), b''):
