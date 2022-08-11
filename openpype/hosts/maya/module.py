@@ -42,3 +42,6 @@ class OpenPypeMaya(OpenPypeModule, IHostModule):
         return [
             os.path.join(MAYA_ROOT_DIR, "hooks")
         ]
+
+    def get_workfile_extensions(self):
+        return [".ma", ".mb"]
