@@ -361,3 +361,14 @@ class IHostModule(OpenPypeInterface):
         """Name of host which module represents."""
 
         pass
+
+    def get_workfile_extensions(self):
+        """Define workfile extensions for host.
+
+        Not all hosts support workfiles thus this is optional implementation.
+
+        Returns:
+            List[str]: Extensions used for workfiles with dot.
+        """
+
+        return []

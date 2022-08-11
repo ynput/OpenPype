@@ -1303,6 +1303,7 @@ def get_app_environments_for_context(
         dict: Environments for passed context and application.
     """
 
+    from openpype.modules import ModulesManager
     from openpype.pipeline import AvalonMongoDB, Anatomy
 
     # Avalon database connection
@@ -1315,8 +1316,6 @@ def get_app_environments_for_context(
     asset_doc = get_asset_by_name(project_name, asset_name)
 
     if modules_manager is None:
-        from openpype.modules import ModulesManager
-
         modules_manager = ModulesManager()
 
     # Prepare app object which can be obtained only from ApplciationManager
@@ -1343,7 +1342,7 @@ def get_app_environments_for_context(
     })
 
     prepare_app_environments(data, env_group, modules_manager)
-    prepare_context_environments(data, env_group)
+    prepare_context_environments(data, env_group, modules_manager)
 
     # Discard avalon connection
     dbcon.uninstall()
@@ -1564,7 +1563,7 @@ def apply_project_environments_value(
     return env
 
 
-def prepare_context_environments(data, env_group=None):
+def prepare_context_environments(data, env_group=None, modules_manager=None):
     """Modify launch environments with context data for launched host.
 
     Args:
@@ -1652,10 +1651,10 @@ def prepare_context_environments(data, env_group=None):
     data["env"]["AVALON_APP"] = app.host_name
     data["env"]["AVALON_WORKDIR"] = workdir
 
-    _prepare_last_workfile(data, workdir)
+    _prepare_last_workfile(data, workdir, modules_manager)
 
 
-def _prepare_last_workfile(data, workdir):
+def _prepare_last_workfile(data, workdir, modules_manager):
     """last workfile workflow preparation.
 
     Function check if should care about last workfile workflow and tries
@@ -1670,7 +1669,12 @@ def _prepare_last_workfile(data, workdir):
             result will be stored.
         workdir (str): Path to folder where workfiles should be stored.
     """
+
+    from openpype.modules import ModulesManager
     from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+
+    if not modules_manager:
+        modules_manager = ModulesManager()
 
     log = data["log"]
 
@@ -1719,7 +1723,12 @@ def _prepare_last_workfile(data, workdir):
     # Last workfile path
     last_workfile_path = data.get("last_workfile_path") or ""
     if not last_workfile_path:
-        extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+        host_module = modules_manager.get_host_module(app.host_name)
+        if host_module:
+            extensions = host_module.get_workfile_extensions()
+        else:
+            extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+
         if extensions:
             anatomy = data["anatomy"]
             project_settings = data["project_settings"]
