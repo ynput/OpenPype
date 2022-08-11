@@ -498,8 +498,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 project_name,
                 representations=representations
             )
-            for repre_id, repre_parents in parents_by_repre_id.items():
-                _, repre_subset, _, _ = repre_parents
+            for repre_parents in parents_by_repre_id.values():
+                repre_subset = repre_parents[1]
                 subsets_loaded_by_id.add(repre_subset["_id"])
 
         if self._doc_fetching_stop:
