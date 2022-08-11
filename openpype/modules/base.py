@@ -825,6 +825,45 @@ class ModulesManager:
             output.extend(hook_paths)
         return output
 
+    def get_host_module(self, host_name):
+        """Find host module by host name.
+
+        Args:
+            host_name (str): Host name for which is found host module.
+
+        Returns:
+            OpenPypeModule: Found host module by name.
+            None: There was not found module inheriting IHostModule which has
+                host name set to passed 'host_name'.
+        """
+
+        from openpype_interfaces import IHostModule
+
+        for module in self.get_enabled_modules():
+            if (
+                isinstance(module, IHostModule)
+                and module.host_name == host_name
+            ):
+                return module
+        return None
+
+    def get_host_names(self):
+        """List of available host names based on host modules.
+
+        Returns:
+            Iterable[str]: All available host names based on enabled modules
+                inheriting 'IHostModule'.
+        """
+
+        from openpype_interfaces import IHostModule
+
+        host_names = {
+            module.host_name
+            for module in self.get_enabled_modules()
+            if isinstance(module, IHostModule)
+        }
+        return host_names
+
     def print_report(self):
         """Print out report of time spent on modules initialization parts.
 
