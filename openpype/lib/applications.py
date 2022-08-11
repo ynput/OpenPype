@@ -962,32 +962,24 @@ class ApplicationLaunchContext:
 
         # TODO load additional studio paths from settings
         import openpype
-        pype_dir = os.path.dirname(os.path.abspath(openpype.__file__))
+        openpype_dir = os.path.dirname(os.path.abspath(openpype.__file__))
 
-        # --- START: Backwards compatibility ---
-        hooks_dir = os.path.join(pype_dir, "hooks")
+        global_hooks_dir = os.path.join(openpype_dir, "hooks")
 
-        subfolder_names = ["global"]
-        if self.host_name:
-            subfolder_names.append(self.host_name)
-        for subfolder_name in subfolder_names:
-            path = os.path.join(hooks_dir, subfolder_name)
-            if (
-                os.path.exists(path)
-                and os.path.isdir(path)
-                and path not in paths
-            ):
-                paths.append(path)
-        # --- END: Backwards compatibility ---
-
-        subfolders_list = [
-            ["hooks"]
+        hooks_dirs = [
+            global_hooks_dir
         ]
         if self.host_name:
-            subfolders_list.append(["hosts", self.host_name, "hooks"])
+            # If host requires launch hooks and is module then launch hooks
+            #   should be collected using 'collect_launch_hook_paths'
+            #   - module have to implement 'get_launch_hook_paths'
+            host_module = self.modules_manager.get_host_module(self.host_name)
+            if not host_module:
+                hooks_dirs.append(os.path.join(
+                    openpype_dir, "hosts", self.host_name, "hooks"
+                ))
 
-        for subfolders in subfolders_list:
-            path = os.path.join(pype_dir, *subfolders)
+        for path in hooks_dirs:
             if (
                 os.path.exists(path)
                 and os.path.isdir(path)
