@@ -1,4 +1,3 @@
-from cProfile import label
 import os
 import logging
 import platform
@@ -64,22 +63,23 @@ No shelf definition found for shelf set named '{}'".format(shelf_set_name)
 
             shelf = get_or_create_shelf(shelf_name)
 
-            tools = []
-            for tool in shelf_definition.get('tools_list'):
+            for tool_definition in shelf_definition.get('tools_list'):
                 mandatory_attributes = ['name', 'script']
                 if not all(
-                    [v for k, v in tool.items() if k in mandatory_attributes]
+                    [v for k, v in tool_definition.items() if
+                        k in mandatory_attributes]
                 ):
                     log.warning("TOOLS ERROR: You need to specify at least \
 the name and the script path of the tool.")
                     return
 
-                tool = get_or_create_tool(tool, shelf)
-        # create the tool
-        # add it to a list of tools
+                tool = get_or_create_tool(tool_definition, shelf)
 
-        # add the tools list to the shelf with the tools already in it
-        # add the shelf to the shelf set with the shelfs already in it
+                if tool not in shelf.tools():
+                    shelf.setTools(list(shelf.tools()) + [tool])
+
+            if shelf not in shelf_set.shelves():
+                shelf_set.setShelves(shelf_set.shelves() + (shelf,))
 
 
 def get_or_create_shelf_set(shelf_set_label):
@@ -117,4 +117,33 @@ def get_or_create_shelf(shelf_label):
 
 
 def get_or_create_tool(tool_definition, shelf):
-    pass
+    existing_tools = shelf.tools()
+    tool_label = tool_definition.get('label')
+
+    existing_tool = [
+        tool for tool in existing_tools if tool.label() == tool_label
+    ]
+
+    if existing_tool:
+        tool_definition.pop('name', None)
+        tool_definition.pop('label', None)
+        existing_tool[0].setData(**tool_definition)
+        return existing_tool[0]
+
+    tool_name = tool_label.replace(' ', '_').lower()
+
+    if not os.path.exists(tool_definition['script']):
+        log.warning(
+            "TOOL ERROR: This path doesn't exist - {}".format(
+                tool_definition['script']
+            )
+        )
+        return
+
+    with open(tool_definition['script']) as f:
+        script = f.read()
+        tool_definition.update({'script': script})
+
+    new_tool = hou.shelves.newTool(name=tool_name, **tool_definition)
+
+    return new_tool
