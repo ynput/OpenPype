@@ -31,6 +31,10 @@
                             "label": "Validate Mesh Has UVs"
                         },
                         {
+                            "key": "ValidateMeshNoNegativeScale",
+                            "label": "Validate Mesh No Negative Scale"
+                        },
+                        {
                             "key": "ValidateTransformZero",
                             "label": "Validate Transform Zero"
                         }
