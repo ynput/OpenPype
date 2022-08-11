@@ -219,18 +219,23 @@ def update_op_assets(
 
         # Add parents for hierarchy
         item_data["parents"] = []
-        while parent_zou_id is not None:
-            parent_doc = asset_doc_ids[parent_zou_id]
+        ancestor_id = parent_zou_id
+        while ancestor_id is not None:
+            parent_doc = asset_doc_ids[ancestor_id]
             item_data["parents"].insert(0, parent_doc["name"])
 
             # Get parent entity
             parent_entity = parent_doc["data"]["zou"]
-            parent_zou_id = parent_entity.get("parent_id")
+            ancestor_id = parent_entity.get("parent_id")
 
-        if item_type in ["Shot", "Sequence"]:
+        # Build OpenPype compatible name
+        if item_type in ["Shot", "Sequence"] and parent_zou_id is not None:
             # Name with parents hierarchy "({episode}_){sequence}_{shot}"
             # to avoid duplicate name issue
             item_name = f"{item_data['parents'][-1]}_{item['name']}"
+
+            # Update doc name
+            asset_doc_ids[item["id"]]["name"] = item_name
         else:
             item_name = item["name"]
 
