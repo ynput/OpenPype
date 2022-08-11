@@ -1508,8 +1508,10 @@ def prepare_app_environments(
     final_env = None
     # Add host specific environments
     if app.host_name and implementation_envs:
-        module = __import__("openpype.hosts", fromlist=[app.host_name])
-        host_module = getattr(module, app.host_name, None)
+        host_module = modules_manager.get_host_module(app.host_name)
+        if not host_module:
+            module = __import__("openpype.hosts", fromlist=[app.host_name])
+            host_module = getattr(module, app.host_name, None)
         add_implementation_envs = None
         if host_module:
             add_implementation_envs = getattr(
