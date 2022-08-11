@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 
 from openpype import resources
 
@@ -319,4 +319,14 @@ class ISettingsChangeListener(OpenPypeInterface):
     def on_project_anatomy_save(
         self, old_value, new_value, changes, project_name, new_value_metadata
     ):
+        pass
+
+
+class IHostModule(OpenPypeInterface):
+    """Module which also contain a host implementation."""
+
+    @abstractproperty
+    def host_name(self):
+        """Name of host which module represents."""
+
         pass
