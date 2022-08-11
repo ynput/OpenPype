@@ -12,7 +12,7 @@
                     "shelf_name": "OpenPype Shelf",
                     "tools_list": [
                         {
-                            "name": "OpenPype Tool",
+                            "label": "OpenPype Tool",
                             "script": "/path/to/your/tool_script",
                             "icon": "/path/to/your/icon",
                             "help": "Help message for your tool"

@@ -42,7 +42,7 @@
                                 "children": [
                                     {
                                         "type": "text",
-                                        "key": "name",
+                                        "key": "label",
                                         "label": "Name"
                                     },
                                     {
