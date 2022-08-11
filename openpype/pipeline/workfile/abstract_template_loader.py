@@ -7,7 +7,11 @@ from functools import reduce
 
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
-from openpype.lib import get_linked_assets, PypeLogger as Logger
+from openpype.lib import (
+    Logger,
+    filter_profiles,
+    get_linked_assets,
+)
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import (
     get_loaders_by_name,
@@ -167,22 +171,23 @@ class AbstractTemplateLoader:
         anatomy = Anatomy(project_name)
         project_settings = get_project_settings(project_name)
 
-        build_info = project_settings[host_name]['templated_workfile_build']
-        profiles = build_info['profiles']
+        build_info = project_settings[host_name]["templated_workfile_build"]
+        profile = filter_profiles(
+            build_info["profiles"],
+            {
+                "task_types": task_type,
+                "tasks": task_name
+            }
+        )
 
-        for prf in profiles:
-            if prf['task_types'] and task_type not in prf['task_types']:
-                continue
-            if prf['tasks'] and task_name not in prf['tasks']:
-                continue
-            path = prf['path']
-            break
-        else:  # IF no template were found (no break happened)
+        if not profile:
             raise TemplateProfileNotFound(
                 "No matching profile found for task '{}' of type '{}' "
                 "with host '{}'".format(task_name, task_type, host_name)
             )
-        if path is None:
+
+        path = profile["path"]
+        if not path:
             raise TemplateLoadingFailed(
                 "Template path is not set.\n"
                 "Path need to be set in {}\\Template Workfile Build "
