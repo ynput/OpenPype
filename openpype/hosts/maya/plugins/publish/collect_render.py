@@ -219,6 +219,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                     publish_meta_path = os.path.dirname(full_path)
                 aov_dict[aov_first_key] = full_paths
+            full_exp_files = [aov_dict]
 
             frame_start_render = int(self.get_render_attribute(
                 "startFrame", layer=layer_name))
