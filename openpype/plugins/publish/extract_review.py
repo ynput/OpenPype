@@ -1369,33 +1369,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
             or input_width != output_width
             or pixel_aspect != 1
         ):
-            if input_res_ratio < output_res_ratio:
-                self.log.debug(
-                    "Input's resolution ratio is lower then output's"
-                )
-                width_scale = int(input_width * scale_factor_by_height)
-                width_half_pad = int((output_width - width_scale) / 2)
-                height_scale = output_height
-                height_half_pad = 0
-            else:
-                self.log.debug("Input is heigher then output")
-                width_scale = output_width
-                width_half_pad = 0
-                height_scale = int(input_height * scale_factor_by_width)
-                height_half_pad = int((output_height - height_scale) / 2)
-
-            self.log.debug("width_scale: `{}`".format(width_scale))
-            self.log.debug("width_half_pad: `{}`".format(width_half_pad))
-            self.log.debug("height_scale: `{}`".format(height_scale))
-            self.log.debug("height_half_pad: `{}`".format(height_half_pad))
-
             filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    width_scale, height_scale
-                ),
-                "pad={}:{}:{}:{}:{}".format(
+                (
+                    "scale={}x{}"
+                    ":flags=lanczos"
+                    ":force_original_aspect_ratio=decrease"
+                ).format(output_width, output_height),
+                "pad={}:{}:(ow-iw)/2:(oh-ih)/2:{}".format(
                     output_width, output_height,
-                    width_half_pad, height_half_pad,
                     overscan_color_value
                 ),
                 "setsar=1"

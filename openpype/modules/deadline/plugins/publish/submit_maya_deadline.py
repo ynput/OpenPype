@@ -519,12 +519,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
+            "OPENPYPE_SG_USER",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
