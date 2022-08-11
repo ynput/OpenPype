@@ -10,8 +10,15 @@ log = logging.getLogger("openpype.hosts.houdini")
 
 
 def generate_shelves():
+    """This function generates complete shelves from shef set to tools
+    in Houdini from openpype project settings houdini shelf definition.
+
+    Raises:
+        FileNotFoundError: Raised when the shelf set filepath does not exist
+    """
     current_os = platform.system().lower()
-    # load configuration of custom menu
+
+    # load configuration of houdini shelves
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     shelves_set_config = project_settings["houdini"]["shelves"]
 
@@ -57,13 +64,15 @@ No shelf definition found for shelf set named '{}'".format(shelf_set_name)
             shelf_name = shelf_definition.get('shelf_name')
             if not shelf_name:
                 log.warning(
-                    "SHELF WARNGING: No name found in shelf set definition."
+                    "SHELF WARNGING: No name found in shelf definition."
                 )
                 return
 
             shelf = get_or_create_shelf(shelf_name)
 
             for tool_definition in shelf_definition.get('tools_list'):
+                # We verify that the name and script attibutes of the tool
+                # are set
                 mandatory_attributes = ['name', 'script']
                 if not all(
                     [v for k, v in tool_definition.items() if
@@ -75,14 +84,25 @@ the name and the script path of the tool.")
 
                 tool = get_or_create_tool(tool_definition, shelf)
 
+                # Add the tool to the shelf if not already in it
                 if tool not in shelf.tools():
                     shelf.setTools(list(shelf.tools()) + [tool])
 
+            # Add the shelf in the shelf set if not already in it
             if shelf not in shelf_set.shelves():
                 shelf_set.setShelves(shelf_set.shelves() + (shelf,))
 
 
 def get_or_create_shelf_set(shelf_set_label):
+    """This function verifies if the shelf set label exists. If not,
+    creates a new shelf set.
+
+    Arguments:
+        shelf_set_label {str} -- The label of the shelf set
+
+    Returns:
+        hou.ShelfSet -- The shelf set existing or the new one
+    """
     all_shelves_sets = hou.shelves.shelfSets().values()
 
     shelf_set = [
@@ -101,6 +121,15 @@ def get_or_create_shelf_set(shelf_set_label):
 
 
 def get_or_create_shelf(shelf_label):
+    """This function verifies if the shelf label exists. If not, creates
+    a new shelf.
+
+    Arguments:
+        shelf_label {str} -- The label of the shelf
+
+    Returns:
+        hou.Shelf -- The shelf existing or the new one
+    """
     all_shelves = hou.shelves.shelves().values()
 
     shelf = [s for s in all_shelves if s.label() == shelf_label]
@@ -117,6 +146,16 @@ def get_or_create_shelf(shelf_label):
 
 
 def get_or_create_tool(tool_definition, shelf):
+    """This function verifies if the tool exsist and update it. If not, creates
+    a new one.
+
+    Arguments:
+        tool_definition {dict} -- Dict with label, script, icon and help
+        shelf {hou.Shelf} -- The parent shelf of the tool
+
+    Returns:
+        hou.Tool -- The tool updated or the new one
+    """
     existing_tools = shelf.tools()
     tool_label = tool_definition.get('label')
 
