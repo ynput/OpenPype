@@ -1,6 +1,5 @@
 import os
 from enum import Enum
-from zipfile import ZipFile
 from abc import abstractmethod
 
 import attr
@@ -66,9 +65,10 @@ class AddonDownloader:
         Raises:
             ValueError if hashes doesn't match
         """
+        if not os.path.exists(addon_path):
+            raise ValueError(f"{addon_path} doesn't exist.")
         if addon_hash != sha256sum(addon_path):
-            raise ValueError(
-                "{} doesn't match expected hash".format(addon_path))
+            raise ValueError(f"{addon_path} doesn't match expected hash.")
 
     @classmethod
     def unzip(cls, addon_zip_path, destination):
@@ -153,9 +153,14 @@ def update_addon_state(addon_infos, destination_folder, factory):
             log.debug(f"Addon version folder {addon_dest} already exists.")
             continue
 
-        downloader = factory.get_downloader(addon.type)
-        zip_file_path = downloader.download(addon.addon_url, addon_dest)
-        downloader.unzip(zip_file_path, addon_dest)
+        try:
+            downloader = factory.get_downloader(addon.type)
+            zip_file_path = downloader.download(addon.addon_url, addon_dest)
+            downloader.check_hash(zip_file_path, addon.hash)
+            downloader.unzip(zip_file_path, addon_dest)
+        except Exception:
+            log.warning(f"Error happened during updating {addon.name}",
+                        stack_info=True)
 
 
 def cli(args):
