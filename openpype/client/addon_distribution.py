@@ -7,14 +7,15 @@ import attr
 
 from openpype.lib.path_tools import sha256sum
 from openpype.lib import PypeLogger
+from openpype.lib.file_handler import RemoteFileHandler
 
 log = PypeLogger().get_logger(__name__)
 
 
 class UrlType(Enum):
-    HTTP = {}
-    GIT = {}
-    OS = {}
+    HTTP = "http"
+    GIT = "git"
+    OS = "os"
 
 
 @attr.s
@@ -70,19 +71,15 @@ class AddonDownloader:
                 "{} doesn't match expected hash".format(addon_path))
 
     @classmethod
-    def unzip(cls, addon_path, destination):
-        """Unzips local 'addon_path' to 'destination'.
+    def unzip(cls, addon_zip_path, destination):
+        """Unzips local 'addon_zip_path' to 'destination'.
 
         Args:
-            addon_path (str): local path to addon zip file
+            addon_zip_path (str): local path to addon zip file
             destination (str): local folder to unzip
         """
-        addon_file_name = os.path.basename(addon_path)
-        addon_base_file_name, _ = os.path.splitext(addon_file_name)
-        with ZipFile(addon_path, "r") as zip_ref:
-            log.debug(f"Unzipping {addon_path} to {destination}.")
-            zip_ref.extractall(
-                os.path.join(destination, addon_base_file_name))
+        RemoteFileHandler.unzip(addon_zip_path, destination)
+        os.remove(addon_zip_path)
 
     @classmethod
     def remove(cls, addon_url):
@@ -99,6 +96,23 @@ class OSAddonDownloader(AddonDownloader):
         return addon_url
 
 
+class HTTPAddonDownloader(AddonDownloader):
+    CHUNK_SIZE = 100000
+
+    @classmethod
+    def download(cls, addon_url, destination):
+        log.debug(f"Downloading {addon_url} to {destination}")
+        file_name = os.path.basename(destination)
+        _, ext = os.path.splitext(file_name)
+        if (ext.replace(".", '') not
+                in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
+            file_name += ".zip"
+        RemoteFileHandler.download_url(addon_url,
+                                       destination,
+                                       filename=file_name)
+
+        return os.path.join(destination, file_name)
+
 def get_addons_info():
     """Returns list of addon information from Server"""
     # TODO temp
@@ -109,7 +123,14 @@ def get_addons_info():
            "type": UrlType.OS,
            "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"})  # noqa
 
-    return [addon_info]
+    http_addon = AddonInfo(
+        **{"name": "openpype_slack",
+           "version": "1.0.0",
+           "addon_url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
+           "type": UrlType.HTTP,
+           "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"})  # noqa
+
+    return [http_addon]
 
 
 def update_addon_state(addon_infos, destination_folder, factory):
@@ -126,14 +147,15 @@ def update_addon_state(addon_infos, destination_folder, factory):
     """
     for addon in addon_infos:
         full_name = "{}_{}".format(addon.name, addon.version)
-        addon_url = os.path.join(destination_folder, full_name)
+        addon_dest = os.path.join(destination_folder, full_name)
 
-        if os.path.isdir(addon_url):
-            log.debug(f"Addon version folder {addon_url} already exists.")
+        if os.path.isdir(addon_dest):
+            log.debug(f"Addon version folder {addon_dest} already exists.")
             continue
 
         downloader = factory.get_downloader(addon.type)
-        downloader.download(addon.addon_url, destination_folder)
+        zip_file_path = downloader.download(addon.addon_url, addon_dest)
+        downloader.unzip(zip_file_path, addon_dest)
 
 
 def cli(args):
@@ -141,8 +163,7 @@ def cli(args):
 
     downloader_factory = AddonDownloader()
     downloader_factory.register_format(UrlType.OS, OSAddonDownloader)
+    downloader_factory.register_format(UrlType.HTTP, HTTPAddonDownloader)
 
     print(update_addon_state(get_addons_info(), addon_folder,
                              downloader_factory))
-
-
