@@ -478,4 +478,3 @@ class HostDirmap:
 
             log.debug("local sync mapping:: {}".format(mapping))
         return mapping
-
