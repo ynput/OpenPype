@@ -1,4 +1,5 @@
 import os
+from .module import OpenPypeMaya
 
 
 def add_implementation_envs(env, _app):
@@ -25,3 +26,9 @@ def add_implementation_envs(env, _app):
     for key, value in defaults.items():
         if not env.get(key):
             env[key] = value
+
+
+__all__ = (
+    "OpenPypeMaya",
+    "add_implementation_envs",
+)
