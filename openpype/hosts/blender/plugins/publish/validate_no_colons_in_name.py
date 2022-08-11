@@ -18,6 +18,7 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model", "rig"]
+    category = "cleanup"
     version = (0, 1, 0)
     label = "No Colons in names"
     actions = [SelectInvalidAction]

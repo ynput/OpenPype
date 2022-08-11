@@ -13,6 +13,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
+    category = "geometry"
     label = "Mesh No Negative Scale"
     actions = [SelectInvalidAction]
 

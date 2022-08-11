@@ -13,7 +13,7 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    category = "geometry"
+    category = "uv"
     label = "Mesh Has UV's"
     actions = [SelectInvalidAction]
     optional = True

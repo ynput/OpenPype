@@ -20,7 +20,7 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    category = "geometry"
+    category = "cleanup"
     version = (0, 1, 0)
     label = "Transform Zero"
     actions = [SelectInvalidAction]

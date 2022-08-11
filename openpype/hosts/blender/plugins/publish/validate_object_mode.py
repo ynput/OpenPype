@@ -12,7 +12,7 @@ class ValidateObjectIsInObjectMode(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder - 0.01
     hosts = ["blender"]
     families = ["model", "rig", "layout"]
-    category = "geometry"
+    category = "cleanup"
     label = "Validate Object Mode"
     actions = [SelectInvalidAction]
     optional = False

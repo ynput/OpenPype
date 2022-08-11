@@ -24,8 +24,6 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
     label = "Zero Keyframe"
     actions = [SelectInvalidAction]
 
-    _identity = mathutils.Matrix()
-
     @staticmethod
     def get_invalid(instance) -> List:
         invalid = []
