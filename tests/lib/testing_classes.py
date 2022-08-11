@@ -10,7 +10,7 @@ import glob
 import platform
 
 from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
+from openpype.lib.file_handler import RemoteFileHandler
 
 from openpype.lib.remote_publish import find_variant_key
 
