@@ -5,8 +5,16 @@ import copy
 import clique
 import six
 
+from openpype.client.operations import (
+    OperationsSession,
+    new_subset_document,
+    new_version_doc,
+    new_representation_doc,
+    prepare_subset_update_data,
+    prepare_version_update_data,
+    prepare_representation_update_data,
+)
 from bson.objectid import ObjectId
-from pymongo import DeleteMany, ReplaceOne, InsertOne, UpdateOne
 import pyblish.api
 
 from openpype.client import (
@@ -247,9 +255,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_name = self.get_template_name(instance)
 
-        subset, subset_writes = self.prepare_subset(instance, project_name)
-        version, version_writes = self.prepare_version(
-            instance, subset, project_name
+        op_session = OperationsSession()
+        subset = self.prepare_subset(
+            instance, op_session, project_name
+        )
+        version = self.prepare_version(
+            instance, op_session, subset, project_name
         )
         instance.data["versionEntity"] = version
 
@@ -299,7 +310,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Transaction to reduce the chances of another publish trying to
         # publish to the same version number since that chance can greatly
         # increase if the file transaction takes a long time.
-        legacy_io.bulk_write(subset_writes + version_writes)
+        op_session.commit()
+
         self.log.info("Subset {subset[name]} and Version {version[name]} "
                       "written to database..".format(subset=subset,
                                                      version=version))
@@ -331,49 +343,49 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Finalize the representations now the published files are integrated
         # Get 'files' info for representations and its attached resources
-        representation_writes = []
         new_repre_names_low = set()
         for prepared in prepared_representations:
-            representation = prepared["representation"]
+            repre_doc = prepared["representation"]
+            repre_update_data = prepared["repre_doc_update_data"]
             transfers = prepared["transfers"]
             destinations = [dst for src, dst in transfers]
-            representation["files"] = self.get_files_info(
+            repre_doc["files"] = self.get_files_info(
                 destinations, sites=sites, anatomy=anatomy
             )
 
             # Add the version resource file infos to each representation
-            representation["files"] += resource_file_infos
+            repre_doc["files"] += resource_file_infos
 
             # Set up representation for writing to the database. Since
             # we *might* be overwriting an existing entry if the version
             # already existed we'll use ReplaceOnce with `upsert=True`
-            representation_writes.append(ReplaceOne(
-                filter={"_id": representation["_id"]},
-                replacement=representation,
-                upsert=True
-            ))
+            if repre_update_data is None:
+                op_session.create_entity(
+                    project_name, repre_doc["type"], repre_doc
+                )
+            else:
+                op_session.update_entity(
+                    project_name,
+                    repre_doc["type"],
+                    repre_doc["_id"],
+                    repre_update_data
+                )
 
-            new_repre_names_low.add(representation["name"].lower())
+            new_repre_names_low.add(repre_doc["name"].lower())
 
         # Delete any existing representations that didn't get any new data
         # if the instance is not set to append mode
         if not instance.data.get("append", False):
-            delete_names = set()
             for name, existing_repres in existing_repres_by_name.items():
                 if name not in new_repre_names_low:
                     # We add the exact representation name because `name` is
                     # lowercase for name matching only and not in the database
-                    delete_names.add(existing_repres["name"])
-            if delete_names:
-                representation_writes.append(DeleteMany(
-                    filter={
-                        "parent": version["_id"],
-                        "name": {"$in": list(delete_names)}
-                    }
-                ))
+                    op_session.delete_entity(
+                        project_name, "representation", existing_repres["_id"]
+                    )
 
-        # Write representations to the database
-        legacy_io.bulk_write(representation_writes)
+        self.log.debug("{}".format(op_session.to_data()))
+        op_session.commit()
 
         # Backwards compatibility
         # todo: can we avoid the need to store this?
@@ -384,13 +396,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Registered {} representations"
                       "".format(len(prepared_representations)))
 
-    def prepare_subset(self, instance, project_name):
+    def prepare_subset(self, instance, op_session, project_name):
         asset_doc = instance.data["assetEntity"]
         subset_name = instance.data["subset"]
+        family = instance.data["family"]
         self.log.debug("Subset: {}".format(subset_name))
 
         # Get existing subset if it exists
-        subset_doc = get_subset_by_name(
+        existing_subset_doc = get_subset_by_name(
             project_name, subset_name, asset_doc["_id"]
         )
 
@@ -403,45 +416,40 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         if subset_group:
             data["subsetGroup"] = subset_group
 
-        bulk_writes = []
-        if subset_doc is None:
+        subset_id = None
+        if existing_subset_doc:
+            subset_id = existing_subset_doc["_id"]
+        subset_doc = new_subset_document(
+            subset_name, family, asset_doc["_id"], data, subset_id
+        )
+
+        if existing_subset_doc is None:
             # Create a new subset
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
-            subset_doc = {
-                "_id": ObjectId(),
-                "schema": "openpype:subset-3.0",
-                "type": "subset",
-                "name": subset_name,
-                "data": data,
-                "parent": asset_doc["_id"]
-            }
-            bulk_writes.append(InsertOne(subset_doc))
+            op_session.create_entity(
+                project_name, subset_doc["type"], subset_doc
+            )
 
         else:
             # Update existing subset data with new data and set in database.
             # We also change the found subset in-place so we don't need to
             # re-query the subset afterwards
             subset_doc["data"].update(data)
-            bulk_writes.append(UpdateOne(
-                {"type": "subset", "_id": subset_doc["_id"]},
-                {"$set": {
-                    "data": subset_doc["data"]
-                }}
-            ))
+            update_data = prepare_subset_update_data(
+                existing_subset_doc, subset_doc
+            )
+            op_session.update_entity(
+                project_name,
+                subset_doc["type"],
+                subset_doc["_id"],
+                update_data
+            )
 
         self.log.info("Prepared subset: {}".format(subset_name))
-        return subset_doc, bulk_writes
+        return subset_doc
 
-    def prepare_version(self, instance, subset_doc, project_name):
+    def prepare_version(self, instance, op_session, subset_doc, project_name):
         version_number = instance.data["version"]
-
-        version_doc = {
-            "schema": "openpype:version-3.0",
-            "type": "version",
-            "parent": subset_doc["_id"],
-            "name": version_number,
-            "data": self.create_version_data(instance)
-        }
 
         existing_version = get_version_by_name(
             project_name,
@@ -449,23 +457,38 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             subset_doc["_id"],
             fields=["_id"]
         )
+        version_id = None
+        if existing_version:
+            version_id = existing_version["_id"]
+
+        version_data = self.create_version_data(instance)
+        version_doc = new_version_doc(
+            version_number,
+            subset_doc["_id"],
+            version_data,
+            version_id
+        )
 
         if existing_version:
             self.log.debug("Updating existing version ...")
-            version_doc["_id"] = existing_version["_id"]
+            update_data = prepare_version_update_data(
+                existing_version, version_doc
+            )
+            op_session.update_entity(
+                project_name,
+                version_doc["type"],
+                version_doc["_id"],
+                update_data
+            )
         else:
             self.log.debug("Creating new version ...")
-            version_doc["_id"] = ObjectId()
-
-        bulk_writes = [ReplaceOne(
-            filter={"_id": version_doc["_id"]},
-            replacement=version_doc,
-            upsert=True
-        )]
+            op_session.create_entity(
+                project_name, version_doc["type"], version_doc
+            )
 
         self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
 
-        return version_doc, bulk_writes
+        return version_doc
 
     def prepare_representation(self, repre,
                                template_name,
@@ -676,10 +699,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Use previous representation's id if there is a name match
         existing = existing_repres_by_name.get(repre["name"].lower())
+        repre_id = None
         if existing:
             repre_id = existing["_id"]
-        else:
-            repre_id = ObjectId()
 
         # Store first transferred destination as published path data
         # - used primarily for reviews that are integrated to custom modules
@@ -693,20 +715,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       and the actual representation entity for the database
         data = repre.get("data", {})
         data.update({"path": published_path, "template": template})
-        representation = {
-            "_id": repre_id,
-            "schema": "openpype:representation-2.0",
-            "type": "representation",
-            "parent": version["_id"],
-            "name": repre["name"],
-            "data": data,
-
-            # Imprint shortcut to context for performance reasons.
-            "context": repre_context
-        }
+        repre_doc = new_representation_doc(
+            repre["name"], version["_id"], repre_context, data, repre_id
+        )
+        update_data = None
+        if repre_id is not None:
+            update_data = prepare_representation_update_data(
+                existing, repre_doc
+            )
 
         return {
-            "representation": representation,
+            "representation": repre_doc,
+            "repre_doc_update_data": update_data,
             "anatomy_data": template_data,
             "transfers": transfers,
             # todo: avoid the need for 'published_files' used by Integrate Hero

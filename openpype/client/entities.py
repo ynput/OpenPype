@@ -6,39 +6,13 @@ that has project name as a context (e.g. on 'ProjectEntity'?).
 + We will need more specific functions doing wery specific queires really fast.
 """
 
-import os
 import re
 import collections
 
 import six
 from bson.objectid import ObjectId
 
-from .mongo import OpenPypeMongoConnection
-
-
-def _get_project_database():
-    db_name = os.environ.get("AVALON_DB") or "avalon"
-    return OpenPypeMongoConnection.get_mongo_client()[db_name]
-
-
-def get_project_connection(project_name):
-    """Direct access to mongo collection.
-
-    We're trying to avoid using direct access to mongo. This should be used
-    only for Create, Update and Remove operations until there are implemented
-    api calls for that.
-
-    Args:
-        project_name(str): Project name for which collection should be
-            returned.
-
-    Returns:
-        pymongo.Collection: Collection realated to passed project.
-    """
-
-    if not project_name:
-        raise ValueError("Invalid project name {}".format(str(project_name)))
-    return _get_project_database()[project_name]
+from .mongo import get_project_database, get_project_connection
 
 
 def _prepare_fields(fields, required_fields=None):
@@ -73,7 +47,7 @@ def _convert_ids(in_ids):
 
 
 def get_projects(active=True, inactive=False, fields=None):
-    mongodb = _get_project_database()
+    mongodb = get_project_database()
     for project_name in mongodb.collection_names():
         if project_name in ("system.indexes",):
             continue
@@ -820,7 +794,7 @@ def get_output_link_versions(project_name, version_id, fields=None):
     # Does make sense to look for hero versions?
     query_filter = {
         "type": "version",
-        "data.inputLinks.input": version_id
+        "data.inputLinks.id": version_id
     }
     return conn.find(query_filter, _prepare_fields(fields))
 

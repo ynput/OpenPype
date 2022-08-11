@@ -18,8 +18,8 @@ from openpype.client import (
 )
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
-from openpype.lib import filter_pyblish_plugins
 
+from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
 from .template_data import get_template_data_with_names
 from . import (
