@@ -1,14 +1,11 @@
 import os
 from enum import Enum
 from abc import abstractmethod
-
 import attr
 
 from openpype.lib.path_tools import sha256sum
-from openpype.lib import PypeLogger
 from openpype.lib.file_handler import RemoteFileHandler
-
-log = PypeLogger().get_logger(__name__)
+from openpype.lib import Logger
 
 
 class UrlType(Enum):
@@ -28,6 +25,7 @@ class AddonInfo(object):
 
 
 class AddonDownloader:
+    log = Logger.get_logger(__name__)
 
     def __init__(self):
         self._downloaders = {}
@@ -101,7 +99,7 @@ class HTTPAddonDownloader(AddonDownloader):
 
     @classmethod
     def download(cls, addon_url, destination):
-        log.debug(f"Downloading {addon_url} to {destination}")
+        cls.log.debug(f"Downloading {addon_url} to {destination}")
         file_name = os.path.basename(destination)
         _, ext = os.path.splitext(file_name)
         if (ext.replace(".", '') not
@@ -112,6 +110,7 @@ class HTTPAddonDownloader(AddonDownloader):
                                        filename=file_name)
 
         return os.path.join(destination, file_name)
+
 
 def get_addons_info():
     """Returns list of addon information from Server"""
@@ -145,6 +144,10 @@ def update_addon_state(addon_infos, destination_folder, factory):
         factory (AddonDownloader): factory to get appropriate downloader per
             addon type
     """
+    from openpype.lib import Logger
+
+    log = Logger.get_logger(__name__)
+
     for addon in addon_infos:
         full_name = "{}_{}".format(addon.name, addon.version)
         addon_dest = os.path.join(destination_folder, full_name)
