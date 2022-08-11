@@ -64,8 +64,17 @@ No shelf definition found for shelf set named '{}'".format(shelf_set_name)
 
             shelf = get_or_create_shelf(shelf_name)
 
-        # go through each tool
-        # if filepath exists, load the tool, add it to the shelf and continue
+            tools = []
+            for tool in shelf_definition.get('tools_list'):
+                mandatory_attributes = ['name', 'script']
+                if not all(
+                    [v for k, v in tool.items() if k in mandatory_attributes]
+                ):
+                    log.warning("TOOLS ERROR: You need to specify at least \
+the name and the script path of the tool.")
+                    return
+
+                tool = get_or_create_tool(tool, shelf)
         # create the tool
         # add it to a list of tools
 
@@ -107,5 +116,5 @@ def get_or_create_shelf(shelf_label):
     return new_shelf
 
 
-def get_or_create_tool():
+def get_or_create_tool(tool_definition, shelf):
     pass
