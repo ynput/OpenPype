@@ -996,7 +996,9 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        paths.extend(self.modules_manager.collect_launch_hook_paths())
+        paths.extend(
+            self.modules_manager.collect_launch_hook_paths(self.application)
+        )
 
         return paths
 

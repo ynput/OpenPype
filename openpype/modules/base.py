@@ -789,24 +789,50 @@ class ModulesManager:
                 output.extend(paths)
         return output
 
-    def collect_launch_hook_paths(self):
-        """Helper to collect hooks from modules inherited ILaunchHookPaths.
+    def collect_launch_hook_paths(self, app):
+        """Helper to collect application launch hooks.
+
+        It used to be based on 'ILaunchHookPaths' which is not true anymore.
+        Module just have to have implemented 'get_launch_hook_paths' method.
+
+        Args:
+            app (Application): Application object which can be used for
+                filtering of which launch hook paths are returned.
 
         Returns:
             list: Paths to launch hook directories.
         """
-        from openpype_interfaces import ILaunchHookPaths
 
         str_type = type("")
         expected_types = (list, tuple, set)
 
         output = []
         for module in self.get_enabled_modules():
-            # Skip module that do not inherit from `ILaunchHookPaths`
-            if not isinstance(module, ILaunchHookPaths):
+            # Skip module if does not have implemented 'get_launch_hook_paths'
+            func = getattr(module, "get_launch_hook_paths", None)
+            if func is None:
                 continue
 
-            hook_paths = module.get_launch_hook_paths()
+            func = module.get_launch_hook_paths
+            if hasattr(inspect, "signature"):
+                sig = inspect.signature(func)
+                expect_args = len(sig.parameters) > 0
+            else:
+                expect_args = len(inspect.getargspec(func)[0]) > 0
+
+            # Pass application argument if method expect it.
+            try:
+                if expect_args:
+                    hook_paths = func(app)
+                else:
+                    hook_paths = func()
+            except Exception:
+                self.log.warning(
+                    "Failed to call 'get_launch_hook_paths'",
+                    exc_info=True
+                )
+                continue
+
             if not hook_paths:
                 continue
 

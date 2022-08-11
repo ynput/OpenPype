@@ -50,12 +50,32 @@ class IPluginPaths(OpenPypeInterface):
 class ILaunchHookPaths(OpenPypeInterface):
     """Module has launch hook paths to return.
 
+    Modules does not have to inherit from this interface (changed 8.11.2022).
+    Module just have to have implemented 'get_launch_hook_paths' to be able use
+    the advantage.
+
     Expected result is list of paths.
     ["path/to/launch_hooks_dir"]
     """
 
     @abstractmethod
-    def get_launch_hook_paths(self):
+    def get_launch_hook_paths(self, app):
+        """Paths to directory with application launch hooks.
+
+        Method can be also defined without arguments.
+        ```python
+        def get_launch_hook_paths(self):
+            return []
+        ```
+
+        Args:
+            app (Application): Application object which can be used for
+                filtering of which launch hook paths are returned.
+
+        Returns:
+            Iterable[str]: Path to directories where launch hooks can be found.
+        """
+
         pass
 
 
@@ -66,6 +86,7 @@ class ITrayModule(OpenPypeInterface):
     The module still must be usable if is not used in tray even if
     would do nothing.
     """
+
     tray_initialized = False
     _tray_manager = None
 
@@ -78,16 +99,19 @@ class ITrayModule(OpenPypeInterface):
         This is where GUIs should be loaded or tray specific parts should be
         prepared.
         """
+
         pass
 
     @abstractmethod
     def tray_menu(self, tray_menu):
         """Add module's action to tray menu."""
+
         pass
 
     @abstractmethod
     def tray_start(self):
         """Start procedure in Pype tray."""
+
         pass
 
     @abstractmethod
@@ -96,6 +120,7 @@ class ITrayModule(OpenPypeInterface):
 
         This is place where all threads should be shut.
         """
+
         pass
 
     def execute_in_main_thread(self, callback):
@@ -104,6 +129,7 @@ class ITrayModule(OpenPypeInterface):
             Some callbacks need to be processed on main thread (menu actions
             must be added on main thread or they won't get triggered etc.)
         """
+
         if not self.tray_initialized:
             # TODO Called without initialized tray, still main thread needed
             try:
@@ -128,6 +154,7 @@ class ITrayModule(OpenPypeInterface):
             msecs (int): Duration of message visibility in miliseconds.
                 Default is 10000 msecs, may differ by Qt version.
         """
+
         if self._tray_manager:
             self._tray_manager.show_tray_message(title, message, icon, msecs)
 
@@ -280,16 +307,19 @@ class ITrayService(ITrayModule):
 
     def set_service_running_icon(self):
         """Change icon of an QAction to green circle."""
+
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_running())
 
     def set_service_failed_icon(self):
         """Change icon of an QAction to red circle."""
+
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_failed())
 
     def set_service_idle_icon(self):
         """Change icon of an QAction to orange circle."""
+
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_idle())
 
@@ -303,6 +333,7 @@ class ISettingsChangeListener(OpenPypeInterface):
         "publish": ["path/to/publish_plugins"]
     }
     """
+
     @abstractmethod
     def on_system_settings_save(
         self, old_value, new_value, changes, new_value_metadata
