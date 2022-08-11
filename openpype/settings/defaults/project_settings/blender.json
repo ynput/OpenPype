@@ -14,6 +14,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateMeshNoNegativeScale": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateTransformZero": {
             "enabled": true,
             "optional": false,
@@ -23,7 +28,6 @@
             "enabled": true,
             "optional": true,
             "active": true,
-            "pack_images": true,
             "families": [
                 "model",
                 "camera",

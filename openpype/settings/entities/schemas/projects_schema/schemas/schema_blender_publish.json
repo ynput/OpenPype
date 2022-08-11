@@ -18,15 +18,10 @@
                 }
             ]
         },
-
         {
             "type": "collapsible-wrap",
             "label": "Model",
             "children": [
-                {
-                    "type": "label",
-                    "label": "Validators"
-                },
                 {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
@@ -76,7 +71,7 @@
                     "key": "families",
                     "label": "Families",
                     "type": "list",
-                    "object_type": "task-types-enum"
+                    "object_type": "text"
                 }
             ]
         },
@@ -86,7 +81,7 @@
             "template_data": [
                 {
                     "key": "ExtractFBX",
-                    "label": "Extract FBX (model and rig)",
+                    "label": "Extract FBX (model and rig)"
                 },
                 {
                     "key": "ExtractABC",

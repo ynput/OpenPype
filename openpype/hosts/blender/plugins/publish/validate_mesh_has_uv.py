@@ -3,18 +3,19 @@ from typing import List
 import bpy
 
 import pyblish.api
-import openpype.hosts.blender.api.action
+from openpype.api import ValidateContentsOrder
+from openpype.hosts.blender.api.action import SelectInvalidAction
 
 
 class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     """Validate that the current mesh has UV's."""
 
-    order = pyblish.api.ValidatorOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
     category = "geometry"
     label = "Mesh Has UV's"
-    actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
+    actions = [SelectInvalidAction]
     optional = True
 
     @staticmethod
@@ -33,20 +34,20 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        # TODO (jasper): only check objects in the collection that will be published?
-        for obj in [
-            obj for obj in instance]:
+        for obj in set(instance):
             try:
                 if obj.type == 'MESH':
                     # Make sure we are in object mode.
                     bpy.ops.object.mode_set(mode='OBJECT')
                     if not cls.has_uvs(obj):
                         invalid.append(obj)
-            except:
+            except RuntimeError:
                 continue
         return invalid
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(f"Meshes found in instance without valid UV's: {invalid}")
+            raise RuntimeError(
+                f"Meshes found in instance without valid UV's: {invalid}"
+            )
