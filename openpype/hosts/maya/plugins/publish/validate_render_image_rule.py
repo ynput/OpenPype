@@ -1,13 +1,7 @@
-import maya.mel as mel
-import pymel.core as pm
+from maya import cmds
 
 import pyblish.api
 import openpype.api
-
-
-def get_file_rule(rule):
-    """Workaround for a bug in python with cmds.workspace"""
-    return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))
 
 
 class ValidateRenderImageRule(pyblish.api.InstancePlugin):
@@ -28,7 +22,7 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         required_images_rule = self.get_default_render_image_folder(instance)
-        current_images_rule = get_file_rule("images")
+        current_images_rule = cmds.workspace(fileRuleEntry="images")
 
         assert current_images_rule == required_images_rule, (
             "Invalid workspace `images` file rule value: '{}'. "
@@ -40,8 +34,8 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
         default = cls.get_default_render_image_folder(instance)
-        pm.workspace.fileRules["images"] = default
-        pm.system.Workspace.save()
+        cmds.workspace(fileRule=("images", default))
+        cmds.workspace(saveWorkspace=True)
 
     @staticmethod
     def get_default_render_image_folder(instance):
