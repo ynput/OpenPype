@@ -5,7 +5,6 @@ import json
 import logging
 import six
 import platform
-import hashlib
 
 from openpype.client import get_project
 from openpype.settings import get_project_settings
@@ -480,21 +479,3 @@ class HostDirmap:
             log.debug("local sync mapping:: {}".format(mapping))
         return mapping
 
-
-def sha256sum(filename):
-    """Calculate sha256 for content of the file.
-
-    Args:
-         filename (str): Path to file.
-
-    Returns:
-        str: hex encoded sha256
-
-    """
-    h = hashlib.sha256()
-    b = bytearray(128 * 1024)
-    mv = memoryview(b)
-    with open(filename, 'rb', buffering=0) as f:
-        for n in iter(lambda: f.readinto(mv), 0):
-            h.update(mv[:n])
-    return h.hexdigest()
