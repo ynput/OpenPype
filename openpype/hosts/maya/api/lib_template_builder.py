@@ -40,6 +40,9 @@ def create_placeholder():
     placeholder_name = create_placeholder_name(args, options)
 
     selection = cmds.ls(selection=True)
+    if not selection:
+        raise ValueError("Nothing is selected")
+
     placeholder = cmds.spaceLocator(name=placeholder_name)[0]
 
     # get the long name of the placeholder (with the groups)
