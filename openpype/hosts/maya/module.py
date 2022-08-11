@@ -35,3 +35,10 @@ class OpenPypeMaya(OpenPypeModule, IHostModule):
         for key, value in defaults.items():
             if not env.get(key):
                 env[key] = value
+
+    def get_launch_hook_paths(self, app):
+        if app.host_name != self.host_name:
+            return []
+        return [
+            os.path.join(MAYA_ROOT_DIR, "hooks")
+        ]
