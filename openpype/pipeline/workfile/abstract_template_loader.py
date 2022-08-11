@@ -8,6 +8,7 @@ from functools import reduce
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
 from openpype.lib import (
+    StringTemplate,
     Logger,
     filter_profiles,
     get_linked_assets,
@@ -192,19 +193,35 @@ class AbstractTemplateLoader:
                 "Template path is not set.\n"
                 "Path need to be set in {}\\Template Workfile Build "
                 "Settings\\Profiles".format(host_name.title()))
-        try:
-            solved_path = None
-            while True:
+
+        # Try fill path with environments and anatomy roots
+        fill_data = {
+            key: value
+            for key, value in os.environ.items()
+        }
+        fill_data["root"] = anatomy.roots
+        result = StringTemplate.format_template(path, fill_data)
+        if result.solved:
+            path = result.normalized()
+
+        if path and os.path.exists(path):
+            self.log.info("Found template at: '{}'".format(path))
+            return path
+
+        solved_path = None
+        while True:
+            try:
                 solved_path = anatomy.path_remapper(path)
-                if solved_path is None:
-                    solved_path = path
-                if solved_path == path:
-                    break
-                path = solved_path
-        except KeyError as missing_key:
-            raise KeyError(
-                "Could not solve key '{}' in template path '{}'".format(
-                    missing_key, path))
+            except KeyError as missing_key:
+                raise KeyError(
+                    "Could not solve key '{}' in template path '{}'".format(
+                        missing_key, path))
+
+            if solved_path is None:
+                solved_path = path
+            if solved_path == path:
+                break
+            path = solved_path
 
         solved_path = os.path.normpath(solved_path)
         if not os.path.exists(solved_path):
@@ -213,7 +230,7 @@ class AbstractTemplateLoader:
                 "'{}' does not exists. (Not found : {})".format(
                     task_name, host_name, solved_path))
 
-        self.log.info("Found template at : '{}'".format(solved_path))
+        self.log.info("Found template at: '{}'".format(solved_path))
 
         return solved_path
 
