@@ -1130,10 +1130,11 @@ def _get_representations(
 
         for item in _regex_filters(flatten_filters):
             for key, value in item.items():
-                if key == "$or":
-                    or_queries.append(value)
-                else:
+                if key != "$or":
                     query_filter[key] = value
+
+                elif value:
+                    or_queries.append(value)
 
     if len(or_queries) == 1:
         query_filter["$or"] = or_queries[0]
