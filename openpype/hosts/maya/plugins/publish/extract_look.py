@@ -40,15 +40,15 @@ def get_ocio_config_path(profile_folder):
     Returns:
         str: Path to vendorized config file.
     """
-    return os.path.join(
-        os.environ["OPENPYPE_ROOT"],
-        "vendor",
-        "configs",
-        "OpenColorIO-Configs",
-        profile_folder,
-        "config.ocio"
-    )
-
+    try:
+        import OpenColorIOConfigs
+        return os.path.join(
+            os.path.dirname(OpenColorIOConfigs.__file__),
+            profile_folder,
+            "config.ocio"
+        )
+    except ImportError:
+        return None
 
 def find_paths_by_hash(texture_hash):
     """Find the texture hash key in the dictionary.
