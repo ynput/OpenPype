@@ -436,15 +436,12 @@ class ExtractLook(openpype.api.Extractor):
                         # set color space to raw if we linearized it
                         color_space = "Raw"
                 else:
-
                     # if the files are unresolved from `source`
                     # assume color space from the first file of 
                     # the resource
                     first_file = next(iter(resource.get("files", [])), None)
                     if not first_file:
-                        # No files for this resource? Can this happen? Should this error?
                         continue
-                        
                     filepath = os.path.normpath(first_file)
                     # if the files are unresolved
                     if files_metadata[filepath]["color_space"] == "Raw":
