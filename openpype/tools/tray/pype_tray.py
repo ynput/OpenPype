@@ -333,7 +333,11 @@ class TrayManager:
         expected_version = get_expected_version()
 
         # Request new build if is needed
-        if not expected_version.is_compatible(installed_version):
+        if (
+            # Backwards compatibility
+            not hasattr(expected_version, "is_compatible")
+            or not expected_version.is_compatible(installed_version)
+        ):
             if (
                 self._version_dialog is not None
                 and self._version_dialog.isVisible()
