@@ -729,7 +729,7 @@ def _find_frozen_openpype(use_version: str = None,
             ">>> Finding latest version compatible "
             f"with [ {installed_version} ]"))
         openpype_version = bootstrap.find_latest_openpype_version(
-            use_staging, compatible_with=installed_version)
+            use_staging)
 
         if openpype_version is None:
             if use_staging:

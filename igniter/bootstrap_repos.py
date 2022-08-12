@@ -1166,16 +1166,12 @@ class BootstrapRepos:
 
     @staticmethod
     def find_latest_openpype_version(
-            staging: bool,
-            compatible_with: OpenPypeVersion = None
+            staging: bool
     ) -> Union[OpenPypeVersion, None]:
         """Find the latest available OpenPype version in all location.
 
         Args:
             staging (bool): True to look for staging versions.
-            compatible_with (OpenPypeVersion, optional): If set, it will
-                try to find the latest version compatible with the
-                one specified.
 
         Returns:
             Latest OpenPype version on None if nothing was found.
@@ -1194,12 +1190,6 @@ class BootstrapRepos:
 
         if not all_versions:
             return None
-
-        if compatible_with:
-            all_versions = [
-                version for version in all_versions
-                if version.is_compatible(installed_version)
-            ]
 
         all_versions.sort()
         latest_version = all_versions[-1]
