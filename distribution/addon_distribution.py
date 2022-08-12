@@ -3,6 +3,7 @@ from enum import Enum
 from abc import abstractmethod
 import attr
 import logging
+import requests
 
 from distribution.file_handler import RemoteFileHandler
 
@@ -21,6 +22,9 @@ class AddonInfo(object):
     addon_url = attr.ib(default=None)
     type = attr.ib(default=None)
     hash = attr.ib(default=None)
+    description = attr.ib(default=None)
+    license = attr.ib(default=None)
+    authors = attr.ib(default=None)
 
 
 class AddonDownloader:
