@@ -429,9 +429,10 @@ class ExtractLook(openpype.api.Extractor):
                 # node doesn't have color space attribute
                 color_space = "Raw"
             else:
+                # get the resolved files
                 metadata = files_metadata.get(source)
-                # if the files are unresolved from `source` 
-                # assume color space from the first file of 
+                # if the files are unresolved from `source`
+                # assume color space from the first file of
                 # the resource
                 if not metadata:
                     first_file = next(iter(resource.get(
