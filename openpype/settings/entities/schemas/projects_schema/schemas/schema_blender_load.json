@@ -26,6 +26,20 @@
                             "rig": "For each rig assets"
                         }
                     ]
+                },
+                {
+                    "type": "enum",
+                    "key": "animation_instance_link",
+                    "label": "Animation instance link",
+                    "multiselection": false,
+                    "enum_items": [
+                        {
+                            "collection": "Collection"
+                        },
+                        {
+                            "armature": "Armature"
+                        }
+                    ]
                 }
             ]
         },
