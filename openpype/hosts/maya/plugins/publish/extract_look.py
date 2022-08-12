@@ -431,7 +431,7 @@ class ExtractLook(openpype.api.Extractor):
             else:
                 # get all the resolved files
                 metadata = files_metadata.get(source)
-                # if the files are unresolved from `source`
+                # if the files are unresolved from `source` 
                 # assume color space from the first file of 
                 # the resource
                 if not metadata:
