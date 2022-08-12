@@ -28,7 +28,7 @@ from .lib import (
     imprint,
     get_selection
 )
-from .pipeline import metadata_update, AVALON_PROPERTY, MODEL_DOWNSTREAM
+from .pipeline import metadata_update, AVALON_PROPERTY
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
@@ -1309,7 +1309,6 @@ class AssetLoader(LoaderPlugin):
         instance_collection = asset_group.instance_collection
         instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
         # Get current session task name and asset name
-        session_task_name = legacy_io.Session.get("AVALON_TASK")
         session_asset_name = legacy_io.Session.get("AVALON_ASSET")
 
         # If instance collection is a model container and current session task
@@ -1318,7 +1317,7 @@ class AssetLoader(LoaderPlugin):
         # instancers.
         if (
             is_container(instance_collection, "model")
-            and session_task_name not in MODEL_DOWNSTREAM
+            and session_asset_name != instance_metadata.get("asset_name")
         ):
             asset_group[AVALON_PROPERTY] = instance_metadata
             self._update_namespace(asset_group)

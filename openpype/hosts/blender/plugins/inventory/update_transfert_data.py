@@ -2,7 +2,6 @@ from openpype.pipeline import InventoryAction, legacy_io, update_container
 
 import bpy
 
-from openpype.hosts.blender.api.pipeline import MODEL_DOWNSTREAM
 from openpype.hosts.blender.api.ops import _process_app_events
 from openpype.hosts.blender.api.plugin import (
     ContainerMaintainer,
@@ -20,7 +19,6 @@ class UpdateTransfertData(InventoryAction):
     def is_compatible(container):
         return (
             container.get("loader") in ("LinkModelLoader", "AppendModelLoader")
-            and legacy_io.Session.get("AVALON_TASK") in MODEL_DOWNSTREAM
         )
 
     def process(self, containers):

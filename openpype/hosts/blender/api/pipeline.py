@@ -45,8 +45,6 @@ ORIGINAL_EXCEPTHOOK = sys.excepthook
 AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
 
-MODEL_DOWNSTREAM = ("Rigging", "Lookdev")
-
 log = Logger.get_logger(__name__)
 
 
