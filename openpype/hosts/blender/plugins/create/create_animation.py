@@ -30,8 +30,7 @@ class CreateAnimation(plugin.Creator):
         # Get Instance Container
         container = super()._process()
 
-        if (self.options or {}).get("asset_groups"):
-            asset_groups = set(self.options["asset_groups"])
-            plugin.link_to_collection(asset_groups, container)
+        if (self.options or {}).get("members"):
+            plugin.link_to_collection(self.options["members"], container)
 
         return container
