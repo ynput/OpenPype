@@ -10,4 +10,5 @@ class CreateModel(plugin.Creator):
     label = "Model"
     family = "model"
     icon = "cube"
+    defaults = ["Main", "Proxy"]
     color_tag = "COLOR_04"
