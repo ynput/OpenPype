@@ -199,4 +199,3 @@ def cli(args):
         server_endpoint = test_endpoint
 
     check_addons(server_endpoint, addon_folder, downloader_factory)
-
