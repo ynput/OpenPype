@@ -496,7 +496,6 @@ class OpenPypeVersion(semver.VersionInfo):
             ValueError: if invalid path is specified.
 
         """
-        installed_version = OpenPypeVersion.get_installed_version()
         openpype_versions = []
         if not openpype_dir.exists() and not openpype_dir.is_dir():
             return openpype_versions
@@ -1667,7 +1666,6 @@ class BootstrapRepos:
             ValueError: if invalid path is specified.
 
         """
-        installed_version = OpenPypeVersion.get_installed_version()
         if not openpype_dir.exists() and not openpype_dir.is_dir():
             raise ValueError(f"specified directory {openpype_dir} is invalid")
 
