@@ -27,11 +27,6 @@ from openpype.settings.constants import (
 from . import PypeLogger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
-from .avalon_context import (
-    get_workdir_with_workdir_data,
-    get_workfile_template_key,
-    get_last_workfile
-)
 
 from .python_module_tools import (
     modules_from_path,
@@ -1635,7 +1630,14 @@ def prepare_context_environments(data, env_group=None):
     data["task_type"] = task_type
 
     try:
-        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+        from openpype.pipeline.workfile import get_workdir_with_workdir_data
+
+        workdir = get_workdir_with_workdir_data(
+            workdir_data,
+            anatomy.project_name,
+            anatomy,
+            project_settings=project_settings
+        )
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
@@ -1725,11 +1727,19 @@ def _prepare_last_workfile(data, workdir):
     if not last_workfile_path:
         extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
         if extensions:
+            from openpype.pipeline.workfile import (
+                get_workfile_template_key,
+                get_last_workfile
+            )
+
             anatomy = data["anatomy"]
             project_settings = data["project_settings"]
             task_type = workdir_data["task"]["type"]
             template_key = get_workfile_template_key(
-                task_type, app.host_name, project_settings=project_settings
+                task_type,
+                app.host_name,
+                project_name,
+                project_settings=project_settings
             )
             # Find last workfile
             file_template = str(anatomy.templates[template_key]["file"])

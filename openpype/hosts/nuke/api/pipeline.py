@@ -9,7 +9,6 @@ import pyblish.api
 import openpype
 from openpype.api import (
     Logger,
-    BuildWorkfile,
     get_current_project_settings
 )
 from openpype.lib import register_event_callback
@@ -22,6 +21,7 @@ from openpype.pipeline import (
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
