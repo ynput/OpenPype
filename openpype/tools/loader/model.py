@@ -483,24 +483,22 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             last_versions_by_subset_id[subset_id] = hero_version
 
         # Check loaded subsets
-        subsets_loaded_by_id = set()
+        loaded_subset_ids = set()
         ids = self._loaded_representation_ids
         if ids:
             if self._doc_fetching_stop:
                 return
 
-            # Get subsets from representations
+            # Get subset ids from loaded representations in workfile
             # todo: optimize with aggregation query to distinct subset id
             representations = get_representations(project_name,
                                                   representation_ids=ids,
                                                   fields=["parent"])
-            parents_by_repre_id = get_representations_parents(
-                project_name,
-                representations=representations
-            )
-            for repre_parents in parents_by_repre_id.values():
-                repre_subset = repre_parents[1]
-                subsets_loaded_by_id.add(repre_subset["_id"])
+            version_ids = set(repre["parent"] for repre in representations)
+            versions = get_versions(project_name,
+                                    version_ids=version_ids,
+                                    fields=["parent"])
+            loaded_subset_ids = set(version["parent"] for version in versions)
 
         if self._doc_fetching_stop:
             return
@@ -528,7 +526,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             "subset_families": subset_families,
             "last_versions_by_subset_id": last_versions_by_subset_id,
             "repre_info_by_version_id": repre_info,
-            "subsets_loaded_by_id": subsets_loaded_by_id
+            "subsets_loaded_by_id": loaded_subset_ids
         }
 
         self.doc_fetched.emit()
