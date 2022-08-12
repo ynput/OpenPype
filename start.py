@@ -726,7 +726,7 @@ def _find_frozen_openpype(use_version: str = None,
     else:
         # Default behavior to use latest version
         _print((
-            ">>> Finding latest version compatible "
+            ">>> Finding latest version "
             f"with [ {installed_version} ]"))
         openpype_version = bootstrap.find_latest_openpype_version(
             use_staging)
@@ -947,7 +947,12 @@ def _boot_print_versions(use_staging, local_version, openpype_root):
     openpype_versions = bootstrap.find_openpype(
         include_zips=True,
         staging=use_staging,
-        compatible_with=compatible_with)
+    )
+    openpype_versions = [
+        version for version in openpype_versions
+        if version.is_compatible(
+            OpenPypeVersion.get_installed_version())
+    ]
 
     list_versions(openpype_versions, local_version)
 
