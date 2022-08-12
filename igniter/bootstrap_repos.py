@@ -425,7 +425,7 @@ class OpenPypeVersion(semver.VersionInfo):
     @classmethod
     def get_remote_versions(
         cls, production: bool = None,
-        staging: bool = None, compatible_with: OpenPypeVersion = None
+        staging: bool = None
     ) -> List:
         """Get all versions available in OpenPype Path.
 
@@ -470,13 +470,7 @@ class OpenPypeVersion(semver.VersionInfo):
         if not dir_to_search:
             return []
 
-        # DEPRECATED: look for version in root directory
-        versions = cls.get_versions_from_directory(
-            dir_to_search, compatible_with=compatible_with)
-        if compatible_with:
-            dir_to_search = dir_to_search / f"{compatible_with.major}.{compatible_with.minor}"  # noqa
-            versions += cls.get_versions_from_directory(
-                dir_to_search, compatible_with=compatible_with)
+        versions = cls.get_versions_from_directory(dir_to_search)
 
         filtered_versions = []
         for version in versions:
@@ -511,18 +505,13 @@ class OpenPypeVersion(semver.VersionInfo):
         # contain OpenPype.
         for item in openpype_dir.iterdir():
             # if the item is directory with major.minor version, dive deeper
-            try:
-                ver_dir = item.name.split(".")[
-                              0] == installed_version.major and \
-                          item.name.split(".")[
-                              1] == installed_version.minor  # noqa: E051
-                if item.is_dir() and ver_dir:
-                    _versions = OpenPypeVersion.get_versions_from_directory(
-                        item)
-                    if _versions:
-                        openpype_versions.append(_versions)
-            except IndexError:
-                pass
+
+            if item.is_dir() and re.match(r"^\d+\.\d+$", item.name):
+                _versions = OpenPypeVersion.get_versions_from_directory(
+                    item)
+                if _versions:
+                    openpype_versions += _versions
+
             # if file exists, strip extension, in case of dir don't.
             name = item.name if item.is_dir() else item.stem
             result = OpenPypeVersion.version_in_str(name)
@@ -1687,15 +1676,12 @@ class BootstrapRepos:
         # contain OpenPype.
         for item in openpype_dir.iterdir():
             # if the item is directory with major.minor version, dive deeper
-            try:
-                ver_dir = item.name.split(".")[0] == installed_version.major and item.name.split(".")[1] == installed_version.minor  # noqa: E501
-                if item.is_dir() and ver_dir:
-                    _versions = self.get_openpype_versions(
-                        item, staging=staging)
-                    if _versions:
-                        openpype_versions.append(_versions)
-            except IndexError:
-                pass
+            if item.is_dir() and re.match(r"^\d+\.\d+$", item.name):
+                _versions = self.get_openpype_versions(
+                    item, staging=staging)
+                if _versions:
+                    openpype_versions += _versions
+
             # if it is file, strip extension, in case of dir don't.
             name = item.name if item.is_dir() else item.stem
             result = OpenPypeVersion.version_in_str(name)
