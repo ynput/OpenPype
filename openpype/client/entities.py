@@ -1220,6 +1220,8 @@ def get_archived_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
+        context_filters (Dict[str, List[str, re.Pattern]]): Filter by
+            representation context fields.
         names_by_version_ids (dict[ObjectId, List[str]]): Complex filtering
             using version ids and list of names under the version.
         fields (Iterable[str]): Fields that should be returned. All fields are
