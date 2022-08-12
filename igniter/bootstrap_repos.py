@@ -1264,7 +1264,6 @@ class BootstrapRepos:
             ok install it as normal version.
 
         """
-        installed_version = OpenPypeVersion.get_installed_version()
         if openpype_path and not isinstance(openpype_path, Path):
             raise NotImplementedError(
                 ("Finding OpenPype in non-filesystem locations is"
@@ -1689,7 +1688,7 @@ class BootstrapRepos:
         for item in openpype_dir.iterdir():
             # if the item is directory with major.minor version, dive deeper
             try:
-                ver_dir = item.name.split(".")[0] == installed_version.major and item.name.split(".")[1] == installed_version.minor  # noqa: E051
+                ver_dir = item.name.split(".")[0] == installed_version.major and item.name.split(".")[1] == installed_version.minor  # noqa: E501
                 if item.is_dir() and ver_dir:
                     _versions = self.get_openpype_versions(
                         item, staging=staging)
