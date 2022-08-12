@@ -381,7 +381,7 @@ class OpenPypeVersion(semver.VersionInfo):
     @classmethod
     def get_local_versions(
         cls, production: bool = None,
-        staging: bool = None, compatible_with: OpenPypeVersion = None
+        staging: bool = None
     ) -> List:
         """Get all versions available on this machine.
 
@@ -391,8 +391,10 @@ class OpenPypeVersion(semver.VersionInfo):
         Args:
             production (bool): Return production versions.
             staging (bool): Return staging versions.
-            compatible_with (OpenPypeVersion): Return only those compatible
-                with specified version.
+
+        Returns:
+            list: of compatible versions available on the machine.
+
         """
         # Return all local versions if arguments are set to None
         if production is None and staging is None:
@@ -435,8 +437,7 @@ class OpenPypeVersion(semver.VersionInfo):
         Args:
             production (bool): Return production versions.
             staging (bool): Return staging versions.
-            compatible_with (OpenPypeVersion): Return only those compatible
-                with specified version.
+
         """
         # Return all local versions if arguments are set to None
         if production is None and staging is None:
@@ -745,9 +746,9 @@ class BootstrapRepos:
             self, repo_dir: Path = None) -> Union[OpenPypeVersion, None]:
         """Copy zip created from OpenPype repositories to user data dir.
 
-        This detect OpenPype version either in local "live" OpenPype
+        This detects OpenPype version either in local "live" OpenPype
         repository or in user provided path. Then it will zip it in temporary
-        directory and finally it will move it to destination which is user
+        directory, and finally it will move it to destination which is user
         data directory. Existing files will be replaced.
 
         Args:
@@ -758,7 +759,7 @@ class BootstrapRepos:
 
         """
         # if repo dir is not set, we detect local "live" OpenPype repository
-        # version and use it as a source. Otherwise repo_dir is user
+        # version and use it as a source. Otherwise, repo_dir is user
         # entered location.
         if repo_dir:
             version = self.get_version(repo_dir)
@@ -1122,21 +1123,19 @@ class BootstrapRepos:
     @staticmethod
     def find_openpype_version(
             version: Union[str, OpenPypeVersion],
-            staging: bool,
-            compatible_with: OpenPypeVersion = None
+            staging: bool
     ) -> Union[OpenPypeVersion, None]:
         """Find location of specified OpenPype version.
 
         Args:
             version (Union[str, OpenPypeVersion): Version to find.
             staging (bool): Filter staging versions.
-            compatible_with (OpenPypeVersion, optional): Find only
-                versions compatible with specified one.
+
+        Returns:
+            requested OpenPypeVersion.
 
         """
         installed_version = OpenPypeVersion.get_installed_version()
-        if not compatible_with:
-            compatible_with = installed_version
         if isinstance(version, str):
             version = OpenPypeVersion(version=version)
 
@@ -1144,8 +1143,7 @@ class BootstrapRepos:
             return installed_version
 
         local_versions = OpenPypeVersion.get_local_versions(
-            staging=staging, production=not staging,
-            compatible_with=compatible_with
+            staging=staging, production=not staging
         )
         zip_version = None
         for local_version in local_versions:
@@ -1159,8 +1157,7 @@ class BootstrapRepos:
             return zip_version
 
         remote_versions = OpenPypeVersion.get_remote_versions(
-            staging=staging, production=not staging,
-            compatible_with=compatible_with
+            staging=staging, production=not staging
         )
         for remote_version in remote_versions:
             if remote_version == version:
@@ -1237,8 +1234,6 @@ class BootstrapRepos:
                 otherwise.
             include_zips (bool, optional): If set True it will try to find
                 OpenPype in zip files in given directory.
-            compatible_with (OpenPypeVersion, optional): Find only those
-                versions compatible with the one specified.
 
         Returns:
             dict of Path: Dictionary of detected OpenPype version.

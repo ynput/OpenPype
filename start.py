@@ -689,7 +689,7 @@ def _find_frozen_openpype(use_version: str = None,
     # Collect OpenPype versions
     installed_version = OpenPypeVersion.get_installed_version()
     # Expected version that should be used by studio settings
-    #   - this option is used only if version is not explictly set and if
+    #   - this option is used only if version is not explicitly set and if
     #       studio has set explicit version in settings
     studio_version = OpenPypeVersion.get_expected_studio_version(use_staging)
 
