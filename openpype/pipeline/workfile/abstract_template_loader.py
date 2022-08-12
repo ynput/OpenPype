@@ -456,7 +456,7 @@ class AbstractPlaceholder:
 
     @property
     def loader_name(self):
-        """Return placeholder loader type.
+        """Return placeholder loader name.
 
         Returns:
             str: Loader name that will be used to load placeholder
