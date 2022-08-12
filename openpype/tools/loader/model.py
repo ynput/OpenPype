@@ -564,7 +564,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         # This runs in the main thread because it involves the host DCC
         if self._host:
             time_since_refresh = time.time() - self._host_loaded_refresh_time
-            print(time_since_refresh)
             if time_since_refresh > self._host_loaded_refresh_timeout:
                 repre_ids = {con.get("representation")
                              for con in self._host.ls()}
