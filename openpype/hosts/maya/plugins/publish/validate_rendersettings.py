@@ -180,14 +180,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         redshift_AOV_prefix
                     ))
                     invalid = True
-                # get aov format
-                aov_ext = cmds.getAttr(
-                    "{}.fileFormat".format(aov), asString=True)
 
-                default_ext = cmds.getAttr(
-                    "redshiftOptions.imageFormat", asString=True)
+                # check aov file format
+                aov_ext = cmds.getAttr("{}.fileFormat".format(aov))
+                default_ext = cmds.getAttr("redshiftOptions.imageFormat")
+                aov_type = cmds.getAttr("{}.aovType".format(aov))
+                if aov_type == "Cryptomatte":
+                    # redshift Cryptomatte AOV always uses "Cryptomatte (EXR)"
+                    # so we ignore validating file format for it.
+                    pass
 
-                if default_ext != aov_ext:
+                elif default_ext != aov_ext:
                     cls.log.error(("AOV file format is not the same "
                                    "as the one set globally "
                                    "{} != {}").format(default_ext,
