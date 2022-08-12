@@ -1515,13 +1515,21 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     return None
 
 
-@with_pipeline_io
+@deprecated
 def change_timer_to_current_context():
     """Called after context change to change timers.
+
+    Deprecated:
+        This method is specific for TimersManager module so please use the
+        functionality from there. Function will be removed after release
+        version 3.14.*
 
     TODO:
     - use TimersManager's static method instead of reimplementing it here
     """
+
+    from openpype.pipeline import legacy_io
+
     webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
     if not webserver_url:
         log.warning("Couldn't find webserver url")
