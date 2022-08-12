@@ -442,8 +442,8 @@ class ExtractLook(openpype.api.Extractor):
                     first_filepath = os.path.normpath(first_file)
                     metadata = files_metadata[first_filepath]
                 if metadata["color_space"] == "Raw":
-                        # set color space to raw if we linearized it
-                        color_space = "Raw"
+                    # set color space to raw if we linearized it
+                    color_space = "Raw"
                 # Remap file node filename to destination
                 remap[color_space_attr] = color_space
             attr = resource["attribute"]
