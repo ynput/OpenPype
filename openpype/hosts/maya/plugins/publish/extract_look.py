@@ -430,22 +430,25 @@ class ExtractLook(openpype.api.Extractor):
                 color_space = "Raw"
             else:
                 # get all the resolved files in Maya File Path Editor 
-                src = files_metadata.get(source)
-                if src:
-                    if files_metadata[source]["color_space"] == "Raw":
+                metadata = files_metadata.get(source)
+                if metadata:
+                    metadata = files_metadata[source]
+                    if metadata["color_space"] == "Raw":
                         # set color space to raw if we linearized it
                         color_space = "Raw"
                 else:
                     # if the files are unresolved from `source`
                     # assume color space from the first file of 
                     # the resource
-                    first_file = next(iter(resource.get("files", [])), None)
-                    if not first_file:
-                        continue
-                    filepath = os.path.normpath(first_file)
-                    # if the files are unresolved
-                    if files_metadata[filepath]["color_space"] == "Raw":
-                    # set color space to raw if we linearized it
+                    metadata = files_metadata.get(source)
+                    if not metadata:
+                        first_file = next(iter(resource.get("files", [])), None)
+                        if not first_file:
+                            continue
+                    first_filepath = os.path.normpath(first_file)
+                    metadata = files_metadata[first_filepath]
+                    if metadata["color_space"] == "Raw":
+                        # set color space to raw if we linearized it
                         color_space = "Raw"
                 # Remap file node filename to destination
                 remap[color_space_attr] = color_space
