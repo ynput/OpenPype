@@ -5,7 +5,7 @@
 <description>
 ## Outdated containers found
 
-Scene contains one or more outdated loaded containers, eg. versions of items loaded into scene by Loader are not latest.
+Scene contains one or more outdated loaded containers, eg. versions loaded into scene by Loader are not latest.
 
 ### How to repair?
 
