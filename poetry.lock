@@ -798,21 +798,6 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "opencolorio-configs"
-version = "1.0.2"
-description = "Curated set of OpenColorIO Configs for use in OpenPype"
-category = "main"
-optional = false
-python-versions = "*"
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/pypeclub/OpenColorIO-Configs.git"
-reference = "main"
-resolved_reference = "07c5e865bf2b115b589dd2876ae632cd410821b5"
-
-[[package]]
 name = "opentimelineio"
 version = "0.14.0.dev1"
 description = "Editorial interchange format and API"
@@ -1284,7 +1269,7 @@ python-versions = "*"
 
 [[package]]
 name = "pytz"
-version = "2022.1"
+version = "2022.2"
 description = "World timezone definitions, modern and historical"
 category = "dev"
 optional = false
@@ -1750,7 +1735,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "3.7.*"
-content-hash = "89fb7e8ad310b5048bf78561f1146194c8779e286d839cc000f04e88be87f3f3"
+content-hash = "de7422afb6aed02f75e1696afdda9ad6c7bf32da76b5022ee3e8f71a1ac4bae2"
 
 [metadata.files]
 acre = []
@@ -2146,7 +2131,6 @@ multidict = [
     {file = "multidict-6.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:4bae31803d708f6f15fd98be6a6ac0b6958fcf68fda3c77a048a4f9073704aae"},
     {file = "multidict-6.0.2.tar.gz", hash = "sha256:5ff3bd75f38e4c43f1f470f2df7a4d430b821c4ce22be384e1459cb57d6bb013"},
 ]
-opencolorio-configs = []
 opentimelineio = []
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
@@ -2398,10 +2382,7 @@ python-xlib = [
 python3-xlib = [
     {file = "python3-xlib-0.15.tar.gz", hash = "sha256:dc4245f3ae4aa5949c1d112ee4723901ade37a96721ba9645f2bfa56e5b383f8"},
 ]
-pytz = [
-    {file = "pytz-2022.1-py2.py3-none-any.whl", hash = "sha256:e68985985296d9a66a881eb3193b0906246245294a881e7c8afe623866ac6a5c"},
-    {file = "pytz-2022.1.tar.gz", hash = "sha256:1e760e2fe6a8163bc0b3d9a19c4f84342afa0a2affebfaa84b01b978a02ecaa7"},
-]
+pytz = []
 pywin32 = [
     {file = "pywin32-301-cp35-cp35m-win32.whl", hash = "sha256:93367c96e3a76dfe5003d8291ae16454ca7d84bb24d721e0b74a07610b7be4a7"},
     {file = "pywin32-301-cp35-cp35m-win_amd64.whl", hash = "sha256:9635df6998a70282bd36e7ac2a5cef9ead1627b0a63b17c731312c7a0daebb72"},

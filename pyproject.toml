@@ -70,8 +70,6 @@ requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
-OpenColorIO-Configs = { git = "https://github.com/pypeclub/OpenColorIO-Configs.git", branch = "main" }
-
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
@@ -143,6 +141,10 @@ hash = "3894dec7e4e521463891a869586850e8605f5fd604858b674c87323bf33e273d"
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
 hash = "sha256:..."
+
+[openpype.thirdparty.ocioconfig]
+url = "https://distribute.openpype.io/thirdparty/OpenColorIO-Configs-1.0.2.zip"
+hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
 
 [tool.pyright]
 include = [
