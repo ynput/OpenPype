@@ -214,7 +214,7 @@ These inputs wraps another inputs into {key: value} relation
 
 #### dict
 - this is dictionary type wrapping more inputs with keys defined in schema
-- may be used as dynamic children (e.g. in `list` or `dict-modifiable`)
+- may be used as dynamic children (e.g. in [list](#list) or [dict-modifiable](#dict-modifiable))
     - in that case the only key modifier is `children` which is list of it's keys
     - USAGE: e.g. List of dictionaries where each dictionary have same structure.
 - if is not used as dynamic children then must have defined `"key"` under which are it's values stored
@@ -600,7 +600,7 @@ How output of the schema could look like on save:
 - type of items is defined with key `"object_type"`
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
-    2.) item type name as string without modifiers (e.g. `text`)
+    2.) item type name as string without modifiers (e.g. [text](#text))
     3.) enhancement of 1.) there is also support of `template` type but be carefull about endless loop of templates
         - goal of using `template` is to easily change same item definitions in multiple lists
 
@@ -690,18 +690,31 @@ How output of the schema could look like on save:
 - one of dictionary inputs, this is only used as value input
 - items in this input can be removed and added same way as in `list` input
 - value items in dictionary must be the same type
-- type of items is defined with key `"object_type"`
 - required keys may be defined under `"required_keys"`
     - required keys must be defined as a list (e.g. `["key_1"]`) and are moved to the top
     - these keys can't be removed or edited (it is possible to edit label if item is collapsible)
-- there are 2 possible ways how to set the type:
-    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
-    2.) item type name as string without modifiers (e.g. `text`)
+- type of items is defined with key `"object_type"`
+    - there are 2 possible ways how to set the object type (Examples below):
+    1. just a type name as string without modifiers (e.g. `"text"`)
+    2. full types with modifiers as dictionary(`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"`
 - this input can be collapsible
+    - `"use_label_wrap"` must be set to `True` (Default behavior)
     - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
         - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
 
-1.) with item modifiers
+1. **Object type** without modifiers
+```
+{
+    "type": "dict-modifiable",
+    "object_type": "text",
+    "is_group": true,
+    "key": "templates_mapping",
+    "label": "Muster - Templates mapping",
+    "is_file": true
+}
+```
+
+2. **Object type** with item modifiers
 ```
 {
     "type": "dict-modifiable",
@@ -717,22 +730,10 @@ How output of the schema could look like on save:
 }
 ```
 
-2.) without modifiers
-```
-{
-    "type": "dict-modifiable",
-    "object_type": "text",
-    "is_group": true,
-    "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
-    "is_file": true
-}
-```
-
 #### path
 - input for paths, use `path-input` internally
 - has 2 input modifiers `"multiplatform"` and `"multipath"`
-    - `"multiplatform"` - adds `"windows"`, `"linux"` and `"darwin"` path inputs result is dictionary
+    - `"multiplatform"` - adds `"windows"`, `"linux"` and `"darwin"` path inputs (result is dictionary)
     - `"multipath"` - it is possible to enter multiple paths
     - if both are enabled result is dictionary with lists
 
@@ -797,6 +798,8 @@ How output of the schema could look like on save:
 - preimplemented entity to store and load color values
 - entity store and expect list of 4 integers in range 0-255
     - integers represents rgba [Red, Green, Blue, Alpha]
+- has modifier `"use_alpha"` which can be `True`/`False`
+    - alpha is always `255` if set to `True` and alpha slider is not visible in UI
 
 ```
 {
@@ -805,6 +808,13 @@ How output of the schema could look like on save:
     "label": "Background Color"
 }
 ```
+
+### Anatomy
+Anatomy represents data stored on project document. Item cares about **Project Anatomy**.
+
+#### anatomy
+- entity is just enhanced [dict](#dict) item
+- anatomy has always all keys overridden with overrides
 
 ### Noninteractive items
 Items used only for UI purposes.
@@ -830,15 +840,6 @@ Items used only for UI purposes.
     "type": "separator"
 }
 ```
-
-### Anatomy
-Anatomy represents data stored on project document.
-
-#### anatomy
-- entity works similarly to `dict`
-- anatomy has always all keys overridden with overrides
-    - overrides are not applied as all anatomy data must be available from project document
-    - all children must be groups
 
 ### Proxy wrappers
 - should wraps multiple inputs only visually
@@ -888,3 +889,8 @@ Anatomy represents data stored on project document.
         }
     ]
 }
+```
+
+
+## How to add new settings
+Always start with modifying or adding new schema and don't worry about values. When you think schema is ready to use launch OpenPype settings in development mode using `poetry run python ./start.py settings --dev` or prepared script in `~/openpype/tools/run_settings(.sh|.ps1)`. Settings opened in development mode have checkbox `Modify defaults` available in bottom left corner. When checked default values are modified and saved on `Save`. This is recommended approach how default settings should be created instead of direct modification of files.
