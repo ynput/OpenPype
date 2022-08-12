@@ -6,10 +6,9 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.api import BuildWorkfile
-
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.pipeline.workfile.build_template import (
     build_workfile_template,
     update_workfile_template

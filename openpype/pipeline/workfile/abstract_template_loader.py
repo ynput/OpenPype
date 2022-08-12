@@ -9,7 +9,7 @@ from functools import reduce
 
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
-from openpype.lib import get_linked_assets, PypeLogger as Logger
+from openpype.lib import get_linked_assets, Logger
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import (
     get_loaders_by_name,
