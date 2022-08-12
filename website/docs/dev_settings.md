@@ -195,7 +195,7 @@ Because formatting value can be only string it is possible to use formatting val
 #### dynamic_schema
 Dynamic schema item marks a place in settings schema where schemas defined by `BaseModuleSettingsDef` can be placed.
 - example:
-```
+```javascript
 {
     "type": "dynamic_schema",
     "name": "project_settings/global"
@@ -228,8 +228,8 @@ These inputs wraps another inputs into {key: value} relation
     - it is possible to add lighter background with `"highlight_content"` (Default: `False`)
         - lighter background has limits of maximum applies after 3-4 nested highlighted items there is not much difference in the color
     - output is dictionary `{the "key": children values}`
-```
-# Example
+```javascript
+// Example
 {
     "key": "applications",
     "type": "dict",
@@ -243,7 +243,7 @@ These inputs wraps another inputs into {key: value} relation
     ]
 }
 
-# Without label
+// Without label
 {
     "type": "dict",
     "key": "global",
@@ -252,7 +252,7 @@ These inputs wraps another inputs into {key: value} relation
     ]
 }
 
-# When used as widget
+// When used as widget
 {
     "type": "list",
     "key": "profiles",
@@ -283,7 +283,7 @@ These inputs wraps another inputs into {key: value} relation
 - they are not updated "live" it is required to save root changes and then
     modify values on this entity
     # TODO do live updates
-```
+```javascript
 {
     "type": "dict-roots",
     "key": "roots",
@@ -327,8 +327,8 @@ These inputs wraps another inputs into {key: value} relation
 - output is dictionary `{the "key": children values}`
 - using this type as template item for list type can be used to create infinite hierarchies
 
-```
-# Example
+```javascript
+// Example
 {
     "type": "dict-conditional",
     "key": "my_key",
@@ -336,7 +336,7 @@ These inputs wraps another inputs into {key: value} relation
     "enum_key": "type",
     "enum_label": "label",
     "enum_children": [
-        # Each item must be a dictionary with 'key'
+        // Each item must be a dictionary with 'key'
         {
             "key": "action",
             "label": "Action",
@@ -371,7 +371,7 @@ These inputs wraps another inputs into {key: value} relation
             ]
         },
         {
-            # Separator does not have children as "separator" value is enough
+            // Separator does not have children as "separator" value is enough
             "key": "separator",
             "label": "Separator"
         }
@@ -380,7 +380,7 @@ These inputs wraps another inputs into {key: value} relation
 ```
 
 How output of the schema could look like on save:
-```
+```javascript
 {
     "type": "separator"
 }
@@ -407,7 +407,7 @@ How output of the schema could look like on save:
 
 #### boolean
 - simple checkbox, nothing more to set
-```
+```javascript
 {
     "type": "boolean",
     "key": "my_boolean_key",
@@ -422,7 +422,7 @@ How output of the schema could look like on save:
     - key `"maxium"` as maximum allowed number to enter (Default: `99999`)
 - key `"steps"` will change single step value of UI inputs (using arrows and wheel scroll)
 - for UI it is possible to show slider to enable this option set `show_slider` to `true`
-```
+```javascript
 {
     "type": "number",
     "key": "fps",
@@ -433,7 +433,7 @@ How output of the schema could look like on save:
 }
 ```
 
-```
+```javascript
 {
     "type": "number",
     "key": "ratio",
@@ -450,7 +450,7 @@ How output of the schema could look like on save:
     - key `"multiline"` allows to enter multiple lines of text (Default: `False`)
     - key `"placeholder"` allows to show text inside input when is empty (Default: `None`)
 
-```
+```javascript
 {
     "type": "text",
     "key": "deadline_pool",
@@ -473,7 +473,7 @@ How output of the schema could look like on save:
     - set key `store_as_string` to `true`
     - code using that setting must expected that value is string and use json module to convert it to python types
 
-```
+```javascript
 {
     "type": "raw-json",
     "key": "profiles",
@@ -492,7 +492,7 @@ How output of the schema could look like on save:
     - it is recommended to use this option only in single selection mode
     - at the end this option is used only when defying default settings value or in dynamic items
 
-```
+```javascript
 {
     "key": "tags",
     "label": "Tags",
@@ -515,7 +515,7 @@ How output of the schema could look like on save:
     - `"work"` is used if default value is not specified
 - enum values are not updated on the fly it is required to save templates and
     reset settings to recache values
-```
+```javascript
 {
     "key": "host",
     "label": "Host name",
@@ -532,7 +532,7 @@ How output of the schema could look like on save:
 - to filter host names it is required to define `"hosts_filter"` which is list of host names that will be available
     - do not pass empty string if `use_empty_value` is enabled
     - ignoring host names would be more dangerous in some cases
-```
+```javascript
 {
     "key": "host",
     "label": "Host name",
@@ -555,7 +555,7 @@ How output of the schema could look like on save:
 - can be used only in project settings
 - has only `multiselection`
 - used only in project anatomy
-```
+```javascript
 {
     "type": "apps-enum",
     "key": "applications",
@@ -568,7 +568,7 @@ How output of the schema could look like on save:
 - can be used only in project settings
 - has only `multiselection`
 - used only in project anatomy
-```
+```javascript
 {
     "type": "tools-enum",
     "key": "tools_env",
@@ -605,7 +605,7 @@ How output of the schema could look like on save:
         - goal of using `template` is to easily change same item definitions in multiple lists
 
 1.) with item modifiers
-```
+```javascript
 {
     "type": "list",
     "key": "exclude_ports",
@@ -619,7 +619,7 @@ How output of the schema could look like on save:
 ```
 
 2.) without modifiers
-```
+```javascript
 {
     "type": "list",
     "key": "exclude_ports",
@@ -629,8 +629,8 @@ How output of the schema could look like on save:
 ```
 
 3.) with template definition
-```
-# Schema of list item where template is used
+```javascript
+// Schema of list item where template is used
 {
     "type": "list",
     "key": "menu_items",
@@ -641,9 +641,9 @@ How output of the schema could look like on save:
     }
 }
 
-# WARNING:
-#  In this example the template use itself inside which will work in `list`
-#  but may cause an issue in other entity types (e.g. `dict`).
+// WARNING:
+//  In this example the template use itself inside which will work in `list`
+//  but may cause an issue in other entity types (e.g. `dict`).
 
 'template_object_example.json' :
 [
@@ -703,7 +703,7 @@ How output of the schema could look like on save:
         - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
 
 1. **Object type** without modifiers
-```
+```javascript
 {
     "type": "dict-modifiable",
     "object_type": "text",
@@ -715,7 +715,7 @@ How output of the schema could look like on save:
 ```
 
 2. **Object type** with item modifiers
-```
+```javascript
 {
     "type": "dict-modifiable",
     "object_type": {
@@ -737,7 +737,7 @@ How output of the schema could look like on save:
     - `"multipath"` - it is possible to enter multiple paths
     - if both are enabled result is dictionary with lists
 
-```
+```javascript
 {
     "type": "path",
     "key": "ffmpeg_path",
@@ -759,7 +759,7 @@ How output of the schema could look like on save:
 - USAGE: For colors, transformations, etc. Custom number and different modifiers
   give ability to define if color is HUE or RGB, 0-255, 0-1, 0-100 etc.
 
-```
+```javascript
 {
     "type": "list-strict",
     "key": "color",
@@ -801,7 +801,7 @@ How output of the schema could look like on save:
 - has modifier `"use_alpha"` which can be `True`/`False`
     - alpha is always `255` if set to `True` and alpha slider is not visible in UI
 
-```
+```javascript
 {
     "type": "color",
     "key": "bg_color",
@@ -824,7 +824,7 @@ Items used only for UI purposes.
 - it is possible to use html tags inside the label
 - set `work_wrap` to `true`/`false` if you want to enable word wrapping in UI (default: `false`)
 
-```
+```javascript
 {
     "type": "label",
     "label": "<span style=\"color:#FF0000\";>RED LABEL:</span> Normal label"
@@ -835,7 +835,7 @@ Items used only for UI purposes.
 - legacy name is `splitter` (still usable)
 - visual separator of items (more divider than separator)
 
-```
+```javascript
 {
     "type": "separator"
 }
@@ -850,7 +850,7 @@ Items used only for UI purposes.
 - wraps inputs into form look layout
 - should be used only for Pure inputs
 
-```
+```javascript
 {
     "type": "dict-form",
     "children": [
@@ -875,7 +875,7 @@ Items used only for UI purposes.
     - looks like `dict` but does not hold `"key"`
 - should be used only for Pure inputs
 
-```
+```javascript
 {
     "type": "collapsible-wrap",
     "label": "Collapsible example"
