@@ -894,3 +894,5 @@ Items used only for UI purposes.
 
 ## How to add new settings
 Always start with modifying or adding new schema and don't worry about values. When you think schema is ready to use launch OpenPype settings in development mode using `poetry run python ./start.py settings --dev` or prepared script in `~/openpype/tools/run_settings(.sh|.ps1)`. Settings opened in development mode have checkbox `Modify defaults` available in bottom left corner. When checked default values are modified and saved on `Save`. This is recommended approach how default settings should be created instead of direct modification of files.
+
+![Modify default settings](assets/settings_dev.png)
