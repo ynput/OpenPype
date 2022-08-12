@@ -699,8 +699,7 @@ def _find_frozen_openpype(use_version: str = None,
             # Version says to use latest version
             _print(">>> Finding latest version defined by use version")
             openpype_version = bootstrap.find_latest_openpype_version(
-                use_staging, compatible_with=installed_version
-            )
+                use_staging)
         else:
             _print(f">>> Finding specified version \"{use_version}\"")
             openpype_version = bootstrap.find_openpype_version(
@@ -712,18 +711,11 @@ def _find_frozen_openpype(use_version: str = None,
                 f"Requested version \"{use_version}\" was not found."
             )
 
-        if not openpype_version.is_compatible(installed_version):
-            raise OpenPypeVersionIncompatible((
-                f"Requested version \"{use_version}\" is not compatible "
-                f"with installed version \"{installed_version}\""
-            ))
-
     elif studio_version is not None:
         # Studio has defined a version to use
         _print(f">>> Finding studio version \"{studio_version}\"")
         openpype_version = bootstrap.find_openpype_version(
-            studio_version, use_staging, compatible_with=installed_version
-        )
+            studio_version, use_staging)
         if openpype_version is None:
             raise OpenPypeVersionNotFound((
                 "Requested OpenPype version "
@@ -737,8 +729,8 @@ def _find_frozen_openpype(use_version: str = None,
             ">>> Finding latest version compatible "
             f"with [ {installed_version} ]"))
         openpype_version = bootstrap.find_latest_openpype_version(
-            use_staging, compatible_with=installed_version
-        )
+            use_staging, compatible_with=installed_version)
+
         if openpype_version is None:
             if use_staging:
                 reason = "Didn't find any staging versions."
@@ -755,6 +747,14 @@ def _find_frozen_openpype(use_version: str = None,
             path=version_path)
         _initialize_environment(openpype_version)
         return version_path
+
+    if not installed_version.is_compatible(openpype_version):
+        raise OpenPypeVersionIncompatible(
+            (
+                f"Latest version found {openpype_version} is not "
+                f"compatible with currently running {installed_version}"
+            )
+        )
 
     # test if latest detected is installed (in user data dir)
     is_inside = False

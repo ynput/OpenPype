@@ -411,16 +411,7 @@ class OpenPypeVersion(semver.VersionInfo):
 
         # DEPRECATED: backwards compatible way to look for versions in root
         dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
-        versions = OpenPypeVersion.get_versions_from_directory(
-            dir_to_search, compatible_with=compatible_with
-        )
-        if compatible_with:
-            dir_to_search = Path(
-                user_data_dir("openpype", "pypeclub")) / f"{compatible_with.major}.{compatible_with.minor}"  # noqa
-            versions += OpenPypeVersion.get_versions_from_directory(
-                dir_to_search, compatible_with=compatible_with
-            )
-
+        versions = OpenPypeVersion.get_versions_from_directory(dir_to_search)
 
         filtered_versions = []
         for version in versions:
@@ -498,14 +489,11 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @staticmethod
     def get_versions_from_directory(
-            openpype_dir: Path,
-            compatible_with: OpenPypeVersion = None) -> List:
+            openpype_dir: Path) -> List:
         """Get all detected OpenPype versions in directory.
 
         Args:
             openpype_dir (Path): Directory to scan.
-            compatible_with (OpenPypeVersion): Return only versions compatible
-                with build version specified as OpenPypeVersion.
 
         Returns:
             list of OpenPypeVersion
@@ -515,17 +503,27 @@ class OpenPypeVersion(semver.VersionInfo):
 
         """
         installed_version = OpenPypeVersion.get_installed_version()
-        if not compatible_with:
-            compatible_with = installed_version
-        _openpype_versions = []
+        openpype_versions = []
         if not openpype_dir.exists() and not openpype_dir.is_dir():
-            return _openpype_versions
+            return openpype_versions
 
         # iterate over directory in first level and find all that might
         # contain OpenPype.
         for item in openpype_dir.iterdir():
-
-            # if file, strip extension, in case of dir not.
+            # if the item is directory with major.minor version, dive deeper
+            try:
+                ver_dir = item.name.split(".")[
+                              0] == installed_version.major and \
+                          item.name.split(".")[
+                              1] == installed_version.minor  # noqa: E051
+                if item.is_dir() and ver_dir:
+                    _versions = OpenPypeVersion.get_versions_from_directory(
+                        item)
+                    if _versions:
+                        openpype_versions.append(_versions)
+            except IndexError:
+                pass
+            # if file exists, strip extension, in case of dir don't.
             name = item.name if item.is_dir() else item.stem
             result = OpenPypeVersion.version_in_str(name)
 
@@ -543,13 +541,10 @@ class OpenPypeVersion(semver.VersionInfo):
                 )[0]:
                     continue
 
-                if not detected_version.is_compatible(compatible_with):
-                    continue
-
                 detected_version.path = item
-                _openpype_versions.append(detected_version)
+                openpype_versions.append(detected_version)
 
-        return sorted(_openpype_versions)
+        return sorted(openpype_versions)
 
     @staticmethod
     def get_installed_version_str() -> str:
@@ -577,15 +572,14 @@ class OpenPypeVersion(semver.VersionInfo):
     def get_latest_version(
         staging: bool = False,
         local: bool = None,
-        remote: bool = None,
-        compatible_with: OpenPypeVersion = None
+        remote: bool = None
     ) -> Union[OpenPypeVersion, None]:
-        """Get latest available version.
+        """Get the latest available version.
 
         The version does not contain information about path and source.
 
-        This is utility version to get latest version from all found. Build
-        version is not listed if staging is enabled.
+        This is utility version to get the latest version from all found.
+        Build version is not listed if staging is enabled.
 
         Arguments 'local' and 'remote' define if local and remote repository
         versions are used. All versions are used if both are not set (or set
@@ -597,8 +591,9 @@ class OpenPypeVersion(semver.VersionInfo):
             staging (bool, optional): List staging versions if True.
             local (bool, optional): List local versions if True.
             remote (bool, optional): List remote versions if True.
-            compatible_with (OpenPypeVersion, optional) Return only version
-                compatible with compatible_with.
+
+        Returns:
+            Latest OpenPypeVersion or None
 
         """
         if local is None and remote is None:
@@ -612,8 +607,6 @@ class OpenPypeVersion(semver.VersionInfo):
             remote = True
 
         installed_version = OpenPypeVersion.get_installed_version()
-        if not compatible_with:
-            compatible_with = installed_version
         local_versions = []
         remote_versions = []
         if local:
@@ -633,10 +626,7 @@ class OpenPypeVersion(semver.VersionInfo):
 
         all_versions.sort()
         latest_version: OpenPypeVersion
-        latest_version = all_versions[-1]
-        if not latest_version.is_compatible(compatible_with):
-            return None
-        return latest_version
+        return all_versions[-1]
 
     @classmethod
     def get_expected_studio_version(cls, staging=False, global_settings=None):
@@ -1191,13 +1181,27 @@ class BootstrapRepos:
 
     @staticmethod
     def find_latest_openpype_version(
-            staging, compatible_with: OpenPypeVersion = None):
+            staging: bool,
+            compatible_with: OpenPypeVersion = None
+    ) -> Union[OpenPypeVersion, None]:
+        """Find the latest available OpenPype version in all location.
+
+        Args:
+            staging (bool): True to look for staging versions.
+            compatible_with (OpenPypeVersion, optional): If set, it will
+                try to find the latest version compatible with the
+                one specified.
+
+        Returns:
+            Latest OpenPype version on None if nothing was found.
+
+        """
         installed_version = OpenPypeVersion.get_installed_version()
         local_versions = OpenPypeVersion.get_local_versions(
-            staging=staging, compatible_with=compatible_with
+            staging=staging
         )
         remote_versions = OpenPypeVersion.get_remote_versions(
-            staging=staging, compatible_with=compatible_with
+            staging=staging
         )
         all_versions = local_versions + remote_versions
         if not staging:
@@ -1205,6 +1209,12 @@ class BootstrapRepos:
 
         if not all_versions:
             return None
+
+        if compatible_with:
+            all_versions = [
+                version for version in all_versions
+                if version.is_compatible(installed_version)
+            ]
 
         all_versions.sort()
         latest_version = all_versions[-1]
@@ -1222,8 +1232,7 @@ class BootstrapRepos:
             self,
             openpype_path: Union[Path, str] = None,
             staging: bool = False,
-            include_zips: bool = False,
-            compatible_with: OpenPypeVersion = None
+            include_zips: bool = False
     ) -> Union[List[OpenPypeVersion], None]:
         """Get ordered dict of detected OpenPype version.
 
@@ -1256,36 +1265,29 @@ class BootstrapRepos:
 
         """
         installed_version = OpenPypeVersion.get_installed_version()
-        if not compatible_with:
-            compatible_with = installed_version
         if openpype_path and not isinstance(openpype_path, Path):
             raise NotImplementedError(
                 ("Finding OpenPype in non-filesystem locations is"
                  " not implemented yet."))
 
-        version_dir = f"{compatible_with.major}.{compatible_with.minor}"
-
         # if checks bellow for OPENPYPE_PATH and registry fails, use data_dir
         # DEPRECATED: lookup in root of this folder is deprecated in favour
         #             of major.minor sub-folders.
-        dirs_to_search = [self.data_dir, self.data_dir / version_dir]
+        dirs_to_search = [self.data_dir]
 
         if openpype_path:
-            dirs_to_search = [openpype_path, openpype_path / version_dir]
+            dirs_to_search = [openpype_path]
         elif os.getenv("OPENPYPE_PATH") \
                 and Path(os.getenv("OPENPYPE_PATH")).exists():
             # first try OPENPYPE_PATH and if that is not available,
             # try registry.
-            dirs_to_search = [Path(os.getenv("OPENPYPE_PATH")),
-                              Path(os.getenv("OPENPYPE_PATH")) / version_dir]
+            dirs_to_search = [Path(os.getenv("OPENPYPE_PATH"))]
         else:
             try:
                 registry_dir = Path(
                     str(self.registry.get_item("openPypePath")))
                 if registry_dir.exists():
-                    dirs_to_search = [
-                        registry_dir, registry_dir / version_dir
-                    ]
+                    dirs_to_search = [registry_dir]
 
             except ValueError:
                 # nothing found in registry, we'll use data dir
@@ -1295,7 +1297,7 @@ class BootstrapRepos:
         for dir_to_search in dirs_to_search:
             try:
                 openpype_versions += self.get_openpype_versions(
-                    dir_to_search, staging, compatible_with=compatible_with)
+                    dir_to_search, staging)
             except ValueError:
                 # location is invalid, skip it
                 pass
@@ -1663,15 +1665,12 @@ class BootstrapRepos:
     def get_openpype_versions(
             self,
             openpype_dir: Path,
-            staging: bool = False,
-            compatible_with: OpenPypeVersion = None) -> list:
+            staging: bool = False) -> list:
         """Get all detected OpenPype versions in directory.
 
         Args:
             openpype_dir (Path): Directory to scan.
             staging (bool, optional): Find staging versions if True.
-            compatible_with (OpenPypeVersion, optional): Get only versions
-                compatible with the one specified.
 
         Returns:
             list of OpenPypeVersion
@@ -1681,17 +1680,24 @@ class BootstrapRepos:
 
         """
         installed_version = OpenPypeVersion.get_installed_version()
-        if not compatible_with:
-            compatible_with = installed_version
         if not openpype_dir.exists() and not openpype_dir.is_dir():
             raise ValueError(f"specified directory {openpype_dir} is invalid")
 
-        _openpype_versions = []
+        openpype_versions = []
         # iterate over directory in first level and find all that might
         # contain OpenPype.
         for item in openpype_dir.iterdir():
-
-            # if file, strip extension, in case of dir not.
+            # if the item is directory with major.minor version, dive deeper
+            try:
+                ver_dir = item.name.split(".")[0] == installed_version.major and item.name.split(".")[1] == installed_version.minor  # noqa: E051
+                if item.is_dir() and ver_dir:
+                    _versions = self.get_openpype_versions(
+                        item, staging=staging)
+                    if _versions:
+                        openpype_versions.append(_versions)
+            except IndexError:
+                pass
+            # if it is file, strip extension, in case of dir don't.
             name = item.name if item.is_dir() else item.stem
             result = OpenPypeVersion.version_in_str(name)
 
@@ -1709,17 +1715,14 @@ class BootstrapRepos:
                 ):
                     continue
 
-                if not detected_version.is_compatible(compatible_with):
-                    continue
-
                 detected_version.path = item
                 if staging and detected_version.is_staging():
-                    _openpype_versions.append(detected_version)
+                    openpype_versions.append(detected_version)
 
                 if not staging and not detected_version.is_staging():
-                    _openpype_versions.append(detected_version)
+                    openpype_versions.append(detected_version)
 
-        return sorted(_openpype_versions)
+        return sorted(openpype_versions)
 
 
 class OpenPypeVersionExists(Exception):
