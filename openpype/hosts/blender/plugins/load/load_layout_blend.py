@@ -83,6 +83,7 @@ class LayoutLoader(plugin.AssetLoader):
         "animation_instances",
     ]
     animation_instance_mode = "global"
+    animation_instance_link = "collection"
 
     def _get_rig_assets(self, asset_group):
         return [
@@ -90,6 +91,12 @@ class LayoutLoader(plugin.AssetLoader):
             for child in plugin.get_children_recursive(asset_group)
             if plugin.is_container(child, family="rig")
         ]
+
+    def _get_armatures(self, rig_assets):
+        for rig_asset in rig_assets:
+            for obj in rig_asset.all_objects:
+                if obj.type == "ARMATURE":
+                    yield obj
 
     def _get_animation_collection(self, subset):
         for collection in plugin.get_children_recursive(
@@ -110,11 +117,16 @@ class LayoutLoader(plugin.AssetLoader):
                 'Creator plugin "CreateAnimation" was not found.'
             )
 
+        if self.animation_instance_link == "armature":
+            members = set(self._get_armatures(rig_assets))
+        else:
+            members = set(rig_assets)
+
         legacy_create(
             creator_plugin,
             name=name,
             asset=legacy_io.Session.get("AVALON_ASSET"),
-            options={"useSelection": False, "asset_groups": rig_assets},
+            options={"useSelection": False, "members": members},
             data={"dependencies": dependency}
         )
 
