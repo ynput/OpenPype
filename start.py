@@ -629,6 +629,9 @@ def _determine_mongodb() -> str:
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     version_path = openpype_version.path
+    if not version_path:
+        _print(f"!!! Version {openpype_version} doesn't have path set.")
+        raise ValueError("No path set in specified OpenPype version.")
     os.environ["OPENPYPE_VERSION"] = str(openpype_version)
     # set OPENPYPE_REPOS_ROOT to point to currently used OpenPype version.
     os.environ["OPENPYPE_REPOS_ROOT"] = os.path.normpath(

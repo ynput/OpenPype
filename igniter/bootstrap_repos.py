@@ -514,6 +514,9 @@ class OpenPypeVersion(semver.VersionInfo):
             ValueError: if invalid path is specified.
 
         """
+        installed_version = OpenPypeVersion.get_installed_version()
+        if not compatible_with:
+            compatible_with = installed_version
         _openpype_versions = []
         if not openpype_dir.exists() and not openpype_dir.is_dir():
             return _openpype_versions
@@ -540,8 +543,7 @@ class OpenPypeVersion(semver.VersionInfo):
                 )[0]:
                     continue
 
-                if compatible_with and not detected_version.is_compatible(
-                        compatible_with):
+                if not detected_version.is_compatible(compatible_with):
                     continue
 
                 detected_version.path = item
@@ -610,6 +612,8 @@ class OpenPypeVersion(semver.VersionInfo):
             remote = True
 
         installed_version = OpenPypeVersion.get_installed_version()
+        if not compatible_with:
+            compatible_with = installed_version
         local_versions = []
         remote_versions = []
         if local:
@@ -630,8 +634,7 @@ class OpenPypeVersion(semver.VersionInfo):
         all_versions.sort()
         latest_version: OpenPypeVersion
         latest_version = all_versions[-1]
-        if compatible_with and not latest_version.is_compatible(
-                compatible_with):
+        if not latest_version.is_compatible(compatible_with):
             return None
         return latest_version
 
@@ -1153,10 +1156,12 @@ class BootstrapRepos:
                 versions compatible with specified one.
 
         """
+        installed_version = OpenPypeVersion.get_installed_version()
+        if not compatible_with:
+            compatible_with = installed_version
         if isinstance(version, str):
             version = OpenPypeVersion(version=version)
 
-        installed_version = OpenPypeVersion.get_installed_version()
         if installed_version == version:
             return installed_version
 
@@ -1250,51 +1255,41 @@ class BootstrapRepos:
             ok install it as normal version.
 
         """
+        installed_version = OpenPypeVersion.get_installed_version()
+        if not compatible_with:
+            compatible_with = installed_version
         if openpype_path and not isinstance(openpype_path, Path):
             raise NotImplementedError(
                 ("Finding OpenPype in non-filesystem locations is"
                  " not implemented yet."))
 
-        version_dir = ""
-        if compatible_with:
-            version_dir = f"{compatible_with.major}.{compatible_with.minor}"
+        version_dir = f"{compatible_with.major}.{compatible_with.minor}"
 
         # if checks bellow for OPENPYPE_PATH and registry fails, use data_dir
         # DEPRECATED: lookup in root of this folder is deprecated in favour
         #             of major.minor sub-folders.
-        dirs_to_search = [
-            self.data_dir
-        ]
-        if compatible_with:
-            dirs_to_search.append(self.data_dir / version_dir)
+        dirs_to_search = [self.data_dir, self.data_dir / version_dir]
 
         if openpype_path:
-            dirs_to_search = [openpype_path]
-
-            if compatible_with:
-                dirs_to_search.append(openpype_path / version_dir)
-        else:
+            dirs_to_search = [openpype_path, openpype_path / version_dir]
+        elif os.getenv("OPENPYPE_PATH") \
+                and Path(os.getenv("OPENPYPE_PATH")).exists():
             # first try OPENPYPE_PATH and if that is not available,
             # try registry.
-            if os.getenv("OPENPYPE_PATH") \
-                    and Path(os.getenv("OPENPYPE_PATH")).exists():
-                dirs_to_search = [Path(os.getenv("OPENPYPE_PATH"))]
+            dirs_to_search = [Path(os.getenv("OPENPYPE_PATH")),
+                              Path(os.getenv("OPENPYPE_PATH")) / version_dir]
+        else:
+            try:
+                registry_dir = Path(
+                    str(self.registry.get_item("openPypePath")))
+                if registry_dir.exists():
+                    dirs_to_search = [
+                        registry_dir, registry_dir / version_dir
+                    ]
 
-                if compatible_with:
-                    dirs_to_search.append(
-                        Path(os.getenv("OPENPYPE_PATH")) / version_dir)
-            else:
-                try:
-                    registry_dir = Path(
-                        str(self.registry.get_item("openPypePath")))
-                    if registry_dir.exists():
-                        dirs_to_search = [registry_dir]
-                    if compatible_with:
-                        dirs_to_search.append(registry_dir / version_dir)
-
-                except ValueError:
-                    # nothing found in registry, we'll use data dir
-                    pass
+            except ValueError:
+                # nothing found in registry, we'll use data dir
+                pass
 
         openpype_versions = []
         for dir_to_search in dirs_to_search:
@@ -1685,6 +1680,9 @@ class BootstrapRepos:
             ValueError: if invalid path is specified.
 
         """
+        installed_version = OpenPypeVersion.get_installed_version()
+        if not compatible_with:
+            compatible_with = installed_version
         if not openpype_dir.exists() and not openpype_dir.is_dir():
             raise ValueError(f"specified directory {openpype_dir} is invalid")
 
@@ -1711,8 +1709,7 @@ class BootstrapRepos:
                 ):
                     continue
 
-                if compatible_with and \
-                        not detected_version.is_compatible(compatible_with):
+                if not detected_version.is_compatible(compatible_with):
                     continue
 
                 detected_version.path = item
