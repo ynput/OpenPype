@@ -442,7 +442,8 @@ class ExtractLook(openpype.api.Extractor):
                     # the resource
                     metadata = files_metadata.get(source)
                     if not metadata:
-                        first_file = next(iter(resource.get("files", [])), None)
+                        first_file = next(iter(resource.get(
+                            "files", [])), None)
                         if not first_file:
                             continue
                     first_filepath = os.path.normpath(first_file)
