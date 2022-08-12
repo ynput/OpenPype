@@ -466,23 +466,6 @@ class AbstractPlaceholder:
         return self.data["loader"]
 
     @property
-    def is_context(self):
-        """Check if is placeholder context type.
-
-        context_asset: For loading current asset
-        linked_asset: For loading linked assets
-
-        Question:
-            There seems to be more build options and this property is not used,
-                should be removed?
-
-        Returns:
-            bool: true if placeholder is a context placeholder
-        """
-
-        return self.builder_type == "context_asset"
-
-    @property
     def is_valid(self):
         """Test validity of placeholder.
 
