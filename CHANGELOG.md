@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.13.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.13.0...HEAD)
+
+**🐛 Bug fixes**
+
+- General: Hero version representations have full context [\#3638](https://github.com/pypeclub/OpenPype/pull/3638)
+- Maya: FBX support for update in reference loader [\#3631](https://github.com/pypeclub/OpenPype/pull/3631)
+
+**🔀 Refactored code**
+
+- TimersManager: Plugins are in timers manager module [\#3639](https://github.com/pypeclub/OpenPype/pull/3639)
+- General: Move workfiles functions into pipeline [\#3637](https://github.com/pypeclub/OpenPype/pull/3637)
+
+**Merged pull requests:**
+
+- Kitsu|Fix: Movie project type fails & first loop children names [\#3636](https://github.com/pypeclub/OpenPype/pull/3636)
+
 ## [3.13.0](https://github.com/pypeclub/OpenPype/tree/3.13.0) (2022-08-09)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.13.0-nightly.1...3.13.0)
@@ -37,6 +55,7 @@
 - General: Update imports in start script [\#3579](https://github.com/pypeclub/OpenPype/pull/3579)
 - Nuke: render family integration consistency  [\#3576](https://github.com/pypeclub/OpenPype/pull/3576)
 - Ftrack: Handle missing published path in integrator [\#3570](https://github.com/pypeclub/OpenPype/pull/3570)
+- Maya: fix Review image plane attribute  [\#3569](https://github.com/pypeclub/OpenPype/pull/3569)
 - Nuke: publish existing frames with slate with correct range [\#3555](https://github.com/pypeclub/OpenPype/pull/3555)
 
 **🔀 Refactored code**
@@ -68,13 +87,9 @@
 - Maya: add additional validators to Settings [\#3540](https://github.com/pypeclub/OpenPype/pull/3540)
 - General: Interactive console in cli [\#3526](https://github.com/pypeclub/OpenPype/pull/3526)
 - Ftrack: Automatic daily review session creation can define trigger hour [\#3516](https://github.com/pypeclub/OpenPype/pull/3516)
-- Ftrack: add source into Note [\#3509](https://github.com/pypeclub/OpenPype/pull/3509)
-- Add pack and unpack convenience scripts [\#3502](https://github.com/pypeclub/OpenPype/pull/3502)
-- NewPublisher: Keep plugins with mismatch target in report [\#3498](https://github.com/pypeclub/OpenPype/pull/3498)
 
 **🐛 Bug fixes**
 
-- Maya: fix Review image plane attribute  [\#3569](https://github.com/pypeclub/OpenPype/pull/3569)
 - Maya: Fix animated attributes \(ie. overscan\) on loaded cameras breaking review publishing. [\#3562](https://github.com/pypeclub/OpenPype/pull/3562)
 - NewPublisher: Python 2 compatible html escape [\#3559](https://github.com/pypeclub/OpenPype/pull/3559)
 - Remove invalid submodules from `/vendor` [\#3557](https://github.com/pypeclub/OpenPype/pull/3557)
@@ -89,8 +104,6 @@
 - General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
 - Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
 - TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
-- TrayPublisher: Make sure host name is filled [\#3504](https://github.com/pypeclub/OpenPype/pull/3504)
-- NewPublisher: Groups work and enum multivalue [\#3501](https://github.com/pypeclub/OpenPype/pull/3501)
 
 **🔀 Refactored code**
 
