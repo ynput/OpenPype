@@ -1,11 +1,11 @@
 import os
 import shutil
-from openpype.lib import (
-    PreLaunchHook,
-    get_custom_workfile_template_by_context,
+from openpype.lib import PreLaunchHook
+from openpype.settings import get_project_settings
+from openpype.pipeline.workfile import (
+    get_custom_workfile_template,
     get_custom_workfile_template_by_string_context
 )
-from openpype.settings import get_project_settings
 
 
 class CopyTemplateWorkfile(PreLaunchHook):
@@ -54,41 +54,22 @@ class CopyTemplateWorkfile(PreLaunchHook):
         project_name = self.data["project_name"]
         asset_name = self.data["asset_name"]
         task_name = self.data["task_name"]
+        host_name = self.application.host_name
 
         project_settings = get_project_settings(project_name)
-        host_settings = project_settings[self.application.host_name]
-
-        workfile_builder_settings = host_settings.get("workfile_builder")
-        if not workfile_builder_settings:
-            # TODO remove warning when deprecated
-            self.log.warning((
-                "Seems like old version of settings is used."
-                " Can't access custom templates in host \"{}\"."
-            ).format(self.application.full_label))
-            return
-
-        if not workfile_builder_settings["create_first_version"]:
-            self.log.info((
-                "Project \"{}\" has turned off to create first workfile for"
-                " application \"{}\""
-            ).format(project_name, self.application.full_label))
-            return
-
-        # Backwards compatibility
-        template_profiles = workfile_builder_settings.get("custom_templates")
-        if not template_profiles:
-            self.log.info(
-                "Custom templates are not filled. Skipping template copy."
-            )
-            return
 
         project_doc = self.data.get("project_doc")
         asset_doc = self.data.get("asset_doc")
         anatomy = self.data.get("anatomy")
         if project_doc and asset_doc:
             self.log.debug("Started filtering of custom template paths.")
-            template_path = get_custom_workfile_template_by_context(
-                template_profiles, project_doc, asset_doc, task_name, anatomy
+            template_path = get_custom_workfile_template(
+                project_doc,
+                asset_doc,
+                task_name,
+                host_name,
+                anatomy,
+                project_settings
             )
 
         else:
@@ -96,10 +77,13 @@ class CopyTemplateWorkfile(PreLaunchHook):
                 "Global data collection probably did not execute."
                 " Using backup solution."
             ))
-            dbcon = self.data.get("dbcon")
             template_path = get_custom_workfile_template_by_string_context(
-                template_profiles, project_name, asset_name, task_name,
-                dbcon, anatomy
+                project_name,
+                asset_name,
+                task_name,
+                host_name,
+                anatomy,
+                project_settings
             )
 
         if not template_path:

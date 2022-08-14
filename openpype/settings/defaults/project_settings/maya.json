@@ -31,6 +31,37 @@
             }
         ]
     },
+    "RenderSettings": {
+        "apply_render_settings": true,
+        "default_render_image_folder": "",
+        "aov_separator": "underscore",
+        "reset_current_frame": false,
+        "arnold_renderer": {
+            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
+            "image_format": "exr",
+            "multilayer_exr": true,
+            "tiled": true,
+            "aov_list": [],
+            "additional_options": []
+        },
+        "vray_renderer": {
+            "image_prefix": "maya/<scene>/<Layer>/<Layer>",
+            "engine": "1",
+            "image_format": "png",
+            "aov_list": [],
+            "additional_options": []
+        },
+        "redshift_renderer": {
+            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
+            "primary_gi_engine": "0",
+            "secondary_gi_engine": "0",
+            "image_format": "iff",
+            "multilayer_exr": true,
+            "force_combine": true,
+            "aov_list": [],
+            "additional_options": []
+        }
+    },
     "create": {
         "CreateLook": {
             "enabled": true,
@@ -44,9 +75,7 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ],
-            "aov_separator": "underscore",
-            "default_render_image_folder": "renders"
+            ]
         },
         "CreateUnrealStaticMesh": {
             "enabled": true,
@@ -71,6 +100,20 @@
             "enabled": true,
             "publish_mip_map": true
         },
+        "CreateAnimation": {
+            "enabled": true,
+            "write_color_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreatePointCache": {
+            "enabled": true,
+            "write_color_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -84,12 +127,6 @@
             ]
         },
         "CreateMultiverseUsdOver": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateAnimation": {
             "enabled": true,
             "defaults": [
                 "Main"
@@ -131,12 +168,6 @@
                 "Main",
                 "Proxy",
                 "Sculpt"
-            ]
-        },
-        "CreatePointCache": {
-            "enabled": true,
-            "defaults": [
-                "Main"
             ]
         },
         "CreateRenderSetup": {

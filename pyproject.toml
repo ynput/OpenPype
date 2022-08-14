@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.12.3-nightly.1" # OpenPype
+version = "3.13.1-nightly.2" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -33,13 +33,14 @@ aiohttp = "^3.7"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
 opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
-appdirs = "^1.4.3"
+appdirs = { git = "https://github.com/ActiveState/appdirs.git", branch = "master" }
 blessed = "^1.17" # openpype terminal formatting
 coolname = "*"
 clique = "1.6.*"
 Click = "^7"
 dnspython = "^2.1.0"
-ftrack-python-api = "2.0.*"
+ftrack-python-api = "^2.3.3"
+shotgun_api3 = {git = "https://github.com/shotgunsoftware/python-api.git", rev = "v3.3.3"}
 gazu = "^0.8.28"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
 jsonschema = "^2.6.0"

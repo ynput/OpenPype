@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Avalon/Pyblish plugin tools."""
 import os
-import inspect
 import logging
 import re
 import json
+
+import warnings
+import functools
 
 from openpype.client import get_asset_by_id
 from openpype.settings import get_project_settings
@@ -15,6 +17,51 @@ log = logging.getLogger(__name__)
 
 # Subset name template used when plugin does not have defined any
 DEFAULT_SUBSET_TEMPLATE = "{family}{Variant}"
+
+
+class PluginToolsDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", PluginToolsDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=PluginToolsDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 class TaskNotSetError(KeyError):
@@ -197,6 +244,7 @@ def prepare_template_data(fill_pairs):
     return fill_data
 
 
+@deprecated("openpype.pipeline.publish.lib.filter_pyblish_plugins")
 def filter_pyblish_plugins(plugins):
     """Filter pyblish plugins by presets.
 
@@ -206,57 +254,14 @@ def filter_pyblish_plugins(plugins):
     Args:
         plugins (dict): Dictionary of plugins produced by :mod:`pyblish-base`
             `discover()` method.
-
     """
-    from pyblish import api
 
-    host = api.current_host()
+    from openpype.pipeline.publish.lib import filter_pyblish_plugins
 
-    presets = get_project_settings(os.environ['AVALON_PROJECT']) or {}
-    # skip if there are no presets to process
-    if not presets:
-        return
-
-    # iterate over plugins
-    for plugin in plugins[:]:
-
-        try:
-            config_data = presets[host]["publish"][plugin.__name__]
-        except KeyError:
-            # host determined from path
-            file = os.path.normpath(inspect.getsourcefile(plugin))
-            file = os.path.normpath(file)
-
-            split_path = file.split(os.path.sep)
-            if len(split_path) < 4:
-                log.warning(
-                    'plugin path too short to extract host {}'.format(file)
-                )
-                continue
-
-            host_from_file = split_path[-4]
-            plugin_kind = split_path[-2]
-
-            # TODO: change after all plugins are moved one level up
-            if host_from_file == "openpype":
-                host_from_file = "global"
-
-            try:
-                config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
-            except KeyError:
-                continue
-
-        for option, value in config_data.items():
-            if option == "enabled" and value is False:
-                log.info('removing plugin {}'.format(plugin.__name__))
-                plugins.remove(plugin)
-            else:
-                log.info('setting {}:{} on plugin {}'.format(
-                    option, value, plugin.__name__))
-
-                setattr(plugin, option, value)
+    filter_pyblish_plugins(plugins)
 
 
+@deprecated
 def set_plugin_attributes_from_settings(
     plugins, superclass, host_name=None, project_name=None
 ):
@@ -273,6 +278,8 @@ def set_plugin_attributes_from_settings(
         project_name (str): Name of project for which settings will be loaded.
             Value from environment `AVALON_PROJECT` is used if not entered.
     """
+
+    # Function is not used anymore
     from openpype.pipeline import LegacyCreator, LoaderPlugin
 
     # determine host application to use for finding presets

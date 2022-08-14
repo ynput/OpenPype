@@ -92,7 +92,14 @@ version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/ActiveState/appdirs.git"
+reference = "master"
+resolved_reference = "193a2cbba58cce2542882fcedd0e49f6763672ed"
 
 [[package]]
 name = "arrow"
@@ -221,7 +228,7 @@ python-versions = "~=3.7"
 
 [[package]]
 name = "certifi"
-version = "2022.5.18.1"
+version = "2022.6.15"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -456,19 +463,20 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "ftrack-python-api"
-version = "2.0.0"
+version = "2.3.3"
 description = "Python API for ftrack."
 category = "main"
 optional = false
-python-versions = ">=2.7.9, <4.0"
+python-versions = ">=2.7.9, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, < 3.10"
 
 [package.dependencies]
+appdirs = ">=1,<2"
 arrow = ">=0.4.4,<1"
-clique = ">=1.2.0,<2"
+clique = "1.6.1"
 future = ">=0.16.0,<1"
 pyparsing = ">=2.0,<3"
 requests = ">=2,<3"
-six = ">=1,<2"
+six = ">=1.13.0,<2"
 termcolor = ">=1.1.0,<2"
 websocket-client = ">=0.40.0,<1"
 
@@ -1376,6 +1384,21 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "shotgun-api3"
+version = "3.3.3"
+description = "Shotgun Python API"
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/shotgunsoftware/python-api.git"
+reference = "v3.3.3"
+resolved_reference = "b9f066c0edbea6e0733242e18f32f75489064840"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1812,10 +1835,7 @@ ansicon = [
     {file = "ansicon-1.89.0-py2.py3-none-any.whl", hash = "sha256:f1def52d17f65c2c9682cf8370c03f541f410c1752d6a14029f97318e4b9dfec"},
     {file = "ansicon-1.89.0.tar.gz", hash = "sha256:e4d039def5768a47e4afec8e89e83ec3ae5a26bf00ad851f914d1240b444d2b1"},
 ]
-appdirs = [
-    {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
-    {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
-]
+appdirs = []
 arrow = [
     {file = "arrow-0.17.0-py2.py3-none-any.whl", hash = "sha256:e098abbd9af3665aea81bdd6c869e93af4feb078e98468dd351c383af187aac5"},
     {file = "arrow-0.17.0.tar.gz", hash = "sha256:ff08d10cda1d36c68657d6ad20d74fbea493d980f8b2d45344e00d6ed2bf6ed4"},
@@ -1870,8 +1890,8 @@ cachetools = [
     {file = "cachetools-5.2.0.tar.gz", hash = "sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757"},
 ]
 certifi = [
-    {file = "certifi-2022.5.18.1-py3-none-any.whl", hash = "sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a"},
-    {file = "certifi-2022.5.18.1.tar.gz", hash = "sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7"},
+    {file = "certifi-2022.6.15-py3-none-any.whl", hash = "sha256:fe86415d55e84719d75f8b69414f6438ac3547d2078ab91b67e779ef69378412"},
+    {file = "certifi-2022.6.15.tar.gz", hash = "sha256:84c85a9078b11105f04f3036a9482ae10e4621616db313fe045dd24743a0820d"},
 ]
 cffi = [
     {file = "cffi-1.15.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:c2502a1a03b6312837279c8c1bd3ebedf6c12c4228ddbad40912d671ccc8a962"},
@@ -2137,10 +2157,7 @@ frozenlist = [
     {file = "frozenlist-1.3.0-cp39-cp39-win_amd64.whl", hash = "sha256:772965f773757a6026dea111a15e6e2678fbd6216180f82a48a40b27de1ee2ab"},
     {file = "frozenlist-1.3.0.tar.gz", hash = "sha256:ce6f2ba0edb7b0c1d8976565298ad2deba6f8064d2bebb6ffce2ca896eb35b0b"},
 ]
-ftrack-python-api = [
-    {file = "ftrack-python-api-2.0.0.tar.gz", hash = "sha256:dd6f02c31daf5a10078196dc9eac4671e4297c762fbbf4df98de668ac12281d9"},
-    {file = "ftrack_python_api-2.0.0-py2.py3-none-any.whl", hash = "sha256:d0df0f2df4b53947272f95e179ec98b477ee425bf4217b37bb59030ad989771e"},
-]
+ftrack-python-api = []
 future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
@@ -2820,6 +2837,7 @@ semver = [
     {file = "semver-2.13.0-py2.py3-none-any.whl", hash = "sha256:ced8b23dceb22134307c1b8abfa523da14198793d9787ac838e70e29e77458d4"},
     {file = "semver-2.13.0.tar.gz", hash = "sha256:fa0fe2722ee1c3f57eac478820c3a5ae2f624af8264cbdf9000c980ff7f75e3f"},
 ]
+shotgun-api3 = []
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
