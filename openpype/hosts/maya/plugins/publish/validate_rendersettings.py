@@ -242,6 +242,14 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
                 "{}_render_attributes".format(renderer)) or []
         )
+        settings_lights_flag = instance.context.data["project_settings"].get(
+            "maya", {}).get(
+            "RenderSettings", {}).get(
+            "enable_all_lights", {})
+
+        instance_lights_flag = instance.data.get("renderSetupIncludeLights")
+        if settings_lights_flag != instance_lights_flag:
+            cls.log.warning('Instance flag for "Render Setup Include Lights" is set to {0} and Settings flag is set to {1}'.format(instance_lights_flag, settings_lights_flag)) # noqa
 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
