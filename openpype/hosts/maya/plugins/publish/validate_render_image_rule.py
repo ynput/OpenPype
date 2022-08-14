@@ -41,6 +41,5 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     def get_default_render_image_folder(instance):
         return instance.context.data.get('project_settings')\
             .get('maya') \
-            .get('create') \
-            .get('CreateRender') \
+            .get('RenderSettings') \
             .get('default_render_image_folder')
