@@ -1,6 +1,6 @@
 import maya.mel as mel
+import pymel.core as pm
 
-from maya import cmds
 import pyblish.api
 import openpype.api
 
@@ -11,10 +11,8 @@ def get_file_rule(rule):
 
 
 class ValidateRenderImageRule(pyblish.api.InstancePlugin):
-    """Validates Maya Workpace "images" file rule matches project settings.
-    This validates against the configured default render image folder:
-    Studio Settings > Project > Maya >
-    Render Settings > Default render image folder.
+    """Validates "images" file rule is set to "renders/"
+
     """
 
     order = openpype.api.ValidateContentsOrder
@@ -24,28 +22,25 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     actions = [openpype.api.RepairAction]
 
     def process(self, instance):
-        required_images_rule = self.get_default_render_image_folder(instance)
-        current_images_rule = cmds.workspace(fileRuleEntry="images")
 
-        assert current_images_rule == required_images_rule, (
-            "Invalid workspace `images` file rule value: '{}'. "
-            "Must be set to: '{}'".format(
-                current_images_rule, required_images_rule
+        default_render_file = self.get_default_render_image_folder(instance)
+
+        assert get_file_rule("images") == default_render_file, (
+            "Workspace's `images` file rule must be set to: {}".format(
+                default_render_file
             )
         )
 
     @classmethod
     def repair(cls, instance):
-        required_images_rule = cls.get_default_render_image_folder(instance)
-        current_images_rule = cmds.workspace(fileRuleEntry="images")
-
-        if current_images_rule != required_images_rule:
-            cmds.workspace(fileRule=("images", required_images_rule))
-            cmds.workspace(saveWorkspace=True)
+        default = cls.get_default_render_image_folder(instance)
+        pm.workspace.fileRules["images"] = default
+        pm.system.Workspace.save()
 
     @staticmethod
     def get_default_render_image_folder(instance):
         return instance.context.data.get('project_settings')\
             .get('maya') \
-            .get('RenderSettings') \
+            .get('create') \
+            .get('CreateRender') \
             .get('default_render_image_folder')
