@@ -33,7 +33,8 @@
     },
     "RenderSettings": {
         "apply_render_settings": true,
-        "default_render_image_folder": "",
+        "default_render_image_folder": "renders",
+        "enable_all_lights": false,
         "aov_separator": "underscore",
         "reset_current_frame": false,
         "arnold_renderer": {
