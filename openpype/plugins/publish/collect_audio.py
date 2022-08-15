@@ -15,7 +15,24 @@ class CollectAudio(pyblish.api.InstancePlugin):
 
     label = "Colect Audio"
     order = pyblish.api.CollectorOrder + 0.1
-    hosts = ["standalonepublisher"]
+    families = ["review"]
+    hosts = [
+        "nuke",
+        "maya",
+        "shell",
+        "hiero",
+        "premiere",
+        "harmony",
+        "traypublisher",
+        "standalonepublisher",
+        "fusion",
+        "tvpaint",
+        "resolve",
+        "webpublisher",
+        "aftereffects",
+        "flame",
+        "unreal"
+    ]
 
     def process(self, instance):
         self.log.info('Collecting Audio Data')
