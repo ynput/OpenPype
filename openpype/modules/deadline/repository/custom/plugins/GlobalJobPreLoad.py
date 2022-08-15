@@ -234,32 +234,6 @@ def inject_render_job_id(deadlinePlugin):
     print(">>> Injection end.")
 
 
-def pype_command_line(executable, arguments, workingDirectory):
-    """Remap paths in comand line argument string.
-
-    Using Deadline rempper it will remap all path found in command-line.
-
-    Args:
-        executable (str): path to executable
-        arguments (str): arguments passed to executable
-        workingDirectory (str): working directory path
-
-    Returns:
-        Tuple(executable, arguments, workingDirectory)
-
-    """
-    print("-" * 40)
-    print("executable: {}".format(executable))
-    print("arguments: {}".format(arguments))
-    print("workingDirectory: {}".format(workingDirectory))
-    print("-" * 40)
-    print("Remapping arguments ...")
-    arguments = RepositoryUtils.CheckPathMapping(arguments)
-    print("* {}".format(arguments))
-    print("-" * 40)
-    return executable, arguments, workingDirectory
-
-
 def __main__(deadlinePlugin):
     print("*** GlobalJobPreload start ...")
     print(">>> Getting job ...")
