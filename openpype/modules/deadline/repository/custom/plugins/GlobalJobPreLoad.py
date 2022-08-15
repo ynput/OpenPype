@@ -34,7 +34,7 @@ def get_openpype_version_from_path(path, build=True):
 
     # if only builds are requested
     if build and not os.path.isfile(exe):  # noqa: E501
-        print(f"   ! path is not a build: {path}")
+        print("   ! path is not a build: {}".format(path))
         return None
 
     version = {}
@@ -70,11 +70,12 @@ def inject_openpype_environment(deadlinePlugin):
         # lets go over all available and find compatible build.
         requested_version = job.GetJobEnvironmentKeyValue("OPENPYPE_VERSION")
         if requested_version:
-            print((">>> Scanning for compatible requested "
-                  f"version {requested_version}"))
+            print((
+                ">>> Scanning for compatible requested version {}"
+            ).format(requested_version))
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
             if install_dir:
-                print(f"--- Looking for OpenPype at: {install_dir}")
+                print("--- Looking for OpenPype at: {}".format(install_dir))
                 sub_dirs = [
                     f.path for f in os.scandir(install_dir)
                     if f.is_dir()
@@ -83,18 +84,20 @@ def inject_openpype_environment(deadlinePlugin):
                     version = get_openpype_version_from_path(subdir)
                     if not version:
                         continue
-                    print(f"  - found: {version} - {subdir}")
+                    print("  - found: {} - {}".format(version, subdir))
                     openpype_versions.append((version, subdir))
 
         exe = FileUtils.SearchFileList(exe_list)
         if openpype_versions:
             # if looking for requested compatible version,
             # add the implicitly specified to the list too.
-            print(f"Looking for OpenPype at: {os.path.dirname(exe)}")
+            print("Looking for OpenPype at: {}".format(os.path.dirname(exe)))
             version = get_openpype_version_from_path(
                 os.path.dirname(exe))
             if version:
-                print(f"  - found: {version} - {os.path.dirname(exe)}")
+                print("  - found: {} - {}".format(
+                    version, os.path.dirname(exe)
+                ))
                 openpype_versions.append((version, os.path.dirname(exe)))
 
         if requested_version:
@@ -106,8 +109,9 @@ def inject_openpype_environment(deadlinePlugin):
                         int(t) if t.isdigit() else t.lower()
                         for t in re.split(r"(\d+)", ver[0])
                     ])
-                print(("*** Latest available version found is "
-                       f"{openpype_versions[-1][0]}"))
+                print((
+                    "*** Latest available version found is {}"
+                ).format(openpype_versions[-1][0]))
             requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
             compatible_versions = []
             for version in openpype_versions:
@@ -127,8 +131,9 @@ def inject_openpype_environment(deadlinePlugin):
                     int(t) if t.isdigit() else t.lower()
                     for t in re.split(r"(\d+)", ver[0])
                 ])
-            print(("*** Latest compatible version found is "
-                   f"{compatible_versions[-1][0]}"))
+            print((
+                "*** Latest compatible version found is {}"
+            ).format(compatible_versions[-1][0]))
             # create list of executables for different platform and let
             # Deadline decide.
             exe_list = [
