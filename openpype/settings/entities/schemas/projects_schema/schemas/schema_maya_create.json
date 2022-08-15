@@ -22,6 +22,11 @@
                     "label": "Make tx files"
                 },
                 {
+                    "type": "boolean",
+                    "key": "rs_tex",
+                    "label": "Make Redshift texture files"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",

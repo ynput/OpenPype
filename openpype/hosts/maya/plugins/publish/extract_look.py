@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
+from abc import ABCMeta, abstractmethod
+
+import six
 import os
 import sys
 import json
@@ -7,6 +10,7 @@ import tempfile
 import platform
 import contextlib
 import subprocess
+from openpype.lib.vendor_bin_utils import find_executable
 from collections import OrderedDict
 
 from maya import cmds  # noqa
@@ -20,6 +24,28 @@ from openpype.hosts.maya.api import lib
 # Modes for transfer
 COPY = 1
 HARDLINK = 2
+
+
+def get_redshift_tool(tool_name):
+    """Path to redshift texture processor.
+
+    On Windows it adds .exe extension if missing from tool argument.
+
+    Args:
+        tool (string): Tool name.
+
+    Returns:
+        str: Full path to redshift texture processor executable.
+    """
+    redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
+
+    redshift_tool_path = os.path.join(
+        redshift_os_path,
+        "bin",
+        tool_name
+    )
+
+    return find_executable(redshift_tool_path)
 
 
 def escape_space(path):
@@ -66,65 +92,129 @@ def find_paths_by_hash(texture_hash):
     return legacy_io.distinct(key, {"type": "version"})
 
 
-def maketx(source, destination, *args):
-    """Make `.tx` using `maketx` with some default settings.
+@six.add_metaclass(ABCMeta)
+class TextureProcessor:
 
-    The settings are based on default as used in Arnold's
-    txManager in the scene.
-    This function requires the `maketx` executable to be
-    on the `PATH`.
+    def __init__(self):
+        pass
 
-    Args:
-        source (str): Path to source file.
-        destination (str): Writing destination path.
-        *args: Additional arguments for `maketx`.
+    @abstractmethod
+    def process(self, filepath):
 
-    Returns:
-        str: Output of `maketx` command.
+        pass
 
-    """
-    from openpype.lib import get_oiio_tools_path
 
-    maketx_path = get_oiio_tools_path("maketx")
+class MakeRSTexBin(TextureProcessor):
+    def __init__(self):
+        super(MakeRSTexBin, self).__init__()
 
-    if not os.path.exists(maketx_path):
-        print(
-            "OIIO tool not found in {}".format(maketx_path))
-        raise AssertionError("OIIO tool not found")
+    def process(self, source, *args):
+        """Make `.rstexbin` using `redshiftTextureProcessor`
+        with some default settings.
 
-    cmd = [
-        maketx_path,
-        "-v",  # verbose
-        "-u",  # update mode
-        # unpremultiply before conversion (recommended when alpha present)
-        "--unpremult",
-        "--checknan",
-        # use oiio-optimized settings for tile-size, planarconfig, metadata
-        "--oiio",
-        "--filter lanczos3",
-        escape_space(source)
-    ]
+        This function requires the `REDSHIFT_COREDATAPATH`
+        to be in `PATH`.
 
-    cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination)])
+        Args:
+            source (str): Path to source file.
+            *args: Additional arguments for `redshiftTextureProcessor`.
 
-    cmd = " ".join(cmd)
+        """
+        if "REDSHIFT_COREDATAPATH" not in os.environ:
+            raise RuntimeError("Must have Redshift available.")
 
-    CREATE_NO_WINDOW = 0x08000000  # noqa
-    kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
+        texture_processor_path = get_redshift_tool("TextureProcessor")
 
-    if sys.platform == "win32":
-        kwargs["creationflags"] = CREATE_NO_WINDOW
-    try:
-        out = subprocess.check_output(**kwargs)
-    except subprocess.CalledProcessError as exc:
-        print(exc)
-        import traceback
+        cmd = [
+            texture_processor_path,
+            escape_space(source),
+        ]
 
-        traceback.print_exc()
-        raise
+        cmd.extend(args)
 
-    return out
+        cmd = " ".join(cmd)
+
+        CREATE_NO_WINDOW = 0x08000000
+        kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
+
+        if sys.platform == "win32":
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+        try:
+            processed_filepath = subprocess.check_output(**kwargs)
+        except subprocess.CalledProcessError as exc:
+            print(exc)
+            import traceback
+
+            traceback.print_exc()
+            raise
+        return processed_filepath
+
+
+class MakeTX(TextureProcessor):
+    def __init__(self):
+        super(MakeTX, self).__init__()
+
+    def process(self, source, destination, *args):
+        """Make `.tx` using `maketx` with some default settings.
+
+        The settings are based on default as used in Arnold's
+        txManager in the scene.
+        This function requires the `maketx` executable to be
+        on the `PATH`.
+
+        Args:
+            source (str): Path to source file.
+            destination (str): Writing destination path.
+            *args: Additional arguments for `maketx`.
+
+        Returns:
+            str: Output of `maketx` command.
+
+        """
+        from openpype.lib import get_oiio_tools_path
+
+        maketx_path = get_oiio_tools_path("maketx")
+
+        if not os.path.exists(maketx_path):
+            print(
+                "OIIO tool not found in {}".format(maketx_path))
+            raise AssertionError("OIIO tool not found")
+
+        cmd = [
+            maketx_path,
+            "-v",  # verbose
+            "-u",  # update mode
+            # unpremultiply before conversion (recommended when alpha present)
+            "--unpremult",
+            "--checknan",
+            # use oiio-optimized settings for tile-size, planarconfig, metadata
+            "--oiio",
+            "--filter lanczos3",
+            escape_space(source)
+        ]
+
+        cmd.extend(args)
+        cmd.extend(["-o", escape_space(destination)])
+
+        cmd = " ".join(cmd)
+
+        CREATE_NO_WINDOW = 0x08000000  # noqa
+        kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
+
+        if sys.platform == "win32":
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+        try:
+            processed_filepath = subprocess.check_output(**kwargs)
+        except subprocess.CalledProcessError as exc:
+            print(exc)
+            import traceback
+
+            traceback.print_exc()
+            print(exc.returncode)
+            print(exc.output)
+            raise
+
+        return processed_filepath
 
 
 @contextlib.contextmanager
@@ -341,8 +431,6 @@ class ExtractLook(openpype.api.Extractor):
         # might be included more than once amongst the resources as they could
         # be the input file to multiple nodes.
         resources = instance.data["resources"]
-        do_maketx = instance.data.get("maketx", False)
-
         # Collect all unique files used in the resources
         files_metadata = {}
         for resource in resources:
@@ -371,17 +459,24 @@ class ExtractLook(openpype.api.Extractor):
         for filepath in files_metadata:
 
             linearize = False
+
+            # Specify texture processing executables to activate
+            processors = []
+            do_maketx = instance.data.get("maketx", False)
+            do_rstex = instance.data.get("rstex", False)
+            if do_maketx:
+                processors.append(MakeTX)
+            # Option to convert textures to native redshift textures
+            if do_rstex:
+                processors.append(MakeRSTexBin)
+
             if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
                 linearize = True
                 # set its file node to 'raw' as tx will be linearized
                 files_metadata[filepath]["color_space"] = "Raw"
-
-            # if do_maketx:
-            #     color_space = "Raw"
-
             source, mode, texture_hash = self._process_texture(
                 filepath,
-                do_maketx,
+                processors,
                 staging=staging_dir,
                 linearize=linearize,
                 force=force_copy
@@ -474,7 +569,7 @@ class ExtractLook(openpype.api.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging, linearize, force):
+    def _process_texture(self, filepath, processors, staging, linearize, force): # noqa
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -489,13 +584,12 @@ class ExtractLook(openpype.api.Extractor):
         fname, ext = os.path.splitext(os.path.basename(filepath))
 
         args = []
-        if do_maketx:
-            args.append("maketx")
         texture_hash = openpype.api.source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
         existing = find_paths_by_hash(texture_hash)
+
         if existing and not force:
             self.log.info("Found hash in database, preparing hardlink..")
             source = next((p for p in existing if os.path.exists(p)), None)
@@ -506,38 +600,45 @@ class ExtractLook(openpype.api.Extractor):
                     ("Paths not found on disk, "
                      "skipping hardlink: %s") % (existing,)
                 )
+        config_path = get_ocio_config_path("nuke-default")
+        color_config = "--colorconfig {0}".format(config_path)
+        # Ensure folder exists
+        if linearize:
+            self.log.info("tx: converting sRGB -> linear")
+            colorconvert = "--colorconvert sRGB linear"
+        else:
+            colorconvert = ""
 
-        if do_maketx and ext != ".tx":
-            # Produce .tx file in staging if source file is not .tx
-            converted = os.path.join(staging, "resources", fname + ".tx")
+        converted = os.path.join(staging, "resources", fname + ".tx")
+        if not os.path.exists(os.path.dirname(converted)):
+            os.makedirs(os.path.dirname(converted))
 
-            if linearize:
-                self.log.info("tx: converting sRGB -> linear")
-                colorconvert = "--colorconvert sRGB linear"
-            else:
-                colorconvert = ""
+        if bool(processors):
+            for processor in processors:
+                if processor == MakeTX:
+                    processed_path = processor().process(filepath,
+                                                         converted,
+                                                         "--sattrib",
+                                                         "sourceHash",
+                                                         escape_space(texture_hash), # noqa
+                                                         colorconvert,
+                                                         color_config,
+                                                         )
+                    self.log.info("Generating texture file for %s .." % filepath) # noqa
+                    self.log.info(converted)
+                    if processed_path:
+                        return processed_path, COPY, texture_hash
+                    else:
+                        self.log.info("maketx has returned nothing")
+                elif processor == MakeRSTexBin:
+                    processed_path = processor().process(filepath)
+                    self.log.info("Generating texture file for %s .." % filepath) # noqa
+                    if processed_path:
+                        return processed_path, COPY, texture_hash
+                    else:
+                        self.log.info("redshift texture converter has returned nothing") # noqa
 
-            config_path = get_ocio_config_path("nuke-default")
-            color_config = "--colorconfig {0}".format(config_path)
-            # Ensure folder exists
-            if not os.path.exists(os.path.dirname(converted)):
-                os.makedirs(os.path.dirname(converted))
-
-            self.log.info("Generating .tx file for %s .." % filepath)
-            maketx(
-                filepath,
-                converted,
-                # Include `source-hash` as string metadata
-                "--sattrib",
-                "sourceHash",
-                escape_space(texture_hash),
-                colorconvert,
-                color_config
-            )
-
-            return converted, COPY, texture_hash
-
-        return filepath, COPY, texture_hash
+        return processed_path, COPY, texture_hash
 
 
 class ExtractModelRenderSets(ExtractLook):
