@@ -36,9 +36,10 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
         invalid = []
         for obj in set(instance):
             try:
-                if obj.type == 'MESH':
-                    # Make sure we are in object mode.
-                    bpy.ops.object.mode_set(mode='OBJECT')
+                if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
+                    if obj.mode != 'OBJECT':
+                        # Make sure we are in object mode.
+                        bpy.ops.object.mode_set(mode='OBJECT')
                     if not cls.has_uvs(obj):
                         invalid.append(obj)
             except RuntimeError:
