@@ -614,7 +614,6 @@ class OpenPypeVersion(semver.VersionInfo):
             return None
 
         all_versions.sort()
-        latest_version: OpenPypeVersion
         return all_versions[-1]
 
     @classmethod
