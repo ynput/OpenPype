@@ -2,7 +2,7 @@ import os
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayAction
+from openpype.modules.interfaces import ITrayAction
 
 
 class TrayPublishAction(OpenPypeModule, ITrayAction):
@@ -21,20 +21,9 @@ class TrayPublishAction(OpenPypeModule, ITrayAction):
                 "publish"
             )
         ]
-        self._experimental_tools = None
 
     def tray_init(self):
-        from openpype.tools.experimental_tools import ExperimentalTools
-
-        self._experimental_tools = ExperimentalTools()
-
-    def tray_menu(self, *args, **kwargs):
-        super(TrayPublishAction, self).tray_menu(*args, **kwargs)
-        traypublisher = self._experimental_tools.get("traypublisher")
-        visible = False
-        if traypublisher and traypublisher.enabled:
-            visible = True
-        self._action_item.setVisible(visible)
+        return
 
     def on_action_trigger(self):
         self.run_traypublisher()
