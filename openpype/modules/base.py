@@ -49,6 +49,7 @@ class _ModuleClass(object):
     Object of this class can be stored to `sys.modules` and used for storing
     dynamically imported modules.
     """
+
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
@@ -116,12 +117,13 @@ class _InterfacesClass(_ModuleClass):
     - this is because interfaces must be available even if are missing
         implementation
     """
+
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__", "__file__"):
                 return None
 
-            raise ImportError((
+            raise AttributeError((
                 "cannot import name '{}' from 'openpype_interfaces'"
             ).format(attr_name))
 

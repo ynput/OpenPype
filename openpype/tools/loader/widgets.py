@@ -434,7 +434,8 @@ class SubsetWidget(QtWidgets.QWidget):
 
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = discover_loader_plugins()
+        project_name = self.dbcon.active_project()
+        available_loaders = discover_loader_plugins(project_name)
         if self.tool_name:
             available_loaders = lib.remove_tool_name_from_loaders(
                 available_loaders, self.tool_name
@@ -1330,7 +1331,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         selected_side = self._get_selected_side(point_index, rows)
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = discover_loader_plugins()
+        project_name = self.dbcon.active_project()
+        available_loaders = discover_loader_plugins(project_name)
 
         filtered_loaders = []
         for loader in available_loaders:

@@ -10,10 +10,22 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype.client import (
+    get_project,
+    get_asset_by_id,
+    get_asset_by_name,
+    version_is_latest,
+)
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
-from openpype.lib import filter_pyblish_plugins
+
+from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
+from .template_data import get_template_data_with_names
+from .workfile import (
+    get_workfile_template_key,
+    get_custom_workfile_template_by_string_context,
+)
 from . import (
     legacy_io,
     register_loader_plugin_path,
@@ -240,29 +252,7 @@ def registered_host():
 
 
 def deregister_host():
-    _registered_host["_"] = default_host()
-
-
-def default_host():
-    """A default host, in place of anything better
-
-    This may be considered as reference for the
-    interface a host must implement. It also ensures
-    that the system runs, even when nothing is there
-    to support it.
-
-    """
-
-    host = types.ModuleType("defaultHost")
-
-    def ls():
-        return list()
-
-    host.__dict__.update({
-        "ls": ls
-    })
-
-    return host
+    _registered_host["_"] = None
 
 
 def debug_host():
@@ -304,3 +294,154 @@ def debug_host():
     })
 
     return host
+
+
+def get_current_project(fields=None):
+    """Helper function to get project document based on global Session.
+
+    This function should be called only in process where host is installed.
+
+    Returns:
+        dict: Project document.
+        None: Project is not set.
+    """
+
+    project_name = legacy_io.active_project()
+    return get_project(project_name, fields=fields)
+
+
+def get_current_project_asset(asset_name=None, asset_id=None, fields=None):
+    """Helper function to get asset document based on global Session.
+
+    This function should be called only in process where host is installed.
+
+    Asset is found out based on passed asset name or id (not both). Asset name
+    is not used for filtering if asset id is passed. When both asset name and
+    id are missing then asset name from current process is used.
+
+    Args:
+        asset_name (str): Name of asset used for filter.
+        asset_id (Union[str, ObjectId]): Asset document id. If entered then
+            is used as only filter.
+        fields (Union[List[str], None]): Limit returned data of asset documents
+            to specific keys.
+
+    Returns:
+        dict: Asset document.
+        None: Asset is not set or not exist.
+    """
+
+    project_name = legacy_io.active_project()
+    if asset_id:
+        return get_asset_by_id(project_name, asset_id, fields=fields)
+
+    if not asset_name:
+        asset_name = legacy_io.Session.get("AVALON_ASSET")
+        # Skip if is not set even on context
+        if not asset_name:
+            return None
+    return get_asset_by_name(project_name, asset_name, fields=fields)
+
+
+def is_representation_from_latest(representation):
+    """Return whether the representation is from latest version
+
+    Args:
+        representation (dict): The representation document from the database.
+
+    Returns:
+        bool: Whether the representation is of latest version.
+    """
+
+    project_name = legacy_io.active_project()
+    return version_is_latest(project_name, representation["parent"])
+
+
+def get_template_data_from_session(session=None, system_settings=None):
+    """Template data for template fill from session keys.
+
+    Args:
+        session (Union[Dict[str, str], None]): The Session to use. If not
+            provided use the currently active global Session.
+        system_settings (Union[Dict[str, Any], Any]): Prepared system settings.
+            Optional are auto received if not passed.
+
+    Returns:
+        Dict[str, Any]: All available data from session.
+    """
+
+    if session is None:
+        session = legacy_io.Session
+
+    project_name = session["AVALON_PROJECT"]
+    asset_name = session["AVALON_ASSET"]
+    task_name = session["AVALON_TASK"]
+    host_name = session["AVALON_APP"]
+
+    return get_template_data_with_names(
+        project_name, asset_name, task_name, host_name, system_settings
+    )
+
+
+def get_workdir_from_session(session=None, template_key=None):
+    """Template data for template fill from session keys.
+
+    Args:
+        session (Union[Dict[str, str], None]): The Session to use. If not
+            provided use the currently active global Session.
+        template_key (str): Prepared template key from which workdir is
+            calculated.
+
+    Returns:
+        str: Workdir path.
+    """
+
+    if session is None:
+        session = legacy_io.Session
+    project_name = session["AVALON_PROJECT"]
+    host_name = session["AVALON_APP"]
+    anatomy = Anatomy(project_name)
+    template_data = get_template_data_from_session(session)
+    anatomy_filled = anatomy.format(template_data)
+
+    if not template_key:
+        task_type = template_data["task"]["type"]
+        template_key = get_workfile_template_key(
+            task_type,
+            host_name,
+            project_name=project_name
+        )
+    path = anatomy_filled[template_key]["folder"]
+    if path:
+        path = os.path.normpath(path)
+    return path
+
+
+def get_custom_workfile_template_from_session(
+    session=None, project_settings=None
+):
+    """Filter and fill workfile template profiles by current context.
+
+    Current context is defined by `legacy_io.Session`. That's why this
+    function should be used only inside host where context is set and stable.
+
+    Args:
+        session (Union[None, Dict[str, str]]): Session from which are taken
+            data.
+        project_settings(Dict[str, Any]): Template profiles from settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    if session is None:
+        session = legacy_io.Session
+
+    return get_custom_workfile_template_by_string_context(
+        session["AVALON_PROJECT"],
+        session["AVALON_ASSET"],
+        session["AVALON_TASK"],
+        session["AVALON_APP"],
+        project_settings=project_settings
+    )

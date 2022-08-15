@@ -124,6 +124,11 @@
                 "Project Manager"
             ],
             "cycle_enabled": false,
+            "cycle_hour_start": [
+                0,
+                0,
+                0
+            ],
             "review_session_template": "{yy}{mm}{dd}"
         }
     },
@@ -270,6 +275,51 @@
                 },
                 {
                     "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "plate",
+                        "review",
+                        "audio"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
                         "maya"
                     ],
                     "families": [
@@ -398,6 +448,9 @@
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackComponentOverwrite": {
+            "enabled": true
         },
         "IntegrateFtrackInstance": {
             "family_mapping": {

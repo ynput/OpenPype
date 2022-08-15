@@ -6,11 +6,11 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
-from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
 
@@ -44,6 +44,7 @@ def install():
             parent="MayaWindow"
         )
 
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             legacy_io.Session["AVALON_ASSET"],
@@ -94,6 +95,13 @@ def install():
             command=lambda *args: host_tools.show_library_loader(
                 parent=parent_widget
             )
+        )
+
+        cmds.menuItem(divider=True)
+
+        cmds.menuItem(
+            "Set Render Settings",
+            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
         )
 
         cmds.menuItem(divider=True)

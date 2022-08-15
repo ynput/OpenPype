@@ -1,11 +1,9 @@
 import os
-import sys
 import signal
 import datetime
 import subprocess
 import socket
 import json
-import platform
 import getpass
 import atexit
 import time
@@ -13,12 +11,14 @@ import uuid
 
 import ftrack_api
 import pymongo
+from openpype.client.mongo import (
+    OpenPypeMongoConnection,
+    validate_mongo_connection,
+)
 from openpype.lib import (
     get_openpype_execute_args,
-    OpenPypeMongoConnection,
     get_openpype_version,
     get_build_version,
-    validate_mongo_connection
 )
 from openpype_modules.ftrack import FTRACK_MODULE_DIR
 from openpype_modules.ftrack.lib import credentials

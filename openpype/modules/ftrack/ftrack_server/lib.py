@@ -7,6 +7,7 @@ import threading
 import datetime
 import time
 import queue
+import collections
 import appdirs
 import pymongo
 
@@ -24,7 +25,7 @@ except ImportError:
     from ftrack_api._weakref import WeakMethod
 from openpype_modules.ftrack.lib import get_ftrack_event_mongo_info
 
-from openpype.lib import OpenPypeMongoConnection
+from openpype.client import OpenPypeMongoConnection
 from openpype.api import Logger
 
 TOPIC_STATUS_SERVER = "openpype.event.server.status"
@@ -309,7 +310,20 @@ class CustomEventHubSession(ftrack_api.session.Session):
 
         # Currently pending operations.
         self.recorded_operations = ftrack_api.operation.Operations()
-        self.record_operations = True
+
+        # OpenPype change - In new API are operations properties
+        new_api = hasattr(self.__class__, "record_operations")
+
+        if new_api:
+            self._record_operations = collections.defaultdict(
+                lambda: True
+            )
+            self._auto_populate = collections.defaultdict(
+                lambda: auto_populate
+            )
+        else:
+            self.record_operations = True
+            self.auto_populate = auto_populate
 
         self.cache_key_maker = cache_key_maker
         if self.cache_key_maker is None:
@@ -328,14 +342,15 @@ class CustomEventHubSession(ftrack_api.session.Session):
             if cache is not None:
                 self.cache.caches.append(cache)
 
+        if new_api:
+            self.merge_lock = threading.RLock()
+
         self._managed_request = None
         self._request = requests.Session()
         self._request.auth = ftrack_api.session.SessionAuthentication(
             self._api_key, self._api_user
         )
         self.request_timeout = timeout
-
-        self.auto_populate = auto_populate
 
         # Fetch server information and in doing so also check credentials.
         self._server_information = self._fetch_server_information()

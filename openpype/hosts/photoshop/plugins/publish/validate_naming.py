@@ -4,6 +4,7 @@ import pyblish.api
 import openpype.api
 from openpype.pipeline import PublishXmlValidationError
 from openpype.hosts.photoshop import api as photoshop
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class ValidateNamingRepair(pyblish.api.Action):
@@ -49,6 +50,13 @@ class ValidateNamingRepair(pyblish.api.Action):
 
             subset_name = re.sub(invalid_chars, replace_char,
                                  instance.data["subset"])
+
+            # format from Tool Creator
+            subset_name = re.sub(
+                "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                "",
+                subset_name
+            )
 
             layer_meta["subset"] = subset_name
             stub.imprint(instance_id, layer_meta)

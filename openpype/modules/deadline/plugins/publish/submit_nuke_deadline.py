@@ -80,10 +80,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     "Using published scene for render {}".format(script_path)
                 )
 
-        # exception for slate workflow
-        if "slate" in instance.data["families"]:
-            submit_frame_start -= 1
-
         response = self.payload_submit(
             instance,
             script_path,
@@ -99,10 +95,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["publishJobState"] = "Suspended"
 
         if instance.data.get("bakingNukeScripts"):
-            # exception for slate workflow
-            if "slate" in instance.data["families"]:
-                submit_frame_start += 1
-
             for baking_script in instance.data["bakingNukeScripts"]:
                 render_path = baking_script["bakeRenderPath"]
                 script_path = baking_script["bakeScriptPath"]
@@ -261,7 +253,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
             "TOOL_ENV",
-            "FOUNDRY_LICENSE"
+            "FOUNDRY_LICENSE",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
@@ -365,7 +358,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         if not instance.data.get("expectedFiles"):
             instance.data["expectedFiles"] = []
 
-        dir = os.path.dirname(path)
+        dirname = os.path.dirname(path)
         file = os.path.basename(path)
 
         if "#" in file:
@@ -377,9 +370,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             instance.data["expectedFiles"].append(path)
             return
 
+        if instance.data.get("slate"):
+            start_frame -= 1
+
         for i in range(start_frame, (end_frame + 1)):
             instance.data["expectedFiles"].append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
+                os.path.join(dirname, (file % i)).replace("\\", "/"))
 
     def get_limit_groups(self):
         """Search for limit group nodes and return group name.
