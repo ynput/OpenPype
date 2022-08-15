@@ -127,7 +127,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 f_start_h += 1
 
             if (
-                collected_frames_len >= frame_length
+                collected_frames_len != frame_length
                 and coll_start <= f_start_h
                 and coll_end >= f_end_h
             ):
