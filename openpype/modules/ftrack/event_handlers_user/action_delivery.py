@@ -16,7 +16,7 @@ from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from openpype_modules.ftrack.lib.custom_attributes import (
     query_custom_attributes
 )
-from openpype.lib import config
+from openpype.lib.dateutils import get_datetime_data
 from openpype.lib.delivery import (
     path_from_representation,
     get_format_dict,
@@ -555,7 +555,7 @@ class Delivery(BaseAction):
 
         format_dict = get_format_dict(anatomy, location_path)
 
-        datetime_data = config.get_datetime_data()
+        datetime_data = get_datetime_data()
         for repre in repres_to_deliver:
             source_path = repre.get("data", {}).get("path")
             debug_msg = "Processing representation {}".format(repre["_id"])

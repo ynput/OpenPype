@@ -19,6 +19,9 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
         if not create_context:
             return
 
+        project_name = create_context.project_name
+        if project_name:
+            context.data["projectName"] = project_name
         for created_instance in create_context.instances:
             instance_data = created_instance.data_to_store()
             if instance_data["active"]:
@@ -44,7 +47,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
             "subset": subset,
             "asset": in_data["asset"],
             "task": in_data["task"],
-            "label": subset,
+            "label": in_data.get("label") or subset,
             "name": subset,
             "family": in_data["family"],
             "families": instance_families,

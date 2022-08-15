@@ -1,5 +1,4 @@
 import os
-import sys
 
 from Qt import QtWidgets
 
@@ -15,6 +14,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
+from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
 
@@ -136,7 +136,7 @@ def ls():
 
 def check_inventory():
     """Checks loaded containers if they are of highest version"""
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
     # Warn about outdated containers.

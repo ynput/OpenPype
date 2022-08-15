@@ -116,8 +116,10 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         # check in two way if it is sequence
         if hasattr(otio.schema, "ImageSequenceReference"):
             # for OpenTimelineIO 0.13 and newer
-            if isinstance(media_ref,
-                          otio.schema.ImageSequenceReference):
+            if isinstance(
+                media_ref,
+                otio.schema.ImageSequenceReference
+            ):
                 is_sequence = True
         else:
             # for OpenTimelineIO 0.12 and older
@@ -139,11 +141,9 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
                     padding=media_ref.frame_zero_padding
                 )
                 collection.indexes.update(
-                    [i for i in range(a_frame_start_h, (a_frame_end_h + 1))])
+                    list(range(a_frame_start_h, (a_frame_end_h + 1)))
+                )
 
-                self.log.debug(collection)
-                repre = self._create_representation(
-                    frame_start, frame_end, collection=collection)
             else:
                 # in case it is file sequence but not new OTIO schema
                 # `ImageSequenceReference`
@@ -152,9 +152,9 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
                     path, trimmed_media_range_h, metadata)
                 self.staging_dir, collection = collection_data
 
-                self.log.debug(collection)
-                repre = self._create_representation(
-                    frame_start, frame_end, collection=collection)
+            self.log.debug(collection)
+            repre = self._create_representation(
+                frame_start, frame_end, collection=collection)
         else:
             _trim = False
             dirname, filename = os.path.split(media_ref.target_url)
@@ -198,7 +198,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
 
         if kwargs.get("collection"):
             collection = kwargs.get("collection")
-            files = [f for f in collection]
+            files = list(collection)
             ext = collection.format("{tail}")
             representation_data.update({
                 "name": ext[1:],
@@ -220,7 +220,5 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             })
 
         if kwargs.get("trim") is True:
-            representation_data.update({
-                "tags": ["trim"]
-            })
+            representation_data["tags"] = ["trim"]
         return representation_data

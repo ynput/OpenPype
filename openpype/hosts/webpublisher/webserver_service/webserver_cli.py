@@ -6,6 +6,7 @@ import requests
 import json
 import subprocess
 
+from openpype.client import OpenPypeMongoConnection
 from openpype.lib import PypeLogger
 
 from .webpublish_routes import (
@@ -121,8 +122,6 @@ def run_webserver(*args, **kwargs):
 
 def reprocess_failed(upload_dir, webserver_url):
     # log.info("check_reprocesable_records")
-    from openpype.lib import OpenPypeMongoConnection
-
     mongo_client = OpenPypeMongoConnection.get_mongo_client()
     database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     dbcon = mongo_client[database_name]["webpublishes"]
