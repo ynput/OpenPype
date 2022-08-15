@@ -1,3 +1,4 @@
+import six
 import pyblish.api
 from openpype.api import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
@@ -72,11 +73,21 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
         for knob_data in check_knobs:
             key = knob_data["name"]
             value = knob_data["value"]
+            node_value = write_node[key].value()
+
+            # fix type differences
+            if type(node_value) in (int, float):
+                value = float(value)
+                node_value = float(node_value)
+            else:
+                value = str(value)
+                node_value = str(node_value)
+
             self.log.debug("__ key: {} | value: {}".format(
                 key, value
             ))
             if (
-                str(write_node[key].value()) != str(value)
+                node_value != value
                 and key != "file"
                 and key != "tile_color"
             ):
