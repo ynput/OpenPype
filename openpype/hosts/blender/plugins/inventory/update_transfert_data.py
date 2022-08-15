@@ -78,6 +78,9 @@ class VersionTransfertData(UpdateTransfertData):
     def _show_version_dialog(self, containers):
         """Create a dialog with the available versions for containers.
 
+        Note:
+            Extracted from openpype.tools.sceneinventory.view
+
         Args:
             containers (list): list of containers to run the "set_version".
 
