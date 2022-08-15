@@ -12,7 +12,9 @@ from openpype.pipeline import (
 
 
 class CollectAudio(pyblish.api.InstancePlugin):
+    """ Collecting available audio subset to instance
 
+    """
     label = "Colect Audio"
     order = pyblish.api.CollectorOrder + 0.1
     families = ["review"]
@@ -35,11 +37,12 @@ class CollectAudio(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        # * Add audio to instance if exists.
         self.log.info('Collecting Audio Data')
 
         project_name = legacy_io.active_project()
         asset_name = instance.data["asset"]
-        # * Add audio to instance if exists.
+
         # Find latest versions document
         last_version_doc = get_last_version_by_subset_name(
             project_name, "audioMain", asset_name=asset_name, fields=["_id"]
