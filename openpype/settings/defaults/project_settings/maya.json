@@ -968,13 +968,7 @@
         ]
     },
     "templated_workfile_build": {
-        "profiles": [
-            {
-                "task_types": [],
-                "tasks": [],
-                "path": "/path/to/your/template"
-            }
-        ]
+        "profiles": []
     },
     "filters": {
         "preset 1": {

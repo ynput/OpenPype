@@ -1,15 +1,18 @@
 import os
 from abc import ABCMeta, abstractmethod
 
-import traceback
-
 import six
 import logging
 from functools import reduce
 
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
-from openpype.lib import get_linked_assets, Logger
+from openpype.lib import (
+    StringTemplate,
+    Logger,
+    filter_profiles,
+    get_linked_assets,
+)
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import (
     get_loaders_by_name,
@@ -169,49 +172,65 @@ class AbstractTemplateLoader:
         anatomy = Anatomy(project_name)
         project_settings = get_project_settings(project_name)
 
-        build_info = project_settings[host_name]['templated_workfile_build']
-        profiles = build_info['profiles']
+        build_info = project_settings[host_name]["templated_workfile_build"]
+        profile = filter_profiles(
+            build_info["profiles"],
+            {
+                "task_types": task_type,
+                "tasks": task_name
+            }
+        )
 
-        for prf in profiles:
-            if prf['task_types'] and task_type not in prf['task_types']:
-                continue
-            if prf['tasks'] and task_name not in prf['tasks']:
-                continue
-            path = prf['path']
-            break
-        else:  # IF no template were found (no break happened)
+        if not profile:
             raise TemplateProfileNotFound(
                 "No matching profile found for task '{}' of type '{}' "
                 "with host '{}'".format(task_name, task_type, host_name)
             )
-        if path is None:
+
+        path = profile["path"]
+        if not path:
             raise TemplateLoadingFailed(
                 "Template path is not set.\n"
                 "Path need to be set in {}\\Template Workfile Build "
                 "Settings\\Profiles".format(host_name.title()))
-        try:
-            solved_path = None
-            while True:
-                solved_path = anatomy.path_remapper(path)
-                if solved_path is None:
-                    solved_path = path
-                if solved_path == path:
-                    break
-                path = solved_path
-        except KeyError as missing_key:
-            raise KeyError(
-                "Could not solve key '{}' in template path '{}'".format(
-                    missing_key, path))
-        finally:
-            solved_path = os.path.normpath(solved_path)
 
+        # Try fill path with environments and anatomy roots
+        fill_data = {
+            key: value
+            for key, value in os.environ.items()
+        }
+        fill_data["root"] = anatomy.roots
+        result = StringTemplate.format_template(path, fill_data)
+        if result.solved:
+            path = result.normalized()
+
+        if path and os.path.exists(path):
+            self.log.info("Found template at: '{}'".format(path))
+            return path
+
+        solved_path = None
+        while True:
+            try:
+                solved_path = anatomy.path_remapper(path)
+            except KeyError as missing_key:
+                raise KeyError(
+                    "Could not solve key '{}' in template path '{}'".format(
+                        missing_key, path))
+
+            if solved_path is None:
+                solved_path = path
+            if solved_path == path:
+                break
+            path = solved_path
+
+        solved_path = os.path.normpath(solved_path)
         if not os.path.exists(solved_path):
             raise TemplateNotFound(
                 "Template found in openPype settings for task '{}' with host "
                 "'{}' does not exists. (Not found : {})".format(
                     task_name, host_name, solved_path))
 
-        self.log.info("Found template at : '{}'".format(solved_path))
+        self.log.info("Found template at: '{}'".format(solved_path))
 
         return solved_path
 
@@ -223,30 +242,30 @@ class AbstractTemplateLoader:
         Returns:
             None
         """
+
         loaders_by_name = self.loaders_by_name
-        current_asset = self.current_asset
-        linked_assets = [asset['name'] for asset
-                         in get_linked_assets(self.current_asset_doc)]
+        current_asset_doc = self.current_asset_doc
+        linked_assets = get_linked_assets(current_asset_doc)
 
         ignored_ids = ignored_ids or []
         placeholders = self.get_placeholders()
         self.log.debug("Placeholders found in template: {}".format(
-            [placeholder.data['node'] for placeholder in placeholders]
+            [placeholder.name for placeholder in placeholders]
         ))
         for placeholder in placeholders:
             self.log.debug("Start to processing placeholder {}".format(
-                placeholder.data['node']
+                placeholder.name
             ))
             placeholder_representations = self.get_placeholder_representations(
                 placeholder,
-                current_asset,
+                current_asset_doc,
                 linked_assets
             )
 
             if not placeholder_representations:
                 self.log.info(
                     "There's no representation for this placeholder: "
-                    "{}".format(placeholder.data['node'])
+                    "{}".format(placeholder.name)
                 )
                 continue
 
@@ -264,8 +283,8 @@ class AbstractTemplateLoader:
                     "Loader arguments used : {}".format(
                         representation['context']['asset'],
                         representation['context']['subset'],
-                        placeholder.loader,
-                        placeholder.data['loader_args']))
+                        placeholder.loader_name,
+                        placeholder.loader_args))
 
                 try:
                     container = self.load(
@@ -278,21 +297,18 @@ class AbstractTemplateLoader:
                     self.postload(placeholder)
 
     def get_placeholder_representations(
-        self, placeholder, current_asset, linked_assets
+        self, placeholder, current_asset_doc, linked_asset_docs
     ):
-        # TODO This approach must be changed. Placeholders should return
-        #   already prepared data and not query them here.
-        #   - this is impossible to handle using query functions
-        placeholder_db_filters = placeholder.convert_to_db_filters(
-            current_asset,
-            linked_assets)
-        # get representation by assets
-        for db_filter in placeholder_db_filters:
-            placeholder_representations = list(legacy_io.find(db_filter))
-            for representation in reduce(update_representations,
-                                         placeholder_representations,
-                                         dict()).values():
-                yield representation
+        placeholder_representations = placeholder.get_representations(
+            current_asset_doc,
+            linked_asset_docs
+        )
+        for repre_doc in reduce(
+            update_representations,
+            placeholder_representations,
+            dict()
+        ).values():
+            yield repre_doc
 
     def load_data_is_incorrect(
             self, placeholder, last_representation, ignored_ids):
@@ -310,19 +326,22 @@ class AbstractTemplateLoader:
     def load(self, placeholder, loaders_by_name, last_representation):
         repre = get_representation_context(last_representation)
         return load_with_repre_context(
-            loaders_by_name[placeholder.loader],
+            loaders_by_name[placeholder.loader_name],
             repre,
-            options=parse_loader_args(placeholder.data['loader_args']))
+            options=parse_loader_args(placeholder.loader_args))
 
     def load_succeed(self, placeholder, container):
         placeholder.parent_in_hierarchy(container)
 
     def load_failed(self, placeholder, last_representation):
-        self.log.warning("Got error trying to load {}:{} with {}\n\n"
-                         "{}".format(last_representation['context']['asset'],
-                                     last_representation['context']['subset'],
-                                     placeholder.loader,
-                                     traceback.format_exc()))
+        self.log.warning(
+            "Got error trying to load {}:{} with {}".format(
+                last_representation['context']['asset'],
+                last_representation['context']['subset'],
+                placeholder.loader_name
+            ),
+            exc_info=True
+        )
 
     def postload(self, placeholder):
         placeholder.clean()
@@ -332,11 +351,15 @@ class AbstractTemplateLoader:
         self.populate_template(ignored_ids=loaded_containers_ids)
 
     def get_placeholders(self):
-        placeholder_class = self.placeholder_class
-        placeholders = map(placeholder_class, self.get_template_nodes())
-        valid_placeholders = filter(placeholder_class.is_valid, placeholders)
-        sorted_placeholders = sorted(valid_placeholders,
-                                     key=placeholder_class.order)
+        placeholders = map(self.placeholder_class, self.get_template_nodes())
+        valid_placeholders = filter(
+            lambda i: i.is_valid,
+            placeholders
+        )
+        sorted_placeholders = list(sorted(
+            valid_placeholders,
+            key=lambda i: i.order
+        ))
         return sorted_placeholders
 
     @abstractmethod
@@ -377,107 +400,127 @@ class AbstractTemplateLoader:
 
 @six.add_metaclass(ABCMeta)
 class AbstractPlaceholder:
-    """Abstraction of placeholders logic
+    """Abstraction of placeholders logic.
+
     Properties:
-        attributes: A list of mandatory attribute to decribe placeholder
+        required_keys: A list of mandatory keys to decribe placeholder
             and assets to load.
-        optional_attributes: A list of optional attribute to decribe
+        optional_keys: A list of optional keys to decribe
             placeholder and assets to load
-        loader: Name of linked loader to use while loading assets
-        is_context: Is placeholder linked
-            to context asset (or to linked assets)
-    Methods:
-        is_repres_valid:
-        loader:
-        order:
-        is_valid:
-        get_data:
-        parent_in_hierachy:
+        loader_name: Name of linked loader to use while loading assets
+
+    Args:
+        identifier (str): Placeholder identifier. Should be possible to be
+            used as identifier in "a scene" (e.g. unique node name).
     """
 
-    attributes = {'builder_type', 'family', 'representation',
-                  'order', 'loader', 'loader_args'}
-    optional_attributes = {}
+    required_keys = {
+        "builder_type",
+        "family",
+        "representation",
+        "order",
+        "loader",
+        "loader_args"
+    }
+    optional_keys = {}
 
-    def __init__(self, node):
-        self.get_data(node)
+    def __init__(self, identifier):
+        self._log = None
+        self._name = identifier
+        self.get_data(identifier)
 
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(repr(self))
+        return self._log
+
+    def __repr__(self):
+        return "< {} {} >".format(self.__class__.__name__, self.name)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def loader_args(self):
+        return self.data["loader_args"]
+
+    @property
+    def builder_type(self):
+        return self.data["builder_type"]
+
+    @property
     def order(self):
-        """Get placeholder order.
-        Order is used to sort them by priority
-        Priority is lowset first, highest last
-        (ex:
-            1: First to load
-            100: Last to load)
-        Returns:
-            Int: Order priority
-        """
-        return self.data.get('order')
+        return self.data["order"]
 
     @property
-    def loader(self):
-        """Return placeholder loader type
+    def loader_name(self):
+        """Return placeholder loader name.
+
         Returns:
-            string: Loader name
+            str: Loader name that will be used to load placeholder
+                representations.
         """
-        return self.data.get('loader')
+
+        return self.data["loader"]
 
     @property
-    def is_context(self):
-        """Return placeholder type
-        context_asset: For loading current asset
-        linked_asset: For loading linked assets
-        Returns:
-            bool: true if placeholder is a context placeholder
-        """
-        return self.data.get('builder_type') == 'context_asset'
-
     def is_valid(self):
-        """Test validity of placeholder
-        i.e.: every attributes exists in placeholder data
+        """Test validity of placeholder.
+
+        i.e.: every required key exists in placeholder data
+
         Returns:
-            Bool: True if every attributes are a key of data
+            bool: True if every key is in data
         """
-        if set(self.attributes).issubset(self.data.keys()):
-            print("Valid placeholder : {}".format(self.data["node"]))
+
+        if set(self.required_keys).issubset(self.data.keys()):
+            self.log.debug("Valid placeholder : {}".format(self.name))
             return True
-        print("Placeholder is not valid : {}".format(self.data["node"]))
+        self.log.info("Placeholder is not valid : {}".format(self.name))
         return False
 
     @abstractmethod
-    def parent_in_hierarchy(self, containers):
-        """Place container in correct hierarchy
-        given by placeholder
+    def parent_in_hierarchy(self, container):
+        """Place loaded container in correct hierarchy given by placeholder
+
         Args:
-            containers (String): Container name returned back by
-                placeholder's loader.
+            container (Dict[str, Any]): Loaded container created by loader.
         """
+
         pass
 
     @abstractmethod
     def clean(self):
-        """Clean placeholder from hierarchy after loading assets.
-        """
+        """Clean placeholder from hierarchy after loading assets."""
+
         pass
 
     @abstractmethod
-    def convert_to_db_filters(self, current_asset, linked_asset):
-        """map current placeholder data as a db filter
-        args:
-            current_asset (String): Name of current asset in context
-            linked asset (list[String]) : Names of assets linked to
-                current asset in context
-        Returns:
-            dict: a dictionnary describing a filter to look for asset in
-                a database
-        """
-        pass
+    def get_representations(self, current_asset_doc, linked_asset_docs):
+        """Query representations based on placeholder data.
 
-    @abstractmethod
-    def get_data(self, node):
-        """
-        Collect placeholders information.
         Args:
-            node (AnyNode): A unique node decided by Placeholder implementation
+            current_asset_doc (Dict[str, Any]): Document of current
+                context asset.
+            linked_asset_docs (List[Dict[str, Any]]): Documents of assets
+                linked to current context asset.
+
+        Returns:
+            Iterable[Dict[str, Any]]: Representations that are matching
+                placeholder filters.
         """
+
+        pass
+
+    @abstractmethod
+    def get_data(self, identifier):
+        """Collect information about placeholder by identifier.
+
+        Args:
+            identifier (str): A unique placeholder identifier defined by
+                implementation.
+        """
+
         pass
