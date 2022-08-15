@@ -94,7 +94,7 @@ def find_paths_by_hash(texture_hash):
 
 @six.add_metaclass(ABCMeta)
 class TextureProcessor:
-    @abstractmethod
+
     def __init__(self):
         pass
 
@@ -106,7 +106,7 @@ class TextureProcessor:
 
 class MakeRSTexBin(TextureProcessor):
     def __init__(self):
-        super(TextureProcessor, self).__init__()
+        super(MakeRSTexBin, self).__init__()
 
     def process(self, source, *args):
         """Make `.rstexbin` using `redshiftTextureProcessor`
@@ -152,7 +152,7 @@ class MakeRSTexBin(TextureProcessor):
 
 class MakeTX(TextureProcessor):
     def __init__(self):
-        super(TextureProcessor, self).__init__()
+        super(MakeTX, self).__init__()
 
     def process(self, source, destination, *args):
         """Make `.tx` using `maketx` with some default settings.
@@ -627,18 +627,18 @@ class ExtractLook(openpype.api.Extractor):
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     self.log.info(converted)
                     if processed_path:
-                        return processed_path
+                        return processed_path, COPY, texture_hash
                     else:
                         self.log.info("maketx has returned nothing")
                 elif processor == MakeRSTexBin:
                     processed_path = processor().process(filepath)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     if processed_path:
-                        return processed_path
+                        return processed_path, COPY, texture_hash
                     else:
                         self.log.info("redshift texture converter has returned nothing") # noqa
 
-        return filepath, COPY, texture_hash
+        return processed_path, COPY, texture_hash
 
 
 class ExtractModelRenderSets(ExtractLook):
