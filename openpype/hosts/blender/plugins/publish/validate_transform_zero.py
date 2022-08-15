@@ -4,8 +4,8 @@ import mathutils
 import bpy
 
 import pyblish.api
-from openpype.api import ValidateContentsOrder
-from openpype.hosts.blender.api.action import SelectInvalidAction
+import openpype.api
+import openpype.hosts.blender.api.action
 
 
 class ValidateTransformZero(pyblish.api.InstancePlugin):
@@ -17,20 +17,19 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    category = "cleanup"
     version = (0, 1, 0)
     label = "Transform Zero"
-    actions = [SelectInvalidAction]
+    actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
 
     _identity = mathutils.Matrix()
 
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        for obj in set(instance):
+        for obj in instance:
             if (
                 isinstance(obj, bpy.types.Object)
                 and obj.matrix_basis != cls._identity

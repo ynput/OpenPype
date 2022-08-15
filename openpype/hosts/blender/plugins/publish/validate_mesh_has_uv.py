@@ -3,19 +3,19 @@ from typing import List
 import bpy
 
 import pyblish.api
-from openpype.api import ValidateContentsOrder
-from openpype.hosts.blender.api.action import SelectInvalidAction
+import openpype.api
+import openpype.hosts.blender.api.action
 
 
 class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     """Validate that the current mesh has UV's."""
 
-    order = ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    category = "uv"
+    category = "geometry"
     label = "Mesh Has UV's"
-    actions = [SelectInvalidAction]
+    actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
     optional = True
 
     @staticmethod
@@ -34,16 +34,10 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
-        for obj in set(instance):
-            try:
-                if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
-                    if obj.mode != 'OBJECT':
-                        # Make sure we are in object mode.
-                        bpy.ops.object.mode_set(mode='OBJECT')
-                    if not cls.has_uvs(obj):
-                        invalid.append(obj)
-            except RuntimeError:
-                continue
+        for obj in instance:
+            if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
+                if not cls.has_uvs(obj):
+                    invalid.append(obj)
         return invalid
 
     def process(self, instance):
