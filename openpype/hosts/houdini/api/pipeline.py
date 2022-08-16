@@ -310,7 +310,6 @@ def _set_context_settings():
         fps
         resolution
         renderer
-        shelves
 
     Returns:
         None

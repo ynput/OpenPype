@@ -105,7 +105,7 @@ def get_or_create_shelf_set(shelf_set_label):
     creates a new shelf set.
 
     Arguments:
-        shelf_set_label {str} -- The label of the shelf set
+        shelf_set_label (str) -- The label of the shelf set
 
     Returns:
         hou.ShelfSet -- The shelf set existing or the new one
@@ -153,7 +153,7 @@ def get_or_create_shelf(shelf_label):
 
 
 def get_or_create_tool(tool_definition, shelf):
-    """This function verifies if the tool exsist and update it. If not, creates
+    """This function verifies if the tool exsists and updates it. If not, creates
     a new one.
 
     Arguments:
@@ -177,7 +177,6 @@ def get_or_create_tool(tool_definition, shelf):
         return existing_tool[0]
 
     tool_name = tool_label.replace(' ', '_').lower()
-    log.warning(tool_definition)
 
     if not os.path.exists(tool_definition['script']):
         log.warning(
