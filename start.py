@@ -748,12 +748,21 @@ def _find_frozen_openpype(use_version: str = None,
         _initialize_environment(openpype_version)
         return version_path
 
+    in_headless_mode = os.getenv("OPENPYPE_HEADLESS_MODE") == "1"
     if not installed_version.is_compatible(openpype_version):
-        raise OpenPypeVersionIncompatible(
-            (
-                f"Latest version found {openpype_version} is not "
-                f"compatible with currently running {installed_version}"
+        message = "Version {} is not compatible with installed version {}."
+        # Show UI to user
+        if not in_headless_mode:
+            igniter.show_message_dialog(
+                "Incompatible OpenPype installation",
+                message.format(
+                    "<b>{}</b>".format(openpype_version),
+                    "<b>{}</b>".format(installed_version)
+                )
             )
+        # Raise incompatible error
+        raise OpenPypeVersionIncompatible(
+            message.format(openpype_version, installed_version)
         )
 
     # test if latest detected is installed (in user data dir)
@@ -768,7 +777,7 @@ def _find_frozen_openpype(use_version: str = None,
 
     if not is_inside:
         # install latest version to user data dir
-        if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
+        if in_headless_mode:
             version_path = bootstrap.install_version(
                 openpype_version, force=True
             )
