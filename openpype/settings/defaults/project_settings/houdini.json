@@ -5,21 +5,8 @@
             "shelf_set_source_path": {
                 "windows": "",
                 "darwin": "",
-                "linux": "/path/to/your/shelf_set_file"
-            },
-            "shelf_definition": [
-                {
-                    "shelf_name": "OpenPype Shelf",
-                    "tools_list": [
-                        {
-                            "label": "OpenPype Tool",
-                            "script": "/path/to/your/tool_script",
-                            "icon": "/path/to/your/icon",
-                            "help": "Help message for your tool"
-                        }
-                    ]
-                }
-            ]
+                "linux": ""
+            }
         }
     ],
     "create": {
