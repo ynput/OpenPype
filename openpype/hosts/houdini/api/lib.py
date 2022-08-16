@@ -460,35 +460,3 @@ def reset_framerange():
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
     hou.setFrame(frame_start)
-
-
-def create_shelf():
-    hou.shelves.beginChangeBlock()
-
-    custom_shelf = hou.shelves.newShelf(
-        file_path='',
-        name="custom_shelf",
-        label="Custom Shelf"
-    )
-
-    new_tool = hou.shelves.newTool(
-        file_path='',
-        name='new_tool',
-        label='New Tool',
-        script='',
-        language=hou.scriptLanguage.Python,
-        icon='',
-        help='This is a new tool'
-    )
-
-    if new_tool not in custom_shelf.tools():
-        custom_shelf.setTools(list(custom_shelf.tools()) + [new_tool])
-
-    shelf_set = [
-        shelf for shelf in hou.shelves.shelfSets().values()
-        if shelf.label() == "Create and Refine"
-    ][0]
-
-    shelf_set.setShelves(shelf_set.shelves() + (custom_shelf,))
-
-    hou.shelves.endChangeBlock()
