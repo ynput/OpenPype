@@ -94,10 +94,10 @@ class WorkfileTemplate():
                 isinstance(newNode, nuke.Node)):
             return
 
-        source_node_width = newNode.screenWidth() / 2
-        source_node_height = newNode.screenHeight() / 2
-        target_node_width = targetNode.screenWidth() / 2
-        target_node_height = targetNode.screenHeight() / 2
+        source_node_width = int(newNode.screenWidth() / 2)
+        source_node_height = int(newNode.screenHeight() / 2)
+        target_node_width = int(targetNode.screenWidth() / 2)
+        target_node_height = int(targetNode.screenHeight() / 2)
         width_offset = target_node_width - source_node_width
         height_offset = target_node_height - source_node_height
         sourcePos = (newNode.xpos(), newNode.ypos())
