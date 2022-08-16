@@ -82,10 +82,17 @@
                 "model",
                 "camera",
                 "rig",
+                "look",
                 "action",
                 "layout",
                 "setdress"
             ]
+        },
+        "ExtractBlendMaterials": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "pack_images": true
         },
         "ExtractFBX": {
             "enabled": true,
