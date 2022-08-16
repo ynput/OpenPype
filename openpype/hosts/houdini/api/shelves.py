@@ -105,10 +105,10 @@ def get_or_create_shelf_set(shelf_set_label):
     creates a new shelf set.
 
     Arguments:
-        shelf_set_label {str} -- The label of the shelf set
+        shelf_set_label (str): The label of the shelf set
 
     Returns:
-        hou.ShelfSet -- The shelf set existing or the new one
+        hou.ShelfSet: The shelf set existing or the new one
     """
     all_shelves_sets = hou.shelves.shelfSets().values()
 
@@ -132,10 +132,10 @@ def get_or_create_shelf(shelf_label):
     a new shelf.
 
     Arguments:
-        shelf_label {str} -- The label of the shelf
+        shelf_label (str): The label of the shelf
 
     Returns:
-        hou.Shelf -- The shelf existing or the new one
+        hou.Shelf: The shelf existing or the new one
     """
     all_shelves = hou.shelves.shelves().values()
 
@@ -153,15 +153,15 @@ def get_or_create_shelf(shelf_label):
 
 
 def get_or_create_tool(tool_definition, shelf):
-    """This function verifies if the tool exsist and update it. If not, creates
+    """This function verifies if the tool exsists and updates it. If not, creates
     a new one.
 
     Arguments:
-        tool_definition {dict} -- Dict with label, script, icon and help
-        shelf {hou.Shelf} -- The parent shelf of the tool
+        tool_definition (dict): Dict with label, script, icon and help
+        shelf (hou.Shelf): The parent shelf of the tool
 
     Returns:
-        hou.Tool -- The tool updated or the new one
+        hou.Tool: The tool updated or the new one
     """
     existing_tools = shelf.tools()
     tool_label = tool_definition.get('label')
@@ -177,7 +177,6 @@ def get_or_create_tool(tool_definition, shelf):
         return existing_tool[0]
 
     tool_name = tool_label.replace(' ', '_').lower()
-    log.warning(tool_definition)
 
     if not os.path.exists(tool_definition['script']):
         log.warning(
