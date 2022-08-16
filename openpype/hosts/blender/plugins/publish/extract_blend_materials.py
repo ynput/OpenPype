@@ -13,6 +13,8 @@ class ExtractBlendMaterials(openpype.api.Extractor):
     families = ["look"]
     optional = True
 
+    pack_images = True
+
     @staticmethod
     def _get_images_from_materials(materials):
         """Get images from materials."""
@@ -35,7 +37,7 @@ class ExtractBlendMaterials(openpype.api.Extractor):
         # Define extract output file path
 
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.blend"
+        filename = f"{instance.name}.mat.blend"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
@@ -76,8 +78,7 @@ class ExtractBlendMaterials(openpype.api.Extractor):
 
         # Get all images used by materials and pack their if needed.
         for image in self._get_images_from_materials(materials):
-            # TODO : Add a image_pack option from project settings.
-            if not image.packed_file:
+            if self.pack_images and not image.packed_file:
                 image.pack()
             data_blocks.add(image)
 
@@ -100,8 +101,8 @@ class ExtractBlendMaterials(openpype.api.Extractor):
         instance.data.setdefault("representations", [])
 
         representation = {
-            "name": "blend",
-            "ext": "blend",
+            "name": "blend materials",
+            "ext": "mat.blend",
             "files": filename,
             "stagingDir": stagingdir,
         }

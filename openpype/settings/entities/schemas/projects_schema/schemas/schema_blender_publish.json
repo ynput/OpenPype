@@ -125,6 +125,35 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractBlendMaterials",
+            "label": "Extract Materials as Blend",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "boolean",
+                    "key": "pack_images",
+                    "label": "Pack Images"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_publish_plugin",
             "template_data": [
