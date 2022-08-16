@@ -586,7 +586,7 @@ class SubsetWidget(QtWidgets.QWidget):
 
                 # keep only version ids without representation with that name
                 version_id = repre_doc["parent"]
-                version_ids.remove(version_id)
+                version_ids.discard(version_id)
 
             if version_ids:
                 # report versions that didn't have valid representation
