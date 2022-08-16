@@ -11,7 +11,7 @@ from distribution.file_handler import RemoteFileHandler
 class UrlType(Enum):
     HTTP = "http"
     GIT = "git"
-    OS = "os"
+    FILESYSTEM = "filesystem"
 
 
 @attr.s
@@ -122,7 +122,7 @@ def get_addons_info(server_endpoint):
     #     **{"name": "openpype_slack",
     #        "version": "1.0.0",
     #        "addon_url": "c:/projects/openpype_slack_1.0.0.zip",
-    #        "type": UrlType.OS,
+    #        "type": UrlType.FILESYSTEM,
     #        "hash": "4f6b8568eb9dd6f510fd7c4dcb676788"})  # noqa
     #
     # http_addon = AddonInfo(
@@ -189,7 +189,7 @@ def cli(args):
     addon_folder = "c:/projects/testing_addons/pypeclub/openpype/addons"
 
     downloader_factory = AddonDownloader()
-    downloader_factory.register_format(UrlType.OS, OSAddonDownloader)
+    downloader_factory.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
     downloader_factory.register_format(UrlType.HTTP, HTTPAddonDownloader)
 
     test_endpoint = "https://34e99f0f-f987-4715-95e6-d2d88caa7586.mock.pstmn.io/get_addons_info"  # noqa
