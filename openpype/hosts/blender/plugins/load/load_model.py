@@ -8,7 +8,7 @@ from openpype.hosts.blender.api import plugin
 class LinkModelLoader(plugin.AssetLoader):
     """Link models from a .blend file."""
 
-    families = ["model"]
+    families = ["model", "look"]
     representations = ["blend"]
 
     label = "Link Model"
@@ -22,7 +22,7 @@ class LinkModelLoader(plugin.AssetLoader):
 class AppendModelLoader(plugin.AssetLoader):
     """Append models from a .blend file."""
 
-    families = ["model"]
+    families = ["model", "look"]
     representations = ["blend"]
 
     label = "Append Model"
@@ -36,7 +36,7 @@ class AppendModelLoader(plugin.AssetLoader):
 class InstanceModelLoader(plugin.AssetLoader):
     """load models from a .blend file as instance collection."""
 
-    families = ["model"]
+    families = ["model", "look"]
     representations = ["blend"]
 
     label = "Instantiate Collection"

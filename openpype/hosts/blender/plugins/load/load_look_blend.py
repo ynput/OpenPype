@@ -11,7 +11,7 @@ class BlendLookLoader(plugin.AssetLoader):
     """Load and assign extracted materials from look task."""
 
     families = ["look"]
-    representations = ["blend"]
+    representations = ["blend materials"]
 
     label = "Load Materials"
     icon = "code-fork"
