@@ -349,14 +349,8 @@ def containerise(name,
     ]
 
     for key, value in data:
-
-        if isinstance(value, (int, float)):
-            cmds.addAttr(container, longName=key, attributeType="short")
-            cmds.setAttr(container + "." + key, value)
-
-        else:
-            cmds.addAttr(container, longName=key, dataType="string")
-            cmds.setAttr(container + "." + key, value, type="string")
+        cmds.addAttr(container, longName=key, dataType="string")
+        cmds.setAttr(container + "." + key, value, type="string")
 
     main_container = cmds.ls(AVALON_CONTAINERS, type="objectSet")
     if not main_container:
