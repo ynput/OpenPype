@@ -229,7 +229,7 @@ class WorkfileTemplate():
         '''
 
         t_nodes = self._get_op_template_nodes()
-        t_creators = [node for node in t_nodes 
+        t_creators = [node for node in t_nodes
                       if node['is_op_creator'].value()]
         asset = str(os.environ["AVALON_ASSET"])
         for temp_creator in t_creators:
