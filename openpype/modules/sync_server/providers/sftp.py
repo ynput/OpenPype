@@ -222,7 +222,7 @@ class SFTPHandler(AbstractProvider):
         return os.path.basename(path)
 
     def upload_file(self, source_path, target_path,
-                    server, collection, file, representation, site,
+                    server, project_name, file, representation, site,
                     overwrite=False):
         """
             Uploads single file from 'source_path' to destination 'path'.
@@ -235,7 +235,7 @@ class SFTPHandler(AbstractProvider):
 
             arguments for saving progress:
             server (SyncServer): server instance to call update_db on
-            collection (str): name of collection
+            project_name (str):
             file (dict): info about uploaded file (matches structure from db)
             representation (dict): complete repre containing 'file'
             site (str): site name
@@ -256,7 +256,7 @@ class SFTPHandler(AbstractProvider):
         thread = threading.Thread(target=self._upload,
                                   args=(source_path, target_path))
         thread.start()
-        self._mark_progress(collection, file, representation, server,
+        self._mark_progress(project_name, file, representation, server,
                             site, source_path, target_path, "upload")
 
         return os.path.basename(target_path)
@@ -267,7 +267,7 @@ class SFTPHandler(AbstractProvider):
         conn.put(source_path, target_path)
 
     def download_file(self, source_path, target_path,
-                      server, collection, file, representation, site,
+                      server, project_name, file, representation, site,
                       overwrite=False):
         """
             Downloads single file from 'source_path' (remote) to 'target_path'.
@@ -281,7 +281,7 @@ class SFTPHandler(AbstractProvider):
 
             arguments for saving progress:
             server (SyncServer): server instance to call update_db on
-            collection (str): name of collection
+            project_name (str):
             file (dict): info about uploaded file (matches structure from db)
             representation (dict): complete repre containing 'file'
             site (str): site name
@@ -302,7 +302,7 @@ class SFTPHandler(AbstractProvider):
         thread = threading.Thread(target=self._download,
                                   args=(source_path, target_path))
         thread.start()
-        self._mark_progress(collection, file, representation, server,
+        self._mark_progress(project_name, file, representation, server,
                             site, source_path, target_path, "download")
 
         return os.path.basename(target_path)
@@ -425,7 +425,7 @@ class SFTPHandler(AbstractProvider):
                 pysftp.exceptions.ConnectionException):
             log.warning("Couldn't connect", exc_info=True)
 
-    def _mark_progress(self, collection, file, representation, server, site,
+    def _mark_progress(self, project_name, file, representation, server, site,
                        source_path, target_path, direction):
         """
             Updates progress field in DB by values 0-1.
@@ -446,7 +446,7 @@ class SFTPHandler(AbstractProvider):
                 status_val = target_file_size / source_file_size
                 last_tick = time.time()
                 log.debug(direction + "ed %d%%." % int(status_val * 100))
-                server.update_db(collection=collection,
+                server.update_db(project_name=project_name,
                                  new_file_id=None,
                                  file=file,
                                  representation=representation,
