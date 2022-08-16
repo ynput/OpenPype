@@ -45,9 +45,15 @@
                             "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
                         },
                         {
-                            "type": "boolean",
                             "key": "create_flatten_image",
-                            "label": "Create flatten image"
+                            "label": "Create flatten image",
+                            "type": "enum",
+                            "multiselection": false,
+                            "enum_items": [
+                                { "yes": "Yes" },
+                                { "no": "No" },
+                                { "only": "Only flatten" }
+                            ]
                         },
                         {
                             "type": "text",
