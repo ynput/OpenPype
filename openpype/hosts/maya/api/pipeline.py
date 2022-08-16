@@ -349,8 +349,6 @@ def containerise(name,
     ]
 
     for key, value in data:
-        if not value:
-            continue
 
         if isinstance(value, (int, float)):
             cmds.addAttr(container, longName=key, attributeType="short")
