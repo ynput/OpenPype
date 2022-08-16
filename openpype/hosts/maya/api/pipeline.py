@@ -344,7 +344,7 @@ def containerise(name,
         ("id", AVALON_CONTAINER_ID),
         ("name", name),
         ("namespace", namespace),
-        ("loader", str(loader)),
+        ("loader", loader),
         ("representation", context["representation"]["_id"]),
     ]
 
