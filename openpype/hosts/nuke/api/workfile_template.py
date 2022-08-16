@@ -69,7 +69,7 @@ class WorkfileTemplate():
         The second contains its outputs, where each 'index' is
         the input index that is connected to 'node'.
         '''
-        
+
         inputNodes = [(i, node.input(i)) for i in range(node.inputs())]
         outputNodes = []
         deps = nuke.dependentNodes(nuke.INPUTS | nuke.HIDDEN_INPUTS, node)
@@ -86,9 +86,9 @@ class WorkfileTemplate():
         'targetNode': The node (or node name) to be replaced.
         'newNode': The node (or node name) that will replace it.
         '''
-        if isinstance(targetNode, basestring):
+        if isinstance(targetNode, str):
             targetNode = nuke.toNode(targetNode)
-        if isinstance(newNode, basestring):
+        if isinstance(newNode, str):
             newNode = nuke.toNode(newNode)
         if not (isinstance(targetNode, nuke.Node) and
                 isinstance(newNode, nuke.Node)):
@@ -229,7 +229,8 @@ class WorkfileTemplate():
         '''
 
         t_nodes = self._get_op_template_nodes()
-        t_creators = [node for node in t_nodes if node['is_op_creator'].value()]
+        t_creators = [node for node in t_nodes 
+                      if node['is_op_creator'].value()]
         asset = str(os.environ["AVALON_ASSET"])
         for temp_creator in t_creators:
             load_create = str(temp_creator['loaderCreator'].value())
