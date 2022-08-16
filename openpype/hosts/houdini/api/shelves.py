@@ -75,13 +75,12 @@ No shelf definition found for shelf set named '{}'".format(shelf_set_name)
 shelf named {}".format(shelf_name))
                 return
 
-            mandatory_attributes = ['name', 'script']
+            mandatory_attributes = {'name', 'script'}
             for tool_definition in shelf_definition.get('tools_list'):
                 # We verify that the name and script attibutes of the tool
                 # are set
                 if not all(
-                    [v for k, v in tool_definition.items() if
-                        k in mandatory_attributes]
+                    tool_definition[key] for key in mandatory_attributes
                 ):
                     log.warning("TOOLS ERROR: You need to specify at least \
 the name and the script path of the tool.")
