@@ -948,7 +948,7 @@
                 {
                     "type": "dict",
                     "key": "IntegrateFtrackInstance",
-                    "label": "IntegrateFtrackInstance",
+                    "label": "Integrate Ftrack Instance",
                     "is_group": true,
                     "children": [
                         {
