@@ -46,6 +46,8 @@ from openpype.pipeline.workfile import BuildWorkfile
 
 from . import gizmo_menu
 
+from . import workfile_template
+
 from .workio import (
     save_file,
     open_file
@@ -2446,6 +2448,44 @@ def _launch_workfile_app():
     host_tools.show_workfiles(parent=None, on_top=True)
 
 
+def load_nodes_from_template_path():
+
+    project_settings = get_current_project_settings()
+
+    # get custom template path if any
+    custom_template_path = get_custom_workfile_template_from_session(
+        project_settings=project_settings
+    )
+
+    # if custom template is defined
+    if custom_template_path:
+        log.info("Adding nodes from `{}`...".format(
+            custom_template_path
+        ))
+        try:
+            # import nodes into current script
+            nuke.nodePaste(custom_template_path)
+        except RuntimeError:
+            raise RuntimeError((
+                "Template defined for project: {} is not working. "
+                "Talk to your manager for an advise").format(
+                    custom_template_path))
+
+
+def apply_template_nodes(run_build=False):
+
+    if run_build:
+        # Load nuke script nodes (maybe with template nodes)
+        load_nodes_from_template_path()
+        # Make loaders
+        BuildWorkfile().process()
+
+    # Make creators
+    # Swap loaders and creators with template nodes
+    template = workfile_template.WorkfileTemplate()
+    template.apply_template()
+
+
 def process_workfile_builder():
     # to avoid looping of the callback, remove it!
     nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
@@ -2468,30 +2508,19 @@ def process_workfile_builder():
 
     # generate first version in file not existing and feature is enabled
     if createfv_on and not os.path.exists(last_workfile_path):
-        # get custom template path if any
-        custom_template_path = get_custom_workfile_template_from_session(
-            project_settings=project_settings
-        )
-
-        # if custom template is defined
-        if custom_template_path:
-            log.info("Adding nodes from `{}`...".format(
-                custom_template_path
-            ))
-            try:
-                # import nodes into current script
-                nuke.nodePaste(custom_template_path)
-            except RuntimeError:
-                raise RuntimeError((
-                    "Template defined for project: {} is not working. "
-                    "Talk to your manager for an advise").format(
-                        custom_template_path))
+        load_nodes_from_template_path()
 
         # if builder at start is defined
         if builder_on:
             log.info("Building nodes from presets...")
             # build nodes by defined presets
             BuildWorkfile().process()
+
+        # Search for template nodes
+        # For found template nodes create creators,
+        # swap loaders and creators with template nodes
+        # and delete template nodes
+        apply_template_nodes(run_build=False)
 
         log.info("Saving script as version `{}`...".format(
             last_workfile_path

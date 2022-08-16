@@ -29,12 +29,15 @@ from .lib import (
     add_publish_knob,
     WorkfileSettings,
     process_workfile_builder,
+    apply_template_nodes,
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
     Context
 )
+
+from . import workfile_template
 
 log = Logger.get_logger(__name__)
 
@@ -217,6 +220,17 @@ def _install_menu():
     menu.addCommand(
         "Build Workfile",
         lambda: BuildWorkfile().process()
+    )
+
+    menu.addSeparator()
+
+    menu.addCommand(
+        "Build Workfile and Apply Template",
+        lambda: apply_template_nodes(run_build=True)
+    )
+    menu.addCommand(
+        "Workfile to Template",
+        lambda: workfile_template.WorkfileTemplate().create_template()
     )
 
     menu.addSeparator()
