@@ -208,7 +208,8 @@ class ReferenceLoader(Loader):
         file_type = {
             "ma": "mayaAscii",
             "mb": "mayaBinary",
-            "abc": "Alembic"
+            "abc": "Alembic",
+            "fbx": "FBX"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation
@@ -234,7 +235,7 @@ class ReferenceLoader(Loader):
             path = self.prepare_root_value(path,
                                            representation["context"]
                                                          ["project"]
-                                                         ["code"])
+                                                         ["name"])
             content = cmds.file(path,
                                 loadReference=reference_node,
                                 type=file_type,

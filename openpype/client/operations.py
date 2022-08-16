@@ -17,6 +17,7 @@ CURRENT_ASSET_DOC_SCHEMA = "openpype:asset-3.0"
 CURRENT_SUBSET_SCHEMA = "openpype:subset-3.0"
 CURRENT_VERSION_SCHEMA = "openpype:version-3.0"
 CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
+CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
 
 
 def _create_or_convert_to_mongo_id(mongo_id):
@@ -188,6 +189,38 @@ def new_representation_doc(
     }
 
 
+def new_workfile_info_doc(
+    filename, asset_id, task_name, files, data=None, entity_id=None
+):
+    """Create skeleton data of workfile info document.
+
+    Workfile document is at this moment used primarily for artist notes.
+
+    Args:
+        filename (str): Filename of workfile.
+        asset_id (Union[str, ObjectId]): Id of asset under which workfile live.
+        task_name (str): Task under which was workfile created.
+        files (List[str]): List of rootless filepaths related to workfile.
+        data (Dict[str, Any]): Additional metadata.
+
+    Returns:
+        Dict[str, Any]: Skeleton of workfile info document.
+    """
+
+    if not data:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "type": "workfile",
+        "parent": ObjectId(asset_id),
+        "task_name": task_name,
+        "filename": filename,
+        "data": data,
+        "files": files
+    }
+
+
 def _prepare_update_data(old_doc, new_doc, replace):
     changes = {}
     for key, value in new_doc.items():
@@ -231,6 +264,20 @@ def prepare_version_update_data(old_doc, new_doc, replace=True):
 
 def prepare_representation_update_data(old_doc, new_doc, replace=True):
     """Compare two representation documents and prepare update data.
+
+    Based on compared values will create update data for 'UpdateOperation'.
+
+    Empty output means that documents are identical.
+
+    Returns:
+        Dict[str, Any]: Changes between old and new document.
+    """
+
+    return _prepare_update_data(old_doc, new_doc, replace)
+
+
+def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
+    """Compare two workfile info documents and prepare update data.
 
     Based on compared values will create update data for 'UpdateOperation'.
 

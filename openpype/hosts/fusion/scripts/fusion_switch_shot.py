@@ -15,7 +15,7 @@ from openpype.pipeline import (
 from openpype.lib import version_up
 from openpype.hosts.fusion import api
 from openpype.hosts.fusion.api import lib
-from openpype.lib.avalon_context import get_workdir_from_session
+from openpype.pipeline.context_tools import get_workdir_from_session
 
 log = logging.getLogger("Update Slap Comp")
 

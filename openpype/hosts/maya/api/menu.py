@@ -6,9 +6,9 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
