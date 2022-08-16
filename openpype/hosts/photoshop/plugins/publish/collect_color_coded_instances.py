@@ -32,7 +32,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     # TODO check if could be set globally, probably doesn't make sense when
     # flattened template cannot
     subset_template_name = ""
-    create_flatten_image = False
+    create_flatten_image = "no"
     # probably not possible to configure this globally
     flatten_subset_template = ""
 
@@ -98,13 +98,16 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                     "Subset {} already created, skipping.".format(subset))
                 continue
 
-            instance = self._create_instance(context, layer, resolved_family,
-                                             asset_name, subset, task_name)
+            if self.create_flatten_image != "only":
+                instance = self._create_instance(context, layer,
+                                                 resolved_family,
+                                                 asset_name, subset, task_name)
+                created_instances.append(instance)
+
             existing_subset_names.append(subset)
             publishable_layers.append(layer)
-            created_instances.append(instance)
 
-        if self.create_flatten_image and publishable_layers:
+        if self.create_flatten_image != "no" and publishable_layers:
             self.log.debug("create_flatten_image")
             if not self.flatten_subset_template:
                 self.log.warning("No template for flatten image")
@@ -116,7 +119,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             first_layer = publishable_layers[0]  # dummy layer
             first_layer.name = subset
-            family = created_instances[0].data["family"]  # inherit family
+            family = resolved_family  # inherit family
             instance = self._create_instance(context, first_layer,
                                              family,
                                              asset_name, subset, task_name)
