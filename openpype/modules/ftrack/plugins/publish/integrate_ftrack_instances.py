@@ -42,7 +42,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "reference": "reference"
     }
     keep_first_subset_name_for_review = True
-    asset_versions_status_profiles = {}
+    asset_versions_status_profiles = []
 
     def process(self, instance):
         self.log.debug("instance {}".format(instance))
