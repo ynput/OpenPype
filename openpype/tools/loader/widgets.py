@@ -584,9 +584,9 @@ class SubsetWidget(QtWidgets.QWidget):
             for repre_doc in repre_docs:
                 repre_ids.append(repre_doc["_id"])
 
+                # keep only version ids without representation with that name
                 version_id = repre_doc["parent"]
-                if version_id not in version_ids:
-                    version_ids.remove(version_id)
+                version_ids.remove(version_id)
 
             for version_id in version_ids:
                 joined_subset_names = ", ".join([
