@@ -36,6 +36,8 @@ class CollectAudio(pyblish.api.InstancePlugin):
         "unreal"
     ]
 
+    audio_subset_name = "audioMain"
+
     def process(self, instance):
         # * Add audio to instance if exists.
         self.log.info('Collecting Audio Data')
@@ -45,7 +47,10 @@ class CollectAudio(pyblish.api.InstancePlugin):
 
         # Find latest versions document
         last_version_doc = get_last_version_by_subset_name(
-            project_name, "audioMain", asset_name=asset_name, fields=["_id"]
+            project_name,
+            self.audio_subset_name,
+            asset_name=asset_name,
+            fields=["_id"]
         )
 
         repre_doc = None
