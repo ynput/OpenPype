@@ -62,6 +62,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
         publishable_layers = []
         created_instances = []
+        family_from_settings = None
         for layer in layers:
             self.log.debug("Layer:: {}".format(layer))
             if layer.parents:
@@ -79,6 +80,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             if not resolved_subset_template or not resolved_family:
                 self.log.debug("!!! Not found family or template, skip")
                 continue
+
+            if not family_from_settings:
+                family_from_settings = resolved_family
 
             fill_pairs = {
                 "variant": variant,
@@ -119,7 +123,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             first_layer = publishable_layers[0]  # dummy layer
             first_layer.name = subset
-            family = resolved_family  # inherit family
+            family = family_from_settings  # inherit family
             instance = self._create_instance(context, first_layer,
                                              family,
                                              asset_name, subset, task_name)
