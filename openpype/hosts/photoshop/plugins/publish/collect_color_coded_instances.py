@@ -9,13 +9,21 @@ from openpype.settings import get_project_settings
 
 
 class CollectColorCodedInstances(pyblish.api.ContextPlugin):
-    """Creates instances for configured color code of a layer.
+    """Creates instances for layers marked by configurable color.
 
     Used in remote publishing when artists marks publishable layers by color-
-    coding.
+    coding. Top level layers (group) must be marked by specific color to be
+    published as an instance of 'image' family.
 
     Can add group for all publishable layers to allow creation of flattened
     image. (Cannot contain special background layer as it cannot be grouped!)
+
+    Based on value `create_flatten_image` from Settings:
+    - "yes": create flattened 'image' subset of all publishable layers + create
+        'image' subset per publishable layer
+    - "only": create ONLY flattened 'image' subset of all publishable layers
+    - "no": do not create flattened 'image' subset at all,
+        only separate subsets per marked layer.
 
     Identifier:
         id (str): "pyblish.avalon.instance"
@@ -33,7 +41,6 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     # flattened template cannot
     subset_template_name = ""
     create_flatten_image = "no"
-    # probably not possible to configure this globally
     flatten_subset_template = ""
 
     def process(self, context):
