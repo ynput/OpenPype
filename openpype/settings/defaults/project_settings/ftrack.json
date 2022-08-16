@@ -434,6 +434,9 @@
             "enabled": false,
             "custom_attribute_keys": []
         },
+        "IntegrateHierarchyToFtrack": {
+            "create_task_status_profiles": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_template": "{intent}: {comment}",
