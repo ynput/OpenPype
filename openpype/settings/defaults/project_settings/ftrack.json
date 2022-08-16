@@ -96,10 +96,6 @@
             "mapping": {},
             "asset_types_to_skip": []
         },
-        "first_version_status": {
-            "enabled": true,
-            "status": ""
-        },
         "next_task_update": {
             "enabled": true,
             "mapping": {

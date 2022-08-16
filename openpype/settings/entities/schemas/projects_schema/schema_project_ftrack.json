@@ -301,24 +301,6 @@
                 },
                 {
                     "type": "dict",
-                    "key": "first_version_status",
-                    "label": "Set status on first created version",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "text",
-                            "key": "status",
-                            "label": "Status"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "next_task_update",
                     "is_group": true,
                     "label": "Update status on next task",
