@@ -10,7 +10,7 @@ log = logging.getLogger("openpype.hosts.houdini")
 
 
 def generate_shelves():
-    """This function generates complete shelves from shef set to tools
+    """This function generates complete shelves from shelf set to tools
     in Houdini from openpype project settings houdini shelf definition.
 
     Raises:
@@ -23,8 +23,8 @@ def generate_shelves():
     shelves_set_config = project_settings["houdini"]["shelves"]
 
     if not shelves_set_config:
-        log.warning(
-            "SHELF WARNGING: No custom shelves found in project settings."
+        log.info(
+            "SHELF INFO: No custom shelves found in project settings."
         )
         return
 
@@ -45,7 +45,7 @@ def generate_shelves():
         shelf_set_name = shelf_set_config.get('shelf_set_name')
         if not shelf_set_name:
             log.warning(
-                "SHELF WARNGING: No name found in shelf set definition."
+                "SHELF WARNING: No name found in shelf set definition."
             )
             return
 
@@ -54,8 +54,8 @@ def generate_shelves():
         shelves_definition = shelf_set_config.get('shelf_definition')
 
         if not shelves_definition:
-            log.warning(
-                "SHELF WARNING: \
+            log.info(
+                "SHELF INFO: \
 No shelf definition found for shelf set named '{}'".format(shelf_set_name)
             )
             return
@@ -64,25 +64,33 @@ No shelf definition found for shelf set named '{}'".format(shelf_set_name)
             shelf_name = shelf_definition.get('shelf_name')
             if not shelf_name:
                 log.warning(
-                    "SHELF WARNGING: No name found in shelf definition."
+                    "SHELF WARNING: No name found in shelf definition."
                 )
                 return
 
             shelf = get_or_create_shelf(shelf_name)
 
+            if not shelf_definition.get('tools_list'):
+                log.warning("TOOLS INFO: No tool definition found for \
+shelf named {}".format(shelf_name))
+                return
+
+            mandatory_attributes = ['name', 'script']
             for tool_definition in shelf_definition.get('tools_list'):
                 # We verify that the name and script attibutes of the tool
                 # are set
-                mandatory_attributes = ['name', 'script']
                 if not all(
                     [v for k, v in tool_definition.items() if
                         k in mandatory_attributes]
                 ):
                     log.warning("TOOLS ERROR: You need to specify at least \
 the name and the script path of the tool.")
-                    return
+                    continue
 
                 tool = get_or_create_tool(tool_definition, shelf)
+
+                if not tool:
+                    return
 
                 # Add the tool to the shelf if not already in it
                 if tool not in shelf.tools():
@@ -105,12 +113,12 @@ def get_or_create_shelf_set(shelf_set_label):
     """
     all_shelves_sets = hou.shelves.shelfSets().values()
 
-    shelf_set = [
+    shelf_sets = [
         shelf for shelf in all_shelves_sets if shelf.label() == shelf_set_label
     ]
 
-    if shelf_set:
-        return shelf_set[0]
+    if shelf_sets:
+        return shelf_sets[0]
 
     shelf_set_name = shelf_set_label.replace(' ', '_').lower()
     new_shelf_set = hou.shelves.newShelfSet(
@@ -170,6 +178,7 @@ def get_or_create_tool(tool_definition, shelf):
         return existing_tool[0]
 
     tool_name = tool_label.replace(' ', '_').lower()
+    log.warning(tool_definition)
 
     if not os.path.exists(tool_definition['script']):
         log.warning(
