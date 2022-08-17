@@ -113,10 +113,12 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
             status_name_low = status_name.lower()
 
             status_id = None
+            status_name = None
             # Skip if status name was already tried to be found
             for status in task_statuses:
                 if status["name"].lower() == status_name_low:
                     status_id = status["id"]
+                    status_name = status["name"]
                     break
 
             if status_id is None:
@@ -136,6 +138,13 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
             if status_id != task_entity["status_id"]:
                 task_entity["status_id"] = status_id
                 status_changed = True
+                path = "/".join([
+                    item["name"]
+                    for item in task_entity["link"]
+                ])
+                self.log.debug("Set status \"{}\" to \"{}\"".format(
+                    status_name, path
+                ))
 
         if status_changed:
             session.commit()
