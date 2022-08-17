@@ -29,7 +29,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "width": "Resolution width",
         "height": "Resolution height",
         "fps": "FPS",
-        "code": "Codec"
+        "codec": "Codec"
     }
 
     family_mapping = {
@@ -526,7 +526,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             ("width", stream_width),
             ("height", stream_height),
             ("fps", fps),
-            ("code", codec_label)
+            ("codec", codec_label)
         ]:
             if not value or key not in self.additional_metadata_keys:
                 continue
