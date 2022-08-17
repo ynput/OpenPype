@@ -183,10 +183,16 @@ class WorkfileTemplate():
                 try:
                     load_create = str(node['avalon:creator'].value())
                 except NameError:
-                    # Writing model via WriteGeo doesn't store creator
+                    # Some OP nodes are missing loader / creator name
                     load_create = ''
-                    if str(node['avalon:subset'].value()).startswith('model'):
-                        load_create = 'CreateModel'
+                    subset = str(node['avalon:subset'].value())
+                    if subset:
+                        if subset.startswith('model'):
+                            load_create = 'CreateModel'
+                        if subset.startswith('nukenodes'):
+                            load_create = 'LoadBackdropNodes'
+                        if subset.startswith('gizmo'):
+                            load_create = 'LoadGizmo'
                 knob_load_create.setText(load_create)
                 knob_is_creator.setValue(True)
                 knob_subset.setText(str(node['avalon:subset'].value()))
