@@ -1011,7 +1011,7 @@
                     "children": [
                         {
                             "type": "label",
-                            "label": "Change status of task when it's subset is rendered on farm"
+                            "label": "Change status of task when it's subset is submitted to farm"
                         },
                         {
                             "type": "list",
