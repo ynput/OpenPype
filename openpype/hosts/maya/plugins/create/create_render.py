@@ -223,7 +223,7 @@ class CreateRender(plugin.Creator):
             self._project_settings.get(
                 "maya", {}).get(
                 "RenderSettings", {}).get(
-                "enable_all_lights", {})
+                "enable_all_lights", False)
             )
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
