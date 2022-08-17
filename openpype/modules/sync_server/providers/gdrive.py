@@ -251,7 +251,7 @@ class GDriveHandler(AbstractProvider):
                 return folder_id
 
     def upload_file(self, source_path, path,
-                    server, collection, file, representation, site,
+                    server, project_name, file, representation, site,
                     overwrite=False):
         """
             Uploads single file from 'source_path' to destination 'path'.
@@ -264,7 +264,7 @@ class GDriveHandler(AbstractProvider):
 
             arguments for saving progress:
             server (SyncServer): server instance to call update_db on
-            collection (str): name of collection
+            project_name (str):
             file (dict): info about uploaded file (matches structure from db)
             representation (dict): complete repre containing 'file'
             site (str): site name
@@ -324,7 +324,7 @@ class GDriveHandler(AbstractProvider):
             while response is None:
                 if server.is_representation_paused(representation['_id'],
                                                    check_parents=True,
-                                                   project_name=collection):
+                                                   project_name=project_name):
                     raise ValueError("Paused during process, please redo.")
                 if status:
                     status_val = float(status.progress())
@@ -333,7 +333,7 @@ class GDriveHandler(AbstractProvider):
                     last_tick = time.time()
                     log.debug("Uploaded %d%%." %
                               int(status_val * 100))
-                    server.update_db(collection=collection,
+                    server.update_db(project_name=project_name,
                                      new_file_id=None,
                                      file=file,
                                      representation=representation,
@@ -358,7 +358,7 @@ class GDriveHandler(AbstractProvider):
         return response['id']
 
     def download_file(self, source_path, local_path,
-                      server, collection, file, representation, site,
+                      server, project_name, file, representation, site,
                       overwrite=False):
         """
             Downloads single file from 'source_path' (remote) to 'local_path'.
@@ -372,7 +372,7 @@ class GDriveHandler(AbstractProvider):
 
             arguments for saving progress:
             server (SyncServer): server instance to call update_db on
-            collection (str): name of collection
+            project_name (str):
             file (dict): info about uploaded file (matches structure from db)
             representation (dict): complete repre containing 'file'
             site (str): site name
@@ -410,7 +410,7 @@ class GDriveHandler(AbstractProvider):
             while response is None:
                 if server.is_representation_paused(representation['_id'],
                                                    check_parents=True,
-                                                   project_name=collection):
+                                                   project_name=project_name):
                     raise ValueError("Paused during process, please redo.")
                 if status:
                     status_val = float(status.progress())
@@ -419,7 +419,7 @@ class GDriveHandler(AbstractProvider):
                     last_tick = time.time()
                     log.debug("Downloaded %d%%." %
                               int(status_val * 100))
-                    server.update_db(collection=collection,
+                    server.update_db(project_name=project_name,
                                      new_file_id=None,
                                      file=file,
                                      representation=representation,

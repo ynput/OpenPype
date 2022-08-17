@@ -413,8 +413,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Gather needed data ------------------------------------------------
         default_render_file = instance.context.data.get('project_settings')\
             .get('maya')\
-            .get('create')\
-            .get('CreateRender')\
+            .get('RenderSettings')\
             .get('default_render_image_folder')
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
