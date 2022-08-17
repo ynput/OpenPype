@@ -90,49 +90,49 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
         project_entity = session.query((
             "select project_schema from Project where full_name is \"{}\""
         ).format(project_name)).one()
-        task_type = session.query(
-            "select id from ObjectType where name is \"Task\""
-        ).first()
         project_schema = project_entity["project_schema"]
-        task_statuses = project_schema.get_statuses(
-            "Task", task_type["id"]
-        )
 
-        joined_status_names = ", ".join({
-            '"{}"'.format(status["name"])
-            for status in task_statuses
-        })
+        task_type_ids = set()
+        for item in instances_with_status_names:
+            instance, _ = item
+            task_entity = instance.data["ftrackTask"]
+            task_type_ids.add(task_entity["type"]["id"])
+
+        task_statuses_by_type_id = {
+            task_type_id: project_schema.get_statuses("Task", task_type_id)
+            for task_type_id in task_type_ids
+        }
+
         # Keep track if anything has changed
+        skipped_status_names = set()
         status_changed = False
-        found_status_id_by_status_name = {}
         for item in instances_with_status_names:
             instance, status_name = item
-
+            task_entity = instance.data["ftrackTask"]
+            task_statuses = task_statuses_by_type_id[task_entity["type"]["id"]]
             status_name_low = status_name.lower()
-            status_id = found_status_id_by_status_name.get(status_name_low)
+
+            status_id = None
+            # Skip if status name was already tried to be found
+            for status in task_statuses:
+                if status["name"].lower() == status_name_low:
+                    status_id = status["id"]
+                    break
 
             if status_id is None:
-                # Skip if status name was already tried to be found
-                if status_name_low in found_status_id_by_status_name:
-                    continue
-
-                for status in task_statuses:
-                    if status["name"].lower() == status_name_low:
-                        status_id = status["id"]
-                        break
-
-            # Store the result to be reused in following instances
-            found_status_id_by_status_name[status_name_low] = status_id
-
-            if status_id is None:
-                self.log.warning((
-                    "Status \"{}\" is not available on project \"{}\"."
-                    " Available statuses are {}"
-                ).format(status_name, project_name, joined_status_names))
+                if status_name_low not in skipped_status_names:
+                    skipped_status_names.add(status_name_low)
+                    joined_status_names = ", ".join({
+                        '"{}"'.format(status["name"])
+                        for status in task_statuses
+                    })
+                    self.log.warning((
+                        "Status \"{}\" is not available on project \"{}\"."
+                        " Available statuses are {}"
+                    ).format(status_name, project_name, joined_status_names))
                 continue
 
             # Change task status id
-            task_entity = instance.data["ftrackTask"]
             if status_id != task_entity["status_id"]:
                 task_entity["status_id"] = status_id
                 status_changed = True
