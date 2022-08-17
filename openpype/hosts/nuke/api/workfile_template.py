@@ -104,7 +104,7 @@ class WorkfileTemplate():
         height_offset = target_node_height - source_node_height
         source_pos = (new_node.xpos(), new_node.ypos())
         target_pos = (target_node.xpos() + width_offset,
-                     target_node.ypos() + height_offset)
+                      target_node.ypos() + height_offset)
         input_nodes, output_nodes = self._get_connected_nodes(target_node)
         nukescripts.clear_selection_recursive()
         target_node.setSelected(True)
