@@ -34,6 +34,9 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
     def filter_instances(self, context):
         filtered_instances = []
         for instance in context:
+            # Skip disabled instances
+            if instance.data.get("publish") is False:
+                continue
             subset_name = instance.data["subset"]
             msg_start = "Skipping instance {}.".format(subset_name)
             if not instance.data.get("farm"):
