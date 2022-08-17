@@ -35,7 +35,7 @@ class HighlightBySceneSelection(InventoryAction):
         host = registered_host()
 
         to_select = []
-        for container in host.ls():
+        for container in host.get_containers():
             members = get_container_members(container)
             if any(member in selection for member in members):
                 to_select.append(container["objectName"])
