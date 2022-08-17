@@ -93,6 +93,10 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
         project_schema = project_entity["project_schema"]
         task_workflow_statuses = project_schema["_task_workflow"]["statuses"]
 
+        joined_status_names = ", ".join({
+            '"{}"'.format(status["name"])
+            for status in task_workflow_statuses
+        })
         # Keep track if anything has changed
         status_changed = False
         found_status_id_by_status_name = {}
@@ -117,8 +121,9 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
 
             if status_id is None:
                 self.log.warning((
-                    "Status \"{}\" is not available on project \"{}\""
-                ).format(status_name, project_name))
+                    "Status \"{}\" is not available on project \"{}\"."
+                    " Available statuses are {}"
+                ).format(status_name, project_name, joined_status_names))
                 continue
 
             # Change task status id
