@@ -1,5 +1,5 @@
 import pyblish.api
-from openpype.lib import profiles_filtering
+from openpype.lib import filter_profiles
 
 
 class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
@@ -63,7 +63,7 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
             host_name = context.data["hostName"]
             task_name = task_entity["name"]
             task_type = task_entity["type"]["name"]
-            status_profile = profiles_filtering(
+            status_profile = filter_profiles(
                 self.farm_status_profiles,
                 {
                     "hosts": host_name,
@@ -75,7 +75,7 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
                 logger=self.log
             )
             if not status_profile:
-                # There already is log in 'profiles_filtering'
+                # There already is log in 'filter_profiles'
                 continue
 
             status_name = status_profile["status_name"]
