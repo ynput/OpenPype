@@ -17,6 +17,12 @@ class CollectContextLabel(pyblish.api.ContextPlugin):
     label = "Context Label"
 
     def process(self, context):
+        # Add ability to use custom context label
+        context_label = context.data.get("contextLabel")
+        if context_label:
+            context.data["label"] = context_label
+            return
+
         host_name = context.data.get("hostName")
         if not host_name:
             host_name = pyblish.api.registered_hosts()[-1]
