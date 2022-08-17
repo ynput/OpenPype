@@ -11,7 +11,6 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder + 0.48
     label = "Integrate Ftrack Farm Status"
-    families = ["ftrack"]
 
     farm_status_profiles = []
 
