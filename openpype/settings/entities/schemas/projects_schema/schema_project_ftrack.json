@@ -1039,6 +1039,22 @@
                                     }
                                 ]
                             }
+                        },
+                        {
+                            "key": "additional_metadata_keys",
+                            "label": "Additional metadata keys on components",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {"openpype_version": "OpenPype version"},
+                                {"frame_start": "Frame start"},
+                                {"frame_end": "Frame end"},
+                                {"duration": "Duration"},
+                                {"width": "Resolution width"},
+                                {"height": "Resolution height"},
+                                {"fps": "FPS"},
+                                {"code": "Codec"}
+                            ]
                         }
                     ]
                 }
