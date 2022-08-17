@@ -50,9 +50,9 @@
                             "type": "enum",
                             "multiselection": false,
                             "enum_items": [
-                                { "yes": "Yes" },
-                                { "no": "No" },
-                                { "only": "Only flatten" }
+                                { "flatten_with_images": "Flatten with images" },
+                                { "flatten_only": "Flatten only" },
+                                { "no": "No" }
                             ]
                         },
                         {

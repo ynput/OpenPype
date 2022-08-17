@@ -109,7 +109,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                     "Subset {} already created, skipping.".format(subset))
                 continue
 
-            if self.create_flatten_image != "only":
+            if self.create_flatten_image != "flatten_only":
                 instance = self._create_instance(context, layer,
                                                  resolved_family,
                                                  asset_name, subset, task_name)
