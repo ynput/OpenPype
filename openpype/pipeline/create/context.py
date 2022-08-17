@@ -6,6 +6,7 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
+from openpype.client import get_assets
 from openpype.host import INewPublisher
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
@@ -1082,15 +1083,10 @@ class CreateContext:
             for asset_name in task_names_by_asset_name.keys()
             if asset_name is not None
         ]
-        asset_docs = list(self.dbcon.find(
-            {
-                "type": "asset",
-                "name": {"$in": asset_names}
-            },
-            {
-                "name": True,
-                "data.tasks": True
-            }
+        asset_docs = list(get_assets(
+            self.project_name,
+            asset_names=asset_names,
+            fields=["name", "data.tasks"]
         ))
 
         task_names_by_asset_name = {}

@@ -61,7 +61,7 @@ def _print(msg: str, message_type: int = 0) -> None:
     else:
         header = term.darkolivegreen3("--- ")
 
-    print("{}{}".format(header, msg))
+    print(f"{header}{msg}")
 
 
 if __name__ == "__main__":
