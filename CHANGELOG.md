@@ -1,12 +1,15 @@
 # Changelog
 
-## [3.13.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.13.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.13.0...HEAD)
 
 **🐛 Bug fixes**
 
+- General: Extract Review can scale with pixel aspect ratio [\#3644](https://github.com/pypeclub/OpenPype/pull/3644)
+- Maya: Refactor moved usage of CreateRender settings [\#3643](https://github.com/pypeclub/OpenPype/pull/3643)
 - General: Hero version representations have full context [\#3638](https://github.com/pypeclub/OpenPype/pull/3638)
+- Nuke: color settings for render write node is working now [\#3632](https://github.com/pypeclub/OpenPype/pull/3632)
 - Maya: FBX support for update in reference loader [\#3631](https://github.com/pypeclub/OpenPype/pull/3631)
 
 **🔀 Refactored code**
@@ -16,7 +19,10 @@
 
 **Merged pull requests:**
 
+- Deadline: Global job pre load is not Pype 2 compatible [\#3666](https://github.com/pypeclub/OpenPype/pull/3666)
+- Maya: Remove unused get current renderer logic [\#3645](https://github.com/pypeclub/OpenPype/pull/3645)
 - Kitsu|Fix: Movie project type fails & first loop children names [\#3636](https://github.com/pypeclub/OpenPype/pull/3636)
+- fix the bug of failing to extract look when UDIMs format used in AiImage [\#3628](https://github.com/pypeclub/OpenPype/pull/3628)
 
 ## [3.13.0](https://github.com/pypeclub/OpenPype/tree/3.13.0) (2022-08-09)
 
@@ -55,7 +61,6 @@
 - General: Update imports in start script [\#3579](https://github.com/pypeclub/OpenPype/pull/3579)
 - Nuke: render family integration consistency  [\#3576](https://github.com/pypeclub/OpenPype/pull/3576)
 - Ftrack: Handle missing published path in integrator [\#3570](https://github.com/pypeclub/OpenPype/pull/3570)
-- Maya: fix Review image plane attribute  [\#3569](https://github.com/pypeclub/OpenPype/pull/3569)
 - Nuke: publish existing frames with slate with correct range [\#3555](https://github.com/pypeclub/OpenPype/pull/3555)
 
 **🔀 Refactored code**
@@ -85,11 +90,10 @@
 
 - General: Global thumbnail extractor is ready for more cases [\#3561](https://github.com/pypeclub/OpenPype/pull/3561)
 - Maya: add additional validators to Settings [\#3540](https://github.com/pypeclub/OpenPype/pull/3540)
-- General: Interactive console in cli [\#3526](https://github.com/pypeclub/OpenPype/pull/3526)
-- Ftrack: Automatic daily review session creation can define trigger hour [\#3516](https://github.com/pypeclub/OpenPype/pull/3516)
 
 **🐛 Bug fixes**
 
+- Maya: fix Review image plane attribute  [\#3569](https://github.com/pypeclub/OpenPype/pull/3569)
 - Maya: Fix animated attributes \(ie. overscan\) on loaded cameras breaking review publishing. [\#3562](https://github.com/pypeclub/OpenPype/pull/3562)
 - NewPublisher: Python 2 compatible html escape [\#3559](https://github.com/pypeclub/OpenPype/pull/3559)
 - Remove invalid submodules from `/vendor` [\#3557](https://github.com/pypeclub/OpenPype/pull/3557)
@@ -98,12 +102,6 @@
 - Module interfaces: Fix import error [\#3547](https://github.com/pypeclub/OpenPype/pull/3547)
 - Workfiles tool: Show of tool and it's flags [\#3539](https://github.com/pypeclub/OpenPype/pull/3539)
 - General: Create workfile documents works again [\#3538](https://github.com/pypeclub/OpenPype/pull/3538)
-- Additional fixes for powershell scripts [\#3525](https://github.com/pypeclub/OpenPype/pull/3525)
-- Maya: Added wrapper around cmds.setAttr [\#3523](https://github.com/pypeclub/OpenPype/pull/3523)
-- Nuke: double slate [\#3521](https://github.com/pypeclub/OpenPype/pull/3521)
-- General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
-- Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
-- TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
 
 **🔀 Refactored code**
 
@@ -112,7 +110,6 @@
 - Refactor Integrate Asset [\#3530](https://github.com/pypeclub/OpenPype/pull/3530)
 - General: Client docstrings cleanup [\#3529](https://github.com/pypeclub/OpenPype/pull/3529)
 - General: Move load related functions into pipeline [\#3527](https://github.com/pypeclub/OpenPype/pull/3527)
-- General: Get current context document functions [\#3522](https://github.com/pypeclub/OpenPype/pull/3522)
 
 **Merged pull requests:**
 
