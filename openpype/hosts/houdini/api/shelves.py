@@ -153,7 +153,7 @@ def get_or_create_shelf(shelf_label):
 
 
 def get_or_create_tool(tool_definition, shelf):
-    """This function verifies if the tool exsists and updates it. If not, creates
+    """This function verifies if the tool exists and updates it. If not, creates
     a new one.
 
     Arguments:
