@@ -190,9 +190,11 @@ class WorkfileTemplate():
                         if subset.startswith('model'):
                             load_create = 'CreateModel'
                         if subset.startswith('nukenodes'):
-                            load_create = 'LoadBackdropNodes'
+                            load_create = 'CreateBackdrop'
                         if subset.startswith('gizmo'):
-                            load_create = 'LoadGizmo'
+                            load_create = 'CreateGizmo'
+                        if subset.startswith('camera'):
+                            load_create = 'CreateCamera'
                 knob_load_create.setText(load_create)
                 knob_is_creator.setValue(True)
                 knob_subset.setText(str(node['avalon:subset'].value()))
@@ -233,6 +235,8 @@ class WorkfileTemplate():
             # Swap (and reconect) just created template node with it's source
             self._swap_nodes(node, template_node)
             # Delete the source node, we have template instead
+            # TODO deleting backdrop needs to delete
+            # what is "in" the backdrop as well
             nuke.delete(node)
 
     def _make_op_creator_nodes_from_temps(self):
