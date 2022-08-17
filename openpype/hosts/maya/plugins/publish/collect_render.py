@@ -354,6 +354,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
+            instance.data["farm"] = True
             instance.data.update(data)
             self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
