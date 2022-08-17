@@ -143,7 +143,8 @@ class ExtractReview(openpype.api.Extractor):
         Ffmpeg has max size 16384x16384. Saved image(s) must be resized to be
         used as a source for thumbnail or review mov.
         """
-        max_ffmpeg_size = 16384
+        # 16384x16384 actually didn't work because int overflow
+        max_ffmpeg_size = 16000
         Image.MAX_IMAGE_PIXELS = None
         first_url = os.path.join(staging_dir, processed_img_names[0])
         with Image.open(first_url) as im:
