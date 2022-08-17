@@ -144,6 +144,7 @@ class ExtractReview(openpype.api.Extractor):
         used as a source for thumbnail or review mov.
         """
         max_ffmpeg_size = 16384
+        Image.MAX_IMAGE_PIXELS = None
         first_url = os.path.join(staging_dir, processed_img_names[0])
         with Image.open(first_url) as im:
             width, height = im.size
