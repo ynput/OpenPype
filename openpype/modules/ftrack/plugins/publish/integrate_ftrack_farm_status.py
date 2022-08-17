@@ -10,7 +10,7 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.IntegratorOrder + 0.48
-    label = "Integrate Ftrack Component"
+    label = "Integrate Ftrack Farm Status"
     families = ["ftrack"]
 
     farm_status_profiles = []
@@ -35,7 +35,7 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
         filtered_instances = []
         for instance in context:
             subset_name = instance.data["subset"]
-            msg_start = "SKipping instance {}.".format(subset_name)
+            msg_start = "Skipping instance {}.".format(subset_name)
             if not instance.data.get("farm"):
                 self.log.debug(
                     "{} Won't be rendered on farm.".format(msg_start)
