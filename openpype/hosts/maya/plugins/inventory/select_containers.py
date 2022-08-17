@@ -7,7 +7,7 @@ from openpype.hosts.maya.api.lib import get_container_members
 class SelectInScene(InventoryAction):
     """Select nodes in the scene from selected containers in scene inventory"""
 
-    label = "Select In Scene"
+    label = "Select in scene"
     icon = "search"
     color = "#888888"
     order = 99
@@ -21,10 +21,10 @@ class SelectInScene(InventoryAction):
         cmds.select(all_members, replace=True, noExpand=True)
 
 
-class SelectFromScene(InventoryAction):
+class HighlightBySceneSelection(InventoryAction):
     """Select containers in scene inventory from the current scene selection"""
 
-    label = "Select From Scene"
+    label = "Highlight by scene selection"
     icon = "search"
     color = "#888888"
     order = 100
