@@ -6,7 +6,7 @@ from openpype.settings import get_project_settings
 
 import hou
 
-log = logging.getLogger("openpype.hosts.houdini")
+log = logging.getLogger("openpype.hosts.houdini.shelves")
 
 
 def generate_shelves():
@@ -23,8 +23,8 @@ def generate_shelves():
     shelves_set_config = project_settings["houdini"]["shelves"]
 
     if not shelves_set_config:
-        log.info(
-            "SHELF INFO: No custom shelves found in project settings."
+        log.debug(
+            "No custom shelves found in project settings."
         )
         return
 
@@ -34,7 +34,7 @@ def generate_shelves():
         if shelf_set_filepath[current_os]:
             if not os.path.isfile(shelf_set_filepath[current_os]):
                 raise FileNotFoundError(
-                    "SHELF ERROR: This path doesn't exist - {}".format(
+                    "This path doesn't exist - {}".format(
                         shelf_set_filepath[current_os]
                     )
                 )
@@ -45,7 +45,7 @@ def generate_shelves():
         shelf_set_name = shelf_set_config.get('shelf_set_name')
         if not shelf_set_name:
             log.warning(
-                "SHELF WARNING: No name found in shelf set definition."
+                "No name found in shelf set definition."
             )
             return
 
@@ -54,9 +54,10 @@ def generate_shelves():
         shelves_definition = shelf_set_config.get('shelf_definition')
 
         if not shelves_definition:
-            log.info(
-                "SHELF INFO: \
-No shelf definition found for shelf set named '{}'".format(shelf_set_name)
+            log.debug(
+                "No shelf definition found for shelf set named '{}'".format(
+                    shelf_set_name
+                )
             )
             return
 
@@ -64,15 +65,18 @@ No shelf definition found for shelf set named '{}'".format(shelf_set_name)
             shelf_name = shelf_definition.get('shelf_name')
             if not shelf_name:
                 log.warning(
-                    "SHELF WARNING: No name found in shelf definition."
+                    "No name found in shelf definition."
                 )
                 return
 
             shelf = get_or_create_shelf(shelf_name)
 
             if not shelf_definition.get('tools_list'):
-                log.warning("TOOLS INFO: No tool definition found for \
-shelf named {}".format(shelf_name))
+                log.debug(
+                    "No tool definition found for shelf named {}".format(
+                        shelf_name
+                    )
+                )
                 return
 
             mandatory_attributes = {'name', 'script'}
@@ -82,8 +86,9 @@ shelf named {}".format(shelf_name))
                 if not all(
                     tool_definition[key] for key in mandatory_attributes
                 ):
-                    log.warning("TOOLS ERROR: You need to specify at least \
-the name and the script path of the tool.")
+                    log.warning(
+                        "You need to specify at least the name and \
+the script path of the tool.")
                     continue
 
                 tool = get_or_create_tool(tool_definition, shelf)
@@ -153,7 +158,7 @@ def get_or_create_shelf(shelf_label):
 
 
 def get_or_create_tool(tool_definition, shelf):
-    """This function verifies if the tool exsists and updates it. If not, creates
+    """This function verifies if the tool exists and updates it. If not, creates
     a new one.
 
     Arguments:
@@ -180,7 +185,7 @@ def get_or_create_tool(tool_definition, shelf):
 
     if not os.path.exists(tool_definition['script']):
         log.warning(
-            "TOOL ERROR: This path doesn't exist - {}".format(
+            "This path doesn't exist - {}".format(
                 tool_definition['script']
             )
         )
