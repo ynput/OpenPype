@@ -165,7 +165,7 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                         " context. Asset: {}"
                     ).format(context_asset_name))
                     instance.data["ftrackEntity"] = context_asset_entity
-                    instance.data["ftrackTask"] = None
+                    instance.data["ftrackTask"] = context_task_entity
                     continue
 
                 # Do not use context's task name
