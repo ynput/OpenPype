@@ -71,7 +71,6 @@ class CreateRender(plugin.Creator):
     label = "Render"
     family = "rendering"
     icon = "eye"
-    enable_all_lights = True
     _token = None
     _user = None
     _password = None
