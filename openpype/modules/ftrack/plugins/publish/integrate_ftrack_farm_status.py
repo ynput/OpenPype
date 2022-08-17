@@ -90,12 +90,17 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
         project_entity = session.query((
             "select project_schema from Project where full_name is \"{}\""
         ).format(project_name)).one()
+        task_type = session.query(
+            "select id from ObjectType where name is \"Task\""
+        ).first()
         project_schema = project_entity["project_schema"]
-        task_workflow_statuses = project_schema["_task_workflow"]["statuses"]
+        task_statuses = project_schema.get_statuses(
+            "Task", task_type["id"]
+        )
 
         joined_status_names = ", ".join({
             '"{}"'.format(status["name"])
-            for status in task_workflow_statuses
+            for status in task_statuses
         })
         # Keep track if anything has changed
         status_changed = False
@@ -111,7 +116,7 @@ class IntegrateFtrackFarmStatus(pyblish.api.ContextPlugin):
                 if status_name_low in found_status_id_by_status_name:
                     continue
 
-                for status in task_workflow_statuses:
+                for status in task_statuses:
                     if status["name"].lower() == status_name_low:
                         status_id = status["id"]
                         break
