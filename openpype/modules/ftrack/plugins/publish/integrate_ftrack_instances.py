@@ -3,7 +3,10 @@ import json
 import copy
 import pyblish.api
 
-from openpype.lib import get_ffprobe_streams
+from openpype.lib.transcoding import (
+    get_ffprobe_streams,
+    convert_ffprobe_fps_to_float,
+)
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -58,7 +61,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         version_number = int(instance_version)
 
         family = instance.data["family"]
-        family_low = instance.data["family"].lower()
+        family_low = family.lower()
 
         asset_type = instance.data.get("ftrackFamily")
         if not asset_type and family_low in self.family_mapping:
@@ -78,11 +81,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "Family \"{}\" does not match any asset type mapping"
             ).format(family))
             return
-
-        # Prepare FPS
-        instance_fps = instance.data.get("fps")
-        if instance_fps is None:
-            instance_fps = instance.context.data["fps"]
 
         status_name = self._get_asset_version_status_name(instance)
 
@@ -140,24 +138,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         first_thumbnail_component = None
         first_thumbnail_component_repre = None
         for repre in thumbnail_representations:
-            published_path = repre.get("published_path")
-            if not published_path:
-                comp_files = repre["files"]
-                if isinstance(comp_files, (tuple, list, set)):
-                    filename = comp_files[0]
-                else:
-                    filename = comp_files
-
-                published_path = os.path.join(
-                    repre["stagingDir"], filename
+            repre_path = self._get_repre_path(instance, repre, False)
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set and source was removed."
                 )
-                if not os.path.exists(published_path):
-                    continue
-                repre["published_path"] = published_path
+                continue
 
             # Create copy of base comp item and append it
             thumbnail_item = copy.deepcopy(base_component_item)
-            thumbnail_item["component_path"] = repre["published_path"]
+            thumbnail_item["component_path"] = repre_path
             thumbnail_item["component_data"] = {
                 "name": "thumbnail"
             }
@@ -176,10 +166,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Add item to component list
             component_list.append(thumbnail_item)
 
-        if (
-            not review_representations
-            and first_thumbnail_component is not None
-        ):
+        if first_thumbnail_component is not None:
             width = first_thumbnail_component_repre.get("width")
             height = first_thumbnail_component_repre.get("height")
             if not width or not height:
@@ -216,6 +203,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         extended_asset_name = ""
         multiple_reviewable = len(review_representations) > 1
         for repre in review_representations:
+            repre_path = self._get_repre_path(instance, repre, False)
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set and source was removed."
+                )
+                continue
+
             # Create copy of base comp item and append it
             review_item = copy.deepcopy(base_component_item)
 
@@ -254,33 +248,18 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     first_thumbnail_component[
                         "asset_data"]["name"] = extended_asset_name
 
-            frame_start = repre.get("frameStartFtrack")
-            frame_end = repre.get("frameEndFtrack")
-            if frame_start is None or frame_end is None:
-                frame_start = instance.data["frameStart"]
-                frame_end = instance.data["frameEnd"]
-
-            # Frame end of uploaded video file should be duration in frames
-            # - frame start is always 0
-            # - frame end is duration in frames
-            duration = frame_end - frame_start + 1
-
-            fps = repre.get("fps")
-            if fps is None:
-                fps = instance_fps
+            component_meta = self._prepare_component_metadata(
+                instance, repre, repre_path, True
+            )
 
             # Change location
-            review_item["component_path"] = repre["published_path"]
+            review_item["component_path"] = repre_path
             # Change component data
             review_item["component_data"] = {
                 # Default component name is "main".
                 "name": "ftrackreview-mp4",
                 "metadata": {
-                    "ftr_meta": json.dumps({
-                        "frameIn": 0,
-                        "frameOut": int(duration),
-                        "frameRate": float(fps)
-                    })
+                    "ftr_meta": json.dumps(component_meta)
                 }
             }
 
@@ -323,11 +302,18 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             component_data = copy_src_item["component_data"]
             component_name = component_data["name"]
             component_data["name"] = component_name + "_src"
+            component_meta = self._prepare_component_metadata(
+                instance, repre, copy_src_item["component_path"], False
+            )
+            if component_meta:
+                component_data["metadata"] = {
+                    "ftr_meta": json.dumps(component_meta)
+                }
             component_list.append(copy_src_item)
 
         # Add others representations as component
         for repre in other_representations:
-            published_path = repre.get("published_path")
+            published_path = self._get_repre_path(instance, repre, True)
             if not published_path:
                 continue
             # Create copy of base comp item and append it
@@ -340,9 +326,17 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             ):
                 other_item["asset_data"]["name"] = extended_asset_name
 
-            other_item["component_data"] = {
+            component_meta = self._prepare_component_metadata(
+                instance, repre, published_path, False
+            )
+            component_data = {
                 "name": repre["name"]
             }
+            if component_meta:
+                component_data["metadata"] = {
+                    "ftr_meta": json.dumps(component_meta)
+                }
+            other_item["component_data"] = component_data
             other_item["component_location_name"] = unmanaged_location_name
             other_item["component_path"] = published_path
             component_list.append(other_item)
@@ -359,6 +353,51 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
         ))
         instance.data["ftrackComponentsList"] = component_list
+
+    def _get_repre_path(self, instance, repre, only_published):
+        """Get representation path that can be used for integration.
+
+        When 'only_published' is set to true the validation of path is not
+        relevant. In that case we just need what is set in 'published_path'
+        as "reference". The reference is not used to get or upload the file but
+        for reference where the file was published.
+
+        Args:
+            instance (pyblish.Instance): Processed instance object. Used
+                for source of staging dir if representation does not have
+                filled it.
+            repre (dict): Representation on instance which could be and
+                could not be integrated with main integrator.
+            only_published (bool): Care only about published paths and
+                ignore if filepath is not existing anymore.
+
+        Returns:
+            str: Path to representation file.
+            None: Path is not filled or does not exists.
+        """
+
+        published_path = repre.get("published_path")
+        if published_path:
+            published_path = os.path.normpath(published_path)
+            if os.path.exists(published_path):
+                return published_path
+
+        if only_published:
+            return published_path
+
+        comp_files = repre["files"]
+        if isinstance(comp_files, (tuple, list, set)):
+            filename = comp_files[0]
+        else:
+            filename = comp_files
+
+        staging_dir = repre.get("stagingDir")
+        if not staging_dir:
+            staging_dir = instance.data["stagingDir"]
+        src_path = os.path.normpath(os.path.join(staging_dir, filename))
+        if os.path.exists(src_path):
+            return src_path
+        return None
 
     def _get_asset_version_status_name(self, instance):
         if not self.asset_versions_status_profiles:
@@ -380,3 +419,107 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             return None
 
         return matching_profile["status"] or None
+
+    def _prepare_component_metadata(
+        self, instance, repre, component_path, is_review
+    ):
+        extension = os.path.splitext(component_path)[-1]
+        streams = []
+        try:
+            streams = get_ffprobe_streams(component_path)
+        except Exception:
+            self.log.debug((
+                "Failed to retrieve information about intput {}"
+            ).format(component_path))
+
+        # Find video streams
+        video_streams = [
+            stream
+            for stream in streams
+            if stream["codec_type"] == "video"
+        ]
+        # Skip if there are not video streams
+        #   - exr is special case which can have issues with reading through
+        #       ffmpegh but we want to set fps for it
+        if not video_streams and extension not in [".exr"]:
+            return {}
+
+        stream_width = None
+        stream_height = None
+        stream_fps = None
+        frame_out = None
+        for video_stream in video_streams:
+            tmp_width = video_stream.get("width")
+            tmp_height = video_stream.get("height")
+            if tmp_width and tmp_height:
+                stream_width = tmp_width
+                stream_height = tmp_height
+
+            input_framerate = video_stream.get("r_frame_rate")
+            duration = video_stream.get("duration")
+            if input_framerate is None or duration is None:
+                continue
+            try:
+                stream_fps = convert_ffprobe_fps_to_float(
+                    input_framerate
+                )
+            except ValueError:
+                self.log.warning((
+                    "Could not convert ffprobe fps to float \"{}\""
+                ).format(input_framerate))
+                continue
+
+            stream_width = tmp_width
+            stream_height = tmp_height
+
+            self.log.debug("FPS from stream is {} and duration is {}".format(
+                input_framerate, duration
+            ))
+            frame_out = float(duration) * stream_fps
+            break
+
+        # Prepare FPS
+        instance_fps = instance.data.get("fps")
+        if instance_fps is None:
+            instance_fps = instance.context.data["fps"]
+
+        if not is_review:
+            output = {}
+            fps = stream_fps or instance_fps
+            if fps:
+                output["frameRate"] = fps
+
+            if stream_width and stream_height:
+                output["width"] = int(stream_width)
+                output["height"] = int(stream_height)
+            return output
+
+        frame_start = repre.get("frameStartFtrack")
+        frame_end = repre.get("frameEndFtrack")
+        if frame_start is None or frame_end is None:
+            frame_start = instance.data["frameStart"]
+            frame_end = instance.data["frameEnd"]
+
+        fps = None
+        repre_fps = repre.get("fps")
+        if repre_fps is not None:
+            repre_fps = float(repre_fps)
+
+        fps = stream_fps or repre_fps or instance_fps
+
+        # Frame end of uploaded video file should be duration in frames
+        # - frame start is always 0
+        # - frame end is duration in frames
+        if not frame_out:
+            frame_out = frame_end - frame_start + 1
+
+        # Ftrack documentation says that it is required to have
+        #   'width' and 'height' in review component. But with those values
+        #   review video does not play.
+        component_meta = {
+            "frameIn": 0,
+            "frameOut": frame_out,
+            "frameRate": float(fps)
+        }
+
+        return component_meta

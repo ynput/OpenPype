@@ -208,3 +208,28 @@ class OpenPypeMongoConnection:
             mongo_url, time.time() - t1
         ))
         return mongo_client
+
+
+def get_project_database():
+    db_name = os.environ.get("AVALON_DB") or "avalon"
+    return OpenPypeMongoConnection.get_mongo_client()[db_name]
+
+
+def get_project_connection(project_name):
+    """Direct access to mongo collection.
+
+    We're trying to avoid using direct access to mongo. This should be used
+    only for Create, Update and Remove operations until there are implemented
+    api calls for that.
+
+    Args:
+        project_name(str): Project name for which collection should be
+            returned.
+
+    Returns:
+        pymongo.Collection: Collection realated to passed project.
+    """
+
+    if not project_name:
+        raise ValueError("Invalid project name {}".format(str(project_name)))
+    return get_project_database()[project_name]

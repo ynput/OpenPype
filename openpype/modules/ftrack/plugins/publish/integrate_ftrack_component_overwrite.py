@@ -13,7 +13,10 @@ class IntegrateFtrackComponentOverwrite(pyblish.api.InstancePlugin):
     active = False
 
     def process(self, instance):
-        component_list = instance.data['ftrackComponentsList']
+        component_list = instance.data.get('ftrackComponentsList')
+        if not component_list:
+            self.log.info("No component to overwrite...")
+            return
 
         for cl in component_list:
             cl['component_overwrite'] = True

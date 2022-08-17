@@ -141,7 +141,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
         "OPENPYPE_PUBLISH_JOB",
-        "OPENPYPE_MONGO"
+        "OPENPYPE_MONGO",
+        "OPENPYPE_VERSION"
     ]
 
     # custom deadline attributes
@@ -158,7 +159,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # mapping of instance properties to be transfered to new instance for every
     # specified family
     instance_transfer = {
-        "slate": ["slateFrames"],
+        "slate": ["slateFrames", "slate"],
         "review": ["lutPath"],
         "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
@@ -585,11 +586,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     " This may cause issues on farm."
                 ).format(staging))
 
+            frame_start = int(instance.get("frameStartHandle"))
+            if instance.get("slate"):
+                frame_start -= 1
+
             rep = {
                 "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(collection)],
-                "frameStart": int(instance.get("frameStartHandle")),
+                "frameStart": frame_start,
                 "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,

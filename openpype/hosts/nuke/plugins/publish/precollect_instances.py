@@ -50,7 +50,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             # establish families
             family = avalon_knob_data["family"]
             families_ak = avalon_knob_data.get("families", [])
-            families = list()
+            families = []
 
             # except disabled nodes but exclude backdrops in test
             if ("nukenodes" not in family) and (node["disable"].value()):
@@ -111,10 +111,10 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             self.log.debug("__ families: `{}`".format(families))
 
             # Get format
-            format = root['format'].value()
-            resolution_width = format.width()
-            resolution_height = format.height()
-            pixel_aspect = format.pixelAspect()
+            format_ = root['format'].value()
+            resolution_width = format_.width()
+            resolution_height = format_.height()
+            pixel_aspect = format_.pixelAspect()
 
             # get publish knob value
             if "publish" not in node.knobs():
@@ -125,8 +125,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             self.log.debug("__ _families_test: `{}`".format(_families_test))
             for family_test in _families_test:
                 if family_test in self.sync_workfile_version_on_families:
-                    self.log.debug("Syncing version with workfile for '{}'"
-                                   .format(family_test))
+                    self.log.debug(
+                        "Syncing version with workfile for '{}'".format(
+                            family_test
+                        )
+                    )
                     # get version to instance for integration
                     instance.data['version'] = instance.context.data['version']
 

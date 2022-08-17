@@ -11,13 +11,11 @@ from openpype.client import (
     get_project,
     get_assets,
 )
-from openpype.settings import get_project_settings
-from openpype.lib import (
-    get_workfile_template_key,
-    get_workdir_data,
-    StringTemplate,
-)
+from openpype.settings import get_project_settings, get_system_settings
+from openpype.lib import StringTemplate
 from openpype.pipeline import Anatomy
+from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.workfile import get_workfile_template_key
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 
@@ -279,14 +277,19 @@ class FillWorkfileAttributeAction(BaseAction):
         extension = "{ext}"
         project_doc = get_project(project_name)
         project_settings = get_project_settings(project_name)
+        system_settings = get_system_settings()
         anatomy = Anatomy(project_name)
         templates_by_key = {}
 
         operations = []
         for asset_doc, task_entities in asset_docs_with_task_entities:
             for task_entity in task_entities:
-                workfile_data = get_workdir_data(
-                    project_doc, asset_doc, task_entity["name"], host_name
+                workfile_data = get_template_data(
+                    project_doc,
+                    asset_doc,
+                    task_entity["name"],
+                    host_name,
+                    system_settings
                 )
                 # Use version 1 for each workfile
                 workfile_data["version"] = 1
@@ -294,7 +297,10 @@ class FillWorkfileAttributeAction(BaseAction):
 
                 task_type = workfile_data["task"]["type"]
                 template_key = get_workfile_template_key(
-                    task_type, host_name, project_settings=project_settings
+                    task_type,
+                    host_name,
+                    project_name,
+                    project_settings=project_settings
                 )
                 if template_key in templates_by_key:
                     template = templates_by_key[template_key]

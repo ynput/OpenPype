@@ -21,9 +21,7 @@ from openpype.client import (
 )
 from openpype.api import (
     Logger,
-    BuildWorkfile,
     get_version_from_path,
-    get_workdir_data,
     get_current_project_settings,
 )
 from openpype.tools.utils import host_tools
@@ -34,12 +32,17 @@ from openpype.settings import (
     get_anatomy_settings,
 )
 from openpype.modules import ModulesManager
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     discover_legacy_creator_plugins,
     legacy_io,
     Anatomy,
 )
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.context_tools import (
+    get_current_project_asset,
+    get_custom_workfile_template_from_session
+)
+from openpype.pipeline.workfile import BuildWorkfile
 
 from . import gizmo_menu
 
@@ -910,19 +913,17 @@ def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     avalon_knob_data = read_avalon_data(node)
-    data = {'avalon': avalon_knob_data}
 
     nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["family"],
+        node_class=avalon_knob_data["families"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
-    host_name = os.environ.get("AVALON_APP")
 
-    data.update({
-        "app": host_name,
+    data = {
+        "avalon": avalon_knob_data,
         "nuke_imageio_writes": nuke_imageio_writes
-    })
+    }
 
     anatomy_filled = format_anatomy(data)
     return anatomy_filled["render"]["path"].replace("\\", "/")
@@ -965,12 +966,11 @@ def format_anatomy(data):
         data["version"] = get_version_from_path(file)
 
     project_name = anatomy.project_name
-    project_doc = get_project(project_name)
-    asset_doc = get_asset_by_name(project_name, data["avalon"]["asset"])
+    asset_name = data["avalon"]["asset"]
     task_name = os.environ["AVALON_TASK"]
     host_name = os.environ["AVALON_APP"]
-    context_data = get_workdir_data(
-        project_doc, asset_doc, task_name, host_name
+    context_data = get_template_data_with_names(
+        project_name, asset_name, task_name, host_name
     )
     data.update(context_data)
     data.update({
@@ -1128,10 +1128,8 @@ def create_write_node(
         if knob["name"] == "file_type":
             representation = knob["value"]
 
-    host_name = os.environ.get("AVALON_APP")
     try:
         data.update({
-            "app": host_name,
             "imageio_writes": imageio_writes,
             "representation": representation,
         })
@@ -1925,7 +1923,7 @@ class WorkfileSettings(object):
                 families.append(avalon_knob_data.get("families"))
 
             nuke_imageio_writes = get_imageio_node_setting(
-                node_class=avalon_knob_data["family"],
+                node_class=avalon_knob_data["families"],
                 plugin_name=avalon_knob_data["creator"],
                 subset=avalon_knob_data["subset"]
             )
@@ -2224,7 +2222,7 @@ def get_write_node_template_attr(node):
     avalon_knob_data = read_avalon_data(node)
     # get template data
     nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["family"],
+        node_class=avalon_knob_data["families"],
         plugin_name=avalon_knob_data["creator"],
         subset=avalon_knob_data["subset"]
     )
@@ -2449,15 +2447,12 @@ def _launch_workfile_app():
 
 
 def process_workfile_builder():
-    from openpype.lib import (
-        env_value_to_bool,
-        get_custom_workfile_template
-    )
     # to avoid looping of the callback, remove it!
     nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     # get state from settings
-    workfile_builder = get_current_project_settings()["nuke"].get(
+    project_settings = get_current_project_settings()
+    workfile_builder = project_settings["nuke"].get(
         "workfile_builder", {})
 
     # get all imortant settings
@@ -2467,7 +2462,6 @@ def process_workfile_builder():
 
     # get settings
     createfv_on = workfile_builder.get("create_first_version") or None
-    custom_templates = workfile_builder.get("custom_templates") or None
     builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
@@ -2475,8 +2469,8 @@ def process_workfile_builder():
     # generate first version in file not existing and feature is enabled
     if createfv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
-        custom_template_path = get_custom_workfile_template(
-            custom_templates
+        custom_template_path = get_custom_workfile_template_from_session(
+            project_settings=project_settings
         )
 
         # if custom template is defined

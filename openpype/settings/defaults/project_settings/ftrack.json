@@ -301,7 +301,9 @@
                         "traypublisher"
                     ],
                     "families": [
-                        "plate"
+                        "plate",
+                        "review",
+                        "audio"
                     ],
                     "task_types": [],
                     "tasks": [],
@@ -432,6 +434,9 @@
             "enabled": false,
             "custom_attribute_keys": []
         },
+        "IntegrateHierarchyToFtrack": {
+            "create_task_status_profiles": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_template": "{intent}: {comment}",
@@ -446,6 +451,9 @@
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackComponentOverwrite": {
+            "enabled": true
         },
         "IntegrateFtrackInstance": {
             "family_mapping": {

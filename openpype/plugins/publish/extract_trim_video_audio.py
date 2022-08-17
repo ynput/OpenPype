@@ -14,7 +14,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
     # must be before `ExtractThumbnailSP`
     order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract Trim Video/Audio"
-    hosts = ["standalonepublisher"]
+    hosts = ["standalonepublisher", "traypublisher"]
     families = ["clip", "trimming"]
 
     # make sure it is enabled only if at least both families are available
@@ -40,6 +40,21 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
         fps = instance.data["fps"]
         video_file_path = instance.data["editorialSourcePath"]
         extensions = instance.data.get("extensions", ["mov"])
+        output_file_type = instance.data.get("outputFileType")
+        reviewable = "review" in instance.data["families"]
+
+        frame_start = int(instance.data["frameStart"])
+        frame_end = int(instance.data["frameEnd"])
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+
+        clip_start_h = float(instance.data["clipInH"])
+        _dur = instance.data["clipDuration"]
+        handle_dur = (handle_start + handle_end)
+        clip_dur_h = float(_dur + handle_dur)
+
+        if output_file_type:
+            extensions = [output_file_type]
 
         for ext in extensions:
             self.log.info("Processing ext: `{}`".format(ext))
@@ -49,16 +64,10 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
 
             clip_trimed_path = os.path.join(
                 staging_dir, instance.data["name"] + ext)
-            # # check video file metadata
-            # input_data = plib.get_ffprobe_streams(video_file_path)[0]
-            # self.log.debug(f"__ input_data: `{input_data}`")
-
-            start = float(instance.data["clipInH"])
-            dur = float(instance.data["clipDurationH"])
 
             if ext == ".wav":
                 # offset time as ffmpeg is having bug
-                start += 0.5
+                clip_start_h += 0.5
                 # remove "review" from families
                 instance.data["families"] = [
                     fml for fml in instance.data["families"]
@@ -67,9 +76,9 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
 
             ffmpeg_args = [
                 ffmpeg_path,
-                "-ss", str(start / fps),
+                "-ss", str(clip_start_h / fps),
                 "-i", video_file_path,
-                "-t", str(dur / fps)
+                "-t", str(clip_dur_h / fps)
             ]
             if ext in [".mov", ".mp4"]:
                 ffmpeg_args.extend([
@@ -98,14 +107,15 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
                 "ext": ext[1:],
                 "files": os.path.basename(clip_trimed_path),
                 "stagingDir": staging_dir,
-                "frameStart": int(instance.data["frameStart"]),
-                "frameEnd": int(instance.data["frameEnd"]),
-                "frameStartFtrack": int(instance.data["frameStartH"]),
-                "frameEndFtrack": int(instance.data["frameEndH"]),
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "frameStartFtrack": frame_start - handle_start,
+                "frameEndFtrack": frame_end + handle_end,
                 "fps": fps,
+                "tags": []
             }
 
-            if ext in [".mov", ".mp4"]:
+            if ext in [".mov", ".mp4"] and reviewable:
                 repre.update({
                     "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"]})

@@ -413,8 +413,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Gather needed data ------------------------------------------------
         default_render_file = instance.context.data.get('project_settings')\
             .get('maya')\
-            .get('create')\
-            .get('CreateRender')\
+            .get('RenderSettings')\
             .get('default_render_image_folder')
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
@@ -519,12 +518,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
+            "OPENPYPE_SG_USER",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
