@@ -298,14 +298,18 @@ class WorkfileTemplate():
                         knob_value = str(knob['value'])
                         knob_type = int(knob['type'])
                         if knob_type == 3:
-                            knob_value = int(knob_value)
+                            try:
+                                knob_value = int(knob_value)
+                            except ValueError:
+                                knob_value = int(float(knob_value))
                         elif knob_type == 6:
                             knob_value = bool(knob_value)
                         elif knob_type == 8:
                             knob_value = float(knob_value)
                         target_node[knob_name].setValue(knob_value)
-                    except NameError:
-                        pass
+                    except (NameError, ValueError):
+                        log.debug("knob {} type conversion failed"
+                                  .format(knob_name))
                 nuke.delete(one_template)
 
         return True
