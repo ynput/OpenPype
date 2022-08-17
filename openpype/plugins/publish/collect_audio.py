@@ -68,9 +68,10 @@ class CollectAudio(pyblish.api.InstancePlugin):
 
         # Add audio to instance if representation was found
         if repre_doc:
-            instance.data["audio"] = [{
-                "offset": 0,
-                "filename": get_representation_path(repre_doc)
-            }]
+            if not instance.data.get("audio"):
+                instance.data["audio"] = [{
+                    "offset": 0,
+                    "filename": get_representation_path(repre_doc)
+                }]
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))
