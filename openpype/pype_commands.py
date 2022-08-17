@@ -232,6 +232,11 @@ class PypeCommands:
             fail_batch(_id, dbcon, msg)
             print("Another batch running, probably stuck, ask admin for help")
 
+        if not task_data["context"]:
+            msg = "Batch manifest must contain context data"
+            msg += "Create new batch and set context properly."
+            fail_batch(_id, dbcon, msg)
+
         asset_name, task_name, task_type = get_batch_asset_task_info(
             task_data["context"])
 
