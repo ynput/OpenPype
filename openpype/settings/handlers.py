@@ -688,6 +688,15 @@ class MongoSettingsHandler(SettingsHandler):
         # Update cache
         self.system_settings_cache.update_data(data, self._current_version)
 
+        last_saved_info = SettingsStateInfo.create_new(
+            self._current_version,
+            SYSTEM_SETTINGS_KEY,
+            None
+        )
+        self.system_settings_cache.update_last_saved_info(
+            last_saved_info
+        )
+
         # Get copy of just updated cache
         system_settings_data = self.system_settings_cache.data_copy()
 
@@ -709,6 +718,7 @@ class MongoSettingsHandler(SettingsHandler):
             "type": self._system_settings_key,
             "version": self._current_version,
             "data": system_settings_data,
+            "last_saved_info": last_saved_info.to_document_data()
         }
         if not system_settings_doc:
             self.collections.insert_one(new_system_settings_doc)
@@ -748,6 +758,14 @@ class MongoSettingsHandler(SettingsHandler):
         """
         data_cache = self.project_settings_cache[project_name]
         data_cache.update_data(overrides, self._current_version)
+
+        last_saved_info = SettingsStateInfo.create_new(
+            self._current_version,
+            PROJECT_SETTINGS_KEY,
+            project_name
+        )
+
+        data_cache.update_last_saved_info(last_saved_info)
 
         self._save_project_data(
             project_name, self._project_settings_key, data_cache
@@ -863,6 +881,7 @@ class MongoSettingsHandler(SettingsHandler):
             "data": data_cache.data,
             "is_default": is_default,
             "version": self._current_version,
+            "last_saved_info": last_saved_info.to_data()
         }
         if not is_default:
             query_filter["project_name"] = project_name
@@ -1207,12 +1226,18 @@ class MongoSettingsHandler(SettingsHandler):
             })
             document, version = self._get_system_settings_overrides_doc()
 
+            last_saved_info = SettingsStateInfo.from_document(
+                version, SYSTEM_SETTINGS_KEY, document
+            )
             merged_document = self._apply_global_settings(
                 document, globals_document
             )
 
             self.system_settings_cache.update_from_document(
                 merged_document, version
+            )
+            self.system_settings_cache.update_last_saved_info(
+                last_saved_info
             )
 
         cache = self.system_settings_cache
@@ -1237,6 +1262,13 @@ class MongoSettingsHandler(SettingsHandler):
 
         return document, version
 
+    def get_system_last_saved_info(self):
+        # Make sure settings are recaches
+        self.system_settings_cache.set_outdated()
+        self.get_studio_system_settings_overrides(False)
+
+        return self.system_settings_cache.last_saved_info.copy()
+
     def _get_project_settings_overrides(self, project_name, return_version):
         if self.project_settings_cache[project_name].is_outdated:
             document, version = self._get_project_settings_overrides_doc(
@@ -1244,6 +1276,12 @@ class MongoSettingsHandler(SettingsHandler):
             )
             self.project_settings_cache[project_name].update_from_document(
                 document, version
+            )
+            last_saved_info = SettingsStateInfo.from_document(
+                version, PROJECT_SETTINGS_KEY, document
+            )
+            self.project_settings_cache[project_name].update_last_saved_info(
+                last_saved_info
             )
 
         cache = self.project_settings_cache[project_name]
@@ -1267,6 +1305,13 @@ class MongoSettingsHandler(SettingsHandler):
                 version = LEGACY_SETTINGS_VERSION
 
         return document, version
+
+    def get_project_last_saved_info(self, project_name):
+        # Make sure settings are recaches
+        self.project_settings_cache[project_name].set_outdated()
+        self._get_project_settings_overrides(project_name, False)
+
+        return self.project_settings_cache[project_name].last_saved_info.copy()
 
     def get_studio_project_settings_overrides(self, return_version):
         """Studio overrides of default project settings."""
