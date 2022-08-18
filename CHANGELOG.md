@@ -1,11 +1,25 @@
 # Changelog
 
-## [3.13.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.13.0...HEAD)
 
+**🆕 New features**
+
+- Maya: Build workfile by template [\#3578](https://github.com/pypeclub/OpenPype/pull/3578)
+
+**🚀 Enhancements**
+
+- Ftrack: Addiotional component metadata [\#3685](https://github.com/pypeclub/OpenPype/pull/3685)
+- Ftrack: Set task status on farm publishing [\#3680](https://github.com/pypeclub/OpenPype/pull/3680)
+- Ftrack: Set task status on task creation in integrate hierarchy [\#3675](https://github.com/pypeclub/OpenPype/pull/3675)
+- Maya: Disable rendering of all lights for render instances submitted through Deadline. [\#3661](https://github.com/pypeclub/OpenPype/pull/3661)
+- General: Optimized OCIO configs [\#3650](https://github.com/pypeclub/OpenPype/pull/3650)
+
 **🐛 Bug fixes**
 
+- General: Switch from hero version to versioned works [\#3691](https://github.com/pypeclub/OpenPype/pull/3691)
+- General: Fix finding of last version [\#3656](https://github.com/pypeclub/OpenPype/pull/3656)
 - General: Extract Review can scale with pixel aspect ratio [\#3644](https://github.com/pypeclub/OpenPype/pull/3644)
 - Maya: Refactor moved usage of CreateRender settings [\#3643](https://github.com/pypeclub/OpenPype/pull/3643)
 - General: Hero version representations have full context [\#3638](https://github.com/pypeclub/OpenPype/pull/3638)
@@ -14,8 +28,12 @@
 
 **🔀 Refactored code**
 
+- General: Use client projects getter [\#3673](https://github.com/pypeclub/OpenPype/pull/3673)
+- Resolve: Match folder structure to other hosts [\#3653](https://github.com/pypeclub/OpenPype/pull/3653)
+- Maya: Hosts as modules [\#3647](https://github.com/pypeclub/OpenPype/pull/3647)
 - TimersManager: Plugins are in timers manager module [\#3639](https://github.com/pypeclub/OpenPype/pull/3639)
 - General: Move workfiles functions into pipeline [\#3637](https://github.com/pypeclub/OpenPype/pull/3637)
+- General: Workfiles builder using query functions [\#3598](https://github.com/pypeclub/OpenPype/pull/3598)
 
 **Merged pull requests:**
 
@@ -89,7 +107,6 @@
 **🚀 Enhancements**
 
 - General: Global thumbnail extractor is ready for more cases [\#3561](https://github.com/pypeclub/OpenPype/pull/3561)
-- Maya: add additional validators to Settings [\#3540](https://github.com/pypeclub/OpenPype/pull/3540)
 
 **🐛 Bug fixes**
 
@@ -100,16 +117,10 @@
 - General: Remove hosts filter on integrator plugins [\#3556](https://github.com/pypeclub/OpenPype/pull/3556)
 - Settings: Clean default values of environments [\#3550](https://github.com/pypeclub/OpenPype/pull/3550)
 - Module interfaces: Fix import error [\#3547](https://github.com/pypeclub/OpenPype/pull/3547)
-- Workfiles tool: Show of tool and it's flags [\#3539](https://github.com/pypeclub/OpenPype/pull/3539)
-- General: Create workfile documents works again [\#3538](https://github.com/pypeclub/OpenPype/pull/3538)
 
 **🔀 Refactored code**
 
 - General: Use query functions in integrator [\#3563](https://github.com/pypeclub/OpenPype/pull/3563)
-- General: Mongo core connection moved to client [\#3531](https://github.com/pypeclub/OpenPype/pull/3531)
-- Refactor Integrate Asset [\#3530](https://github.com/pypeclub/OpenPype/pull/3530)
-- General: Client docstrings cleanup [\#3529](https://github.com/pypeclub/OpenPype/pull/3529)
-- General: Move load related functions into pipeline [\#3527](https://github.com/pypeclub/OpenPype/pull/3527)
 
 **Merged pull requests:**
 
