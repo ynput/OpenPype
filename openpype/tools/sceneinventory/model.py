@@ -35,7 +35,7 @@ class InventoryModel(TreeModel):
     """The model for the inventory"""
 
     Columns = ["Name", "version", "count", "family",
-               "subsetGroup", "loader", "objectName"]
+               "group", "loader", "objectName"]
 
     OUTDATED_COLOR = QtGui.QColor(235, 30, 30)
     CHILD_OUTDATED_COLOR = QtGui.QColor(200, 160, 30)
@@ -160,7 +160,7 @@ class InventoryModel(TreeModel):
 
             column_name = self.Columns[index.column()]
 
-            if column_name == "subsetGroup" and item.get("subsetGroup"):
+            if column_name == "group" and item.get("group"):
                 return qtawesome.icon("fa.object-group",
                                       color=get_default_entity_icon_color())
 
@@ -429,7 +429,7 @@ class InventoryModel(TreeModel):
             group_node["familyIcon"] = family_icon
             group_node["count"] = len(group_items)
             group_node["isGroupNode"] = True
-            group_node["subsetGroup"] = subset["data"].get("subsetGroup")
+            group_node["group"] = subset["data"].get("subsetGroup")
 
             if self.sync_enabled:
                 progress = get_progress_for_repre(
