@@ -23,11 +23,11 @@ from .constants import (
 
 
 class SettingsStateInfo:
-    """Helper state information for Settings state.
+    """Helper state information about some settings state.
 
-    Is used to hold information about last save and last opened UI. Keep
+    Is used to hold information about last saved and last opened UI. Keep
     information about the time when that happened and on which machine under
-    which user.
+    which user and on which openpype version.
 
     To create currrent machine and time information use 'create_new' method.
     """
@@ -35,12 +35,28 @@ class SettingsStateInfo:
     timestamp_format = "%Y-%m-%d %H:%M:%S.%f"
 
     def __init__(
-        self, timestamp, hostname, hostip, username, system_name, local_id
+        self,
+        openpype_version,
+        settings_type,
+        project_name,
+        timestamp,
+        hostname,
+        hostip,
+        username,
+        system_name,
+        local_id
     ):
+        self.openpype_version = openpype_version
+        self.settings_type = settings_type
+        self.project_name = project_name
+
+        timestamp_obj = None
+        if timestamp:
+            timestamp_obj = datetime.datetime.strptime(
+                timestamp, self.timestamp_format
+            )
         self.timestamp = timestamp
-        self._timestamp_obj = datetime.datetime.strptime(
-            timestamp, self.timestamp_format
-        )
+        self.timestamp_obj = timestamp_obj
         self.hostname = hostname
         self.hostip = hostip
         self.username = username
@@ -50,12 +66,8 @@ class SettingsStateInfo:
     def copy(self):
         return self.from_data(self.to_data())
 
-    @property
-    def timestamp_obj(self):
-        return self._timestamp_obj
-
     @classmethod
-    def create_new(cls):
+    def create_new(cls, openpype_version, settings_type, project_name):
         """Create information about this machine for current time."""
 
         from openpype.lib.pype_info import get_workstation_info
@@ -64,6 +76,9 @@ class SettingsStateInfo:
         workstation_info = get_workstation_info()
 
         return cls(
+            openpype_version,
+            settings_type,
+            project_name,
             now.strftime(cls.timestamp_format),
             workstation_info["hostname"],
             workstation_info["hostip"],
@@ -77,6 +92,9 @@ class SettingsStateInfo:
         """Create object from data."""
 
         return cls(
+            data["openpype_version"],
+            data["settings_type"],
+            data["project_name"],
             data["timestamp"],
             data["hostname"],
             data["hostip"],
@@ -86,6 +104,40 @@ class SettingsStateInfo:
         )
 
     def to_data(self):
+        data = self.to_document_data()
+        data.update({
+            "openpype_version": self.openpype_version,
+            "settings_type": self.settings_type,
+            "project_name": self.project_name
+        })
+        return data
+
+    @classmethod
+    def from_document(cls, openpype_version, settings_type, document):
+        document = document or {}
+        project_name = document.get("project_name")
+        last_saved_info = document.get("last_saved_info")
+        if last_saved_info:
+            copy_last_saved_info = copy.deepcopy(last_saved_info)
+            copy_last_saved_info.update({
+                "openpype_version": openpype_version,
+                "settings_type": settings_type,
+                "project_name": project_name,
+            })
+            return cls.from_data(copy_last_saved_info)
+        return cls(
+            openpype_version,
+            settings_type,
+            project_name,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None
+        )
+
+    def to_document_data(self):
         return {
             "timestamp": self.timestamp,
             "hostname": self.hostname,
@@ -103,84 +155,12 @@ class SettingsStateInfo:
             return False
 
         return (
-            self.hostname == other.hostname
+            self.openpype_version == other.openpype_version
+            and self.hostname == other.hostname
             and self.hostip == other.hostip
             and self.username == other.username
             and self.system_name == other.system_name
             and self.local_id == other.local_id
-        )
-
-
-class SettingsState:
-    """State of settings with last saved and last opened.
-
-    Args:
-        openpype_version (str): OpenPype version string.
-        settings_type (str): Type of settings. System or project settings.
-        last_saved_info (Union[None, SettingsStateInfo]): Information about
-            machine and time when were settings saved last time.
-        last_opened_info (Union[None, SettingsStateInfo]): This is settings UI
-            specific information similar to last saved describes who had opened
-            settings as last.
-        project_name (Union[None, str]): Identifier for project settings.
-    """
-
-    def __init__(
-        self,
-        openpype_version,
-        settings_type,
-        last_saved_info,
-        last_opened_info,
-        project_name=None
-    ):
-        self.openpype_version = openpype_version
-        self.settings_type = settings_type
-        self.last_saved_info = last_saved_info
-        self.last_opened_info = last_opened_info
-        self.project_name = project_name
-
-    def __eq__(self, other):
-        if not isinstance(other, SettingsState):
-            return False
-
-        return (
-            self.openpype_version == other.openpype_version
-            and self.settings_type == other.settings_type
-            and self.last_saved_info == other.last_saved_info
-            and self.last_opened_info == other.last_opened_info
-            and self.project_name == other.project_name
-        )
-
-    def copy(self):
-        return self.__class__(
-            self.openpype_version,
-            self.settings_type,
-            self.last_saved_info.copy(),
-            self.last_opened_info.copy(),
-            self.project_name
-        )
-
-    def on_save(self, openpype_version):
-        self.openpype_version = openpype_version
-        self.last_saved_info = SettingsStateInfo.create_new()
-
-    @classmethod
-    def from_document(cls, openpype_version, settings_type, document):
-        document = document or {}
-        last_saved_info = document.get("last_saved_info")
-        if last_saved_info:
-            last_saved_info = SettingsStateInfo.from_data(last_saved_info)
-
-        last_opened_info = document.get("last_opened_info")
-        if last_opened_info:
-            last_opened_info = SettingsStateInfo.from_data(last_opened_info)
-
-        return cls(
-            openpype_version,
-            settings_type,
-            last_saved_info,
-            last_opened_info,
-            document.get("project_name")
         )
 
 
