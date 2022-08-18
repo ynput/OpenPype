@@ -696,19 +696,27 @@ class MongoSettingsHandler(SettingsHandler):
             system_settings_data
         )
 
-        # Store system settings
-        self.collection.replace_one(
+        system_settings_doc = self.collection.find_one(
             {
                 "type": self._system_settings_key,
                 "version": self._current_version
             },
-            {
-                "type": self._system_settings_key,
-                "data": system_settings_data,
-                "version": self._current_version
-            },
-            upsert=True
+            {"_id": True}
         )
+
+        # Store system settings
+        new_system_settings_doc = {
+            "type": self._system_settings_key,
+            "version": self._current_version,
+            "data": system_settings_data,
+        }
+        if not system_settings_doc:
+            self.collections.insert_one(new_system_settings_doc)
+        else:
+            self.collections.update_one(
+                {"_id": system_settings_doc["_id"]},
+                {"$set": new_system_settings_doc}
+            )
 
         # Store global settings
         self.collection.replace_one(
@@ -844,26 +852,33 @@ class MongoSettingsHandler(SettingsHandler):
 
     def _save_project_data(self, project_name, doc_type, data_cache):
         is_default = bool(project_name is None)
-        replace_filter = {
+        query_filter = {
             "type": doc_type,
             "is_default": is_default,
             "version": self._current_version
         }
-        replace_data = {
+        last_saved_info = data_cache.last_saved_info
+        new_project_settings_doc = {
             "type": doc_type,
             "data": data_cache.data,
             "is_default": is_default,
-            "version": self._current_version
+            "version": self._current_version,
         }
         if not is_default:
-            replace_filter["project_name"] = project_name
-            replace_data["project_name"] = project_name
+            query_filter["project_name"] = project_name
+            new_project_settings_doc["project_name"] = project_name
 
-        self.collection.replace_one(
-            replace_filter,
-            replace_data,
-            upsert=True
+        project_settings_doc = self.collection.find_one(
+            query_filter,
+            {"_id": True}
         )
+        if project_settings_doc:
+            self.collection.update_one(
+                {"_id": project_settings_doc["_id"]},
+                new_project_settings_doc
+            )
+        else:
+            self.collection.insert_one(new_project_settings_doc)
 
     def _get_versions_order_doc(self, projection=None):
         # TODO cache
