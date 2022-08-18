@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.13.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.13.0...HEAD)
+
+**🐛 Bug fixes**
+
+- General: Extract Review can scale with pixel aspect ratio [\#3644](https://github.com/pypeclub/OpenPype/pull/3644)
+- Maya: Refactor moved usage of CreateRender settings [\#3643](https://github.com/pypeclub/OpenPype/pull/3643)
+- General: Hero version representations have full context [\#3638](https://github.com/pypeclub/OpenPype/pull/3638)
+- Nuke: color settings for render write node is working now [\#3632](https://github.com/pypeclub/OpenPype/pull/3632)
+- Maya: FBX support for update in reference loader [\#3631](https://github.com/pypeclub/OpenPype/pull/3631)
+
+**🔀 Refactored code**
+
+- TimersManager: Plugins are in timers manager module [\#3639](https://github.com/pypeclub/OpenPype/pull/3639)
+- General: Move workfiles functions into pipeline [\#3637](https://github.com/pypeclub/OpenPype/pull/3637)
+
+**Merged pull requests:**
+
+- Deadline: Global job pre load is not Pype 2 compatible [\#3666](https://github.com/pypeclub/OpenPype/pull/3666)
+- Maya: Remove unused get current renderer logic [\#3645](https://github.com/pypeclub/OpenPype/pull/3645)
+- Kitsu|Fix: Movie project type fails & first loop children names [\#3636](https://github.com/pypeclub/OpenPype/pull/3636)
+- fix the bug of failing to extract look when UDIMs format used in AiImage [\#3628](https://github.com/pypeclub/OpenPype/pull/3628)
+
 ## [3.13.0](https://github.com/pypeclub/OpenPype/tree/3.13.0) (2022-08-09)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.13.0-nightly.1...3.13.0)
@@ -66,11 +90,6 @@
 
 - General: Global thumbnail extractor is ready for more cases [\#3561](https://github.com/pypeclub/OpenPype/pull/3561)
 - Maya: add additional validators to Settings [\#3540](https://github.com/pypeclub/OpenPype/pull/3540)
-- General: Interactive console in cli [\#3526](https://github.com/pypeclub/OpenPype/pull/3526)
-- Ftrack: Automatic daily review session creation can define trigger hour [\#3516](https://github.com/pypeclub/OpenPype/pull/3516)
-- Ftrack: add source into Note [\#3509](https://github.com/pypeclub/OpenPype/pull/3509)
-- Add pack and unpack convenience scripts [\#3502](https://github.com/pypeclub/OpenPype/pull/3502)
-- NewPublisher: Keep plugins with mismatch target in report [\#3498](https://github.com/pypeclub/OpenPype/pull/3498)
 
 **🐛 Bug fixes**
 
@@ -83,14 +102,6 @@
 - Module interfaces: Fix import error [\#3547](https://github.com/pypeclub/OpenPype/pull/3547)
 - Workfiles tool: Show of tool and it's flags [\#3539](https://github.com/pypeclub/OpenPype/pull/3539)
 - General: Create workfile documents works again [\#3538](https://github.com/pypeclub/OpenPype/pull/3538)
-- Additional fixes for powershell scripts [\#3525](https://github.com/pypeclub/OpenPype/pull/3525)
-- Maya: Added wrapper around cmds.setAttr [\#3523](https://github.com/pypeclub/OpenPype/pull/3523)
-- Nuke: double slate [\#3521](https://github.com/pypeclub/OpenPype/pull/3521)
-- General: Fix hash of centos oiio archive [\#3519](https://github.com/pypeclub/OpenPype/pull/3519)
-- Maya: Renderman display output fix [\#3514](https://github.com/pypeclub/OpenPype/pull/3514)
-- TrayPublisher: Simple creation enhancements and fixes [\#3513](https://github.com/pypeclub/OpenPype/pull/3513)
-- TrayPublisher: Make sure host name is filled [\#3504](https://github.com/pypeclub/OpenPype/pull/3504)
-- NewPublisher: Groups work and enum multivalue [\#3501](https://github.com/pypeclub/OpenPype/pull/3501)
 
 **🔀 Refactored code**
 
@@ -99,7 +110,6 @@
 - Refactor Integrate Asset [\#3530](https://github.com/pypeclub/OpenPype/pull/3530)
 - General: Client docstrings cleanup [\#3529](https://github.com/pypeclub/OpenPype/pull/3529)
 - General: Move load related functions into pipeline [\#3527](https://github.com/pypeclub/OpenPype/pull/3527)
-- General: Get current context document functions [\#3522](https://github.com/pypeclub/OpenPype/pull/3522)
 
 **Merged pull requests:**
 

@@ -62,7 +62,7 @@ class AbstractProvider:
 
     @abc.abstractmethod
     def upload_file(self, source_path, path,
-                    server, collection, file, representation, site,
+                    server, project_name, file, representation, site,
                     overwrite=False):
         """
             Copy file from 'source_path' to 'target_path' on provider.
@@ -75,7 +75,7 @@ class AbstractProvider:
 
             arguments for saving progress:
             server (SyncServer): server instance to call update_db on
-            collection (str): name of collection
+            project_name (str): name of project_name
             file (dict): info about uploaded file (matches structure from db)
             representation (dict): complete repre containing 'file'
             site (str): site name
@@ -87,7 +87,7 @@ class AbstractProvider:
 
     @abc.abstractmethod
     def download_file(self, source_path, local_path,
-                      server, collection, file, representation, site,
+                      server, project_name, file, representation, site,
                       overwrite=False):
         """
             Download file from provider into local system
@@ -99,7 +99,7 @@ class AbstractProvider:
 
             arguments for saving progress:
             server (SyncServer): server instance to call update_db on
-            collection (str): name of collection
+            project_name (str):
             file (dict): info about uploaded file (matches structure from db)
             representation (dict): complete repre containing 'file'
             site (str): site name

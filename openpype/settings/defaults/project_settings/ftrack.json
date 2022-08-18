@@ -434,6 +434,9 @@
             "enabled": false,
             "custom_attribute_keys": []
         },
+        "IntegrateHierarchyToFtrack": {
+            "create_task_status_profiles": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_template": "{intent}: {comment}",
@@ -488,7 +491,11 @@
                 "usd": "usd"
             },
             "keep_first_subset_name_for_review": true,
-            "asset_versions_status_profiles": []
+            "asset_versions_status_profiles": [],
+            "additional_metadata_keys": []
+        },
+        "IntegrateFtrackFarmStatus": {
+            "farm_status_profiles": []
         }
     }
 }

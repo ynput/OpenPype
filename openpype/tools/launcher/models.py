@@ -10,6 +10,7 @@ from Qt import QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
+    get_projects,
     get_project,
     get_assets,
 )
@@ -527,7 +528,7 @@ class LauncherModel(QtCore.QObject):
         current_project = self.project_name
         project_names = set()
         project_docs_by_name = {}
-        for project_doc in self._dbcon.projects(only_active=True):
+        for project_doc in get_projects():
             project_name = project_doc["name"]
             project_names.add(project_name)
             project_docs_by_name[project_name] = project_doc
