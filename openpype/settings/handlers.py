@@ -460,22 +460,22 @@ class SettingsHandler:
         pass
 
     @abstractmethod
-    def opened_ui(self):
+    def opened_settings_ui(self):
         """Callback called when settings UI is opened.
 
         Information about this machine must be available when
-        'get_last_opened_info' is called from anywhere until 'closed_ui' is
-        called again.
+        'get_last_opened_info' is called from anywhere until
+        'closed_settings_ui' is called again.
 
         Returns:
             SettingsStateInfo: Object representing information about this
-                machine. Must be passed to 'closed_ui' when finished.
+                machine. Must be passed to 'closed_settings_ui' when finished.
         """
 
         pass
 
     @abstractmethod
-    def closed_ui(self, info_obj):
+    def closed_settings_ui(self, info_obj):
         """Callback called when settings UI is closed.
 
         From the moment this method is called the information about this
@@ -486,8 +486,8 @@ class SettingsHandler:
         before changing any value.
 
         Args:
-            info_obj (SettingsStateInfo): Object created when 'opened_ui' was
-                called.
+            info_obj (SettingsStateInfo): Object created when
+                'opened_settings_ui' was called.
         """
 
         pass
@@ -1680,7 +1680,7 @@ class MongoSettingsHandler(SettingsHandler):
         }) or {}
         info_data = doc.get("info")
         if not info_data:
-            return SettingsStateInfo.create_new_empty(self._current_version)
+            return None
 
         # Fill not available information
         info_data["openpype_version"] = self._current_version
@@ -1688,7 +1688,7 @@ class MongoSettingsHandler(SettingsHandler):
         info_data["project_name"] = None
         return SettingsStateInfo.from_data(info_data)
 
-    def opened_ui(self):
+    def opened_settings_ui(self):
         doc_filter = {
             "type": "last_opened_settings_ui",
             "version": self._current_version
@@ -1711,7 +1711,7 @@ class MongoSettingsHandler(SettingsHandler):
             self.collection.insert_one(new_doc_data)
         return opened_info
 
-    def closed_ui(self, info_obj):
+    def closed_settings_ui(self, info_obj):
         doc_filter = {
             "type": "last_opened_settings_ui",
             "version": self._current_version

@@ -107,13 +107,13 @@ def get_last_opened_info():
 
 
 @require_handler
-def opened_ui():
-    return _SETTINGS_HANDLER.opened_ui()
+def opened_settings_ui():
+    return _SETTINGS_HANDLER.opened_settings_ui()
 
 
 @require_handler
-def closed_ui(info_obj):
-    return _SETTINGS_HANDLER.closed_ui(info_obj)
+def closed_settings_ui(info_obj):
+    return _SETTINGS_HANDLER.closed_settings_ui(info_obj)
 
 
 @require_handler
