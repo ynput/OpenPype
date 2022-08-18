@@ -485,6 +485,9 @@ class CacheValues:
         delta = (datetime.datetime.now() - self.creation_time).seconds
         return delta > self.cache_lifetime
 
+    def set_outdated(self):
+        self.create_time = None
+
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
