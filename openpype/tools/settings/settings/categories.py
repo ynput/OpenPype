@@ -121,6 +121,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.user_role = user_role
 
         self.entity = None
+        self._edit_mode = None
 
         self._state = CategoryState.Idle
 
@@ -190,6 +191,21 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             entity.__class__.__name__, entity.path, entity.value
         )
         raise TypeError("Unknown type: {}".format(label))
+
+    def set_edit_mode(self, enabled):
+        if enabled is self._edit_mode:
+            return
+
+        self.save_btn.setEnabled(enabled)
+        if enabled:
+            tooltip = (
+                "Someone else has opened settings UI."
+                "\nTry hit refresh to check if settings are already available."
+            )
+        else:
+            tooltip = "Save settings"
+
+        self.save_btn.setToolTip(tooltip)
 
     @property
     def state(self):
@@ -434,6 +450,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.set_state(CategoryState.Idle)
 
     def save(self):
+        if not self._edit_mode:
+            return
+
         if not self.items_are_valid():
             return
 

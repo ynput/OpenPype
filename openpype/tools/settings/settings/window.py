@@ -36,6 +36,8 @@ class MainWidget(QtWidgets.QWidget):
         # Object referencing to this machine and time when UI was opened
         # - is used on close event
         self._last_opened_info = None
+        self._edit_mode = None
+        self._main_reset = False
 
         self._user_passed = False
         self._reset_on_show = reset_on_show
@@ -152,6 +154,12 @@ class MainWidget(QtWidgets.QWidget):
         elif not self._last_opened_info:
             self._check_on_ui_open()
 
+    def closeEvent(self, event):
+        if self._last_opened_info:
+            closed_settings_ui(self._last_opened_info)
+            self._last_opened_info = None
+        super(MainWidget, self).closeEvent(event)
+
     def _check_on_ui_open(self):
         last_opened_info = get_last_opened_info()
         if last_opened_info is not None:
@@ -161,19 +169,27 @@ class MainWidget(QtWidgets.QWidget):
             self._last_opened_info = opened_settings_ui()
 
         if self._last_opened_info is not None:
+            if self._edit_mode is not True:
+                self._set_edit_mode(True)
+            return
+
+        if self._edit_mode is False:
             return
 
         dialog = SettingsUIOpenedElsewhere(last_opened_info, self)
         dialog.exec_()
-        if dialog.result() == 1:
+        edit_enabled = dialog.result() == 1
+        if edit_enabled:
             self._last_opened_info = opened_settings_ui()
+        self._set_edit_mode(edit_enabled)
+
+    def _set_edit_mode(self, mode):
+        if self._edit_mode is mode:
             return
 
-    def closeEvent(self, event):
-        if self._last_opened_info:
-            closed_settings_ui(self._last_opened_info)
-            self._last_opened_info = None
-        super(MainWidget, self).closeEvent(event)
+        self._edit_mode = mode
+        for tab_widget in self.tab_widgets:
+            tab_widget.set_edit_mode(mode)
 
     def _show_password_dialog(self):
         if self._password_dialog:
@@ -215,8 +231,11 @@ class MainWidget(QtWidgets.QWidget):
         if self._reset_on_show:
             self._reset_on_show = False
 
+        self._main_reset = True
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
+        self._main_reset = False
+        self._check_on_ui_open()
 
     def _update_search_dialog(self, clear=False):
         if self._search_dialog.isVisible():
@@ -260,7 +279,8 @@ class MainWidget(QtWidgets.QWidget):
         if current_widget is widget:
             self._update_search_dialog()
 
-        self._check_on_ui_open()
+        if not self._main_reset:
+            self._check_on_ui_open()
 
     def keyPressEvent(self, event):
         if event.matches(QtGui.QKeySequence.Find):
@@ -340,7 +360,9 @@ class SettingsUIOpenedElsewhere(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(message_label, 0)
         layout.addWidget(separator_widget_1, 0)
-        layout.addWidget(other_information, 1, QtCore.Qt.AlignHCenter)
+        layout.addStretch(1)
+        layout.addWidget(other_information, 0, QtCore.Qt.AlignHCenter)
+        layout.addStretch(1)
         layout.addWidget(separator_widget_2, 0)
         layout.addWidget(footer_widget, 0)
 
