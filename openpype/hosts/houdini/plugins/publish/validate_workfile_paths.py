@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import openpype.api
 import pyblish.api
 import hou
@@ -50,24 +49,10 @@ class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        """Replace $HIP and $JOB vars for published path."""
-        # determine path of published scene
-        anatomy = instance.context.data['anatomy']
-        template_data = instance.data.get("anatomyData")
-        rep = instance.data.get("representations")[0].get("name")
-        template_data["representation"] = rep
-        template_data["ext"] = rep
-        template_data["comment"] = None
-        anatomy_filled = anatomy.format(template_data)
-        template_filled = anatomy_filled["publish"]["path"]
-        filepath = os.path.normpath(template_filled)
-        hip_dir = os.path.dirname(filepath)
         invalid = cls.get_invalid()
         for param in invalid:
             cls.log.info("processing: {}".format(param.path()))
-            # replace $HIP
-            invalid_path = param.unexpandedString()
-            param.set(invalid_path.replace("$HIP", hip_dir))
-            # replace $JOB
-            param.set(invalid_path.replace("$JOB", hip_dir))
-            cls.log.info("Replacing {} for {}".format(invalid_path, hip_dir))
+            cls.log.info("Replacing {} for {}".format(
+                param.unexpandedString(),
+                hou.text.expandString(param.unexpandedString())))
+            param.set(hou.text.expandString(param.unexpandedString()))
