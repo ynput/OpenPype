@@ -18,6 +18,7 @@ class CreateRig(plugin.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateRig, self).__init__(*args, **kwargs)
         self.data["writeColorSets"] = self.write_color_sets
+        self.data["writeFaceSets"] = False
 
     def process(self):
 
