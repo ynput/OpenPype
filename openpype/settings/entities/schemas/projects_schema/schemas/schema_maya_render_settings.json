@@ -15,6 +15,11 @@
             "label": "Default render image folder"
         },
         {
+          "type": "boolean",
+          "key": "enable_all_lights",
+          "label": "Include all lights in Render Setup Layers by default"
+        },
+        {
             "key": "aov_separator",
             "label": "AOV Separator character",
             "type": "enum",

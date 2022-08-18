@@ -311,7 +311,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False,
-                "aovSeparator": layer_render_products.layer_data.aov_separator  # noqa: E501
+                "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
+                "renderSetupIncludeLights": render_instance.data.get(
+                    "renderSetupIncludeLights"
+                )
             }
 
             # Collect Deadline url if Deadline module is enabled
