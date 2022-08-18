@@ -453,13 +453,12 @@ class CacheValues:
             return {}
         return copy.deepcopy(self.data)
 
-    def update_data(self, data, version=None):
+    def update_data(self, data, version):
         self.data = data
         self.creation_time = datetime.datetime.now()
-        if version is not None:
-            self.version = version
+        self.version = version
 
-    def update_from_document(self, document, version=None):
+    def update_from_document(self, document, version):
         data = {}
         if document:
             if "data" in document:
@@ -468,9 +467,9 @@ class CacheValues:
                 value = document["value"]
                 if value:
                     data = json.loads(value)
+
         self.data = data
-        if version is not None:
-            self.version = version
+        self.version = version
 
     def to_json_string(self):
         return json.dumps(self.data or {})
@@ -1567,7 +1566,7 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
         """
         data = data or {}
 
-        self.local_settings_cache.update_data(data)
+        self.local_settings_cache.update_data(data, None)
 
         self.collection.replace_one(
             {
@@ -1590,6 +1589,6 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
                 "site_id": self.local_site_id
             })
 
-            self.local_settings_cache.update_from_document(document)
+            self.local_settings_cache.update_from_document(document, None)
 
         return self.local_settings_cache.data_copy()
