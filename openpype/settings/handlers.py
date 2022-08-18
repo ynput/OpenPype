@@ -447,6 +447,7 @@ class CacheValues:
         self.data = None
         self.creation_time = None
         self.version = None
+        self.settings_state = None
 
     def data_copy(self):
         if not self.data:
@@ -457,6 +458,9 @@ class CacheValues:
         self.data = data
         self.creation_time = datetime.datetime.now()
         self.version = version
+
+    def update_settings_state(self, settings_state):
+        self.settings_state = settings_state
 
     def update_from_document(self, document, version):
         data = {}
