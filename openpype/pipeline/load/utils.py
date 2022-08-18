@@ -222,13 +222,20 @@ def get_representation_context(representation):
             project_name, representation
         )
 
+    if not representation:
+        raise AssertionError("Representation was not found in database")
+
     version, subset, asset, project = get_representation_parents(
         project_name, representation
     )
-
-    assert all([representation, version, subset, asset, project]), (
-        "This is a bug"
-    )
+    if not version:
+        raise AssertionError("Version was not found in database")
+    if not subset:
+        raise AssertionError("Subset was not found in database")
+    if not asset:
+        raise AssertionError("Asset was not found in database")
+    if not project:
+        raise AssertionError("Project was not found in database")
 
     context = {
         "project": {
