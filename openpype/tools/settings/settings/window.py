@@ -1,4 +1,16 @@
 from Qt import QtWidgets, QtGui, QtCore
+
+from openpype import style
+
+from openpype.lib import is_admin_password_required
+from openpype.widgets import PasswordDialog
+
+from openpype.settings.lib import (
+    get_last_opened_info,
+    opened_settings_ui,
+    closed_settings_ui,
+)
+
 from .categories import (
     CategoryState,
     SystemWidget,
@@ -10,10 +22,6 @@ from .widgets import (
     SettingsTabWidget
 )
 from .search_dialog import SearchEntitiesDialog
-from openpype import style
-
-from openpype.lib import is_admin_password_required
-from openpype.widgets import PasswordDialog
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -24,6 +32,10 @@ class MainWidget(QtWidgets.QWidget):
 
     def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
+
+        # Object referencing to this machine and time when UI was opened
+        # - is used on close event
+        self._last_opened_info = None
 
         self._user_passed = False
         self._reset_on_show = reset_on_show
@@ -74,7 +86,7 @@ class MainWidget(QtWidgets.QWidget):
                 self._on_restart_required
             )
             tab_widget.reset_started.connect(self._on_reset_started)
-            tab_widget.reset_started.connect(self._on_reset_finished)
+            tab_widget.reset_finished.connect(self._on_reset_finished)
             tab_widget.full_path_requested.connect(self._on_full_path_request)
 
         header_tab_widget.context_menu_requested.connect(
@@ -131,10 +143,37 @@ class MainWidget(QtWidgets.QWidget):
 
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
+
         if self._reset_on_show:
             self._reset_on_show = False
             # Trigger reset with 100ms delay
             QtCore.QTimer.singleShot(100, self.reset)
+
+        elif not self._last_opened_info:
+            self._check_on_ui_open()
+
+    def _check_on_ui_open(self):
+        last_opened_info = get_last_opened_info()
+        if last_opened_info is not None:
+            if self._last_opened_info != last_opened_info:
+                self._last_opened_info = None
+        else:
+            self._last_opened_info = opened_settings_ui()
+
+        if self._last_opened_info is not None:
+            return
+
+        dialog = SettingsUIOpenedElsewhere(last_opened_info, self)
+        dialog.exec_()
+        if dialog.result() == 1:
+            self._last_opened_info = opened_settings_ui()
+            return
+
+    def closeEvent(self, event):
+        if self._last_opened_info:
+            closed_settings_ui(self._last_opened_info)
+            self._last_opened_info = None
+        super(MainWidget, self).closeEvent(event)
 
     def _show_password_dialog(self):
         if self._password_dialog:
@@ -221,6 +260,8 @@ class MainWidget(QtWidgets.QWidget):
         if current_widget is widget:
             self._update_search_dialog()
 
+        self._check_on_ui_open()
+
     def keyPressEvent(self, event):
         if event.matches(QtGui.QKeySequence.Find):
             # todo: search in all widgets (or in active)?
@@ -231,3 +272,88 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         return super(MainWidget, self).keyPressEvent(event)
+
+
+class SettingsUIOpenedElsewhere(QtWidgets.QDialog):
+    def __init__(self, info_obj, parent=None):
+        super(SettingsUIOpenedElsewhere, self).__init__(parent)
+
+        self._result = 0
+
+        self.setWindowTitle("Someone else has opened Settings UI")
+
+        message_label = QtWidgets.QLabel((
+            "Someone else has opened Settings UI. That may cause data loss."
+            " Please contact the person on the other side."
+            "<br/><br/>You can open the UI in view-only mode or take"
+            " the control which will cause the other settings won't be able"
+            " to save changes.<br/>"
+        ), self)
+        message_label.setWordWrap(True)
+
+        separator_widget_1 = QtWidgets.QFrame(self)
+        separator_widget_2 = QtWidgets.QFrame(self)
+        for separator_widget in (
+            separator_widget_1,
+            separator_widget_2
+        ):
+            separator_widget.setObjectName("Separator")
+            separator_widget.setMinimumHeight(1)
+            separator_widget.setMaximumHeight(1)
+
+        other_information = QtWidgets.QWidget(self)
+        other_information_layout = QtWidgets.QFormLayout(other_information)
+        other_information_layout.setContentsMargins(0, 0, 0, 0)
+        for label, value in (
+            ("Username", info_obj.username),
+            ("Host name", info_obj.hostname),
+            ("Host IP", info_obj.hostip),
+            ("System name", info_obj.system_name),
+            ("Local ID", info_obj.local_id),
+            ("Time Stamp", info_obj.timestamp),
+        ):
+            other_information_layout.addRow(
+                label,
+                QtWidgets.QLabel(value, other_information)
+            )
+
+        footer_widget = QtWidgets.QWidget(self)
+        buttons_widget = QtWidgets.QWidget(footer_widget)
+
+        take_control_btn = QtWidgets.QPushButton(
+            "Take control", buttons_widget
+        )
+        view_mode_btn = QtWidgets.QPushButton(
+            "View only", buttons_widget
+        )
+
+        buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.addWidget(take_control_btn, 1)
+        buttons_layout.addWidget(view_mode_btn, 1)
+
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(buttons_widget, 0)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(message_label, 0)
+        layout.addWidget(separator_widget_1, 0)
+        layout.addWidget(other_information, 1, QtCore.Qt.AlignHCenter)
+        layout.addWidget(separator_widget_2, 0)
+        layout.addWidget(footer_widget, 0)
+
+        take_control_btn.clicked.connect(self._on_take_control)
+        view_mode_btn.clicked.connect(self._on_view_mode)
+
+    def result(self):
+        return self._result
+
+    def _on_take_control(self):
+        self._result = 1
+        self.close()
+
+    def _on_view_mode(self):
+        self._result = 0
+        self.close()
