@@ -67,7 +67,9 @@ class SettingsStateInfo:
         return self.from_data(self.to_data())
 
     @classmethod
-    def create_new(cls, openpype_version, settings_type, project_name):
+    def create_new(
+        cls, openpype_version, settings_type=None, project_name=None
+    ):
         """Create information about this machine for current time."""
 
         from openpype.lib.pype_info import get_workstation_info
@@ -111,6 +113,20 @@ class SettingsStateInfo:
             "project_name": self.project_name
         })
         return data
+
+    @classmethod
+    def create_new_empty(cls, openpype_version, settings_type=None):
+        return cls(
+            openpype_version,
+            settings_type,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None
+        )
 
     @classmethod
     def from_document(cls, openpype_version, settings_type, document):
@@ -428,6 +444,54 @@ class SettingsHandler:
 
         pass
 
+    # UI related calls
+    @abstractmethod
+    def get_last_opened_info(self):
+        """Get information about last opened UI.
+
+        Last opened UI is empty if there is noone who would have opened UI at
+        the moment when called.
+
+        Returns:
+            Union[None, SettingsStateInfo]: Information about machine who had
+                opened Settings UI.
+        """
+
+        pass
+
+    @abstractmethod
+    def opened_ui(self):
+        """Callback called when settings UI is opened.
+
+        Information about this machine must be available when
+        'get_last_opened_info' is called from anywhere until 'closed_ui' is
+        called again.
+
+        Returns:
+            SettingsStateInfo: Object representing information about this
+                machine. Must be passed to 'closed_ui' when finished.
+        """
+
+        pass
+
+    @abstractmethod
+    def closed_ui(self, info_obj):
+        """Callback called when settings UI is closed.
+
+        From the moment this method is called the information about this
+        machine is removed and no more available when 'get_last_opened_info'
+        is called.
+
+        Callback should validate if this machine is still stored as opened ui
+        before changing any value.
+
+        Args:
+            info_obj (SettingsStateInfo): Object created when 'opened_ui' was
+                called.
+        """
+
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class LocalSettingsHandler:
@@ -690,8 +754,7 @@ class MongoSettingsHandler(SettingsHandler):
 
         last_saved_info = SettingsStateInfo.create_new(
             self._current_version,
-            SYSTEM_SETTINGS_KEY,
-            None
+            SYSTEM_SETTINGS_KEY
         )
         self.system_settings_cache.update_last_saved_info(
             last_saved_info
@@ -1609,6 +1672,64 @@ class MongoSettingsHandler(SettingsHandler):
         if not sorted:
             return output
         return self._sort_versions(output)
+
+    def get_last_opened_info(self):
+        doc = self.collection.find_one({
+            "type": "last_opened_settings_ui",
+            "version": self._current_version
+        }) or {}
+        info_data = doc.get("info")
+        if not info_data:
+            return SettingsStateInfo.create_new_empty(self._current_version)
+
+        # Fill not available information
+        info_data["openpype_version"] = self._current_version
+        info_data["settings_type"] = None
+        info_data["project_name"] = None
+        return SettingsStateInfo.from_data(info_data)
+
+    def opened_ui(self):
+        doc_filter = {
+            "type": "last_opened_settings_ui",
+            "version": self._current_version
+        }
+
+        opened_info = SettingsStateInfo.create_new(self._current_version)
+        new_doc_data = copy.deepcopy(doc_filter)
+        new_doc_data["info"] = opened_info.to_document_data()
+
+        doc = self.collection.find_one(
+            doc_filter,
+            {"_id": True}
+        )
+        if doc:
+            self.collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": new_doc_data}
+            )
+        else:
+            self.collection.insert_one(new_doc_data)
+        return opened_info
+
+    def closed_ui(self, info_obj):
+        doc_filter = {
+            "type": "last_opened_settings_ui",
+            "version": self._current_version
+        }
+        doc = self.collection.find_one(doc_filter) or {}
+        info_data = doc.get("info")
+        if not info_data:
+            return
+
+        info_data["openpype_version"] = self._current_version
+        info_data["settings_type"] = None
+        info_data["project_name"] = None
+        current_info = SettingsStateInfo.from_data(info_data)
+        if current_info == info_obj:
+            self.collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"info": None}}
+            )
 
 
 class MongoLocalSettingsHandler(LocalSettingsHandler):

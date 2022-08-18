@@ -92,6 +92,31 @@ def calculate_changes(old_value, new_value):
 
 
 @require_handler
+def get_system_last_saved_info():
+    return _SETTINGS_HANDLER.get_system_last_saved_info()
+
+
+@require_handler
+def get_project_last_saved_info(project_name):
+    return _SETTINGS_HANDLER.get_project_last_saved_info(project_name)
+
+
+@require_handler
+def get_last_opened_info():
+    return _SETTINGS_HANDLER.get_last_opened_info()
+
+
+@require_handler
+def opened_ui():
+    return _SETTINGS_HANDLER.opened_ui()
+
+
+@require_handler
+def closed_ui(info_obj):
+    return _SETTINGS_HANDLER.closed_ui(info_obj)
+
+
+@require_handler
 def save_studio_settings(data):
     """Save studio overrides of system settings.
 
