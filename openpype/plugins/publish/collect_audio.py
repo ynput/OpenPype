@@ -15,7 +15,7 @@ class CollectAudio(pyblish.api.InstancePlugin):
     """ Collecting available audio subset to instance
 
     """
-    label = "Colect Audio"
+    label = "Collect Audio"
     order = pyblish.api.CollectorOrder + 0.1
     families = ["review"]
     hosts = [
@@ -39,8 +39,14 @@ class CollectAudio(pyblish.api.InstancePlugin):
     audio_subset_name = "audioMain"
 
     def process(self, instance):
-        # * Add audio to instance if exists.
-        self.log.info('Collecting Audio Data')
+        if instance.data.get("audio"):
+            self.log.info(
+                "Skipping Audio collecion. It is already collected"
+            )
+            return
+
+        # Add audio to instance if exists.
+        self.log.info('Collecting Audio Data ...')
 
         project_name = legacy_io.active_project()
         asset_name = instance.data["asset"]
@@ -68,10 +74,10 @@ class CollectAudio(pyblish.api.InstancePlugin):
 
         # Add audio to instance if representation was found
         if repre_doc:
-            if not instance.data.get("audio"):
-                instance.data["audio"] = [{
-                    "offset": 0,
-                    "filename": get_representation_path(repre_doc)
-                }]
+            instance.data["audio"] = [{
+                "offset": 0,
+                "filename": get_representation_path(repre_doc)
+            }]
+            self.log.info("Audio Data added to instance ...")
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))
