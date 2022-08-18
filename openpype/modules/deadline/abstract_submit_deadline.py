@@ -631,7 +631,9 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         try:
             result = response.json()
         except json.decoder.JSONDecodeError:
-            self.log.warning("Broken response {}".format(response))
+            msg = "Broken response {}. ".format(response)
+            msg += "Try restarting DL webservice"
+            self.log.warning()
             raise RuntimeError("Broken response from DL")
 
         # for submit publish job
