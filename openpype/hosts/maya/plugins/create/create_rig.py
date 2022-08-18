@@ -13,12 +13,15 @@ class CreateRig(plugin.Creator):
     label = "Rig"
     family = "rig"
     icon = "wheelchair"
+    write_color_sets = False
+    def __init__(self, *args, **kwargs):
+        super(CreateRig, self).__init__(*args, **kwargs)
+        self.data["writeColorSets"] = self.write_color_sets
 
     def process(self):
 
         with lib.undo_chunk():
             instance = super(CreateRig, self).process()
-
             self.log.info("Creating Rig instance set up ...")
             controls = cmds.sets(name="controls_SET", empty=True)
             pointcache = cmds.sets(name="out_SET", empty=True)

@@ -138,6 +138,56 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CreateModel",
+            "label": "Create Model",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "Write Color Sets"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateRig",
+            "label": "Create Rig",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "Write Color Sets"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CreatePointCache",
             "label": "Create Point Cache",
             "checkbox_key": "enabled",
@@ -160,7 +210,7 @@
                 }
             ]
         },
-        
+
         {
             "type": "schema_template",
             "name": "template_create_plugin",
@@ -198,20 +248,12 @@
                     "label": "Create Maya Scene"
                 },
                 {
-                    "key": "CreateModel",
-                    "label": "Create Model"
-                },
-                {
                     "key": "CreateRenderSetup",
                     "label": "Create Render Setup"
                 },
                 {
                     "key": "CreateReview",
                     "label": "Create Review"
-                },
-                {
-                    "key": "CreateRig",
-                    "label": "Create Rig"
                 },
                 {
                     "key": "CreateSetDress",

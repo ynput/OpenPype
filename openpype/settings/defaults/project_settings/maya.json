@@ -33,7 +33,7 @@
     },
     "RenderSettings": {
         "apply_render_settings": true,
-        "default_render_image_folder": "",
+        "default_render_image_folder": "renders",
         "aov_separator": "underscore",
         "reset_current_frame": false,
         "arnold_renderer": {
@@ -163,6 +163,7 @@
         },
         "CreateModel": {
             "enabled": true,
+            "write_color_sets": false,
             "defaults": [
                 "Main",
                 "Proxy",
@@ -183,6 +184,7 @@
         },
         "CreateRig": {
             "enabled": true,
+            "write_color_sets": false,
             "defaults": [
                 "Main",
                 "Sim",

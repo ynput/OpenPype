@@ -9,12 +9,12 @@ class CreateModel(plugin.Creator):
     family = "model"
     icon = "cube"
     defaults = ["Main", "Proxy", "_MD", "_HD", "_LD"]
-
+    write_color_sets = False
     def __init__(self, *args, **kwargs):
         super(CreateModel, self).__init__(*args, **kwargs)
 
         # Vertex colors with the geometry
-        self.data["writeColorSets"] = False
+        self.data["writeColorSets"] = self.write_color_sets
         self.data["writeFaceSets"] = False
 
         # Include attributes by attribute name or prefix
