@@ -4,6 +4,7 @@
 It provides Deadline JobInfo data class.
 
 """
+import json.decoder
 import os
 from abc import abstractmethod
 import platform
@@ -627,7 +628,12 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.debug(payload)
             raise RuntimeError(response.text)
 
-        result = response.json()
+        try:
+            result = response.json()
+        except json.decoder.JSONDecodeError:
+            self.log.warning("Broken response {}".format(response))
+            raise RuntimeError("Broken response from DL")
+
         # for submit publish job
         self._instance.data["deadlineSubmissionJob"] = result
 
