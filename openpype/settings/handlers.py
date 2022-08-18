@@ -368,7 +368,7 @@ class SettingsHandler:
         """OpenPype versions that have any studio project anatomy overrides.
 
         Returns:
-            list<str>: OpenPype versions strings.
+            List[str]: OpenPype versions strings.
         """
         pass
 
@@ -379,7 +379,7 @@ class SettingsHandler:
         """OpenPype versions that have any studio project settings overrides.
 
         Returns:
-            list<str>: OpenPype versions strings.
+            List[str]: OpenPype versions strings.
         """
         pass
 
@@ -393,8 +393,39 @@ class SettingsHandler:
             project_name(str): Name of project.
 
         Returns:
-            list<str>: OpenPype versions strings.
+            List[str]: OpenPype versions strings.
         """
+
+        pass
+
+    @abstractmethod
+    def get_system_last_saved_info(self):
+        """State of last system settings overrides at the moment when called.
+
+        This method must provide most recent data so using cached data is not
+        the way.
+
+        Returns:
+            SettingsStateInfo: Information about system settings overrides.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_project_last_saved_info(self, project_name):
+        """State of last project settings overrides at the moment when called.
+
+        This method must provide most recent data so using cached data is not
+        the way.
+
+        Args:
+            project_name (Union[None, str]): Project name for which state
+                should be returned.
+
+        Returns:
+            SettingsStateInfo: Information about project settings overrides.
+        """
+
         pass
 
 
@@ -427,7 +458,7 @@ class CacheValues:
         self.data = None
         self.creation_time = None
         self.version = None
-        self.settings_state = None
+        self.last_saved_info = None
 
     def data_copy(self):
         if not self.data:
@@ -439,8 +470,8 @@ class CacheValues:
         self.creation_time = datetime.datetime.now()
         self.version = version
 
-    def update_settings_state(self, settings_state):
-        self.settings_state = settings_state
+    def update_last_saved_info(self, last_saved_info):
+        self.last_saved_info = last_saved_info
 
     def update_from_document(self, document, version):
         data = {}
@@ -1288,6 +1319,7 @@ class MongoSettingsHandler(SettingsHandler):
                 self.project_anatomy_cache[project_name].update_from_document(
                     document, version
                 )
+
             else:
                 project_doc = get_project(project_name)
                 self.project_anatomy_cache[project_name].update_data(
