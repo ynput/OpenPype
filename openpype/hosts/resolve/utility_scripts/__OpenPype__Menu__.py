@@ -2,13 +2,13 @@ import os
 import sys
 
 from openpype.pipeline import install_host
-from openpype.api import Logger
+from openpype.lib import Logger
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def main(env):
-    import openpype.hosts.resolve as bmdvr
+    import openpype.hosts.resolve.api as bmdvr
 
     # activate resolve from openpype
     install_host(bmdvr)
