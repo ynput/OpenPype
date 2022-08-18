@@ -1547,6 +1547,11 @@ def _load_representations_by_loader(loader, repre_contexts,
         return
 
     for repre_context in repre_contexts.values():
+        version_doc = repre_context["version"]
+        if version_doc["type"] == "hero_version":
+            version_name = "Hero"
+        else:
+            version_name = version_doc.get("name")
         try:
             if data_by_repre_id:
                 _id = repre_context["representation"]["_id"]
@@ -1564,7 +1569,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 None,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
 
         except Exception as exc:
@@ -1577,7 +1582,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 formatted_traceback,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
     return error_info
 

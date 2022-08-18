@@ -1259,58 +1259,64 @@ def get_representations_parents(project_name, representations):
         dict[ObjectId, tuple]: Parents by representation id.
     """
 
-    repres_by_version_id = collections.defaultdict(list)
-    versions_by_version_id = {}
-    versions_by_subset_id = collections.defaultdict(list)
-    subsets_by_subset_id = {}
-    subsets_by_asset_id = collections.defaultdict(list)
+    repre_docs_by_version_id = collections.defaultdict(list)
+    version_docs_by_version_id = {}
+    version_docs_by_subset_id = collections.defaultdict(list)
+    subset_docs_by_subset_id = {}
+    subset_docs_by_asset_id = collections.defaultdict(list)
     output = {}
-    for representation in representations:
-        repre_id = representation["_id"]
+    for repre_doc in representations:
+        repre_id = repre_doc["_id"]
+        version_id = repre_doc["parent"]
         output[repre_id] = (None, None, None, None)
-        version_id = representation["parent"]
-        repres_by_version_id[version_id].append(representation)
+        repre_docs_by_version_id[version_id].append(repre_doc)
 
-    versions = get_versions(
-        project_name, version_ids=repres_by_version_id.keys()
+    version_docs = get_versions(
+        project_name,
+        version_ids=repre_docs_by_version_id.keys(),
+        hero=True
     )
-    for version in versions:
-        version_id = version["_id"]
-        subset_id = version["parent"]
-        versions_by_version_id[version_id] = version
-        versions_by_subset_id[subset_id].append(version)
+    for version_doc in version_docs:
+        version_id = version_doc["_id"]
+        subset_id = version_doc["parent"]
+        version_docs_by_version_id[version_id] = version_doc
+        version_docs_by_subset_id[subset_id].append(version_doc)
 
-    subsets = get_subsets(
-        project_name, subset_ids=versions_by_subset_id.keys()
+    subset_docs = get_subsets(
+        project_name, subset_ids=version_docs_by_subset_id.keys()
     )
-    for subset in subsets:
-        subset_id = subset["_id"]
-        asset_id = subset["parent"]
-        subsets_by_subset_id[subset_id] = subset
-        subsets_by_asset_id[asset_id].append(subset)
+    for subset_doc in subset_docs:
+        subset_id = subset_doc["_id"]
+        asset_id = subset_doc["parent"]
+        subset_docs_by_subset_id[subset_id] = subset_doc
+        subset_docs_by_asset_id[asset_id].append(subset_doc)
 
-    assets = get_assets(project_name, asset_ids=subsets_by_asset_id.keys())
-    assets_by_id = {
-        asset["_id"]: asset
-        for asset in assets
+    asset_docs = get_assets(
+        project_name, asset_ids=subset_docs_by_asset_id.keys()
+    )
+    asset_docs_by_id = {
+        asset_doc["_id"]: asset_doc
+        for asset_doc in asset_docs
     }
 
-    project = get_project(project_name)
+    project_doc = get_project(project_name)
 
-    for version_id, representations in repres_by_version_id.items():
-        asset = None
-        subset = None
-        version = versions_by_version_id.get(version_id)
-        if version:
-            subset_id = version["parent"]
-            subset = subsets_by_subset_id.get(subset_id)
-            if subset:
-                asset_id = subset["parent"]
-                asset = assets_by_id.get(asset_id)
+    for version_id, repre_docs in repre_docs_by_version_id.items():
+        asset_doc = None
+        subset_doc = None
+        version_doc = version_docs_by_version_id.get(version_id)
+        if version_doc:
+            subset_id = version_doc["parent"]
+            subset_doc = subset_docs_by_subset_id.get(subset_id)
+            if subset_doc:
+                asset_id = subset_doc["parent"]
+                asset_doc = asset_docs_by_id.get(asset_id)
 
-        for representation in representations:
-            repre_id = representation["_id"]
-            output[repre_id] = (version, subset, asset, project)
+        for repre_doc in repre_docs:
+            repre_id = repre_doc["_id"]
+            output[repre_id] = (
+                version_doc, subset_doc, asset_doc, project_doc
+            )
     return output
 
 
