@@ -1205,18 +1205,7 @@ class MongoSettingsHandler(SettingsHandler):
             globals_document = self.collection.find_one({
                 "type": GLOBAL_SETTINGS_KEY
             })
-            document = (
-                self._get_studio_system_settings_overrides_for_version()
-            )
-            if document is None:
-                document = self._find_closest_system_settings()
-
-            version = None
-            if document:
-                if document["type"] == self._system_settings_key:
-                    version = document["version"]
-                else:
-                    version = LEGACY_SETTINGS_VERSION
+            document, version = self._get_system_settings_overrides_doc()
 
             merged_document = self._apply_global_settings(
                 document, globals_document
@@ -1232,21 +1221,27 @@ class MongoSettingsHandler(SettingsHandler):
             return data, cache.version
         return data
 
+    def _get_system_settings_overrides_doc(self):
+        document = (
+            self._get_studio_system_settings_overrides_for_version()
+        )
+        if document is None:
+            document = self._find_closest_system_settings()
+
+        version = None
+        if document:
+            if document["type"] == self._system_settings_key:
+                version = document["version"]
+            else:
+                version = LEGACY_SETTINGS_VERSION
+
+        return document, version
+
     def _get_project_settings_overrides(self, project_name, return_version):
         if self.project_settings_cache[project_name].is_outdated:
-            document = self._get_project_settings_overrides_for_version(
+            document, version = self._get_project_settings_overrides_doc(
                 project_name
             )
-            if document is None:
-                document = self._find_closest_project_settings(project_name)
-
-            version = None
-            if document:
-                if document["type"] == self._project_settings_key:
-                    version = document["version"]
-                else:
-                    version = LEGACY_SETTINGS_VERSION
-
             self.project_settings_cache[project_name].update_from_document(
                 document, version
             )
@@ -1256,6 +1251,22 @@ class MongoSettingsHandler(SettingsHandler):
         if return_version:
             return data, cache.version
         return data
+
+    def _get_project_settings_overrides_doc(self, project_name):
+        document = self._get_project_settings_overrides_for_version(
+            project_name
+        )
+        if document is None:
+            document = self._find_closest_project_settings(project_name)
+
+        version = None
+        if document:
+            if document["type"] == self._project_settings_key:
+                version = document["version"]
+            else:
+                version = LEGACY_SETTINGS_VERSION
+
+        return document, version
 
     def get_studio_project_settings_overrides(self, return_version):
         """Studio overrides of default project settings."""
