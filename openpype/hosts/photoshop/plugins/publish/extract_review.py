@@ -144,7 +144,7 @@ class ExtractReview(openpype.api.Extractor):
         used as a source for thumbnail or review mov.
         """
         # 16384x16384 actually didn't work because int overflow
-        max_ffmpeg_size = 16000
+        max_ffmpeg_size = 8192
         Image.MAX_IMAGE_PIXELS = None
         first_url = os.path.join(staging_dir, processed_img_names[0])
         with Image.open(first_url) as im:
