@@ -701,7 +701,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self.breadcrumbs_model.set_entity(None)
 
     def _on_reset_success(self):
-        self._reset_crashed = True
+        self._reset_crashed = False
         if not self.save_btn.isEnabled():
             self.save_btn.setEnabled(self._edit_mode)
 
