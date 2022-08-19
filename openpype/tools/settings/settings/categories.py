@@ -115,13 +115,19 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         "settings to update them to you current running OpenPype version."
     )
 
-    def __init__(self, user_role, parent=None):
+    def __init__(self, controller, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
 
-        self.user_role = user_role
+        self._controller = controller
+        controller.event_system.add_callback(
+            "edit.mode.changed",
+            self._edit_mode_changed
+        )
 
         self.entity = None
         self._edit_mode = None
+        self._last_saved_info = None
+        self._reset_crashed = False
 
         self._state = CategoryState.Idle
 
@@ -192,11 +198,16 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
         raise TypeError("Unknown type: {}".format(label))
 
+    def _edit_mode_changed(self, event):
+        self.set_edit_mode(event["edit_mode"])
+
     def set_edit_mode(self, enabled):
         if enabled is self._edit_mode:
             return
 
-        self.save_btn.setEnabled(enabled)
+        self._edit_mode = enabled
+
+        self.save_btn.setEnabled(enabled and not self._reset_crashed)
         if enabled:
             tooltip = (
                 "Someone else has opened settings UI."
@@ -302,7 +313,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(5, 5, 5, 5)
-        if self.user_role == "developer":
+        if self._controller.user_role == "developer":
             self._add_developer_ui(footer_layout, footer_widget)
 
         footer_layout.addWidget(empty_label, 1)
@@ -683,14 +694,16 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
 
     def _on_reset_crash(self):
+        self._reset_crashed = True
         self.save_btn.setEnabled(False)
 
         if self.breadcrumbs_model is not None:
             self.breadcrumbs_model.set_entity(None)
 
     def _on_reset_success(self):
+        self._reset_crashed = True
         if not self.save_btn.isEnabled():
-            self.save_btn.setEnabled(True)
+            self.save_btn.setEnabled(self._edit_mode)
 
         if self.breadcrumbs_model is not None:
             path = self.breadcrumbs_bar.path()

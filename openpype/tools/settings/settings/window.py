@@ -3,6 +3,7 @@ from Qt import QtWidgets, QtGui, QtCore
 from openpype import style
 
 from openpype.lib import is_admin_password_required
+from openpype.lib.events import EventSystem
 from openpype.widgets import PasswordDialog
 
 from openpype.settings.lib import (
@@ -24,6 +25,81 @@ from .widgets import (
 from .search_dialog import SearchEntitiesDialog
 
 
+class SettingsController:
+    """Controller for settings tools.
+
+    Added when tool was finished for checks of last opened in settings
+    categories and being able communicated with main widget logic.
+    """
+
+    def __init__(self, user_role):
+        self._user_role = user_role
+        self._event_system = EventSystem()
+
+        self._opened_info = None
+        self._last_opened_info = None
+        self._edit_mode = None
+
+    @property
+    def user_role(self):
+        return self._user_role
+
+    @property
+    def event_system(self):
+        return self._event_system
+
+    @property
+    def opened_info(self):
+        return self._opened_info
+
+    @property
+    def last_opened_info(self):
+        return self._last_opened_info
+
+    @property
+    def edit_mode(self):
+        return self._edit_mode
+
+    def ui_closed(self):
+        if self._opened_info is not None:
+            closed_settings_ui(self._opened_info)
+
+        self._opened_info = None
+        self._edit_mode = None
+
+    def set_edit_mode(self, enabled):
+        if self._edit_mode is enabled:
+            return
+
+        opened_info = None
+        if enabled:
+            opened_info = opened_settings_ui()
+            self._last_opened_info = opened_info
+
+        self._opened_info = opened_info
+        self._edit_mode = enabled
+
+        self.event_system.emit(
+            "edit.mode.changed",
+            {"edit_mode": enabled},
+            "controller"
+        )
+
+    def update_last_opened_info(self):
+        print("update_last_opened_info")
+        last_opened_info = get_last_opened_info()
+        enabled = False
+        if (
+            last_opened_info is None
+            or self._opened_info == last_opened_info
+        ):
+            enabled = True
+
+        self._last_opened_info = last_opened_info
+
+        self.set_edit_mode(enabled)
+
+
 class MainWidget(QtWidgets.QWidget):
     trigger_restart = QtCore.Signal()
 
@@ -33,11 +109,12 @@ class MainWidget(QtWidgets.QWidget):
     def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
 
+        controller = SettingsController(user_role)
+
         # Object referencing to this machine and time when UI was opened
         # - is used on close event
-        self._last_opened_info = None
-        self._edit_mode = None
         self._main_reset = False
+        self._controller = controller
 
         self._user_passed = False
         self._reset_on_show = reset_on_show
@@ -55,8 +132,8 @@ class MainWidget(QtWidgets.QWidget):
 
         header_tab_widget = SettingsTabWidget(parent=self)
 
-        studio_widget = SystemWidget(user_role, header_tab_widget)
-        project_widget = ProjectWidget(user_role, header_tab_widget)
+        studio_widget = SystemWidget(controller, header_tab_widget)
+        project_widget = ProjectWidget(controller, header_tab_widget)
 
         tab_widgets = [
             studio_widget,
@@ -151,45 +228,24 @@ class MainWidget(QtWidgets.QWidget):
             # Trigger reset with 100ms delay
             QtCore.QTimer.singleShot(100, self.reset)
 
-        elif not self._last_opened_info:
-            self._check_on_ui_open()
-
     def closeEvent(self, event):
-        if self._last_opened_info:
-            closed_settings_ui(self._last_opened_info)
-            self._last_opened_info = None
+        self._controller.ui_closed()
+
         super(MainWidget, self).closeEvent(event)
 
-    def _check_on_ui_open(self):
-        last_opened_info = get_last_opened_info()
-        if last_opened_info is not None:
-            if self._last_opened_info != last_opened_info:
-                self._last_opened_info = None
-        else:
-            self._last_opened_info = opened_settings_ui()
-
-        if self._last_opened_info is not None:
-            if self._edit_mode is not True:
-                self._set_edit_mode(True)
+    def _check_on_reset(self):
+        self._controller.update_last_opened_info()
+        if self._controller.edit_mode:
             return
 
-        if self._edit_mode is False:
-            return
+        # if self._edit_mode is False:
+        #     return
 
-        dialog = SettingsUIOpenedElsewhere(last_opened_info, self)
+        dialog = SettingsUIOpenedElsewhere(
+            self._controller.last_opened_info, self
+        )
         dialog.exec_()
-        edit_enabled = dialog.result() == 1
-        if edit_enabled:
-            self._last_opened_info = opened_settings_ui()
-        self._set_edit_mode(edit_enabled)
-
-    def _set_edit_mode(self, mode):
-        if self._edit_mode is mode:
-            return
-
-        self._edit_mode = mode
-        for tab_widget in self.tab_widgets:
-            tab_widget.set_edit_mode(mode)
+        self._controller.set_edit_mode(dialog.result() == 1)
 
     def _show_password_dialog(self):
         if self._password_dialog:
@@ -235,7 +291,7 @@ class MainWidget(QtWidgets.QWidget):
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
         self._main_reset = False
-        self._check_on_ui_open()
+        self._check_on_reset()
 
     def _update_search_dialog(self, clear=False):
         if self._search_dialog.isVisible():
@@ -280,7 +336,7 @@ class MainWidget(QtWidgets.QWidget):
             self._update_search_dialog()
 
         if not self._main_reset:
-            self._check_on_ui_open()
+            self._check_on_reset()
 
     def keyPressEvent(self, event):
         if event.matches(QtGui.QKeySequence.Find):
@@ -306,8 +362,8 @@ class SettingsUIOpenedElsewhere(QtWidgets.QDialog):
             "Someone else has opened Settings UI. That may cause data loss."
             " Please contact the person on the other side."
             "<br/><br/>You can open the UI in view-only mode or take"
-            " the control which will cause the other settings won't be able"
-            " to save changes.<br/>"
+            " the control which will cause settings on the other side"
+            " won't be able to save changes.<br/>"
         ), self)
         message_label.setWordWrap(True)
 
