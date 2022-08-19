@@ -1,7 +1,6 @@
 import sys
 import os
 import re
-import sys
 import json
 import pickle
 import clique

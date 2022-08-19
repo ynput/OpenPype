@@ -348,7 +348,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # at the end remove the duplicated clip
                 flame.delete(exporting_clip)
 
-
     def _get_retimed_attributes(self, instance):
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
