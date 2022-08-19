@@ -635,7 +635,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         try:
             result = response.json()
-        except json.decoder.JSONDecodeError:
+        except JSONDecodeError:
             msg = "Broken response {}. ".format(response)
             msg += "Try restarting the Deadline Webservice."
             self.log.warning(msg, exc_info=True)
