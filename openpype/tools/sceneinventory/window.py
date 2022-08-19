@@ -4,8 +4,9 @@ import sys
 from Qt import QtWidgets, QtCore
 import qtawesome
 
-from openpype.pipeline import legacy_io
 from openpype import style
+from openpype.client import get_projects
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.delegates import VersionDelegate
 from openpype.tools.utils.lib import (
     qt_app_context,
@@ -195,8 +196,7 @@ def show(root=None, debug=False, parent=None, items=None):
 
         if not os.environ.get("AVALON_PROJECT"):
             any_project = next(
-                project for project in legacy_io.projects()
-                if project.get("active", True) is not False
+                project for project in get_projects()
             )
 
             project_name = any_project["name"]

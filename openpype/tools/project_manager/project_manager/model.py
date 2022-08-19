@@ -8,6 +8,7 @@ from pymongo import UpdateOne, DeleteOne
 from Qt import QtCore, QtGui
 
 from openpype.client import (
+    get_projects,
     get_project,
     get_assets,
     get_asset_ids_with_subsets,
@@ -54,12 +55,8 @@ class ProjectModel(QtGui.QStandardItemModel):
             self._items_by_name[None] = none_project
             new_project_items.append(none_project)
 
-        project_docs = self.dbcon.projects(
-            projection={"name": 1},
-            only_active=True
-        )
         project_names = set()
-        for project_doc in project_docs:
+        for project_doc in get_projects(fields=["name"]):
             project_name = project_doc.get("name")
             if not project_name:
                 continue
