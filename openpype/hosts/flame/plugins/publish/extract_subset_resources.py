@@ -50,7 +50,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-
         if not self.keep_original_representation:
             # remove previeous representation if not needed
             instance.data["representations"] = []
@@ -68,7 +67,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # get configured workfile frame start/end (handles excluded)
         frame_start = instance.data["frameStart"]
         # get media source first frame
-        source_first_frame = instance.data["sourceFirstFrame"]  # 1001
+        source_first_frame = instance.data["sourceFirstFrame"]
 
         # get timeline in/out of segment
         clip_in = instance.data["clipIn"]
@@ -76,9 +75,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         # get retimed attributres
         retimed_data = self._get_retimed_attributes(instance)
-        self.log.debug("_ retimed_data: {}".format(
-            pformat(retimed_data)
-        ))
+
         # get individual keys
         r_handle_start = retimed_data["handle_start"]
         r_handle_end = retimed_data["handle_end"]
@@ -90,7 +87,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
         handle_end = instance.data["handleEnd"]
         handles = max(handle_start, handle_end)
         include_handles = instance.data.get("includeHandles")
-        self.log.debug("_ include_handles: {}".format(include_handles))
 
         # get media source range with handles
         source_start_handles = instance.data["sourceStartH"]
@@ -101,16 +97,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 instance.data["sourceStart"] - r_handle_start)
             source_end_handles = (
                 source_start_handles
-                # TODO: duration exclude 1 - might be problem
                 + (r_source_dur - 1)
                 + r_handle_start
                 + r_handle_end
             )
-
-        self.log.debug("_ source_start_handles: {}".format(
-            source_start_handles))
-        self.log.debug("_ source_end_handles: {}".format(
-            source_end_handles))
 
         # create staging dir path
         staging_dir = self.staging_dir(instance)
@@ -125,18 +115,20 @@ class ExtractSubsetResources(openpype.api.Extractor):
         }
         export_presets.update(self.export_presets_mapping)
 
+        if not instance.data.get("versionData"):
+            instance.data["versionData"] = {}
+
         # set versiondata if any retime
         version_data = retimed_data.get("version_data")
 
         if version_data:
             instance.data["versionData"].update(version_data)
 
-        if instance.data.get("versionData"):
-            if r_speed != 1.0:
-                instance.data["versionData"].update({
-                    "frameStart": source_start_handles + r_handle_start,
-                    "frameEnd": source_end_handles - r_handle_end,
-                })
+        if r_speed != 1.0:
+            instance.data["versionData"].update({
+                "frameStart": source_start_handles + r_handle_start,
+                "frameEnd": source_end_handles - r_handle_end,
+            })
 
         # loop all preset names and
         for unique_name, preset_config in export_presets.items():
@@ -175,9 +167,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
             # calculate duration with handles
             source_duration_handles = (
                 source_end_handles - source_start_handles) + 1
-
-            self.log.debug("_ source_duration_handles: {}".format(
-                source_duration_handles))
 
             exporting_clip = None
             name_patern_xml = "<name>_{}.".format(
@@ -222,9 +211,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # add any xml overrides collected form segment.comment
                 modify_xml_data.update(instance.data["xml_overrides"])
 
-            self.log.debug(pformat(modify_xml_data))
-            self.log.debug("_ sequence publish {}".format(
-                export_type == "Sequence Publish"))
             self.log.debug("_ in_mark: {}".format(in_mark))
             self.log.debug("_ out_mark: {}".format(out_mark))
 
@@ -264,7 +250,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 thumb_frame_number = int(in_mark + (
                     source_duration_handles / 2))
 
-                self.log.debug("__ in_mark: {}".format(in_mark))
                 self.log.debug("__ thumb_frame_number: {}".format(
                     thumb_frame_number
                 ))
@@ -276,9 +261,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "out_mark": out_mark
                 })
 
-            self.log.debug("__ modify_xml_data: {}".format(
-                pformat(modify_xml_data)
-            ))
             preset_path = opfapi.modify_preset_file(
                 preset_orig_xml_path, staging_dir, modify_xml_data)
 
@@ -366,21 +348,13 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # at the end remove the duplicated clip
                 flame.delete(exporting_clip)
 
-        self.log.debug("All representations: {}".format(
-            pformat(instance.data["representations"])))
 
     def _get_retimed_attributes(self, instance):
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
-        include_handles = instance.data.get("includeHandles")
-        self.log.debug("_ include_handles: {}".format(include_handles))
 
         # get basic variables
         otio_clip = instance.data["otioClip"]
-        otio_avalable_range = otio_clip.available_range()
-        available_duration = otio_avalable_range.duration.value
-        self.log.debug(
-            ">> available_duration: {}".format(available_duration))
 
         # get available range trimmed with processed retimes
         retimed_attributes = get_media_range_with_retimes(
@@ -412,8 +386,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 unique_name, activated_preset, filter_path_regex
             )
         )
-        self.log.debug(
-            "__ clip_path: `{}`".format(clip_path))
 
         # skip if not activated presete
         if not activated_preset:
