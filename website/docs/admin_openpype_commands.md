@@ -40,7 +40,6 @@ For more information [see here](admin_use.md#run-openpype).
 | module | Run command line arguments for modules. |  |
 | repack-version | Tool to re-create version zip. | [📑](#repack-version-arguments) |
 | tray | Launch OpenPype Tray. | [📑](#tray-arguments)
-| eventserver | This should be ideally used by system service (such as systemd or upstart on linux and window service). | [📑](#eventserver-arguments) |
 | launch | Launch application in Pype environment. | [📑](#launch-arguments) |
 | publish | Pype takes JSON from provided path and use it to publish data in it. | [📑](#publish-arguments) |
 | extractenvironments | Extract environment variables for entered context to a json file. | [📑](#extractenvironments-arguments) |
@@ -57,25 +56,7 @@ For more information [see here](admin_use.md#run-openpype).
 openpype_console tray
 ```
 ---
-### `launch` arguments {#eventserver-arguments}
-You have to set either proper environment variables to provide URL and credentials or use
-option to specify them.
 
-| Argument | Description |
-| --- | --- |
-| `--ftrack-url` | URL to ftrack server (can be set with `FTRACK_SERVER`) |
-| `--ftrack-user` |user name to log in to ftrack (can be set with `FTRACK_API_USER`) |
-| `--ftrack-api-key` | ftrack api key (can be set with `FTRACK_API_KEY`) |
-| `--legacy` | run event server without mongo storing |
-| `--clockify-api-key` | Clockify API key (can be set with `CLOCKIFY_API_KEY`) |
-| `--clockify-workspace` | Clockify workspace (can be set with `CLOCKIFY_WORKSPACE`) |
-
-To run ftrack event server:
-```shell
-openpype_console eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-api-key=<key>
-```
-
----
 ### `launch` arguments {#launch-arguments}
 
 | Argument | Description |
