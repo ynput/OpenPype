@@ -93,6 +93,6 @@ class IntegrateSubsetGroup(pyblish.api.InstancePlugin):
         return {
             "families": anatomy_data["family"],
             "tasks": task.get("name"),
-            "hosts": anatomy_data["app"],
+            "hosts": anatomy_data.get("app"),
             "task_types": task.get("type")
         }
