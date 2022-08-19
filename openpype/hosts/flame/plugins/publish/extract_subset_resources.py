@@ -8,6 +8,9 @@ import pyblish.api
 import openpype.api
 from openpype.hosts.flame import api as opfapi
 from openpype.hosts.flame.api import MediaInfoFile
+from openpype.pipeline.editorial import (
+    get_media_range_with_retimes
+)
 
 import flame
 
@@ -65,20 +68,50 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # get configured workfile frame start/end (handles excluded)
         frame_start = instance.data["frameStart"]
         # get media source first frame
-        source_first_frame = instance.data["sourceFirstFrame"]
+        source_first_frame = instance.data["sourceFirstFrame"]  # 1001
 
         # get timeline in/out of segment
         clip_in = instance.data["clipIn"]
         clip_out = instance.data["clipOut"]
 
+        # get retimed attributres
+        retimed_data = self._get_retimed_attributes(instance)
+        self.log.debug("_ retimed_data: {}".format(
+            pformat(retimed_data)
+        ))
+        # get individual keys
+        r_handle_start = retimed_data["handle_start"]
+        r_handle_end = retimed_data["handle_end"]
+        r_source_dur = retimed_data["source_duration"]
+        r_speed = retimed_data["speed"]
+        r_handles = max(r_handle_start, r_handle_end)
+
         # get handles value - take only the max from both
         handle_start = instance.data["handleStart"]
-        handle_end = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
         handles = max(handle_start, handle_end)
+        include_handles = instance.data.get("includeHandles")
+        self.log.debug("_ include_handles: {}".format(include_handles))
 
         # get media source range with handles
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
+        # retime if needed
+        if r_speed != 1.0:
+            source_start_handles = (
+                instance.data["sourceStart"] - r_handle_start)
+            source_end_handles = (
+                source_start_handles
+                # TODO: duration exclude 1 - might be problem
+                + (r_source_dur - 1)
+                + r_handle_start
+                + r_handle_end
+            )
+
+        self.log.debug("_ source_start_handles: {}".format(
+            source_start_handles))
+        self.log.debug("_ source_end_handles: {}".format(
+            source_end_handles))
 
         # create staging dir path
         staging_dir = self.staging_dir(instance)
@@ -92,6 +125,19 @@ class ExtractSubsetResources(openpype.api.Extractor):
             if k not in _preset_keys
         }
         export_presets.update(self.export_presets_mapping)
+
+        # set versiondata if any retime
+        version_data = retimed_data.get("version_data")
+
+        if version_data:
+            instance.data["versionData"].update(version_data)
+
+        if instance.data.get("versionData"):
+            if r_speed != 1.0:
+                instance.data["versionData"].update({
+                    "frameStart": source_start_handles + r_handle_start,
+                    "frameEnd": source_end_handles - r_handle_end,
+                })
 
         # loop all preset names and
         for unique_name, preset_config in export_presets.items():
@@ -117,14 +163,22 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
             # get frame range with handles for representation range
             frame_start_handle = frame_start - handle_start
+            if include_handles:
+                if r_speed == 1.0:
+                    frame_start_handle = frame_start
+                else:
+                    frame_start_handle = (
+                        frame_start - handle_start) + r_handle_start
+
+            self.log.debug("_ frame_start_handle: {}".format(
+                frame_start_handle))
 
             # calculate duration with handles
             source_duration_handles = (
-                source_end_handles - source_start_handles)
+                source_end_handles - source_start_handles) + 1
 
-            # define in/out marks
-            in_mark = (source_start_handles - source_first_frame) + 1
-            out_mark = in_mark + source_duration_handles
+            self.log.debug("_ source_duration_handles: {}".format(
+                source_duration_handles))
 
             exporting_clip = None
             name_patern_xml = "<name>_{}.".format(
@@ -142,25 +196,40 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "<segment name>_<shot name>_{}.").format(
                         unique_name)
 
-                # change in/out marks to timeline in/out
+                # only for h264 with baked retime
                 in_mark = clip_in
-                out_mark = clip_out
+                out_mark = clip_out + 1
+
+                modify_xml_data["nbHandles"] = handles
             else:
+                in_mark = (source_start_handles - source_first_frame) + 1
+                out_mark = in_mark + source_duration_handles
                 exporting_clip = self.import_clip(clip_path)
                 exporting_clip.name.set_value("{}_{}".format(
                     asset_name, segment_name))
+                modify_xml_data["nbHandles"] = (
+                    handles if r_speed == 1.0 else r_handles)
 
             # add xml tags modifications
             modify_xml_data.update({
+                # TODO: handles only to Sequence preset
+                # TODO: enable Start frame attribute
                 "exportHandles": True,
-                "nbHandles": handles,
-                "startFrame": frame_start,
+                "startFrame": frame_start_handle,
+                # enum position low start from 0
+                "frameIndex": 0,
                 "namePattern": name_patern_xml
             })
 
             if parsed_comment_attrs:
                 # add any xml overrides collected form segment.comment
                 modify_xml_data.update(instance.data["xml_overrides"])
+
+            self.log.debug(pformat(modify_xml_data))
+            self.log.debug("_ sequence publish {}".format(
+                export_type == "Sequence Publish"))
+            self.log.debug("_ in_mark: {}".format(in_mark))
+            self.log.debug("_ out_mark: {}".format(out_mark))
 
             export_kwargs = {}
             # validate xml preset file is filled
@@ -283,7 +352,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 representation_data.update({
                     "frameStart": frame_start_handle,
                     "frameEnd": (
-                        frame_start_handle + source_duration_handles),
+                        frame_start_handle + source_duration_handles) - 1,
                     "fps": instance.data["fps"]
                 })
 
@@ -302,6 +371,39 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
+
+    def _get_retimed_attributes(self, instance):
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+        include_handles = instance.data.get("includeHandles")
+        self.log.debug("_ include_handles: {}".format(include_handles))
+
+        # get basic variables
+        otio_clip = instance.data["otioClip"]
+        otio_avalable_range = otio_clip.available_range()
+        available_duration = otio_avalable_range.duration.value
+        self.log.debug(
+            ">> available_duration: {}".format(available_duration))
+
+        # get available range trimmed with processed retimes
+        retimed_attributes = get_media_range_with_retimes(
+            otio_clip, handle_start, handle_end)
+        self.log.debug(
+            ">> retimed_attributes: {}".format(retimed_attributes))
+
+        r_media_in = int(retimed_attributes["mediaIn"])
+        r_media_out = int(retimed_attributes["mediaOut"])
+        version_data = retimed_attributes.get("versionData")
+
+        return {
+            "version_data": version_data,
+            "handle_start": int(retimed_attributes["handleStart"]),
+            "handle_end": int(retimed_attributes["handleEnd"]),
+            "source_duration": (
+                (r_media_out - r_media_in) + 1
+            ),
+            "speed": float(retimed_attributes["speed"])
+        }
 
     def _should_skip(self, preset_config, clip_path, unique_name):
         # get activating attributes
