@@ -12,6 +12,7 @@ from openpype.settings.lib import (
     closed_settings_ui,
 )
 
+from .dialogs import SettingsUIOpenedElsewhere
 from .categories import (
     CategoryState,
     SystemWidget,
@@ -348,95 +349,3 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         return super(MainWidget, self).keyPressEvent(event)
-
-
-class SettingsUIOpenedElsewhere(QtWidgets.QDialog):
-    def __init__(self, info_obj, parent=None):
-        super(SettingsUIOpenedElsewhere, self).__init__(parent)
-
-        self._result = 0
-
-        self.setWindowTitle("Someone else has opened Settings UI")
-
-        message_label = QtWidgets.QLabel((
-            "Someone else has opened Settings UI which could cause data loss."
-            " Please contact the person on the other side."
-            "<br/><br/>You can open the UI in <b>view-only mode</b>."
-            " All changes in view mode will be lost."
-            "<br/><br/> You can <b>take the control</b> which will cause that"
-            " all changes of settings on the other side will be lost.<br/>"
-        ), self)
-        message_label.setWordWrap(True)
-
-        separator_widget_1 = QtWidgets.QFrame(self)
-        separator_widget_2 = QtWidgets.QFrame(self)
-        for separator_widget in (
-            separator_widget_1,
-            separator_widget_2
-        ):
-            separator_widget.setObjectName("Separator")
-            separator_widget.setMinimumHeight(1)
-            separator_widget.setMaximumHeight(1)
-
-        other_information = QtWidgets.QWidget(self)
-        other_information_layout = QtWidgets.QFormLayout(other_information)
-        other_information_layout.setContentsMargins(0, 0, 0, 0)
-        for label, value in (
-            ("Username", info_obj.username),
-            ("Host name", info_obj.hostname),
-            ("Host IP", info_obj.hostip),
-            ("System name", info_obj.system_name),
-            ("Local ID", info_obj.local_id),
-            ("Time Stamp", info_obj.timestamp),
-        ):
-            other_information_layout.addRow(
-                label,
-                QtWidgets.QLabel(value, other_information)
-            )
-
-        footer_widget = QtWidgets.QWidget(self)
-        buttons_widget = QtWidgets.QWidget(footer_widget)
-
-        take_control_btn = QtWidgets.QPushButton(
-            "Take control", buttons_widget
-        )
-        view_mode_btn = QtWidgets.QPushButton(
-            "View only", buttons_widget
-        )
-
-        buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.addWidget(take_control_btn, 1)
-        buttons_layout.addWidget(view_mode_btn, 1)
-
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-        footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addStretch(1)
-        footer_layout.addWidget(buttons_widget, 0)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(message_label, 0)
-        layout.addWidget(separator_widget_1, 0)
-        layout.addStretch(1)
-        layout.addWidget(other_information, 0, QtCore.Qt.AlignHCenter)
-        layout.addStretch(1)
-        layout.addWidget(separator_widget_2, 0)
-        layout.addWidget(footer_widget, 0)
-
-        take_control_btn.clicked.connect(self._on_take_control)
-        view_mode_btn.clicked.connect(self._on_view_mode)
-
-    def result(self):
-        return self._result
-
-    def _on_take_control(self):
-        self._result = 1
-        self.close()
-
-    def _on_view_mode(self):
-        self._result = 0
-        self.close()
-
-    def showEvent(self, event):
-        super(SettingsUIOpenedElsewhere, self).showEvent(event)
-        self.resize(600, 400)
