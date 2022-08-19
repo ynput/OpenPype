@@ -26,9 +26,8 @@ class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
         )
         if invalid:
             for param in invalid:
-                self.log.error("{}: {}".format(
-                   param.path(),
-                   param.unexpandedString()))
+                self.log.error(
+                    "{}: {}".format(param.path(), param.unexpandedString()))
 
             raise RuntimeError("Invalid paths found")
 
