@@ -102,6 +102,7 @@
         "CreateAnimation": {
             "enabled": true,
             "write_color_sets": false,
+            "write_face_sets": false,
             "defaults": [
                 "Main"
             ]
@@ -109,6 +110,7 @@
         "CreatePointCache": {
             "enabled": true,
             "write_color_sets": false,
+            "write_face_sets": false,
             "defaults": [
                 "Main"
             ]
@@ -164,6 +166,7 @@
         "CreateModel": {
             "enabled": true,
             "write_color_sets": false,
+            "write_face_sets": false,
             "defaults": [
                 "Main",
                 "Proxy",
@@ -185,6 +188,7 @@
         "CreateRig": {
             "enabled": true,
             "write_color_sets": false,
+            "write_face_sets": false,
             "defaults": [
                 "Main",
                 "Sim",
