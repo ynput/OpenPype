@@ -84,7 +84,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
         r_handle_end = retimed_data["handle_end"]
         r_source_dur = retimed_data["source_duration"]
         r_speed = retimed_data["speed"]
-        r_handles = max(r_handle_start, r_handle_end)
 
         # get handles value - take only the max from both
         handle_start = instance.data["handleStart"]
@@ -183,6 +182,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             exporting_clip = None
             name_patern_xml = "<name>_{}.".format(
                 unique_name)
+
             if export_type == "Sequence Publish":
                 # change export clip to sequence
                 exporting_clip = flame.duplicate(sequence_clip)
@@ -199,25 +199,22 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # only for h264 with baked retime
                 in_mark = clip_in
                 out_mark = clip_out + 1
-
-                modify_xml_data["nbHandles"] = handles
+                modify_xml_data.update({
+                    "exportHandles": True,
+                    "nbHandles": handles
+                })
             else:
                 in_mark = (source_start_handles - source_first_frame) + 1
                 out_mark = in_mark + source_duration_handles
                 exporting_clip = self.import_clip(clip_path)
                 exporting_clip.name.set_value("{}_{}".format(
                     asset_name, segment_name))
-                modify_xml_data["nbHandles"] = (
-                    handles if r_speed == 1.0 else r_handles)
 
             # add xml tags modifications
             modify_xml_data.update({
-                # TODO: handles only to Sequence preset
-                # TODO: enable Start frame attribute
-                "exportHandles": True,
-                "startFrame": frame_start_handle,
                 # enum position low start from 0
                 "frameIndex": 0,
+                "startFrame": frame_start_handle,
                 "namePattern": name_patern_xml
             })
 
