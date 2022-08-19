@@ -4,26 +4,26 @@ title: Settings
 sidebar_label: Settings
 ---
 
-Settings gives ability to change how OpenPype behaves in certain situations. Settings are split into 3 categories **system settings**, **project anatomy** and **project settings**. Project anatomy and project settings are in grouped into single category but there is a technical difference (explained later). Only difference in system and project settings is that system settings can't be technically handled on a project level or their values must be available no matter in which project are values received. Settings have headless entities or settings UI.
+Settings give the ability to change how OpenPype behaves in certain situations. Settings are split into 3 categories **system settings**, **project anatomy** and **project settings**. Project anatomy and project settings are grouped into a single category but there is a technical difference (explained later). Only difference in system and project settings is that system settings can't be technically handled on a project level or their values must be available no matter in which project the values are received. Settings have headless entities or settings UI.
 
 There is one more category **local settings** but they don't have ability to be changed or defined easily. Local settings can change how settings work per machine, can affect both system and project settings but they're hardcoded for predefined values at this moment.
 
 ## Settings schemas
-System and project settings are defined by settings schemas. Schema define structure of output value, what value types output will contain, how settings are stored and how it's UI input will look.
+System and project settings are defined by settings schemas. Schema defines the structure of output value, what value types output will contain, how settings are stored and how its UI input will look.
 
 ## Settings values
-Output of settings is a json serializable value. There are 3 possible types of value **default values**, **studio overrides** and **project overrides**. Default values must be always available for all settings schemas, their values are stored to code. Default values is what everyone who just installed OpenPype will use as default values. It is good practice to set example values but they should be relevant.
+Output of settings is a json serializable value. There are 3 possible types of value **default values**, **studio overrides** and **project overrides**. Default values must be always available for all settings schemas, their values are stored to code. Default values are what everyone who just installed OpenPype will use as default values. It is good practice to set example values but they should be actually relevant.
 
-Setting overrides is what makes settings powerful tool. Overrides contain only a part of settings with additional metadata which describe which parts of settings values that should be replaced from overrides values. Using overrides gives ability to save only specific values and use default values for rest. It is super useful in project settings which have up to 2 levels of overrides. In project settings are used **default values** as base on which are applied **studio overrides** and then **project overrides**. In practice it is possible to save only studio overrides which affect all projects. Changes in studio overrides are then propagated to all projects without project overrides. But values can be locked on project level so studio overrides are not used.
+Setting overrides is what makes settings a powerful tool. Overrides contain only a part of settings with additional metadata that describe which parts of settings values should be replaced from overrides values. Using overrides gives the ability to save only specific values and use default values for rest. It is super useful in project settings which have up to 2 levels of overrides. In project settings are used **default values** as base on which are applied **studio overrides** and then **project overrides**. In practice it is possible to save only studio overrides which affect all projects. Changes in studio overrides are then propagated to all projects without project overrides. But values can be locked on project level so studio overrides are not used.
 
 ## Settings storage
-As was mentined default values are stored into repository files. Overrides are stored to Mongo database. The value in mongo contain only overrides with metadata so their content on it's own is useless and must be used with combination of default values. System settings and project settings are stored into special collection. Single document represents one set of overrides with OpenPype version for which is stored. Settings are versioned and are loaded in specific order - current OpenPype version overrides or first lower available. If there are any overrides with same or lower version then first higher version is used. If there are any overrides then no overrides are applied.
+As was mentioned default values are stored into repository files. Overrides are stored in the Mongo database. The value in mongo contain only overrides with metadata so their content on it's own is useless and must be used with combination of default values. System settings and project settings are stored into special collection. Single document represents one set of overrides with OpenPype version for which is stored. Settings are versioned and are loaded in specific order - current OpenPype version overrides or first lower available. If there are any overrides with the same or lower version then the first higher version is used. If there are any overrides then no overrides are applied.
 
-Project anatomy is stored into project document thus is not versioned and it's values are always overriden. Any changes in anatomy schema may have drastic effect on production and OpenPype updates.
+Project anatomy is stored into a project document thus is not versioned and its values are always overridden. Any changes in anatomy schema may have a drastic effect on production and OpenPype updates.
 
 ## Settings schema items
 As was mentioned schema items define output type of values, how they are stored and how they look in UI.
-- schemas are (by default) defined by a json files
+- schemas are (by default) defined by json files
 - OpenPype core system settings schemas are stored in `~/openpype/settings/entities/schemas/system_schema/` and project settings in `~/openpype/settings/entities/schemas/projects_schema/`
     - both contain `schema_main.json` which are entry points
 - OpenPype modules/addons can define their settings schemas using `BaseModuleSettingsDef` in that case some functionality may be slightly modified
@@ -31,20 +31,21 @@ As was mentioned schema items define output type of values, how they are stored 
     - **type** is only common key which is required for all schema items
 - each item may have "input modifiers" (other keys in dictionary) and they may be required or optional based on the type
 - there are special keys across all items
-    - `"is_file"` - this key is used when defaults values are stored which define that this key is a filename where it's values are stored
-        - key is validated must be once in hierarchy else it won't be possible to store default values
-        - make sense to fill it only if it's value if `true`
-    - `"is_group"` - define that all values under a key in settings hierarchy will be overridden if any value is modified
-        - this key is not allowed for all inputs as they may not have technical ability to handle it
-        - key is validated can be only once in hierarchy and is automatically filled on last possible item if is not defined in schemas
-        - make sense to fill it only if it's value if `true`
+	- `"is_file"` - this key is used when defaults values are stored in the file. Its value matches the filename where values are stored
+	  - key is validated, must be unique in hierarchy otherwise it won't be possible to store default values
+		- make sense to fill it only if it's value if `true`
+		
+	- `"is_group"` - define that all values under a key in settings hierarchy will be overridden if any value is modified
+		  - this key is not allowed for all inputs as they may not have technical ability to handle it
+		  - key is validated, must be unique in hierarchy and is automatically filled on last possible item if is not defined in schemas
+		  - make sense to fill it only if it's value if `true`
 - all entities can have set `"tooltip"` key with description which will be shown in UI on hover
 
 ### Inner schema
-Settings schemas are big json files which would became unmanageable if would be in single file. To be able to split them into multiple files to help organize them special types `schema` and `template` were added. Both types are relating to a different file by filename. If json file contains dictionary it is considered as `schema` if contains list it is considered as `template`.
+Settings schemas are big json files which would become unmanageable if they were in a single file. To be able to split them into multiple files to help organize them special types `schema` and `template` were added. Both types are related to a different file by filename. If a json file contains a dictionary it is considered as `schema` if it contains a list it is considered as a `template`.
 
 #### schema
-Schema item is replaced by content of entered schema name. It is recommended that schema file is used only once in settings hierarchy. Templates are meant for reusing.
+Schema item is replaced by content of entered schema name. It is recommended that the schema file is used only once in settings hierarchy. Templates are meant for reusing.
 - schema must have `"name"` key which is name of schema that should be used
 
 ```javascript
@@ -156,7 +157,7 @@ Templates are almost the same as schema items but can contain one or more items 
 }
 ```
 
-Template data can be used only to fill templates in values but not in keys. It is also possible to define default values for unfilled fields to do so one of items in list must be dictionary with key `"__default_values__"` and value as dictionary with default key: values (as in example above).
+Template data can be used only to fill templates in values but not in keys. It is also possible to define default values for unfilled fields to do so one of the items in the list must be a dictionary with key "__default_values__"` and value as dictionary with default key: values (as in example above).
 ```javascript
 {
     ...
@@ -169,7 +170,7 @@ Template data can be used only to fill templates in values but not in keys. It i
 }
 ```
 
-Because formatting value can be only string it is possible to use formatting values which are replaced with different type.
+Because formatting values can be only string it is possible to use formatting values which are replaced with different types.
 ```javascript
 // Template data
 {
@@ -201,7 +202,7 @@ Dynamic schema item marks a place in settings schema where schemas defined by `B
     "name": "project_settings/global"
 }
 ```
-- `BaseModuleSettingsDef` with implemented `get_settings_schemas` can return a dictionary where key define a dynamic schema name and value schemas that will be put there
+- `BaseModuleSettingsDef` with implemented `get_settings_schemas` can return a dictionary where key defines a dynamic schema name and value schemas that will be put there
 - dynamic schemas work almost the same way as templates
     - one item can be replaced by multiple items (or by 0 items)
 - goal is to dynamically load settings of OpenPype modules without having their schemas or default values in core repository
@@ -215,12 +216,12 @@ These inputs wraps another inputs into {key: value} relation
 #### dict
 - this is dictionary type wrapping more inputs with keys defined in schema
 - may be used as dynamic children (e.g. in [list](#list) or [dict-modifiable](#dict-modifiable))
-    - in that case the only key modifier is `children` which is list of it's keys
-    - USAGE: e.g. List of dictionaries where each dictionary have same structure.
+	- in that case the only key modifier is `children` which is a list of its keys
+	- USAGE: e.g. List of dictionaries where each dictionary has the same structure.
 - if is not used as dynamic children then must have defined `"key"` under which are it's values stored
 - may be with or without `"label"` (only for GUI)
-    - `"label"` must be set to be able mark item as group with `"is_group"` key set to True
-- item with label can visually wrap it's children
+	- `"label"` must be set to be able to mark item as group with `"is_group"` key set to True
+- item with label can visually wrap its children
     - this option is enabled by default to turn off set `"use_label_wrap"` to `False`
     - label wrap is by default collapsible
         - that can be set with key `"collapsible"` to `True`/`False`
@@ -314,16 +315,16 @@ These inputs wraps another inputs into {key: value} relation
 - entity must have defined `"label"` if is not used as widget
 - is set as group if any parent is not group (can't have children as group)
 - may be with or without `"label"` (only for GUI)
-    - `"label"` must be set to be able mark item as group with `"is_group"` key set to True
-- item with label can visually wrap it's children
-    - this option is enabled by default to turn off set `"use_label_wrap"` to `False`
-    - label wrap is by default collapsible
-        - that can be set with key `"collapsible"` to `True`/`False`
-        - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
-    - it is possible to add lighter background with `"highlight_content"` (Default: `False`)
-        - lighter background has limits of maximum applies after 3-4 nested highlighted items there is not much difference in the color
-- for UI porposes was added `enum_is_horizontal` which will make combobox appear next to children inputs instead of on top of them (Default: `False`)
-    - this has extended ability of `enum_on_right` which will move combobox to right side next to children widgets (Default: `False`)
+	- `"label"` must be set to be able to mark item as group with `"is_group"` key set to True
+- item with label can visually wrap its children
+	- this option is enabled by default to turn off set `"use_label_wrap"` to `False`
+	- label wrap is by default collapsible
+		- that can be set with key `"collapsible"` to `True`/`False`
+		- with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
+	- it is possible to add lighter background with `"highlight_content"` (Default: `False`)
+		- lighter background has limits of maximum applies after 3-4 nested highlighted items there is not much difference in the color
+- for UI purposes was added `enum_is_horizontal` which will make combobox appear next to children inputs instead of on top of them (Default: `False`)
+	- this has extended ability of `enum_on_right` which will move combobox to right side next to children widgets (Default: `False`)
 - output is dictionary `{the "key": children values}`
 - using this type as template item for list type can be used to create infinite hierarchies
 
@@ -795,7 +796,7 @@ How output of the schema could look like on save:
 ```
 
 #### color
-- preimplemented entity to store and load color values
+- pre implemented entity to store and load color values
 - entity store and expect list of 4 integers in range 0-255
     - integers represents rgba [Red, Green, Blue, Alpha]
 - has modifier `"use_alpha"` which can be `True`/`False`
@@ -842,9 +843,9 @@ Items used only for UI purposes.
 ```
 
 ### Proxy wrappers
-- should wraps multiple inputs only visually
-- these does not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
-- can't be used as widget (first item in e.g. `list`, `dict-modifiable`, etc.)
+- should wrap multiple inputs only visually
+- these do not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
+- can't be used as a widget (first item in e.g. `list`, `dict-modifiable`, etc.)
 
 #### form
 - wraps inputs into form look layout
@@ -893,6 +894,6 @@ Items used only for UI purposes.
 
 
 ## How to add new settings
-Always start with modifying or adding new schema and don't worry about values. When you think schema is ready to use launch OpenPype settings in development mode using `poetry run python ./start.py settings --dev` or prepared script in `~/openpype/tools/run_settings(.sh|.ps1)`. Settings opened in development mode have checkbox `Modify defaults` available in bottom left corner. When checked default values are modified and saved on `Save`. This is recommended approach how default settings should be created instead of direct modification of files.
+Always start with modifying or adding a new schema and don't worry about values. When you think schema is ready to use launch OpenPype settings in development mode using `poetry run python ./start.py settings --dev` or prepared script in `~/openpype/tools/run_settings(.sh|.ps1)`. Settings opened in development mode have the checkbox `Modify defaults` available in the bottom left corner. When checked default values are modified and saved on `Save`. This is a recommended approach on how default settings should be created instead of direct modification of files.
 
 ![Modify default settings](assets/settings_dev.png)
