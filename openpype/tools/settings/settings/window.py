@@ -359,11 +359,12 @@ class SettingsUIOpenedElsewhere(QtWidgets.QDialog):
         self.setWindowTitle("Someone else has opened Settings UI")
 
         message_label = QtWidgets.QLabel((
-            "Someone else has opened Settings UI. That may cause data loss."
+            "Someone else has opened Settings UI which could cause data loss."
             " Please contact the person on the other side."
-            "<br/><br/>You can open the UI in view-only mode or take"
-            " the control which will cause settings on the other side"
-            " won't be able to save changes.<br/>"
+            "<br/><br/>You can open the UI in <b>view-only mode</b>."
+            " All changes in view mode will be lost."
+            "<br/><br/> You can <b>take the control</b> which will cause that"
+            " all changes of settings on the other side will be lost.<br/>"
         ), self)
         message_label.setWordWrap(True)
 
@@ -435,3 +436,7 @@ class SettingsUIOpenedElsewhere(QtWidgets.QDialog):
     def _on_view_mode(self):
         self._result = 0
         self.close()
+
+    def showEvent(self, event):
+        super(SettingsUIOpenedElsewhere, self).showEvent(event)
+        self.resize(600, 400)
