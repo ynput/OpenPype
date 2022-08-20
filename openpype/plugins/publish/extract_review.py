@@ -1459,6 +1459,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output = -1
         regexes = self.compile_list_of_regexes(in_list)
         for regex in regexes:
+            if not value:
+                continue
             if re.match(regex, value):
                 output = 1
                 break
