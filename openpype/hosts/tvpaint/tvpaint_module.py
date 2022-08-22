@@ -13,7 +13,6 @@ def get_launch_script_path():
     )
 
 
-
 class TVPaintModule(OpenPypeModule, IHostModule):
     name = "tvpaint"
     host_name = "tvpaint"
