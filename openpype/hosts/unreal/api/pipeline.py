@@ -14,6 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
+from openpypr.host import HostBase, ILoadHost
 
 import unreal  # noqa
 
@@ -27,6 +28,32 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
+
+
+class UnrealHost(HostBase, ILoadHost):
+    """Unreal host implementation.
+
+    For some time this class will re-use functions from module based
+    implementation for backwards compatibility of older unreal projects.
+    """
+
+    name = "unreal"
+
+    def install(self):
+        install()
+
+    def get_containers(self):
+        return ls()
+
+    def show_tools_popup(self):
+        """Show tools popup with actions leading to show other tools."""
+
+        show_tools_popup()
+
+    def show_tools_dialog(self):
+        """Show tools dialog with actions leading to show other tools."""
+
+        show_tools_dialog()
 
 
 def install():
