@@ -87,7 +87,6 @@ class SettingsController:
         )
 
     def update_last_opened_info(self):
-        print("update_last_opened_info")
         last_opened_info = get_last_opened_info()
         enabled = False
         if (
