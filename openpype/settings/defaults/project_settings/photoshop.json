@@ -32,6 +32,7 @@
         },
         "ExtractReview": {
             "make_image_sequence": false,
+            "max_downscale_size": 8192,
             "jpg_options": {
                 "tags": []
             },
