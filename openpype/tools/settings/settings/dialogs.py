@@ -113,3 +113,67 @@ class SettingsUIOpenedElsewhere(BaseInfoDialog):
             take_control_btn,
             view_mode_btn
         ]
+
+
+class SettingsLastSavedChanged(BaseInfoDialog):
+    width = 500
+    height = 300
+
+    def __init__(self, info_obj, parent=None):
+        title = "Settings has changed"
+        message = (
+            "Settings has changed while you had opened this settings session."
+            "<br/><br/>It is <b>recommended to refresh settings</b>"
+            " and re-apply changes in the new session."
+        )
+        super(SettingsLastSavedChanged, self).__init__(
+            message, title, info_obj, parent
+        )
+
+    def _on_save(self):
+        self._result = 1
+        self.close()
+
+    def _on_close(self):
+        self._result = 0
+        self.close()
+
+    def get_buttons(self, parent):
+        close_btn = QtWidgets.QPushButton(
+            "Close", parent
+        )
+        save_btn = QtWidgets.QPushButton(
+            "Save anyway", parent
+        )
+
+        close_btn.clicked.connect(self._on_close)
+        save_btn.clicked.connect(self._on_save)
+
+        return [
+            close_btn,
+            save_btn
+        ]
+
+
+class SettingsControlTaken(BaseInfoDialog):
+    width = 500
+    height = 300
+
+    def __init__(self, info_obj, parent=None):
+        title = "Settings control taken"
+        message = (
+            "Someone took control over your settings."
+            "<br/><br/>It is not possible to save changes of currently"
+            " opened session. Copy changes you want to keep and hit refresh."
+        )
+        super(SettingsControlTaken, self).__init__(
+            message, title, info_obj, parent
+        )
+
+    def _on_confirm(self):
+        self.close()
+
+    def get_buttons(self, parent):
+        confirm_btn = QtWidgets.QPushButton("Understand", parent)
+        confirm_btn.clicked.connect(self._on_confirm)
+        return [confirm_btn]
