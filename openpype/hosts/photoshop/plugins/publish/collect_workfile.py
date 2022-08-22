@@ -22,9 +22,11 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
                 break
 
         family = "workfile"
+        # context.data["variant"] might come only from collect_batch_data
+        variant = context.data.get("variant") or self.default_variant
         subset = get_subset_name_with_asset_doc(
             family,
-            self.default_variant,
+            variant,
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],
