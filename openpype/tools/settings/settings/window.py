@@ -105,6 +105,7 @@ class MainWidget(QtWidgets.QWidget):
 
     widget_width = 1000
     widget_height = 600
+    window_title = "OpenPype Settings"
 
     def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
@@ -122,7 +123,7 @@ class MainWidget(QtWidgets.QWidget):
         self._password_dialog = None
 
         self.setObjectName("SettingsMainWidget")
-        self.setWindowTitle("OpenPype Settings")
+        self.setWindowTitle(self.window_title)
 
         self.resize(self.widget_width, self.widget_height)
 
@@ -154,6 +155,11 @@ class MainWidget(QtWidgets.QWidget):
 
         self._shadow_widget = ShadowWidget("Working...", self)
         self._shadow_widget.setVisible(False)
+
+        controller.event_system.add_callback(
+            "edit.mode.changed",
+            self._edit_mode_changed
+        )
 
         header_tab_widget.currentChanged.connect(self._on_tab_changed)
         search_dialog.path_clicked.connect(self._on_search_path_clicked)
@@ -300,6 +306,12 @@ class MainWidget(QtWidgets.QWidget):
                 widget = self._header_tab_widget.currentWidget()
                 entity = widget.entity
             self._search_dialog.set_root_entity(entity)
+
+    def _edit_mode_changed(self, event):
+        title = self.window_title
+        if not event["edit_mode"]:
+            title += " [View only]"
+        self.setWindowTitle(title)
 
     def _on_tab_changed(self):
         self._update_search_dialog()
