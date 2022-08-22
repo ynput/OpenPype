@@ -14,7 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
-from openpypr.host import HostBase, ILoadHost
+from openpype.host import HostBase, ILoadHost
 
 import unreal  # noqa
 
