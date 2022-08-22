@@ -11,6 +11,8 @@ class AEWorkfileCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
 
+    default_variant = "Main"
+
     def get_instance_attr_defs(self):
         return []
 
@@ -35,7 +37,6 @@ class AEWorkfileCreator(AutoCreator):
                 existing_instance = instance
                 break
 
-        variant = ''
         project_name = legacy_io.Session["AVALON_PROJECT"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
         task_name = legacy_io.Session["AVALON_TASK"]
@@ -44,15 +45,17 @@ class AEWorkfileCreator(AutoCreator):
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
-                variant, task_name, asset_doc, project_name, host_name
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
             )
             data = {
                 "asset": asset_name,
                 "task": task_name,
-                "variant": variant
+                "variant": self.default_variant
             }
             data.update(self.get_dynamic_data(
-                variant, task_name, asset_doc, project_name, host_name
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
             ))
 
             new_instance = CreatedInstance(
@@ -69,7 +72,8 @@ class AEWorkfileCreator(AutoCreator):
         ):
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
-                variant, task_name, asset_doc, project_name, host_name
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
             )
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
