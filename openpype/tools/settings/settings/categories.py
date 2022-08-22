@@ -36,6 +36,11 @@ from openpype.settings.entities.op_version_entity import (
 )
 
 from openpype.settings import SaveWarningExc
+from openpype.settings.lib import (
+    get_system_last_saved_info,
+    get_project_last_saved_info,
+)
+from .dialogs import SettingsLastSavedChanged, SettingsControlTaken
 from .widgets import (
     ProjectListWidget,
     VersionAction
@@ -205,6 +210,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         if enabled is self._edit_mode:
             return
 
+        was_false = self._edit_mode is False
         self._edit_mode = enabled
 
         self.save_btn.setEnabled(enabled and not self._reset_crashed)
@@ -217,6 +223,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             tooltip = "Save settings"
 
         self.save_btn.setToolTip(tooltip)
+
+        # Reset when last saved information has changed
+        if was_false and not self._check_last_saved_info():
+            self.reset()
 
     @property
     def state(self):
@@ -748,7 +758,24 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         """Callback on any tab widget save."""
         return
 
+    def _check_last_saved_info(self):
+        raise NotImplementedError((
+            "{} does not have implemented '_check_last_saved_info'"
+        ).format(self.__class__.__name__))
+
     def _save(self):
+        self._controller.update_last_opened_info()
+        if not self._controller.opened_info:
+            dialog = SettingsControlTaken(self._last_saved_info, self)
+            dialog.exec_()
+            return
+
+        if not self._check_last_saved_info():
+            dialog = SettingsLastSavedChanged(self._last_saved_info, self)
+            dialog.exec_()
+            if dialog.result() == 0:
+                return
+
         # Don't trigger restart if defaults are modified
         if self.is_modifying_defaults:
             require_restart = False
@@ -807,6 +834,13 @@ class SystemWidget(SettingsCategoryWidget):
         self._actions = []
         super(SystemWidget, self).__init__(*args, **kwargs)
 
+    def _check_last_saved_info(self):
+        if self.is_modifying_defaults:
+            return True
+
+        last_saved_info = get_system_last_saved_info()
+        return self._last_saved_info == last_saved_info
+
     def contain_category_key(self, category):
         if category == "system_settings":
             return True
@@ -821,6 +855,10 @@ class SystemWidget(SettingsCategoryWidget):
         )
         entity.on_change_callbacks.append(self._on_entity_change)
         self.entity = entity
+        last_saved_info = None
+        if not self.is_modifying_defaults:
+            last_saved_info = get_system_last_saved_info()
+        self._last_saved_info = last_saved_info
         try:
             if self.is_modifying_defaults:
                 entity.set_defaults_state()
@@ -853,6 +891,13 @@ class SystemWidget(SettingsCategoryWidget):
 class ProjectWidget(SettingsCategoryWidget):
     def __init__(self, *args, **kwargs):
         super(ProjectWidget, self).__init__(*args, **kwargs)
+
+    def _check_last_saved_info(self):
+        if self.is_modifying_defaults:
+            return True
+
+        last_saved_info = get_project_last_saved_info(self.project_name)
+        return self._last_saved_info == last_saved_info
 
     def contain_category_key(self, category):
         if category in ("project_settings", "project_anatomy"):
@@ -933,6 +978,11 @@ class ProjectWidget(SettingsCategoryWidget):
         entity.on_change_callbacks.append(self._on_entity_change)
         self.project_list_widget.set_entity(entity)
         self.entity = entity
+
+        last_saved_info = None
+        if not self.is_modifying_defaults:
+            last_saved_info = get_project_last_saved_info(self.project_name)
+        self._last_saved_info = last_saved_info
         try:
             if self.is_modifying_defaults:
                 self.entity.set_defaults_state()
