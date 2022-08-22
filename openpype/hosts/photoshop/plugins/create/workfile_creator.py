@@ -75,3 +75,4 @@ class PSWorkfileCreator(AutoCreator):
             )
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
+            existing_instance["subset"] = subset_name
