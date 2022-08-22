@@ -624,7 +624,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
     from openpype.pipeline import legacy_io
     from openpype.pipeline.context_tools import change_current_context
 
-    project_name = legacy_io.acitve_project()
+    project_name = legacy_io.active_project()
     if isinstance(asset, six.string_types):
         asset = get_asset_by_name(project_name, asset)
 
