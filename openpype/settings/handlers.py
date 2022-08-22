@@ -784,9 +784,9 @@ class MongoSettingsHandler(SettingsHandler):
             "last_saved_info": last_saved_info.to_document_data()
         }
         if not system_settings_doc:
-            self.collections.insert_one(new_system_settings_doc)
+            self.collection.insert_one(new_system_settings_doc)
         else:
-            self.collections.update_one(
+            self.collection.update_one(
                 {"_id": system_settings_doc["_id"]},
                 {"$set": new_system_settings_doc}
             )
