@@ -16,6 +16,7 @@ from openpype.client import (
     get_asset_by_name,
     version_is_latest,
 )
+from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 
@@ -500,5 +501,48 @@ def compute_session_changes(
         )
 
     changes["AVALON_WORKDIR"] = workdir
+
+    return changes
+
+
+def change_current_context(asset_doc, task_name, template_key=None):
+    """Update active Session to a new task work area.
+
+    This updates the live Session to a different task under asset.
+
+    Args:
+        asset_doc (Dict[str, Any]): The asset document to set.
+        task_name (str): The task to set under asset.
+        template_key (Union[str, None]): Prepared template key to be used for
+            workfile template in Anatomy.
+
+    Returns:
+        Dict[str, str]: The changed key, values in the current Session.
+    """
+
+    changes = compute_session_changes(
+        legacy_io.Session,
+        asset_doc,
+        task_name,
+        template_key=template_key
+    )
+
+    # Update the Session and environments. Pop from environments all keys with
+    # value set to None.
+    for key, value in changes.items():
+        legacy_io.Session[key] = value
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+    data = changes.copy()
+    # Convert env keys to human readable keys
+    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
+    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
+    data["task_name"] = legacy_io.Session["AVALON_TASK"]
+
+    # Emit session change
+    emit_event("taskChanged", data)
 
     return changes
