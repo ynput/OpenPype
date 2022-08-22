@@ -48,3 +48,20 @@ class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
             "module", "traypublish_tool", "launch"
         )
         run_detached_process(args)
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(TrayPublishModule.name, help="TrayPublisher related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+def launch():
+    """Launch TrayPublish tool UI."""
+
+    from openpype.tools import traypublisher
+
+    traypublisher.main()
