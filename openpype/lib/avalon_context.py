@@ -7,6 +7,8 @@ import logging
 import functools
 import warnings
 
+import six
+
 from openpype.client import (
     get_project,
     get_assets,
@@ -526,7 +528,7 @@ def template_data_from_session(session=None):
     return get_template_data_from_session(session)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.compute_session_changes")
 def compute_session_changes(
     session, task=None, asset=None, app=None, template_key=None
 ):
@@ -547,54 +549,24 @@ def compute_session_changes(
 
     Returns:
         dict: The required changes in the Session dictionary.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    from openpype.pipeline.context_tools import get_workdir_from_session
+    from openpype.pipeline import legacy_io
+    from openpype.pipeline.context_tools import compute_session_changes
 
-    changes = dict()
+    if isinstance(asset, six.string_types):
+        project_name = legacy_io.active_project()
+        asset = get_asset_by_name(project_name, asset)
 
-    # If no changes, return directly
-    if not any([task, asset, app]):
-        return changes
-
-    # Get asset document and asset
-    asset_document = None
-    asset_tasks = None
-    if isinstance(asset, dict):
-        # Assume asset database document
-        asset_document = asset
-        asset_tasks = asset_document.get("data", {}).get("tasks")
-        asset = asset["name"]
-
-    if not asset_document or not asset_tasks:
-        # Assume asset name
-        project_name = session["AVALON_PROJECT"]
-        asset_document = get_asset_by_name(
-            project_name, asset, fields=["data.tasks"]
-        )
-        assert asset_document, "Asset must exist"
-
-    # Detect any changes compared session
-    mapping = {
-        "AVALON_ASSET": asset,
-        "AVALON_TASK": task,
-        "AVALON_APP": app,
-    }
-    changes = {
-        key: value
-        for key, value in mapping.items()
-        if value and value != session.get(key)
-    }
-    if not changes:
-        return changes
-
-    # Compute work directory (with the temporary changed session so far)
-    _session = session.copy()
-    _session.update(changes)
-
-    changes["AVALON_WORKDIR"] = get_workdir_from_session(_session)
-
-    return changes
+    return compute_session_changes(
+        session,
+        asset,
+        task,
+        template_key
+    )
 
 
 @deprecated("openpype.pipeline.context_tools.get_workdir_from_session")
@@ -604,7 +576,7 @@ def get_workdir_from_session(session=None, template_key=None):
     return get_workdir_from_session(session, template_key)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.change_current_context")
 def update_current_task(task=None, asset=None, app=None, template_key=None):
     """Update active Session to a new task work area.
 
@@ -617,35 +589,19 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
     Returns:
         dict: The changed key, values in the current Session.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    changes = compute_session_changes(
-        legacy_io.Session,
-        task=task,
-        asset=asset,
-        app=app,
-        template_key=template_key
-    )
+    from openpype.pipeline import legacy_io
+    from openpype.pipeline.context_tools import change_current_context
 
-    # Update the Session and environments. Pop from environments all keys with
-    # value set to None.
-    for key, value in changes.items():
-        legacy_io.Session[key] = value
-        if value is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = value
+    project_name = legacy_io.acitve_project()
+    if isinstance(asset, six.string_types):
+        asset = get_asset_by_name(project_name, asset)
 
-    data = changes.copy()
-    # Convert env keys to human readable keys
-    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
-    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
-    data["task_name"] = legacy_io.Session["AVALON_TASK"]
-
-    # Emit session change
-    emit_event("taskChanged", data)
-
-    return changes
+    return change_current_context(asset, task, template_key)
 
 
 @deprecated("openpype.client.get_workfile_info")
