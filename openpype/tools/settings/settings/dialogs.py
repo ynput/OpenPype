@@ -1,5 +1,7 @@
 from Qt import QtWidgets, QtCore
 
+from openpype.tools.utils.delegates import pretty_date
+
 
 class BaseInfoDialog(QtWidgets.QDialog):
     width = 600
@@ -34,12 +36,16 @@ class BaseInfoDialog(QtWidgets.QDialog):
             ("Host IP", info_obj.hostip),
             ("System name", info_obj.system_name),
             ("Local ID", info_obj.local_id),
-            ("Time Stamp", info_obj.timestamp),
         ):
             other_information_layout.addRow(
                 label,
                 QtWidgets.QLabel(value, other_information)
             )
+
+        timestamp_label = QtWidgets.QLabel(
+            pretty_date(info_obj.timestamp_obj), other_information
+        )
+        other_information_layout.addRow("Time", timestamp_label)
 
         footer_widget = QtWidgets.QWidget(self)
         buttons_widget = QtWidgets.QWidget(footer_widget)
@@ -64,9 +70,26 @@ class BaseInfoDialog(QtWidgets.QDialog):
         layout.addWidget(separator_widget_2, 0)
         layout.addWidget(footer_widget, 0)
 
+        timestamp_timer = QtCore.QTimer()
+        timestamp_timer.setInterval(1000)
+        timestamp_timer.timeout.connect(self._on_timestamp_timer)
+
+        self._timestamp_label = timestamp_label
+        self._timestamp_timer = timestamp_timer
+
     def showEvent(self, event):
         super(BaseInfoDialog, self).showEvent(event)
+        self._timestamp_timer.start()
         self.resize(self.width, self.height)
+
+    def closeEvent(self, event):
+        self._timestamp_timer.stop()
+        super(BaseInfoDialog, self).closeEvent(event)
+
+    def _on_timestamp_timer(self):
+        self._timestamp_label.setText(
+            pretty_date(self._info_obj.timestamp_obj)
+        )
 
     def result(self):
         return self._result
