@@ -45,7 +45,7 @@ class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
 
     def run_traypublisher(self):
         args = get_openpype_execute_args(
-            "module", "traypublish_tool", "launch"
+            "module", self.name, "launch"
         )
         run_detached_process(args)
 
