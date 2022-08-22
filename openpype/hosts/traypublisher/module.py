@@ -1,25 +1,24 @@
 import os
+
+import click
+
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayAction
+from openpype.modules.interfaces import ITrayAction, IHostModule
+
+TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class TrayPublishAction(OpenPypeModule, ITrayAction):
+class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
     label = "New Publish (beta)"
     name = "traypublish_tool"
+    host_name = "traypublish"
 
     def initialize(self, modules_settings):
-        import openpype
         self.enabled = True
         self.publish_paths = [
-            os.path.join(
-                openpype.PACKAGE_DIR,
-                "hosts",
-                "traypublisher",
-                "plugins",
-                "publish"
-            )
+            os.path.join(TRAYPUBLISH_ROOT_DIR, "plugins", "publish")
         ]
         self._experimental_tools = None
 
@@ -29,7 +28,7 @@ class TrayPublishAction(OpenPypeModule, ITrayAction):
         self._experimental_tools = ExperimentalTools()
 
     def tray_menu(self, *args, **kwargs):
-        super(TrayPublishAction, self).tray_menu(*args, **kwargs)
+        super(TrayPublishModule, self).tray_menu(*args, **kwargs)
         traypublisher = self._experimental_tools.get("traypublisher")
         visible = False
         if traypublisher and traypublisher.enabled:
@@ -45,5 +44,7 @@ class TrayPublishAction(OpenPypeModule, ITrayAction):
         self.publish_paths.extend(publish_paths)
 
     def run_traypublisher(self):
-        args = get_openpype_execute_args("traypublisher")
+        args = get_openpype_execute_args(
+            "module", "traypublish_tool", "launch"
+        )
         run_detached_process(args)
