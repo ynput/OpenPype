@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import time
 from openpype.hosts.resolve.utils import get_resolve_module
-from openpype.api import Logger
+from openpype.lib import Logger
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 wait_delay = 2.5
 wait = 0.00

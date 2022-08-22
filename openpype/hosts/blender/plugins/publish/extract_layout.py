@@ -180,7 +180,7 @@ class ExtractLayout(openpype.api.Extractor):
                 "rotation": {
                     "x": asset.rotation_euler.x,
                     "y": asset.rotation_euler.y,
-                    "z": asset.rotation_euler.z,
+                    "z": asset.rotation_euler.z
                 },
                 "scale": {
                     "x": asset.scale.x,
@@ -188,6 +188,18 @@ class ExtractLayout(openpype.api.Extractor):
                     "z": asset.scale.z
                 }
             }
+
+            json_element["transform_matrix"] = []
+
+            for row in list(asset.matrix_world.transposed()):
+                json_element["transform_matrix"].append(list(row))
+
+            json_element["basis"] = [
+                [1, 0, 0, 0],
+                [0, -1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ]
 
             # Extract the animation as well
             if family == "rig":

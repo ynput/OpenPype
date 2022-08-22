@@ -321,6 +321,15 @@
                                         },
                                         {
                                             "type": "label",
+                                            "label": "Rescale input when it's pixel aspect ratio is not 1. Usefull for anamorph reviews."
+                                        },
+                                        {
+                                            "key": "scale_pixel_aspect",
+                                            "label": "Scale pixel aspect",
+                                            "type": "boolean"
+                                        },
+                                        {
+                                            "type": "label",
                                             "label": "Background color is used only when input have transparency and Alpha is higher than 0."
                                         },
                                         {

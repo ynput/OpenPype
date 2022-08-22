@@ -66,11 +66,13 @@ def get_ocio_config_path(profile_folder):
     Returns:
         str: Path to vendorized config file.
     """
+
     return os.path.join(
         os.environ["OPENPYPE_ROOT"],
         "vendor",
-        "configs",
-        "OpenColorIO-Configs",
+        "bin",
+        "ocioconfig",
+        "OpenColorIOConfigs",
         profile_folder,
         "config.ocio"
     )
@@ -524,7 +526,19 @@ class ExtractLook(openpype.api.Extractor):
                 # node doesn't have color space attribute
                 color_space = "Raw"
             else:
-                if files_metadata[source]["color_space"] == "Raw":
+                # get the resolved files
+                metadata = files_metadata.get(source)
+                # if the files are unresolved from `source`
+                # assume color space from the first file of
+                # the resource
+                if not metadata:
+                    first_file = next(iter(resource.get(
+                        "files", [])), None)
+                    if not first_file:
+                        continue
+                    first_filepath = os.path.normpath(first_file)
+                    metadata = files_metadata[first_filepath]
+                if metadata["color_space"] == "Raw":
                     # set color space to raw if we linearized it
                     color_space = "Raw"
                 # Remap file node filename to destination
