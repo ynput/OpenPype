@@ -37,3 +37,6 @@ class UnrealModule(OpenPypeModule, IHostModule):
         return [
             os.path.join(UNREAL_ROOT_DIR, "hooks")
         ]
+
+    def get_workfile_extensions(self):
+        return [".uproject"]
