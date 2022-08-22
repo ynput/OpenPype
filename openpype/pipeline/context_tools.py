@@ -445,3 +445,60 @@ def get_custom_workfile_template_from_session(
         session["AVALON_APP"],
         project_settings=project_settings
     )
+
+
+def compute_session_changes(
+    session, asset_doc, task_name, template_key=None
+):
+    """Compute the changes for a session object on task under asset.
+
+    Function does not change the session object, only returns changes.
+
+    Args:
+        session (Dict[str, str]): The initial session to compute changes to.
+            This is required for computing the full Work Directory, as that
+            also depends on the values that haven't changed.
+        asset_doc (Dict[str, Any]): Asset document to switch to.
+        task_name (str): Name of task to switch to.
+        template_key (Union[str, None]): Prepare workfile template key in
+            anatomy templates.
+
+    Returns:
+        Dict[str, str]: Changes in the Session dictionary.
+    """
+
+    changes = {}
+
+    # Get asset document and asset
+    if not asset_doc:
+        task_name = None
+        asset_name = None
+    else:
+        asset_name = asset_doc["name"]
+
+    # Detect any changes compared session
+    mapping = {
+        "AVALON_ASSET": asset_name,
+        "AVALON_TASK": task_name,
+    }
+    changes = {
+        key: value
+        for key, value in mapping.items()
+        if value != session.get(key)
+    }
+    if not changes:
+        return changes
+
+    # Compute work directory (with the temporary changed session so far)
+    changed_session = session.copy()
+    changed_session.update(changes)
+
+    workdir = None
+    if asset_doc:
+        workdir = get_workdir_from_session(
+            changed_session, template_key
+        )
+
+    changes["AVALON_WORKDIR"] = workdir
+
+    return changes
