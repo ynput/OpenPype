@@ -152,6 +152,7 @@ module.exports = {
         "dev_build",
         "dev_testing",
         "dev_contribute",
+        "dev_settings",
         {
             type: "category",
             label: "Hosts integrations",
