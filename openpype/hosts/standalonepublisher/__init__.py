@@ -1,4 +1,4 @@
-from standalonepublish_module import StandAlonePublishModule
+from .standalonepublish_module import StandAlonePublishModule
 
 
 __all__ = (
