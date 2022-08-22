@@ -38,3 +38,22 @@ class StandAlonePublishModule(OpenPypeModule, ITrayAction, IHostModule):
     def run_standalone_publisher(self):
         args = get_openpype_execute_args("module", self.name, "launch")
         run_detached_process(args)
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(
+    StandAlonePublishModule.name,
+    help="StandalonePublisher related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+def launch():
+    """Launch StandalonePublisher tool UI."""
+
+    from openpype.tools import standalonepublish
+
+    standalonepublish.main()
