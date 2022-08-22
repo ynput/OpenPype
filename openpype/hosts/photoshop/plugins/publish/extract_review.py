@@ -30,6 +30,7 @@ class ExtractReview(openpype.api.Extractor):
     jpg_options = None
     mov_options = None
     make_image_sequence = None
+    max_downscale_size = 8192
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
@@ -143,14 +144,12 @@ class ExtractReview(openpype.api.Extractor):
         Ffmpeg has max size 16384x16384. Saved image(s) must be resized to be
         used as a source for thumbnail or review mov.
         """
-        # 16384x16384 actually didn't work because int overflow
-        max_ffmpeg_size = 8192
         Image.MAX_IMAGE_PIXELS = None
         first_url = os.path.join(staging_dir, processed_img_names[0])
         with Image.open(first_url) as im:
             width, height = im.size
 
-        if width > max_ffmpeg_size or height > max_ffmpeg_size:
+        if width > self.max_downscale_size or height > self.max_downscale_size:
             resized_dir = os.path.join(staging_dir, "resized")
             os.mkdir(resized_dir)
             source_files_pattern = os.path.join(resized_dir,
@@ -159,7 +158,8 @@ class ExtractReview(openpype.api.Extractor):
                 source_url = os.path.join(staging_dir, file_name)
                 with Image.open(source_url) as res_img:
                     # 'thumbnail' automatically keeps aspect ratio
-                    res_img.thumbnail((max_ffmpeg_size, max_ffmpeg_size),
+                    res_img.thumbnail((self.max_downscale_size,
+                                       self.max_downscale_size),
                                       Image.ANTIALIAS)
                     res_img.save(os.path.join(resized_dir, file_name))
 
