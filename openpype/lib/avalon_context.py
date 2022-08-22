@@ -17,7 +17,6 @@ from openpype.client import (
     get_workfile_info,
 )
 from .profiles_filtering import filter_profiles
-from .events import emit_event
 from .path_templates import StringTemplate
 
 legacy_io = None
