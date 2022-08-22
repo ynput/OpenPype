@@ -180,7 +180,7 @@ def is_latest(representation):
         bool: Whether the representation is of latest version.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import is_representation_from_latest
@@ -193,7 +193,7 @@ def any_outdated():
     """Return whether the current scene has any outdated content.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.load import any_outdated_containers
@@ -214,7 +214,7 @@ def get_asset(asset_name=None):
         (MongoDB document)
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import get_current_project_asset
@@ -226,7 +226,7 @@ def get_asset(asset_name=None):
 def get_system_general_anatomy_data(system_settings=None):
     """
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
     from openpype.pipeline.template_data import get_general_template_data
 
@@ -298,7 +298,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         dict: Last version document for entered.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     if not project_name:
@@ -346,6 +346,9 @@ def get_workfile_template_key_from_context(
     Raises:
         ValueError: When both 'dbcon' and 'project_name' were not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import (
@@ -389,6 +392,9 @@ def get_workfile_template_key(
     Raises:
         ValueError: When both 'project_name' and 'project_settings' were not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import get_workfile_template_key
@@ -413,7 +419,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         dict: Data prepared for filling workdir template.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.template_data import get_template_data
@@ -449,6 +455,9 @@ def get_workdir_with_workdir_data(
 
     Raises:
         ValueError: When both `anatomy` and `project_name` are set to None.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     if not anatomy and not project_name:
@@ -494,6 +503,9 @@ def get_workdir(
 
     Returns:
         TemplateResult: Workdir path.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.workfile import get_workdir
@@ -520,7 +532,7 @@ def template_data_from_session(session=None):
         dict: All available data from session.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import get_template_data_from_session
@@ -571,6 +583,21 @@ def compute_session_changes(
 
 @deprecated("openpype.pipeline.context_tools.get_workdir_from_session")
 def get_workdir_from_session(session=None, template_key=None):
+    """Calculate workdir path based on session data.
+
+    Args:
+        session (Union[None, Dict[str, str]]): Session to use. If not passed
+            current context session is used (from legacy_io).
+        template_key (Union[str, None]): Precalculate template key to define
+            workfile template name in Anatomy.
+
+    Returns:
+        str: Workdir path.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
+
     from openpype.pipeline.context_tools import get_workdir_from_session
 
     return get_workdir_from_session(session, template_key)
@@ -620,6 +647,9 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
 
     Returns:
         dict: Workfile document or None.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     # Use legacy_io if dbcon is not entered
@@ -730,6 +760,11 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
 
 @deprecated("openpype.pipeline.workfile.BuildWorkfile")
 def BuildWorkfile():
+    """Build workfile class was moved to workfile pipeline.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
     from openpype.pipeline.workfile import BuildWorkfile
 
     return BuildWorkfile()
@@ -772,10 +807,7 @@ def change_timer_to_current_context():
     Deprecated:
         This method is specific for TimersManager module so please use the
         functionality from there. Function will be removed after release
-        version 3.14.*
-
-    TODO:
-    - use TimersManager's static method instead of reimplementing it here
+        version 3.15.*
     """
 
     from openpype.pipeline import legacy_io
@@ -890,6 +922,9 @@ def get_custom_workfile_template_by_context(
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     if anatomy is None:
@@ -948,6 +983,9 @@ def get_custom_workfile_template_by_string_context(
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     project_name = None
@@ -982,6 +1020,9 @@ def get_custom_workfile_template(template_profiles):
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline import legacy_io
@@ -1010,6 +1051,9 @@ def get_last_workfile_with_version(
     Returns:
         tuple: Last workfile<str> with version<int> if there is any otherwise
             returns (None, None).
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import get_last_workfile_with_version
@@ -1036,6 +1080,9 @@ def get_last_workfile(
 
     Returns:
         str: Last or first workfile as filename of full path to filename.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import get_last_workfile
