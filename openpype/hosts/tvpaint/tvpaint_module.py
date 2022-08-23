@@ -20,7 +20,7 @@ class TVPaintModule(OpenPypeModule, IHostModule):
     def initialize(self, module_settings):
         self.enabled = True
 
-    def add_implementation_envs(env, _app):
+    def add_implementation_envs(self, env, _app):
         """Modify environments to contain all required for implementation."""
 
         defaults = {
