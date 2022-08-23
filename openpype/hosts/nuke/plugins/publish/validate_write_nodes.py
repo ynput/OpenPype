@@ -1,4 +1,3 @@
-import six
 import pyblish.api
 from openpype.api import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
