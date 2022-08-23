@@ -483,9 +483,15 @@ class ExtractLook(openpype.api.Extractor):
                 linearize=linearize,
                 force=force_copy
             )
-            destination = self.resource_destination(instance,
-                                                    source,
-                                                    do_maketx)
+            for processor in processors:
+                if processor is MakeTX:
+                    destination = self.resource_destination(
+                        instance, source, MakeTX
+                    )
+                elif processor is MakeRSTexBin:
+                    destination = self.resource_destination(
+                        instance, source, MakeRSTexBin
+                    )
 
             # Force copy is specified.
             if force_copy:
@@ -512,9 +518,15 @@ class ExtractLook(openpype.api.Extractor):
             if source not in destinations:
                 # Cache destination as source resource might be included
                 # multiple times
-                destinations[source] = self.resource_destination(
-                    instance, source, do_maketx
-                )
+                for processor in processors:
+                    if processor is MakeTX:
+                        destinations[source] = self.resource_destination(
+                            instance, source, MakeTX
+                        )
+                    elif processor is MakeRSTexBin:
+                        destinations[source] = self.resource_destination(
+                            instance, source, MakeRSTexBin
+                        )
 
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
@@ -555,7 +567,7 @@ class ExtractLook(openpype.api.Extractor):
             "attrRemap": remap,
         }
 
-    def resource_destination(self, instance, filepath, do_maketx):
+    def resource_destination(self, instance, filepath, processor):
         """Get resource destination path.
 
         This is utility function to change path if resource file name is
@@ -564,7 +576,7 @@ class ExtractLook(openpype.api.Extractor):
         Args:
             instance: Current Instance.
             filepath (str): Resource path
-            do_maketx (bool): Flag if resource is processed by `maketx`.
+            processor: Texture processor converting resource.
 
         Returns:
             str: Path to resource file
@@ -576,8 +588,10 @@ class ExtractLook(openpype.api.Extractor):
         basename, ext = os.path.splitext(os.path.basename(filepath))
 
         # If `maketx` then the texture will always end with .tx
-        if do_maketx:
+        if processor == MakeTX:
             ext = ".tx"
+        elif processor == MakeRSTexBin:
+            ext = ".rstexbin"
 
         return os.path.join(
             resources_dir, basename + ext
