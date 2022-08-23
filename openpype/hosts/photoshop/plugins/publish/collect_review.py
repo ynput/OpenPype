@@ -10,7 +10,7 @@ import os
 
 import pyblish.api
 
-from openpype.pipeline.create import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectReview(pyblish.api.ContextPlugin):
@@ -27,7 +27,7 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "review"
-        subset = get_subset_name_with_asset_doc(
+        subset = get_subset_name(
             family,
             context.data.get("variant", ''),
             context.data["anatomyData"]["task"]["name"],

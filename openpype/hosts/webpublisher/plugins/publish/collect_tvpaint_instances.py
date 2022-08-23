@@ -10,7 +10,7 @@ import re
 import copy
 import pyblish.api
 
-from openpype.pipeline.create import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectTVPaintInstances(pyblish.api.ContextPlugin):
@@ -47,7 +47,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
         new_instances = []
 
         # Workfile instance
-        workfile_subset_name = get_subset_name_with_asset_doc(
+        workfile_subset_name = get_subset_name(
             self.workfile_family,
             self.workfile_variant,
             task_name,
@@ -62,7 +62,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
         new_instances.append(workfile_instance)
 
         # Review instance
-        review_subset_name = get_subset_name_with_asset_doc(
+        review_subset_name = get_subset_name(
             self.review_family,
             self.review_variant,
             task_name,
@@ -116,7 +116,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                     "family": "render"
                 }
 
-                subset_name = get_subset_name_with_asset_doc(
+                subset_name = get_subset_name(
                     self.render_pass_family,
                     render_pass,
                     task_name,
@@ -140,7 +140,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                 # Override family for subset name
                 "family": "render"
             }
-            subset_name = get_subset_name_with_asset_doc(
+            subset_name = get_subset_name(
                 self.render_layer_family,
                 variant,
                 task_name,

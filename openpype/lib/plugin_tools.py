@@ -8,6 +8,7 @@ import json
 import warnings
 import functools
 
+from openpype.client import get_asset_by_id
 from openpype.settings import get_project_settings
 
 log = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def TaskNotSetError(*args, **kwargs):
     return TaskNotSetError(*args, **kwargs)
 
 
-@deprecated("openpype.pipeline.create.get_subset_name_with_asset_doc")
+@deprecated("openpype.pipeline.create.get_subset_name")
 def get_subset_name_with_asset_doc(
     family,
     variant,
@@ -105,9 +106,9 @@ def get_subset_name_with_asset_doc(
             if 'asset_doc' is not passed.
     """
 
-    from openpype.pipeline.create import get_subset_name_with_asset_doc
+    from openpype.pipeline.create import get_subset_name
 
-    return get_subset_name_with_asset_doc(
+    return get_subset_name(
         family,
         variant,
         task_name,
@@ -119,7 +120,7 @@ def get_subset_name_with_asset_doc(
     )
 
 
-@deprecated("openpype.pipeline.create.get_subset_name")
+@deprecated
 def get_subset_name(
     family,
     variant,
@@ -144,11 +145,13 @@ def get_subset_name(
     if project_name is None:
         project_name = dbcon.project_name
 
+    asset_doc = get_asset_by_id(project_name, asset_id, fields=["data.tasks"])
+
     return get_subset_name(
         family,
         variant,
         task_name,
-        asset_id,
+        asset_doc,
         project_name,
         host_name,
         default_template,

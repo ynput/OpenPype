@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 from openpype.pipeline import legacy_io
-from openpype.pipeline.create import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -71,7 +71,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # workfile instance
         family = "workfile"
-        subset = get_subset_name_with_asset_doc(
+        subset = get_subset_name(
             family,
             self.default_variant,
             context.data["anatomyData"]["task"]["name"],

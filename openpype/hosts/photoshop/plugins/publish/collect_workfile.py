@@ -1,7 +1,7 @@
 import os
 import pyblish.api
 
-from openpype.pipeline.create import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -24,7 +24,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         family = "workfile"
         # context.data["variant"] might come only from collect_batch_data
         variant = context.data.get("variant") or self.default_variant
-        subset = get_subset_name_with_asset_doc(
+        subset = get_subset_name(
             family,
             variant,
             context.data["anatomyData"]["task"]["name"],

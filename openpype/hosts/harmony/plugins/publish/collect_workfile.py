@@ -3,7 +3,7 @@
 import os
 import pyblish.api
 
-from openpype.pipeline.create import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -17,7 +17,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         """Plugin entry point."""
         family = "workfile"
         basename = os.path.basename(context.data["currentFile"])
-        subset = get_subset_name_with_asset_doc(
+        subset = get_subset_name(
             family,
             "",
             context.data["anatomyData"]["task"]["name"],

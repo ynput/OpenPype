@@ -24,7 +24,7 @@ from openpype.lib import (
     convert_ffprobe_fps_value,
 )
 from openpype.lib.plugin_tools import parse_json
-from openpype.pipeline.create import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -78,7 +78,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset_name = get_subset_name_with_asset_doc(
+            subset_name = get_subset_name(
                 family,
                 variant,
                 task_name,

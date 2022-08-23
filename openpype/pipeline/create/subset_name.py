@@ -1,6 +1,5 @@
 import os
 
-from openpype.client import get_asset_by_id
 from openpype.settings import get_project_settings
 from openpype.lib import filter_profiles, prepare_template_data
 from openpype.pipeline import legacy_io
@@ -15,7 +14,7 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-def get_subset_name_with_asset_doc(
+def get_subset_name(
     family,
     variant,
     task_name,
@@ -108,40 +107,3 @@ def get_subset_name_with_asset_doc(
             fill_pairs[key] = value
 
     return template.format(**prepare_template_data(fill_pairs))
-
-
-def get_subset_name(
-    family,
-    variant,
-    task_name,
-    asset_id,
-    project_name=None,
-    host_name=None,
-    default_template=None,
-    dynamic_data=None,
-    project_settings=None
-):
-    """Calculate subset name using OpenPype settings.
-
-    This variant of function expects asset id as argument.
-
-    This is legacy function should be replaced with
-    `get_subset_name_with_asset_doc` where asset document is expected.
-    """
-
-    if project_name is None:
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-
-    asset_doc = get_asset_by_id(project_name, asset_id, fields=["data.tasks"])
-
-    return get_subset_name_with_asset_doc(
-        family,
-        variant,
-        task_name,
-        asset_doc or {},
-        project_name,
-        host_name,
-        default_template,
-        dynamic_data,
-        project_settings
-    )

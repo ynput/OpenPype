@@ -6,7 +6,6 @@ from .constants import (
 from .subset_name import (
     TaskNotSetError,
     get_subset_name,
-    get_subset_name_with_asset_doc,
 )
 
 from .creator_plugins import (
@@ -42,7 +41,6 @@ __all__ = (
 
     "TaskNotSetError",
     "get_subset_name",
-    "get_subset_name_with_asset_doc",
 
     "CreatorError",
 
