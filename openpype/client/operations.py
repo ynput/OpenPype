@@ -444,7 +444,7 @@ class UpdateOperation(AbstractOperation):
         set_data = {}
         for key, value in self._update_data.items():
             if value is REMOVED_VALUE:
-                unset_data[key] = value
+                unset_data[key] = None
             else:
                 set_data[key] = value
 
