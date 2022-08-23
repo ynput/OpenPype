@@ -125,7 +125,7 @@ class MakeRSTexBin(TextureProcessor):
         if "REDSHIFT_COREDATAPATH" not in os.environ:
             raise RuntimeError("Must have Redshift available.")
 
-        texture_processor_path = get_redshift_tool("TextureProcessor")
+        texture_processor_path = get_redshift_tool("redshiftTextureProcessor")
 
         cmd = [
             texture_processor_path,
@@ -142,14 +142,14 @@ class MakeRSTexBin(TextureProcessor):
         if sys.platform == "win32":
             kwargs["creationflags"] = CREATE_NO_WINDOW
         try:
-            processed_filepath = subprocess.check_output(**kwargs)
+            subprocess.check_output(**kwargs)
         except subprocess.CalledProcessError as exc:
             print(exc)
             import traceback
 
             traceback.print_exc()
             raise
-        return processed_filepath
+        return source
 
 
 class MakeTX(TextureProcessor):
@@ -206,7 +206,7 @@ class MakeTX(TextureProcessor):
         if sys.platform == "win32":
             kwargs["creationflags"] = CREATE_NO_WINDOW
         try:
-            processed_filepath = subprocess.check_output(**kwargs)
+            subprocess.check_output(**kwargs)
         except subprocess.CalledProcessError as exc:
             print(exc)
             import traceback
@@ -216,7 +216,7 @@ class MakeTX(TextureProcessor):
             print(exc.output)
             raise
 
-        return processed_filepath
+        return destination
 
 
 @contextlib.contextmanager
@@ -629,7 +629,7 @@ class ExtractLook(openpype.api.Extractor):
 
         if bool(processors):
             for processor in processors:
-                if processor == MakeTX:
+                if processor is MakeTX:
                     processed_path = processor().process(filepath,
                                                          converted,
                                                          "--sattrib",
@@ -644,7 +644,7 @@ class ExtractLook(openpype.api.Extractor):
                         return processed_path, COPY, texture_hash
                     else:
                         self.log.info("maketx has returned nothing")
-                elif processor == MakeRSTexBin:
+                elif processor is MakeRSTexBin:
                     processed_path = processor().process(filepath)
                     self.log.info("Generating texture file for %s .." % filepath) # noqa
                     if processed_path:
