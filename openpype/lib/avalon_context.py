@@ -769,7 +769,7 @@ def BuildWorkfile():
     return BuildWorkfile()
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.create.get_legacy_creator_by_name")
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
@@ -780,23 +780,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
 
     Returns:
         Creator: Return first matching plugin or `None`.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    from openpype.pipeline import discover_legacy_creator_plugins
+    from openpype.pipeline.create import get_legacy_creator_by_name
 
-    # Lower input creator name if is not case sensitive
-    if not case_sensitive:
-        creator_name = creator_name.lower()
-
-    for creator_plugin in discover_legacy_creator_plugins():
-        _creator_name = creator_plugin.__name__
-
-        # Lower creator plugin name if is not case sensitive
-        if not case_sensitive:
-            _creator_name = _creator_name.lower()
-
-        if _creator_name == creator_name:
-            return creator_plugin
-    return None
+    return get_legacy_creator_by_name(creator_name, case_sensitive)
 
 
 @deprecated
