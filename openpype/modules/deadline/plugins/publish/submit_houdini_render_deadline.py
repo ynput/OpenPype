@@ -1,16 +1,24 @@
-import os
-import json
-import getpass
-
-import requests
-import pyblish.api
-
 import hou
 
+import os
+import attr
+import getpass
+import pyblish.api
+
 from openpype.pipeline import legacy_io
+from openpype_modules.deadline import abstract_submit_deadline
+from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 
-class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
+@attr.s
+class DeadlinePluginInfo():
+    SceneFile = attr.ib(default=None)
+    OutputDriver = attr.ib(default=None)
+    Version = attr.ib(default=None)
+    IgnoreInputs = attr.ib(default=True)
+
+
+class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     """Submit Solaris USD Render ROPs to Deadline.
 
     Renders are submitted to a Deadline Web Service as
@@ -30,136 +38,95 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "redshift_rop",
                 "arnold_rop"]
     targets = ["local"]
+    use_published = True
 
-    def process(self, instance):
+    def get_job_info(self):
+        job_info = DeadlineJobInfo(Plugin="Houdini")
 
+        instance = self._instance
         context = instance.context
+
         filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
-        comment = context.data.get("comment", "")
-        deadline_user = context.data.get("deadlineUser", getpass.getuser())
-        jobname = "%s - %s" % (filename, instance.name)
 
-        # Support code prefix label for batch name
-        batch_name = filename
+        job_info.Name = "%s - %s" % (filename, instance.name)
+        job_info.BatchName = filename
+        job_info.Plugin = "Houdini"
+        job_info.UserName = context.data.get(
+            "deadlineUser", getpass.getuser())
 
-        # Output driver to render
-        driver = instance[0]
-
-        # StartFrame to EndFrame by byFrameStep
+        # Deadline requires integers in frame range
         frames = "{start}-{end}x{step}".format(
             start=int(instance.data["frameStart"]),
             end=int(instance.data["frameEnd"]),
             step=int(instance.data["byFrameStep"]),
         )
+        job_info.Frames = frames
 
-        # Documentation for keys available at:
-        # https://docs.thinkboxsoftware.com
-        #    /products/deadline/8.0/1_User%20Manual/manual
-        #    /manual-submission.html#job-info-file-options
-        payload = {
-            "JobInfo": {
-                # Top-level group name
-                "BatchName": batch_name,
+        job_info.Pool = instance.data.get("primaryPool")
+        job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.ChunkSize = instance.data.get("chunkSize", 10)
+        job_info.Comment = context.data.get("comment")
 
-                # Job name, as seen in Monitor
-                "Name": jobname,
-
-                # Arbitrary username, for visualisation in Monitor
-                "UserName": deadline_user,
-
-                "Plugin": "Houdini",
-                "Pool": instance.data.get("primaryPool"),
-                "secondaryPool": instance.data.get("secondaryPool"),
-                "Frames": frames,
-
-                "ChunkSize": instance.data.get("chunkSize", 10),
-
-                "Comment": comment
-            },
-            "PluginInfo": {
-                # Input
-                "SceneFile": filepath,
-                "OutputDriver": driver.path(),
-
-                # Mandatory for Deadline
-                # Houdini version without patch number
-                "Version": hou.applicationVersionString().rsplit(".", 1)[0],
-
-                "IgnoreInputs": True
-            },
-
-            # Mandatory for Deadline, may be empty
-            "AuxFiles": []
-        }
-
-        # Include critical environment variables with submission + api.Session
         keys = [
-            # Submit along the current Avalon tool setup that we launched
-            # this application with so the Render Slave can build its own
-            # similar environment using it, e.g. "maya2018;vray4.x;yeti3.1.9"
-            "AVALON_TOOLS",
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "OPENPYPE_SG_USER",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP_NAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS",
             "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
-        if context.data.get("deadlinePassMongoUrl"):
+        if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
+        for key in keys:
+            val = environment.get(key)
+            if val:
+                job_info.EnvironmentKeyValue = "{key}={value}".format(
+                     key=key,
+                     value=val)
+        # to recognize job from PYPE for turning Event On/Off
+        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
 
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
-
-        # Include OutputFilename entries
-        # The first entry also enables double-click to preview rendered
-        # frames from Deadline Monitor
-        output_data = {}
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
             fname = os.path.basename(filepath)
-            output_data["OutputDirectory%d" % i] = dirname.replace("\\", "/")
-            output_data["OutputFilename%d" % i] = fname
+            job_info.OutputDirectory = dirname.replace("\\", "/")
+            job_info.OutputFilename = fname
 
-            # For now ensure destination folder exists otherwise HUSK
-            # will fail to render the output image. This is supposedly fixed
-            # in new production builds of Houdini
-            # TODO Remove this workaround with Houdini 18.0.391+
-            if not os.path.exists(dirname):
-                self.log.info("Ensuring output directory exists: %s" %
-                              dirname)
-                os.makedirs(dirname)
+        return job_info
 
-        payload["JobInfo"].update(output_data)
+    def get_plugin_info(self):
 
-        self.submit(instance, payload)
+        instance = self._instance
+        context = instance.context
 
-    def submit(self, instance, payload):
+        # Output driver to render
+        driver = instance[0]
+        hou_major_minor = hou.applicationVersionString().rsplit(".", 1)[0]
 
-        # get default deadline webservice url from deadline module
-        deadline_url = instance.context.data.get("defaultDeadline")
-        # if custom one is set in instance, use that
-        if instance.data.get("deadlineUrl"):
-            deadline_url = instance.data.get("deadlineUrl")
-        assert deadline_url, "Requires Deadline Webservice URL"
+        plugin_info = DeadlinePluginInfo(
+            SceneFile=context.data["currentFile"],
+            OutputDriver=driver.path(),
+            Version=hou_major_minor,
+            IgnoreInputs=True
+        )
 
-        plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("Using Render Plugin : {}".format(plugin))
+        return attr.asdict(plugin_info)
 
-        self.log.info("Submitting..")
-        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
+    def process(self, instance):
+        super(HoudiniSubmitDeadline, self).process(instance)
 
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(deadline_url)
-        response = requests.post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
-
+        # TODO: Avoid the need for this logic here, needed for submit publish
         # Store output dir for unified publisher (filesequence)
         output_dir = os.path.dirname(instance.data["files"][0])
         instance.data["outputDir"] = output_dir
-        instance.data["deadlineSubmissionJob"] = response.json()
+        instance.data["toBeRenderedOn"] = "deadline"
