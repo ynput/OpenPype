@@ -957,7 +957,7 @@ class MongoSettingsHandler(SettingsHandler):
         if project_settings_doc:
             self.collection.update_one(
                 {"_id": project_settings_doc["_id"]},
-                new_project_settings_doc
+                {"$set": new_project_settings_doc}
             )
         else:
             self.collection.insert_one(new_project_settings_doc)
