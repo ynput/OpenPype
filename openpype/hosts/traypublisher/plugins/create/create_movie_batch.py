@@ -6,12 +6,14 @@ from openpype.client import get_assets, get_asset_by_name
 from openpype.lib import (
     FileDef,
     BoolDef,
-    get_subset_name_with_asset_doc,
-    TaskNotSetError,
 )
 from openpype.pipeline import (
     CreatedInstance,
     CreatorError
+)
+from openpype.pipeline.create import (
+    get_subset_name_with_asset_doc,
+    TaskNotSetError,
 )
 
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
