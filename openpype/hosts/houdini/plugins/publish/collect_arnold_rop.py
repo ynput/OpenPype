@@ -107,7 +107,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
                                                        suffix=label)
             render_products.append(aov_product)
             files_by_aov[label] = self.generate_expected_files(instance,
-                                                            aov_product)
+                                                               aov_product)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -120,7 +120,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["attachTo"] = []      # stub required data
 
         if "expectedFiles" not in instance.data:
-           instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = list()
         instance.data["expectedFiles"].append(files_by_aov)
 
     def get_render_product_name(self, prefix, suffix):
