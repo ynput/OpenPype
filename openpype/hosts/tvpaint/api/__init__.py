@@ -8,15 +8,6 @@ from .pipeline import (
     TVPaintHost,
 )
 
-from .workio import (
-    open_file,
-    save_file,
-    current_file,
-    has_unsaved_changes,
-    file_extensions,
-    work_root,
-)
-
 
 __all__ = (
     "CommunicationWrapper",
@@ -28,12 +19,4 @@ __all__ = (
     "plugin",
 
     "TVPaintHost",
-
-    # Workfiles API
-    "open_file",
-    "save_file",
-    "current_file",
-    "has_unsaved_changes",
-    "file_extensions",
-    "work_root"
 )
