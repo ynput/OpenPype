@@ -1,6 +1,5 @@
 """Should be used only inside of hosts."""
 import os
-import re
 import copy
 import platform
 import logging
@@ -31,6 +30,7 @@ log = logging.getLogger("AvalonContext")
 
 
 # Backwards compatibility - should not be used anymore
+#   - Will be removed in OP 3.16.*
 CURRENT_DOC_SCHEMAS = {
     "project": CURRENT_PROJECT_SCHEMA,
     "asset": CURRENT_ASSET_DOC_SCHEMA,
