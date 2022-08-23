@@ -77,11 +77,6 @@ class PypeCommands:
         return run_webserver(*args, **kwargs)
 
     @staticmethod
-    def launch_standalone_publisher():
-        from openpype.tools import standalonepublish
-        standalonepublish.main()
-
-    @staticmethod
     def launch_traypublisher():
         from openpype.tools import traypublisher
         traypublisher.main()
