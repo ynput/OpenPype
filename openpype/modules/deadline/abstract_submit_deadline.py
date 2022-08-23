@@ -359,6 +359,27 @@ class DeadlineJobInfo(object):
     def OutputDirectory(self, val):  # noqa: N802
         self._outputDirectory.append(val)
 
+    # Asset Dependency
+    # ----------------------------------------------
+    _assetDependency = attr.ib(factory=list)
+
+    @property
+    def AssetDependency(self):  # noqa: N802
+        """Return all OutputDirectory values formatted for Deadline.
+
+        Returns:
+            dict: as `{'OutputDirectory0': 'dir'}`
+
+        """
+        out = {}
+        for index, v in enumerate(self._assetDependency):
+            out["AssetDependency{}".format(index)] = v
+        return out
+
+    @OutputDirectory.setter
+    def AssetDependency(self, val):  # noqa: N802
+        self._assetDependency.append(val)
+
     # Tile Job
     # ----------------------------------------------
     TileJob = attr.ib(default=None)  # Default: false
@@ -396,6 +417,7 @@ class DeadlineJobInfo(object):
         serialized.update(self.OutputFilename)
         serialized.update(self.OutputFilenameTile)
         serialized.update(self.OutputDirectory)
+        serialized.update(self.AssetDependency)
         return serialized
 
 
