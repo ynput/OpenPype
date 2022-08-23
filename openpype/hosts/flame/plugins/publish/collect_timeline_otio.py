@@ -1,9 +1,9 @@
 import pyblish.api
 
-import openpype.lib as oplib
-from openpype.pipeline import legacy_io
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
+from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name_with_asset_doc
 
 
 class CollecTimelineOTIO(pyblish.api.ContextPlugin):
@@ -24,7 +24,7 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
         sequence = opfapi.get_current_sequence(opfapi.CTX.selection)
 
         # create subset name
-        subset_name = oplib.get_subset_name_with_asset_doc(
+        subset_name = get_subset_name_with_asset_doc(
             family,
             variant,
             task_name,

@@ -3,7 +3,7 @@ import copy
 import pyblish.api
 
 from openpype.client import get_asset_by_name
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name_with_asset_doc
 
 
 class CollectRenderScene(pyblish.api.ContextPlugin):

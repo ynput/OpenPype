@@ -23,10 +23,8 @@ from openpype.lib import (
     get_ffprobe_streams,
     convert_ffprobe_fps_value,
 )
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_subset_name_with_asset_doc
-)
+from openpype.lib.plugin_tools import parse_json
+from openpype.pipeline.create import get_subset_name_with_asset_doc
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):

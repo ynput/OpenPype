@@ -10,7 +10,7 @@ import re
 import copy
 import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name_with_asset_doc
 
 
 class CollectTVPaintInstances(pyblish.api.ContextPlugin):

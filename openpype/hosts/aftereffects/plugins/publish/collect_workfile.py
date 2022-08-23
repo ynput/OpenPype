@@ -1,8 +1,8 @@
 import os
 
 import pyblish.api
-from openpype.lib import get_subset_name_with_asset_doc
 from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name_with_asset_doc
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
