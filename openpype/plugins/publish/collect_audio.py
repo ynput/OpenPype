@@ -12,10 +12,12 @@ from openpype.pipeline import (
 
 
 class CollectAudio(pyblish.api.InstancePlugin):
-    """ Collecting available audio subset to instance
+    """Collect asset's last published audio.
 
+    The audio subset name searched for is defined in:
+        project settings > Collect Audio
     """
-    label = "Collect Audio"
+    label = "Collect Asset Audio"
     order = pyblish.api.CollectorOrder + 0.1
     families = ["review"]
     hosts = [
@@ -46,10 +48,33 @@ class CollectAudio(pyblish.api.InstancePlugin):
             return
 
         # Add audio to instance if exists.
-        self.log.info('Collecting Audio Data ...')
+        self.log.info((
+            "Searching for audio subset '{subset}'"
+            " in asset '{asset}'"
+        ).format(
+            subset=self.audio_subset_name,
+            asset=instance.data["asset"]
+        ))
+
+        repre_doc = self._get_repre_doc(instance)
+
+        # Add audio to instance if representation was found
+        if repre_doc:
+            instance.data["audio"] = [{
+                "offset": 0,
+                "filename": get_representation_path(repre_doc)
+            }]
+            self.log.info("Audio Data added to instance ...")
+
+    def _get_repre_doc(self, instance):
+        cache = instance.context.data.get("__cache_asset_audio", {})
+        asset_name = instance.data["asset"]
+
+        # first try to get it from cache
+        if asset_name in cache:
+            return cache[asset_name]
 
         project_name = legacy_io.active_project()
-        asset_name = instance.data["asset"]
 
         # Find latest versions document
         last_version_doc = get_last_version_by_subset_name(
@@ -72,12 +97,8 @@ class CollectAudio(pyblish.api.InstancePlugin):
             else:
                 repre_doc = repre_docs[0]
 
-        # Add audio to instance if representation was found
-        if repre_doc:
-            instance.data["audio"] = [{
-                "offset": 0,
-                "filename": get_representation_path(repre_doc)
-            }]
-            self.log.info("Audio Data added to instance ...")
+        # update cache
+        cache[asset_name] = repre_doc
+        instance.context.data["__cache_asset_audio"].update(cache)
 
-        self.log.debug("instance.data: {}".format(pformat(instance.data)))
+        return repre_doc
