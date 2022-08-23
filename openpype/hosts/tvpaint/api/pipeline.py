@@ -16,8 +16,6 @@ from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 
