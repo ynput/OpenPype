@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Missing audio file</title>
+<description>
+## Cannot locate linked audio file
+
+Audio file at {audio_url} cannot be found.
+
+### How to repair?
+
+Copy audio file to the highlighted location or remove audio link in the workfile.
+</description>
+</error>
+</root>

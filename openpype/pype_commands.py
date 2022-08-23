@@ -7,7 +7,7 @@ import time
 
 from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
-from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
+from openpype.lib.plugin_tools import get_batch_asset_task_info
 from openpype.lib.remote_publish import (
     get_webpublish_conn,
     start_webpublish_log,
@@ -15,6 +15,7 @@ from openpype.lib.remote_publish import (
     fail_batch,
     find_variant_key,
     get_task_data,
+    get_timeout,
     IN_PROGRESS_STATUS
 )
 
@@ -25,7 +26,7 @@ class PypeCommands:
     Most of its methods are called by :mod:`cli` module.
     """
     @staticmethod
-    def launch_tray(debug=False):
+    def launch_tray():
         PypeLogger.set_process_name("Tray")
 
         from openpype.tools import tray
@@ -81,6 +82,11 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def launch_traypublisher():
+        from openpype.tools import traypublisher
+        traypublisher.main()
+
+    @staticmethod
     def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
@@ -96,7 +102,8 @@ class PypeCommands:
             RuntimeError: When there is no path to process.
         """
         from openpype.modules import ModulesManager
-        from openpype import install, uninstall
+        from openpype.pipeline import install_openpype_plugins
+
         from openpype.api import Logger
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
@@ -107,7 +114,7 @@ class PypeCommands:
 
         log = Logger.get_logger()
 
-        install()
+        install_openpype_plugins()
 
         manager = ModulesManager()
 
@@ -119,13 +126,14 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        env = get_app_environments_for_context(
-            os.environ["AVALON_PROJECT"],
-            os.environ["AVALON_ASSET"],
-            os.environ["AVALON_TASK"],
-            os.environ["AVALON_APP_NAME"]
-        )
-        os.environ.update(env)
+        if os.getenv("AVALON_APP_NAME"):
+            env = get_app_environments_for_context(
+                os.environ["AVALON_PROJECT"],
+                os.environ["AVALON_ASSET"],
+                os.environ["AVALON_TASK"],
+                os.environ["AVALON_APP_NAME"]
+            )
+            os.environ.update(env)
 
         pyblish.api.register_host("shell")
 
@@ -134,9 +142,10 @@ class PypeCommands:
                 print(f"setting target: {target}")
                 pyblish.api.register_target(target)
         else:
-            pyblish.api.register_target("filesequence")
+            pyblish.api.register_target("farm")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         log.info("Running publish ...")
 
@@ -162,13 +171,15 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def remotepublishfromapp(project, batch_path, host_name,
+    def remotepublishfromapp(project_name, batch_path, host_name,
                              user_email, targets=None):
         """Opens installed variant of 'host' and run remote publish there.
 
+        Eventually should be yanked out to Webpublisher cli.
+
         Currently implemented and tested for Photoshop where customer
         wants to process uploaded .psd file and publish collected layers
-        from there.
+        from there. Triggered by Webpublisher.
 
         Checks if no other batches are running (status =='in_progress). If
         so, it sleeps for SLEEP (this is separate process),
@@ -179,8 +190,8 @@ class PypeCommands:
         Runs publish process as user would, in automatic fashion.
 
         Args:
-            project (str): project to publish (only single context is expected
-                per call of remotepublish
+            project_name (str): project to publish (only single context is
+                expected per call of remotepublish
             batch_path (str): Path batch folder. Contains subfolders with
                 resources (workfile, another subfolder 'renders' etc.)
             host_name (str): 'photoshop'
@@ -212,10 +223,17 @@ class PypeCommands:
 
         batches_in_progress = list(dbcon.find({"status": IN_PROGRESS_STATUS}))
         if len(batches_in_progress) > 1:
-            fail_batch(_id, batches_in_progress, dbcon)
+            running_batches = [str(batch["_id"])
+                               for batch in batches_in_progress
+                               if batch["_id"] != _id]
+            msg = "There are still running batches {}\n". \
+                format("\n".join(running_batches))
+            msg += "Ask admin to check them and reprocess current batch"
+            fail_batch(_id, dbcon, msg)
             print("Another batch running, probably stuck, ask admin for help")
 
-        asset, task_name, _ = get_batch_asset_task_info(task_data["context"])
+        asset_name, task_name, task_type = get_batch_asset_task_info(
+            task_data["context"])
 
         application_manager = ApplicationManager()
         found_variant_key = find_variant_key(application_manager, host_name)
@@ -223,8 +241,8 @@ class PypeCommands:
 
         # must have for proper launch of app
         env = get_app_environments_for_context(
-            project,
-            asset,
+            project_name,
+            asset_name,
             task_name,
             app_name
         )
@@ -251,19 +269,30 @@ class PypeCommands:
 
         data = {
             "last_workfile_path": workfile_path,
-            "start_last_workfile": True
+            "start_last_workfile": True,
+            "project_name": project_name,
+            "asset_name": asset_name,
+            "task_name": task_name
         }
 
         launched_app = application_manager.launch(app_name, **data)
 
+        timeout = get_timeout(project_name, host_name, task_type)
+
+        time_start = time.time()
         while launched_app.poll() is None:
             time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                launched_app.terminate()
+                msg = "Timeout reached"
+                fail_batch(_id, dbcon, msg)
 
     @staticmethod
     def remotepublish(project, batch_path, user_email, targets=None):
         """Start headless publishing.
 
-        Used to publish rendered assets, workfiles etc.
+        Used to publish rendered assets, workfiles etc via Webpublisher.
+        Eventually should be yanked out to Webpublisher cli.
 
         Publish use json from passed paths argument.
 
@@ -286,7 +315,8 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
-        import avalon.api
+
+        from openpype.pipeline import install_host
         from openpype.hosts.webpublisher import api as webpublisher
 
         log = PypeLogger.get_logger()
@@ -298,6 +328,7 @@ class PypeCommands:
         os.environ["AVALON_PROJECT"] = project
         os.environ["AVALON_APP"] = host_name
         os.environ["USER_EMAIL"] = user_email
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         pyblish.api.register_host(host_name)
 
@@ -307,7 +338,7 @@ class PypeCommands:
             for target in targets:
                 pyblish.api.register_target(target)
 
-        avalon.api.install(webpublisher)
+        install_host(webpublisher)
 
         log.info("Running publish ...")
 
@@ -320,9 +351,12 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def extractenvironments(
-        output_json_path, project, asset, task, app, env_group
-    ):
+    def extractenvironments(output_json_path, project, asset, task, app,
+                            env_group):
+        """Produces json file with environment based on project and app.
+
+        Called by Deadline plugin to propagate environment into render jobs.
+        """
         if all((project, asset, task, app)):
             from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(
@@ -360,7 +394,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant):
+                  test_data_folder, persist, app_variant, timeout):
         """
             Runs tests from 'folder'
 
@@ -398,6 +432,9 @@ class PypeCommands:
         if app_variant:
             args.extend(["--app_variant", app_variant])
 
+        if timeout:
+            args.extend(["--timeout", timeout])
+
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
@@ -433,3 +470,13 @@ class PypeCommands:
 
         version_packer = VersionRepacker(directory)
         version_packer.process()
+
+    def pack_project(self, project_name, dirpath):
+        from openpype.lib.project_backpack import pack_project
+
+        pack_project(project_name, dirpath)
+
+    def unpack_project(self, zip_filepath, new_root):
+        from openpype.lib.project_backpack import unpack_project
+
+        unpack_project(zip_filepath, new_root)

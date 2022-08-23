@@ -7,7 +7,7 @@ VALUE_CHANGE_OFFSET_MS = 300
 
 
 def create_deffered_value_change_timer(callback):
-    """Deffer value change callback.
+    """Defer value change callback.
 
     UI won't trigger all callbacks on each value change but after predefined
     time. Timer is reset on each start so callback is triggered after user

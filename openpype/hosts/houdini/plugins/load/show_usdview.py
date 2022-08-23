@@ -1,7 +1,11 @@
-from avalon import api
+import os
+import subprocess
+
+from openpype.lib.vendor_bin_utils import find_executable
+from openpype.pipeline import load
 
 
-class ShowInUsdview(api.Loader):
+class ShowInUsdview(load.LoaderPlugin):
     """Open USD file in usdview"""
 
     families = ["colorbleed.usd"]
@@ -14,12 +18,7 @@ class ShowInUsdview(api.Loader):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        import os
-        import subprocess
-
-        import avalon.lib as lib
-
-        usdview = lib.which("usdview")
+        usdview = find_executable("usdview")
 
         filepath = os.path.normpath(self.fname)
         filepath = filepath.replace("\\", "/")

@@ -1,5 +1,15 @@
-from avalon import api, style, io
 import nuke
+import six
+
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     create_backdrop,
@@ -13,7 +23,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadGizmoInputProcess(api.Loader):
+class LoadGizmoInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["gizmo"]
@@ -22,7 +32,7 @@ class LoadGizmoInputProcess(api.Loader):
     label = "Load Gizmo - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     node_color = "0x7533c1ff"
 
     def load(self, context, name, namespace, data):
@@ -102,17 +112,16 @@ class LoadGizmoInputProcess(api.Loader):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
-        version_data = version.get("data", {})
-        vname = version.get("name", None)
+        version_data = version_doc.get("data", {})
+        vname = version_doc.get("name", None)
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
         namespace = container['namespace']
@@ -149,21 +158,18 @@ class LoadGizmoInputProcess(api.Loader):
             GN.setXYpos(xpos, ypos)
             GN["name"].setValue(object_name)
 
-        # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
 
         # change color of node
-        if version.get("name") not in [max_version]:
-            GN["tile_color"].setValue(int("0xd88467ff", 16))
+        if version_doc["_id"] == last_version_doc["_id"]:
+            color_value = self.node_color
         else:
-            GN["tile_color"].setValue(int(self.node_color, 16))
+            color_value = "0xd88467ff"
+        GN["tile_color"].setValue(int(color_value, 16))
 
-        self.log.info("updated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version_doc.get("name")))
 
         return update_container(GN, data_imprint)
 
@@ -234,11 +240,11 @@ class LoadGizmoInputProcess(api.Loader):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 

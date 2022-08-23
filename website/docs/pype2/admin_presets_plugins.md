@@ -53,7 +53,7 @@ Profile may have multiple outputs from one input and that's why **outputs** is d
 | **filter** | Filters definition. | dict | [here](#output-filters-filter) |
 
 :::note
-As metioned above **all keys are optional**. If they are not filled at all, then **"ext"** is filled with input's file extension and resolution keys **"width"** and **"heigh"** are filled from instance data, or from input resolution if instance doesn't have set them.
+As mentioned above **all keys are optional**. If they are not filled at all, then **"ext"** is filled with input's file extension and resolution keys **"width"** and **"height"** are filled from instance data, or from input resolution if instance doesn't have set them.
 :::
 
 :::important resolution
@@ -61,7 +61,7 @@ It is not possible to enter only **"width"** or only **"height"**. In that case 
 :::
 
 #### New representation tags (`tags`)
-You can add tags to representation created during extracting process. This might help to define what should happen with representation in upcomming plugins.
+You can add tags to representation created during extracting process. This might help to define what should happen with representation in upcoming plugins.
 
 | Tag | Description |
 | --- | --- |
@@ -69,7 +69,7 @@ You can add tags to representation created during extracting process. This might
 | **preview** | Will be used as preview in Ftrack. |
 | **reformat** | Rescale to format based on width and height keys. |
 | **bake-lut** | Bake LUT into the output (if is available path in data). |
-| **slate-frame** | Add slate frame at the beggining of video. |
+| **slate-frame** | Add slate frame at the beginning of video. |
 | **no-handles** | Remove the shot handles from the output. |
 | **sequence** | Generate a sequence of images instead of single frame.<br />Is applied only if **"ext"** of output is image extension e.g.: png or jpg/jpeg. |
 
@@ -331,7 +331,7 @@ If source representation has suffix **"h264"** and burnin suffix is **"client"**
 
 
 #### Default content values (`fields`)
-If you want to set position content values for all or most of burnin definitions, you can set them in **"fields"**. They will be added to every burnin definition in all profiles. Value can be overriden if same position key is filled in burnin definiton.
+If you want to set position content values for all or most of burnin definitions, you can set them in **"fields"**. They will be added to every burnin definition in all profiles. Value can be overridden if same position key is filled in burnin definition.
 
 ```json
 {
@@ -348,7 +348,7 @@ If you want to set position content values for all or most of burnin definitions
 
             /* example2 has 2 overrides. */
             "example2": {
-                /* Top left value is overriden with asset name. */
+                /* Top left value is overridden with asset name. */
                 "TOP_LEFT": "{asset}",
                 /* Top center will be skipped. */
                 "TOP_CENTERED": null

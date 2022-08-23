@@ -27,12 +27,13 @@ from Qt import QtWidgets, QtCore
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
+from openpype.tools.utils import BaseClickableFrame
+from openpype.tools.utils.lib import html_escape
 from .widgets import (
     AbstractInstanceView,
     ContextWarningLabel,
-    ClickableFrame,
     IconValuePixmapLabel,
-    TransparentPixmapLabel
+    PublishPixmapLabel
 )
 from ..constants import (
     CONTEXT_ID,
@@ -98,6 +99,7 @@ class GroupWidget(QtWidgets.QWidget):
             instances(list<CreatedInstance>): List of instances in
                 CreateContext.
         """
+
         # Store instances by id and by subset name
         instances_by_id = {}
         instances_by_subset_name = collections.defaultdict(list)
@@ -140,8 +142,9 @@ class GroupWidget(QtWidgets.QWidget):
                 widget_idx += 1
 
 
-class CardWidget(ClickableFrame):
+class CardWidget(BaseClickableFrame):
     """Clickable card used as bigger button."""
+
     selected = QtCore.Signal(str, str)
     # Group identifier of card
     # - this must be set because if send when mouse is released with card id
@@ -178,13 +181,14 @@ class ContextCardWidget(CardWidget):
 
     Is not visually under group widget and is always at the top of card view.
     """
+
     def __init__(self, parent):
         super(ContextCardWidget, self).__init__(parent)
 
         self._id = CONTEXT_ID
         self._group_identifier = ""
 
-        icon_widget = TransparentPixmapLabel(self)
+        icon_widget = PublishPixmapLabel(None, self)
         icon_widget.setObjectName("FamilyIconLabel")
 
         label_widget = QtWidgets.QLabel(CONTEXT_LABEL, self)
@@ -204,13 +208,14 @@ class ContextCardWidget(CardWidget):
 
 class InstanceCardWidget(CardWidget):
     """Card widget representing instance."""
+
     active_changed = QtCore.Signal()
 
     def __init__(self, instance, group_icon, parent):
         super(InstanceCardWidget, self).__init__(parent)
 
         self._id = instance.id
-        self._group_identifier = instance.creator_label
+        self._group_identifier = instance.group_label
         self._group_icon = group_icon
 
         self.instance = instance
@@ -303,13 +308,14 @@ class InstanceCardWidget(CardWidget):
         self._last_variant = variant
         self._last_subset_name = subset_name
         # Make `variant` bold
-        found_parts = set(re.findall(variant, subset_name, re.IGNORECASE))
+        label = html_escape(self.instance.label)
+        found_parts = set(re.findall(variant, label, re.IGNORECASE))
         if found_parts:
             for part in found_parts:
                 replacement = "<b>{}</b>".format(part)
-                subset_name = subset_name.replace(part, replacement)
+                label = label.replace(part, replacement)
 
-        self._label_widget.setText(subset_name)
+        self._label_widget.setText(label)
         # HTML text will cause that label start catch mouse clicks
         # - disabling with changing interaction flag
         self._label_widget.setTextInteractionFlags(
@@ -388,7 +394,7 @@ class InstanceCardView(AbstractInstanceView):
 
     def sizeHint(self):
         """Modify sizeHint based on visibility of scroll bars."""
-        # Calculate width hint by content widget and verticall scroll bar
+        # Calculate width hint by content widget and vertical scroll bar
         scroll_bar = self._scroll_area.verticalScrollBar()
         width = (
             self._content_widget.sizeHint().width()
@@ -435,7 +441,7 @@ class InstanceCardView(AbstractInstanceView):
         instances_by_group = collections.defaultdict(list)
         identifiers_by_group = collections.defaultdict(set)
         for instance in self.controller.instances:
-            group_name = instance.creator_label
+            group_name = instance.group_label
             instances_by_group[group_name].append(instance)
             identifiers_by_group[group_name].add(
                 instance.creator_identifier

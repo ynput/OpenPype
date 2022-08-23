@@ -12,10 +12,9 @@ from wsrpc_aiohttp import (
 
 from Qt import QtCore
 
+from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
-
-from avalon import api
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import AfterEffectsServerStub
 
@@ -271,13 +270,13 @@ class AfterEffectsRoute(WebSocketRoute):
         log.info("Setting context change")
         log.info("project {} asset {} ".format(project, asset))
         if project:
-            api.Session["AVALON_PROJECT"] = project
+            legacy_io.Session["AVALON_PROJECT"] = project
             os.environ["AVALON_PROJECT"] = project
         if asset:
-            api.Session["AVALON_ASSET"] = asset
+            legacy_io.Session["AVALON_ASSET"] = asset
             os.environ["AVALON_ASSET"] = asset
         if task:
-            api.Session["AVALON_TASK"] = task
+            legacy_io.Session["AVALON_TASK"] = task
             os.environ["AVALON_TASK"] = task
 
     async def read(self):

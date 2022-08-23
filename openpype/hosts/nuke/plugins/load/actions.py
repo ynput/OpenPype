@@ -2,14 +2,14 @@
 
 """
 
-from avalon import api
 from openpype.api import Logger
+from openpype.pipeline import load
 
 log = Logger().get_logger(__name__)
 
 
-class SetFrameRangeLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class SetFrameRangeLoader(load.LoaderPlugin):
+    """Set frame range excluding pre- and post-handles"""
 
     families = ["animation",
                 "camera",
@@ -42,8 +42,8 @@ class SetFrameRangeLoader(api.Loader):
         lib.update_frame_range(start, end)
 
 
-class SetFrameRangeWithHandlesLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
+    """Set frame range including pre- and post-handles"""
 
     families = ["animation",
                 "camera",

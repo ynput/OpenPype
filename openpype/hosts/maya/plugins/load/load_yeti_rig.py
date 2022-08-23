@@ -25,7 +25,6 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             self, context, name=None, namespace=None, options=None):
 
         import maya.cmds as cmds
-        from avalon import maya
 
         # get roots of selected hierarchies
         selected_roots = []
@@ -53,8 +52,10 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             scene_lookup[cb_id] = node
 
         # load rig
-        with maya.maintained_selection():
-            nodes = cmds.file(self.fname,
+        with lib.maintained_selection():
+            file_url = self.prepare_root_value(self.fname,
+                                               context["project"]["code"])
+            nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,
                               returnNewNodes=True,

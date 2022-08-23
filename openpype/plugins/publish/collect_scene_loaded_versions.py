@@ -1,6 +1,10 @@
-
 import pyblish.api
-from avalon import api, io
+
+from openpype.client import get_representations
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
 
 
 class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
@@ -23,7 +27,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        host = api.registered_host()
+        host = registered_host()
         if host is None:
             self.log.warn("No registered host.")
             return
@@ -34,21 +38,41 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
             return
 
         loaded_versions = []
-        _containers = list(host.ls())
-        _repr_ids = [io.ObjectId(c["representation"]) for c in _containers]
-        version_by_repr = {
-            str(doc["_id"]): doc["parent"] for doc in
-            io.find({"_id": {"$in": _repr_ids}}, projection={"parent": 1})
+        containers = list(host.ls())
+        repre_ids = {
+            container["representation"]
+            for container in containers
         }
 
-        for con in _containers:
+        project_name = legacy_io.active_project()
+        repre_docs = get_representations(
+            project_name,
+            representation_ids=repre_ids,
+            fields=["_id", "parent"]
+        )
+        repre_doc_by_str_id = {
+            str(doc["_id"]): doc
+            for doc in repre_docs
+        }
+
+        # QUESTION should we add same representation id when loaded multiple
+        #   times?
+        for con in containers:
+            repre_id = con["representation"]
+            repre_doc = repre_doc_by_str_id.get(repre_id)
+            if repre_doc is None:
+                self.log.warning((
+                    "Skipping container,"
+                    " did not find representation document. {}"
+                ).format(str(con)))
+                continue
+
             # NOTE:
             # may have more then one representation that are same version
             version = {
-                "objectName": con["objectName"],  # container node name
                 "subsetName": con["name"],
-                "representation": io.ObjectId(con["representation"]),
-                "version": version_by_repr[con["representation"]],  # _id
+                "representation": repre_doc["_id"],
+                "version": repre_doc["parent"],
             }
             loaded_versions.append(version)
 

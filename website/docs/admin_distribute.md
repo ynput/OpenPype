@@ -32,8 +32,8 @@ You have two ways of making this happen
 
 #### Automatic Updates
 
-Everytime and Artist launches OpenPype on their workstation, it will look to a pre-defined 
-[openPype update location](#self) for any versions that are newer than the
+Every time and Artist launches OpenPype on their workstation, it will look to a pre-defined 
+[openPype update location](admin_settings_system.md#openpype-deployment-control) for any versions that are newer than the
 latest, locally installed version. If such version is found, it will be downloaded,  
 automatically extracted to the correct place and launched. This will become the default 
 version to run for the artist, until a higher version is detected in the update location again.
@@ -64,3 +64,17 @@ You can run OpenPype with `--use-staging` argument to add use staging versions.
 :::note
 Running staging version is identified by orange **P** icon in system tray.
 :::
+
+### OpenPype versioning
+
+OpenPype version control is based on semantic versioning.
+
+:::note
+The version of OpenPype is indicated by the variable `__version__` in the file `.\openpype\version.py`.
+:::
+
+For example OpenPype will consider the versions in this order: `3.8.0-nightly` < `3.8.0-nightly.1` < `3.8.0-rc.1` < `3.8.0` < `3.8.1-nightly.1` <`3.8.1` < `3.9.0` < `3.10.0` < `4.0.0`.
+
+See https://semver.org/ for more details.
+
+For studios customizing the source code of OpenPype, a practical approach could be to build by adding a name and a number after the PATCH and not to deploy 3.8.0 from original OpenPype repository. For example, your builds will be: `3.8.0-yourstudio.1` < `3.8.0-yourstudio.2` < `3.8.1-yourstudio.1`.

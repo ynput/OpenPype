@@ -72,7 +72,7 @@ class WorkerRpc(JsonRpc):
             self._job_queue.remove_worker(worker)
 
     async def handle_websocket_request(self, http_request):
-        """Overide this method to catch CLOSING messages."""
+        """Override this method to catch CLOSING messages."""
         http_request.msg_id = 0
         http_request.pending = {}
 

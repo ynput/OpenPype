@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Project name</title>
+<description>## Your scene is from different project
+
+It is not possible to publish into project "{workfile_project_name}" when TVPaint was opened with project "{env_project_name}" in context.
+
+### How to repair?
+
+If the workfile belongs to project "{env_project_name}" then use Workfiles tool to resave it.
+
+Otherwise close TVPaint and launch it again from project you want to publish in.
+</description>
+<detail>
+### How this could happend?
+
+You've opened workfile from different project. You've opened TVPaint on a task from "{env_project_name}" then you've opened TVPaint again on task from "{workfile_project_name}" without closing the TVPaint. Because TVPaint can run only once the project didn't change.
+
+### Why it is important?
+Because project may affect how TVPaint works or change publishing behavior it is dangerous to allow change project context in many ways. For example publishing will not run as expected.
+</detail>
+</error>
+</root>

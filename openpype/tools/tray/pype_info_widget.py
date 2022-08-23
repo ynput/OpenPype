@@ -433,7 +433,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
             pype_info.pop("version_type", self.not_applicable)
         )
         pype_info["version_value"] = version_value
-        # Prepare lable mapping
+        # Prepare label mapping
         key_label_mapping = {
             "version_value": "Running version:",
             "build_verison": "Build version:",

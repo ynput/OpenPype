@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>First frame</title>
+<description>## MarkIn is not set to 0
+
+MarkIn in your scene must start from 0 fram index but MarkIn is set to {current_start_frame}.
+
+### How to repair?
+
+You can modify MarkIn manually or hit the "Repair" button on the right which will change MarkIn to 0 (does not change MarkOut).
+</description>
+</error>
+</root>

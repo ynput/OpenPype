@@ -1,9 +1,15 @@
 import os
 import sys
 import types
+import inspect
+import xml.etree.ElementTree
 
 import six
 import pyblish.plugin
+import pyblish.api
+
+from openpype.lib import Logger
+from openpype.settings import get_project_settings, get_system_settings
 
 
 class DiscoverResult:
@@ -28,10 +34,64 @@ class DiscoverResult:
         self.plugins[item] = value
 
 
+class HelpContent:
+    def __init__(self, title, description, detail=None):
+        self.title = title
+        self.description = description
+        self.detail = detail
+
+
+def load_help_content_from_filepath(filepath):
+    """Load help content from xml file.
+    Xml file may containt errors and warnings.
+    """
+    errors = {}
+    warnings = {}
+    output = {
+        "errors": errors,
+        "warnings": warnings
+    }
+    if not os.path.exists(filepath):
+        return output
+    tree = xml.etree.ElementTree.parse(filepath)
+    root = tree.getroot()
+    for child in root:
+        child_id = child.attrib.get("id")
+        if child_id is None:
+            continue
+
+        # Make sure ID is string
+        child_id = str(child_id)
+
+        title = child.find("title").text
+        description = child.find("description").text
+        detail_node = child.find("detail")
+        detail = None
+        if detail_node is not None:
+            detail = detail_node.text
+        if child.tag == "error":
+            errors[child_id] = HelpContent(title, description, detail)
+        elif child.tag == "warning":
+            warnings[child_id] = HelpContent(title, description, detail)
+    return output
+
+
+def load_help_content_from_plugin(plugin):
+    cls = plugin
+    if not inspect.isclass(plugin):
+        cls = plugin.__class__
+    plugin_filepath = inspect.getfile(cls)
+    plugin_dir = os.path.dirname(plugin_filepath)
+    basename = os.path.splitext(os.path.basename(plugin_filepath))[0]
+    filename = basename + ".xml"
+    filepath = os.path.join(plugin_dir, "help", filename)
+    return load_help_content_from_filepath(filepath)
+
+
 def publish_plugins_discover(paths=None):
     """Find and return available pyblish plug-ins
 
-    Overriden function from `pyblish` module to be able collect crashed files
+    Overridden function from `pyblish` module to be able collect crashed files
     and reason of their crash.
 
     Arguments:
@@ -124,3 +184,92 @@ def publish_plugins_discover(paths=None):
     result.plugins = plugins
 
     return result
+
+
+def filter_pyblish_plugins(plugins):
+    """Pyblish plugin filter which applies OpenPype settings.
+
+    Apply OpenPype settings on discovered plugins. On plugin with implemented
+    class method 'def apply_settings(cls, project_settings, system_settings)'
+    is called the method. Default behavior looks for plugin name and current
+    host name to look for
+
+    Args:
+        plugins (List[pyblish.plugin.Plugin]): Discovered plugins on which
+            are applied settings.
+    """
+
+    log = Logger.get_logger("filter_pyblish_plugins")
+
+    # TODO: Don't use host from 'pyblish.api' but from defined host by us.
+    #   - kept becau on farm is probably used host 'shell' which propably
+    #       affect how settings are applied there
+    host = pyblish.api.current_host()
+    project_name = os.environ.get("AVALON_PROJECT")
+
+    project_setting = get_project_settings(project_name)
+    system_settings = get_system_settings()
+
+    # iterate over plugins
+    for plugin in plugins[:]:
+        if hasattr(plugin, "apply_settings"):
+            try:
+                # Use classmethod 'apply_settings'
+                # - can be used to target settings from custom settings place
+                # - skip default behavior when successful
+                plugin.apply_settings(project_setting, system_settings)
+                continue
+
+            except Exception:
+                log.warning(
+                    (
+                        "Failed to apply settings on plugin {}"
+                    ).format(plugin.__name__),
+                    exc_info=True
+                )
+
+        try:
+            config_data = (
+                project_setting
+                [host]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            # host determined from path
+            file = os.path.normpath(inspect.getsourcefile(plugin))
+            file = os.path.normpath(file)
+
+            split_path = file.split(os.path.sep)
+            if len(split_path) < 4:
+                log.warning(
+                    'plugin path too short to extract host {}'.format(file)
+                )
+                continue
+
+            host_from_file = split_path[-4]
+            plugin_kind = split_path[-2]
+
+            # TODO: change after all plugins are moved one level up
+            if host_from_file == "openpype":
+                host_from_file = "global"
+
+            try:
+                config_data = (
+                    project_setting
+                    [host_from_file]
+                    [plugin_kind]
+                    [plugin.__name__]
+                )
+            except KeyError:
+                continue
+
+        for option, value in config_data.items():
+            if option == "enabled" and value is False:
+                log.info('removing plugin {}'.format(plugin.__name__))
+                plugins.remove(plugin)
+            else:
+                log.info('setting {}:{} on plugin {}'.format(
+                    option, value, plugin.__name__))
+
+                setattr(plugin, option, value)

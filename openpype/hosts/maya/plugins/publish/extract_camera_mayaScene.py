@@ -5,7 +5,6 @@ import itertools
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
 from openpype.hosts.maya.api import lib
 
@@ -44,7 +43,8 @@ def grouper(iterable, n, fillvalue=None):
 
     """
     args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
+    from six.moves import zip_longest
+    return zip_longest(fillvalue=fillvalue, *args)
 
 
 def unlock(plug):
@@ -118,19 +118,9 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
                     # no preset found
                     pass
 
-        framerange = [instance.data.get("frameStart", 1),
-                      instance.data.get("frameEnd", 1)]
-        handle_start = instance.data.get("handleStart", 0)
-        handle_end = instance.data.get("handleEnd", 0)
-
-        # TODO: deprecated attribute "handles"
-
-        if handle_start is None:
-            handle_start = instance.data.get("handles", 0)
-            handle_end = instance.data.get("handles", 0)
-
-        range_with_handles = [framerange[0] - handle_start,
-                              framerange[1] + handle_end]
+        # Collect the start and end including handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
@@ -141,12 +131,12 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
                              "bake to world space is ignored...")
 
         # get cameras
-        members = instance.data['setMembers']
+        members = cmds.ls(instance.data['setMembers'], leaf=True, shapes=True,
+                          long=True, dag=True)
         cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
                           dag=True, type="camera")
 
         # validate required settings
-        assert len(cameras) == 1, "Single camera must be found in extraction"
         assert isinstance(step, float), "Step must be a float value"
         camera = cameras[0]
         transform = cmds.listRelatives(camera, parent=True, fullPath=True)
@@ -157,37 +147,48 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform extraction
-        with avalon.maya.maintained_selection():
+        with lib.maintained_selection():
             with lib.evaluation("off"):
-                with avalon.maya.suspended_refresh():
+                with lib.suspended_refresh():
                     if bake_to_worldspace:
                         self.log.info(
                             "Performing camera bakes: {}".format(transform))
                         baked = lib.bake_to_world_space(
                             transform,
-                            frame_range=range_with_handles,
+                            frame_range=[start, end],
                             step=step
                         )
-                        baked_shapes = cmds.ls(baked,
+                        baked_camera_shapes = cmds.ls(baked,
                                                type="camera",
                                                dag=True,
                                                shapes=True,
                                                long=True)
+
+                        members = members + baked_camera_shapes
+                        members.remove(camera)
                     else:
-                        baked_shapes = cameras
+                        baked_camera_shapes = cmds.ls(cameras,
+                                                      type="camera",
+                                                      dag=True,
+                                                      shapes=True,
+                                                      long=True)
+
+                    attrs = {"backgroundColorR": 0.0,
+                             "backgroundColorG": 0.0,
+                             "backgroundColorB": 0.0,
+                             "overscan": 1.0}
+
                     # Fix PLN-178: Don't allow background color to be non-black
-                    for cam in baked_shapes:
-                        attrs = {"backgroundColorR": 0.0,
-                                 "backgroundColorG": 0.0,
-                                 "backgroundColorB": 0.0,
-                                 "overscan": 1.0}
-                        for attr, value in attrs.items():
-                            plug = "{0}.{1}".format(cam, attr)
-                            unlock(plug)
-                            cmds.setAttr(plug, value)
+                    for cam, (attr, value) in itertools.product(cmds.ls(
+                            baked_camera_shapes, type="camera", dag=True,
+                            long=True), attrs.items()):
+                        plug = "{0}.{1}".format(cam, attr)
+                        unlock(plug)
+                        cmds.setAttr(plug, value)
 
                     self.log.info("Performing extraction..")
-                    cmds.select(baked_shapes, noExpand=True)
+                    cmds.select(cmds.ls(members, dag=True,
+                                        shapes=True, long=True), noExpand=True)
                     cmds.file(path,
                               force=True,
                               typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501

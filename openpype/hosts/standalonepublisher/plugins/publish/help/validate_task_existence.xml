@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Task not found</title>
+<description>
+## Task not found in database
+
+Process contains tasks that don't exist in database:
+'{task_not_found}'
+
+### How to repair?
+
+Remove set task or add task into database into proper place.
+</description>
+</error>
+</root>

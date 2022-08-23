@@ -2,9 +2,9 @@ import os
 import json
 
 import appdirs
-import requests
 
 import pyblish.api
+from openpype.lib import requests_get
 from openpype.plugin import contextplugin_should_run
 import openpype.hosts.maya.api.action
 
@@ -51,7 +51,7 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
             'authToken': self._token
         }
         api_entry = '/api/pools/list'
-        response = self._requests_get(
+        response = requests_get(
             MUSTER_REST_URL + api_entry, params=params)
         assert response.status_code == 200, "invalid response from server"
         assert response.json()['ResponseData'], "invalid data in response"
@@ -88,35 +88,7 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
         api_url = "{}/muster/show_login".format(
             os.environ["OPENPYPE_WEBSERVER_URL"])
         cls.log.debug(api_url)
-        response = cls._requests_get(api_url, timeout=1)
+        response = requests_get(api_url, timeout=1)
         if response.status_code != 200:
             cls.log.error('Cannot show login form to Muster')
             raise Exception('Cannot show login form to Muster')
-
-    def _requests_post(self, *args, **kwargs):
-        """ Wrapper for requests, disabling SSL certificate validation if
-            DONT_VERIFY_SSL environment variable is found. This is useful when
-            Deadline or Muster server are running with self-signed certificates
-            and their certificate is not added to trusted certificates on
-            client machines.
-
-            WARNING: disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """ Wrapper for requests, disabling SSL certificate validation if
-            DONT_VERIFY_SSL environment variable is found. This is useful when
-            Deadline or Muster server are running with self-signed certificates
-            and their certificate is not added to trusted certificates on
-            client machines.
-
-            WARNING: disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        return requests.get(*args, **kwargs)

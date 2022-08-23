@@ -1,9 +1,9 @@
 import os
 
-from avalon import api
+from openpype.pipeline import load
 
 
-class CopyFilePath(api.Loader):
+class CopyFilePath(load.LoaderPlugin):
     """Copy published file path to clipboard"""
     representations = ["*"]
     families = ["*"]

@@ -1,10 +1,12 @@
-import os
 import sys
 import traceback
 import contextlib
 from enum import Enum
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore
+import qtawesome
 
+from openpype.lib import get_openpype_version
+from openpype.tools.utils import set_style_property
 from openpype.settings.entities import (
     SystemSettings,
     ProjectSettings,
@@ -34,14 +36,29 @@ from openpype.settings.entities.op_version_entity import (
 )
 
 from openpype.settings import SaveWarningExc
-from .widgets import ProjectListWidget
+from openpype.settings.lib import (
+    get_system_last_saved_info,
+    get_project_last_saved_info,
+)
+from .dialogs import SettingsLastSavedChanged, SettingsControlTaken
+from .widgets import (
+    ProjectListWidget,
+    VersionAction
+)
 from .breadcrumbs_widget import (
     BreadcrumbsAddressBar,
     SystemSettingsBreadcrumbs,
     ProjectSettingsBreadcrumbs
 )
-
-from .base import GUIWidget
+from .constants import (
+    SETTINGS_PATH_KEY,
+    ROOT_KEY,
+    VALUE_KEY,
+)
+from .base import (
+    ExtractHelper,
+    GUIWidget,
+)
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget
 from .dict_mutable_widget import DictMutableKeysWidget
@@ -58,7 +75,6 @@ from .item_widgets import (
     PathInputWidget
 )
 from .color_widget import ColorWidget
-from avalon.vendor import qtawesome
 
 
 class CategoryState(Enum):
@@ -86,18 +102,45 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
     restart_required_trigger = QtCore.Signal()
+    reset_started = QtCore.Signal()
+    reset_finished = QtCore.Signal()
     full_path_requested = QtCore.Signal(str, str)
 
-    def __init__(self, user_role, parent=None):
+    require_restart_label_text = (
+        "Your changes require restart of"
+        " all running OpenPype processes to take affect."
+    )
+    outdated_version_label_text = (
+        "Your settings are loaded from an older version."
+    )
+    source_version_tooltip = "Using settings of current OpenPype version"
+    source_version_tooltip_outdated = (
+        "Please check that all settings are still correct (blue colour\n"
+        "indicates potential changes in the new version) and save your\n"
+        "settings to update them to you current running OpenPype version."
+    )
+
+    def __init__(self, controller, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
 
-        self.user_role = user_role
+        self._controller = controller
+        controller.event_system.add_callback(
+            "edit.mode.changed",
+            self._edit_mode_changed
+        )
 
         self.entity = None
+        self._edit_mode = None
+        self._last_saved_info = None
+        self._reset_crashed = False
 
         self._state = CategoryState.Idle
 
         self._hide_studio_overrides = False
+        self._updating_root = False
+        self._use_version = None
+        self._current_version = get_openpype_version()
+
         self.ignore_input_changes = IgnoreInputChangesObj(self)
 
         self.keys = []
@@ -160,6 +203,31 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
         raise TypeError("Unknown type: {}".format(label))
 
+    def _edit_mode_changed(self, event):
+        self.set_edit_mode(event["edit_mode"])
+
+    def set_edit_mode(self, enabled):
+        if enabled is self._edit_mode:
+            return
+
+        was_false = self._edit_mode is False
+        self._edit_mode = enabled
+
+        self.save_btn.setEnabled(enabled and not self._reset_crashed)
+        if enabled:
+            tooltip = (
+                "Someone else has opened settings UI."
+                "\nTry hit refresh to check if settings are already available."
+            )
+        else:
+            tooltip = "Save settings"
+
+        self.save_btn.setToolTip(tooltip)
+
+        # Reset when last saved information has changed
+        if was_false and not self._check_last_saved_info():
+            self.reset()
+
     @property
     def state(self):
         return self._state
@@ -183,78 +251,124 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def initialize_attributes(self):
         return
 
+    @property
+    def is_modifying_defaults(self):
+        if self.modify_defaults_checkbox is None:
+            return False
+        return self.modify_defaults_checkbox.isChecked()
+
     def create_ui(self):
         self.modify_defaults_checkbox = None
 
-        scroll_widget = QtWidgets.QScrollArea(self)
-        scroll_widget.setObjectName("GroupWidget")
-        content_widget = QtWidgets.QWidget(scroll_widget)
+        conf_wrapper_widget = QtWidgets.QSplitter(self)
+        configurations_widget = QtWidgets.QWidget(conf_wrapper_widget)
 
-        breadcrumbs_label = QtWidgets.QLabel("Path:", content_widget)
-        breadcrumbs_widget = BreadcrumbsAddressBar(content_widget)
+        # Breadcrumbs/Path widget
+        breadcrumbs_widget = QtWidgets.QWidget(self)
+        breadcrumbs_label = QtWidgets.QLabel("Path:", breadcrumbs_widget)
+        breadcrumbs_bar = BreadcrumbsAddressBar(breadcrumbs_widget)
 
-        breadcrumbs_layout = QtWidgets.QHBoxLayout()
+        refresh_icon = qtawesome.icon("fa.refresh", color="white")
+        refresh_btn = QtWidgets.QPushButton(breadcrumbs_widget)
+        refresh_btn.setIcon(refresh_icon)
+
+        breadcrumbs_layout = QtWidgets.QHBoxLayout(breadcrumbs_widget)
         breadcrumbs_layout.setContentsMargins(5, 5, 5, 5)
         breadcrumbs_layout.setSpacing(5)
-        breadcrumbs_layout.addWidget(breadcrumbs_label)
-        breadcrumbs_layout.addWidget(breadcrumbs_widget)
+        breadcrumbs_layout.addWidget(breadcrumbs_label, 0)
+        breadcrumbs_layout.addWidget(breadcrumbs_bar, 1)
+        breadcrumbs_layout.addWidget(refresh_btn, 0)
+
+        # Widgets representing settings entities
+        scroll_widget = QtWidgets.QScrollArea(configurations_widget)
+        content_widget = QtWidgets.QWidget(scroll_widget)
+        scroll_widget.setWidgetResizable(True)
+        scroll_widget.setWidget(content_widget)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
         content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
 
-        scroll_widget.setWidgetResizable(True)
-        scroll_widget.setWidget(content_widget)
+        # Footer widget
+        footer_widget = QtWidgets.QWidget(self)
+        footer_widget.setObjectName("SettingsFooter")
 
-        refresh_icon = qtawesome.icon("fa.refresh", color="white")
-        refresh_btn = QtWidgets.QPushButton(self)
-        refresh_btn.setIcon(refresh_icon)
+        # Info labels
+        # TODO dynamic labels
+        labels_alignment = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        empty_label = QtWidgets.QLabel(footer_widget)
 
-        footer_layout = QtWidgets.QHBoxLayout()
+        outdated_version_label = QtWidgets.QLabel(
+            self.outdated_version_label_text, footer_widget
+        )
+        outdated_version_label.setToolTip(self.source_version_tooltip_outdated)
+        outdated_version_label.setAlignment(labels_alignment)
+        outdated_version_label.setVisible(False)
+        outdated_version_label.setObjectName("SettingsOutdatedSourceVersion")
+
+        require_restart_label = QtWidgets.QLabel(
+            self.require_restart_label_text, footer_widget
+        )
+        require_restart_label.setAlignment(labels_alignment)
+        require_restart_label.setVisible(False)
+
+        # Label showing source version of loaded settings
+        source_version_label = QtWidgets.QLabel("", footer_widget)
+        source_version_label.setObjectName("SourceVersionLabel")
+        set_style_property(source_version_label, "state", "")
+        source_version_label.setToolTip(self.source_version_tooltip)
+
+        save_btn = QtWidgets.QPushButton("Save", footer_widget)
+
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(5, 5, 5, 5)
-        if self.user_role == "developer":
-            self._add_developer_ui(footer_layout)
+        if self._controller.user_role == "developer":
+            self._add_developer_ui(footer_layout, footer_widget)
 
-        save_btn = QtWidgets.QPushButton("Save", self)
-        require_restart_label = QtWidgets.QLabel(self)
-        require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
-
-        footer_layout.addWidget(refresh_btn, 0)
+        footer_layout.addWidget(empty_label, 1)
+        footer_layout.addWidget(outdated_version_label, 1)
         footer_layout.addWidget(require_restart_label, 1)
+        footer_layout.addWidget(source_version_label, 0)
         footer_layout.addWidget(save_btn, 0)
 
-        configurations_layout = QtWidgets.QVBoxLayout()
+        configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
         configurations_layout.setContentsMargins(0, 0, 0, 0)
         configurations_layout.setSpacing(0)
 
         configurations_layout.addWidget(scroll_widget, 1)
-        configurations_layout.addLayout(footer_layout, 0)
 
-        conf_wrapper_layout = QtWidgets.QHBoxLayout()
-        conf_wrapper_layout.setContentsMargins(0, 0, 0, 0)
-        conf_wrapper_layout.setSpacing(0)
-        conf_wrapper_layout.addLayout(configurations_layout, 1)
+        conf_wrapper_widget.addWidget(configurations_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        main_layout.addLayout(breadcrumbs_layout, 0)
-        main_layout.addLayout(conf_wrapper_layout, 1)
+        main_layout.addWidget(breadcrumbs_widget, 0)
+        main_layout.addWidget(conf_wrapper_widget, 1)
+        main_layout.addWidget(footer_widget, 0)
 
         save_btn.clicked.connect(self._save)
         refresh_btn.clicked.connect(self._on_refresh)
-        breadcrumbs_widget.path_edited.connect(self._on_path_edit)
+        breadcrumbs_bar.path_edited.connect(self._on_path_edit)
+
+        self._require_restart_label = require_restart_label
+        self._outdated_version_label = outdated_version_label
+        self._empty_label = empty_label
+
+        self._is_loaded_version_outdated = False
 
         self.save_btn = save_btn
-        self.refresh_btn = refresh_btn
-        self.require_restart_label = require_restart_label
+        self._source_version_label = source_version_label
+
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
-        self.breadcrumbs_widget = breadcrumbs_widget
+        self.breadcrumbs_bar = breadcrumbs_bar
+
         self.breadcrumbs_model = None
-        self.conf_wrapper_layout = conf_wrapper_layout
+        self.refresh_btn = refresh_btn
+
+        self.conf_wrapper_widget = conf_wrapper_widget
         self.main_layout = main_layout
 
         self.ui_tweaks()
@@ -307,22 +421,23 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         """Change path of widget based on category full path."""
         pass
 
-    def set_path(self, path):
-        self.breadcrumbs_widget.set_path(path)
+    def change_path(self, path):
+        """Change path and go to widget."""
+        self.breadcrumbs_bar.change_path(path)
 
-    def _add_developer_ui(self, footer_layout):
-        modify_defaults_widget = QtWidgets.QWidget()
-        modify_defaults_checkbox = QtWidgets.QCheckBox(modify_defaults_widget)
+    def set_path(self, path):
+        """Called from clicked widget."""
+        self.breadcrumbs_bar.set_path(path)
+
+    def _add_developer_ui(self, footer_layout, footer_widget):
+        modify_defaults_checkbox = QtWidgets.QCheckBox(footer_widget)
         modify_defaults_checkbox.setChecked(self._hide_studio_overrides)
         label_widget = QtWidgets.QLabel(
-            "Modify defaults", modify_defaults_widget
+            "Modify defaults", footer_widget
         )
 
-        modify_defaults_layout = QtWidgets.QHBoxLayout(modify_defaults_widget)
-        modify_defaults_layout.addWidget(label_widget)
-        modify_defaults_layout.addWidget(modify_defaults_checkbox)
-
-        footer_layout.addWidget(modify_defaults_widget, 0)
+        footer_layout.addWidget(label_widget, 0)
+        footer_layout.addWidget(modify_defaults_checkbox, 0)
 
         modify_defaults_checkbox.stateChanged.connect(
             self._on_modify_defaults
@@ -356,11 +471,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.set_state(CategoryState.Idle)
 
     def save(self):
+        if not self._edit_mode:
+            return
+
         if not self.items_are_valid():
             return
 
         try:
             self.entity.save()
+            self._use_version = None
 
             # NOTE There are relations to previous entities and C++ callbacks
             #   so it is easier to just use new entity and recreate UI but
@@ -420,15 +539,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return
 
     def _on_require_restart_change(self):
-        value = ""
-        if self.entity.require_restart:
-            value = (
-                "Your changes require restart of"
-                " all running OpenPype processes to take affect."
-            )
-        self.require_restart_label.setText(value)
+        self._update_labels_visibility()
 
     def reset(self):
+        self.reset_started.emit()
         self.set_state(CategoryState.Working)
 
         self._on_reset_start()
@@ -444,6 +558,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             widget.deleteLater()
 
         dialog = None
+        self._updating_root = True
+        source_version = ""
         try:
             self._create_root_entity()
 
@@ -459,6 +575,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 input_field.set_entity_value()
 
             self.ignore_input_changes.set_ignore(False)
+            source_version = self.entity.source_version
 
         except DefaultsNotDefined:
             dialog = QtWidgets.QMessageBox(self)
@@ -502,6 +619,27 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 spacer, layout.rowCount(), 0, 1, layout.columnCount()
             )
 
+        self._updating_root = False
+
+        # Update source version label
+        state_value = ""
+        tooltip = ""
+        outdated = False
+        if source_version:
+            if source_version != self._current_version:
+                state_value = "different"
+                tooltip = self.source_version_tooltip_outdated
+                outdated = True
+            else:
+                state_value = "same"
+                tooltip = self.source_version_tooltip
+
+        self._is_loaded_version_outdated = outdated
+        self._source_version_label.setText(source_version)
+        self._source_version_label.setToolTip(tooltip)
+        set_style_property(self._source_version_label, "state", state_value)
+        self._update_labels_visibility()
+
         self.set_state(CategoryState.Idle)
 
         if dialog:
@@ -509,22 +647,79 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._on_reset_crash()
         else:
             self._on_reset_success()
+        self.reset_finished.emit()
+
+    def _on_source_version_change(self, version):
+        if self._updating_root:
+            return
+
+        if version == self._current_version:
+            version = None
+
+        self._use_version = version
+        QtCore.QTimer.singleShot(20, self.reset)
+
+    def add_context_actions(self, menu):
+        if not self.entity or self.is_modifying_defaults:
+            return
+
+        versions = self.entity.get_available_studio_versions(sorted=True)
+        if not versions:
+            return
+
+        submenu = QtWidgets.QMenu("Use settings from version", menu)
+        for version in reversed(versions):
+            action = VersionAction(version, submenu)
+            action.version_triggered.connect(
+                self._on_context_version_trigger
+            )
+            submenu.addAction(action)
+
+        menu.addMenu(submenu)
+
+        extract_action = QtWidgets.QAction("Extract to file", menu)
+        extract_action.triggered.connect(self._on_extract_to_file)
+
+        menu.addAction(extract_action)
+
+    def _on_context_version_trigger(self, version):
+        self._on_source_version_change(version)
+
+    def _on_extract_to_file(self):
+        filepath = ExtractHelper.ask_for_save_filepath(self)
+        if not filepath:
+            return
+
+        settings_data = {
+            SETTINGS_PATH_KEY: self.entity.root_key,
+            ROOT_KEY: self.entity.root_key,
+            VALUE_KEY: self.entity.value
+        }
+        project_name = 0
+        if hasattr(self, "project_name"):
+            project_name = self.project_name
+
+        ExtractHelper.extract_settings_to_json(
+            filepath, settings_data, project_name
+        )
 
     def _on_reset_crash(self):
+        self._reset_crashed = True
         self.save_btn.setEnabled(False)
 
         if self.breadcrumbs_model is not None:
             self.breadcrumbs_model.set_entity(None)
 
     def _on_reset_success(self):
+        self._reset_crashed = False
         if not self.save_btn.isEnabled():
-            self.save_btn.setEnabled(True)
+            self.save_btn.setEnabled(self._edit_mode)
 
         if self.breadcrumbs_model is not None:
-            path = self.breadcrumbs_widget.path()
-            self.breadcrumbs_widget.set_path("")
+            path = self.breadcrumbs_bar.path()
+            self.breadcrumbs_bar.set_path("")
             self.breadcrumbs_model.set_entity(self.entity)
-            self.breadcrumbs_widget.change_path(path)
+            self.breadcrumbs_bar.change_path(path)
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
@@ -563,12 +758,26 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         """Callback on any tab widget save."""
         return
 
+    def _check_last_saved_info(self):
+        raise NotImplementedError((
+            "{} does not have implemented '_check_last_saved_info'"
+        ).format(self.__class__.__name__))
+
     def _save(self):
+        self._controller.update_last_opened_info()
+        if not self._controller.opened_info:
+            dialog = SettingsControlTaken(self._last_saved_info, self)
+            dialog.exec_()
+            return
+
+        if not self._check_last_saved_info():
+            dialog = SettingsLastSavedChanged(self._last_saved_info, self)
+            dialog.exec_()
+            if dialog.result() == 0:
+                return
+
         # Don't trigger restart if defaults are modified
-        if (
-            self.modify_defaults_checkbox
-            and self.modify_defaults_checkbox.isChecked()
-        ):
+        if self.is_modifying_defaults:
             require_restart = False
         else:
             require_restart = self.entity.require_restart
@@ -584,7 +793,34 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         if require_restart:
             self.restart_required_trigger.emit()
-        self.require_restart_label.setText("")
+
+    def _update_labels_visibility(self):
+        visible_label = None
+        labels = {
+            self._empty_label,
+            self._outdated_version_label,
+            self._require_restart_label,
+        }
+        if self.is_modifying_defaults or self.entity is None:
+            require_restart = False
+        else:
+            require_restart = self.entity.require_restart
+
+        if require_restart:
+            visible_label = self._require_restart_label
+        elif self._is_loaded_version_outdated:
+            visible_label = self._outdated_version_label
+        else:
+            visible_label = self._empty_label
+
+        if visible_label.isVisible():
+            return
+
+        for label in labels:
+            if label is visible_label:
+                visible_label.setVisible(True)
+            else:
+                label.setVisible(False)
 
     def _on_refresh(self):
         self.reset()
@@ -594,25 +830,40 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
 
 class SystemWidget(SettingsCategoryWidget):
+    def __init__(self, *args, **kwargs):
+        self._actions = []
+        super(SystemWidget, self).__init__(*args, **kwargs)
+
+    def _check_last_saved_info(self):
+        if self.is_modifying_defaults:
+            return True
+
+        last_saved_info = get_system_last_saved_info()
+        return self._last_saved_info == last_saved_info
+
     def contain_category_key(self, category):
         if category == "system_settings":
             return True
         return False
 
     def set_category_path(self, category, path):
-        self.breadcrumbs_widget.change_path(path)
+        self.breadcrumbs_bar.change_path(path)
 
     def _create_root_entity(self):
-        self.entity = SystemSettings(set_studio_state=False)
-        self.entity.on_change_callbacks.append(self._on_entity_change)
+        entity = SystemSettings(
+            set_studio_state=False, source_version=self._use_version
+        )
+        entity.on_change_callbacks.append(self._on_entity_change)
+        self.entity = entity
+        last_saved_info = None
+        if not self.is_modifying_defaults:
+            last_saved_info = get_system_last_saved_info()
+        self._last_saved_info = last_saved_info
         try:
-            if (
-                self.modify_defaults_checkbox
-                and self.modify_defaults_checkbox.isChecked()
-            ):
-                self.entity.set_defaults_state()
+            if self.is_modifying_defaults:
+                entity.set_defaults_state()
             else:
-                self.entity.set_studio_state()
+                entity.set_studio_state()
 
             if self.modify_defaults_checkbox:
                 self.modify_defaults_checkbox.setEnabled(True)
@@ -620,16 +871,16 @@ class SystemWidget(SettingsCategoryWidget):
             if not self.modify_defaults_checkbox:
                 raise
 
-            self.entity.set_defaults_state()
+            entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)
             self.modify_defaults_checkbox.setEnabled(False)
 
     def ui_tweaks(self):
         self.breadcrumbs_model = SystemSettingsBreadcrumbs()
-        self.breadcrumbs_widget.set_model(self.breadcrumbs_model)
+        self.breadcrumbs_bar.set_model(self.breadcrumbs_model)
 
     def _on_modify_defaults(self):
-        if self.modify_defaults_checkbox.isChecked():
+        if self.is_modifying_defaults:
             if not self.entity.is_in_defaults_state():
                 self.reset()
         else:
@@ -638,6 +889,16 @@ class SystemWidget(SettingsCategoryWidget):
 
 
 class ProjectWidget(SettingsCategoryWidget):
+    def __init__(self, *args, **kwargs):
+        super(ProjectWidget, self).__init__(*args, **kwargs)
+
+    def _check_last_saved_info(self):
+        if self.is_modifying_defaults:
+            return True
+
+        last_saved_info = get_project_last_saved_info(self.project_name)
+        return self._last_saved_info == last_saved_info
+
     def contain_category_key(self, category):
         if category in ("project_settings", "project_anatomy"):
             return True
@@ -651,28 +912,33 @@ class ProjectWidget(SettingsCategoryWidget):
         else:
             path = category
 
-        self.breadcrumbs_widget.change_path(path)
+        self.breadcrumbs_bar.change_path(path)
 
     def initialize_attributes(self):
         self.project_name = None
 
     def ui_tweaks(self):
         self.breadcrumbs_model = ProjectSettingsBreadcrumbs()
-        self.breadcrumbs_widget.set_model(self.breadcrumbs_model)
+        self.breadcrumbs_bar.set_model(self.breadcrumbs_model)
 
         project_list_widget = ProjectListWidget(self)
 
-        self.conf_wrapper_layout.insertWidget(0, project_list_widget, 0)
+        self.conf_wrapper_widget.insertWidget(0, project_list_widget)
+        self.conf_wrapper_widget.setStretchFactor(0, 0)
+        self.conf_wrapper_widget.setStretchFactor(1, 1)
 
         project_list_widget.project_changed.connect(self._on_project_change)
+        project_list_widget.version_change_requested.connect(
+            self._on_source_version_change
+        )
+        project_list_widget.extract_to_file_requested.connect(
+            self._on_extract_to_file
+        )
 
         self.project_list_widget = project_list_widget
 
     def get_project_names(self):
-        if (
-            self.modify_defaults_checkbox
-            and self.modify_defaults_checkbox.isChecked()
-        ):
+        if self.is_modifying_defaults:
             return []
         return self.project_list_widget.get_project_names()
 
@@ -683,6 +949,10 @@ class ProjectWidget(SettingsCategoryWidget):
         """
         if self is saved_tab_widget:
             return
+
+    def _on_context_version_trigger(self, version):
+        self.project_list_widget.select_project(None)
+        super(ProjectWidget, self)._on_context_version_trigger(version)
 
     def _on_reset_start(self):
         self.project_list_widget.refresh()
@@ -696,32 +966,34 @@ class ProjectWidget(SettingsCategoryWidget):
         super(ProjectWidget, self)._on_reset_success()
 
     def _set_enabled_project_list(self, enabled):
-        if (
-            enabled
-            and self.modify_defaults_checkbox
-            and self.modify_defaults_checkbox.isChecked()
-        ):
+        if enabled and self.is_modifying_defaults:
             enabled = False
         if self.project_list_widget.isEnabled() != enabled:
             self.project_list_widget.setEnabled(enabled)
 
     def _create_root_entity(self):
-        self.entity = ProjectSettings(change_state=False)
-        self.entity.on_change_callbacks.append(self._on_entity_change)
+        entity = ProjectSettings(
+            change_state=False, source_version=self._use_version
+        )
+        entity.on_change_callbacks.append(self._on_entity_change)
+        self.project_list_widget.set_entity(entity)
+        self.entity = entity
+
+        last_saved_info = None
+        if not self.is_modifying_defaults:
+            last_saved_info = get_project_last_saved_info(self.project_name)
+        self._last_saved_info = last_saved_info
         try:
-            if (
-                self.modify_defaults_checkbox
-                and self.modify_defaults_checkbox.isChecked()
-            ):
+            if self.is_modifying_defaults:
                 self.entity.set_defaults_state()
 
             elif self.project_name is None:
                 self.entity.set_studio_state()
 
-            elif self.project_name == self.entity.project_name:
-                self.entity.set_project_state()
             else:
-                self.entity.change_project(self.project_name)
+                self.entity.change_project(
+                    self.project_name, self._use_version
+                )
 
             if self.modify_defaults_checkbox:
                 self.modify_defaults_checkbox.setEnabled(True)
@@ -754,7 +1026,7 @@ class ProjectWidget(SettingsCategoryWidget):
         self.set_state(CategoryState.Idle)
 
     def _on_modify_defaults(self):
-        if self.modify_defaults_checkbox.isChecked():
+        if self.is_modifying_defaults:
             self._set_enabled_project_list(False)
             if not self.entity.is_in_defaults_state():
                 self.reset()

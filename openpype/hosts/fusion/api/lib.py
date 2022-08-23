@@ -1,8 +1,23 @@
+import os
 import sys
+import re
+import contextlib
 
 from Qt import QtGui
-import avalon.fusion
-from avalon import io
+
+from openpype.client import (
+    get_asset_by_name,
+    get_subset_by_name,
+    get_last_version_by_subset_id,
+    get_representation_by_id,
+    get_representation_by_name,
+    get_representation_parents,
+)
+from openpype.pipeline import (
+    switch_container,
+    legacy_io,
+)
+from .pipeline import get_current_comp, comp_lock_and_undo_chunk
 
 self = sys.modules[__name__]
 self._project = None
@@ -24,7 +39,7 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
     """
 
     if not comp:
-        comp = avalon.fusion.get_current_comp()
+        comp = get_current_comp()
 
     attrs = {
         "COMPN_GlobalStart": start,
@@ -37,7 +52,7 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
             "COMPN_RenderEnd": end
         })
 
-    with avalon.fusion.comp_lock_and_undo_chunk(comp):
+    with comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
 
 
@@ -85,11 +100,16 @@ def switch_item(container,
         raise ValueError("Must have at least one change provided to switch.")
 
     # Collect any of current asset, subset and representation if not provided
-    # so we can use the original name from those.
+    #   so we can use the original name from those.
+    project_name = legacy_io.active_project()
     if any(not x for x in [asset_name, subset_name, representation_name]):
-        _id = io.ObjectId(container["representation"])
-        representation = io.find_one({"type": "representation", "_id": _id})
-        version, subset, asset, project = io.parenthood(representation)
+        repre_id = container["representation"]
+        representation = get_representation_by_id(project_name, repre_id)
+        repre_parent_docs = get_representation_parents(representation)
+        if repre_parent_docs:
+            version, subset, asset, _ = repre_parent_docs
+        else:
+            version = subset = asset = None
 
         if asset_name is None:
             asset_name = asset["name"]
@@ -101,42 +121,77 @@ def switch_item(container,
             representation_name = representation["name"]
 
     # Find the new one
-    asset = io.find_one({
-        "name": asset_name,
-        "type": "asset"
-    })
+    asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
     assert asset, ("Could not find asset in the database with the name "
                    "'%s'" % asset_name)
 
-    subset = io.find_one({
-        "name": subset_name,
-        "type": "subset",
-        "parent": asset["_id"]
-    })
+    subset = get_subset_by_name(
+        project_name, subset_name, asset["_id"], fields=["_id"]
+    )
     assert subset, ("Could not find subset in the database with the name "
                     "'%s'" % subset_name)
 
-    version = io.find_one(
-        {
-            "type": "version",
-            "parent": subset["_id"]
-        },
-        sort=[('name', -1)]
+    version = get_last_version_by_subset_id(
+        project_name, subset["_id"], fields=["_id"]
     )
-
     assert version, "Could not find a version for {}.{}".format(
         asset_name, subset_name
     )
 
-    representation = io.find_one({
-        "name": representation_name,
-        "type": "representation",
-        "parent": version["_id"]}
+    representation = get_representation_by_name(
+        project_name, representation_name, version["_id"]
     )
-
     assert representation, ("Could not find representation in the database "
                             "with the name '%s'" % representation_name)
 
-    avalon.api.switch(container, representation)
+    switch_container(container, representation)
 
     return representation
+
+
+@contextlib.contextmanager
+def maintained_selection():
+    comp = get_current_comp()
+    previous_selection = comp.GetToolList(True).values()
+    try:
+        yield
+    finally:
+        flow = comp.CurrentFrame.FlowView
+        flow.Select()  # No args equals clearing selection
+        if previous_selection:
+            for tool in previous_selection:
+                flow.Select(tool, True)
+
+
+def get_frame_path(path):
+    """Get filename for the Fusion Saver with padded number as '#'
+
+    >>> get_frame_path("C:/test.exr")
+    ('C:/test', 4, '.exr')
+
+    >>> get_frame_path("filename.00.tif")
+    ('filename.', 2, '.tif')
+
+    >>> get_frame_path("foobar35.tif")
+    ('foobar', 2, '.tif')
+
+    Args:
+        path (str): The path to render to.
+
+    Returns:
+        tuple: head, padding, tail (extension)
+
+    """
+    filename, ext = os.path.splitext(path)
+
+    # Find a final number group
+    match = re.match('.*?([0-9]+)$', filename)
+    if match:
+        padding = len(match.group(1))
+        # remove number from end since fusion
+        # will swap it with the frame number
+        filename = filename[:-padding]
+    else:
+        padding = 4  # default Fusion padding
+
+    return filename, padding, ext

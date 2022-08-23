@@ -22,6 +22,20 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectFbxCamera",
+            "label": "Collect Camera for FBX export",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {
@@ -48,6 +62,39 @@
                 }
             ]
         },
+        {   
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateFrameRange",
+            "label": "Validate Frame Range",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "key": "exclude_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
         {
             "type": "dict",
             "collapsible": true,
@@ -61,6 +108,11 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
                     "type": "label",
                     "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
                 },
@@ -71,7 +123,6 @@
                 }
             ]
         },
-
         {
             "type": "schema_template",
             "name": "template_publish_plugin",
@@ -82,7 +133,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -102,7 +152,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -117,6 +166,11 @@
                 },
                 {
                     "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
                     "key": "whitelist_native_plugins",
                     "label": "Whitelist Maya Native Plugins"
                 },
@@ -128,7 +182,68 @@
                 }
             ]
         },
-
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateMayaUnits",
+            "label": "Validate Maya Units",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_linear_units",
+                    "label": "Validate linear units"
+                },
+                {
+                    "key": "linear_units",
+                    "label": "Linear units",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "cm",
+                    "enum_items": [
+                        {"mm": "millimeter"},
+                        {"cm": "centimeter"},
+                        {"m": "meter"},
+                        {"km": "kilometer"},
+                        {"in": "inch"},
+                        {"ft": "foot"},
+                        {"yd": "yard"},
+                        {"mi": "mile"}
+                    ]
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_angular_units",
+                    "label": "Validate angular units"
+                },
+                {
+                    "key": "angular_units",
+                    "label": "Angular units",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "cm",
+                    "enum_items": [
+                        {"deg": "degree"},
+                        {"rad": "radian"}
+                    ]
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_fps",
+                    "label": "Validate fps"
+                }
+            ]
+        },
         {
             "type": "dict",
             "collapsible": true,
@@ -143,6 +258,11 @@
                 },
                 {
                     "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
                     "key": "validate_mesh",
                     "label": "Validate mesh Names "
                 },
@@ -153,7 +273,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -180,7 +299,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -226,6 +344,72 @@
                     "object_type": {
                         "type": "text"
                     }
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateCurrentRenderLayerIsRenderable",
+                    "label": "Validate Current Render Layer Has Renderable Camera"
+                },
+                {
+                    "key": "ValidateRenderImageRule",
+                    "label": "Validate Images File Rule (Workspace)"
+                },
+                {
+                    "key": "ValidateRenderNoDefaultCameras",
+                    "label": "Validate No Default Cameras Renderable"
+                },
+                {
+                    "key": "ValidateRenderSingleCamera",
+                    "label": "Validate Render Single Camera"
+                },
+                {
+                    "key": "ValidateRenderLayerAOVs",
+                    "label": "Validate Render Passes / AOVs Are Registered"
+                },
+                {
+                    "key": "ValidateStepSize",
+                    "label": "Validate Step Size"
+                },
+                {
+                    "key": "ValidateVRayDistributedRendering",
+                    "label": "VRay Distributed Rendering"
+                },
+                {
+                    "key": "ValidateVrayReferencedAOVs",
+                    "label": "VRay Referenced AOVs"
+                },
+                {
+                    "key": "ValidateVRayTranslatorEnabled",
+                    "label": "VRay Translator Settings"
+                },
+                {
+                    "key": "ValidateVrayProxy",
+                    "label": "VRay Proxy Settings"
+                },
+                {
+                    "key": "ValidateVrayProxyMembers",
+                    "label": "VRay Proxy Members"
+                },
+                {
+                    "key": "ValidateYetiRenderScriptCallbacks",
+                    "label": "Yeti Render Script Callbacks"
+                },
+                {
+                    "key": "ValidateYetiRigCacheState",
+                    "label": "Yeti Rig Cache State"
+                },
+                {
+                    "key": "ValidateYetiRigInputShapesInInstance",
+                    "label": "Yeti Rig Input Shapes In Instance"
+                },
+                {
+                    "key": "ValidateYetiRigSettings",
+                    "label": "Yeti Rig Settings"
                 }
             ]
         },
@@ -284,7 +468,7 @@
                     "label": "Validate Model Content",
                     "checkbox_key": "enabled",
                     "children": [
-                         {
+                        {
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
@@ -312,6 +496,11 @@
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
                         },
                         {
                             "type": "label",
@@ -370,6 +559,14 @@
                             "label": "ValidateMeshNonManifold"
                         },
                         {
+                            "key": "ValidateMeshNoNegativeScale",
+                            "label": "Validate Mesh No Negative Scale"
+                        },
+                        {
+                            "key": "ValidateMeshNonZeroEdgeLength",
+                            "label": "Validate Mesh Edge Length Non Zero"
+                        },
+                        {
                             "key": "ValidateMeshNormalsUnlocked",
                             "label": "ValidateMeshNormalsUnlocked"
                         },
@@ -422,6 +619,42 @@
                         {
                             "key": "ValidateUniqueNames",
                             "label": "ValidateUniqueNames"
+                        },
+                        {
+                            "key": "ValidateNoVRayMesh",
+                            "label": "Validate No V-Ray Proxies (VRayMesh)"
+                        },
+                        {
+                            "key": "ValidateUnrealMeshTriangulated",
+                            "label": "Validate if Mesh is Triangulated"
+                        },
+                        {
+                            "key": "ValidateAlembicVisibleOnly",
+                            "label": "Validate Alembic visible node"
+                        }
+                    ]
+                },
+                {
+                    "type": "label",
+                    "label": "Extractors"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractAlembic",
+                    "label": "Extract Alembic",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
                         }
                     ]
                 }
@@ -446,6 +679,51 @@
                         {
                             "key": "ValidateRigControllers",
                             "label": "Validate Rig Controllers"
+                        },
+                        {
+                            "key": "ValidateAnimationContent",
+                            "label": "Validate Animation Content"
+                        },
+                        {
+                            "key": "ValidateOutRelatedNodeIds",
+                            "label": "Validate Animation Out Set Related Node Ids"
+                        },
+                        {
+                            "key": "ValidateRigControllersArnoldAttributes",
+                            "label": "Validate Rig Controllers (Arnold Attributes)"
+                        },
+                        {
+                            "key": "ValidateSkeletalMeshHierarchy",
+                            "label": "Validate Skeletal Mesh Top Node"
+                        },
+                         {
+                            "key": "ValidateSkinclusterDeformerSet",
+                            "label": "Validate Skincluster Deformer Relationships"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateRigOutSetNodeIds",
+                    "label": "Validate Rig Out Set Node Ids",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_history_only",
+                            "label": "Allow history only"
                         }
                     ]
                 }
@@ -465,8 +743,56 @@
                     "label": "Validate Assembly Name"
                 },
                 {
+                    "key": "ValidateAssemblyNamespaces",
+                    "label": "Validate Assembly Namespaces"
+                },
+                {
+                    "key": "ValidateAssemblyModelTransforms",
+                    "label": "Validate Assembly Model Transforms"
+                },
+                {
                     "key": "ValidateAssRelativePaths",
                     "label": "ValidateAssRelativePaths"
+                },
+                {
+                    "key": "ValidateInstancerContent",
+                    "label": "Validate Instancer Content"
+                },
+                {
+                    "key": "ValidateInstancerFrameRanges",
+                    "label": "Validate Instancer Cache Frame Ranges"
+                },
+                {
+                    "key": "ValidateNoDefaultCameras",
+                    "label": "Validate No Default Cameras"
+                },
+                {
+                    "key": "ValidateUnrealUpAxis",
+                    "label": "Validate Unreal Up-Axis check"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateCameraContents",
+            "label": "Validate Camera Content",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_shapes",
+                    "label": "Validate presence of shapes"
                 }
             ]
         },
@@ -480,6 +806,30 @@
         {
             "type": "schema",
             "name": "schema_maya_capture"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractMayaSceneRaw",
+            "label": "Maya Scene (Raw)",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Add loaded instances to those published families:"
+                },
+                {
+                    "key": "add_for_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
         },
         {
             "type": "dict",

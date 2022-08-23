@@ -8,6 +8,29 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "RenderCreator",
+                    "label": "Create render",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Default Variants",
+                            "object_type": "text",
+                            "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [
@@ -48,39 +71,6 @@
                             "key": "skip_timelines_check",
                             "object_type": "text",
                             "label": "Skip Timeline Check  for Tasks"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "AfterEffectsSubmitDeadline",
-                    "label": "AfterEffects Submit to Deadline",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
-                        },
-                        {
-                            "type": "number",
-                            "key": "priority",
-                            "label": "Priority"
-                        },
-                        {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        },
-                        {
-                            "type": "number",
-                            "key": "chunk_size",
-                            "label": "Frames Per Task"
                         }
                     ]
                 }

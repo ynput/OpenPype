@@ -8,4 +8,3 @@ class CreateAssembly(plugin.Creator):
     label = "Assembly"
     family = "assembly"
     icon = "cubes"
-    defaults = ['Main']

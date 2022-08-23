@@ -101,7 +101,7 @@ class OverrideState:
     - DEFAULTS - Entity cares only about default values. It is not
         possible to set higher state if any entity does not have filled
         default value.
-    - STUDIO - First layer of overrides. Hold only studio overriden values
+    - STUDIO - First layer of overrides. Hold only studio overridden values
         that are applied on top of defaults.
     - PROJECT - Second layer of overrides. Hold only project overrides that are
         applied on top of defaults and studio overrides.

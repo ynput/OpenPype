@@ -2,17 +2,18 @@
 
 """
 
-from avalon import api
+from openpype.pipeline import load
 
 
-class FusionSetFrameRangeLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class FusionSetFrameRangeLoader(load.LoaderPlugin):
+    """Set frame range excluding pre- and post-handles"""
 
     families = ["animation",
                 "camera",
                 "imagesequence",
                 "yeticache",
-                "pointcache"]
+                "pointcache",
+                "render"]
     representations = ["*"]
 
     label = "Set frame range"
@@ -38,14 +39,15 @@ class FusionSetFrameRangeLoader(api.Loader):
         lib.update_frame_range(start, end)
 
 
-class FusionSetFrameRangeWithHandlesLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class FusionSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
+    """Set frame range including pre- and post-handles"""
 
     families = ["animation",
                 "camera",
                 "imagesequence",
                 "yeticache",
-                "pointcache"]
+                "pointcache",
+                "render"]
     representations = ["*"]
 
     label = "Set frame range (with handles)"

@@ -1,4 +1,9 @@
+import logging
+
+from tests.lib.assert_classes import DBAssert
 from tests.integration.hosts.photoshop.lib import PhotoshopTestClass
+
+log = logging.getLogger("test_publish_in_photoshop")
 
 
 class TestPublishInPhotoshop(PhotoshopTestClass):
@@ -30,7 +35,7 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/photoshop  # noqa: E501
 
     """
-    PERSIST = False
+    PERSIST = True
 
     TEST_FILES = [
         ("1zD2v5cBgkyOm_xIgKz3WKn8aFB_j8qC-", "test_photoshop_publish.zip", "")
@@ -44,33 +49,56 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
 
     TIMEOUT = 120  # publish timeout
 
-
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 3 == dbcon.count_documents({"type": "version"}), \
-            "Not expected no of versions"
+        failures = []
 
-        assert 0 == dbcon.count_documents({"type": "version",
-                                           "name": {"$ne": 1}}), \
-            "Only versions with 1 expected"
+        failures.append(DBAssert.count_of_types(dbcon, "version", 4))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "imageMainBackgroundcopy"}
-                                          ), \
-            "modelMain subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1}))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTesttask"}), \
-            "workfileTest_task subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="imageMainForeground"))
 
-        assert 6 == dbcon.count_documents({"type": "representation"}), \
-            "Not expected no of representations"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="imageMainBackground"))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "imageMainBackgroundcopy",  # noqa: E501
-                                           "context.ext": "png"}), \
-            "Not expected no of representations with ext 'png'"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="workfileTest_task"))
+
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 8))
+
+        additional_args = {"context.subset": "imageMainForeground",
+                           "context.ext": "png"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "imageMainForeground",
+                           "context.ext": "jpg"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "imageMainBackground",
+                           "context.ext": "png"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "imageMainBackground",
+                           "context.ext": "jpg"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        assert not any(failures)
 
 
 if __name__ == "__main__":

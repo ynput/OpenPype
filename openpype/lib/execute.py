@@ -1,8 +1,12 @@
 import os
+import sys
 import subprocess
-import distutils.spawn
+import platform
+import json
+import tempfile
 
 from .log import PypeLogger as Logger
+from .vendor_bin_utils import find_executable
 
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
@@ -181,6 +185,80 @@ def run_openpype_process(*args, **kwargs):
     return run_subprocess(args, env=env, **kwargs)
 
 
+def run_detached_process(args, **kwargs):
+    """Execute process with passed arguments as separated process.
+
+    Values from 'os.environ' are used for environments if are not passed.
+    They are cleaned using 'clean_envs_for_openpype_process' function.
+
+    Example:
+    ```
+    run_detached_openpype_process("run", "<path to .py script>")
+    ```
+
+    Args:
+        *args (tuple): OpenPype cli arguments.
+        **kwargs (dict): Keyword arguments for for subprocess.Popen.
+
+    Returns:
+        subprocess.Popen: Pointer to launched process but it is possible that
+            launched process is already killed (on linux).
+    """
+    env = kwargs.pop("env", None)
+    # Keep env untouched if are passed and not empty
+    if not env:
+        env = os.environ
+
+    # Create copy of passed env
+    kwargs["env"] = {k: v for k, v in env.items()}
+
+    low_platform = platform.system().lower()
+    if low_platform == "darwin":
+        new_args = ["open", "-na", args.pop(0), "--args"]
+        new_args.extend(args)
+        args = new_args
+
+    elif low_platform == "windows":
+        flags = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | subprocess.DETACHED_PROCESS
+        )
+        kwargs["creationflags"] = flags
+
+        if not sys.stdout:
+            kwargs["stdout"] = subprocess.DEVNULL
+            kwargs["stderr"] = subprocess.DEVNULL
+
+    elif low_platform == "linux" and get_linux_launcher_args() is not None:
+        json_data = {
+            "args": args,
+            "env": kwargs.pop("env")
+        }
+        json_temp = tempfile.NamedTemporaryFile(
+            mode="w", prefix="op_app_args", suffix=".json", delete=False
+        )
+        json_temp.close()
+        json_temp_filpath = json_temp.name
+        with open(json_temp_filpath, "w") as stream:
+            json.dump(json_data, stream)
+
+        new_args = get_linux_launcher_args()
+        new_args.append(json_temp_filpath)
+
+        # Create mid-process which will launch application
+        process = subprocess.Popen(new_args, **kwargs)
+        # Wait until the process finishes
+        #   - This is important! The process would stay in "open" state.
+        process.wait()
+        # Remove the temp file
+        os.remove(json_temp_filpath)
+        # Return process which is already terminated
+        return process
+
+    process = subprocess.Popen(args, **kwargs)
+    return process
+
+
 def path_to_subprocess_arg(path):
     """Prepare path for subprocess arguments.
 
@@ -263,7 +341,7 @@ def get_linux_launcher_args(*args):
             os.path.dirname(openpype_executable),
             filename
         )
-        executable_path = distutils.spawn.find_executable(new_executable)
+        executable_path = find_executable(new_executable)
         if executable_path is None:
             return None
         launch_args = [executable_path]

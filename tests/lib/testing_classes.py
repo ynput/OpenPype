@@ -153,7 +153,7 @@ class ModuleUnitTest(BaseTest):
 
             Database prepared from dumps with 'db_setup' fixture.
         """
-        from avalon.api import AvalonMongoDB
+        from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
         yield dbcon
@@ -273,8 +273,6 @@ class PublishTest(ModuleUnitTest):
         )
         os.environ["AVALON_SCHEMA"] = schema_path
 
-        import openpype
-        openpype.install()
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
         from openpype.lib import ApplicationManager
 
@@ -293,13 +291,16 @@ class PublishTest(ModuleUnitTest):
         yield app_process
 
     @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app, download_test_data):
+    def publish_finished(self, dbcon, launched_app, download_test_data,
+                         timeout):
         """Dummy fixture waiting for publish to finish"""
         import time
         time_start = time.time()
+        timeout = timeout or self.TIMEOUT
+        timeout = float(timeout)
         while launched_app.poll() is None:
             time.sleep(0.5)
-            if time.time() - time_start > self.TIMEOUT:
+            if time.time() - time_start > timeout:
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
@@ -313,30 +314,22 @@ class PublishTest(ModuleUnitTest):
 
             Compares only presence, not size nor content!
         """
-        published_dir_base = download_test_data
-        published_dir = os.path.join(output_folder_url,
-                                     self.PROJECT,
-                                     self.ASSET,
-                                     self.TASK,
-                                     "**")
-        expected_dir_base = os.path.join(published_dir_base,
+        published_dir_base = output_folder_url
+        expected_dir_base = os.path.join(download_test_data,
                                          "expected")
-        expected_dir = os.path.join(expected_dir_base,
-                                    self.PROJECT,
-                                    self.ASSET,
-                                    self.TASK,
-                                    "**")
-        print("Comparing published:'{}' : expected:'{}'".format(published_dir,
-                                                                expected_dir))
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir, recursive=True) if
-                        f != published_dir_base and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir, recursive=True) if
-                       f != expected_dir_base and os.path.exists(f))
 
-        not_matched = expected.difference(published)
-        assert not not_matched, "Missing {} files".format(not_matched)
+        print("Comparing published:'{}' : expected:'{}'".format(
+            published_dir_base, expected_dir_base))
+        published = set(f.replace(published_dir_base, '') for f in
+                        glob.glob(published_dir_base + "\\**", recursive=True)
+                        if f != published_dir_base and os.path.exists(f))
+        expected = set(f.replace(expected_dir_base, '') for f in
+                       glob.glob(expected_dir_base + "\\**", recursive=True)
+                       if f != expected_dir_base and os.path.exists(f))
+
+        not_matched = expected.symmetric_difference(published)
+        assert not not_matched, "Missing {} files".format(
+            "\n".join(sorted(not_matched)))
 
 
 class HostFixtures(PublishTest):

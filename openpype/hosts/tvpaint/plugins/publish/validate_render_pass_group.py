@@ -1,5 +1,6 @@
 import collections
 import pyblish.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateLayersGroup(pyblish.api.InstancePlugin):
@@ -26,11 +27,13 @@ class ValidateLayersGroup(pyblish.api.InstancePlugin):
         layer_names = instance.data["layer_names"]
         # Check if all layers from render pass are in right group
         invalid_layers_by_group_id = collections.defaultdict(list)
+        invalid_layer_names = set()
         for layer_name in layer_names:
             layer = layers_by_name.get(layer_name)
             _group_id = layer["group_id"]
             if _group_id != group_id:
                 invalid_layers_by_group_id[_group_id].append(layer)
+                invalid_layer_names.add(layer_name)
 
         # Everything is OK and skip exception
         if not invalid_layers_by_group_id:
@@ -61,16 +64,27 @@ class ValidateLayersGroup(pyblish.api.InstancePlugin):
             )
 
         # Raise an error
-        raise AssertionError((
-            # Short message
-            "Layers in wrong group."
-            # Description what's wrong
-            " Layers from render pass \"{}\" must be in group {} (id: {})."
-            # Detailed message
-            " Layers in wrong group: {}"
-        ).format(
-            instance.data["label"],
-            correct_group["name"],
-            correct_group["group_id"],
-            " | ".join(per_group_msgs)
-        ))
+        raise PublishXmlValidationError(
+            self,
+            (
+                # Short message
+                "Layers in wrong group."
+                # Description what's wrong
+                " Layers from render pass \"{}\" must be in group {} (id: {})."
+                # Detailed message
+                " Layers in wrong group: {}"
+            ).format(
+                instance.data["label"],
+                correct_group["name"],
+                correct_group["group_id"],
+                " | ".join(per_group_msgs)
+            ),
+            formatting_data={
+                "instance_name": (
+                    instance.data.get("label") or instance.data["name"]
+                ),
+                "expected_group": correct_group["name"],
+                "layer_names": ", ".join(invalid_layer_names)
+
+            }
+        )

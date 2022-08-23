@@ -42,7 +42,7 @@ These are the important branches to remember.
 
 **`develop`** - Development branch where we merge all PRs during the development
 
-**`release/3.x.x`** - Testing branch for a release, once a release branch is crated, no new features
+**`release/3.x.x`** - Testing branch for a release, once a release branch is created, no new features
 are accepted for the given release. Bugfixes, however, are expected. Once the branch is stable it is
 merged to `main` and `develop` and `main` is tagged with a new release
 
@@ -77,7 +77,7 @@ Inside each PR, put a link to the corresponding PR.
 
 Of course if you want to contribute, feel free to make a PR to only 2.x/develop or develop, based on what you are using. While reviewing the PRs, we might convert the code to corresponding PR for the other release ourselves. 
 
-We might also change the target of you PR to and intermediate branch, rather than `develop` if we feel it requires some extra work on our end. That way, we preserve all your commits so you don't loos out on the contribution credits.
+We might also change the target of you PR to and intermediate branch, rather than `develop` if we feel it requires some extra work on our end. That way, we preserve all your commits so you don't lose out on the contribution credits.
 
 
 

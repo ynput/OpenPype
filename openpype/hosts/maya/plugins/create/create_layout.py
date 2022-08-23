@@ -8,4 +8,3 @@ class CreateLayout(plugin.Creator):
     label = "Layout"
     family = "layout"
     icon = "cubes"
-    defaults = ["Main"]

@@ -3,9 +3,8 @@ import inspect
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.vendor import qtawesome
+import qtawesome
 
-from openpype import style
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from openpype.tools.utils import ErrorMessageBox
 

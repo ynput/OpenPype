@@ -7,7 +7,7 @@ sidebar_label: Standalone Publisher
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overriden per project.
+Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overridden per project.
 
 :::warning Default studio values
 Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orage colour). Any changes in default project may affect all existing projects.

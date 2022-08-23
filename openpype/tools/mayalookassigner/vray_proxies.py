@@ -10,11 +10,19 @@ import six
 import alembic.Abc
 from maya import cmds
 
-import avalon.io as io
-import avalon.maya
-import avalon.api as api
-
-import openpype.hosts.maya.api.lib as lib
+from openpype.client import (
+    get_representation_by_name,
+    get_last_version_by_subset_name,
+)
+from openpype.pipeline import (
+    legacy_io,
+    load_container,
+    loaders_from_representation,
+    discover_loader_plugins,
+    get_representation_path,
+    registered_host,
+)
+from openpype.hosts.maya.api import lib
 
 
 log = logging.getLogger(__name__)
@@ -150,14 +158,15 @@ def get_look_relationships(version_id):
 
     Returns:
         dict: Dictionary of relations.
-
     """
-    json_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "json"})
+
+    project_name = legacy_io.active_project()
+    json_representation = get_representation_by_name(
+        project_name, representation_name="json", version_id=version_id
+    )
 
     # Load relationships
-    shader_relation = api.get_representation_path(json_representation)
+    shader_relation = get_representation_path(json_representation)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 
@@ -177,13 +186,15 @@ def load_look(version_id):
         list of shader nodes.
 
     """
+
+    project_name = legacy_io.active_project()
     # Get representations of shader file and relationships
-    look_representation = io.find_one({"type": "representation",
-                                       "parent": version_id,
-                                       "name": "ma"})
+    look_representation = get_representation_by_name(
+        project_name, representation_name="ma", version_id=version_id
+    )
 
     # See if representation is already loaded, if so reuse it.
-    host = api.registered_host()
+    host = registered_host()
     representation_id = str(look_representation['_id'])
     for container in host.ls():
         if (container['loader'] == "LookLoader" and
@@ -195,48 +206,20 @@ def load_look(version_id):
         log.info("Using look for the first time ...")
 
         # Load file
-        loaders = api.loaders_from_representation(api.discover(api.Loader),
-                                                  representation_id)
+        all_loaders = discover_loader_plugins()
+        loaders = loaders_from_representation(all_loaders, representation_id)
         loader = next(
             (i for i in loaders if i.__name__ == "LookLoader"), None)
         if loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
-        with avalon.maya.maintained_selection():
-            container_node = api.load(loader, look_representation)
+        with lib.maintained_selection():
+            container_node = load_container(loader, look_representation)
 
-    return cmds.sets(container_node, query=True)
-
-
-def get_latest_version(asset_id, subset):
-    # type: (str, str) -> dict
-    """Get latest version of subset.
-
-    Args:
-        asset_id (str): Asset ID
-        subset (str): Subset name.
-
-    Returns:
-        Latest version
-
-    Throws:
-        RuntimeError: When subset or version doesn't exist.
-
-    """
-    subset = io.find_one({"name": subset,
-                          "parent": io.ObjectId(asset_id),
-                          "type": "subset"})
-    if not subset:
-        raise RuntimeError("Subset does not exist: %s" % subset)
-
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"]},
-                          sort=[("name", -1)])
-    if not version:
-        raise RuntimeError("Version does not exist.")
-
-    return version
+    # Get container members
+    shader_nodes = lib.get_container_members(container_node)
+    return shader_nodes
 
 
 def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
@@ -264,13 +247,20 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
         asset_id = node_id.split(":", 1)[0]
         node_ids_by_asset_id[asset_id].add(node_id)
 
+    project_name = legacy_io.active_project()
     for asset_id, node_ids in node_ids_by_asset_id.items():
 
         # Get latest look version
-        try:
-            version = get_latest_version(asset_id, subset=subset)
-        except RuntimeError as exc:
-            print(exc)
+        version = get_last_version_by_subset_name(
+            project_name,
+            subset_name=subset,
+            asset_id=asset_id,
+            fields=["_id"]
+        )
+        if not version:
+            print("Didn't find last version for subset name {}".format(
+                subset
+            ))
             continue
 
         relationships = get_look_relationships(version["_id"])

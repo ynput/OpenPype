@@ -65,7 +65,7 @@ Here's a list of supported families
 | Gizmo                   |                                                  |                           |
 | Nukenodes               |                                                  |                           |
 | Harmony.template        |                                                  |                           |
-| Harmony.pallette        |                                                  |                           |
+| Harmony.palette        |                                                  |                           |
 
 
 

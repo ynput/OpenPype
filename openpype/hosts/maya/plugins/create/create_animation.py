@@ -11,7 +11,7 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    defaults = ['Main']
+    write_color_sets = False
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -23,7 +23,7 @@ class CreateAnimation(plugin.Creator):
             self.data[key] = value
 
         # Write vertex colors with the geometry.
-        self.data["writeColorSets"] = False
+        self.data["writeColorSets"] = self.write_color_sets
         self.data["writeFaceSets"] = False
 
         # Include only renderable visible shapes.
@@ -39,3 +39,7 @@ class CreateAnimation(plugin.Creator):
 
         # Default to exporting world-space
         self.data["worldSpace"] = True
+
+        # Default to not send to farm.
+        self.data["farm"] = False
+        self.data["priority"] = 50

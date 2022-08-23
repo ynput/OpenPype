@@ -51,7 +51,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         cls.log.debug("Checking for attribute: %s" % path_attr)
 
         # Check if the primitive attribute exists
-        frame = instance.data.get("startFrame", 0)
+        frame = instance.data.get("frameStart", 0)
         geo = output.geometryAtFrame(frame)
 
         # If there are no primitives on the current frame then we can't

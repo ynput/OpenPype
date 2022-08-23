@@ -4,9 +4,13 @@ import os
 
 import maya.cmds as cmds
 
+from openpype.client import get_asset_by_id
+from openpype.pipeline import (
+    legacy_io,
+    remove_container,
+    registered_host,
+)
 from openpype.hosts.maya.api import lib
-
-from avalon import io, api
 
 from .vray_proxies import get_alembic_ids_cache
 
@@ -77,7 +81,7 @@ def get_all_asset_nodes():
         list: list of dictionaries
     """
 
-    host = api.registered_host()
+    host = registered_host()
 
     nodes = []
     for container in host.ls():
@@ -87,7 +91,7 @@ def get_all_asset_nodes():
 
         # Gather all information
         container_name = container["objectName"]
-        nodes += cmds.sets(container_name, query=True, nodesOnly=True) or []
+        nodes += lib.get_container_members(container_name)
 
     nodes = list(set(nodes))
     return nodes
@@ -155,9 +159,9 @@ def create_items_from_nodes(nodes):
         log.warning("No id hashes")
         return asset_view_items
 
+    project_name = legacy_io.active_project()
     for _id, id_nodes in id_hashes.items():
-        asset = io.find_one({"_id": io.ObjectId(_id)},
-                            projection={"name": True})
+        asset = get_asset_by_id(project_name, _id, fields=["name"])
 
         # Skip if asset id is not found
         if not asset:
@@ -174,10 +178,12 @@ def create_items_from_nodes(nodes):
             namespace = get_namespace_from_node(node)
             namespaces.add(namespace)
 
-        asset_view_items.append({"label": asset["name"],
-                                 "asset": asset,
-                                 "looks": looks,
-                                 "namespaces": namespaces})
+        asset_view_items.append({
+            "label": asset["name"],
+            "asset": asset,
+            "looks": looks,
+            "namespaces": namespaces
+        })
 
     return asset_view_items
 
@@ -190,12 +196,12 @@ def remove_unused_looks():
 
     """
 
-    host = api.registered_host()
+    host = registered_host()
 
     unused = []
     for container in host.ls():
         if container['loader'] == "LookLoader":
-            members = cmds.sets(container['objectName'], query=True)
+            members = lib.get_container_members(container['objectName'])
             look_sets = cmds.ls(members, type="objectSet")
             for look_set in look_sets:
                 # If the set is used than we consider this look *in use*
@@ -206,6 +212,6 @@ def remove_unused_looks():
 
     for container in unused:
         log.info("Removing unused look container: %s", container['objectName'])
-        api.remove(container)
+        remove_container(container)
 
     log.info("Finished removing unused looks. (see log for details)")

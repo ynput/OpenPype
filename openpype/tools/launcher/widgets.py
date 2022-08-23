@@ -2,12 +2,23 @@ import copy
 import time
 import collections
 from Qt import QtWidgets, QtCore, QtGui
-from avalon.vendor import qtawesome
+import qtawesome
+
+from openpype.tools.flickcharm import FlickCharm
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
+from openpype.tools.utils.tasks_widget import TasksWidget
 
 from .delegates import ActionDelegate
 from . import lib
-from .models import ActionModel
-from openpype.tools.flickcharm import FlickCharm
+from .models import (
+    ActionModel,
+    ProjectModel,
+    LauncherAssetsModel,
+    AssetRecursiveSortFilterModel,
+    LauncherTaskModel,
+    LauncherTasksProxyModel
+)
+from .actions import ApplicationAction
 from .constants import (
     ACTION_ROLE,
     GROUP_ROLE,
@@ -15,20 +26,21 @@ from .constants import (
     ACTION_ID_ROLE,
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE,
-    ANIMATION_LEN
+    ANIMATION_LEN,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 
 
 class ProjectBar(QtWidgets.QWidget):
-    def __init__(self, project_handler, parent=None):
+    def __init__(self, launcher_model, parent=None):
         super(ProjectBar, self).__init__(parent)
 
         project_combobox = QtWidgets.QComboBox(self)
         # Change delegate so stylysheets are applied
         project_delegate = QtWidgets.QStyledItemDelegate(project_combobox)
         project_combobox.setItemDelegate(project_delegate)
-
-        project_combobox.setModel(project_handler.model)
+        model = ProjectModel(launcher_model)
+        project_combobox.setModel(model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -40,16 +52,17 @@ class ProjectBar(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Maximum
         )
 
-        self.project_handler = project_handler
+        self._launcher_model = launcher_model
         self.project_delegate = project_delegate
         self.project_combobox = project_combobox
+        self._model = model
 
         # Signals
         self.project_combobox.currentIndexChanged.connect(self.on_index_change)
-        project_handler.project_changed.connect(self._on_project_change)
+        launcher_model.project_changed.connect(self._on_project_change)
 
         # Set current project by default if it's set.
-        project_name = project_handler.current_project
+        project_name = launcher_model.project_name
         if project_name:
             self.set_project(project_name)
 
@@ -65,7 +78,7 @@ class ProjectBar(QtWidgets.QWidget):
         index = self.project_combobox.findText(project_name)
         if index < 0:
             # Try refresh combobox model
-            self.project_handler.refresh_model()
+            self._launcher_model.refresh_projects()
             index = self.project_combobox.findText(project_name)
 
         if index >= 0:
@@ -76,7 +89,70 @@ class ProjectBar(QtWidgets.QWidget):
             return
 
         project_name = self.get_current_project()
-        self.project_handler.set_project(project_name)
+        self._launcher_model.set_project_name(project_name)
+
+
+class LauncherTaskWidget(TasksWidget):
+    def __init__(self, launcher_model, *args, **kwargs):
+        self._launcher_model = launcher_model
+
+        super(LauncherTaskWidget, self).__init__(*args, **kwargs)
+
+    def _create_source_model(self):
+        return LauncherTaskModel(self._launcher_model, self._dbcon)
+
+    def _create_proxy_model(self, source_model):
+        proxy = LauncherTasksProxyModel(self._launcher_model)
+        proxy.setSourceModel(source_model)
+        return proxy
+
+
+class LauncherAssetsWidget(SingleSelectAssetsWidget):
+    def __init__(self, launcher_model, *args, **kwargs):
+        self._launcher_model = launcher_model
+
+        super(LauncherAssetsWidget, self).__init__(*args, **kwargs)
+
+        launcher_model.assets_refresh_started.connect(self._on_refresh_start)
+
+        self.set_current_asset_btn_visibility(False)
+
+    def _on_refresh_start(self):
+        self._set_loading_state(loading=True, empty=True)
+        self.refresh_triggered.emit()
+
+    @property
+    def refreshing(self):
+        return self._model.refreshing
+
+    def refresh(self):
+        self._launcher_model.refresh_assets(force=True)
+
+    def stop_refresh(self):
+        raise ValueError("bug stop_refresh called")
+
+    def _refresh_model(self, clear=False):
+        raise ValueError("bug _refresh_model called")
+
+    def _create_source_model(self):
+        model = LauncherAssetsModel(self._launcher_model, self.dbcon)
+        model.refreshed.connect(self._on_model_refresh)
+        return model
+
+    def _create_proxy_model(self, source_model):
+        proxy = AssetRecursiveSortFilterModel(self._launcher_model)
+        proxy.setSourceModel(source_model)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        return proxy
+
+    def _on_model_refresh(self, has_item):
+        self._proxy.sort(0)
+        self._set_loading_state(loading=False, empty=not has_item)
+        self.refreshed.emit()
+
+    def _on_filter_text_change(self, new_text):
+        self._launcher_model.set_asset_name_filter(new_text)
 
 
 class ActionBar(QtWidgets.QWidget):
@@ -84,10 +160,10 @@ class ActionBar(QtWidgets.QWidget):
 
     action_clicked = QtCore.Signal(object)
 
-    def __init__(self, project_handler, dbcon, parent=None):
+    def __init__(self, launcher_model, dbcon, parent=None):
         super(ActionBar, self).__init__(parent)
 
-        self.project_handler = project_handler
+        self._launcher_model = launcher_model
         self.dbcon = dbcon
 
         view = QtWidgets.QListView(self)
@@ -96,6 +172,7 @@ class ActionBar(QtWidgets.QWidget):
         view.setViewMode(QtWidgets.QListView.IconMode)
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
+        view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
         view.setWrapping(True)
         view.setGridSize(QtCore.QSize(70, 75))
@@ -133,10 +210,18 @@ class ActionBar(QtWidgets.QWidget):
 
         self.set_row_height(1)
 
-        project_handler.projects_refreshed.connect(self._on_projects_refresh)
+        launcher_model.projects_refreshed.connect(self._on_projects_refresh)
         view.clicked.connect(self.on_clicked)
+        view.customContextMenuRequested.connect(self.on_context_menu)
+
+        self._context_menu = None
+        self._discover_on_menu = False
 
     def discover_actions(self):
+        if self._context_menu is not None:
+            self._discover_on_menu = True
+            return
+
         if self._animation_timer.isActive():
             self._animation_timer.stop()
         self.model.discover()
@@ -172,7 +257,7 @@ class ActionBar(QtWidgets.QWidget):
 
     def _start_animation(self, index):
         # Offset refresh timout
-        self.project_handler.start_timer()
+        self._launcher_model.start_refresh_timer()
         action_id = index.data(ACTION_ID_ROLE)
         item = self.model.items_by_id.get(action_id)
         if item:
@@ -180,6 +265,46 @@ class ActionBar(QtWidgets.QWidget):
             item.setData(1, ANIMATION_STATE_ROLE)
             self._animated_items.add(action_id)
             self._animation_timer.start()
+
+    def on_context_menu(self, point):
+        """Creates menu to force skip opening last workfile."""
+        index = self.view.indexAt(point)
+        if not index.isValid():
+            return
+
+        action_item = index.data(ACTION_ROLE)
+        if not self.model.is_application_action(action_item):
+            return
+
+        menu = QtWidgets.QMenu(self.view)
+        checkbox = QtWidgets.QCheckBox("Skip opening last workfile.",
+                                       menu)
+        if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+            checkbox.setChecked(True)
+
+        action_id = index.data(ACTION_ID_ROLE)
+        checkbox.stateChanged.connect(
+            lambda: self.on_checkbox_changed(checkbox.isChecked(),
+                                             action_id))
+        action = QtWidgets.QWidgetAction(menu)
+        action.setDefaultWidget(checkbox)
+
+        menu.addAction(action)
+
+        self._context_menu = menu
+        global_point = self.mapToGlobal(point)
+        menu.exec_(global_point)
+        self._context_menu = None
+        if self._discover_on_menu:
+            self._discover_on_menu = False
+            self.discover_actions()
+
+    def on_checkbox_changed(self, is_checked, action_id):
+        self.model.update_force_not_open_workfile_settings(is_checked,
+                                                           action_id)
+        self.view.update()
+        if self._context_menu is not None:
+            self._context_menu.close()
 
     def on_clicked(self, index):
         if not index or not index.isValid():
@@ -189,12 +314,18 @@ class ActionBar(QtWidgets.QWidget):
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
+            # Change data of application action
+            if issubclass(action, ApplicationAction):
+                if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+                    action.data["start_last_workfile"] = False
+                else:
+                    action.data.pop("start_last_workfile", None)
             self._start_animation(index)
             self.action_clicked.emit(action)
             return
 
         # Offset refresh timout
-        self.project_handler.start_timer()
+        self._launcher_model.start_refresh_timer()
 
         actions = index.data(ACTION_ROLE)
 
@@ -212,7 +343,7 @@ class ActionBar(QtWidgets.QWidget):
             by_variant_label = collections.defaultdict(list)
             orders = []
             for action in actions:
-                # Lable variants
+                # Label variants
                 label = getattr(action, "label", None)
                 label_variant = getattr(action, "label_variant", None)
                 if label_variant and not label:

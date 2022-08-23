@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Frame range</title>
+<description>## Invalid render frame range
+
+Scene frame range which will be rendered is defined by MarkIn and MarkOut. Expected frame range is {expected_frame_range} and current frame range is {current_frame_range}.
+
+It is also required that MarkIn and MarkOut are enabled in the scene. Their color is highlighted on timeline when are enabled.
+
+- MarkIn is {mark_in_enable_state}
+- MarkOut is {mark_out_enable_state}
+
+### How to repair?
+
+Yout can fix this with "Repair" button on the right. That will change MarkOut to {expected_mark_out}.
+
+Or you can manually modify MarkIn and MarkOut in the scene timeline.
+</description>
+</error>
+</root>

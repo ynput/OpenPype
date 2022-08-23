@@ -3,9 +3,7 @@ import logging
 
 import Qt
 from Qt import QtCore, QtGui
-from avalon.vendor import qtawesome
-from avalon import style, io
-from . import lib
+from openpype.client import get_projects
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
     PROJECT_NAME_ROLE,
@@ -199,31 +197,37 @@ class Item(dict):
 
 
 class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
-    """Filters to the regex if any of the children matches allow parent"""
-    def filterAcceptsRow(self, row, parent):
+    """Recursive proxy model.
+    Item is not filtered if any children match the filter.
+    Use case: Filtering by string - parent won't be filtered if does not match
+        the filter string but first checks if any children does.
+    """
+    def filterAcceptsRow(self, row, parent_index):
         regex = self.filterRegExp()
         if not regex.isEmpty():
-            pattern = regex.pattern()
             model = self.sourceModel()
-            source_index = model.index(row, self.filterKeyColumn(), parent)
+            source_index = model.index(
+                row, self.filterKeyColumn(), parent_index
+            )
             if source_index.isValid():
+                pattern = regex.pattern()
+
                 # Check current index itself
-                key = model.data(source_index, self.filterRole())
-                if re.search(pattern, key, re.IGNORECASE):
+                value = model.data(source_index, self.filterRole())
+                if re.search(pattern, value, re.IGNORECASE):
                     return True
 
-                # Check children
                 rows = model.rowCount(source_index)
-                for i in range(rows):
-                    if self.filterAcceptsRow(i, source_index):
+                for idx in range(rows):
+                    if self.filterAcceptsRow(idx, source_index):
                         return True
 
                 # Otherwise filter it
                 return False
 
-        return super(
-            RecursiveSortFilterProxyModel, self
-        ).filterAcceptsRow(row, parent)
+        return super(RecursiveSortFilterProxyModel, self).filterAcceptsRow(
+            row, parent_index
+        )
 
 
 class ProjectModel(QtGui.QStandardItemModel):
@@ -293,29 +297,29 @@ class ProjectModel(QtGui.QStandardItemModel):
             self._default_item = item
 
         project_names = set()
-        if self.dbcon is not None:
-            for project_doc in self.dbcon.projects(
-                projection={"name": 1, "data.active": 1},
-                only_active=self._only_active
-            ):
-                project_name = project_doc["name"]
-                project_names.add(project_name)
-                if project_name in self._items_by_name:
-                    item = self._items_by_name[project_name]
-                else:
-                    item = QtGui.QStandardItem(project_name)
+        project_docs = get_projects(
+            inactive=not self._only_active,
+            fields=["name", "data.active"]
+        )
+        for project_doc in project_docs:
+            project_name = project_doc["name"]
+            project_names.add(project_name)
+            if project_name in self._items_by_name:
+                item = self._items_by_name[project_name]
+            else:
+                item = QtGui.QStandardItem(project_name)
 
-                    self._items_by_name[project_name] = item
-                    new_items.append(item)
+                self._items_by_name[project_name] = item
+                new_items.append(item)
 
-                is_active = project_doc.get("data", {}).get("active", True)
-                item.setData(project_name, PROJECT_NAME_ROLE)
-                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+            is_active = project_doc.get("data", {}).get("active", True)
+            item.setData(project_name, PROJECT_NAME_ROLE)
+            item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
 
-                if not is_active:
-                    font = item.font()
-                    font.setItalic(True)
-                    item.setFont(font)
+            if not is_active:
+                font = item.font()
+                font.setItalic(True)
+                item.setFont(font)
 
         root_item = self.invisibleRootItem()
         for project_name in tuple(self._items_by_name.keys()):

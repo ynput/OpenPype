@@ -1,5 +1,5 @@
+import os
 import copy
-import logging
 
 from abc import (
     ABCMeta,
@@ -8,7 +8,17 @@ from abc import (
 )
 import six
 
+from openpype.settings import get_system_settings, get_project_settings
 from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.plugin_discover import (
+    discover,
+    register_plugin,
+    register_plugin_path,
+    deregister_plugin,
+    deregister_plugin_path
+)
+
+from .legacy_create import LegacyCreator
 
 
 class CreatorError(Exception):
@@ -35,6 +45,9 @@ class BaseCreator:
 
     # Label shown in UI
     label = None
+    group_label = None
+    # Cached group label after first call 'get_group_label'
+    _cached_group_label = None
 
     # Variable to store logger
     _log = None
@@ -46,8 +59,19 @@ class BaseCreator:
     # - may not be used if `get_icon` is reimplemented
     icon = None
 
+    # Instance attribute definitions that can be changed per instance
+    # - returns list of attribute definitions from
+    #       `openpype.pipeline.attribute_definitions`
+    instance_attr_defs = []
+
+    # Filtering by host name - can be used to be filtered by host name
+    # - used on all hosts when set to 'None' for Backwards compatibility
+    #   - was added afterwards
+    # QUESTION make this required?
+    host_name = None
+
     def __init__(
-        self, create_context, system_settings, project_settings, headless=False
+        self, project_settings, system_settings, create_context, headless=False
     ):
         # Reference to CreateContext
         self.create_context = create_context
@@ -56,45 +80,140 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
-    @abstractproperty
+    @property
     def identifier(self):
-        """Identifier of creator (must be unique)."""
-        pass
+        """Identifier of creator (must be unique).
+
+        Default implementation returns plugin's family.
+        """
+
+        return self.family
 
     @abstractproperty
     def family(self):
         """Family that plugin represents."""
+
         pass
 
     @property
+    def project_name(self):
+        """Family that plugin represents."""
+
+        return self.create_context.project_name
+
+    @property
+    def host(self):
+        return self.create_context.host
+
+    def get_group_label(self):
+        """Group label under which are instances grouped in UI.
+
+        Default implementation use attributes in this order:
+            - 'group_label' -> 'label' -> 'identifier'
+                Keep in mind that 'identifier' use 'family' by default.
+
+        Returns:
+            str: Group label that can be used for grouping of instances in UI.
+                Group label can be overriden by instance itself.
+        """
+
+        if self._cached_group_label is None:
+            label = self.identifier
+            if self.group_label:
+                label = self.group_label
+            elif self.label:
+                label = self.label
+            self._cached_group_label = label
+        return self._cached_group_label
+
+    @property
     def log(self):
+        """Logger of the plugin.
+
+        Returns:
+            logging.Logger: Logger with name of the plugin.
+        """
+
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            from openpype.api import Logger
+
+            self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def _add_instance_to_context(self, instance):
-        """Helper method to ad d"""
+        """Helper method to add instance to create context.
+
+        Instances should be stored to DCC workfile metadata to be able reload
+        them and also stored to CreateContext in which is creator plugin
+        existing at the moment to be able use it without refresh of
+        CreateContext.
+
+        Args:
+            instance (CreatedInstance): New created instance.
+        """
+
         self.create_context.creator_adds_instance(instance)
 
     def _remove_instance_from_context(self, instance):
+        """Helper method to remove instance from create context.
+
+        Instances must be removed from DCC workfile metadat aand from create
+        context in which plugin is existing at the moment of removement to
+        propagate the change without restarting create context.
+
+        Args:
+            instance (CreatedInstance): Instance which should be removed.
+        """
+
         self.create_context.creator_removed_instance(instance)
 
     @abstractmethod
-    def create(self, options=None):
+    def create(self):
         """Create new instance.
 
         Replacement of `process` method from avalon implementation.
         - must expect all data that were passed to init in previous
             implementation
         """
+
         pass
 
     @abstractmethod
-    def collect_instances(self, attr_plugins=None):
+    def collect_instances(self):
+        """Collect existing instances related to this creator plugin.
+
+        The implementation differs on host abilities. The creator has to
+        collect metadata about instance and create 'CreatedInstance' object
+        which should be added to 'CreateContext'.
+
+        Example:
+        ```python
+        def collect_instances(self):
+            # Getting existing instances is different per host implementation
+            for instance_data in pipeline.list_instances():
+                # Process only instances that were created by this creator
+                creator_id = instance_data.get("creator_identifier")
+                if creator_id == self.identifier:
+                    # Create instance object from existing data
+                    instance = CreatedInstance.from_existing(
+                        instance_data, self
+                    )
+                    # Add instance to create context
+                    self._add_instance_to_context(instance)
+        ```
+        """
+
         pass
 
     @abstractmethod
     def update_instances(self, update_list):
+        """Store changes of existing instances so they can be recollected.
+
+        Args:
+            update_list(List[UpdateData]): Gets list of tuples. Each item
+                contain changed instance and it's changes.
+        """
+
         pass
 
     @abstractmethod
@@ -105,9 +224,10 @@ class BaseCreator:
         'True' if did so.
 
         Args:
-            instance(list<CreatedInstance>): Instance objects which should be
+            instance(List[CreatedInstance]): Instance objects which should be
                 removed.
         """
+
         pass
 
     def get_icon(self):
@@ -115,6 +235,7 @@ class BaseCreator:
 
         Can return path to image file or awesome icon name.
         """
+
         return self.icon
 
     def get_dynamic_data(
@@ -125,6 +246,7 @@ class BaseCreator:
         These may be get dynamically created based on current context of
         workfile.
         """
+
         return {}
 
     def get_subset_name(
@@ -149,6 +271,7 @@ class BaseCreator:
             project_name(str): Project name.
             host_name(str): Which host creates subset.
         """
+
         dynamic_data = self.get_dynamic_data(
             variant, task_name, asset_doc, project_name, host_name
         )
@@ -163,7 +286,7 @@ class BaseCreator:
             dynamic_data=dynamic_data
         )
 
-    def get_attribute_defs(self):
+    def get_instance_attr_defs(self):
         """Plugin attribute definitions.
 
         Attribute definitions of plugin that hold data about created instance
@@ -175,10 +298,11 @@ class BaseCreator:
         keys/values when plugin attributes change.
 
         Returns:
-            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
                 created instance.
         """
-        return []
+
+        return self.instance_attr_defs
 
 
 class Creator(BaseCreator):
@@ -191,6 +315,9 @@ class Creator(BaseCreator):
     # - default_variants may not be used if `get_default_variants` is overriden
     default_variants = []
 
+    # Default variant used in 'get_default_variant'
+    default_variant = None
+
     # Short description of family
     # - may not be used if `get_description` is overriden
     description = None
@@ -199,15 +326,26 @@ class Creator(BaseCreator):
     # - may not be used if `get_detail_description` is overriden
     detailed_description = None
 
+    # It does make sense to change context on creation
+    # - in some cases it may confuse artists because it would not be used
+    #      e.g. for buld creators
+    create_allow_context_change = True
+
+    # Precreate attribute definitions showed before creation
+    # - similar to instance attribute definitions
+    pre_create_attr_defs = []
+
     @abstractmethod
-    def create(self, subset_name, instance_data, options=None):
+    def create(self, subset_name, instance_data, pre_create_data):
         """Create new instance and store it.
 
         Ideally should be stored to workfile using host implementation.
 
         Args:
             subset_name(str): Subset name of created instance.
-            instance_data(dict):
+            instance_data(dict): Base data for instance.
+            pre_create_data(dict): Data based on pre creation attributes.
+                Those may affect how creator works.
         """
 
         # instance = CreatedInstance(
@@ -221,6 +359,7 @@ class Creator(BaseCreator):
         Returns:
             str: Short description of family.
         """
+
         return self.description
 
     def get_detail_description(self):
@@ -231,6 +370,7 @@ class Creator(BaseCreator):
         Returns:
             str: Detailed description of family for artist.
         """
+
         return self.detailed_description
 
     def get_default_variants(self):
@@ -242,8 +382,9 @@ class Creator(BaseCreator):
         By default returns `default_variants` value.
 
         Returns:
-            list<str>: Whisper variants for user input.
+            List[str]: Whisper variants for user input.
         """
+
         return copy.deepcopy(self.default_variants)
 
     def get_default_variant(self):
@@ -256,7 +397,28 @@ class Creator(BaseCreator):
         `get_default_variants` should be used.
         """
 
-        return None
+        return self.default_variant
+
+    def get_pre_create_attr_defs(self):
+        """Plugin attribute definitions needed for creation.
+        Attribute definitions of plugin that define how creation will work.
+        Values of these definitions are passed to `create` method.
+
+        Note:
+            Convert method should be implemented which should care about
+            updating keys/values when plugin attributes change.
+
+        Returns:
+            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
+                created instance.
+        """
+        return self.pre_create_attr_defs
+
+
+class HiddenCreator(BaseCreator):
+    @abstractmethod
+    def create(self, instance_data, source_data):
+        pass
 
 
 class AutoCreator(BaseCreator):
@@ -264,6 +426,59 @@ class AutoCreator(BaseCreator):
 
     Can be used e.g. for `workfile`.
     """
+
     def remove_instances(self, instances):
         """Skip removement."""
         pass
+
+
+def discover_creator_plugins():
+    return discover(BaseCreator)
+
+
+def discover_legacy_creator_plugins():
+    from openpype.lib import Logger
+
+    log = Logger.get_logger("CreatorDiscover")
+
+    plugins = discover(LegacyCreator)
+    project_name = os.environ.get("AVALON_PROJECT")
+    system_settings = get_system_settings()
+    project_settings = get_project_settings(project_name)
+    for plugin in plugins:
+        try:
+            plugin.apply_settings(project_settings, system_settings)
+        except Exception:
+            log.warning(
+                "Failed to apply settings to loader {}".format(
+                    plugin.__name__
+                ),
+                exc_info=True
+            )
+    return plugins
+
+
+def register_creator_plugin(plugin):
+    if issubclass(plugin, BaseCreator):
+        register_plugin(BaseCreator, plugin)
+
+    elif issubclass(plugin, LegacyCreator):
+        register_plugin(LegacyCreator, plugin)
+
+
+def deregister_creator_plugin(plugin):
+    if issubclass(plugin, BaseCreator):
+        deregister_plugin(BaseCreator, plugin)
+
+    elif issubclass(plugin, LegacyCreator):
+        deregister_plugin(LegacyCreator, plugin)
+
+
+def register_creator_plugin_path(path):
+    register_plugin_path(BaseCreator, path)
+    register_plugin_path(LegacyCreator, path)
+
+
+def deregister_creator_plugin_path(path):
+    deregister_plugin_path(BaseCreator, path)
+    deregister_plugin_path(LegacyCreator, path)

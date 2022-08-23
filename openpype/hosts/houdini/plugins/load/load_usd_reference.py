@@ -1,15 +1,16 @@
-from avalon import api
-from avalon.houdini import pipeline, lib
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+    AVALON_CONTAINER_ID,
+)
+from openpype.hosts.houdini.api import lib
 
 
-class USDReferenceLoader(api.Loader):
+class USDReferenceLoader(load.LoaderPlugin):
     """Reference USD file in Solaris"""
 
     families = [
-        "colorbleed.usd",
-        "colorbleed.pointcache",
-        "colorbleed.animation",
-        "colorbleed.camera",
+        "usd",
         "usdCamera",
     ]
     label = "Reference USD"
@@ -43,7 +44,7 @@ class USDReferenceLoader(api.Loader):
         # Imprint it manually
         data = {
             "schema": "avalon-core:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "name": node_name,
             "namespace": namespace,
             "loader": str(self.__class__.__name__),
@@ -60,7 +61,7 @@ class USDReferenceLoader(api.Loader):
         node = container["node"]
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         # Update attributes

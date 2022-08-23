@@ -5,6 +5,9 @@ Contains end-to-end tests for automatic testing of OP.
 Should run headless publish on all hosts to check basic publish use cases automatically
 to limit regression issues.
 
+Uses env var `HEADLESS_PUBLISH` (set in test data zip files) to differentiate between regular publish
+and "automated" one.
+
 How to run
 ----------
 - activate `{OPENPYPE_ROOT}/.venv`

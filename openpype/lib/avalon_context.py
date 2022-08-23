@@ -1,21 +1,24 @@
 """Should be used only inside of hosts."""
 import os
-import json
 import re
 import copy
 import platform
 import logging
-import collections
 import functools
-import getpass
+import warnings
 
-from openpype.settings import get_project_settings
-from .anatomy import Anatomy
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_asset_by_name,
+    get_last_version_by_subset_name,
+    get_workfile_info,
+)
 from .profiles_filtering import filter_profiles
+from .events import emit_event
+from .path_templates import StringTemplate
 
-# avalon module is not imported at the top
-# - may not be in path at the time of pype.lib initialization
-avalon = None
+legacy_io = None
 
 log = logging.getLogger("AvalonContext")
 
@@ -29,6 +32,51 @@ PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
 PROJECT_NAME_REGEX = re.compile(
     "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
 )
+
+
+class AvalonContextDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", AvalonContextDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=AvalonContextDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 def create_project(
@@ -57,8 +105,13 @@ def create_project(
     """
 
     from openpype.settings import ProjectSettings, SaveWarningExc
-    from avalon.api import AvalonMongoDB
-    from avalon.schema import validate
+    from openpype.pipeline import AvalonMongoDB
+    from openpype.pipeline.schema import validate
+
+    if get_project(project_name, fields=["name"]):
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
 
     if dbcon is None:
         dbcon = AvalonMongoDB()
@@ -69,15 +122,6 @@ def create_project(
         ).format(project_name))
 
     database = dbcon.database
-    project_doc = database[project_name].find_one(
-        {"type": "project"},
-        {"name": 1}
-    )
-    if project_doc:
-        raise ValueError("Project with name \"{}\" already exists".format(
-            project_name
-        ))
-
     project_doc = {
         "type": "project",
         "name": project_name,
@@ -100,7 +144,7 @@ def create_project(
         database[project_name].delete_one({"type": "project"})
         raise
 
-    project_doc = database[project_name].find_one({"type": "project"})
+    project_doc = get_project(project_name)
 
     try:
         # Validate created project document
@@ -113,17 +157,17 @@ def create_project(
     return project_doc
 
 
-def with_avalon(func):
+def with_pipeline_io(func):
     @functools.wraps(func)
-    def wrap_avalon(*args, **kwargs):
-        global avalon
-        if avalon is None:
-            import avalon
+    def wrapped(*args, **kwargs):
+        global legacy_io
+        if legacy_io is None:
+            from openpype.pipeline import legacy_io
         return func(*args, **kwargs)
-    return wrap_avalon
+    return wrapped
 
 
-@with_avalon
+@deprecated("openpype.pipeline.context_tools.is_representation_from_latest")
 def is_latest(representation):
     """Return whether the representation is from latest version
 
@@ -133,129 +177,58 @@ def is_latest(representation):
     Returns:
         bool: Whether the representation is of latest version.
 
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
-    version = avalon.io.find_one({"_id": representation['parent']})
-    if version["type"] == "hero_version":
-        return True
+    from openpype.pipeline.context_tools import is_representation_from_latest
 
-    # Get highest version under the parent
-    highest_version = avalon.io.find_one({
-        "type": "version",
-        "parent": version["parent"]
-    }, sort=[("name", -1)], projection={"name": True})
-
-    if version['name'] == highest_version['name']:
-        return True
-    else:
-        return False
+    return is_representation_from_latest(representation)
 
 
-@with_avalon
+@deprecated("openpype.pipeline.load.any_outdated_containers")
 def any_outdated():
-    """Return whether the current scene has any outdated content"""
+    """Return whether the current scene has any outdated content.
 
-    checked = set()
-    host = avalon.api.registered_host()
-    for container in host.ls():
-        representation = container['representation']
-        if representation in checked:
-            continue
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
 
-        representation_doc = avalon.io.find_one(
-            {
-                "_id": avalon.io.ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not is_latest(representation_doc):
-            return True
-        elif not representation_doc:
-            log.debug("Container '{objectName}' has an invalid "
-                      "representation, it is missing in the "
-                      "database".format(**container))
+    from openpype.pipeline.load import any_outdated_containers
 
-        checked.add(representation)
-
-    return False
+    return any_outdated_containers()
 
 
-@with_avalon
+@deprecated("openpype.pipeline.context_tools.get_current_project_asset")
 def get_asset(asset_name=None):
     """ Returning asset document from database by its name.
 
-        Doesn't count with duplicities on asset names!
-
-        Args:
-            asset_name (str)
-
-        Returns:
-            (MongoDB document)
-    """
-    if not asset_name:
-        asset_name = avalon.api.Session["AVALON_ASSET"]
-
-    asset_document = avalon.io.find_one({
-        "name": asset_name,
-        "type": "asset"
-    })
-
-    if not asset_document:
-        raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
-
-    return asset_document
-
-
-@with_avalon
-def get_hierarchy(asset_name=None):
-    """
-    Obtain asset hierarchy path string from mongo db
+    Doesn't count with duplicities on asset names!
 
     Args:
         asset_name (str)
 
     Returns:
-        (string): asset hierarchy path
+        (MongoDB document)
 
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
-    if not asset_name:
-        asset_name = avalon.io.Session.get(
-            "AVALON_ASSET",
-            os.environ["AVALON_ASSET"]
-        )
 
-    asset_entity = avalon.io.find_one({
-        "type": 'asset',
-        "name": asset_name
-    })
+    from openpype.pipeline.context_tools import get_current_project_asset
 
-    not_set = "PARENTS_NOT_SET"
-    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
+    return get_current_project_asset(asset_name=asset_name)
 
-    # If entity already have parents then just return joined
-    if entity_parents != not_set:
-        return "/".join(entity_parents)
 
-    # Else query parents through visualParents and store result to entity
-    hierarchy_items = []
-    entity = asset_entity
-    while True:
-        parent_id = entity.get("data", {}).get("visualParent")
-        if not parent_id:
-            break
-        entity = avalon.io.find_one({"_id": parent_id})
-        hierarchy_items.append(entity["name"])
+@deprecated("openpype.pipeline.template_data.get_general_template_data")
+def get_system_general_anatomy_data(system_settings=None):
+    """
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
+    from openpype.pipeline.template_data import get_general_template_data
 
-    # Add parents to entity data for next query
-    entity_data = asset_entity.get("data", {})
-    entity_data["parents"] = hierarchy_items
-    avalon.io.update_many(
-        {"_id": asset_entity["_id"]},
-        {"$set": {"data": entity_data}}
-    )
-
-    return "/".join(hierarchy_items)
+    return get_general_template_data(system_settings)
 
 
 def get_linked_asset_ids(asset_doc):
@@ -285,7 +258,7 @@ def get_linked_asset_ids(asset_doc):
     return output
 
 
-@with_avalon
+@with_pipeline_io
 def get_linked_assets(asset_doc):
     """Return linked assets for `asset_doc` from DB
 
@@ -295,14 +268,16 @@ def get_linked_assets(asset_doc):
     Returns:
         (list) Asset documents of input links for passed asset doc.
     """
+
     link_ids = get_linked_asset_ids(asset_doc)
     if not link_ids:
         return []
 
-    return list(avalon.io.find({"_id": {"$in": link_ids}}))
+    project_name = legacy_io.active_project()
+    return list(get_assets(project_name, link_ids))
 
 
-@with_avalon
+@deprecated("openpype.client.get_last_version_by_subset_name")
 def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
@@ -313,68 +288,35 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
-        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
-            with Session.
+        dbcon (AvalonMongoDB, optional): Avalon Mongo connection with Session.
         project_name (str, optional): Find latest version in specific project.
 
     Returns:
         None: If asset, subset or version were not found.
-        dict: Last version document for entered .
+        dict: Last version document for entered.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
 
-    if not dbcon:
-        log.debug("Using `avalon.io` for query.")
-        dbcon = avalon.io
-        # Make sure is installed
-        dbcon.install()
+    if not project_name:
+        if not dbcon:
+            from openpype.pipeline import legacy_io
 
-    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
-        # `avalon.io` has only `_database` attribute
-        # but `AvalonMongoDB` has `database`
-        database = getattr(dbcon, "database", dbcon._database)
-        collection = database[project_name]
-    else:
-        project_name = dbcon.Session.get("AVALON_PROJECT")
-        collection = dbcon
+            log.debug("Using `legacy_io` for query.")
+            dbcon = legacy_io
+            # Make sure is installed
+            dbcon.install()
 
-    log.debug((
-        "Getting latest version for Project: \"{}\" Asset: \"{}\""
-        " and Subset: \"{}\""
-    ).format(project_name, asset_name, subset_name))
+        project_name = dbcon.active_project()
 
-    # Query asset document id by asset name
-    asset_doc = collection.find_one(
-        {"type": "asset", "name": asset_name},
-        {"_id": True}
+    return get_last_version_by_subset_name(
+        project_name, subset_name, asset_name=asset_name
     )
-    if not asset_doc:
-        log.info(
-            "Asset \"{}\" was not found in Database.".format(asset_name)
-        )
-        return None
-
-    subset_doc = collection.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
-        {"_id": True}
-    )
-    if not subset_doc:
-        log.info(
-            "Subset \"{}\" was not found in Database.".format(subset_name)
-        )
-        return None
-
-    version_doc = collection.find_one(
-        {"type": "version", "parent": subset_doc["_id"]},
-        sort=[("name", -1)],
-    )
-    if not version_doc:
-        log.info(
-            "Subset \"{}\" does not have any version yet.".format(subset_name)
-        )
-        return None
-    return version_doc
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_workfile_template_key_from_context")
 def get_workfile_template_key_from_context(
     asset_name, task_name, host_name, project_name=None,
     dbcon=None, project_settings=None
@@ -403,38 +345,26 @@ def get_workfile_template_key_from_context(
         ValueError: When both 'dbcon' and 'project_name' were not
             passed.
     """
-    if not dbcon:
-        if not project_name:
+
+    from openpype.pipeline.workfile import (
+        get_workfile_template_key_from_context
+    )
+
+    if not project_name:
+        if not dbcon:
             raise ValueError((
                 "`get_workfile_template_key_from_context` requires to pass"
                 " one of 'dbcon' or 'project_name' arguments."
             ))
-        from avalon.api import AvalonMongoDB
+        project_name = dbcon.active_project()
 
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-
-    elif not project_name:
-        project_name = dbcon.Session["AVALON_PROJECT"]
-
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        {
-            "data.tasks": 1
-        }
-    )
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
-
-    return get_workfile_template_key(
-        task_type, host_name, project_name, project_settings
+    return get_workfile_template_key_from_context(
+        asset_name, task_name, host_name, project_name, project_settings
     )
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_workfile_template_key")
 def get_workfile_template_key(
     task_type, host_name, project_name=None, project_settings=None
 ):
@@ -458,43 +388,15 @@ def get_workfile_template_key(
         ValueError: When both 'project_name' and 'project_settings' were not
             passed.
     """
-    default = "work"
-    if not task_type or not host_name:
-        return default
 
-    if not project_settings:
-        if not project_name:
-            raise ValueError((
-                "`get_workfile_template_key` requires to pass"
-                " one of 'project_name' or 'project_settings' arguments."
-            ))
-        project_settings = get_project_settings(project_name)
+    from openpype.pipeline.workfile import get_workfile_template_key
 
-    try:
-        profiles = (
-            project_settings
-            ["global"]
-            ["tools"]
-            ["Workfiles"]
-            ["workfile_template_profiles"]
-        )
-    except Exception:
-        profiles = []
-
-    if not profiles:
-        return default
-
-    profile_filter = {
-        "task_types": task_type,
-        "hosts": host_name
-    }
-    profile = filter_profiles(profiles, profile_filter)
-    if profile:
-        return profile["workfile_template"] or default
-    return default
+    return get_workfile_template_key(
+        task_type, host_name, project_name, project_settings
+    )
 
 
-# TODO rename function as is not just "work" specific
+@deprecated("openpype.pipeline.template_data.get_template_data")
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
 
@@ -507,38 +409,19 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
     Returns:
         dict: Data prepared for filling workdir template.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
     """
-    task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
 
-    project_task_types = project_doc["config"]["tasks"]
-    task_code = project_task_types.get(task_type, {}).get("short_name")
+    from openpype.pipeline.template_data import get_template_data
 
-    asset_parents = asset_doc["data"]["parents"]
-    hierarchy = "/".join(asset_parents)
-
-    parent_name = project_doc["name"]
-    if asset_parents:
-        parent_name = asset_parents[-1]
-
-    data = {
-        "project": {
-            "name": project_doc["name"],
-            "code": project_doc["data"].get("code")
-        },
-        "task": {
-            "name": task_name,
-            "type": task_type,
-            "short": task_code,
-        },
-        "asset": asset_doc["name"],
-        "parent": parent_name,
-        "app": host_name,
-        "user": getpass.getuser(),
-        "hierarchy": hierarchy,
-    }
-    return data
+    return get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
 
 
+@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
 def get_workdir_with_workdir_data(
     workdir_data, anatomy=None, project_name=None, template_key=None
 ):
@@ -565,27 +448,24 @@ def get_workdir_with_workdir_data(
     Raises:
         ValueError: When both `anatomy` and `project_name` are set to None.
     """
+
     if not anatomy and not project_name:
         raise ValueError((
             "Missing required arguments one of `project_name` or `anatomy`"
             " must be entered."
         ))
 
-    if not anatomy:
-        anatomy = Anatomy(project_name)
+    if not project_name:
+        project_name = anatomy.project_name
 
-    if not template_key:
-        template_key = get_workfile_template_key(
-            workdir_data["task"]["type"],
-            workdir_data["app"],
-            project_name=workdir_data["project"]["name"]
-        )
+    from openpype.pipeline.workfile import get_workdir_with_workdir_data
 
-    anatomy_filled = anatomy.format(workdir_data)
-    # Output is TemplateResult object which contain useful data
-    return anatomy_filled[template_key]["folder"]
+    return get_workdir_with_workdir_data(
+        workdir_data, project_name, anatomy, template_key
+    )
 
 
+@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
 def get_workdir(
     project_doc,
     asset_doc,
@@ -613,19 +493,162 @@ def get_workdir(
     Returns:
         TemplateResult: Workdir path.
     """
-    if not anatomy:
-        anatomy = Anatomy(project_doc["name"])
 
-    workdir_data = get_workdir_data(
-        project_doc, asset_doc, task_name, host_name
-    )
+    from openpype.pipeline.workfile import get_workdir
     # Output is TemplateResult object which contain useful data
-    return get_workdir_with_workdir_data(
-        workdir_data, anatomy, template_key=template_key
+    return get_workdir(
+        project_doc,
+        asset_doc,
+        task_name,
+        host_name,
+        anatomy,
+        template_key
     )
 
 
-@with_avalon
+@deprecated("openpype.pipeline.context_tools.get_template_data_from_session")
+def template_data_from_session(session=None):
+    """ Return dictionary with template from session keys.
+
+    Args:
+        session (dict, Optional): The Session to use. If not provided use the
+            currently active global Session.
+
+    Returns:
+        dict: All available data from session.
+
+    Deprecated:
+        Function will be removed after release version 3.14.*
+    """
+
+    from openpype.pipeline.context_tools import get_template_data_from_session
+
+    return get_template_data_from_session(session)
+
+
+@with_pipeline_io
+def compute_session_changes(
+    session, task=None, asset=None, app=None, template_key=None
+):
+    """Compute the changes for a Session object on asset, task or app switch
+
+    This does *NOT* update the Session object, but returns the changes
+    required for a valid update of the Session.
+
+    Args:
+        session (dict): The initial session to compute changes to.
+            This is required for computing the full Work Directory, as that
+            also depends on the values that haven't changed.
+        task (str, Optional): Name of task to switch to.
+        asset (str or dict, Optional): Name of asset to switch to.
+            You can also directly provide the Asset dictionary as returned
+            from the database to avoid an additional query. (optimization)
+        app (str, Optional): Name of app to switch to.
+
+    Returns:
+        dict: The required changes in the Session dictionary.
+    """
+
+    from openpype.pipeline.context_tools import get_workdir_from_session
+
+    changes = dict()
+
+    # If no changes, return directly
+    if not any([task, asset, app]):
+        return changes
+
+    # Get asset document and asset
+    asset_document = None
+    asset_tasks = None
+    if isinstance(asset, dict):
+        # Assume asset database document
+        asset_document = asset
+        asset_tasks = asset_document.get("data", {}).get("tasks")
+        asset = asset["name"]
+
+    if not asset_document or not asset_tasks:
+        # Assume asset name
+        project_name = session["AVALON_PROJECT"]
+        asset_document = get_asset_by_name(
+            project_name, asset, fields=["data.tasks"]
+        )
+        assert asset_document, "Asset must exist"
+
+    # Detect any changes compared session
+    mapping = {
+        "AVALON_ASSET": asset,
+        "AVALON_TASK": task,
+        "AVALON_APP": app,
+    }
+    changes = {
+        key: value
+        for key, value in mapping.items()
+        if value and value != session.get(key)
+    }
+    if not changes:
+        return changes
+
+    # Compute work directory (with the temporary changed session so far)
+    _session = session.copy()
+    _session.update(changes)
+
+    changes["AVALON_WORKDIR"] = get_workdir_from_session(_session)
+
+    return changes
+
+
+@deprecated("openpype.pipeline.context_tools.get_workdir_from_session")
+def get_workdir_from_session(session=None, template_key=None):
+    from openpype.pipeline.context_tools import get_workdir_from_session
+
+    return get_workdir_from_session(session, template_key)
+
+
+@with_pipeline_io
+def update_current_task(task=None, asset=None, app=None, template_key=None):
+    """Update active Session to a new task work area.
+
+    This updates the live Session to a different `asset`, `task` or `app`.
+
+    Args:
+        task (str): The task to set.
+        asset (str): The asset to set.
+        app (str): The app to set.
+
+    Returns:
+        dict: The changed key, values in the current Session.
+    """
+
+    changes = compute_session_changes(
+        legacy_io.Session,
+        task=task,
+        asset=asset,
+        app=app,
+        template_key=template_key
+    )
+
+    # Update the Session and environments. Pop from environments all keys with
+    # value set to None.
+    for key, value in changes.items():
+        legacy_io.Session[key] = value
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+    data = changes.copy()
+    # Convert env keys to human readable keys
+    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
+    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
+    data["task_name"] = legacy_io.Session["AVALON_TASK"]
+
+    # Emit session change
+    emit_event("taskChanged", data)
+
+    return changes
+
+
+@deprecated("openpype.client.get_workfile_info")
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
 
@@ -637,24 +660,22 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
         task_name (str): Name of task under which the workfile belongs.
         filename (str): Name of a workfile.
         dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
-            `avalon.io` is used if not entered.
+            `legacy_io` is used if not entered.
 
     Returns:
         dict: Workfile document or None.
     """
-    # Use avalon.io if dbcon is not entered
+
+    # Use legacy_io if dbcon is not entered
     if not dbcon:
-        dbcon = avalon.io
+        from openpype.pipeline import legacy_io
+        dbcon = legacy_io
 
-    return dbcon.find_one({
-        "type": "workfile",
-        "parent": asset_id,
-        "task_name": task_name,
-        "filename": filename
-    })
+    project_name = dbcon.active_project()
+    return get_workfile_info(project_name, asset_id, task_name, filename)
 
 
-@with_avalon
+@deprecated
 def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     """Creates or replace workfile document in mongo.
 
@@ -667,11 +688,16 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
         filename (str): Filename of workfile.
         workdir (str): Path to directory where `filename` is located.
         dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
-            `avalon.io` is used if not entered.
+            `legacy_io` is used if not entered.
     """
-    # Use avalon.io if dbcon is not entered
+
+    from openpype.pipeline import Anatomy
+    from openpype.pipeline.template_data import get_template_data
+
+    # Use legacy_io if dbcon is not entered
     if not dbcon:
-        dbcon = avalon.io
+        from openpype.pipeline import legacy_io
+        dbcon = legacy_io
 
     # Filter of workfile document
     doc_filter = {
@@ -684,12 +710,13 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     doc_data = copy.deepcopy(doc_filter)
 
     # Prepare project for workdir data
-    project_doc = dbcon.find_one({"type": "project"})
-    workdir_data = get_workdir_data(
+    project_name = dbcon.active_project()
+    project_doc = get_project(project_name)
+    workdir_data = get_template_data(
         project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
     )
     # Prepare anatomy
-    anatomy = Anatomy(project_doc["name"])
+    anatomy = Anatomy(project_name)
     # Get workdir path (result is anatomy.TemplateResult)
     template_workdir = get_workdir_with_workdir_data(
         workdir_data, anatomy
@@ -716,7 +743,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     )
 
 
-@with_avalon
+@deprecated
 def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     if not workfile_doc:
         # TODO add log message
@@ -725,9 +752,10 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     if not data:
         return
 
-    # Use avalon.io if dbcon is not entered
+    # Use legacy_io if dbcon is not entered
     if not dbcon:
-        dbcon = avalon.io
+        from openpype.pipeline import legacy_io
+        dbcon = legacy_io
 
     # Convert data to mongo modification keys/values
     # - this is naive implementation which does not expect nested
@@ -744,666 +772,14 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     )
 
 
-class BuildWorkfile:
-    """Wrapper for build workfile process.
+@deprecated("openpype.pipeline.workfile.BuildWorkfile")
+def BuildWorkfile():
+    from openpype.pipeline.workfile import BuildWorkfile
 
-    Load representations for current context by build presets. Build presets
-    are host related, since each host has it's loaders.
-    """
+    return BuildWorkfile()
 
-    log = logging.getLogger("BuildWorkfile")
 
-    @staticmethod
-    def map_subsets_by_family(subsets):
-        subsets_by_family = collections.defaultdict(list)
-        for subset in subsets:
-            family = subset["data"].get("family")
-            if not family:
-                families = subset["data"].get("families")
-                if not families:
-                    continue
-                family = families[0]
-
-            subsets_by_family[family].append(subset)
-        return subsets_by_family
-
-    def process(self):
-        """Main method of this wrapper.
-
-        Building of workfile is triggered and is possible to implement
-        post processing of loaded containers if necessary.
-        """
-        containers = self.build_workfile()
-
-        return containers
-
-    @with_avalon
-    def build_workfile(self):
-        """Prepares and load containers into workfile.
-
-        Loads latest versions of current and linked assets to workfile by logic
-        stored in Workfile profiles from presets. Profiles are set by host,
-        filtered by current task name and used by families.
-
-        Each family can specify representation names and loaders for
-        representations and first available and successful loaded
-        representation is returned as container.
-
-        At the end you'll get list of loaded containers per each asset.
-
-        loaded_containers [{
-            "asset_entity": <AssetEntity1>,
-            "containers": [<Container1>, <Container2>, ...]
-        }, {
-            "asset_entity": <AssetEntity2>,
-            "containers": [<Container3>, ...]
-        }, {
-            ...
-        }]
-        """
-        # Get current asset name and entity
-        current_asset_name = avalon.io.Session["AVALON_ASSET"]
-        current_asset_entity = avalon.io.find_one({
-            "type": "asset",
-            "name": current_asset_name
-        })
-
-        # Skip if asset was not found
-        if not current_asset_entity:
-            print("Asset entity with name `{}` was not found".format(
-                current_asset_name
-            ))
-            return
-
-        # Prepare available loaders
-        loaders_by_name = {}
-        for loader in avalon.api.discover(avalon.api.Loader):
-            loader_name = loader.__name__
-            if loader_name in loaders_by_name:
-                raise KeyError(
-                    "Duplicated loader name {0}!".format(loader_name)
-                )
-            loaders_by_name[loader_name] = loader
-
-        # Skip if there are any loaders
-        if not loaders_by_name:
-            self.log.warning("There are no registered loaders.")
-            return
-
-        # Get current task name
-        current_task_name = avalon.io.Session["AVALON_TASK"]
-
-        # Load workfile presets for task
-        self.build_presets = self.get_build_presets(
-            current_task_name, current_asset_entity
-        )
-
-        # Skip if there are any presets for task
-        if not self.build_presets:
-            self.log.warning(
-                "Current task `{}` does not have any loading preset.".format(
-                    current_task_name
-                )
-            )
-            return
-
-        # Get presets for loading current asset
-        current_context_profiles = self.build_presets.get("current_context")
-        # Get presets for loading linked assets
-        link_context_profiles = self.build_presets.get("linked_assets")
-        # Skip if both are missing
-        if not current_context_profiles and not link_context_profiles:
-            self.log.warning(
-                "Current task `{}` has empty loading preset.".format(
-                    current_task_name
-                )
-            )
-            return
-
-        elif not current_context_profiles:
-            self.log.warning((
-                "Current task `{}` doesn't have any loading"
-                " preset for it's context."
-            ).format(current_task_name))
-
-        elif not link_context_profiles:
-            self.log.warning((
-                "Current task `{}` doesn't have any"
-                "loading preset for it's linked assets."
-            ).format(current_task_name))
-
-        # Prepare assets to process by workfile presets
-        assets = []
-        current_asset_id = None
-        if current_context_profiles:
-            # Add current asset entity if preset has current context set
-            assets.append(current_asset_entity)
-            current_asset_id = current_asset_entity["_id"]
-
-        if link_context_profiles:
-            # Find and append linked assets if preset has set linked mapping
-            link_assets = get_linked_assets(current_asset_entity)
-            if link_assets:
-                assets.extend(link_assets)
-
-        # Skip if there are no assets. This can happen if only linked mapping
-        # is set and there are no links for his asset.
-        if not assets:
-            self.log.warning(
-                "Asset does not have linked assets. Nothing to process."
-            )
-            return
-
-        # Prepare entities from database for assets
-        prepared_entities = self._collect_last_version_repres(assets)
-
-        # Load containers by prepared entities and presets
-        loaded_containers = []
-        # - Current asset containers
-        if current_asset_id and current_asset_id in prepared_entities:
-            current_context_data = prepared_entities.pop(current_asset_id)
-            loaded_data = self.load_containers_by_asset_data(
-                current_context_data, current_context_profiles, loaders_by_name
-            )
-            if loaded_data:
-                loaded_containers.append(loaded_data)
-
-        # - Linked assets container
-        for linked_asset_data in prepared_entities.values():
-            loaded_data = self.load_containers_by_asset_data(
-                linked_asset_data, link_context_profiles, loaders_by_name
-            )
-            if loaded_data:
-                loaded_containers.append(loaded_data)
-
-        # Return list of loaded containers
-        return loaded_containers
-
-    @with_avalon
-    def get_build_presets(self, task_name, asset_doc):
-        """ Returns presets to build workfile for task name.
-
-        Presets are loaded for current project set in
-        io.Session["AVALON_PROJECT"], filtered by registered host
-        and entered task name.
-
-        Args:
-            task_name (str): Task name used for filtering build presets.
-
-        Returns:
-            (dict): preset per entered task name
-        """
-        host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-        project_settings = get_project_settings(
-            avalon.io.Session["AVALON_PROJECT"]
-        )
-
-        host_settings = project_settings.get(host_name) or {}
-        # Get presets for host
-        wb_settings = host_settings.get("workfile_builder")
-        if not wb_settings:
-            # backward compatibility
-            wb_settings = host_settings.get("workfile_build") or {}
-
-        builder_profiles = wb_settings.get("profiles")
-        if not builder_profiles:
-            return None
-
-        task_type = (
-            asset_doc
-            .get("data", {})
-            .get("tasks", {})
-            .get(task_name, {})
-            .get("type")
-        )
-        filter_data = {
-            "task_types": task_type,
-            "tasks": task_name
-        }
-        return filter_profiles(builder_profiles, filter_data)
-
-    def _filter_build_profiles(self, build_profiles, loaders_by_name):
-        """ Filter build profiles by loaders and prepare process data.
-
-        Valid profile must have "loaders", "families" and "repre_names" keys
-        with valid values.
-        - "loaders" expects list of strings representing possible loaders.
-        - "families" expects list of strings for filtering
-                     by main subset family.
-        - "repre_names" expects list of strings for filtering by
-                        representation name.
-
-        Lowered "families" and "repre_names" are prepared for each profile with
-        all required keys.
-
-        Args:
-            build_profiles (dict): Profiles for building workfile.
-            loaders_by_name (dict): Available loaders per name.
-
-        Returns:
-            (list): Filtered and prepared profiles.
-        """
-        valid_profiles = []
-        for profile in build_profiles:
-            # Check loaders
-            profile_loaders = profile.get("loaders")
-            if not profile_loaders:
-                self.log.warning((
-                    "Build profile has missing loaders configuration: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Check if any loader is available
-            loaders_match = False
-            for loader_name in profile_loaders:
-                if loader_name in loaders_by_name:
-                    loaders_match = True
-                    break
-
-            if not loaders_match:
-                self.log.warning((
-                    "All loaders from Build profile are not available: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Check families
-            profile_families = profile.get("families")
-            if not profile_families:
-                self.log.warning((
-                    "Build profile is missing families configuration: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Check representation names
-            profile_repre_names = profile.get("repre_names")
-            if not profile_repre_names:
-                self.log.warning((
-                    "Build profile is missing"
-                    " representation names filtering: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Prepare lowered families and representation names
-            profile["families_lowered"] = [
-                fam.lower() for fam in profile_families
-            ]
-            profile["repre_names_lowered"] = [
-                name.lower() for name in profile_repre_names
-            ]
-
-            valid_profiles.append(profile)
-
-        return valid_profiles
-
-    def _prepare_profile_for_subsets(self, subsets, profiles):
-        """Select profile for each subset by it's data.
-
-        Profiles are filtered for each subset individually.
-        Profile is filtered by subset's family, optionally by name regex and
-        representation names set in profile.
-        It is possible to not find matching profile for subset, in that case
-        subset is skipped and it is possible that none of subsets have
-        matching profile.
-
-        Args:
-            subsets (list): Subset documents.
-            profiles (dict): Build profiles.
-
-        Returns:
-            (dict) Profile by subset's id.
-        """
-        # Prepare subsets
-        subsets_by_family = self.map_subsets_by_family(subsets)
-
-        profiles_per_subset_id = {}
-        for family, subsets in subsets_by_family.items():
-            family_low = family.lower()
-            for profile in profiles:
-                # Skip profile if does not contain family
-                if family_low not in profile["families_lowered"]:
-                    continue
-
-                # Precompile name filters as regexes
-                profile_regexes = profile.get("subset_name_filters")
-                if profile_regexes:
-                    _profile_regexes = []
-                    for regex in profile_regexes:
-                        _profile_regexes.append(re.compile(regex))
-                    profile_regexes = _profile_regexes
-
-                # TODO prepare regex compilation
-                for subset in subsets:
-                    # Verify regex filtering (optional)
-                    if profile_regexes:
-                        valid = False
-                        for pattern in profile_regexes:
-                            if re.match(pattern, subset["name"]):
-                                valid = True
-                                break
-
-                        if not valid:
-                            continue
-
-                    profiles_per_subset_id[subset["_id"]] = profile
-
-                # break profiles loop on finding the first matching profile
-                break
-        return profiles_per_subset_id
-
-    def load_containers_by_asset_data(
-        self, asset_entity_data, build_profiles, loaders_by_name
-    ):
-        """Load containers for entered asset entity by Build profiles.
-
-        Args:
-            asset_entity_data (dict): Prepared data with subsets, last version
-                and representations for specific asset.
-            build_profiles (dict): Build profiles.
-            loaders_by_name (dict): Available loaders per name.
-
-        Returns:
-            (dict) Output contains asset document and loaded containers.
-        """
-
-        # Make sure all data are not empty
-        if not asset_entity_data or not build_profiles or not loaders_by_name:
-            return
-
-        asset_entity = asset_entity_data["asset_entity"]
-
-        valid_profiles = self._filter_build_profiles(
-            build_profiles, loaders_by_name
-        )
-        if not valid_profiles:
-            self.log.warning(
-                "There are not valid Workfile profiles. Skipping process."
-            )
-            return
-
-        self.log.debug("Valid Workfile profiles: {}".format(valid_profiles))
-
-        subsets_by_id = {}
-        version_by_subset_id = {}
-        repres_by_version_id = {}
-        for subset_id, in_data in asset_entity_data["subsets"].items():
-            subset_entity = in_data["subset_entity"]
-            subsets_by_id[subset_entity["_id"]] = subset_entity
-
-            version_data = in_data["version"]
-            version_entity = version_data["version_entity"]
-            version_by_subset_id[subset_id] = version_entity
-            repres_by_version_id[version_entity["_id"]] = (
-                version_data["repres"]
-            )
-
-        if not subsets_by_id:
-            self.log.warning("There are not subsets for asset {0}".format(
-                asset_entity["name"]
-            ))
-            return
-
-        profiles_per_subset_id = self._prepare_profile_for_subsets(
-            subsets_by_id.values(), valid_profiles
-        )
-        if not profiles_per_subset_id:
-            self.log.warning("There are not valid subsets.")
-            return
-
-        valid_repres_by_subset_id = collections.defaultdict(list)
-        for subset_id, profile in profiles_per_subset_id.items():
-            profile_repre_names = profile["repre_names_lowered"]
-
-            version_entity = version_by_subset_id[subset_id]
-            version_id = version_entity["_id"]
-            repres = repres_by_version_id[version_id]
-            for repre in repres:
-                repre_name_low = repre["name"].lower()
-                if repre_name_low in profile_repre_names:
-                    valid_repres_by_subset_id[subset_id].append(repre)
-
-        # DEBUG message
-        msg = "Valid representations for Asset: `{}`".format(
-            asset_entity["name"]
-        )
-        for subset_id, repres in valid_repres_by_subset_id.items():
-            subset = subsets_by_id[subset_id]
-            msg += "\n# Subset Name/ID: `{}`/{}".format(
-                subset["name"], subset_id
-            )
-            for repre in repres:
-                msg += "\n## Repre name: `{}`".format(repre["name"])
-
-        self.log.debug(msg)
-
-        containers = self._load_containers(
-            valid_repres_by_subset_id, subsets_by_id,
-            profiles_per_subset_id, loaders_by_name
-        )
-
-        return {
-            "asset_entity": asset_entity,
-            "containers": containers
-        }
-
-    @with_avalon
-    def _load_containers(
-        self, repres_by_subset_id, subsets_by_id,
-        profiles_per_subset_id, loaders_by_name
-    ):
-        """Real load by collected data happens here.
-
-        Loading of representations per subset happens here. Each subset can
-        loads one representation. Loading is tried in specific order.
-        Representations are tried to load by names defined in configuration.
-        If subset has representation matching representation name each loader
-        is tried to load it until any is successful. If none of them was
-        successful then next representation name is tried.
-        Subset process loop ends when any representation is loaded or
-        all matching representations were already tried.
-
-        Args:
-            repres_by_subset_id (dict): Available representations mapped
-                by their parent (subset) id.
-            subsets_by_id (dict): Subset documents mapped by their id.
-            profiles_per_subset_id (dict): Build profiles mapped by subset id.
-            loaders_by_name (dict): Available loaders per name.
-
-        Returns:
-            (list) Objects of loaded containers.
-        """
-        loaded_containers = []
-
-        # Get subset id order from build presets.
-        build_presets = self.build_presets.get("current_context", [])
-        build_presets += self.build_presets.get("linked_assets", [])
-        subset_ids_ordered = []
-        for preset in build_presets:
-            for preset_family in preset["families"]:
-                for id, subset in subsets_by_id.items():
-                    if preset_family not in subset["data"].get("families", []):
-                        continue
-
-                    subset_ids_ordered.append(id)
-
-        # Order representations from subsets.
-        print("repres_by_subset_id", repres_by_subset_id)
-        representations_ordered = []
-        representations = []
-        for id in subset_ids_ordered:
-            for subset_id, repres in repres_by_subset_id.items():
-                if repres in representations:
-                    continue
-
-                if id == subset_id:
-                    representations_ordered.append((subset_id, repres))
-                    representations.append(repres)
-
-        print("representations", representations)
-
-        # Load ordered representations.
-        for subset_id, repres in representations_ordered:
-            subset_name = subsets_by_id[subset_id]["name"]
-
-            profile = profiles_per_subset_id[subset_id]
-            loaders_last_idx = len(profile["loaders"]) - 1
-            repre_names_last_idx = len(profile["repre_names_lowered"]) - 1
-
-            repre_by_low_name = {
-                repre["name"].lower(): repre for repre in repres
-            }
-
-            is_loaded = False
-            for repre_name_idx, profile_repre_name in enumerate(
-                profile["repre_names_lowered"]
-            ):
-                # Break iteration if representation was already loaded
-                if is_loaded:
-                    break
-
-                repre = repre_by_low_name.get(profile_repre_name)
-                if not repre:
-                    continue
-
-                for loader_idx, loader_name in enumerate(profile["loaders"]):
-                    if is_loaded:
-                        break
-
-                    loader = loaders_by_name.get(loader_name)
-                    if not loader:
-                        continue
-                    try:
-                        container = avalon.api.load(
-                            loader,
-                            repre["_id"],
-                            name=subset_name
-                        )
-                        loaded_containers.append(container)
-                        is_loaded = True
-
-                    except Exception as exc:
-                        if exc == avalon.pipeline.IncompatibleLoaderError:
-                            self.log.info((
-                                "Loader `{}` is not compatible with"
-                                " representation `{}`"
-                            ).format(loader_name, repre["name"]))
-
-                        else:
-                            self.log.error(
-                                "Unexpected error happened during loading",
-                                exc_info=True
-                            )
-
-                        msg = "Loading failed."
-                        if loader_idx < loaders_last_idx:
-                            msg += " Trying next loader."
-                        elif repre_name_idx < repre_names_last_idx:
-                            msg += (
-                                " Loading of subset `{}` was not successful."
-                            ).format(subset_name)
-                        else:
-                            msg += " Trying next representation."
-                        self.log.info(msg)
-
-        return loaded_containers
-
-    @with_avalon
-    def _collect_last_version_repres(self, asset_entities):
-        """Collect subsets, versions and representations for asset_entities.
-
-        Args:
-            asset_entities (list): Asset entities for which want to find data
-
-        Returns:
-            (dict): collected entities
-
-        Example output:
-        ```
-        {
-            {Asset ID}: {
-                "asset_entity": <AssetEntity>,
-                "subsets": {
-                    {Subset ID}: {
-                        "subset_entity": <SubsetEntity>,
-                        "version": {
-                            "version_entity": <VersionEntity>,
-                            "repres": [
-                                <RepreEntity1>, <RepreEntity2>, ...
-                            ]
-                        }
-                    },
-                    ...
-                }
-            },
-            ...
-        }
-        output[asset_id]["subsets"][subset_id]["version"]["repres"]
-        ```
-        """
-
-        if not asset_entities:
-            return {}
-
-        asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
-
-        subsets = list(avalon.io.find({
-            "type": "subset",
-            "parent": {"$in": asset_entity_by_ids.keys()}
-        }))
-        subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
-
-        sorted_versions = list(avalon.io.find({
-            "type": "version",
-            "parent": {"$in": subset_entity_by_ids.keys()}
-        }).sort("name", -1))
-
-        subset_id_with_latest_version = []
-        last_versions_by_id = {}
-        for version in sorted_versions:
-            subset_id = version["parent"]
-            if subset_id in subset_id_with_latest_version:
-                continue
-            subset_id_with_latest_version.append(subset_id)
-            last_versions_by_id[version["_id"]] = version
-
-        repres = avalon.io.find({
-            "type": "representation",
-            "parent": {"$in": last_versions_by_id.keys()}
-        })
-
-        output = {}
-        for repre in repres:
-            version_id = repre["parent"]
-            version = last_versions_by_id[version_id]
-
-            subset_id = version["parent"]
-            subset = subset_entity_by_ids[subset_id]
-
-            asset_id = subset["parent"]
-            asset = asset_entity_by_ids[asset_id]
-
-            if asset_id not in output:
-                output[asset_id] = {
-                    "asset_entity": asset,
-                    "subsets": {}
-                }
-
-            if subset_id not in output[asset_id]["subsets"]:
-                output[asset_id]["subsets"][subset_id] = {
-                    "subset_entity": subset,
-                    "version": {
-                        "version_entity": version,
-                        "repres": []
-                    }
-                }
-
-            output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-                repre
-            )
-
-        return output
-
-
-@with_avalon
+@with_pipeline_io
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
@@ -1415,11 +791,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     Returns:
         Creator: Return first matching plugin or `None`.
     """
+    from openpype.pipeline import discover_legacy_creator_plugins
+
     # Lower input creator name if is not case sensitive
     if not case_sensitive:
         creator_name = creator_name.lower()
 
-    for creator_plugin in avalon.api.discover(avalon.api.Creator):
+    for creator_plugin in discover_legacy_creator_plugins():
         _creator_name = creator_plugin.__name__
 
         # Lower creator plugin name if is not case sensitive
@@ -1431,13 +809,21 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     return None
 
 
-@with_avalon
+@deprecated
 def change_timer_to_current_context():
     """Called after context change to change timers.
+
+    Deprecated:
+        This method is specific for TimersManager module so please use the
+        functionality from there. Function will be removed after release
+        version 3.14.*
 
     TODO:
     - use TimersManager's static method instead of reimplementing it here
     """
+
+    from openpype.pipeline import legacy_io
+
     webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
     if not webserver_url:
         log.warning("Couldn't find webserver url")
@@ -1450,9 +836,9 @@ def change_timer_to_current_context():
         log.warning("Couldn't start timer")
         return
     data = {
-        "project_name": avalon.io.Session["AVALON_PROJECT"],
-        "asset_name": avalon.io.Session["AVALON_ASSET"],
-        "task_name": avalon.io.Session["AVALON_TASK"]
+        "project_name": legacy_io.Session["AVALON_PROJECT"],
+        "asset_name": legacy_io.Session["AVALON_ASSET"],
+        "task_name": legacy_io.Session["AVALON_TASK"]
     }
 
     requests.post(rest_api_url, json=data)
@@ -1480,6 +866,7 @@ def _get_task_context_data_for_anatomy(
     """
 
     if anatomy is None:
+        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
     asset_name = asset_doc["name"]
@@ -1505,7 +892,7 @@ def _get_task_context_data_for_anatomy(
         "requested task type: `{}`".format(task_type)
     )
 
-    return {
+    data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
@@ -1514,11 +901,18 @@ def _get_task_context_data_for_anatomy(
         "task": {
             "name": task_name,
             "type": task_type,
-            "short_name": project_task_type_data["short_name"]
+            "short": project_task_type_data["short_name"]
         }
     }
 
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
 
+    return data
+
+
+@deprecated(
+    "openpype.pipeline.workfile.get_custom_workfile_template_by_context")
 def get_custom_workfile_template_by_context(
     template_profiles, project_doc, asset_doc, task_name, anatomy=None
 ):
@@ -1542,9 +936,8 @@ def get_custom_workfile_template_by_context(
             context. (Existence of formatted path is not validated.)
     """
 
-    from openpype.lib import filter_profiles
-
     if anatomy is None:
+        from openpype.pipeline import Anatomy
         anatomy = Anatomy(project_doc["name"])
 
     # get project, asset, task anatomy context data
@@ -1566,11 +959,16 @@ def get_custom_workfile_template_by_context(
     # there are some anatomy template strings
     if matching_item:
         template = matching_item["path"][platform.system().lower()]
-        return template.format(**anatomy_context_data)
+        return StringTemplate.format_strict_template(
+            template, anatomy_context_data
+        )
 
     return None
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_custom_workfile_template_by_string_context"
+)
 def get_custom_workfile_template_by_string_context(
     template_profiles, project_name, asset_name, task_name,
     dbcon=None, anatomy=None
@@ -1596,45 +994,30 @@ def get_custom_workfile_template_by_string_context(
             context. (Existence of formatted path is not validated.)
     """
 
-    if dbcon is None:
-        from avalon.api import AvalonMongoDB
+    project_name = None
+    if anatomy is not None:
+        project_name = anatomy.project_name
 
-        dbcon = AvalonMongoDB()
+    if not project_name and dbcon is not None:
+        project_name = dbcon.active_project()
 
-    dbcon.install()
+    if not project_name:
+        raise ValueError("Can't determina project")
 
-    if dbcon.Session["AVALON_PROJECT"] != project_name:
-        dbcon.Session["AVALON_PROJECT"] = project_name
-
-    project_doc = dbcon.find_one(
-        {"type": "project"},
-        # All we need is "name" and "data.code" keys
-        {
-            "name": 1,
-            "data.code": 1
-        }
-    )
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        # All we need is "name" and "data.tasks" keys
-        {
-            "name": 1,
-            "data.tasks": 1
-        }
-    )
+    project_doc = get_project(project_name, fields=["name", "data.code"])
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["name", "data.tasks"])
 
     return get_custom_workfile_template_by_context(
         template_profiles, project_doc, asset_doc, task_name, anatomy
     )
 
 
+@deprecated("openpype.pipeline.context_tools.get_custom_workfile_template")
 def get_custom_workfile_template(template_profiles):
     """Filter and fill workfile template profiles by current context.
 
-    Current context is defined by `avalon.api.Session`. That's why this
+    Current context is defined by `legacy_io.Session`. That's why this
     function should be used only inside host where context is set and stable.
 
     Args:
@@ -1644,13 +1027,179 @@ def get_custom_workfile_template(template_profiles):
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
     """
-    # Use `avalon.io` as Mongo connection
-    from avalon import io
+
+    from openpype.pipeline import legacy_io
 
     return get_custom_workfile_template_by_string_context(
         template_profiles,
-        io.Session["AVALON_PROJECT"],
-        io.Session["AVALON_ASSET"],
-        io.Session["AVALON_TASK"],
-        io
+        legacy_io.Session["AVALON_PROJECT"],
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"],
+        legacy_io
     )
+
+
+@deprecated("openpype.pipeline.workfile.get_last_workfile_with_version")
+def get_last_workfile_with_version(
+    workdir, file_template, fill_data, extensions
+):
+    """Return last workfile version.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+
+    Returns:
+        tuple: Last workfile<str> with version<int> if there is any otherwise
+            returns (None, None).
+    """
+
+    from openpype.pipeline.workfile import get_last_workfile_with_version
+
+    return get_last_workfile_with_version(
+        workdir, file_template, fill_data, extensions
+    )
+
+
+@deprecated("openpype.pipeline.workfile.get_last_workfile")
+def get_last_workfile(
+    workdir, file_template, fill_data, extensions, full_path=False
+):
+    """Return last workfile filename.
+
+    Returns file with version 1 if there is not workfile yet.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+        full_path(bool): Full path to file is returned if set to True.
+
+    Returns:
+        str: Last or first workfile as filename of full path to filename.
+    """
+
+    from openpype.pipeline.workfile import get_last_workfile
+
+    return get_last_workfile(
+        workdir, file_template, fill_data, extensions, full_path
+    )
+
+
+@with_pipeline_io
+def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
+                                       link_type=None, max_depth=0):
+    """Returns list of linked ids of particular type (if provided).
+
+    Goes from representations to version, back to representations
+    Args:
+        project_name (str)
+        repre_ids (list) or (ObjectId)
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        link_type (str): ['reference', '..]
+        max_depth (int): limit how many levels of recursion
+    Returns:
+        (list) of ObjectId - linked representations
+    """
+    # Create new dbcon if not passed and use passed project name
+    if not dbcon:
+        from openpype.pipeline import AvalonMongoDB
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+    # Validate that passed dbcon has same project
+    elif dbcon.Session["AVALON_PROJECT"] != project_name:
+        raise ValueError("Passed connection does not have right project")
+
+    if not isinstance(repre_ids, list):
+        repre_ids = [repre_ids]
+
+    version_ids = dbcon.distinct("parent", {
+        "_id": {"$in": repre_ids},
+        "type": "representation"
+    })
+
+    match = {
+        "_id": {"$in": version_ids},
+        "type": "version"
+    }
+
+    graph_lookup = {
+        "from": project_name,
+        "startWith": "$data.inputLinks.id",
+        "connectFromField": "data.inputLinks.id",
+        "connectToField": "_id",
+        "as": "outputs_recursive",
+        "depthField": "depth"
+    }
+    if max_depth != 0:
+        # We offset by -1 since 0 basically means no recursion
+        # but the recursion only happens after the initial lookup
+        # for outputs.
+        graph_lookup["maxDepth"] = max_depth - 1
+
+    pipeline_ = [
+        # Match
+        {"$match": match},
+        # Recursive graph lookup for inputs
+        {"$graphLookup": graph_lookup}
+    ]
+
+    result = dbcon.aggregate(pipeline_)
+    referenced_version_ids = _process_referenced_pipeline_result(result,
+                                                                 link_type)
+
+    ref_ids = dbcon.distinct(
+        "_id",
+        filter={
+            "parent": {"$in": list(referenced_version_ids)},
+            "type": "representation"
+        }
+    )
+
+    return list(ref_ids)
+
+
+def _process_referenced_pipeline_result(result, link_type):
+    """Filters result from pipeline for particular link_type.
+
+    Pipeline cannot use link_type directly in a query.
+    Returns:
+        (list)
+    """
+    referenced_version_ids = set()
+    correctly_linked_ids = set()
+    for item in result:
+        input_links = item["data"].get("inputLinks", [])
+        correctly_linked_ids = _filter_input_links(input_links,
+                                                   link_type,
+                                                   correctly_linked_ids)
+
+        # outputs_recursive in random order, sort by depth
+        outputs_recursive = sorted(item.get("outputs_recursive", []),
+                                   key=lambda d: d["depth"])
+
+        for output in outputs_recursive:
+            if output["_id"] not in correctly_linked_ids:  # leaf
+                continue
+
+            correctly_linked_ids = _filter_input_links(
+                output["data"].get("inputLinks", []),
+                link_type,
+                correctly_linked_ids)
+
+            referenced_version_ids.add(output["_id"])
+
+    return referenced_version_ids
+
+
+def _filter_input_links(input_links, link_type, correctly_linked_ids):
+    for input_link in input_links:
+        if not link_type or input_link["type"] == link_type:
+            correctly_linked_ids.add(input_link.get("id") or
+                                     input_link.get("_id"))  # legacy
+
+    return correctly_linked_ids

@@ -1,8 +1,10 @@
 import re
 
 import pyblish.api
+
 import openpype.api
-from openpype import lib
+from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.context_tools import get_current_project_asset
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -25,7 +27,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                for pattern in self.skip_timelines_check):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
-        asset_data = lib.get_asset(instance.data["asset"])["data"]
+        # TODO repace query with using 'instance.data["assetEntity"]'
+        asset_data = get_current_project_asset(instance.data["asset"])["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]
         handle_start = asset_data["handleStart"]
@@ -48,9 +51,15 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             files = [files]
         frames = len(files)
 
-        err_msg = "Frame duration from DB:'{}' ". format(int(duration)) +\
-                  " doesn't match number of files:'{}'".format(frames) +\
-                  " Please change frame range for Asset or limit no. of files"
-        assert frames == duration, err_msg
+        msg = "Frame duration from DB:'{}' ". format(int(duration)) +\
+              " doesn't match number of files:'{}'".format(frames) +\
+              " Please change frame range for Asset or limit no. of files"
 
-        self.log.debug("Valid ranges {} - {}".format(int(duration), frames))
+        formatting_data = {"duration": duration,
+                           "found": frames}
+        if frames != duration:
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
+
+        self.log.debug("Valid ranges expected '{}' - found '{}'".
+                       format(int(duration), frames))

@@ -11,15 +11,12 @@ from openpype.tools.utils import PlaceholderLineEdit
 class AppVariantWidget(QtWidgets.QWidget):
     exec_placeholder = "< Specific path for this machine >"
 
-    def __init__(self, group_label, variant_name, variant_entity, parent):
+    def __init__(
+        self, group_label, variant_name, variant_label, variant_entity, parent
+    ):
         super(AppVariantWidget, self).__init__(parent)
 
         self.executable_input_widget = None
-        variant_label = variant_entity.label
-        if variant_label is None:
-            parent_entity = variant_entity.parent
-            if hasattr(parent_entity, "get_key_label"):
-                variant_label = parent_entity.get_key_label(variant_name)
 
         if not variant_label:
             variant_label = variant_name
@@ -107,15 +104,15 @@ class AppVariantWidget(QtWidgets.QWidget):
 
 
 class AppGroupWidget(QtWidgets.QWidget):
-    def __init__(self, group_entity, parent):
+    def __init__(self, group_entity, group_label, parent, dynamic=False):
         super(AppGroupWidget, self).__init__(parent)
 
+        variants_entity = group_entity["variants"]
         valid_variants = {}
-        for key, entity in group_entity["variants"].items():
+        for key, entity in variants_entity.items():
             if "enabled" not in entity or entity["enabled"].value:
                 valid_variants[key] = entity
 
-        group_label = group_entity.label
         expading_widget = ExpandingWidget(group_label, self)
         content_widget = QtWidgets.QWidget(expading_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -126,8 +123,16 @@ class AppGroupWidget(QtWidgets.QWidget):
             if "executables" not in variant_entity:
                 continue
 
+            variant_label = variant_entity.label
+            if dynamic and hasattr(variants_entity, "get_key_label"):
+                variant_label = variants_entity.get_key_label(variant_name)
+
             variant_widget = AppVariantWidget(
-                group_label, variant_name, variant_entity, content_widget
+                group_label,
+                variant_name,
+                variant_label,
+                variant_entity,
+                content_widget
             )
             widgets_by_variant_name[variant_name] = variant_widget
             content_layout.addWidget(variant_widget)
@@ -171,6 +176,20 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
 
         self.content_layout = layout
 
+    def _filter_group_entity(self, entity):
+        if not entity["enabled"].value:
+            return False
+
+        # Check if has enabled any variant
+        for variant_entity in entity["variants"].values():
+            if (
+                "enabled" not in variant_entity
+                or variant_entity["enabled"].value
+            ):
+                return True
+
+        return False
+
     def _reset_app_widgets(self):
         while self.content_layout.count() > 0:
             item = self.content_layout.itemAt(0)
@@ -180,26 +199,35 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
             self.content_layout.removeItem(item)
         self.widgets_by_group_name.clear()
 
+        app_items = {}
+        additional_apps = set()
+        additional_apps_entity = None
         for key, entity in self.system_settings_entity["applications"].items():
-            # Filter not enabled app groups
-            if not entity["enabled"].value:
+            if key != "additional_apps":
+                app_items[key] = entity
                 continue
 
-            # Check if has enabled any variant
-            enabled_variant = False
-            for variant_entity in entity["variants"].values():
-                if (
-                    "enabled" not in variant_entity
-                    or variant_entity["enabled"].value
-                ):
-                    enabled_variant = True
-                    break
+            additional_apps_entity = entity
+            for _key, _entity in entity.items():
+                app_items[_key] = _entity
+                additional_apps.add(_key)
 
-            if not enabled_variant:
+        for key, entity in app_items.items():
+            if not self._filter_group_entity(entity):
                 continue
+
+            dynamic = key in additional_apps
+            group_label = None
+            if dynamic and hasattr(additional_apps_entity, "get_key_label"):
+                group_label = additional_apps_entity.get_key_label(key)
+
+            if not group_label:
+                group_label = entity.label
+                if not group_label:
+                    group_label = key
 
             # Create App group specific widget and store it by the key
-            group_widget = AppGroupWidget(entity, self)
+            group_widget = AppGroupWidget(entity, group_label, self, dynamic)
             if group_widget.widgets_by_variant_name:
                 self.widgets_by_group_name[key] = group_widget
                 self.content_layout.addWidget(group_widget)

@@ -1,16 +1,27 @@
 import copy
 import re
 import math
+import time
+from uuid import uuid4
 
-from avalon import (
-    style,
-    schema
-)
 from Qt import QtCore, QtGui
+import qtawesome
 
-from avalon.vendor import qtawesome
-from avalon.lib import HeroVersionType
+from openpype.client import (
+    get_assets,
+    get_subsets,
+    get_last_versions,
+    get_versions,
+    get_hero_versions,
+    get_version_by_name,
+    get_representations
+)
+from openpype.pipeline import (
+    HeroVersionType,
+    schema,
+)
 
+from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.tools.utils import lib
 
@@ -21,6 +32,8 @@ from openpype.tools.utils.constants import (
     LOCAL_AVAILABILITY_ROLE,
     REMOTE_AVAILABILITY_ROLE
 )
+
+ITEM_ID_ROLE = QtCore.Qt.UserRole + 90
 
 
 def is_filtering_recursible():
@@ -35,6 +48,14 @@ def is_filtering_recursible():
 
 class BaseRepresentationModel(object):
     """Methods for SyncServer useful in multiple models"""
+    # Cheap & hackish way how to avoid refreshing of whole sync server module
+    #   on each selection change
+    _last_project = None
+    _modules_manager = None
+    _last_project_cache = 0
+    _last_manager_cache = 0
+    _max_project_cache_time = 30
+    _max_manager_cache_time = 60
 
     def reset_sync_server(self, project_name=None):
         """Sets/Resets sync server vars after every change (refresh.)"""
@@ -44,28 +65,53 @@ class BaseRepresentationModel(object):
         remote_site = remote_provider = None
 
         if not project_name:
-            project_name = self.dbcon.Session["AVALON_PROJECT"]
+            project_name = self.dbcon.active_project()
         else:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
 
-        if project_name:
-            manager = ModulesManager()
-            sync_server = manager.modules_by_name["sync_server"]
+        if not project_name:
+            self.repre_icons = repre_icons
+            self.sync_server = sync_server
+            self.active_site = active_site
+            self.active_provider = active_provider
+            self.remote_site = remote_site
+            self.remote_provider = remote_provider
+            return
 
-            if project_name in sync_server.get_enabled_projects():
-                active_site = sync_server.get_active_site(project_name)
-                active_provider = sync_server.get_provider_for_site(
-                    project_name, active_site)
-                if active_site == 'studio':  # for studio use explicit icon
-                    active_provider = 'studio'
+        now_time = time.time()
+        project_cache_diff = now_time - self._last_project_cache
+        if project_cache_diff > self._max_project_cache_time:
+            self._last_project = None
 
-                remote_site = sync_server.get_remote_site(project_name)
-                remote_provider = sync_server.get_provider_for_site(
-                    project_name, remote_site)
-                if remote_site == 'studio':  # for studio use explicit icon
-                    remote_provider = 'studio'
+        if project_name == self._last_project:
+            return
 
-                repre_icons = lib.get_repre_icons()
+        self._last_project = project_name
+        self._last_project_cache = now_time
+
+        manager_cache_diff = now_time - self._last_manager_cache
+        if manager_cache_diff > self._max_manager_cache_time:
+            self._modules_manager = None
+
+        if self._modules_manager is None:
+            self._modules_manager = ModulesManager()
+            self._last_manager_cache = now_time
+
+        sync_server = self._modules_manager.modules_by_name["sync_server"]
+        if sync_server.is_project_enabled(project_name, single=True):
+            active_site = sync_server.get_active_site(project_name)
+            active_provider = sync_server.get_provider_for_site(
+                project_name, active_site)
+            if active_site == 'studio':  # for studio use explicit icon
+                active_provider = 'studio'
+
+            remote_site = sync_server.get_remote_site(project_name)
+            remote_provider = sync_server.get_provider_for_site(
+                project_name, remote_site)
+            if remote_site == 'studio':  # for studio use explicit icon
+                remote_provider = 'studio'
+
+            repre_icons = lib.get_repre_icons()
 
         self.repre_icons = repre_icons
         self.sync_server = sync_server
@@ -160,9 +206,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         if subset_doc_projection:
             self.subset_doc_projection = subset_doc_projection
 
-        self.asset_doc_projection = asset_doc_projection
-        self.subset_doc_projection = subset_doc_projection
-
         self.repre_icons = {}
         self.sync_server = None
         self.active_site = self.active_provider = None
@@ -177,16 +220,29 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._sorter = None
         self._grouping = grouping
         self._icons = {
-            "subset": qtawesome.icon("fa.file-o", color=style.colors.default)
+            "subset": qtawesome.icon(
+                "fa.file-o",
+                color=get_default_entity_icon_color()
+            )
         }
+        self._items_by_id = {}
 
         self._doc_fetching_thread = None
         self._doc_fetching_stop = False
         self._doc_payload = {}
 
-        self.doc_fetched.connect(self.on_doc_fetched)
+        self.doc_fetched.connect(self._on_doc_fetched)
 
         self.refresh()
+
+    def get_item_by_id(self, item_id):
+        return self._items_by_id.get(item_id)
+
+    def add_child(self, new_item, *args, **kwargs):
+        item_id = str(uuid4())
+        new_item["id"] = item_id
+        self._items_by_id[item_id] = new_item
+        super(SubsetsModel, self).add_child(new_item, *args, **kwargs)
 
     def set_assets(self, asset_ids):
         self._asset_ids = asset_ids
@@ -194,7 +250,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
     def set_grouping(self, state):
         self._grouping = state
-        self.on_doc_fetched()
+        self._on_doc_fetched()
 
     def get_subsets_families(self):
         return self._doc_payload.get("subset_families") or set()
@@ -204,56 +260,60 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         # because it also updates the information in other columns
         if index.column() == self.columns_index["version"]:
             item = index.internalPointer()
-            parent = item["_id"]
+            subset_id = item["_id"]
             if isinstance(value, HeroVersionType):
-                versions = list(self.dbcon.find({
-                    "type": {"$in": ["version", "hero_version"]},
-                    "parent": parent
-                }, sort=[("name", -1)]))
-
-                version = None
-                last_version = None
-                for __version in versions:
-                    if __version["type"] == "hero_version":
-                        version = __version
-                    elif last_version is None:
-                        last_version = __version
-
-                    if version is not None and last_version is not None:
-                        break
-
-                _version = None
-                for __version in versions:
-                    if __version["_id"] == version["version_id"]:
-                        _version = __version
-                        break
-
-                version["data"] = _version["data"]
-                version["name"] = _version["name"]
-                version["is_from_latest"] = (
-                    last_version["_id"] == _version["_id"]
-                )
+                version_doc = self._get_hero_version(subset_id)
 
             else:
-                version = self.dbcon.find_one({
-                    "name": value,
-                    "type": "version",
-                    "parent": parent
-                })
+                project_name = self.dbcon.active_project()
+                version_doc = get_version_by_name(
+                    project_name, value, subset_id
+                )
 
                 # update availability on active site when version changes
-                if self.sync_server.enabled and version:
-                    query = self._repre_per_version_pipeline([version["_id"]],
-                                                             self.active_site,
-                                                             self.remote_site)
-                    docs = list(self.dbcon.aggregate(query))
-                    if docs:
-                        repre = docs.pop()
-                        version["data"].update(self._get_repre_dict(repre))
+                if self.sync_server.enabled and version_doc:
+                    repre_info = self.sync_server.get_repre_info_for_versions(
+                        project_name,
+                        [version_doc["_id"]],
+                        self.active_site,
+                        self.remote_site
+                    )
+                    if repre_info:
+                        version_doc["data"].update(
+                            self._get_repre_dict(repre_info[0]))
 
-            self.set_version(index, version)
+            self.set_version(index, version_doc)
 
         return super(SubsetsModel, self).setData(index, value, role)
+
+    def _get_hero_version(self, subset_id):
+        project_name = self.dbcon.active_project()
+        version_docs = get_versions(
+            project_name, subset_ids=[subset_id], hero=True
+        )
+        standard_versions = []
+        hero_version_doc = None
+        for version_doc in version_docs:
+            if version_doc["type"] == "hero_version":
+                hero_version_doc = version_doc
+                continue
+            standard_versions.append(version_doc)
+
+        src_version_id = hero_version_doc["version_id"]
+        src_version = None
+        is_from_latest = True
+        for version_doc in reversed(sorted(
+            standard_versions, key=lambda item: item["name"]
+        )):
+            if version_doc["_id"] == src_version_id:
+                src_version = version_doc
+                break
+            is_from_latest = False
+
+        hero_version_doc["data"] = src_version["data"]
+        hero_version_doc["name"] = src_version["name"]
+        hero_version_doc["is_from_latest"] = is_from_latest
+        return hero_version_doc
 
     def set_version(self, index, version):
         """Update the version data of the given index.
@@ -341,26 +401,25 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             item["repre_info"] = repre_info
 
     def _fetch(self):
-        asset_docs = self.dbcon.find(
-            {
-                "type": "asset",
-                "_id": {"$in": self._asset_ids}
-            },
-            self.asset_doc_projection
+        project_name = self.dbcon.active_project()
+        asset_docs = get_assets(
+            project_name,
+            asset_ids=self._asset_ids,
+            fields=self.asset_doc_projection.keys()
         )
+
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
             for asset_doc in asset_docs
         }
 
         subset_docs_by_id = {}
-        subset_docs = self.dbcon.find(
-            {
-                "type": "subset",
-                "parent": {"$in": self._asset_ids}
-            },
-            self.subset_doc_projection
+        subset_docs = get_subsets(
+            project_name,
+            asset_ids=self._asset_ids,
+            fields=self.subset_doc_projection.keys()
         )
+
         subset_families = set()
         for subset_doc in subset_docs:
             if self._doc_fetching_stop:
@@ -373,37 +432,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             subset_docs_by_id[subset_doc["_id"]] = subset_doc
 
         subset_ids = list(subset_docs_by_id.keys())
-        _pipeline = [
-            # Find all versions of those subsets
-            {"$match": {
-                "type": "version",
-                "parent": {"$in": subset_ids}
-            }},
-            # Sorting versions all together
-            {"$sort": {"name": 1}},
-            # Group them by "parent", but only take the last
-            {"$group": {
-                "_id": "$parent",
-                "_version_id": {"$last": "$_id"},
-                "name": {"$last": "$name"},
-                "type": {"$last": "$type"},
-                "data": {"$last": "$data"},
-                "locations": {"$last": "$locations"},
-                "schema": {"$last": "$schema"}
-            }}
-        ]
-        last_versions_by_subset_id = dict()
-        for doc in self.dbcon.aggregate(_pipeline):
-            if self._doc_fetching_stop:
-                return
-            doc["parent"] = doc["_id"]
-            doc["_id"] = doc.pop("_version_id")
-            last_versions_by_subset_id[doc["parent"]] = doc
+        last_versions_by_subset_id = get_last_versions(
+            project_name,
+            subset_ids,
+            fields=["_id", "parent", "name", "type", "data", "schema"]
+        )
 
-        hero_versions = self.dbcon.find({
-            "type": "hero_version",
-            "parent": {"$in": subset_ids}
-        })
+        hero_versions = get_hero_versions(project_name, subset_ids=subset_ids)
         missing_versions = []
         for hero_version in hero_versions:
             version_id = hero_version["version_id"]
@@ -412,10 +447,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
         missing_versions_by_id = {}
         if missing_versions:
-            missing_version_docs = self.dbcon.find({
-                "type": "version",
-                "_id": {"$in": missing_versions}
-            })
+            missing_version_docs = get_versions(
+                project_name, version_ids=missing_versions
+            )
             missing_versions_by_id = {
                 missing_version_doc["_id"]: missing_version_doc
                 for missing_version_doc in missing_version_docs
@@ -438,31 +472,30 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
             last_versions_by_subset_id[subset_id] = hero_version
 
-        self._doc_payload = {
-            "asset_docs_by_id": asset_docs_by_id,
-            "subset_docs_by_id": subset_docs_by_id,
-            "subset_families": subset_families,
-            "last_versions_by_subset_id": last_versions_by_subset_id
-        }
-
+        repre_info = {}
         if self.sync_server.enabled:
             version_ids = set()
             for _subset_id, doc in last_versions_by_subset_id.items():
                 version_ids.add(doc["_id"])
 
-            query = self._repre_per_version_pipeline(list(version_ids),
-                                                     self.active_site,
-                                                     self.remote_site)
-
-            repre_info = {}
-            for doc in self.dbcon.aggregate(query):
+            repres = self.sync_server.get_repre_info_for_versions(
+                project_name,
+                list(version_ids), self.active_site, self.remote_site
+            )
+            for repre in repres:
                 if self._doc_fetching_stop:
                     return
                 doc["active_provider"] = self.active_provider
                 doc["remote_provider"] = self.remote_provider
-                repre_info[doc["_id"]] = doc
+                repre_info[repre["_id"]] = repre
 
-            self._doc_payload["repre_info_by_version_id"] = repre_info
+        self._doc_payload = {
+            "asset_docs_by_id": asset_docs_by_id,
+            "subset_docs_by_id": subset_docs_by_id,
+            "subset_families": subset_families,
+            "last_versions_by_subset_id": last_versions_by_subset_id,
+            "repre_info_by_version_id": repre_info
+        }
 
         self.doc_fetched.emit()
 
@@ -486,7 +519,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
     def refresh(self):
         self.stop_fetch_thread()
         self.clear()
-
+        self._items_by_id = {}
         self.reset_sync_server()
 
         if not self._asset_ids:
@@ -495,8 +528,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
         self.fetch_subset_and_version()
 
-    def on_doc_fetched(self):
+    def _on_doc_fetched(self):
         self.clear()
+        self._items_by_id = {}
         self.beginResetModel()
 
         asset_docs_by_id = self._doc_payload.get(
@@ -524,9 +558,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             return
 
         self._fill_subset_items(
-            asset_docs_by_id, subset_docs_by_id, last_versions_by_subset_id,
+            asset_docs_by_id,
+            subset_docs_by_id,
+            last_versions_by_subset_id,
             repre_info_by_version_id
         )
+        self.endResetModel()
+        self.refreshed.emit(True)
 
     def create_multiasset_group(
         self, subset_name, asset_ids, subset_counter, parent_item=None
@@ -538,7 +576,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         merge_group.update({
             "subset": "{} ({})".format(subset_name, len(asset_ids)),
             "isMerged": True,
-            "childRow": 0,
             "subsetColor": subset_color,
             "assetIds": list(asset_ids),
             "icon": qtawesome.icon(
@@ -547,7 +584,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             )
         })
 
-        subset_counter += 1
         self.add_child(merge_group, parent_item)
 
         return merge_group
@@ -567,8 +603,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             group_item = Item()
             group_item.update({
                 "subset": group_name,
-                "isGroup": True,
-                "childRow": 0
+                "isGroup": True
             })
             group_item.update(group_data)
 
@@ -666,14 +701,14 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 index = self.index(item.row(), 0, parent_index)
                 self.set_version(index, last_version)
 
-        self.endResetModel()
-        self.refreshed.emit(True)
-
     def data(self, index, role):
         if not index.isValid():
             return
 
         item = index.internalPointer()
+        if role == ITEM_ID_ROLE:
+            return item["id"]
+
         if role == self.SortDescendingRole:
             if item.get("isGroup"):
                 # Ensure groups be on top when sorting by descending order
@@ -792,83 +827,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
         return data
 
-    def _repre_per_version_pipeline(self, version_ids,
-                                    active_site, remote_site):
-        query = [
-            {"$match": {"parent": {"$in": version_ids},
-                        "type": "representation",
-                        "files.sites.name": {"$exists": 1}}},
-            {"$unwind": "$files"},
-            {'$addFields': {
-                'order_local': {
-                    '$filter': {
-                        'input': '$files.sites', 'as': 'p',
-                        'cond': {'$eq': ['$$p.name', active_site]}
-                    }
-                }
-            }},
-            {'$addFields': {
-                'order_remote': {
-                    '$filter': {
-                        'input': '$files.sites', 'as': 'p',
-                        'cond': {'$eq': ['$$p.name', remote_site]}
-                    }
-                }
-            }},
-            {'$addFields': {
-                'progress_local': {"$arrayElemAt": [{
-                    '$cond': [
-                        {'$size': "$order_local.progress"},
-                        "$order_local.progress",
-                        # if exists created_dt count is as available
-                        {'$cond': [
-                            {'$size': "$order_local.created_dt"},
-                            [1],
-                            [0]
-                        ]}
-                    ]},
-                    0
-                ]}
-            }},
-            {'$addFields': {
-                'progress_remote': {"$arrayElemAt": [{
-                    '$cond': [
-                        {'$size': "$order_remote.progress"},
-                        "$order_remote.progress",
-                        # if exists created_dt count is as available
-                        {'$cond': [
-                            {'$size': "$order_remote.created_dt"},
-                            [1],
-                            [0]
-                        ]}
-                    ]},
-                    0
-                ]}
-            }},
-            {'$group': {  # first group by repre
-                '_id': '$_id',
-                'parent': {'$first': '$parent'},
-                'avail_ratio_local': {
-                    '$first': {
-                        '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]
-                    }
-                },
-                'avail_ratio_remote': {
-                    '$first': {
-                        '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]
-                    }
-                }
-            }},
-            {'$group': {  # second group by parent, eg version_id
-                '_id': '$parent',
-                'repre_count': {'$sum': 1},  # total representations
-                # fully available representation for site
-                'avail_repre_local': {'$sum': "$avail_ratio_local"},
-                'avail_repre_remote': {'$sum': "$avail_ratio_remote"},
-            }},
-        ]
-        return query
-
 
 class GroupMemberFilterProxyModel(QtCore.QSortFilterProxyModel):
     """Provide the feature of filtering group by the acceptance of members
@@ -984,7 +942,6 @@ class RepresentationSortProxyModel(GroupMemberFilterProxyModel):
 
 
 class RepresentationModel(TreeModel, BaseRepresentationModel):
-
     doc_fetched = QtCore.Signal()
     refreshed = QtCore.Signal(bool)
 
@@ -1010,33 +967,43 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         "remote_site": "Remote"
     }
 
-    def __init__(self, dbcon, header, version_ids):
+    repre_projection = {
+        "_id": 1,
+        "name": 1,
+        "context.subset": 1,
+        "context.asset": 1,
+        "context.version": 1,
+        "context.representation": 1,
+        'files.sites': 1
+    }
+
+    def __init__(self, dbcon, header):
         super(RepresentationModel, self).__init__()
         self.dbcon = dbcon
         self._data = []
         self._header = header
-        self.version_ids = version_ids
+        self._version_ids = []
 
         manager = ModulesManager()
         sync_server = active_site = remote_site = None
         active_provider = remote_provider = None
 
-        project = dbcon.Session["AVALON_PROJECT"]
-        if project:
+        project_name = dbcon.current_project()
+        if project_name:
             sync_server = manager.modules_by_name["sync_server"]
-            active_site = sync_server.get_active_site(project)
-            remote_site = sync_server.get_remote_site(project)
+            active_site = sync_server.get_active_site(project_name)
+            remote_site = sync_server.get_remote_site(project_name)
 
             # TODO refactor
-            active_provider = \
-                sync_server.get_provider_for_site(project,
-                                                  active_site)
+            active_provider = sync_server.get_provider_for_site(
+                project_name, active_site
+            )
             if active_site == 'studio':
                 active_provider = 'studio'
 
-            remote_provider = \
-                sync_server.get_provider_for_site(project,
-                                                  remote_site)
+            remote_provider = sync_server.get_provider_for_site(
+                project_name, remote_site
+            )
 
             if remote_site == 'studio':
                 remote_provider = 'studio'
@@ -1047,19 +1014,25 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self.remote_site = remote_site
         self.remote_provider = remote_provider
 
-        self.doc_fetched.connect(self.on_doc_fetched)
+        self.doc_fetched.connect(self._on_doc_fetched)
 
         self._docs = {}
         self._icons = lib.get_repre_icons()
-        self._icons["repre"] = qtawesome.icon("fa.file-o",
-                                              color=style.colors.default)
+        self._icons["repre"] = qtawesome.icon(
+            "fa.file-o",
+            color=get_default_entity_icon_color()
+        )
+        self._items_by_id = {}
 
     def set_version_ids(self, version_ids):
-        self.version_ids = version_ids
+        self._version_ids = version_ids
         self.refresh()
 
     def data(self, index, role):
         item = index.internalPointer()
+
+        if role == ITEM_ID_ROLE:
+            return item["id"]
 
         if role == self.IdRole:
             return item.get("_id")
@@ -1069,8 +1042,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             if index.column() == self.Columns.index("name"):
                 if item.get("isMerged"):
                     return item["icon"]
-                else:
-                    return self._icons["repre"]
+                return self._icons["repre"]
 
         active_index = self.Columns.index("active_site")
         remote_index = self.Columns.index("remote_site")
@@ -1086,12 +1058,12 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                 # site added, sync in progress
                 progress_str = "not avail."
                 if progress >= 0:
-                    # progress == 0 for isMerged is unavailable
                     if progress == 0 and item.get("isMerged"):
                         progress_str = "not avail."
                     else:
-                        progress_str = "{}% {}".format(int(progress * 100),
-                                                       label)
+                        progress_str = "{}% {}".format(
+                            int(progress * 100), label
+                        )
 
                 return progress_str
 
@@ -1121,7 +1093,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
         return super(RepresentationModel, self).data(index, role)
 
-    def on_doc_fetched(self):
+    def _on_doc_fetched(self):
         self.clear()
         self.beginResetModel()
         subsets = set()
@@ -1131,35 +1103,39 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         group = None
         self._items_by_id = {}
         for doc in self._docs:
-            if len(self.version_ids) > 1:
+            if len(self._version_ids) > 1:
                 group = repre_groups.get(doc["name"])
                 if not group:
                     group_item = Item()
+                    item_id = str(uuid4())
                     group_item.update({
+                        "id": item_id,
                         "_id": doc["_id"],
                         "name": doc["name"],
                         "isMerged": True,
-                        "childRow": 0,
                         "active_site_name": self.active_site,
                         "remote_site_name": self.remote_site,
                         "icon": qtawesome.icon(
                             "fa.folder",
-                            color=style.colors.default
+                            color=get_default_entity_icon_color()
                         )
                     })
+                    self._items_by_id[item_id] = group_item
                     self.add_child(group_item, None)
                     repre_groups[doc["name"]] = group_item
                     repre_groups_items[doc["name"]] = 0
                     group = group_item
 
-            progress = lib.get_progress_for_repre(doc,
-                                                  self.active_site,
-                                                  self.remote_site)
+            progress = lib.get_progress_for_repre(
+                doc, self.active_site, self.remote_site
+            )
 
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)
 
+            item_id = str(uuid4())
             data = {
+                "id": item_id,
                 "_id": doc["_id"],
                 "name": doc["name"],
                 "subset": doc["context"]["subset"],
@@ -1178,15 +1154,16 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
             item = Item()
             item.update(data)
+            self._items_by_id[item_id] = item
 
             current_progress = {
                 'active_site_progress': progress[self.active_site],
                 'remote_site_progress': progress[self.remote_site]
             }
             if group:
-                group = self._sum_group_progress(doc["name"], group,
-                                                 current_progress,
-                                                 repre_groups_items)
+                group = self._sum_group_progress(
+                    doc["name"], group, current_progress, repre_groups_items
+                )
 
             self.add_child(item, group)
 
@@ -1201,48 +1178,43 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self.endResetModel()
         self.refreshed.emit(False)
 
+    def get_item_by_id(self, item_id):
+        return self._items_by_id.get(item_id)
+
     def refresh(self):
-        docs = []
-        session_project = self.dbcon.Session['AVALON_PROJECT']
-        if not session_project:
+        project_name = self.dbcon.current_project()
+        if not project_name:
             return
 
-        if self.version_ids:
+        repre_docs = []
+        if self._version_ids:
             # Simple find here for now, expected to receive lower number of
             # representations and logic could be in Python
-            docs = list(self.dbcon.find(
-                {"type": "representation", "parent": {"$in": self.version_ids},
-                 "files.sites.name": {"$exists": 1}}, self.projection()))
-        self._docs = docs
+            repre_docs = list(get_representations(
+                project_name,
+                version_ids=self._version_ids,
+                fields=self.repre_projection.keys()
+            ))
+
+        self._docs = repre_docs
 
         self.doc_fetched.emit()
 
-    @classmethod
-    def projection(cls):
-        return {
-            "_id": 1,
-            "name": 1,
-            "context.subset": 1,
-            "context.asset": 1,
-            "context.version": 1,
-            "context.representation": 1,
-            'files.sites': 1
-        }
+    def _sum_group_progress(
+        self, repre_name, group, current_item_progress, repre_groups_items
+    ):
+        """Update final group progress
 
-    def _sum_group_progress(self, repre_name, group, current_item_progress,
-                            repre_groups_items):
-        """
-            Update final group progress
-            Called after every item in group is added
+        Called after every item in group is added
 
-            Args:
-                repre_name(string)
-                group(dict): info about group of selected items
-                current_item_progress(dict): {'active_site_progress': XX,
-                                              'remote_site_progress': YY}
-                repre_groups_items(dict)
-            Returns:
-                (dict): updated group info
+        Args:
+            repre_name(string)
+            group(dict): info about group of selected items
+            current_item_progress(dict): {'active_site_progress': XX,
+                                          'remote_site_progress': YY}
+            repre_groups_items(dict)
+        Returns:
+            (dict): updated group info
         """
         repre_groups_items[repre_name] += 1
 

@@ -1,0 +1,29 @@
+{
+  "name": "openharmony",
+  "version": "0.0.1",
+  "description": "An Open Source Imlementation of a Document Object Model for the Toonboom Harmony scripting interface",
+  "main": "openHarmony.js",
+  "scripts": {
+    "test": "$",
+    "docs": "jsdoc -c jsdoc.json",
+    "generate-docs": "node_modules/.bin/jsdoc -c .jsdoc.json -d docs --verbose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cfourney/OpenHarmony.git"
+  },
+  "keywords": [
+    "DOM",
+    "Toonboom",
+    "Toon",
+    "Boom",
+    "openHarmony"
+  ],
+  "author": "Mathieu Chaptel, Chris Fourney",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/cfourney/OpenHarmony/issues"
+  },
+  "homepage": "https://github.com/cfourney/OpenHarmony#readme"
+  
+}

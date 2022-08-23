@@ -417,7 +417,9 @@ function getRenderInfo(){
     var file_url = item.file.toString();
 
     return JSON.stringify({
-        "file_name": file_url            
+        "file_name": file_url,
+        "width": render_item.comp.width,
+	    "height": render_item.comp.height
     })
 }
 
@@ -438,7 +440,10 @@ function getAudioUrlForComp(comp_id){
         for (i = 1; i <= item.numLayers; ++i){
             var layer = item.layers[i];
             if (layer instanceof AVLayer){
-                return layer.source.file.fsName.toString();
+                if (layer.hasAudio){
+                    source_url = layer.source.file.fsName.toString()
+                    return _prepareSingleValue(source_url);
+                }
             }
 
         }
@@ -713,6 +718,10 @@ function render(target_folder){
 function close(){
     app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
     app.quit();
+}
+
+function getAppVersion(){
+    return _prepareSingleValue(app.version);
 }
 
 function _prepareSingleValue(value){

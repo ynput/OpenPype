@@ -5,8 +5,9 @@ import importlib
 import inspect
 import logging
 
+import six
+
 log = logging.getLogger(__name__)
-PY3 = sys.version_info[0] == 3
 
 
 def import_filepath(filepath, module_name=None):
@@ -28,7 +29,7 @@ def import_filepath(filepath, module_name=None):
     # Prepare module object where content of file will be parsed
     module = types.ModuleType(module_name)
 
-    if PY3:
+    if six.PY3:
         # Use loader so module has full specs
         module_loader = importlib.machinery.SourceFileLoader(
             module_name, filepath
@@ -38,7 +39,7 @@ def import_filepath(filepath, module_name=None):
         # Execute module code and store content to module
         with open(filepath) as _stream:
             # Execute content and store it to module object
-            exec(_stream.read(), module.__dict__)
+            six.exec_(_stream.read(), module.__dict__)
 
         module.__file__ = filepath
     return module
@@ -129,20 +130,12 @@ def classes_from_module(superclass, module):
     for name in dir(module):
         # It could be anything at this point
         obj = getattr(module, name)
-        if not inspect.isclass(obj):
+        if not inspect.isclass(obj) or obj is superclass:
             continue
 
-        # These are subclassed from nothing, not even `object`
-        if not len(obj.__bases__) > 0:
-            continue
+        if issubclass(obj, superclass):
+            classes.append(obj)
 
-        # Use string comparison rather than `issubclass`
-        # in order to support reloading of this module.
-        bases = recursive_bases_from_class(obj)
-        if not any(base.__name__ == superclass.__name__ for base in bases):
-            continue
-
-        classes.append(obj)
     return classes
 
 
@@ -228,7 +221,7 @@ def import_module_from_dirpath(dirpath, folder_name, dst_module_name=None):
         dst_module_name(str): Parent module name under which can be loaded
             module added.
     """
-    if PY3:
+    if six.PY3:
         module = _import_module_from_dirpath_py3(
             dirpath, folder_name, dst_module_name
         )

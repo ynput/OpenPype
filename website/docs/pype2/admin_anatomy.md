@@ -22,7 +22,7 @@ Project
 ```
 
 :::note Shot naming
-We do strongly recommend to name shots with their full hierarchical name. Avalon doesn't allow two assets with same name in project. Therefor if you have for example:
+We do strongly recommend to name shots with their full hierarchical name. Avalon doesn't allow two assets with same name in project. Therefore if you have for example:
 
 ```text
 sequence01 / shot001

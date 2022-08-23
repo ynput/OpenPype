@@ -24,7 +24,7 @@ To use it, you have two options
 
 **openpype_gui.exe** is the most common for artists. It runs OpenPype GUI in system tray. From there you can run all the available tools. To use any of the features, OpenPype must be running in the tray.
 
-**openpype_console.exe** in usefull for debugging and error reporting. It opens console window where all the necessary information will appear during user's work. 
+**openpype_console.exe** in useful for debugging and error reporting. It opens console window where all the necessary information will appear during user's work. 
 
 
 <Tabs
@@ -76,9 +76,9 @@ This pat is usually taken from the database directly, so you shouldn't need it.
 
 ## Updates
 
-If you're connected to your studio, OpenPype will check for, and install updates automatically everytime you run it. That's why during the first start, it will go through a quick update installation process, even though you might have just installed it. 
+If you're connected to your studio, OpenPype will check for, and install updates automatically every time you run it. That's why during the first start, it will go through a quick update installation process, even though you might have just installed it. 
 
 
 ## Advanced use
 
-For more advanced use of OpenPype commands please visit [Admin section](admin_openpype_commands).
+For more advanced use of OpenPype commands please visit [Admin section](admin_openpype_commands.md).

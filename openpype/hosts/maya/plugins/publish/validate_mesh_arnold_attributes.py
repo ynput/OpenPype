@@ -3,7 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from avalon import maya
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
@@ -67,7 +67,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        with maya.maintained_selection():
+        with maintained_selection():
             with pc.UndoChunk():
                 temp_transform = pc.polyCube()[0]
 

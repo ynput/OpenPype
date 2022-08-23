@@ -110,9 +110,9 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
         Maya API will return a list of values, which need to be properly
         handled to evaluate properly.
         """
-        if isinstance(attr_val, types.BooleanType):
+        if isinstance(attr_val, bool):
             return attr_val
-        elif isinstance(attr_val, (types.ListType, types.GeneratorType)):
+        elif isinstance(attr_val, (list, types.GeneratorType)):
             return any(attr_val)
         else:
             return bool(attr_val)

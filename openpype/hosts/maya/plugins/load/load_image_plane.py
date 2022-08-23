@@ -1,7 +1,17 @@
-from avalon import api, io
-from avalon.maya.pipeline import containerise
-from avalon.maya import lib
 from Qt import QtWidgets, QtCore
+
+from openpype.client import (
+    get_asset_by_id,
+    get_subset_by_id,
+    get_version_by_id,
+)
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path
+)
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
 
 from maya import cmds
 
@@ -73,12 +83,12 @@ class CameraWindow(QtWidgets.QDialog):
         self.close()
 
 
-class ImagePlaneLoader(api.Loader):
+class ImagePlaneLoader(load.LoaderPlugin):
     """Specific loader of plate for image planes on selected camera."""
 
     families = ["image", "plate", "render"]
     label = "Load imagePlane"
-    representations = ["mov", "exr", "preview", "png"]
+    representations = ["mov", "exr", "preview", "png", "jpg"]
     icon = "image"
     color = "orange"
 
@@ -88,7 +98,7 @@ class ImagePlaneLoader(api.Loader):
         new_nodes = []
         image_plane_depth = 1000
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
@@ -202,7 +212,7 @@ class ImagePlaneLoader(api.Loader):
 
         assert image_plane_shape is not None, "Image plane not found."
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         image_plane_shape.imageName.set(path)
         cmds.setAttr(
             container["objectName"] + ".representation",
@@ -211,9 +221,16 @@ class ImagePlaneLoader(api.Loader):
         )
 
         # Set frame range.
-        version = io.find_one({"_id": representation["parent"]})
-        subset = io.find_one({"_id": version["parent"]})
-        asset = io.find_one({"_id": subset["parent"]})
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(
+            project_name, representation["parent"], fields=["parent"]
+        )
+        subset = get_subset_by_id(
+            project_name, version["parent"], fields=["parent"]
+        )
+        asset = get_asset_by_id(
+            project_name, subset["parent"], fields=["parent"]
+        )
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
         image_plane_shape.frameOffset.set(1 - start_frame)

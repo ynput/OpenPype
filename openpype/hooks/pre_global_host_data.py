@@ -1,12 +1,11 @@
-from openpype.api import Anatomy
+from openpype.client import get_project, get_asset_by_name
 from openpype.lib import (
     PreLaunchHook,
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments
 )
-
-import avalon.api
+from openpype.pipeline import AvalonMongoDB, Anatomy
 
 
 class GlobalHostDataHook(PreLaunchHook):
@@ -14,14 +13,6 @@ class GlobalHostDataHook(PreLaunchHook):
 
     def execute(self):
         """Prepare global objects to `data` that will be used for sure."""
-        if not self.application.is_host:
-            self.log.info(
-                "Skipped hook {}. Application is not marked as host.".format(
-                    self.__class__.__name__
-                )
-            )
-            return
-
         self.prepare_global_data()
 
         if not self.data.get("asset_doc"):
@@ -43,12 +34,13 @@ class GlobalHostDataHook(PreLaunchHook):
 
             "env": self.launch_context.env,
 
+            "start_last_workfile": self.data.get("start_last_workfile"),
             "last_workfile_path": self.data.get("last_workfile_path"),
 
             "log": self.log
         })
 
-        prepare_host_environments(temp_data, self.launch_context.env_group)
+        prepare_app_environments(temp_data, self.launch_context.env_group)
         prepare_context_environments(temp_data)
 
         temp_data.pop("log")
@@ -71,14 +63,14 @@ class GlobalHostDataHook(PreLaunchHook):
         self.data["anatomy"] = Anatomy(project_name)
 
         # Mongo connection
-        dbcon = avalon.api.AvalonMongoDB()
+        dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
         dbcon.install()
 
         self.data["dbcon"] = dbcon
 
         # Project document
-        project_doc = dbcon.find_one({"type": "project"})
+        project_doc = get_project(project_name)
         self.data["project_doc"] = project_doc
 
         asset_name = self.data.get("asset_name")
@@ -88,8 +80,5 @@ class GlobalHostDataHook(PreLaunchHook):
             )
             return
 
-        asset_doc = dbcon.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
+        asset_doc = get_asset_by_name(project_name, asset_name)
         self.data["asset_doc"] = asset_doc

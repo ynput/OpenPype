@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Extract camera from Unreal."""
 import os
 
 import unreal
@@ -17,7 +19,7 @@ class ExtractCamera(openpype.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-        stagingdir = self.staging_dir(instance)
+        staging_dir = self.staging_dir(instance)
         fbx_filename = "{}.fbx".format(instance.name)
 
         # Perform extraction
@@ -38,7 +40,7 @@ class ExtractCamera(openpype.api.Extractor):
                     sequence,
                     sequence.get_bindings(),
                     unreal.FbxExportOption(),
-                    os.path.join(stagingdir, fbx_filename)
+                    os.path.join(staging_dir, fbx_filename)
                 )
                 break
 
@@ -49,6 +51,6 @@ class ExtractCamera(openpype.api.Extractor):
             'name': 'fbx',
             'ext': 'fbx',
             'files': fbx_filename,
-            "stagingDir": stagingdir,
+            "stagingDir": staging_dir,
         }
         instance.data["representations"].append(fbx_representation)

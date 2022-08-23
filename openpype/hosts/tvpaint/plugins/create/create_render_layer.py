@@ -1,5 +1,4 @@
-from avalon.api import CreatorError
-
+from openpype.pipeline import CreatorError
 from openpype.lib import prepare_template_data
 from openpype.hosts.tvpaint.api import (
     plugin,
@@ -25,7 +24,9 @@ class CreateRenderlayer(plugin.Creator):
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
     )
 
-    dynamic_subset_keys = ["render_pass", "render_layer", "group"]
+    dynamic_subset_keys = [
+        "renderpass", "renderlayer", "render_pass", "render_layer", "group"
+    ]
 
     @classmethod
     def get_dynamic_data(
@@ -35,11 +36,16 @@ class CreateRenderlayer(plugin.Creator):
             variant, task_name, asset_id, project_name, host_name
         )
         # Use render pass name from creator's plugin
-        dynamic_data["render_pass"] = cls.render_pass
+        dynamic_data["renderpass"] = cls.render_pass
         # Add variant to render layer
-        dynamic_data["render_layer"] = variant
+        dynamic_data["renderlayer"] = variant
         # Change family for subset name fill
         dynamic_data["family"] = "render"
+
+        # TODO remove - Backwards compatibility for old subset name templates
+        # - added 2022/04/28
+        dynamic_data["render_pass"] = dynamic_data["renderpass"]
+        dynamic_data["render_layer"] = dynamic_data["renderlayer"]
 
         return dynamic_data
 

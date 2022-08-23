@@ -1,8 +1,8 @@
-from avalon import api
 from maya import mel
+from openpype.pipeline import load
 
 
-class MatchmoveLoader(api.Loader):
+class MatchmoveLoader(load.LoaderPlugin):
     """
     This will run matchmove script to create track in scene.
 

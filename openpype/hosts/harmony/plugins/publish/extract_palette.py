@@ -5,7 +5,7 @@ import csv
 
 from PIL import Image, ImageDraw, ImageFont
 
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 import openpype.api
 
 

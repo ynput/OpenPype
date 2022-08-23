@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-from avalon import api
+import os
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.hosts.houdini.api import pipeline
 
-from avalon.houdini import pipeline
 
-
-class HdaLoader(api.Loader):
+class HdaLoader(load.LoaderPlugin):
     """Load Houdini Digital Asset file."""
 
     families = ["hda"]
@@ -15,7 +18,6 @@ class HdaLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
-        import os
         import hou
 
         # Format file name, Houdini only wants forward slashes
@@ -49,7 +51,7 @@ class HdaLoader(api.Loader):
         import hou
 
         hda_node = container["node"]
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
         hou.hda.installFile(file_path)
         defs = hda_node.type().allInstalledDefinitions()

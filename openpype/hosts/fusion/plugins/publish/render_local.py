@@ -1,8 +1,8 @@
 import os
-import pyblish.api
-
-import avalon.fusion as fusion
 from pprint import pformat
+
+import pyblish.api
+from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
 
 
 class Fusionlocal(pyblish.api.InstancePlugin):
@@ -39,7 +39,7 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         self.log.info("Start frame: {}".format(frame_start))
         self.log.info("End frame: {}".format(frame_end))
 
-        with fusion.comp_lock_and_undo_chunk(current_comp):
+        with comp_lock_and_undo_chunk(current_comp):
             result = current_comp.Render()
 
         if "representations" not in instance.data:

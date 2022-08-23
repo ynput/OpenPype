@@ -1,7 +1,11 @@
 import os
 from openpype.api import get_project_settings
-import openpype.hosts.maya.api.lib as mlib
+from openpype.pipeline import install_host
+from openpype.hosts.maya.api import MayaHost
 from maya import cmds
+
+host = MayaHost()
+install_host(host)
 
 
 print("starting OpenPype usersetup")

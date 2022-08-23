@@ -64,7 +64,19 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_shotgrid"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_kitsu"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_deadline"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_royalrender"
                 },
                 {
                     "type": "schema",
@@ -121,6 +133,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_standalonepublisher"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_traypublisher"
                 },
                 {
                     "type": "schema",

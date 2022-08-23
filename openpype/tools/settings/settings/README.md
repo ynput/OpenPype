@@ -10,7 +10,7 @@
     - `"is_file"` - this key is for storing openpype defaults in `openpype` repo
         - reasons of existence: developing new schemas does not require to create defaults manually
         - key is validated, must be once in hierarchy else it won't be possible to store openpype defaults
-    - `"is_group"` - define that all values under key in hierarchy will be overriden if any value is modified, this information is also stored to overrides
+    - `"is_group"` - define that all values under key in hierarchy will be overridden if any value is modified, this information is also stored to overrides
         - this keys is not allowed for all inputs as they may have not reason for that
         - key is validated, can be only once in hierarchy but is not required
 - currently there are `system configurations` and `project configurations`
@@ -44,8 +44,7 @@
     }, {
         "type": "raw-json",
         "label": "{host_label} Environments",
-        "key": "{host_name}_environments",
-        "env_group_key": "{host_name}"
+        "key": "{host_name}_environments"
     }, {
         "type": "path-widget",
         "key": "{host_name}_executables",
@@ -199,7 +198,7 @@
 - number input, can be used for both integer and float
     - key `"decimal"` defines how many decimal places will be used, 0 is for integer input (Default: `0`)
     - key `"minimum"` as minimum allowed number to enter (Default: `-99999`)
-    - key `"maxium"` as maximum allowed number to enter (Default: `99999`)
+    - key `"maximum"` as maximum allowed number to enter (Default: `99999`)
 ```
 {
     "type": "number",

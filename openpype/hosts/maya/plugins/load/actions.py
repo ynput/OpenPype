@@ -1,12 +1,16 @@
 """A module containing generic loader actions that will display in the Loader.
 
 """
+import qargparse
+from openpype.pipeline import load
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    unique_namespace
+)
 
-from avalon import api
 
-
-class SetFrameRangeLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class SetFrameRangeLoader(load.LoaderPlugin):
+    """Set frame range excluding pre- and post-handles"""
 
     families = ["animation",
                 "camera",
@@ -39,8 +43,8 @@ class SetFrameRangeLoader(api.Loader):
                              animationEndTime=end)
 
 
-class SetFrameRangeWithHandlesLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
+    """Set frame range including pre- and post-handles"""
 
     families = ["animation",
                 "camera",
@@ -68,9 +72,8 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
             return
 
         # Include handles
-        handles = version_data.get("handles", 0)
-        start -= handles
-        end += handles
+        start -= version_data.get("handleStart", 0)
+        end += version_data.get("handleEnd", 0)
 
         cmds.playbackOptions(minTime=start,
                              maxTime=end,
@@ -78,7 +81,7 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
                              animationEndTime=end)
 
 
-class ImportMayaLoader(api.Loader):
+class ImportMayaLoader(load.LoaderPlugin):
     """Import action for Maya (unmanaged)
 
     Warning:
@@ -95,11 +98,17 @@ class ImportMayaLoader(api.Loader):
     icon = "arrow-circle-down"
     color = "#775555"
 
+    options = [
+        qargparse.Boolean(
+            "clean_import",
+            label="Clean import",
+            default=False,
+            help="Should all occurences of cbId be purged?"
+        )
+    ]
+
     def load(self, context, name=None, namespace=None, data=None):
         import maya.cmds as cmds
-
-        from avalon import maya
-        from avalon.maya import lib
 
         choice = self.display_warning()
         if choice is False:
@@ -107,20 +116,29 @@ class ImportMayaLoader(api.Loader):
 
         asset = context['asset']
 
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset["name"] + "_",
             prefix="_" if asset["name"][0].isdigit() else "",
             suffix="_",
         )
 
-        with maya.maintained_selection():
-            cmds.file(self.fname,
-                      i=True,
-                      preserveReferences=True,
-                      namespace=namespace,
-                      returnNewNodes=True,
-                      groupReference=True,
-                      groupName="{}:{}".format(namespace, name))
+        with maintained_selection():
+            nodes = cmds.file(self.fname,
+                              i=True,
+                              preserveReferences=True,
+                              namespace=namespace,
+                              returnNewNodes=True,
+                              groupReference=True,
+                              groupName="{}:{}".format(namespace, name))
+
+            if data.get("clean_import", False):
+                remove_attributes = ["cbId"]
+                for node in nodes:
+                    for attr in remove_attributes:
+                        if cmds.attributeQuery(attr, node=node, exists=True):
+                            full_attr = "{}.{}".format(node, attr)
+                            print("Removing {}".format(full_attr))
+                            cmds.deleteAttr(full_attr)
 
         # We do not containerize imported content, it remains unmanaged
         return

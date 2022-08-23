@@ -1,9 +1,30 @@
 {
+    "load": {
+        "ImageSequenceLoader": {
+            "family": [
+                "shot",
+                "render",
+                "image",
+                "plate",
+                "reference"
+            ],
+            "representations": [
+                "jpeg",
+                "png",
+                "jpg"
+            ]
+        }
+    },
     "publish": {
         "CollectPalettes": {
             "allowed_tasks": [
                 ".*"
             ]
+        },
+        "ValidateAudio": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateContainers": {
             "enabled": true,
@@ -17,13 +38,6 @@
             "frame_check_filter": [],
             "skip_resolution_check": [],
             "skip_timelines_check": []
-        },
-        "HarmonySubmitDeadline": {
-            "use_published": false,
-            "priority": 50,
-            "primary_pool": "",
-            "secondary_pool": "",
-            "chunk_size": 1000000
         }
     }
 }

@@ -6,11 +6,15 @@ import os
 import shutil
 import uuid
 
-from avalon import api, harmony
-import openpype.lib
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.pipeline.context_tools import is_representation_from_latest
+import openpype.hosts.harmony.api as harmony
 
 
-class TemplateLoader(api.Loader):
+class TemplateLoader(load.LoaderPlugin):
     """Load Harmony template as container.
 
     .. todo::
@@ -37,7 +41,7 @@ class TemplateLoader(api.Loader):
         # Load template.
         self_name = self.__class__.__name__
         temp_dir = tempfile.mkdtemp()
-        zip_file = api.get_representation_path(context["representation"])
+        zip_file = get_representation_path(context["representation"])
         template_path = os.path.join(temp_dir, "temp.tpl")
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
@@ -79,7 +83,7 @@ class TemplateLoader(api.Loader):
         self_name = self.__class__.__name__
 
         update_and_replace = False
-        if openpype.lib.is_latest(representation):
+        if is_representation_from_latest(representation):
             self._set_green(node)
         else:
             self._set_red(node)

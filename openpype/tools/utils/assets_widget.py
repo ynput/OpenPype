@@ -3,11 +3,16 @@ import collections
 
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
-from avalon import style
-from avalon.vendor import qtawesome
-
-from openpype.style import get_objected_colors
+from openpype.client import (
+    get_project,
+    get_assets,
+)
+from openpype.style import (
+    get_objected_colors,
+    get_default_tools_icon_color,
+)
 from openpype.tools.flickcharm import FlickCharm
 
 from .views import (
@@ -16,7 +21,10 @@ from .views import (
 )
 from .widgets import PlaceholderLineEdit
 from .models import RecursiveSortFilterProxyModel
-from .lib import DynamicQThread
+from .lib import (
+    DynamicQThread,
+    get_asset_icon
+)
 
 if Qt.__binding__ == "PySide":
     from PySide.QtGui import QStyleOptionViewItemV4
@@ -303,7 +311,7 @@ class AssetModel(QtGui.QStandardItemModel):
 
         self._doc_fetched.connect(self._on_docs_fetched)
 
-        self._items_with_color_by_id = {}
+        self._item_ids_with_color = set()
         self._items_by_asset_id = {}
 
         self._last_project_name = None
@@ -354,7 +362,6 @@ class AssetModel(QtGui.QStandardItemModel):
 
         Args:
             force (bool): Stop currently running refresh start new refresh.
-            clear (bool): Clear model before refresh thread starts.
         """
         # Skip fetch if there is already other thread fetching documents
         if self._refreshing:
@@ -382,9 +389,11 @@ class AssetModel(QtGui.QStandardItemModel):
         self._stop_fetch_thread()
 
     def clear_underlines(self):
-        for asset_id in tuple(self._items_with_color_by_id.keys()):
-            item = self._items_with_color_by_id.pop(asset_id)
-            item.setData(None, ASSET_UNDERLINE_COLORS_ROLE)
+        for asset_id in set(self._item_ids_with_color):
+            self._item_ids_with_color.remove(asset_id)
+            item = self._items_by_asset_id.get(asset_id)
+            if item is not None:
+                item.setData(None, ASSET_UNDERLINE_COLORS_ROLE)
 
     def set_underline_colors(self, colors_by_asset_id):
         self.clear_underlines()
@@ -394,12 +403,13 @@ class AssetModel(QtGui.QStandardItemModel):
             if item is None:
                 continue
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
+            self._item_ids_with_color.add(asset_id)
 
     def _clear_items(self):
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
         self._items_by_asset_id = {}
-        self._items_with_color_by_id = {}
+        self._item_ids_with_color = set()
 
     def _on_docs_fetched(self):
         # Make sure refreshing did not change
@@ -488,8 +498,6 @@ class AssetModel(QtGui.QStandardItemModel):
         # Remove cache of removed items
         for asset_id in removed_asset_ids:
             self._items_by_asset_id.pop(asset_id)
-            if asset_id in self._items_with_color_by_id:
-                self._items_with_color_by_id.pop(asset_id)
 
         # Refresh data
         # - all items refresh all data except id
@@ -506,25 +514,9 @@ class AssetModel(QtGui.QStandardItemModel):
                 item.setData(asset_label, QtCore.Qt.DisplayRole)
                 item.setData(asset_label, ASSET_LABEL_ROLE)
 
-            icon_color = asset_data.get("color") or style.colors.default
-            icon_name = asset_data.get("icon")
-            if not icon_name:
-                # Use default icons if no custom one is specified.
-                # If it has children show a full folder, otherwise
-                # show an open folder
-                if item.rowCount() > 0:
-                    icon_name = "folder"
-                else:
-                    icon_name = "folder-o"
-
-            try:
-                # font-awesome key
-                full_icon_name = "fa.{0}".format(icon_name)
-                icon = qtawesome.icon(full_icon_name, color=icon_color)
-                item.setData(icon, QtCore.Qt.DecorationRole)
-
-            except Exception:
-                pass
+            has_children = item.rowCount() > 0
+            icon = get_asset_icon(asset_doc, has_children)
+            item.setData(icon, QtCore.Qt.DecorationRole)
 
     def _threaded_fetch(self):
         asset_docs = self._fetch_asset_docs()
@@ -537,21 +529,18 @@ class AssetModel(QtGui.QStandardItemModel):
         self._doc_fetched.emit()
 
     def _fetch_asset_docs(self):
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
+        project_name = self.dbcon.current_project()
+        if not project_name:
             return []
 
-        project_doc = self.dbcon.find_one(
-            {"type": "project"},
-            {"_id": True}
-        )
+        project_doc = get_project(project_name, fields=["_id"])
         if not project_doc:
             return []
 
         # Get all assets sorted by name
-        return list(self.dbcon.find(
-            {"type": "asset"},
-            self._asset_projection
-        ))
+        return list(
+            get_assets(project_name, fields=self._asset_projection.keys())
+        )
 
     def _stop_fetch_thread(self):
         self._refreshing = False
@@ -599,35 +588,49 @@ class AssetsWidget(QtWidgets.QWidget):
         view = AssetsView(self)
         view.setModel(proxy)
 
+        header_widget = QtWidgets.QWidget(self)
+
         current_asset_icon = qtawesome.icon(
-            "fa.arrow-down", color=style.colors.light
+            "fa.arrow-down", color=get_default_tools_icon_color()
         )
-        current_asset_btn = QtWidgets.QPushButton(self)
+        current_asset_btn = QtWidgets.QPushButton(header_widget)
         current_asset_btn.setIcon(current_asset_icon)
         current_asset_btn.setToolTip("Go to Asset from current Session")
         # Hide by default
         current_asset_btn.setVisible(False)
 
-        refresh_icon = qtawesome.icon("fa.refresh", color=style.colors.light)
-        refresh_btn = QtWidgets.QPushButton(self)
+        refresh_icon = qtawesome.icon(
+            "fa.refresh", color=get_default_tools_icon_color()
+        )
+        refresh_btn = QtWidgets.QPushButton(header_widget)
         refresh_btn.setIcon(refresh_icon)
         refresh_btn.setToolTip("Refresh items")
 
-        filter_input = PlaceholderLineEdit(self)
+        filter_input = PlaceholderLineEdit(header_widget)
         filter_input.setPlaceholderText("Filter assets..")
 
         # Header
-        header_layout = QtWidgets.QHBoxLayout()
+        header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(filter_input)
         header_layout.addWidget(current_asset_btn)
         header_layout.addWidget(refresh_btn)
 
+        # Make header widgets expand vertically if there is a place
+        for widget in (
+            current_asset_btn,
+            refresh_btn,
+            filter_input,
+        ):
+            size_policy = widget.sizePolicy()
+            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            widget.setSizePolicy(size_policy)
+
         # Layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-        layout.addLayout(header_layout)
-        layout.addWidget(view)
+        layout.addWidget(header_widget, 0)
+        layout.addWidget(view, 1)
 
         # Signals/Slots
         filter_input.textChanged.connect(self._on_filter_text_change)
@@ -635,16 +638,25 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
         refresh_btn.clicked.connect(self.refresh)
-        current_asset_btn.clicked.connect(self.set_current_session_asset)
+        current_asset_btn.clicked.connect(self._on_current_asset_click)
         view.doubleClicked.connect(self.double_clicked)
 
+        self._header_widget = header_widget
+        self._filter_input = filter_input
+        self._refresh_btn = refresh_btn
         self._current_asset_btn = current_asset_btn
         self._model = model
         self._proxy = proxy
         self._view = view
         self._last_project_name = None
 
+        self._last_btns_height = None
+
         self.model_selection = {}
+
+    @property
+    def header_widget(self):
+        return self._header_widget
 
     def _create_source_model(self):
         model = AssetModel(dbcon=self.dbcon, parent=self)
@@ -668,16 +680,38 @@ class AssetsWidget(QtWidgets.QWidget):
     def stop_refresh(self):
         self._model.stop_refresh()
 
+    def _get_current_session_asset(self):
+        return self.dbcon.Session.get("AVALON_ASSET")
+
+    def _on_current_asset_click(self):
+        """Trigger change of asset to current context asset.
+        This separation gives ability to override this method and use it
+        in differnt way.
+        """
+
+        self.set_current_session_asset()
+
     def set_current_session_asset(self):
-        asset_name = self.dbcon.Session.get("AVALON_ASSET")
+        asset_name = self._get_current_session_asset()
         if asset_name:
             self.select_asset_by_name(asset_name)
+
+    def set_refresh_btn_visibility(self, visible=None):
+        """Hide set refresh button.
+        Some tools may have their global refresh button or do not support
+        refresh at all.
+        """
+
+        if visible is None:
+            visible = not self._refresh_btn.isVisible()
+        self._refresh_btn.setVisible(visible)
 
     def set_current_asset_btn_visibility(self, visible=None):
         """Hide set current asset button.
 
         Not all tools support using of current context asset.
         """
+
         if visible is None:
             visible = not self._current_asset_btn.isVisible()
         self._current_asset_btn.setVisible(visible)
@@ -711,6 +745,7 @@ class AssetsWidget(QtWidgets.QWidget):
         so if you're modifying model keep in mind that this method should be
         called when refresh is done.
         """
+
         self._proxy.sort(0)
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
@@ -726,6 +761,10 @@ class AssetsWidget(QtWidgets.QWidget):
 
     def _set_loading_state(self, loading, empty):
         self._view.set_loading_state(loading, empty)
+
+    def _clear_selection(self):
+        selection_model = self._view.selectionModel()
+        selection_model.clearSelection()
 
     def _select_indexes(self, indexes):
         valid_indexes = [
@@ -751,6 +790,7 @@ class SingleSelectAssetsWidget(AssetsWidget):
 
     Contain single selection specific api methods.
     """
+
     def get_selected_asset_id(self):
         """Currently selected asset id."""
         selection_model = self._view.selectionModel()

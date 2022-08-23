@@ -8,4 +8,3 @@ class CreateMayaScene(plugin.Creator):
     label = "Maya Scene"
     family = "mayaScene"
     icon = "file-archive-o"
-    defaults = ['Main']

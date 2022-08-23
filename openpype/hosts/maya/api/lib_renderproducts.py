@@ -77,7 +77,17 @@ IMAGE_PREFIXES = {
     "arnold": "defaultRenderGlobals.imageFilePrefix",
     "renderman": "rmanGlobals.imageFileFormat",
     "redshift": "defaultRenderGlobals.imageFilePrefix",
+    "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
 }
+
+RENDERMAN_IMAGE_DIR = "maya/<scene>/<layer>"
+
+
+def has_tokens(string, tokens):
+    """Return whether any of tokens is in input string (case-insensitive)"""
+    pattern = "({})".format("|".join(re.escape(token) for token in tokens))
+    match = re.search(pattern, string, re.IGNORECASE)
+    return bool(match)
 
 
 @attr.s
@@ -96,6 +106,12 @@ class LayerMetadata(object):
 
     # Render Products
     products = attr.ib(init=False, default=attr.Factory(list))
+
+    # The AOV separator token. Note that not all renderers define an explicit
+    # render separator but allow to put the AOV/RenderPass token anywhere in
+    # the file path prefix. For those renderers we'll fall back to whatever
+    # is between the last occurrences of <RenderLayer> and <RenderPass> tokens.
+    aov_separator = attr.ib(default="_")
 
 
 @attr.s
@@ -154,7 +170,8 @@ def get(layer, render_instance=None):
         "arnold": RenderProductsArnold,
         "vray": RenderProductsVray,
         "redshift": RenderProductsRedshift,
-        "renderman": RenderProductsRenderman
+        "renderman": RenderProductsRenderman,
+        "mayahardware2": RenderProductsMayaHardware
     }.get(renderer_name.lower(), None)
     if renderer is None:
         raise UnsupportedRendererException(
@@ -180,7 +197,6 @@ class ARenderProducts:
         self.layer = layer
         self.render_instance = render_instance
         self.multipart = False
-        self.aov_separator = render_instance.data.get("aovSeparator", "_")
 
         # Initialize
         self.layer_data = self._get_layer_data()
@@ -293,6 +309,42 @@ class ARenderProducts:
 
         return lib.get_attr_in_layer(plug, layer=self.layer)
 
+    @staticmethod
+    def extract_separator(file_prefix):
+        """Extract AOV separator character from the prefix.
+
+        Default behavior extracts the part between
+        last occurrences of <RenderLayer> and <RenderPass>
+
+        Todo:
+            This code also triggers for V-Ray which overrides it explicitly
+            so this code will invalidly debug log it couldn't extract the
+            AOV separator even though it does set it in RenderProductsVray.
+
+        Args:
+            file_prefix (str): File prefix with tokens.
+
+        Returns:
+            str or None: prefix character if it can be extracted.
+        """
+        layer_tokens = ["<renderlayer>", "<layer>"]
+        aov_tokens = ["<aov>", "<renderpass>"]
+
+        def match_last(tokens, text):
+            """regex match the last occurence from a list of tokens"""
+            pattern = "(?:.*)({})".format("|".join(tokens))
+            return re.search(pattern, text, re.IGNORECASE)
+
+        layer_match = match_last(layer_tokens, file_prefix)
+        aov_match = match_last(aov_tokens, file_prefix)
+        separator = None
+        if layer_match and aov_match:
+            matches = sorted((layer_match, aov_match),
+                             key=lambda match: match.end(1))
+            separator = file_prefix[matches[0].end(1):matches[1].start(1)]
+        return separator
+
+
     def _get_layer_data(self):
         # type: () -> LayerMetadata
         #                      ______________________________________________
@@ -301,7 +353,7 @@ class ARenderProducts:
         # ____________________/
         _, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-
+        kwargs = {}
         file_prefix = self.get_renderer_prefix()
 
         # If the Render Layer belongs to a Render Setup layer then the
@@ -315,6 +367,13 @@ class ARenderProducts:
         if self.layer == "defaultRenderLayer":
             # defaultRenderLayer renders as masterLayer
             layer_name = "masterLayer"
+
+        separator = self.extract_separator(file_prefix)
+        if separator:
+            kwargs["aov_separator"] = separator
+        else:
+            log.debug("Couldn't extract aov separator from "
+                      "file prefix: {}".format(file_prefix))
 
         # todo: Support Custom Frames sequences 0,5-10,100-120
         #       Deadline allows submitting renders with a custom frame list
@@ -332,7 +391,8 @@ class ARenderProducts:
             layerName=layer_name,
             renderer=self.renderer,
             defaultExt=self._get_attr("defaultRenderGlobals.imfPluginKey"),
-            filePrefix=file_prefix
+            filePrefix=file_prefix,
+            **kwargs
         )
 
     def _generate_file_sequence(
@@ -677,8 +737,16 @@ class RenderProductsVray(ARenderProducts):
 
         """
         prefix = super(RenderProductsVray, self).get_renderer_prefix()
-        prefix = "{}{}<aov>".format(prefix, self.aov_separator)
+        aov_separator = self._get_aov_separator()
+        prefix = "{}{}<aov>".format(prefix, aov_separator)
         return prefix
+
+    def _get_aov_separator(self):
+        # type: () -> str
+        """Return the V-Ray AOV/Render Elements separator"""
+        return self._get_attr(
+            "vraySettings.fileNameRenderElementSeparator"
+        )
 
     def _get_layer_data(self):
         # type: () -> LayerMetadata
@@ -690,6 +758,8 @@ class RenderProductsVray(ARenderProducts):
             default_ext = "exr"
         layer_data.defaultExt = default_ext
         layer_data.padding = self._get_attr("vraySettings.fileNamePadding")
+
+        layer_data.aov_separator = self._get_aov_separator()
 
         return layer_data
 
@@ -910,8 +980,9 @@ class RenderProductsRedshift(ARenderProducts):
             :func:`ARenderProducts.get_renderer_prefix()`
 
         """
-        prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
-        prefix = "{}.<aov>".format(prefix)
+        file_prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
+        separator = self.extract_separator(file_prefix)
+        prefix = "{}{}<aov>".format(file_prefix, separator or "_")
         return prefix
 
     def get_render_products(self):
@@ -1054,6 +1125,8 @@ class RenderProductsRenderman(ARenderProducts):
             :func:`ARenderProducts.get_render_products()`
 
         """
+        from rfm2.api.displays import get_displays  # noqa
+
         cameras = [
             self.sanitize_camera_name(c)
             for c in self.get_renderable_cameras()
@@ -1066,45 +1139,149 @@ class RenderProductsRenderman(ARenderProducts):
             ]
         products = []
 
-        default_ext = "exr"
-        displays = cmds.listConnections("rmanGlobals.displays")
-        for aov in displays:
-            enabled = self._get_attr(aov, "enabled")
+        # NOTE: This is guessing extensions from renderman display types.
+        #       Some of them are just framebuffers, d_texture format can be
+        #       set in display setting. We set those now to None, but it
+        #       should be handled more gracefully.
+        display_types = {
+            "d_deepexr": "exr",
+            "d_it": None,
+            "d_null": None,
+            "d_openexr": "exr",
+            "d_png": "png",
+            "d_pointcloud": "ptc",
+            "d_targa": "tga",
+            "d_texture": None,
+            "d_tiff": "tif"
+        }
+
+        displays = get_displays(override_dst="render")["displays"]
+        for name, display in displays.items():
+            enabled = display["params"]["enable"]["value"]
             if not enabled:
                 continue
 
-            aov_name = str(aov)
+            # Skip display types not producing any file output.
+            # Is there a better way to do it?
+            if not display_types.get(display["driverNode"]["type"]):
+                continue
+
+            aov_name = name
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
 
+            extensions = display_types.get(
+                display["driverNode"]["type"], "exr")
+
             for camera in cameras:
-                product = RenderProduct(productName=aov_name,
-                                        ext=default_ext,
-                                        camera=camera)
+                # Create render product and set it as multipart only on
+                # display types supporting it. In all other cases, Renderman
+                # will create separate output per channel.
+                if display["driverNode"]["type"] in ["d_openexr", "d_deepexr", "d_tiff"]:  # noqa
+                    product = RenderProduct(
+                        productName=aov_name,
+                        ext=extensions,
+                        camera=camera,
+                        multipart=True
+                    )
+                else:
+                    # this code should handle the case where no multipart
+                    # capable format is selected. But since it involves
+                    # shady logic to determine what channel become what
+                    # lets not do that as all productions will use exr anyway.
+                    """
+                    for channel in display['params']['displayChannels']['value']:  # noqa
+                        product = RenderProduct(
+                            productName="{}_{}".format(aov_name, channel),
+                            ext=extensions,
+                            camera=camera,
+                            multipart=False
+                        )
+                    """
+                    raise UnsupportedImageFormatException(
+                        "Only exr, deep exr and tiff formats are supported.")
+
                 products.append(product)
 
         return products
 
-    def get_files(self, product, camera):
+    def get_files(self, product):
         """Get expected files.
 
-        In renderman we hack it with prepending path. This path would
-        normally be translated from `rmanGlobals.imageOutputDir`. We skip
-        this and hardcode prepend path we expect. There is no place for user
-        to mess around with this settings anyway and it is enforced in
-        render settings validator.
         """
-        files = super(RenderProductsRenderman, self).get_files(product, camera)
+        files = super(RenderProductsRenderman, self).get_files(product)
 
         layer_data = self.layer_data
         new_files = []
+
+        resolved_image_dir = re.sub("<scene>", layer_data.sceneName, RENDERMAN_IMAGE_DIR, flags=re.IGNORECASE)  # noqa: E501
+        resolved_image_dir = re.sub("<layer>", layer_data.layerName, resolved_image_dir, flags=re.IGNORECASE)  # noqa: E501
         for file in files:
-            new_file = "{}/{}/{}".format(
-                layer_data["sceneName"], layer_data["layerName"], file
-            )
+            new_file = "{}/{}".format(resolved_image_dir, file)
             new_files.append(new_file)
 
         return new_files
+
+
+class RenderProductsMayaHardware(ARenderProducts):
+    """Expected files for MayaHardware renderer."""
+
+    renderer = "mayahardware2"
+
+    extensions = [
+        {"label": "JPEG", "index": 8, "extension": "jpg"},
+        {"label": "PNG", "index": 32, "extension": "png"},
+        {"label": "EXR(exr)", "index": 40, "extension": "exr"}
+    ]
+
+    def _get_extension(self, value):
+        result = None
+        if isinstance(value, int):
+            extensions = {
+                extension["index"]: extension["extension"]
+                for extension in self.extensions
+            }
+            try:
+                result = extensions[value]
+            except KeyError:
+                raise NotImplementedError(
+                    "Could not find extension for {}".format(value)
+                )
+
+        if isinstance(value, six.string_types):
+            extensions = {
+                extension["label"]: extension["extension"]
+                for extension in self.extensions
+            }
+            try:
+                result = extensions[value]
+            except KeyError:
+                raise NotImplementedError(
+                    "Could not find extension for {}".format(value)
+                )
+
+        if not result:
+            raise NotImplementedError(
+                "Could not find extension for {}".format(value)
+            )
+
+        return result
+
+    def get_render_products(self):
+        """Get all AOVs.
+        See Also:
+            :func:`ARenderProducts.get_render_products()`
+        """
+        ext = self._get_extension(
+            self._get_attr("defaultRenderGlobals.imageFormat")
+        )
+
+        products = []
+        for cam in self.get_renderable_cameras():
+            product = RenderProduct(productName="beauty", ext=ext, camera=cam)
+            products.append(product)
+
+        return products
 
 
 class AOVError(Exception):
@@ -1116,3 +1293,7 @@ class UnsupportedRendererException(Exception):
 
     Raised when requesting data from unsupported renderer.
     """
+
+
+class UnsupportedImageFormatException(Exception):
+    """Custom exception to report unsupported output image format."""

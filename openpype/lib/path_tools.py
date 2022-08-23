@@ -4,14 +4,50 @@ import abc
 import json
 import logging
 import six
+import platform
 
+from openpype.client import get_project
 from openpype.settings import get_project_settings
-from openpype.settings.lib import get_site_local_overrides
 
-from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
+
+
+def create_hard_link(src_path, dst_path):
+    """Create hardlink of file.
+
+    Args:
+        src_path(str): Full path to a file which is used as source for
+            hardlink.
+        dst_path(str): Full path to a file where a link of source will be
+            added.
+    """
+    # Use `os.link` if is available
+    #   - should be for all platforms with newer python versions
+    if hasattr(os, "link"):
+        os.link(src_path, dst_path)
+        return
+
+    # Windows implementation of hardlinks
+    #   - used in Python 2
+    if platform.system().lower() == "windows":
+        import ctypes
+        from ctypes.wintypes import BOOL
+        CreateHardLink = ctypes.windll.kernel32.CreateHardLinkW
+        CreateHardLink.argtypes = [
+            ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_void_p
+        ]
+        CreateHardLink.restype = BOOL
+
+        res = CreateHardLink(dst_path, src_path, None)
+        if res == 0:
+            raise ctypes.WinError()
+        return
+    # Raises not implemented error if gets here
+    raise NotImplementedError(
+        "Implementation of hardlink for current environment is missing."
+    )
 
 
 def _rreplace(s, a, b, n=1):
@@ -51,12 +87,6 @@ def version_up(filepath):
                                                      padding=padding)
         new_label = label.replace(version, new_version, 1)
         new_basename = _rreplace(basename, label, new_label)
-
-    if not new_basename.endswith(new_label):
-        index = (new_basename.find(new_label))
-        index += len(new_label)
-        new_basename = new_basename[:index]
-
     new_filename = "{}{}".format(new_basename, ext)
     new_filename = os.path.join(dirname, new_filename)
     new_filename = os.path.normpath(new_filename)
@@ -65,8 +95,19 @@ def version_up(filepath):
         raise RuntimeError("Created path is the same as current file,"
                            "this is a bug")
 
+    # We check for version clashes against the current file for any file
+    # that matches completely in name up to the {version} label found. Thus
+    # if source file was test_v001_test.txt we want to also check clashes
+    # against test_v002.txt but do want to preserve the part after the version
+    # label for our new filename
+    clash_basename = new_basename
+    if not clash_basename.endswith(new_label):
+        index = (clash_basename.find(new_label))
+        index += len(new_label)
+        clash_basename = clash_basename[:index]
+
     for file in os.listdir(dirname):
-        if file.endswith(ext) and file.startswith(new_basename):
+        if file.endswith(ext) and file.startswith(clash_basename):
             log.info("Skipping existing version %s" % new_label)
             return version_up(new_filename)
 
@@ -130,45 +171,74 @@ def get_last_version_from_path(path_dir, filter):
     return None
 
 
-def compute_paths(basic_paths_items, project_root):
+def concatenate_splitted_paths(split_paths, anatomy):
     pattern_array = re.compile(r"\[.*\]")
-    project_root_key = "__project_root__"
     output = []
-    for path_items in basic_paths_items:
+    for path_items in split_paths:
         clean_items = []
+        if isinstance(path_items, str):
+            path_items = [path_items]
+
         for path_item in path_items:
-            matches = re.findall(pattern_array, path_item)
-            if len(matches) > 0:
-                path_item = path_item.replace(matches[0], "")
-            if path_item == project_root_key:
-                path_item = project_root
+            if not re.match(r"{.+}", path_item):
+                path_item = re.sub(pattern_array, "", path_item)
             clean_items.append(path_item)
+
+        # backward compatibility
+        if "__project_root__" in path_items:
+            for root, root_path in anatomy.roots.items():
+                if not os.path.exists(str(root_path)):
+                    log.debug("Root {} path path {} not exist on \
+                        computer!".format(root, root_path))
+                    continue
+                clean_items = ["{{root[{}]}}".format(root),
+                               r"{project[name]}"] + clean_items[1:]
+                output.append(os.path.normpath(os.path.sep.join(clean_items)))
+            continue
+
         output.append(os.path.normpath(os.path.sep.join(clean_items)))
+
     return output
 
 
-def create_project_folders(basic_paths, project_name):
-    anatomy = Anatomy(project_name)
-    roots_paths = []
-    if isinstance(anatomy.roots, dict):
-        for root in anatomy.roots.values():
-            roots_paths.append(root.value)
-    else:
-        roots_paths.append(anatomy.roots.value)
+def get_format_data(anatomy):
+    project_doc = get_project(anatomy.project_name, fields=["data.code"])
+    project_code = project_doc["data"]["code"]
 
-    for root_path in roots_paths:
-        project_root = os.path.join(root_path, project_name)
-        full_paths = compute_paths(basic_paths, project_root)
-        # Create folders
-        for path in full_paths:
-            full_path = path.format(project_root=project_root)
-            if os.path.exists(full_path):
-                log.debug(
-                    "Folder already exists: {}".format(full_path)
-                )
-            else:
-                log.debug("Creating folder: {}".format(full_path))
-                os.makedirs(full_path)
+    return {
+        "root": anatomy.roots,
+        "project": {
+            "name": anatomy.project_name,
+            "code": project_code
+        },
+    }
+
+
+def fill_paths(path_list, anatomy):
+    format_data = get_format_data(anatomy)
+    filled_paths = []
+
+    for path in path_list:
+        new_path = path.format(**format_data)
+        filled_paths.append(new_path)
+
+    return filled_paths
+
+
+def create_project_folders(basic_paths, project_name):
+    from openpype.pipeline import Anatomy
+    anatomy = Anatomy(project_name)
+
+    concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
+    filled_paths = fill_paths(concat_paths, anatomy)
+
+    # Create folders
+    for path in filled_paths:
+        if os.path.exists(path):
+            log.debug("Folder already exists: {}".format(path))
+        else:
+            log.debug("Creating folder: {}".format(path))
+            os.makedirs(path)
 
 
 def _list_path_items(folder_structure):
@@ -267,6 +337,7 @@ class HostDirmap:
             on_dirmap_enabled: run host code for enabling dirmap
             do_dirmap: run host code to do actual remapping
     """
+
     def __init__(self, host_name, project_settings, sync_module=None):
         self.host_name = host_name
         self.project_settings = project_settings

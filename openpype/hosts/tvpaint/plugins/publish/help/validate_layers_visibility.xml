@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Layers visiblity</title>
+<description>## All layers are not visible
+
+Layers visibility was changed during publishing which caused that all layers for subset "{instance_name}" are hidden.
+
+### Layer names for **{instance_name}**
+
+{layer_names}
+
+*Check layer names for all subsets in the list on the left side.*
+
+### How to repair?
+
+Reset publishing and do not change visibility of layers after hitting publish button.
+</description>
+</error>
+</root>

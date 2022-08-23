@@ -10,19 +10,19 @@ from Qt import QtCore, QtGui, QtWidgets
 
 import openpype.version
 from openpype.api import (
-    Logger,
     resources,
     get_system_settings
 )
-from openpype.lib import (
-    get_openpype_execute_args,
+from openpype.lib import get_openpype_execute_args, Logger
+from openpype.lib.openpype_version import (
     op_version_control_available,
+    get_expected_version,
+    get_installed_version,
     is_current_version_studio_latest,
     is_current_version_higher_than_expected,
     is_running_from_build,
     is_running_staging,
-    get_expected_version,
-    get_openpype_version
+    get_openpype_version,
 )
 from openpype.modules import TrayModulesManager
 from openpype import style
@@ -33,7 +33,8 @@ from openpype.settings import (
 )
 from openpype.tools.utils import (
     WrappedCallbackItem,
-    paint_image_with_color
+    paint_image_with_color,
+    get_warning_pixmap
 )
 
 from .pype_info_widget import PypeInfoWidget
@@ -76,7 +77,7 @@ class PixmapLabel(QtWidgets.QLabel):
         super(PixmapLabel, self).resizeEvent(event)
 
 
-class VersionDialog(QtWidgets.QDialog):
+class VersionUpdateDialog(QtWidgets.QDialog):
     restart_requested = QtCore.Signal()
     ignore_requested = QtCore.Signal()
 
@@ -84,7 +85,7 @@ class VersionDialog(QtWidgets.QDialog):
     _min_height = 130
 
     def __init__(self, parent=None):
-        super(VersionDialog, self).__init__(parent)
+        super(VersionUpdateDialog, self).__init__(parent)
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
@@ -152,11 +153,11 @@ class VersionDialog(QtWidgets.QDialog):
         )
 
     def showEvent(self, event):
-        super().showEvent(event)
+        super(VersionUpdateDialog, self).showEvent(event)
         self._restart_accepted = False
 
     def closeEvent(self, event):
-        super().closeEvent(event)
+        super(VersionUpdateDialog, self).closeEvent(event)
         if self._restart_accepted or self._current_is_higher:
             return
         # Trigger ignore requested only if restart was not clicked and current
@@ -202,6 +203,63 @@ class VersionDialog(QtWidgets.QDialog):
         self.accept()
 
 
+class BuildVersionDialog(QtWidgets.QDialog):
+    """Build/Installation version is too low for current OpenPype version.
+
+    This dialog tells to user that it's build OpenPype is too old.
+    """
+    def __init__(self, parent=None):
+        super(BuildVersionDialog, self).__init__(parent)
+
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowTitle("Outdated OpenPype installation")
+        self.setWindowFlags(
+            self.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
+
+        top_widget = QtWidgets.QWidget(self)
+
+        warning_pixmap = get_warning_pixmap()
+        warning_icon_label = PixmapLabel(warning_pixmap, top_widget)
+
+        message = (
+            "Your installation of OpenPype <b>does not match minimum"
+            " requirements</b>.<br/><br/>Please update OpenPype installation"
+            " to newer version."
+        )
+        content_label = QtWidgets.QLabel(message, self)
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addWidget(
+            warning_icon_label, 0,
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+        )
+        top_layout.addWidget(content_label, 1)
+
+        footer_widget = QtWidgets.QWidget(self)
+        ok_btn = QtWidgets.QPushButton("I understand", footer_widget)
+
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(ok_btn)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(top_widget, 0)
+        main_layout.addStretch(1)
+        main_layout.addWidget(footer_widget, 0)
+
+        self.setStyleSheet(style.load_stylesheet())
+
+        ok_btn.clicked.connect(self._on_ok_clicked)
+
+    def _on_ok_clicked(self):
+        self.close()
+
+
 class TrayManager:
     """Cares about context of application.
 
@@ -238,7 +296,7 @@ class TrayManager:
 
     @property
     def doubleclick_callback(self):
-        """Doubleclick callback for Tray icon."""
+        """Double-click callback for Tray icon."""
         callback_name = self.modules_manager.doubleclick_callback
         return self.modules_manager.doubleclick_callbacks.get(callback_name)
 
@@ -271,8 +329,27 @@ class TrayManager:
                 self._version_dialog.close()
             return
 
+        installed_version = get_installed_version()
+        expected_version = get_expected_version()
+
+        # Request new build if is needed
+        if (
+            # Backwards compatibility
+            not hasattr(expected_version, "is_compatible")
+            or not expected_version.is_compatible(installed_version)
+        ):
+            if (
+                self._version_dialog is not None
+                and self._version_dialog.isVisible()
+            ):
+                self._version_dialog.close()
+
+            dialog = BuildVersionDialog()
+            dialog.exec_()
+            return
+
         if self._version_dialog is None:
-            self._version_dialog = VersionDialog()
+            self._version_dialog = VersionUpdateDialog()
             self._version_dialog.restart_requested.connect(
                 self._restart_and_install
             )
@@ -280,7 +357,6 @@ class TrayManager:
                 self._outdated_version_ignored
             )
 
-        expected_version = get_expected_version()
         current_version = get_openpype_version()
         current_is_higher = is_current_version_higher_than_expected()
 
@@ -383,6 +459,10 @@ class TrayManager:
 
         self._validate_settings_defaults()
 
+        if not op_version_control_available():
+            dialog = BuildVersionDialog()
+            dialog.exec_()
+
     def _validate_settings_defaults(self):
         valid = True
         try:
@@ -398,7 +478,7 @@ class TrayManager:
         title = "Settings miss default values"
         msg = (
             "Your OpenPype will not work as expected! \n"
-            "Some default values in settigs are missing. \n\n"
+            "Some default values in settings are missing. \n\n"
             "Please contact OpenPype team."
         )
         msg_box = QtWidgets.QMessageBox(
@@ -430,7 +510,7 @@ class TrayManager:
             message (str): Content of message.
             icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
                 Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in miliseconds.
+            msecs (int): Duration of message visibility in milliseconds.
                 Default is 10000 msecs, may differ by Qt version.
         """
         args = [title, message]

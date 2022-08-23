@@ -13,7 +13,6 @@ class CreateRig(plugin.Creator):
     label = "Rig"
     family = "rig"
     icon = "wheelchair"
-    defaults = ['Main']
 
     def process(self):
 

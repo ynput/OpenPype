@@ -380,7 +380,8 @@ Viewport2Options = {
     "transparencyAlgorithm": 1,
     "transparencyQuality": 0.33,
     "useMaximumHardwareLights": True,
-    "vertexAnimationCache": 0
+    "vertexAnimationCache": 0,
+    "renderDepthOfField": 0
 }
 
 
@@ -402,7 +403,7 @@ def apply_view(panel, **options):
     camera_options = options.get("camera_options", {})
     _iteritems = getattr(camera_options, "iteritems", camera_options.items)
     for key, value in _iteritems:
-        cmds.setAttr("{0}.{1}".format(camera, key), value)
+        _safe_setAttr("{0}.{1}".format(camera, key), value)
 
     # Viewport options
     viewport_options = options.get("viewport_options", {})
@@ -416,7 +417,7 @@ def apply_view(panel, **options):
     )
     for key, value in _iteritems():
         attr = "hardwareRenderingGlobals.{0}".format(key)
-        cmds.setAttr(attr, value)
+        _safe_setAttr(attr, value)
 
 
 def parse_active_panel():
@@ -550,10 +551,10 @@ def apply_scene(**options):
         cmds.playbackOptions(maxTime=options["end_frame"])
 
     if "width" in options:
-        cmds.setAttr("defaultResolution.width", options["width"])
+        _safe_setAttr("defaultResolution.width", options["width"])
 
     if "height" in options:
-        cmds.setAttr("defaultResolution.height", options["height"])
+        _safe_setAttr("defaultResolution.height", options["height"])
 
     if "compression" in options:
         cmds.optionVar(
@@ -664,7 +665,10 @@ def _applied_camera_options(options, panel):
 
     _iteritems = getattr(options, "iteritems", options.items)
     for opt, value in _iteritems():
-        cmds.setAttr(camera + "." + opt, value)
+        if cmds.getAttr(camera + "." + opt, lock=True):
+            continue
+        else:
+            _safe_setAttr(camera + "." + opt, value)
 
     try:
         yield
@@ -672,7 +676,11 @@ def _applied_camera_options(options, panel):
         if old_options:
             _iteritems = getattr(old_options, "iteritems", old_options.items)
             for opt, value in _iteritems():
-                cmds.setAttr(camera + "." + opt, value)
+                #
+                if cmds.getAttr(camera + "." + opt, lock=True):
+                    continue
+                else:
+                    _safe_setAttr(camera + "." + opt, value)
 
 
 @contextlib.contextmanager
@@ -759,7 +767,7 @@ def _applied_viewport2_options(options):
     # Apply settings
     _iteritems = getattr(options, "iteritems", options.items)
     for opt, value in _iteritems():
-        cmds.setAttr("hardwareRenderingGlobals." + opt, value)
+        _safe_setAttr("hardwareRenderingGlobals." + opt, value)
 
     try:
         yield
@@ -767,7 +775,7 @@ def _applied_viewport2_options(options):
         # Restore previous settings
         _iteritems = getattr(original, "iteritems", original.items)
         for opt, value in _iteritems():
-            cmds.setAttr("hardwareRenderingGlobals." + opt, value)
+            _safe_setAttr("hardwareRenderingGlobals." + opt, value)
 
 
 @contextlib.contextmanager
@@ -801,14 +809,14 @@ def _maintain_camera(panel, camera):
     else:
         state = dict((camera, cmds.getAttr(camera + ".rnd"))
                      for camera in cmds.ls(type="camera"))
-        cmds.setAttr(camera + ".rnd", True)
+        _safe_setAttr(camera + ".rnd", True)
 
     try:
         yield
     finally:
         _iteritems = getattr(state, "iteritems", state.items)
         for camera, renderable in _iteritems():
-            cmds.setAttr(camera + ".rnd", renderable)
+            _safe_setAttr(camera + ".rnd", renderable)
 
 
 @contextlib.contextmanager
@@ -843,6 +851,18 @@ def _get_screen_size():
 
 def _in_standalone():
     return not hasattr(cmds, "about") or cmds.about(batch=True)
+
+
+def _safe_setAttr(*args, **kwargs):
+    """Wrapper to handle failures when attribute is locked.
+
+    Temporary hotfix until better approach (store value, unlock, set new,
+    return old, lock again) is implemented.
+    """
+    try:
+        cmds.setAttr(*args, **kwargs)
+    except RuntimeError:
+        print("Cannot setAttr {}!".format(args))
 
 
 # --------------------------------

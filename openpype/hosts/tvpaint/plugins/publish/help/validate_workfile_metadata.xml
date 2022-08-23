@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Missing metadata</title>
+<description>## Your scene miss context metadata
+
+Your scene does not contain metadata about {missing_metadata}.
+
+### How to repair?
+
+Resave the scene using Workfiles tool or hit the "Repair" button on the right.
+</description>
+<detail>
+### How this could happend?
+
+You're using scene file that was not created using Workfiles tool.
+</detail>
+</error>
+</root>

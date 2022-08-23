@@ -2,9 +2,9 @@ import os
 import json
 
 from Qt import QtWidgets, QtCore, QtGui
-from avalon.api import AvalonMongoDB
 
 from openpype import style
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils.lib import center_window
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.constants import (
@@ -46,7 +46,7 @@ class ContextDialog(QtWidgets.QDialog):
         # UI initialization
         main_splitter = QtWidgets.QSplitter(self)
 
-        # Left side widget containt project combobox and asset widget
+        # Left side widget contains project combobox and asset widget
         left_side_widget = QtWidgets.QWidget(main_splitter)
 
         project_combobox = QtWidgets.QComboBox(left_side_widget)
@@ -308,7 +308,6 @@ class ContextDialog(QtWidgets.QDialog):
         self._validate_strict()
 
     def _set_asset_to_tasks_widget(self):
-        # filter None docs they are silo
         asset_id = self._assets_widget.get_selected_asset_id()
 
         self._tasks_widget.set_asset_id(asset_id)

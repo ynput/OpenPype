@@ -6,11 +6,18 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
-from ..lib import UnknownDef
+from openpype.client import get_assets
+from openpype.host import INewPublisher
+from openpype.pipeline import legacy_io
+from openpype.pipeline.mongodb import (
+    AvalonMongoDB,
+    session_data_from_environment,
+)
+
 from .creator_plugins import (
-    BaseCreator,
     Creator,
-    AutoCreator
+    AutoCreator,
+    discover_creator_plugins,
 )
 
 from openpype.api import (
@@ -18,9 +25,12 @@ from openpype.api import (
     get_project_settings
 )
 
+UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
+
 
 class ImmutableKeyError(TypeError):
     """Accessed key is immutable so does not allow changes or removements."""
+
     def __init__(self, key, msg=None):
         self.immutable_key = key
         if not msg:
@@ -32,6 +42,7 @@ class ImmutableKeyError(TypeError):
 
 class HostMissRequiredMethod(Exception):
     """Host does not have implemented required functions for creation."""
+
     def __init__(self, host, missing_methods):
         self.missing_methods = missing_methods
         self.host = host
@@ -58,6 +69,7 @@ class InstanceMember:
     TODO:
     Implement and use!
     """
+
     def __init__(self, instance, name):
         self.instance = instance
 
@@ -86,7 +98,10 @@ class AttributeValues:
         values(dict): Values after possible conversion.
         origin_data(dict): Values loaded from host before conversion.
     """
+
     def __init__(self, attr_defs, values, origin_data=None):
+        from openpype.lib.attribute_definitions import UnknownDef
+
         if origin_data is None:
             origin_data = copy.deepcopy(values)
         self._origin_data = origin_data
@@ -94,6 +109,7 @@ class AttributeValues:
         attr_defs_by_key = {
             attr_def.key: attr_def
             for attr_def in attr_defs
+            if attr_def.is_value_def
         }
         for key, value in values.items():
             if key not in attr_defs_by_key:
@@ -163,6 +179,10 @@ class AttributeValues:
         output = {}
         for key in self._data:
             output[key] = self[key]
+
+        for key, attr_def in self._attr_defs_by_key.items():
+            if key not in output:
+                output[key] = attr_def.default
         return output
 
     @staticmethod
@@ -185,6 +205,7 @@ class CreatorAttributeValues(AttributeValues):
     Args:
         instance (CreatedInstance): Instance for which are values hold.
     """
+
     def __init__(self, instance, *args, **kwargs):
         self.instance = instance
         super(CreatorAttributeValues, self).__init__(*args, **kwargs)
@@ -200,6 +221,7 @@ class PublishAttributeValues(AttributeValues):
         publish_attributes(PublishAttributes): Wrapper for multiple publish
             attributes is used as parent object.
     """
+
     def __init__(self, publish_attributes, *args, **kwargs):
         self.publish_attributes = publish_attributes
         super(PublishAttributeValues, self).__init__(*args, **kwargs)
@@ -221,6 +243,7 @@ class PublishAttributes:
         attr_plugins(list): List of publish plugins that may have defined
             attribute definitions.
     """
+
     def __init__(self, parent, origin_data, attr_plugins=None):
         self.parent = parent
         self._origin_data = copy.deepcopy(origin_data)
@@ -259,6 +282,7 @@ class PublishAttributes:
             key(str): Plugin name.
             default: Default value if plugin was not found.
         """
+
         if key not in self._data:
             return default
 
@@ -276,11 +300,13 @@ class PublishAttributes:
 
     def plugin_names_order(self):
         """Plugin names order by their 'order' attribute."""
+
         for name in self._plugin_names_order:
             yield name
 
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
+
         output = {}
         for key, attr_value in self._data.items():
             output[key] = attr_value.data_to_store()
@@ -288,6 +314,7 @@ class PublishAttributes:
 
     def changes(self):
         """Return changes per each key."""
+
         changes = {}
         for key, attr_val in self._data.items():
             attr_changes = attr_val.changes()
@@ -303,11 +330,10 @@ class PublishAttributes:
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
+
         self._plugin_names_order = []
         self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
-        if not attr_plugins:
-            return
 
         origin_data = self._origin_data
         data = self._data
@@ -353,16 +379,17 @@ class CreatedInstance:
             already existing instance.
         creator(BaseCreator): Creator responsible for instance.
         host(ModuleType): Host implementation loaded with
-            `avalon.api.registered_host`.
+            `openpype.pipeline.registered_host`.
         new(bool): Is instance new.
     """
+
     # Keys that can't be changed or removed from data after loading using
     #   creator.
     # - 'creator_attributes' and 'publish_attributes' can change values of
     #   their individual children but not on their own
     __immutable_keys = (
         "id",
-        "uuid",
+        "instance_id",
         "family",
         "creator_identifier",
         "creator_attributes",
@@ -400,15 +427,6 @@ class CreatedInstance:
         self._data["active"] = data.get("active", True)
         self._data["creator_identifier"] = creator.identifier
 
-        # QUESTION handle version of instance here or in creator?
-        version = None
-        if not new:
-            version = data.get("version")
-
-        if version is None:
-            version = 1
-        self._data["version"] = version
-
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
         # - they should be the same and if are not then should not change
@@ -420,7 +438,7 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_attribute_defs()
+        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
             self, creator_attr_defs, creator_values, orig_creator_attributes
@@ -435,8 +453,8 @@ class CreatedInstance:
         if data:
             self._data.update(data)
 
-        if not self._data.get("uuid"):
-            self._data["uuid"] = str(uuid4())
+        if not self._data.get("instance_id"):
+            self._data["instance_id"] = str(uuid4())
 
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
@@ -497,6 +515,20 @@ class CreatedInstance:
         return self._data["subset"]
 
     @property
+    def label(self):
+        label = self._data.get("label")
+        if not label:
+            label = self.subset_name
+        return label
+
+    @property
+    def group_label(self):
+        label = self._data.get("group")
+        if label:
+            return label
+        return self.creator.get_group_label()
+
+    @property
     def creator_identifier(self):
         return self.creator.identifier
 
@@ -552,7 +584,8 @@ class CreatedInstance:
     @property
     def id(self):
         """Instance identifier."""
-        return self._data["uuid"]
+
+        return self._data["instance_id"]
 
     @property
     def data(self):
@@ -560,10 +593,12 @@ class CreatedInstance:
 
         Access to data is needed to modify values.
         """
+
         return self
 
     def changes(self):
         """Calculate and return changes."""
+
         changes = {}
         new_keys = set()
         for key, new_value in self._data.items():
@@ -652,12 +687,6 @@ class CreateContext:
         discover_publish_plugins(bool): Discover publish plugins during reset
             phase.
     """
-    # Methods required in host implementaion to be able create instances
-    #   or change context data.
-    required_methods = (
-        "get_context_data",
-        "update_context_data"
-    )
 
     def __init__(
         self, host, dbcon=None, headless=False, reset=True,
@@ -665,10 +694,8 @@ class CreateContext:
     ):
         # Create conncetion if is not passed
         if dbcon is None:
-            import avalon.api
-
-            session = avalon.api.session_data_from_environment(True)
-            dbcon = avalon.api.AvalonMongoDB(session)
+            session = session_data_from_environment(True)
+            dbcon = AvalonMongoDB(session)
             dbcon.install()
 
         self.dbcon = dbcon
@@ -710,6 +737,7 @@ class CreateContext:
         self.manual_creators = {}
 
         self.publish_discover_result = None
+        self.publish_plugins_mismatch_targets = []
         self.publish_plugins = []
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
@@ -741,16 +769,24 @@ class CreateContext:
         Args:
             host(ModuleType): Host implementaion.
         """
-        missing = set()
-        for attr_name in cls.required_methods:
-            if not hasattr(host, attr_name):
-                missing.add(attr_name)
+
+        missing = set(
+            INewPublisher.get_missing_publish_methods(host)
+        )
         return missing
 
     @property
     def host_is_valid(self):
         """Is host valid for creation."""
         return self._host_is_valid
+
+    @property
+    def host_name(self):
+        return os.environ["AVALON_APP"]
+
+    @property
+    def project_name(self):
+        return self.dbcon.active_project()
 
     @property
     def log(self):
@@ -776,12 +812,11 @@ class CreateContext:
         """Give ability to reset avalon context.
 
         Reset is based on optional host implementation of `get_current_context`
-        function or using `avalon.api.Session`.
+        function or using `legacy_io.Session`.
 
         Some hosts have ability to change context file without using workfiles
         tool but that change is not propagated to
         """
-        import avalon.api
 
         project_name = asset_name = task_name = None
         if hasattr(self.host, "get_current_context"):
@@ -792,11 +827,11 @@ class CreateContext:
                 task_name = host_context.get("task_name")
 
         if not project_name:
-            project_name = avalon.api.Session.get("AVALON_PROJECT")
+            project_name = legacy_io.Session.get("AVALON_PROJECT")
         if not asset_name:
-            asset_name = avalon.api.Session.get("AVALON_ASSET")
+            asset_name = legacy_io.Session.get("AVALON_ASSET")
         if not task_name:
-            task_name = avalon.api.Session.get("AVALON_TASK")
+            task_name = legacy_io.Session.get("AVALON_TASK")
 
         if project_name:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
@@ -811,7 +846,6 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
-        import avalon.api
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -826,33 +860,42 @@ class CreateContext:
         discover_result = DiscoverResult()
         plugins_with_defs = []
         plugins_by_targets = []
+        plugins_mismatch_targets = []
         if discover_publish_plugins:
             discover_result = publish_plugins_discover()
             publish_plugins = discover_result.plugins
 
-            targets = pyblish.logic.registered_targets() or ["default"]
+            targets = set(pyblish.logic.registered_targets())
+            targets.add("default")
             plugins_by_targets = pyblish.logic.plugins_by_targets(
-                publish_plugins, targets
+                publish_plugins, list(targets)
             )
+
             # Collect plugins that can have attribute definitions
             for plugin in publish_plugins:
                 if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
                     plugins_with_defs.append(plugin)
 
+            plugins_mismatch_targets = [
+                plugin
+                for plugin in publish_plugins
+                if plugin not in plugins_by_targets
+            ]
+
+        self.publish_plugins_mismatch_targets = plugins_mismatch_targets
         self.publish_discover_result = discover_result
         self.publish_plugins = plugins_by_targets
         self.plugins_with_defs = plugins_with_defs
 
         # Prepare settings
-        project_name = self.dbcon.Session["AVALON_PROJECT"]
         system_settings = get_system_settings()
-        project_settings = get_project_settings(project_name)
+        project_settings = get_project_settings(self.project_name)
 
         # Discover and prepare creators
         creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in avalon.api.discover(BaseCreator):
+        for creator_class in discover_creator_plugins():
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))
@@ -866,10 +909,21 @@ class CreateContext:
                     "Using first and skipping following"
                 ))
                 continue
+
+            # Filter by host name
+            if (
+                creator_class.host_name
+                and creator_class.host_name != self.host_name
+            ):
+                self.log.info((
+                    "Creator's host name is not supported for current host {}"
+                ).format(creator_class.host_name, self.host_name))
+                continue
+
             creator = creator_class(
-                self,
-                system_settings,
                 project_settings,
+                system_settings,
+                self,
                 self.headless
             )
             creators[creator_identifier] = creator
@@ -1015,27 +1069,24 @@ class CreateContext:
         if not instances:
             return
 
-        task_names_by_asset_name = collections.defaultdict(set)
+        task_names_by_asset_name = {}
         for instance in instances:
             task_name = instance.get("task")
             asset_name = instance.get("asset")
-            if asset_name and task_name:
-                task_names_by_asset_name[asset_name].add(task_name)
+            if asset_name:
+                task_names_by_asset_name[asset_name] = set()
+                if task_name:
+                    task_names_by_asset_name[asset_name].add(task_name)
 
         asset_names = [
             asset_name
             for asset_name in task_names_by_asset_name.keys()
             if asset_name is not None
         ]
-        asset_docs = list(self.dbcon.find(
-            {
-                "type": "asset",
-                "name": {"$in": asset_names}
-            },
-            {
-                "name": True,
-                "data.tasks": True
-            }
+        asset_docs = list(get_assets(
+            self.project_name,
+            asset_names=asset_names,
+            fields=["name", "data.tasks"]
         ))
 
         task_names_by_asset_name = {}
@@ -1088,7 +1139,7 @@ class CreateContext:
             for instance in cretor_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
-                    update_list.append((instance, instance_changes))
+                    update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
             if update_list:

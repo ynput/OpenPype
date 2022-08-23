@@ -5,15 +5,23 @@ from collections import OrderedDict
 import nuke
 
 import pyblish.api
-import avalon.api
-from avalon import pipeline
 
 import openpype
 from openpype.api import (
     Logger,
-    BuildWorkfile,
     get_current_project_settings
 )
+from openpype.lib import register_event_callback
+from openpype.pipeline import (
+    register_loader_plugin_path,
+    register_creator_plugin_path,
+    register_inventory_action_path,
+    deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
+    deregister_inventory_action_path,
+    AVALON_CONTAINER_ID,
+)
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -24,13 +32,12 @@ from .lib import (
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
-    read,
+    read_avalon_data,
     Context
 )
 
 log = Logger.get_logger(__name__)
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -71,11 +78,11 @@ def reload_config():
     """
 
     for module in (
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.actions".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.menu".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.plugin".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.lib".format(AVALON_CONFIG),
+        "openpype.api",
+        "openpype.hosts.nuke.api.actions",
+        "openpype.hosts.nuke.api.menu",
+        "openpype.hosts.nuke.api.plugin",
+        "openpype.hosts.nuke.api.lib",
     ):
         log.info("Reloading module: {}...".format(module))
 
@@ -97,35 +104,25 @@ def install():
 
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
-    avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
+    register_loader_plugin_path(LOAD_PATH)
+    register_creator_plugin_path(CREATE_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
-    avalon.api.on("workio.open_file", check_inventory_versions)
-    avalon.api.on("taskChanged", change_context_label)
+    register_event_callback("workio.open_file", check_inventory_versions)
+    register_event_callback("taskChanged", change_context_label)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = WorkfileSettings()
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "write",
-        "review",
-        "nukenodes",
-        "model",
-        "gizmo"
-    ]
-
-    avalon.api.data["familiesStateDefault"] = False
-    avalon.api.data["familiesStateToggled"] = family_states
 
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
-    nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
     _install_menu()
+    launch_workfiles_app()
 
 
 def uninstall():
@@ -134,14 +131,23 @@ def uninstall():
     log.info("Deregistering Nuke plug-ins..")
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(
         "instanceToggled", on_pyblish_instance_toggled)
 
     reload_config()
     _uninstall_menu()
+
+
+def _show_workfiles():
+    # Make sure parent is not set
+    # - this makes Workfiles tool as separated window which
+    #   avoid issues with reopening
+    # - it is possible to explicitly change on top flag of the tool
+    host_tools.show_workfiles(parent=None, on_top=False)
 
 
 def _install_menu():
@@ -160,7 +166,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Work Files...",
-        lambda: host_tools.show_workfiles(parent=main_window)
+        _show_workfiles
     )
 
     menu.addSeparator()
@@ -183,7 +189,12 @@ def _install_menu():
         "Manage...",
         lambda: host_tools.show_scene_inventory(parent=main_window)
     )
-
+    menu.addCommand(
+        "Library...",
+        lambda: host_tools.show_library_loader(
+            parent=main_window
+        )
+    )
     menu.addSeparator()
     menu.addCommand(
         "Set Resolution",
@@ -232,7 +243,7 @@ def _uninstall_menu():
         menu.removeItem(item.name())
 
 
-def change_context_label(*args):
+def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
 
@@ -330,7 +341,7 @@ def containerise(node,
     data = OrderedDict(
         [
             ("schema", "openpype:container-2.0"),
-            ("id", pipeline.AVALON_CONTAINER_ID),
+            ("id", AVALON_CONTAINER_ID),
             ("name", name),
             ("namespace", namespace),
             ("loader", str(loader)),
@@ -357,7 +368,7 @@ def parse_container(node):
         dict: The container schema data for this container node.
 
     """
-    data = read(node)
+    data = read_avalon_data(node)
 
     # (TODO) Remove key validation when `ls` has re-implemented.
     #

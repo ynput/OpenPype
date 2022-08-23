@@ -1,12 +1,16 @@
 import re
 import uuid
-from avalon import api
-import openpype.api as pype
-from openpype.hosts import resolve
-from avalon.vendor import qargparse
-from . import lib
 
+import qargparse
 from Qt import QtWidgets, QtCore
+
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
+from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.hosts import resolve
+from . import lib
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -289,7 +293,7 @@ class ClipLoader:
         """ Initialize object
 
         Arguments:
-            cls (avalon.api.Loader): plugin object
+            cls (openpype.pipeline.load.LoaderPlugin): plugin object
             context (dict): loader plugin context
             options (dict)[optional]: possible keys:
                 projectBinPath: "path/to/binItem"
@@ -371,7 +375,7 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+        self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
     def load(self):
         # create project bin for the media to be imported into
@@ -445,7 +449,7 @@ class ClipLoader:
         return timeline_item
 
 
-class TimelineItemLoader(api.Loader):
+class TimelineItemLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that
@@ -493,7 +497,7 @@ class TimelineItemLoader(api.Loader):
         pass
 
 
-class Creator(pype.PypeCreatorMixin, api.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     marker_color = "Purple"
@@ -502,7 +506,7 @@ class Creator(pype.PypeCreatorMixin, api.Creator):
         super(Creator, self).__init__(*args, **kwargs)
         from openpype.api import get_current_project_settings
         resolve_p_settings = get_current_project_settings().get("resolve")
-        self.presets = dict()
+        self.presets = {}
         if resolve_p_settings:
             self.presets = resolve_p_settings["create"].get(
                 self.__class__.__name__, {})

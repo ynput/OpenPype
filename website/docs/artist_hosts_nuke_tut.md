@@ -89,6 +89,8 @@ This menu item will set correct Colorspace definitions for you. All has to be co
 -   set preview LUT to your viewers
 -   set correct colorspace to all discovered Read nodes (following expression set in settings)
 
+See [Nuke Color Management](artist_hosts_nuke_tut.md#nuke-color-management)
+
 </div>
 <div class="col col--6 markdown">
 
@@ -144,6 +146,8 @@ This tool will append all available subsets into an actual node graph. It will l
 
 This QuickStart is short introduction to what OpenPype can do for you. It attempts to make an overview for compositing artists, and simplifies processes that are better described in specific parts of the documentation.
 
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/jgwmLOPJg0g" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
 ### Launch Nuke - Shot and Task Context
 OpenPype has to know what shot and task you are working on. You need to run Nuke in context of the task, using Ftrack Action or OpenPype Launcher to select the task and run Nuke.
 
@@ -161,7 +165,7 @@ Nuke OpenPype menu shows the current context
 
 Launching Nuke with context stops your timer, and starts the clock on the shot and task you picked.
 
-Openpype makes initial setup for your Nuke script. It is the same as running [Apply All Settings](artist_hosts_nuke.md#apply-all-settings) from the OpenPype menu.
+Openpype makes initial setup for your Nuke script. It is the same as running [Apply All Settings](artist_hosts_nuke_tut.md#apply-all-settings) from the OpenPype menu.
 
 - Reads frame range and resolution from Avalon database, sets it in Nuke Project Settings,
 Creates Viewer node, sets it’s range and indicates handles by In and Out points.
@@ -182,21 +186,21 @@ The Next Available Version checks the work folder for already used versions and 
 
 Subversion can be used to distinguish or name versions. For example used to add shortened artist name.
 
-More about [workfiles](artist_tools#workfiles).
+More about [workfiles](artist_tools.md#workfiles).
 
 
 :::tip Admin Tips
 - **Workfile Naming**
 
-  - The [workfile naming](admin_settings_project_anatomy#templates) is configured in anatomy, see **Studio Settings → Project → Anatomy → Templates → Work**
+  - The [workfile naming](admin_settings_project_anatomy.md#templates) is configured in anatomy, see **Studio Settings → Project → Anatomy → Templates → Work**
 
 - **Open Workfile**
 
-  - You can [configure](project_settings/settings_project_nuke#create-first-workfile) Nuke to automatically open the last version, or create a file on startup. See **Studio Settings → Project → Global → Tools → Workfiles**
+  - You can [configure](project_settings/settings_project_nuke.md#create-first-workfile) Nuke to automatically open the last version, or create a file on startup. See **Studio Settings → Project → Global → Tools → Workfiles**
 
 - **Nuke Color Settings**
 
-  - [Color setting](project_settings/settings_project_nuke) for Nuke can be found in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke**
+  - [Color setting](project_settings/settings_project_nuke.md) for Nuke can be found in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke**
 :::
 
 ### Load plate
@@ -210,7 +214,7 @@ Note that the Read node created by OpenPype is green. Green color indicates the 
 
 ![Asset Load](assets/nuke_tut/nuke_AssetLoadOutOfDate.png)
 
-More about [Asset loader](artist_tools#loader).
+More about [Asset loader](artist_tools.md#loader).
 
 ### Create Write Node
 To create OpenPype managed Write node, select the Read node you just created, from OpenPype menu, pick Create.
@@ -225,6 +229,11 @@ This will create a Group with a Write node inside.
 :::tip Admin Tip - Configuring write node
 You can configure write node parameters in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke → Nodes**
 :::
+
+### Create Prerender Node
+Creating Prerender is very similar to creating OpenPype managed Write node.
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/er4SztHFN-w" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 #### What Nuke Publish Does
 From Artist perspective, Nuke publish gathers all the stuff found in the Nuke script with Publish checkbox set to on, exports stuff and raises the Nuke script (workfile) version.
@@ -254,7 +263,7 @@ Gathering all the info and validating usually takes just a few seconds. Creating
 ##### Pyblish Note and Intent
 ![Note and Intent](assets/nuke_tut/nuke_PyblishDialogNukeNoteIntent.png)
 
-Artist can add Note and Intent before firing the publish button. The Note and Intent is ment for easy communication between artist and supervisor. After publish, Note and Intent can be seen in Ftrack notes.
+Artist can add Note and Intent before firing the publish button. The Note and Intent is meant for easy communication between artist and supervisor. After publish, Note and Intent can be seen in Ftrack notes.
 
 ##### Pyblish Checkbox
 
@@ -264,7 +273,7 @@ Pyblish Dialog tries to pack a lot of info in a small area. One of the more tric
 
 If you run the publish and decide to not publish the Nuke script, you can turn it off right in the Pyblish dialog by clicking on the checkbox. If you decide to render and  publish the shot in lower resolution to speed up the turnaround, you have to turn off the Write Resolution validator. If you want to use an older version of the asset (older version of the plate...), you have to turn off the Validate containers, and so on.
 
-More info about [Using Pyblish](artist_tools#publisher)
+More info about [Using Pyblish](artist_tools.md#publisher)
 
 :::tip Admin Tip - Configuring validators
 You can configure Nuke validators like Output Resolution in **Studio Settings → Project → Nuke → Publish plugins**
@@ -286,7 +295,7 @@ If you choose to publish on the farm, you will render and do reviews on the farm
 
 So far there is no option for using existing frames (from your local / check render) and just do the review on the farm.
 
-More info about [configuring reviews](pype2/admin_presets_plugins#extractreview).
+More info about [configuring reviews](pype2/admin_presets_plugins.md#extractreview).
 
 :::tip Admin Tip - Configuring Reviews
 You can configure reviewsin **Studio Settings → Project → Global → Publish plugins → ExtractReview / ExtractBurnin**
@@ -315,6 +324,8 @@ Main disadvantage of this approach is that you can render only one version of yo
 
 When making quick farm publishes, like making two versions with different color correction, care must be taken to let the first job (first version) completely finish before the second version starts rendering.
 
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/j95OITIWJk8" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
 ### Managing Versions
 
 ![Versionless](assets/nuke_tut/nuke_ManageVersion.png)
@@ -323,15 +334,30 @@ OpenPype checks all the assets loaded to Nuke on script open. All out of date as
 
 Use Manage to switch versions for loaded assets.
 
+### Loading Effects
+This video show how to publish effect from Hiero / Nuke Studio, and use the effect in Nuke.
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/zFoH7bq-w0E" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/HzZDdtII5io" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
+### Nuke Color Management
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/NKjQHkuwkSM" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
 ## Troubleshooting
 
 ### Fixing Validate Containers
 
+If your Pyblish dialog fails on Validate Containers, you might have an old asset loaded. Use OpenPype - Manage... to switch the asset(s) to the latest version.
+
 ![Versionless](assets/nuke_tut/nuke_ValidateContainers.png)
 
-If your Pyblish dialog fails on Validate Containers, you might have an old asset loaded. Use OpenPype - Manage... to switch the asset(s) to the latest version.
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/hridMybn5nA" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 ### Fixing Validate Version
 If your Pyblish dialog fails on Validate Version, you might be trying to publish already published version. Rise your version in the OpenPype WorkFiles SaveAs.
 
-Or maybe you accidentaly copied write node from different shot to your current one. Check the write publishes on the left side of the Pyblish dialog. Typically you publish only one write. Locate and delete the stray write from other shot.
+Or maybe you accidentally copied write node from different shot to your current one. Check the write publishes on the left side of the Pyblish dialog. Typically you publish only one write. Locate and delete the stray write from other shot.
+
+<iframe width="512px" height="288px" src="https://www.youtube.com/embed/Ic9z4gKnHAA" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>

@@ -6,7 +6,9 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 from maya import cmds
 
 import pyblish.api
-from avalon import api
+
+from openpype.pipeline import legacy_io
+from openpype.lib import get_formatted_current_time
 from openpype.hosts.maya.api import lib
 
 
@@ -116,15 +118,21 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 # instance subset
                 "family": "vrayscene_layer",
                 "families": ["vrayscene_layer"],
-                "asset": api.Session["AVALON_ASSET"],
-                "time": api.time(),
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "time": get_formatted_current_time(),
                 "author": context.data["user"],
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
                 "source": context.data["currentFile"].replace("\\", "/"),
-                "resolutionWidth": cmds.getAttr("defaultResolution.width"),
-                "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
+                "resolutionWidth": lib.get_attr_in_layer(
+                    "defaultResolution.height", layer=layer_name
+                ),
+                "resolutionHeight": lib.get_attr_in_layer(
+                    "defaultResolution.width", layer=layer_name
+                ),
+                "pixelAspect": lib.get_attr_in_layer(
+                    "defaultResolution.pixelAspect", layer=layer_name
+                ),
                 "priority": instance.data.get("priority"),
                 "useMultipleSceneFiles": instance.data.get(
                     "vraySceneMultipleFiles")

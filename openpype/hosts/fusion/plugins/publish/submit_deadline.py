@@ -2,10 +2,11 @@ import os
 import json
 import getpass
 
-from avalon import api
-from avalon.vendor import requests
+import requests
 
 import pyblish.api
+
+from openpype.pipeline import legacy_io
 
 
 class FusionSubmitDeadline(pyblish.api.InstancePlugin):
@@ -30,7 +31,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
         else:
             context.data[key] = True
 
-        from avalon.fusion.lib import get_frame_path
+        from openpype.hosts.fusion.api.lib import get_frame_path
 
         deadline_url = (
             context.data["system_settings"]
@@ -132,7 +133,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
             "FUSION9_MasterPrefs"
         ]
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -145,7 +146,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(DEADLINE_REST_URL)
+        url = "{}/api/jobs".format(deadline_url)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)

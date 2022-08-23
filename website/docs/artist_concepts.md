@@ -12,7 +12,7 @@ In our pipeline all the main entities the project is made from are internally co
 
 ### Subset
 
-Usually, an asset needs to be created in multiple *'flavours'*. A character might have multiple different looks, model needs to be published in different resolutions, a standard animation rig might not be useable in a crowd system and so on. 'Subsets' are here to accommodate all this variety that might be needed within a single asset. A model might have subset: *'main'*, *'proxy'*, *'sculpt'*, while data of *'look'* family could have subsets *'main'*, *'dirty'*, *'damaged'*. Subsets have some recommendations for their names, but ultimately it's up to the artist to use them for separation of publishes when needed.
+Usually, an asset needs to be created in multiple *'flavours'*. A character might have multiple different looks, model needs to be published in different resolutions, a standard animation rig might not be usable in a crowd system and so on. 'Subsets' are here to accommodate all this variety that might be needed within a single asset. A model might have subset: *'main'*, *'proxy'*, *'sculpt'*, while data of *'look'* family could have subsets *'main'*, *'dirty'*, *'damaged'*. Subsets have some recommendations for their names, but ultimately it's up to the artist to use them for separation of publishes when needed.
 
 ### Version
 
@@ -26,7 +26,7 @@ Each published variant can come out of the software in multiple representations.
 
 ### Family
 
-Each published [subset][3b89d8e0] can have exactly one family assigned to it. Family determines the type of data that the subset holds. Family doesn't dictate the file type, but can enforce certain technical specifications. For example OpenPype default configuration expects `model` family to only contain geometry without any shaders or joins when it is published.
+Each published [subset][3b89d8e0] can have exactly one family assigned to it. Family determines the type of data that the subset holds. Family doesn't dictate the file type, but can enforce certain technical specifications. For example OpenPype default configuration expects `model` family to only contain geometry without any shaders or joints when it is published.
 
 
   [3b89d8e0]: #subset "subset"
@@ -40,7 +40,7 @@ General term for Software or Application supported by OpenPype and Avalon. These
 
 ### Tool
 
-Small piece of software usually dedicated to a particular purpose. Most of OpenPype and Avalon tools have GUI, but some are command line only
+Small piece of software usually dedicated to a particular purpose. Most of OpenPype and Avalon tools have GUI, but some are command line only.
 
 
 ### Publish
@@ -50,4 +50,4 @@ Process of exporting data from your work scene to versioned, immutable file that
 ### Load
 
 Process of importing previously published subsets into your current scene, using any of the OpenPype tools.
-Loading asset using proper tools will ensure that all your scene content stays version controlled and updatable at a later point
+Loading asset using proper tools will ensure that all your scene content stays version controlled and updatable at a later point.

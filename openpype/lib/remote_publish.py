@@ -1,15 +1,16 @@
 import os
 from datetime import datetime
-import sys
-from bson.objectid import ObjectId
 import collections
+
+from bson.objectid import ObjectId
 
 import pyblish.util
 import pyblish.api
 
-from openpype import uninstall
-from openpype.lib.mongo import OpenPypeMongoConnection
+from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
+from openpype.lib.profiles_filtering import filter_profiles
+from openpype.api import get_project_settings
 
 ERROR_STATUS = "error"
 IN_PROGRESS_STATUS = "in_progress"
@@ -21,9 +22,6 @@ FINISHED_OK_STATUS = "finished_ok"
 
 def headless_publish(log, close_plugin_name=None, is_test=False):
     """Runs publish in a opened host with a context and closes Python process.
-
-        Host is being closed via ClosePS pyblish plugin which triggers 'exit'
-        method in ConsoleTrayApp.
     """
     if not is_test:
         dbcon = get_webpublish_conn()
@@ -64,7 +62,7 @@ def start_webpublish_log(dbcon, batch_id, user):
     }).inserted_id
 
 
-def publish(log, close_plugin_name=None):
+def publish(log, close_plugin_name=None, raise_error=False):
     """Loops through all plugins, logs to console. Used for tests.
 
         Args:
@@ -83,12 +81,15 @@ def publish(log, close_plugin_name=None):
                 result["plugin"].label, record.msg))
 
         if result["error"]:
-            log.error(error_format.format(**result))
-            uninstall()
+            error_message = error_format.format(**result)
+            log.error(error_message)
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
-            sys.exit(1)
+            if raise_error:
+                # Fatal Error is because of Deadline
+                error_message = "Fatal Error: " + error_format.format(**result)
+                raise RuntimeError(error_message)
 
 
 def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
@@ -122,7 +123,6 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
 
         if result["error"]:
             log.error(error_format.format(**result))
-            uninstall()
             log_lines = [error_format.format(**result)] + log_lines
             dbcon.update_one(
                 {"_id": _id},
@@ -137,7 +137,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
-            sys.exit(1)
+            return
         elif processed % log_every == 0:
             # pyblish returns progress in 0.0 - 2.0
             progress = min(round(result["progress"] / 2 * 100), 99)
@@ -177,14 +177,12 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     )
 
 
-def fail_batch(_id, batches_in_progress, dbcon):
-    """Set current batch as failed as there are some stuck batches."""
-    running_batches = [str(batch["_id"])
-                       for batch in batches_in_progress
-                       if batch["_id"] != _id]
-    msg = "There are still running batches {}\n". \
-        format("\n".join(running_batches))
-    msg += "Ask admin to check them and reprocess current batch"
+def fail_batch(_id, dbcon, msg):
+    """Set current batch as failed as there is some problem.
+
+    Raises:
+        ValueError
+    """
     dbcon.update_one(
         {"_id": _id},
         {"$set":
@@ -235,7 +233,7 @@ def _get_close_plugin(close_plugin_name, log):
             if plugin.__name__ == close_plugin_name:
                 return plugin
 
-    log.warning("Close plugin not found, app might not close.")
+    log.debug("Close plugin not found, app might not close.")
 
 
 def get_task_data(batch_dir):
@@ -261,3 +259,19 @@ def get_task_data(batch_dir):
             "Cannot parse batch meta in {} folder".format(task_data))
 
     return task_data
+
+
+def get_timeout(project_name, host_name, task_type):
+    """Returns timeout(seconds) from Setting profile."""
+    filter_data = {
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    timeout_profiles = (get_project_settings(project_name)["webpublisher"]
+                                                          ["timeout_profiles"])
+    matching_item = filter_profiles(timeout_profiles, filter_data)
+    timeout = 3600
+    if matching_item:
+        timeout = matching_item["timeout"]
+
+    return timeout

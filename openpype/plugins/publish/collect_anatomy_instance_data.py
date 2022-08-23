@@ -25,8 +25,14 @@ import copy
 import json
 import collections
 
-from avalon import io
 import pyblish.api
+
+from openpype.client import (
+    get_assets,
+    get_subsets,
+    get_last_versions
+)
+from openpype.pipeline import legacy_io
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -43,16 +49,18 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("Collecting anatomy data for all instances.")
 
-        self.fill_missing_asset_docs(context)
-        self.fill_latest_versions(context)
+        project_name = legacy_io.active_project()
+        self.fill_missing_asset_docs(context, project_name)
+        self.fill_instance_data_from_asset(context)
+        self.fill_latest_versions(context, project_name)
         self.fill_anatomy_data(context)
 
         self.log.info("Anatomy Data collection finished.")
 
-    def fill_missing_asset_docs(self, context):
+    def fill_missing_asset_docs(self, context, project_name):
         self.log.debug("Qeurying asset documents for instances.")
 
-        context_asset_doc = context.data["assetEntity"]
+        context_asset_doc = context.data.get("assetEntity")
 
         instances_with_missing_asset_doc = collections.defaultdict(list)
         for instance in context:
@@ -69,7 +77,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # Check if asset name is the same as what is in context
             # - they may be different, e.g. in NukeStudio
-            if context_asset_doc["name"] == _asset_name:
+            if context_asset_doc and context_asset_doc["name"] == _asset_name:
                 instance.data["assetEntity"] = context_asset_doc
 
             else:
@@ -83,10 +91,8 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Querying asset documents with names: {}".format(
             ", ".join(["\"{}\"".format(name) for name in asset_names])
         ))
-        asset_docs = io.find({
-            "type": "asset",
-            "name": {"$in": asset_names}
-        })
+
+        asset_docs = get_assets(project_name, asset_names=asset_names)
         asset_docs_by_name = {
             asset_doc["name"]: asset_doc
             for asset_doc in asset_docs
@@ -110,7 +116,24 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 "Not found asset documents with names \"{}\"."
             ).format(joined_asset_names))
 
-    def fill_latest_versions(self, context):
+    def fill_instance_data_from_asset(self, context):
+        for instance in context:
+            asset_doc = instance.data.get("assetEntity")
+            if not asset_doc:
+                continue
+
+            asset_data = asset_doc["data"]
+            for key in (
+                "fps",
+                "frameStart",
+                "frameEnd",
+                "handleStart",
+                "handleEnd",
+            ):
+                if key not in instance.data and key in asset_data:
+                    instance.data[key] = asset_data[key]
+
+    def fill_latest_versions(self, context, project_name):
         """Try to find latest version for each instance's subset.
 
         Key "latestVersion" is always set to latest version or `None`.
@@ -125,7 +148,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Qeurying latest versions for instances.")
 
         hierarchy = {}
-        subset_filters = []
+        names_by_asset_ids = collections.defaultdict(set)
         for instance in context:
             # Make sure `"latestVersion"` key is set
             latest_version = instance.data.get("latestVersion")
@@ -146,73 +169,39 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             if subset_name not in hierarchy[asset_id]:
                 hierarchy[asset_id][subset_name] = []
             hierarchy[asset_id][subset_name].append(instance)
-            subset_filters.append({
-                "parent": asset_id,
-                "name": subset_name
-            })
+            names_by_asset_ids[asset_id].add(subset_name)
 
         subset_docs = []
-        if subset_filters:
-            subset_docs = list(io.find({
-                "type": "subset",
-                "$or": subset_filters
-            }))
+        if names_by_asset_ids:
+            subset_docs = list(get_subsets(
+                project_name, names_by_asset_ids=names_by_asset_ids
+            ))
 
         subset_ids = [
             subset_doc["_id"]
             for subset_doc in subset_docs
         ]
 
-        last_version_by_subset_id = self._query_last_versions(subset_ids)
+        last_version_docs_by_subset_id = get_last_versions(
+            project_name, subset_ids, fields=["name"]
+        )
         for subset_doc in subset_docs:
             subset_id = subset_doc["_id"]
-            last_version = last_version_by_subset_id.get(subset_id)
-            if last_version is None:
+            last_version_doc = last_version_docs_by_subset_id.get(subset_id)
+            if last_version_docs_by_subset_id is None:
                 continue
 
             asset_id = subset_doc["parent"]
             subset_name = subset_doc["name"]
             _instances = hierarchy[asset_id][subset_name]
             for _instance in _instances:
-                _instance.data["latestVersion"] = last_version
-
-    def _query_last_versions(self, subset_ids):
-        """Retrieve all latest versions for entered subset_ids.
-
-        Args:
-            subset_ids (list): List of subset ids with type `ObjectId`.
-
-        Returns:
-            dict: Key is subset id and value is last version name.
-        """
-        _pipeline = [
-            # Find all versions of those subsets
-            {"$match": {
-                "type": "version",
-                "parent": {"$in": subset_ids}
-            }},
-            # Sorting versions all together
-            {"$sort": {"name": 1}},
-            # Group them by "parent", but only take the last
-            {"$group": {
-                "_id": "$parent",
-                "_version_id": {"$last": "$_id"},
-                "name": {"$last": "$name"}
-            }}
-        ]
-
-        last_version_by_subset_id = {}
-        for doc in io.aggregate(_pipeline):
-            subset_id = doc["_id"]
-            last_version_by_subset_id[subset_id] = doc["name"]
-
-        return last_version_by_subset_id
+                _instance.data["latestVersion"] = last_version_doc["name"]
 
     def fill_anatomy_data(self, context):
         self.log.debug("Storing anatomy data to instance data.")
 
         project_doc = context.data["projectEntity"]
-        context_asset_doc = context.data["assetEntity"]
+        context_asset_doc = context.data.get("assetEntity")
 
         project_task_types = project_doc["config"]["tasks"]
 
@@ -240,7 +229,13 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # Hiearchy
             asset_doc = instance.data.get("assetEntity")
-            if asset_doc and asset_doc["_id"] != context_asset_doc["_id"]:
+            if (
+                asset_doc
+                and (
+                    not context_asset_doc
+                    or asset_doc["_id"] != context_asset_doc["_id"]
+                )
+            ):
                 parents = asset_doc["data"].get("parents") or list()
                 parent_name = project_doc["name"]
                 if parents:

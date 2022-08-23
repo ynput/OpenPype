@@ -1,16 +1,20 @@
 import os
+import sys
 import glob
 import logging
 
 from Qt import QtWidgets, QtCore
 
-import avalon.io as io
-import avalon.api as api
-import avalon.pipeline as pipeline
-import avalon.fusion
-import avalon.style as style
-from avalon.vendor import qtawesome as qta
+import qtawesome as qta
 
+from openpype.client import get_assets
+from openpype import style
+from openpype.pipeline import (
+    install_host,
+    legacy_io,
+)
+from openpype.hosts.fusion import api
+from openpype.pipeline.context_tools import get_workdir_from_session
 
 log = logging.getLogger("Fusion Switch Shot")
 
@@ -124,7 +128,7 @@ class App(QtWidgets.QWidget):
 
     def _on_open_from_dir(self):
 
-        start_dir = self._get_context_directory()
+        start_dir = get_workdir_from_session()
         comp_file, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Choose comp", start_dir)
 
@@ -139,7 +143,7 @@ class App(QtWidgets.QWidget):
         # Clear any existing items
         self._assets.clear()
 
-        asset_names = [a["name"] for a in self.collect_assets()]
+        asset_names = self.collect_asset_names()
         completer = QtWidgets.QCompleter(asset_names)
 
         self._assets.setCompleter(completer)
@@ -150,7 +154,7 @@ class App(QtWidgets.QWidget):
         if not self._use_current.isChecked():
             file_name = self._comps.itemData(self._comps.currentIndex())
         else:
-            comp = avalon.fusion.get_current_comp()
+            comp = api.get_current_comp()
             file_name = comp.GetAttrs("COMPS_FileName")
 
         asset = self._assets.currentText()
@@ -158,23 +162,18 @@ class App(QtWidgets.QWidget):
         import colorbleed.scripts.fusion_switch_shot as switch_shot
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
 
-    def _get_context_directory(self):
-
-        project = io.find_one({"type": "project",
-                               "name": api.Session["AVALON_PROJECT"]},
-                              projection={"config": True})
-
-        template = project["config"]["template"]["work"]
-        dir = pipeline._format_work_template(template, api.Session)
-
-        return dir
-
     def collect_slap_comps(self, directory):
         items = glob.glob("{}/*.comp".format(directory))
         return items
 
-    def collect_assets(self):
-        return list(io.find({"type": "asset", "silo": "film"}))
+    def collect_asset_names(self):
+        project_name = legacy_io.active_project()
+        asset_docs = get_assets(project_name, fields=["name"])
+        asset_names = {
+            asset_doc["name"]
+            for asset_doc in asset_docs
+        }
+        return list(asset_names)
 
     def populate_comp_box(self, files):
         """Ensure we display the filename only but the path is stored as well
@@ -192,8 +191,7 @@ class App(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
-    api.install(avalon.fusion)
+    install_host(api)
 
     app = QtWidgets.QApplication(sys.argv)
     window = App()

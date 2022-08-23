@@ -15,7 +15,6 @@ class CreateAss(plugin.Creator):
     label = "Ass StandIn"
     family = "ass"
     icon = "cube"
-    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateAss, self).__init__(*args, **kwargs)

@@ -2,21 +2,20 @@ import sys
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.api import AvalonMongoDB
 from openpype import style
+from openpype.client import get_projects, get_project
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
     ThumbnailWidget,
     VersionWidget,
     FamilyListView,
-    RepresentationWidget
+    RepresentationWidget,
+    SubsetWidget
 )
 from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from openpype.modules import ModulesManager
-
-from . import lib
-from .widgets import LibrarySubsetWidget
 
 module = sys.modules[__name__]
 module.window = None
@@ -92,7 +91,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         # --- Middle part ---
         # Subsets widget
-        subsets_widget = LibrarySubsetWidget(
+        subsets_widget = SubsetWidget(
             dbcon,
             self.groups_config,
             self.family_config_cache,
@@ -240,7 +239,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
     def get_filtered_projects(self):
         projects = list()
-        for project in self.dbcon.projects():
+        for project in get_projects(fields=["name", "data.library_project"]):
             is_library = project.get("data", {}).get("library_project", False)
             if (
                 (is_library and self.show_libraries) or
@@ -259,14 +258,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         project_name = index.data(QtCore.Qt.UserRole + 1)
 
         self.dbcon.Session["AVALON_PROJECT"] = project_name
-
-        _config = lib.find_config()
-        if hasattr(_config, "install"):
-            _config.install()
-        else:
-            print(
-                "Config `%s` has no function `install`" % _config.__name__
-            )
 
         self._subsets_widget.on_project_change(project_name)
         if self._repres_widget:
@@ -313,14 +304,26 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         families = self._subsets_widget.get_subsets_families()
         self._families_filter_view.set_enabled_families(families)
 
-    def set_context(self, context, refresh=True):
-        self.echo("Setting context: {}".format(context))
-        lib.schedule(
-            lambda: self._set_context(context, refresh=refresh),
-            50, channel="mongo"
-        )
-
     # ------------------------------
+    def set_context(self, context, refresh=True):
+        """Set the selection in the interface using a context.
+        The context must contain `asset` data by name.
+
+        Args:
+            context (dict): The context to apply.
+        Returns:
+            None
+        """
+
+        asset_name = context.get("asset", None)
+        if asset_name is None:
+            return
+
+        if refresh:
+            self._refresh_assets()
+
+        self._assets_widget.select_asset_by_name(asset_name)
+
     def _on_family_filter_change(self, families):
         self._subsets_widget.set_family_filters(families)
 
@@ -333,10 +336,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         """Load assets from database"""
         if self.current_project is not None:
             # Ensure a project is loaded
-            project_doc = self.dbcon.find_one(
-                {"type": "project"},
-                {"type": 1}
-            )
+            project_doc = get_project(self.current_project, fields=["_id"])
             assert project_doc, "This is a bug"
 
         self._families_filter_view.set_enabled_families(set())
@@ -381,7 +381,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         # Clear the version information on asset change
         self._version_info_widget.set_version(None)
-        self._thumbnail_widget.set_thumbnail(asset_ids)
+        self._thumbnail_widget.set_thumbnail("asset", asset_ids)
 
         self.data["state"]["assetIds"] = asset_ids
 
@@ -396,9 +396,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             self._versionschanged()
             return
 
-        selected_subsets = self._subsets_widget.selected_subsets(
-            _merged=True, _other=False
-        )
+        selected_subsets = self._subsets_widget.get_selected_merge_items()
 
         asset_colors = {}
         asset_ids = []
@@ -423,35 +421,14 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self._versionschanged()
 
     def _versionschanged(self):
-        selection = self._subsets_widget.view.selectionModel()
-
-        # Active must be in the selected rows otherwise we
-        # assume it's not actually an "active" current index.
-        version_docs = None
+        items = self._subsets_widget.get_selected_subsets()
         version_doc = None
-        active = selection.currentIndex()
-        rows = selection.selectedRows(column=active.column())
-        if active and active in rows:
-            item = active.data(self._subsets_widget.model.ItemRole)
-            if (
-                item is not None
-                and not (item.get("isGroup") or item.get("isMerged"))
-            ):
-                version_doc = item["version_document"]
-
-        if rows:
-            version_docs = []
-            for index in rows:
-                if not index or not index.isValid():
-                    continue
-                item = index.data(self._subsets_widget.model.ItemRole)
-                if (
-                    item is None
-                    or item.get("isGroup")
-                    or item.get("isMerged")
-                ):
-                    continue
-                version_docs.append(item["version_document"])
+        version_docs = []
+        for item in items:
+            doc = item["version_document"]
+            version_docs.append(doc)
+            if version_doc is None:
+                version_doc = doc
 
         self._version_info_widget.set_version(version_doc)
 
@@ -459,42 +436,16 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             version_doc["_id"]
             for version_doc in version_docs
         ]
+        src_type = "version"
         if not thumbnail_src_ids:
+            src_type = "asset"
             thumbnail_src_ids = self._assets_widget.get_selected_asset_ids()
 
-        self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
+        self._thumbnail_widget.set_thumbnail(src_type, thumbnail_src_ids)
 
         version_ids = [doc["_id"] for doc in version_docs or []]
         if self._repres_widget:
             self._repres_widget.set_version_ids(version_ids)
-
-    def _set_context(self, context, refresh=True):
-        """Set the selection in the interface using a context.
-        The context must contain `asset` data by name.
-        Note: Prior to setting context ensure `refresh` is triggered so that
-              the "silos" are listed correctly, aside from that setting the
-              context will force a refresh further down because it changes
-              the active silo and asset.
-        Args:
-            context (dict): The context to apply.
-        Returns:
-            None
-        """
-
-        asset_name = context.get("asset", None)
-        if asset_name is None:
-            return
-
-        if refresh:
-            # Workaround:
-            # Force a direct (non-scheduled) refresh prior to setting the
-            # asset widget's silo and asset selection to ensure it's correctly
-            # displaying the silo tabs. Calling `window.refresh()` and directly
-            # `window.set_context()` the `set_context()` seems to override the
-            # scheduled refresh and the silo tabs are not shown.
-            self._refresh_assets()
-
-        self._assets_widget.select_asset_by_name(asset_name)
 
     def _on_message_timeout(self):
         self._message_label.setText("")

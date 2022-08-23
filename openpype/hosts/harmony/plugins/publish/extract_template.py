@@ -4,7 +4,7 @@ import os
 import shutil
 
 import openpype.api
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 import openpype.hosts.harmony
 
 

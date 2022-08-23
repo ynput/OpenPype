@@ -1,11 +1,15 @@
 import os
-import toml
 
 import nuke
 
+import toml
 import pyblish.api
-from avalon import api
 from bson.objectid import ObjectId
+
+from openpype.pipeline import (
+    discover_loader_plugins,
+    load_container,
+)
 
 
 class RepairReadLegacyAction(pyblish.api.Action):
@@ -49,13 +53,13 @@ class RepairReadLegacyAction(pyblish.api.Action):
                 loader_name = "LoadMov"
 
             loader_plugin = None
-            for Loader in api.discover(api.Loader):
+            for Loader in discover_loader_plugins():
                 if Loader.__name__ != loader_name:
                     continue
 
                 loader_plugin = Loader
 
-            api.load(
+            load_container(
                 Loader=loader_plugin,
                 representation=ObjectId(data["representation"])
             )

@@ -28,6 +28,10 @@ class BaseEntity:
 
     def __init__(self, schema_data, *args, **kwargs):
         self.schema_data = schema_data
+        tooltip = None
+        if schema_data:
+            tooltip = schema_data.get("tooltip")
+        self.tooltip = tooltip
 
         # Entity id
         self._id = uuid4()
@@ -123,12 +127,6 @@ class BaseItemEntity(BaseEntity):
         # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
 
-        # Entity will save metadata about environments
-        #   - this is current possible only for RawJsonEnity
-        self.is_env_group = False
-        # Key of environment group key must be unique across system settings
-        self.env_group_key = None
-
         # Roles of an entity
         self.roles = None
 
@@ -168,6 +166,10 @@ class BaseItemEntity(BaseEntity):
         self._has_project_override = False
         # Entity has set `_project_override_value` (is not NOT_SET)
         self.had_project_override = False
+
+        self._default_log_invalid_types = True
+        self._studio_log_invalid_types = True
+        self._project_log_invalid_types = True
 
         # Callbacks that are called on change.
         # - main current purspose is to register GUI callbacks
@@ -276,16 +278,6 @@ class BaseItemEntity(BaseEntity):
                 " Change group hierarchy or remove dynamic"
                 " schema to be able work properly."
             ).format(self.group_item.path)
-            raise EntitySchemaError(self, reason)
-
-        # Validate that env group entities will be stored into file.
-        #   - env group entities must store metadata which is not possible if
-        #       metadata would be outside of file
-        if self.file_item is None and self.is_env_group:
-            reason = (
-                "Environment item is not inside file"
-                " item so can't store metadata for defaults."
-            )
             raise EntitySchemaError(self, reason)
 
         # Dynamic items must not have defined labels. (UI specific)
@@ -415,7 +407,7 @@ class BaseItemEntity(BaseEntity):
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
     # TODO convert to private method
-    def _check_update_value(self, value, value_source):
+    def _check_update_value(self, value, value_source, log_invalid_types=True):
         """Validation of value on update methods.
 
         Update methods update data from currently saved settings so it is
@@ -443,16 +435,17 @@ class BaseItemEntity(BaseEntity):
         if new_value is not NOT_SET:
             return new_value
 
-        # Warning log about invalid value type.
-        self.log.warning(
-            (
-                "{} Got invalid value type for {} values."
-                " Expected types: {} | Got Type: {} | Value: \"{}\""
-            ).format(
-                self.path, value_source,
-                self.valid_value_types, type(value), str(value)
+        if log_invalid_types:
+            # Warning log about invalid value type.
+            self.log.warning(
+                (
+                    "{} Got invalid value type for {} values."
+                    " Expected types: {} | Got Type: {} | Value: \"{}\""
+                ).format(
+                    self.path, value_source,
+                    self.valid_value_types, type(value), str(value)
+                )
             )
-        )
         return NOT_SET
 
     def available_for_role(self, role_name=None):
@@ -752,7 +745,7 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def _add_to_project_override(self, on_change_trigger):
-        """Item's implementation to set values as overriden for project.
+        """Item's implementation to set values as overridden for project.
 
         Mark item and all it's children to be stored as project overrides.
         """
@@ -794,7 +787,7 @@ class BaseItemEntity(BaseEntity):
         """Item's implementation to remove project overrides.
 
         Mark item as does not have project overrides. Must not change
-        `was_overriden` attribute value.
+        `was_overridden` attribute value.
 
         Args:
             on_change_trigger (list): Callbacks of `on_change` should be stored
@@ -852,11 +845,6 @@ class ItemEntity(BaseItemEntity):
         # - key is defined by it's parent
         if self.is_dynamic_item:
             self.require_key = False
-
-        # If value should be stored to environments and uder which group key
-        # - the key may be dynamically changed by it's parent on save
-        self.env_group_key = self.schema_data.get("env_group_key")
-        self.is_env_group = bool(self.env_group_key is not None)
 
         # Root item reference
         self.root_item = self.parent.root_item
@@ -981,7 +969,7 @@ class ItemEntity(BaseItemEntity):
         return self.root_item.get_entity_from_path(path)
 
     @abstractmethod
-    def update_default_value(self, parent_values):
+    def update_default_value(self, parent_values, log_invalid_types=True):
         """Fill default values on startup or on refresh.
 
         Default values stored in `openpype` repository should update all items
@@ -991,11 +979,13 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass
 
     @abstractmethod
-    def update_studio_value(self, parent_values):
+    def update_studio_value(self, parent_values, log_invalid_types=True):
         """Fill studio override values on startup or on refresh.
 
         Set studio value if is not set to NOT_SET, in that case studio
@@ -1004,11 +994,13 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass
 
     @abstractmethod
-    def update_project_value(self, parent_values):
+    def update_project_value(self, parent_values, log_invalid_types=True):
         """Fill project override values on startup, refresh or project change.
 
         Set project value if is not set to NOT_SET, in that case project
@@ -1017,5 +1009,7 @@ class ItemEntity(BaseItemEntity):
         Args:
             parent_values (dict): Values of parent's item. But in case item is
                 used as widget, `parent_values` contain value for item.
+            log_invalid_types (bool): Log invalid type of value. Used when
+                entity can have children with same keys and different types.
         """
         pass

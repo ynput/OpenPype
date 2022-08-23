@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Texture version</title>
+<description>
+## Texture version mismatch with workfile
+
+Workfile '{file_name}' version doesn't match with '{version}' of a texture.
+
+### How to repair?
+
+Rename either workfile or texture to contain matching versions
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+This might happen if you are trying to publish textures for older version of workfile (or the other way).
+(Eg. publishing 'workfile_v001' and 'texture_file_v002')
+</detail>
+</error>
+<error id="too_many">
+<title>Too many versions</title>
+<description>
+## Too many versions published at same time
+
+It is currently expected to publish only batch with single version.
+
+Found {found} versions.
+
+### How to repair?
+
+Please remove files with different version and split publishing into multiple steps.
+</description>
+</error>
+</root>

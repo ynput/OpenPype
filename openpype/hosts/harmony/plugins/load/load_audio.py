@@ -1,4 +1,8 @@
-from avalon import api, harmony
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+import openpype.hosts.harmony.api as harmony
 
 sig = harmony.signature()
 func = """
@@ -28,7 +32,7 @@ function %s(args)
 """ % (sig, sig)
 
 
-class ImportAudioLoader(api.Loader):
+class ImportAudioLoader(load.LoaderPlugin):
     """Import audio."""
 
     families = ["shot", "audio"]
@@ -36,7 +40,7 @@ class ImportAudioLoader(api.Loader):
     label = "Import Audio"
 
     def load(self, context, name=None, namespace=None, data=None):
-        wav_file = api.get_representation_path(context["representation"])
+        wav_file = get_representation_path(context["representation"])
         harmony.send(
             {"function": func, "args": [context["subset"]["name"], wav_file]}
         )

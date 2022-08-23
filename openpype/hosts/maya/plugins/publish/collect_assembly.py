@@ -2,7 +2,7 @@ from collections import defaultdict
 import pyblish.api
 
 from maya import cmds, mel
-from avalon import maya as avalon
+from openpype.hosts.maya import api
 from openpype.hosts.maya.api import lib
 
 # TODO : Publish of assembly: -unique namespace for all assets, VALIDATOR!
@@ -30,7 +30,7 @@ class CollectAssembly(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         # Find containers
-        containers = avalon.ls()
+        containers = api.ls()
 
         # Get all content from the instance
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))

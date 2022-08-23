@@ -1,10 +1,20 @@
-from avalon import api, io
-from avalon.maya.pipeline import containerise
-from avalon.maya import lib
 from maya import cmds, mel
 
+from openpype.client import (
+    get_asset_by_id,
+    get_subset_by_id,
+    get_version_by_id,
+)
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
 
-class AudioLoader(api.Loader):
+
+class AudioLoader(load.LoaderPlugin):
     """Specific loader of audio."""
 
     families = ["audio"]
@@ -27,7 +37,7 @@ class AudioLoader(api.Loader):
         )
 
         asset = context["asset"]["name"]
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
@@ -51,7 +61,7 @@ class AudioLoader(api.Loader):
 
         assert audio_node is not None, "Audio node not found."
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         audio_node.filename.set(path)
         cmds.setAttr(
             container["objectName"] + ".representation",
@@ -60,9 +70,16 @@ class AudioLoader(api.Loader):
         )
 
         # Set frame range.
-        version = io.find_one({"_id": representation["parent"]})
-        subset = io.find_one({"_id": version["parent"]})
-        asset = io.find_one({"_id": subset["parent"]})
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(
+            project_name, representation["parent"], fields=["parent"]
+        )
+        subset = get_subset_by_id(
+            project_name, version["parent"], fields=["parent"]
+        )
+        asset = get_asset_by_id(
+            project_name, subset["parent"], fields=["parent"]
+        )
         audio_node.sourceStart.set(1 - asset["data"]["frameStart"])
         audio_node.sourceEnd.set(asset["data"]["frameEnd"])
 

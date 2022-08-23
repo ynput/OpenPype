@@ -1,9 +1,9 @@
 import os
 
-import avalon.maya
 import openpype.api
 
 from maya import cmds
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractAssStandin(openpype.api.Extractor):
@@ -30,7 +30,7 @@ class ExtractAssStandin(openpype.api.Extractor):
 
         # Write out .ass file
         self.log.info("Writing: '%s'" % file_path)
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             self.log.info("Writing: {}".format(instance.data["setMembers"]))
             cmds.select(instance.data["setMembers"], noExpand=True)
 
@@ -38,13 +38,9 @@ class ExtractAssStandin(openpype.api.Extractor):
                 self.log.info("Extracting ass sequence")
 
                 # Collect the start and end including handles
-                start = instance.data.get("frameStart", 1)
-                end = instance.data.get("frameEnd", 1)
-                handles = instance.data.get("handles", 0)
+                start = instance.data.get("frameStartHandle", 1)
+                end = instance.data.get("frameEndHandle", 1)
                 step = instance.data.get("step", 0)
-                if handles:
-                    start -= handles
-                    end += handles
 
                 exported_files = cmds.arnoldExportAss(filename=file_path,
                                                       selected=True,

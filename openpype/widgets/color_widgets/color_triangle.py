@@ -1,5 +1,5 @@
 from enum import Enum
-from math import floor, sqrt, sin, cos, acos, pi as PI
+from math import floor, ceil, sqrt, sin, cos, acos, pi as PI
 from Qt import QtWidgets, QtCore, QtGui
 
 TWOPI = PI * 2
@@ -187,10 +187,10 @@ class QtColorTriangle(QtWidgets.QWidget):
         self.outer_radius = (size - 1) / 2
 
         self.pen_width = int(
-            floor(self.outer_radius / self.ellipse_thick_ratio)
+            ceil(self.outer_radius / self.ellipse_thick_ratio)
         )
         self.ellipse_size = int(
-            floor(self.outer_radius / self.ellipse_size_ratio)
+            ceil(self.outer_radius / self.ellipse_size_ratio)
         )
 
         cx = float(self.contentsRect().center().x())
@@ -542,10 +542,10 @@ class QtColorTriangle(QtWidgets.QWidget):
         self.outer_radius = (size - 1) / 2
 
         self.pen_width = int(
-            floor(self.outer_radius / self.ellipse_thick_ratio)
+            ceil(self.outer_radius / self.ellipse_thick_ratio)
         )
         self.ellipse_size = int(
-            floor(self.outer_radius / self.ellipse_size_ratio)
+            ceil(self.outer_radius / self.ellipse_size_ratio)
         )
 
         cx = float(self.contentsRect().center().x())

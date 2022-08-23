@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import tempfile
+import platform
 import contextlib
 import subprocess
 from collections import OrderedDict
@@ -11,10 +12,9 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-import avalon.maya
-from avalon import io, api
 
 import openpype.api
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
@@ -25,6 +25,31 @@ HARDLINK = 2
 def escape_space(path):
     """Ensure path is enclosed by quotes to allow paths with spaces"""
     return '"{}"'.format(path) if " " in path else path
+
+
+def get_ocio_config_path(profile_folder):
+    """Path to OpenPype vendorized OCIO.
+
+    Vendorized OCIO config file path is grabbed from the specific path
+    hierarchy specified below.
+
+    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
+    Args:
+        profile_folder (str): Name of folder to grab config file from.
+
+    Returns:
+        str: Path to vendorized config file.
+    """
+
+    return os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "bin",
+        "ocioconfig",
+        "OpenColorIOConfigs",
+        profile_folder,
+        "config.ocio"
+    )
 
 
 def find_paths_by_hash(texture_hash):
@@ -40,7 +65,7 @@ def find_paths_by_hash(texture_hash):
 
     """
     key = "data.sourceHashes.{0}".format(texture_hash)
-    return io.distinct(key, {"type": "version"})
+    return legacy_io.distinct(key, {"type": "version"})
 
 
 def maketx(source, destination, *args):
@@ -63,6 +88,7 @@ def maketx(source, destination, *args):
     from openpype.lib import get_oiio_tools_path
 
     maketx_path = get_oiio_tools_path("maketx")
+
     if not os.path.exists(maketx_path):
         print(
             "OIIO tool not found in {}".format(maketx_path))
@@ -78,10 +104,11 @@ def maketx(source, destination, *args):
         # use oiio-optimized settings for tile-size, planarconfig, metadata
         "--oiio",
         "--filter lanczos3",
+        escape_space(source)
     ]
 
     cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination), escape_space(source)])
+    cmd.extend(["-o", escape_space(destination)])
 
     cmd = " ".join(cmd)
 
@@ -145,7 +172,7 @@ class ExtractLook(openpype.api.Extractor):
 
     label = "Extract Look (Maya Scene + JSON)"
     hosts = ["maya"]
-    families = ["look"]
+    families = ["look", "mvLook"]
     order = pyblish.api.ExtractorOrder + 0.2
     scene_type = "ma"
     look_data_type = "json"
@@ -217,7 +244,7 @@ class ExtractLook(openpype.api.Extractor):
         self.log.info("Extract sets (%s) ..." % _scene_type)
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
-        sets = relationships.keys()
+        sets = list(relationships.keys())
         if not sets:
             self.log.info("No sets found")
             return
@@ -239,7 +266,7 @@ class ExtractLook(openpype.api.Extractor):
                 # getting incorrectly remapped. (LKD-17, PLN-101)
                 with no_workspace_dir():
                     with lib.attribute_values(remap):
-                        with avalon.maya.maintained_selection():
+                        with lib.maintained_selection():
                             cmds.select(sets, noExpand=True)
                             cmds.file(
                                 maya_path,
@@ -334,7 +361,14 @@ class ExtractLook(openpype.api.Extractor):
         transfers = []
         hardlinks = []
         hashes = {}
-        force_copy = instance.data.get("forceCopy", False)
+        # Temporary fix to NOT create hardlinks on windows machines
+        if platform.system().lower() == "windows":
+            self.log.info(
+                "Forcing copy instead of hardlink due to issues on Windows..."
+            )
+            force_copy = True
+        else:
+            force_copy = instance.data.get("forceCopy", False)
 
         for filepath in files_metadata:
 
@@ -364,10 +398,12 @@ class ExtractLook(openpype.api.Extractor):
 
             if mode == COPY:
                 transfers.append((source, destination))
-                self.log.info('copying')
+                self.log.info('file will be copied {} -> {}'.format(
+                    source, destination))
             elif mode == HARDLINK:
                 hardlinks.append((source, destination))
-                self.log.info('hardlinking')
+                self.log.info('file will be hardlinked {} -> {}'.format(
+                    source, destination))
 
             # Store the hashes from hash to destination to include in the
             # database
@@ -395,7 +431,19 @@ class ExtractLook(openpype.api.Extractor):
                 # node doesn't have color space attribute
                 color_space = "Raw"
             else:
-                if files_metadata[source]["color_space"] == "Raw":
+                # get the resolved files
+                metadata = files_metadata.get(source)
+                # if the files are unresolved from `source`
+                # assume color space from the first file of
+                # the resource
+                if not metadata:
+                    first_file = next(iter(resource.get(
+                        "files", [])), None)
+                    if not first_file:
+                        continue
+                    first_filepath = os.path.normpath(first_file)
+                    metadata = files_metadata[first_filepath]
+                if metadata["color_space"] == "Raw":
                     # set color space to raw if we linearized it
                     color_space = "Raw"
                 # Remap file node filename to destination
@@ -483,6 +531,8 @@ class ExtractLook(openpype.api.Extractor):
             else:
                 colorconvert = ""
 
+            config_path = get_ocio_config_path("nuke-default")
+            color_config = "--colorconfig {0}".format(config_path)
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -492,10 +542,11 @@ class ExtractLook(openpype.api.Extractor):
                 filepath,
                 converted,
                 # Include `source-hash` as string metadata
-                "-sattrib",
+                "--sattrib",
                 "sourceHash",
                 escape_space(texture_hash),
                 colorconvert,
+                color_config
             )
 
             return converted, COPY, texture_hash

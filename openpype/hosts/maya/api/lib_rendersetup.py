@@ -1,24 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Library for handling Render Setup in Maya."""
+"""Code to get attributes from render layer without switching to it.
+
+https://github.com/Colorbleed/colorbleed-config/blob/acre/colorbleed/maya/lib_rendersetup.py
+Credits: Roy Nieterau (BigRoy) / Colorbleed
+Modified for use in OpenPype
+
+"""
+
 from maya import cmds
 import maya.api.OpenMaya as om
 import logging
 
 import maya.app.renderSetup.model.utils as utils
-from maya.app.renderSetup.model import (
-    renderSetup
-)
+from maya.app.renderSetup.model import renderSetup
 from maya.app.renderSetup.model.override import (
     AbsOverride,
     RelOverride,
     UniqueOverride
 )
 
-ExactMatch = 0
-ParentMatch = 1
-ChildMatch = 2
+EXACT_MATCH = 0
+PARENT_MATCH = 1
+CLIENT_MATCH = 2
 
-DefaultRenderLayer = "defaultRenderLayer"
+DEFAULT_RENDER_LAYER = "defaultRenderLayer"
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +49,7 @@ def get_rendersetup_layer(layer):
 
 
     """
-    if layer == DefaultRenderLayer:
+    if layer == DEFAULT_RENDER_LAYER:
         # defaultRenderLayer doesn't have a `renderSetupLayer`
         return layer
 
@@ -96,12 +101,13 @@ def get_attr_in_layer(node_attr, layer):
 
     def _layer_needs_update(layer):
         """Return whether layer needs updating."""
-        # Use `getattr` as e.g. DefaultRenderLayer does not have the attribute
+        # Use `getattr` as e.g. DEFAULT_RENDER_LAYER does not have
+        # the attribute
         return getattr(layer, "needsMembershipUpdate", False) or \
             getattr(layer, "needsApplyUpdate", False)
 
     def get_default_layer_value(node_attr_):
-        """Return attribute value in defaultRenderLayer"""
+        """Return attribute value in `DEFAULT_RENDER_LAYER`."""
         inputs = cmds.listConnections(node_attr_,
                                       source=True,
                                       destination=False,
@@ -112,11 +118,11 @@ def get_attr_in_layer(node_attr, layer):
                                       skipConversionNodes=True,
                                       type="applyOverride") or []
         if inputs:
-            _override = inputs[0]
-            history_overrides = cmds.ls(cmds.listHistory(_override,
+            override = inputs[0]
+            history_overrides = cmds.ls(cmds.listHistory(override,
                                                          pruneDagObjects=True),
                                         type="applyOverride")
-            node = history_overrides[-1] if history_overrides else _override
+            node = history_overrides[-1] if history_overrides else override
             node_attr_ = node + ".original"
 
         return pm.getAttr(node_attr_, asString=True)
@@ -151,11 +157,12 @@ def get_attr_in_layer(node_attr, layer):
         if isinstance(layer_override, AbsOverride):
             # Absolute override
             value = pm.getAttr(layer_override.name() + ".attrValue")
-            if match == ExactMatch:
-                value = value
-            if match == ParentMatch:
+            if match == EXACT_MATCH:
+                # value = value
+                pass
+            elif match == PARENT_MATCH:
                 value = value[index]
-            if match == ChildMatch:
+            elif match == CLIENT_MATCH:
                 value[index] = value
 
         elif isinstance(layer_override, RelOverride):
@@ -164,11 +171,11 @@ def get_attr_in_layer(node_attr, layer):
             multiply = pm.getAttr(layer_override.name() + ".multiply")
             offset = pm.getAttr(layer_override.name() + ".offset")
 
-            if match == ExactMatch:
+            if match == EXACT_MATCH:
                 value = value * multiply + offset
-            if match == ParentMatch:
+            elif match == PARENT_MATCH:
                 value = value * multiply[index] + offset[index]
-            if match == ChildMatch:
+            elif match == CLIENT_MATCH:
                 value[index] = value[index] * multiply + offset
 
         else:
@@ -187,7 +194,7 @@ def get_attr_overrides(node_attr, layer,
         (Match, Override, Index)
 
     Match:
-        This is any of ExactMatch, ParentMatch, ChildMatch
+        This is any of EXACT_MATCH, PARENT_MATCH, CLIENT_MATCH
         and defines whether the override is exactly on the
         plug, on the parent or on a child plug.
 
@@ -196,9 +203,9 @@ def get_attr_overrides(node_attr, layer,
 
     Index:
         This is the Plug index under the parent or for
-        the child that matches. The ExactMatch index will
-        always be None. For ParentMatch the index is which
-        index the plug is under the parent plug. For ChildMatch
+        the child that matches. The EXACT_MATCH index will
+        always be None. For PARENT_MATCH the index is which
+        index the plug is under the parent plug. For CLIENT_MATCH
         the index is which child index matches the plug.
 
     Args:
@@ -217,7 +224,7 @@ def get_attr_overrides(node_attr, layer,
     """
 
     def get_mplug_children(plug):
-        """Return children MPlugs of compound MPlug"""
+        """Return children MPlugs of compound `MPlug`."""
         children = []
         if plug.isCompound:
             for i in range(plug.numChildren()):
@@ -225,29 +232,29 @@ def get_attr_overrides(node_attr, layer,
         return children
 
     def get_mplug_names(mplug):
-        """Return long and short name of MPlug"""
+        """Return long and short name of `MPlug`."""
         long_name = mplug.partialName(useLongNames=True)
         short_name = mplug.partialName(useLongNames=False)
         return {long_name, short_name}
 
-    def iter_override_targets(_override):
+    def iter_override_targets(override):
         try:
-            for target in _override._targets():
+            for target in override._targets():
                 yield target
         except AssertionError:
             # Workaround: There is a bug where the private `_targets()` method
             #             fails on some attribute plugs. For example overrides
             #             to the defaultRenderGlobals.endFrame
             #             (Tested in Maya 2020.2)
-            log.debug("Workaround for %s" % _override)
+            log.debug("Workaround for %s" % override)
             from maya.app.renderSetup.common.utils import findPlug
 
-            attr = _override.attributeName()
-            if isinstance(_override, UniqueOverride):
-                node = _override.targetNodeName()
+            attr = override.attributeName()
+            if isinstance(override, UniqueOverride):
+                node = override.targetNodeName()
                 yield findPlug(node, attr)
             else:
-                nodes = _override.parent().selector().nodes()
+                nodes = override.parent().selector().nodes()
                 for node in nodes:
                     if cmds.attributeQuery(attr, node=node, exists=True):
                         yield findPlug(node, attr)
@@ -258,8 +265,8 @@ def get_attr_overrides(node_attr, layer,
     plug = sel.getPlug(0)
 
     layer = get_rendersetup_layer(layer)
-    if layer == DefaultRenderLayer:
-        # DefaultRenderLayer will never have overrides
+    if layer == DEFAULT_RENDER_LAYER:
+        # DEFAULT_RENDER_LAYER will never have overrides
         # since it's the default layer
         return []
 
@@ -314,14 +321,14 @@ def get_attr_overrides(node_attr, layer,
 
             override_match = None
             if plug == override_plug:
-                override_match = (ExactMatch, layer_override, None)
+                override_match = (EXACT_MATCH, layer_override, None)
 
             elif parent and override_plug == parent:
-                override_match = (ParentMatch, layer_override, parent_index)
+                override_match = (PARENT_MATCH, layer_override, parent_index)
 
             elif children and override_plug in children:
                 child_index = children.index(override_plug)
-                override_match = (ChildMatch, layer_override, child_index)
+                override_match = (CLIENT_MATCH, layer_override, child_index)
 
             if override_match:
                 plug_overrides.append(override_match)
@@ -333,7 +340,7 @@ def get_attr_overrides(node_attr, layer,
                 isinstance(layer_override, AbsOverride) and
                 # When the override is only on a child plug then it doesn't
                 # override the entire value so we not stop at this override
-                not override_match[0] == ChildMatch
+                not override_match[0] == CLIENT_MATCH
         ):
             # If override is absolute override, then BREAK out
             # of parent loop we don't need to look any further as

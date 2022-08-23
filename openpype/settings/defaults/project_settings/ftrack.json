@@ -109,6 +109,27 @@
                 "Omitted"
             ],
             "name_sorting": false
+        },
+        "transfer_values_of_hierarchical_attributes": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "create_daily_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project Manager"
+            ],
+            "cycle_enabled": false,
+            "cycle_hour_start": [
+                0,
+                0,
+                0
+            ],
+            "review_session_template": "{yy}{mm}{dd}"
         }
     },
     "user_handlers": {
@@ -193,6 +214,11 @@
                 "Administrator"
             ]
         },
+        "fill_workfile_attribute": {
+            "enabled": false,
+            "custom_attribute_key": "",
+            "role_list": []
+        },
         "seed_project": {
             "enabled": true,
             "role_list": [
@@ -233,6 +259,51 @@
                     ],
                     "families": [
                         "plate"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "plate",
+                        "review",
+                        "audio"
                     ],
                     "task_types": [],
                     "tasks": [],
@@ -292,7 +363,8 @@
                     ],
                     "families": [
                         "write",
-                        "render"
+                        "render",
+                        "prerender"
                     ],
                     "task_types": [],
                     "tasks": [],
@@ -331,17 +403,99 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "houdini"
+                    ],
+                    "families": [
+                        "usd"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "photoshop"
+                    ],
+                    "families": [
+                        "review"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
+        "CollectFtrackCustomAttributeData": {
+            "enabled": false,
+            "custom_attribute_keys": []
+        },
+        "IntegrateHierarchyToFtrack": {
+            "create_task_status_profiles": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
-            "note_with_intent_template": "{intent}: {comment}",
+            "note_template": "{intent}: {comment}",
             "note_labels": []
+        },
+        "IntegrateFtrackDescription": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "description_template": "{comment}"
         },
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackComponentOverwrite": {
+            "enabled": true
+        },
+        "IntegrateFtrackInstance": {
+            "family_mapping": {
+                "camera": "cam",
+                "look": "look",
+                "mayaascii": "scene",
+                "model": "geo",
+                "rig": "rig",
+                "setdress": "setdress",
+                "pointcache": "cache",
+                "render": "render",
+                "prerender": "render",
+                "render2d": "render",
+                "nukescript": "comp",
+                "write": "render",
+                "review": "mov",
+                "plate": "img",
+                "audio": "audio",
+                "workfile": "scene",
+                "animation": "cache",
+                "image": "img",
+                "reference": "reference",
+                "ass": "cache",
+                "mayaScene": "scene",
+                "camerarig": "rig",
+                "yeticache": "cache",
+                "yetiRig": "rig",
+                "xgen": "xgen",
+                "rendersetup": "rendersetup",
+                "assembly": "assembly",
+                "layout": "layout",
+                "unrealStaticMesh": "geo",
+                "vrayproxy": "cache",
+                "redshiftproxy": "cache",
+                "usd": "usd"
+            },
+            "keep_first_subset_name_for_review": true,
+            "asset_versions_status_profiles": [],
+            "additional_metadata_keys": []
+        },
+        "IntegrateFtrackFarmStatus": {
+            "farm_status_profiles": []
         }
     }
 }

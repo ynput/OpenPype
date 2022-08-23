@@ -110,7 +110,7 @@ install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   export POETRY_HOME="$openpype_root/.poetry"
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+  curl -sSL https://install.python-poetry.org/ | python -
 }
 
 ##############################################################################
@@ -194,7 +194,6 @@ main () {
   "$POETRY_HOME/bin/poetry" run pip install setuptools==49.6.0
   "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall wheel
   "$POETRY_HOME/bin/poetry" run python -m pip install --disable-pip-version-check --force-reinstall pip
-  "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall cx_freeze -i $openpype_index --extra-index-url https://pypi.org/simple
 }
 
 return_code=0

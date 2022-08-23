@@ -1,11 +1,13 @@
 import pyblish.api
+
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
     """Validates that textures workfile has collected resources (optional).
 
-        Collected recourses means secondary workfiles (in most cases).
+        Collected resources means secondary workfiles (in most cases).
     """
 
     label = "Validate Texture Workfile Has Resources"
@@ -24,6 +26,13 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
                 self.log.warning("Only secondary workfile present!")
                 return
 
-            msg = "No secondary workfiles present for workfile {}".\
-                format(instance.data["name"])
-            assert instance.data.get("resources"), msg
+            if not instance.data.get("resources"):
+                msg = "No secondary workfile present for workfile '{}'". \
+                    format(instance.data["name"])
+                ext = self.main_workfile_extensions[0]
+                formatting_data = {"file_name": instance.data["name"],
+                                   "extension": ext}
+
+                raise PublishXmlValidationError(self, msg,
+                                                formatting_data=formatting_data
+                                                )

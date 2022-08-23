@@ -1,14 +1,36 @@
 import logging
 
 from Qt import QtWidgets, QtCore, QtGui
-
-from avalon.vendor import qtawesome, qargparse
+import qargparse
+import qtawesome
 from openpype.style import (
     get_objected_colors,
     get_style_image_path
 )
 
 log = logging.getLogger(__name__)
+
+
+class CustomTextComboBox(QtWidgets.QComboBox):
+    """Combobox which can have different text showed."""
+
+    def __init__(self, *args, **kwargs):
+        self._custom_text = None
+        super(CustomTextComboBox, self).__init__(*args, **kwargs)
+
+    def set_custom_text(self, text=None):
+        if self._custom_text != text:
+            self._custom_text = text
+            self.repaint()
+
+    def paintEvent(self, event):
+        painter = QtWidgets.QStylePainter(self)
+        option = QtWidgets.QStyleOptionComboBox()
+        self.initStyleOption(option)
+        if self._custom_text is not None:
+            option.currentText = self._custom_text
+        painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, option)
+        painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, option)
 
 
 class PlaceholderLineEdit(QtWidgets.QLineEdit):
@@ -61,6 +83,29 @@ class ClickableFrame(BaseClickableFrame):
 
     def _mouse_release_callback(self):
         self.clicked.emit()
+
+
+class ClickableLabel(QtWidgets.QLabel):
+    """Label that catch left mouse click and can trigger 'clicked' signal."""
+    clicked = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(ClickableLabel, self).__init__(parent)
+
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(ClickableLabel, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(ClickableLabel, self).mouseReleaseEvent(event)
 
 
 class ExpandBtnLabel(QtWidgets.QLabel):
@@ -148,11 +193,70 @@ class ImageButton(QtWidgets.QPushButton):
         return self.iconSize()
 
 
+class IconButton(QtWidgets.QPushButton):
+    """PushButton with icon and size of font.
+
+    Using font metrics height as icon size reference.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(IconButton, self).__init__(*args, **kwargs)
+        self.setObjectName("IconButton")
+
+    def sizeHint(self):
+        result = super(IconButton, self).sizeHint()
+        icon_h = self.iconSize().height()
+        font_height = self.fontMetrics().height()
+        text_set = bool(self.text())
+        if not text_set and icon_h < font_height:
+            new_size = result.height() - icon_h + font_height
+            result.setHeight(new_size)
+            result.setWidth(new_size)
+
+        return result
+
+
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._empty_pixmap = QtGui.QPixmap(0, 0)
+        self._source_pixmap = pixmap
+
+    def set_source_pixmap(self, pixmap):
+        """Change source image."""
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
+
+    def _get_pix_size(self):
+        size = self.fontMetrics().height()
+        size += size % 2
+        return size, size
+
+    def _set_resized_pix(self):
+        if self._source_pixmap is None:
+            self.setPixmap(self._empty_pixmap)
+            return
+        width, height = self._get_pix_size()
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(PixmapLabel, self).resizeEvent(event)
+
+
 class OptionalMenu(QtWidgets.QMenu):
     """A subclass of `QtWidgets.QMenu` to work with `OptionalAction`
 
     This menu has reimplemented `mouseReleaseEvent`, `mouseMoveEvent` and
-    `leaveEvent` to provide better action hightlighting and triggering for
+    `leaveEvent` to provide better action highlighting and triggering for
     actions that were instances of `QtWidgets.QWidgetAction`.
 
     """

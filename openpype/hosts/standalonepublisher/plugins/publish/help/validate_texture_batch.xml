@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>No texture files found</title>
+<description>
+## Batch doesn't contain texture files
+
+Batch must contain at least one texture file.
+
+### How to repair?
+
+Add texture file to the batch or check name if it follows naming convention to match texture files to the batch.
+</description>
+</error>
+</root>

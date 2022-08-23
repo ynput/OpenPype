@@ -301,6 +301,15 @@ function main(websocket_url){
       return get_extension_version();
     });
 
+    RPC.addRoute('AfterEffects.get_app_version', function (data) {
+        log.warn('Server called client route "get_app_version":', data);
+        return runEvalScript("getAppVersion()")
+            .then(function(result){
+                log.warn("get_app_version: " + result);
+                return result;
+            });
+    });
+
      RPC.addRoute('AfterEffects.close', function (data) {
         log.warn('Server called client route "close":', data);
         return runEvalScript("close()");

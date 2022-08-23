@@ -152,8 +152,6 @@ def test_install_live_repos(fix_bootstrap, printer, monkeypatch, pytestconfig):
     openpype_version = fix_bootstrap.create_version_from_live_code()
     sep = os.path.sep
     expected_paths = [
-        f"{openpype_version.path}{sep}repos{sep}avalon-core",
-        f"{openpype_version.path}{sep}repos{sep}avalon-unreal-integration",
         f"{openpype_version.path}"
     ]
     printer("testing zip creation")

@@ -1,5 +1,5 @@
 import os
-from avalon import style
+from openpype.resources import get_image_path
 from Qt import QtWidgets, QtCore, QtGui, QtSvg
 
 
@@ -24,11 +24,8 @@ class TreeViewSpinner(QtWidgets.QTreeView):
     def __init__(self, parent=None):
         super(TreeViewSpinner, self).__init__(parent=parent)
 
-        loading_image_path = os.path.join(
-            os.path.dirname(os.path.abspath(style.__file__)),
-            "svg",
-            "spinner-200.svg"
-        )
+        loading_image_path = get_image_path("spinner-200.svg")
+
         self.spinner = QtSvg.QSvgRenderer(loading_image_path)
 
         self.is_loading = False

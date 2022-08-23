@@ -41,6 +41,9 @@
                         },
                         {
                             "render": "render"
+                        },
+                        {
+                            "write": "write"
                         }
                     ]
                 }
@@ -132,9 +135,46 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "raw-json",
-                    "key": "nodes",
-                    "label": "Nodes"
+                    "type": "boolean",
+                    "key": "use_rendered",
+                    "label": "Use rendered images"
+                },
+                {
+                    "type": "boolean",
+                    "key": "bake_viewer_process",
+                    "label": "Bake viewer process"
+                },
+                {
+                    "type": "boolean",
+                    "key": "bake_viewer_input_process",
+                    "label": "Bake viewer input process"
+                },
+                {
+                    "type": "collapsible-wrap",
+                    "label": "Nodes",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "raw-json",
+                            "key": "nodes",
+                            "label": "Nodes"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ExtractReviewData",
+            "label": "ExtractReviewData",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
                 }
             ]
         },
@@ -195,6 +235,12 @@
                                         "label": "Families",
                                         "type": "list",
                                         "object_type": "text"
+                                    },
+                                    {
+                                        "key": "subsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
                                     }
                                 ]
                             },
@@ -202,9 +248,10 @@
                                 "type": "separator"
                             },
                             {
-                                "type": "text",
-                                "key": "extension",
-                                "label": "File extension"
+                                "type": "boolean",
+                                "key": "read_raw",
+                                "label": "Read colorspace RAW",
+                                "default": false
                             },
                             {
                                 "type": "text",
@@ -220,6 +267,33 @@
                                 "type": "boolean",
                                 "key": "bake_viewer_input_process",
                                 "label": "Bake Viewer Input Process (LUTs)"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "reformat_node_add",
+                                "label": "Add Reformat Node",
+                                "default": false
+                            },
+                            {
+                                "type": "schema_template",
+                                "name": "template_nuke_knob_inputs",
+                                "template_data": [
+                                    {
+                                        "label": "Reformat Node Knobs",
+                                        "key": "reformat_node_config"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "extension",
+                                "label": "Write node file type"
                             },
                             {
                                 "key": "add_tags",
@@ -244,6 +318,59 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill specific slate node values with templates. Uncheck the checkbox to not change the value.",
+                    "word_wrap": true
+                },
+                {
+                    "type": "dict",
+                    "key": "key_value_mapping",
+                    "children": [
+                        {
+                            "type": "list-strict",
+                            "key": "f_submission_note",
+                            "label": "Submission Note:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "f_submitting_for",
+                            "label": "Submission For:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "f_vfx_scope_of_work",
+                            "label": "VFX Scope Of Work:",
+                            "object_types": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },

@@ -14,6 +14,9 @@
             "ftrackreview": "Add review to Ftrack"
         },
         {
+            "shotgridreview": "Add review to Shotgrid"
+        },
+        {
             "delete": "Delete output"
         },
         {
@@ -24,6 +27,9 @@
         },
         {
             "sequence": "Output as image sequence"
+        },
+        {
+            "no-audio": "Do not add audio"
         }
     ]
 }

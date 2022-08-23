@@ -2,13 +2,11 @@ import unreal
 from unreal import EditorAssetLibrary as eal
 from unreal import EditorLevelLibrary as ell
 
-from openpype.hosts.unreal.api.plugin import Creator
-from avalon.unreal import (
-    instantiate,
-)
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api.pipeline import instantiate
 
 
-class CreateCamera(Creator):
+class CreateCamera(plugin.Creator):
     """Layout output for character rigs"""
 
     name = "layoutMain"
@@ -16,7 +14,7 @@ class CreateCamera(Creator):
     family = "camera"
     icon = "cubes"
 
-    root = "/Game/Avalon/Instances"
+    root = "/Game/OpenPype/Instances"
     suffix = "_INS"
 
     def __init__(self, *args, **kwargs):

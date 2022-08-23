@@ -199,7 +199,7 @@ pype publish <PATH_TO_JSON>
 - run Pyblish GUI
 
 ### `--debug`
-- print more verbose infomation
+- print more verbose information
 
 --------------------
 
@@ -260,9 +260,9 @@ pype tray --debug
 
 ## `update-requirements`
 
-Synchronize dependecies in your virtual environment with requirement.txt file.
+Synchronize dependencies in your virtual environment with requirement.txt file.
 Equivalent of running `pip freeze > pypeapp/requirements.txt` from your virtual
-environmnet. This is useful for development purposes.
+environment. This is useful for development purposes.
 
 ```sh
 pype update-requirements

@@ -21,6 +21,11 @@ class OpenPypeVersionNotFound(Exception):
     pass
 
 
+class OpenPypeVersionIncompatible(Exception):
+    """OpenPype version is not compatible with the installed one (build)."""
+    pass
+
+
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
@@ -161,18 +166,17 @@ def get_openpype_global_settings(url: str) -> dict:
     return global_settings.get("data") or {}
 
 
-def get_openpype_path_from_db(url: str) -> Union[str, None]:
+def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     """Get OpenPype path from global settings.
 
     Args:
-        url (str): mongodb url.
+        settings (dict): mongodb url.
 
     Returns:
         path to OpenPype or None if not found
     """
-    global_settings = get_openpype_global_settings(url)
     paths = (
-        global_settings
+        settings
         .get("openpype_path", {})
         .get(platform.system().lower())
     ) or []

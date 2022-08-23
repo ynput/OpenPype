@@ -1,15 +1,20 @@
 from collections import defaultdict
 
 from Qt import QtCore
+import qtawesome
 
-from avalon.tools import models
-from avalon.vendor import qtawesome
-from avalon.style import colors
+from openpype.tools.utils import models
+from openpype.style import get_default_entity_icon_color
 
 
 class AssetModel(models.TreeModel):
 
     Columns = ["label"]
+
+    def __init__(self, *args, **kwargs):
+        super(AssetModel, self).__init__(*args, **kwargs)
+
+        self._icon_color = get_default_entity_icon_color()
 
     def add_items(self, items):
         """
@@ -65,8 +70,10 @@ class AssetModel(models.TreeModel):
                 node = index.internalPointer()
                 icon = node.get("icon")
                 if icon:
-                    return qtawesome.icon("fa.{0}".format(icon),
-                                          color=colors.default)
+                    return qtawesome.icon(
+                        "fa.{0}".format(icon),
+                        color=self._icon_color
+                    )
 
         return super(AssetModel, self).data(index, role)
 

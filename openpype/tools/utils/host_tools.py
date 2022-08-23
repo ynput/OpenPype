@@ -1,10 +1,17 @@
 """Single access point to all tools usable in hosts.
 
-It is possible to create `HostToolsHelper` in host implementaion or
+It is possible to create `HostToolsHelper` in host implementation or
 use singleton approach with global functions (using helper anyway).
 """
+import os
 
-import avalon.api
+import pyblish.api
+from openpype.host import IWorkfileHost, ILoadHost
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
+)
+
 from .lib import qt_app_context
 
 
@@ -42,48 +49,33 @@ class HostToolsHelper:
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from openpype.tools.workfiles.app import (
-                Window, validate_host_requirements
-            )
+            from openpype.tools.workfiles.app import Window
+
             # Host validation
-            host = avalon.api.registered_host()
-            validate_host_requirements(host)
+            host = registered_host()
+            IWorkfileHost.validate_workfile_methods(host)
 
             workfiles_window = Window(parent=parent)
             self._workfiles_tool = workfiles_window
 
         return self._workfiles_tool
 
-    def show_workfiles(self, parent=None, use_context=None, save=None):
+    def show_workfiles(
+        self, parent=None, use_context=None, save=None, on_top=None
+    ):
         """Workfiles tool for changing context and saving workfiles."""
-        if use_context is None:
-            use_context = True
-
-        if save is None:
-            save = True
 
         with qt_app_context():
             workfiles_tool = self.get_workfiles_tool(parent)
-            workfiles_tool.set_save_enabled(save)
-
-            if not workfiles_tool.isVisible():
-                workfiles_tool.show()
-
-                if use_context:
-                    context = {
-                        "asset": avalon.api.Session["AVALON_ASSET"],
-                        "task": avalon.api.Session["AVALON_TASK"]
-                    }
-                    workfiles_tool.set_context(context)
-
-            # Pull window to the front.
-            workfiles_tool.raise_()
-            workfiles_tool.activateWindow()
+            workfiles_tool.ensure_visible(use_context, save, on_top)
 
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
             from openpype.tools.loader import LoaderWindow
+
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
 
             loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
@@ -98,12 +90,13 @@ class HostToolsHelper:
             loader_tool.show()
             loader_tool.raise_()
             loader_tool.activateWindow()
+            loader_tool.showNormal()
 
             if use_context is None:
                 use_context = False
 
             if use_context:
-                context = {"asset": avalon.api.Session["AVALON_ASSET"]}
+                context = {"asset": legacy_io.Session["AVALON_ASSET"]}
                 loader_tool.set_context(context, refresh=True)
             else:
                 loader_tool.refresh()
@@ -156,6 +149,9 @@ class HostToolsHelper:
         if self._scene_inventory_tool is None:
             from openpype.tools.sceneinventory import SceneInventoryWindow
 
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
+
             scene_inventory_window = SceneInventoryWindow(
                 parent=parent or self._parent
             )
@@ -173,6 +169,7 @@ class HostToolsHelper:
             # Pull window to the front.
             scene_inventory_tool.raise_()
             scene_inventory_tool.activateWindow()
+            scene_inventory_tool.showNormal()
 
     def get_library_loader_tool(self, parent):
         """Create, cache and return library loader tool window."""
@@ -193,37 +190,61 @@ class HostToolsHelper:
             library_loader_tool.show()
             library_loader_tool.raise_()
             library_loader_tool.activateWindow()
+            library_loader_tool.showNormal()
             library_loader_tool.refresh()
 
-    def show_publish(self, parent=None):
-        """Publish UI."""
-        from avalon.tools import publish
 
-        publish.show(parent)
+    def show_publish(self, parent=None):
+        """Try showing the most desirable publish GUI
+
+        This function cycles through the currently registered
+        graphical user interfaces, if any, and presents it to
+        the user.
+        """
+
+        pyblish_show = self._discover_pyblish_gui()
+        return pyblish_show(parent)
+
+    def _discover_pyblish_gui(self):
+        """Return the most desirable of the currently registered GUIs"""
+        # Prefer last registered
+        guis = list(reversed(pyblish.api.registered_guis()))
+        for gui in guis:
+            try:
+                gui = __import__(gui).show
+            except (ImportError, AttributeError):
+                continue
+            else:
+                return gui
+
+        raise ImportError("No Pyblish GUI found")
 
     def get_look_assigner_tool(self, parent):
         """Create, cache and return look assigner tool window."""
         if self._look_assigner_tool is None:
-            import mayalookassigner
+            from openpype.tools.mayalookassigner import MayaLookAssignerWindow
 
-            mayalookassigner_window = mayalookassigner.App(parent)
+            mayalookassigner_window = MayaLookAssignerWindow(parent)
             self._look_assigner_tool = mayalookassigner_window
         return self._look_assigner_tool
 
     def show_look_assigner(self, parent=None):
         """Look manager is Maya specific tool for look management."""
-        from avalon import style
 
         with qt_app_context():
             look_assigner_tool = self.get_look_assigner_tool(parent)
             look_assigner_tool.show()
-            look_assigner_tool.setStyleSheet(style.load_stylesheet())
+
+            # Pull window to the front.
+            look_assigner_tool.raise_()
+            look_assigner_tool.activateWindow()
+            look_assigner_tool.showNormal()
 
     def get_experimental_tools_dialog(self, parent=None):
         """Dialog of experimental tools.
 
         For some hosts it is not easy to modify menu of tools. For
-        those cases was addded experimental tools dialog which is Qt based
+        those cases was added experimental tools dialog which is Qt based
         and can dynamically filled by experimental tools so
         host need only single "Experimental tools" button to see them.
 
@@ -246,6 +267,7 @@ class HostToolsHelper:
             dialog.show()
             dialog.raise_()
             dialog.activateWindow()
+            dialog.showNormal()
 
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
@@ -347,7 +369,7 @@ class _SingletonPoint:
         return cls.helper.get_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-# Function callbacks using singleton acces point
+# Function callbacks using singleton access point
 def get_tool_by_name(tool_name, parent=None, *args, **kwargs):
     return _SingletonPoint.get_tool_by_name(tool_name, parent, *args, **kwargs)
 
@@ -356,9 +378,9 @@ def show_tool_by_name(tool_name, parent=None, *args, **kwargs):
     _SingletonPoint.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-def show_workfiles(parent=None, use_context=None, save=None):
+def show_workfiles(*args, **kwargs):
     _SingletonPoint.show_tool_by_name(
-        "workfiles", parent, use_context=use_context, save=save
+        "workfiles", *args, **kwargs
     )
 
 
@@ -394,3 +416,11 @@ def show_publish(parent=None):
 
 def show_experimental_tools_dialog(parent=None):
     _SingletonPoint.show_tool_by_name("experimental_tools", parent)
+
+
+def get_pyblish_icon():
+    pyblish_dir = os.path.abspath(os.path.dirname(pyblish.api.__file__))
+    icon_path = os.path.join(pyblish_dir, "icons", "logo-32x32.svg")
+    if os.path.exists(icon_path):
+        return icon_path
+    return None

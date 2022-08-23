@@ -15,7 +15,7 @@ def add_implementation_envs(env, _app):
     old_houdini_menu_path = env.get("HOUDINI_MENU_PATH") or ""
 
     for path in old_houdini_path.split(os.pathsep):
-        if not path or not os.path.exists(path):
+        if not path:
             continue
 
         norm_path = os.path.normpath(path)
@@ -23,7 +23,7 @@ def add_implementation_envs(env, _app):
             new_houdini_path.append(norm_path)
 
     for path in old_houdini_menu_path.split(os.pathsep):
-        if not path or not os.path.exists(path):
+        if not path:
             continue
 
         norm_path = os.path.normpath(path)

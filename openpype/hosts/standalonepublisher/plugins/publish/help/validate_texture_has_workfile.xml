@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>No workfile found</title>
+<description>
+## Batch should contain workfile
+
+It is expected that published contains workfile that served as a source for textures.
+
+### How to repair?
+
+Add workfile to the batch, or disable this validator if you do not want workfile published.
+</description>
+</error>
+</root>

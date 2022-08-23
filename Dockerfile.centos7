@@ -1,11 +1,15 @@
 # Build Pype docker image
 FROM centos:7 AS builder
-ARG OPENPYPE_PYTHON_VERSION=3.7.10
+ARG OPENPYPE_PYTHON_VERSION=3.7.12
 
 LABEL org.opencontainers.image.name="pypeclub/openpype"
 LABEL org.opencontainers.image.title="OpenPype Docker Image"
 LABEL org.opencontainers.image.url="https://openpype.io/"
 LABEL org.opencontainers.image.source="https://github.com/pypeclub/pype"
+LABEL org.opencontainers.image.documentation="https://openpype.io/docs/system_introduction"
+LABEL org.opencontainers.image.created=$BUILD_DATE
+LABEL org.opencontainers.image.version=$VERSION
+
 
 USER root
 
@@ -38,7 +42,8 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         patchelf \
         automake \
         autoconf \
-	    ncurses \
+        patch \
+        ncurses \
 	    ncurses-devel \
         qt5-qtbase-devel \
         xcb-util-wm \

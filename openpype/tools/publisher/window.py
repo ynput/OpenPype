@@ -4,7 +4,10 @@ from openpype import (
     resources,
     style
 )
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    PixmapLabel
+)
 from .control import PublisherController
 from .widgets import (
     BorderedLabelWidget,
@@ -13,8 +16,6 @@ from .widgets import (
     InstanceCardView,
     InstanceListView,
     CreateDialog,
-
-    PixmapLabel,
 
     StopBtn,
     ResetBtn,
@@ -32,13 +33,16 @@ class PublisherWindow(QtWidgets.QDialog):
     default_width = 1000
     default_height = 600
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
+
+        if reset_on_show is None:
+            reset_on_show = True
 
         if parent is None:
             on_top_flag = QtCore.Qt.WindowStaysOnTopHint
@@ -54,6 +58,7 @@ class PublisherWindow(QtWidgets.QDialog):
             | on_top_flag
         )
 
+        self._reset_on_show = reset_on_show
         self._first_show = True
         self._refreshing_instances = False
 
@@ -78,8 +83,10 @@ class PublisherWindow(QtWidgets.QDialog):
         line_widget.setMinimumHeight(2)
 
         # Content
+        content_stacked_widget = QtWidgets.QWidget(self)
+
         # Subset widget
-        subset_frame = QtWidgets.QWidget(self)
+        subset_frame = QtWidgets.QFrame(content_stacked_widget)
 
         subset_views_widget = BorderedLabelWidget(
             "Subsets to publish", subset_frame
@@ -116,12 +123,16 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_view_btns_layout.addWidget(change_view_btn)
 
         # Layout of view and buttons
-        subset_view_layout = QtWidgets.QVBoxLayout()
+        # - widget 'subset_view_widget' is necessary
+        # - only layout won't be resized automatically to minimum size hint
+        #   on child resize request!
+        subset_view_widget = QtWidgets.QWidget(subset_views_widget)
+        subset_view_layout = QtWidgets.QVBoxLayout(subset_view_widget)
         subset_view_layout.setContentsMargins(0, 0, 0, 0)
         subset_view_layout.addLayout(subset_views_layout, 1)
         subset_view_layout.addLayout(subset_view_btns_layout, 0)
 
-        subset_views_widget.set_center_widget(subset_view_layout)
+        subset_views_widget.set_center_widget(subset_view_widget)
 
         # Whole subset layout with attributes and details
         subset_content_widget = QtWidgets.QWidget(subset_frame)
@@ -162,9 +173,12 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_layout.addLayout(footer_layout, 0)
 
         # Create publish frame
-        publish_frame = PublishFrame(controller, self)
+        publish_frame = PublishFrame(controller, content_stacked_widget)
 
-        content_stacked_layout = QtWidgets.QStackedLayout()
+        content_stacked_layout = QtWidgets.QStackedLayout(
+            content_stacked_widget
+        )
+        content_stacked_layout.setContentsMargins(0, 0, 0, 0)
         content_stacked_layout.setStackingMode(
             QtWidgets.QStackedLayout.StackAll
         )
@@ -177,7 +191,7 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.setSpacing(0)
         main_layout.addWidget(header_widget, 0)
         main_layout.addWidget(line_widget, 0)
-        main_layout.addLayout(content_stacked_layout, 1)
+        main_layout.addWidget(content_stacked_widget, 1)
 
         creator_window = CreateDialog(controller, parent=self)
 
@@ -216,6 +230,10 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
 
+        # Store header for TrayPublisher
+        self._header_layout = header_layout
+
+        self._content_stacked_widget = content_stacked_widget
         self.content_stacked_layout = content_stacked_layout
         self.publish_frame = publish_frame
         self.subset_frame = subset_frame
@@ -248,7 +266,8 @@ class PublisherWindow(QtWidgets.QDialog):
             self._first_show = False
             self.resize(self.default_width, self.default_height)
             self.setStyleSheet(style.load_stylesheet())
-            self.reset()
+            if self._reset_on_show:
+                self.reset()
 
     def closeEvent(self, event):
         self.controller.save_changes()
@@ -327,9 +346,23 @@ class PublisherWindow(QtWidgets.QDialog):
     def _set_publish_visibility(self, visible):
         if visible:
             widget = self.publish_frame
+            publish_frame_visible = True
         else:
             widget = self.subset_frame
+            publish_frame_visible = False
         self.content_stacked_layout.setCurrentWidget(widget)
+        self._set_publish_frame_visible(publish_frame_visible)
+
+    def _set_publish_frame_visible(self, publish_frame_visible):
+        """Publish frame visibility has changed.
+
+        Also used in TrayPublisher to be able handle start/end of publish
+        widget overlay.
+        """
+
+        # Hide creator dialog if visible
+        if publish_frame_visible and self.creator_window.isVisible():
+            self.creator_window.close()
 
     def _on_reset_clicked(self):
         self.controller.reset()
@@ -380,6 +413,12 @@ class PublisherWindow(QtWidgets.QDialog):
 
         context_title = self.controller.get_context_title()
         self.set_context_label(context_title)
+
+        # Give a change to process Resize Request
+        QtWidgets.QApplication.processEvents()
+        # Trigger update geometry of
+        widget = self.subset_views_layout.currentWidget()
+        widget.updateGeometry()
 
     def _on_subset_change(self, *_args):
         # Ignore changes if in middle of refreshing

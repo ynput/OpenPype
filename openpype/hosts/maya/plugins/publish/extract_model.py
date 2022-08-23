@@ -4,7 +4,6 @@ import os
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
 from openpype.hosts.maya.api import lib
 
@@ -74,7 +73,7 @@ class ExtractModel(openpype.api.Extractor):
                                        polygonObject=1):
                 with lib.shader(members,
                                 shadingEngine="initialShadingGroup"):
-                    with avalon.maya.maintained_selection():
+                    with lib.maintained_selection():
                         cmds.select(members, noExpand=True)
                         cmds.file(path,
                                   force=True,

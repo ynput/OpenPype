@@ -82,7 +82,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         tool_btns_layout.addWidget(tool_btns_label, 0)
 
         experimental_tools = ExperimentalTools(
-            parent=parent, filter_hosts=True
+            parent_widget=parent, refresh=False
         )
 
         # Main layout
@@ -107,7 +107,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
 
         # Is dialog first shown
         self._first_show = True
-        # Trigger refresh when window get's activity
+        # Trigger refresh when window gets activity
         self._refresh_on_active = True
         # Is window active
         self._window_is_active = False
@@ -116,7 +116,8 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         self._experimental_tools.refresh_availability()
 
         buttons_to_remove = set(self._buttons_by_tool_identifier.keys())
-        for idx, tool in enumerate(self._experimental_tools.tools):
+        tools = self._experimental_tools.get_tools_for_host()
+        for idx, tool in enumerate(tools):
             identifier = tool.identifier
             if identifier in buttons_to_remove:
                 buttons_to_remove.remove(identifier)

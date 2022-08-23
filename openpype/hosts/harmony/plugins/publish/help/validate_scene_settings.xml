@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Scene setting</title>
+<description>
+## Invalid scene setting found
+
+One of the settings in a scene doesn't match to asset settings in database.
+
+{invalid_setting_str}
+
+### How to repair?
+
+Change values for {invalid_keys_str} in the scene OR change them in the asset database if they are wrong there.
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+This error is shown when for example resolution in the scene doesn't match to resolution set on the asset in the database.
+Either value in the database or in the scene is wrong.
+</detail>
+</error>
+<error id="file_not_found">
+<title>Scene file doesn't exist</title>
+<description>
+## Scene file doesn't exist
+
+Collected scene {scene_url} doesn't exist.
+
+### How to repair?
+
+Re-save file, start publish from the beginning again.
+</description>
+</error>
+</root>

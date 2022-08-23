@@ -7,11 +7,17 @@ from openpype import resources
 
 from .color_defs import parse_color
 
-
-_STYLESHEET_CACHE = None
-_FONT_IDS = None
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+class _Cache:
+    stylesheet = None
+    font_ids = None
+
+    tools_icon_color = None
+    default_entity_icon_color = None
+    disabled_entity_icon_color = None
+    deprecated_entity_font_color = None
 
 
 def get_style_image_path(image_name):
@@ -125,21 +131,19 @@ def _load_font():
     """Load and register fonts into Qt application."""
     from Qt import QtGui
 
-    global _FONT_IDS
-
     # Check if font ids are still loaded
-    if _FONT_IDS is not None:
-        for font_id in tuple(_FONT_IDS):
+    if _Cache.font_ids is not None:
+        for font_id in tuple(_Cache.font_ids):
             font_families = QtGui.QFontDatabase.applicationFontFamilies(
                 font_id
             )
             # Reset font if font id is not available
             if not font_families:
-                _FONT_IDS = None
+                _Cache.font_ids = None
                 break
 
-    if _FONT_IDS is None:
-        _FONT_IDS = []
+    if _Cache.font_ids is None:
+        _Cache.font_ids = []
         fonts_dirpath = os.path.join(current_dir, "fonts")
         font_dirs = []
         font_dirs.append(os.path.join(fonts_dirpath, "Noto_Sans"))
@@ -157,7 +161,7 @@ def _load_font():
                     continue
                 full_path = os.path.join(font_dir, filename)
                 font_id = QtGui.QFontDatabase.addApplicationFont(full_path)
-                _FONT_IDS.append(font_id)
+                _Cache.font_ids.append(font_id)
                 font_families = QtGui.QFontDatabase.applicationFontFamilies(
                     font_id
                 )
@@ -167,11 +171,11 @@ def _load_font():
 
 def load_stylesheet():
     """Load and return OpenPype Qt stylesheet."""
-    global _STYLESHEET_CACHE
-    if _STYLESHEET_CACHE is None:
-        _STYLESHEET_CACHE = _load_stylesheet()
+
+    if _Cache.stylesheet is None:
+        _Cache.stylesheet = _load_stylesheet()
     _load_font()
-    return _STYLESHEET_CACHE
+    return _Cache.stylesheet
 
 
 def get_app_icon_path():
@@ -182,3 +186,63 @@ def get_app_icon_path():
 def app_icon_path():
     # Backwards compatibility
     return get_app_icon_path()
+
+
+def get_default_tools_icon_color():
+    """Default color used in tool icons.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
+    if _Cache.tools_icon_color is None:
+        color_data = get_colors_data()
+        _Cache.tools_icon_color = color_data["icon-tools"]
+    return _Cache.tools_icon_color
+
+
+def get_default_entity_icon_color():
+    """Default color of entities icons.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
+    if _Cache.default_entity_icon_color is None:
+        color_data = get_colors_data()
+        _Cache.default_entity_icon_color = color_data["icon-entity-default"]
+    return _Cache.default_entity_icon_color
+
+
+def get_disabled_entity_icon_color():
+    """Default color of entities icons.
+
+    TODO: Find more suitable function name.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
+    if _Cache.disabled_entity_icon_color is None:
+        color_data = get_colors_data()
+        _Cache.disabled_entity_icon_color = color_data["icon-entity-disabled"]
+    return _Cache.disabled_entity_icon_color
+
+
+def get_deprecated_entity_font_color():
+    """Font color for deprecated entities.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
+    if _Cache.deprecated_entity_font_color is None:
+        color_data = get_colors_data()
+        _Cache.deprecated_entity_font_color = (
+            color_data["font-entity-deprecated"]
+        )
+    return _Cache.deprecated_entity_font_color

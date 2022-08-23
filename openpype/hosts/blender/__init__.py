@@ -29,12 +29,12 @@ def add_implementation_envs(env, _app):
         env.get("OPENPYPE_BLENDER_USER_SCRIPTS") or ""
     )
     for path in openpype_blender_user_scripts.split(os.pathsep):
-        if path and os.path.exists(path):
+        if path:
             previous_user_scripts.add(os.path.normpath(path))
 
     blender_user_scripts = env.get("BLENDER_USER_SCRIPTS") or ""
     for path in blender_user_scripts.split(os.pathsep):
-        if path and os.path.exists(path):
+        if path:
             previous_user_scripts.add(os.path.normpath(path))
 
     # Remove implementation path from user script paths as is set to

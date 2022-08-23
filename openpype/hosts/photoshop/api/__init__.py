@@ -12,11 +12,13 @@ from .pipeline import (
     remove_instance,
     install,
     uninstall,
-    containerise
+    containerise,
+    get_context_data,
+    update_context_data,
+    get_context_title
 )
 from .plugin import (
     PhotoshopLoader,
-    Creator,
     get_unique_layer_name
 )
 from .workio import (
@@ -42,11 +44,14 @@ __all__ = [
     "list_instances",
     "remove_instance",
     "install",
+    "uninstall",
     "containerise",
+    "get_context_data",
+    "update_context_data",
+    "get_context_title",
 
     # Plugin
     "PhotoshopLoader",
-    "Creator",
     "get_unique_layer_name",
 
     # workfiles

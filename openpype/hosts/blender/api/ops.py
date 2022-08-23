@@ -15,9 +15,9 @@ from Qt import QtWidgets, QtCore
 import bpy
 import bpy.utils.previews
 
-import avalon.api
-from openpype.tools.utils import host_tools
 from openpype import style
+from openpype.pipeline import legacy_io
+from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
 
@@ -220,12 +220,9 @@ class LaunchQtApp(bpy.types.Operator):
                 self._app.store_window(self.bl_idname, window)
             self._window = window
 
-        if not isinstance(
-            self._window,
-            (QtWidgets.QMainWindow, QtWidgets.QDialog, ModuleType)
-        ):
+        if not isinstance(self._window, (QtWidgets.QWidget, ModuleType)):
             raise AttributeError(
-                "`window` should be a `QDialog or module`. Got: {}".format(
+                "`window` should be a `QWidget or module`. Got: {}".format(
                     str(type(window))
                 )
             )
@@ -249,9 +246,9 @@ class LaunchQtApp(bpy.types.Operator):
             self._window.setWindowFlags(on_top_flags)
             self._window.show()
 
-            if on_top_flags != origin_flags:
-                self._window.setWindowFlags(origin_flags)
-                self._window.show()
+            # if on_top_flags != origin_flags:
+            #     self._window.setWindowFlags(origin_flags)
+            #     self._window.show()
 
         return {'FINISHED'}
 
@@ -279,7 +276,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": avalon.api.Session["AVALON_ASSET"]},
+            {"asset": legacy_io.Session["AVALON_ASSET"]},
             refresh=True
         )
 
@@ -306,6 +303,17 @@ class LaunchManager(LaunchQtApp):
         self._window.refresh()
 
 
+class LaunchLibrary(LaunchQtApp):
+    """Launch Library Loader."""
+
+    bl_idname = "wm.library_loader"
+    bl_label = "Library..."
+    _tool_name = "libraryloader"
+
+    def before_window_show(self):
+        self._window.refresh()
+
+
 class LaunchWorkFiles(LaunchQtApp):
     """Launch Avalon Work Files."""
 
@@ -316,9 +324,8 @@ class LaunchWorkFiles(LaunchQtApp):
     def execute(self, context):
         result = super().execute(context)
         self._window.set_context({
-            "asset": avalon.api.Session["AVALON_ASSET"],
-            "silo": avalon.api.Session["AVALON_SILO"],
-            "task": avalon.api.Session["AVALON_TASK"]
+            "asset": legacy_io.Session["AVALON_ASSET"],
+            "task": legacy_io.Session["AVALON_TASK"]
         })
         return result
 
@@ -348,8 +355,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = avalon.api.Session['AVALON_ASSET']
-        task = avalon.api.Session['AVALON_TASK']
+        asset = legacy_io.Session['AVALON_ASSET']
+        task = legacy_io.Session['AVALON_TASK']
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
         context_label_item.operator(
@@ -365,6 +372,7 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
             icon_value=pyblish_menu_icon_id,
         )
         layout.operator(LaunchManager.bl_idname, text="Manage...")
+        layout.operator(LaunchLibrary.bl_idname, text="Library...")
         layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
         # TODO (jasper): maybe add 'Reload Pipeline', 'Reset Frame Range' and
@@ -382,6 +390,7 @@ classes = [
     LaunchLoader,
     LaunchPublisher,
     LaunchManager,
+    LaunchLibrary,
     LaunchWorkFiles,
     TOPBAR_MT_avalon,
 ]

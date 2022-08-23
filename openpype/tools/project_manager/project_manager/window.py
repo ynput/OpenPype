@@ -16,6 +16,7 @@ from .style import ResourceCache
 from openpype.style import load_stylesheet
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
+from openpype.pipeline import AvalonMongoDB
 
 from openpype import resources
 from openpype.api import (
@@ -23,7 +24,6 @@ from openpype.api import (
     create_project_folders,
     Logger
 )
-from avalon.api import AvalonMongoDB
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
@@ -108,7 +108,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             helper_btns_widget
         )
         add_asset_btn.setObjectName("IconBtn")
+        add_asset_btn.setEnabled(False)
         add_task_btn.setObjectName("IconBtn")
+        add_task_btn.setEnabled(False)
 
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
@@ -138,6 +140,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         message_label = QtWidgets.QLabel(buttons_widget)
         save_btn = QtWidgets.QPushButton("Save", buttons_widget)
+        save_btn.setEnabled(False)
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -173,6 +176,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._create_project_btn = create_project_btn
         self._create_folders_btn = create_folders_btn
         self._remove_projects_btn = remove_projects_btn
+        self._save_btn = save_btn
 
         self._add_asset_btn = add_asset_btn
         self._add_task_btn = add_task_btn
@@ -180,11 +184,14 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.resize(1200, 600)
         self.setStyleSheet(load_stylesheet())
 
-    def _set_project(self, project_name=None):
+    def _set_project(self, project_name=None, force=False):
         self._create_folders_btn.setEnabled(project_name is not None)
         self._remove_projects_btn.setEnabled(project_name is not None)
+        self._add_asset_btn.setEnabled(project_name is not None)
+        self._add_task_btn.setEnabled(project_name is not None)
+        self._save_btn.setEnabled(project_name is not None)
         self._project_proxy_model.set_filter_default(project_name is not None)
-        self.hierarchy_view.set_project(project_name)
+        self.hierarchy_view.set_project(project_name, force)
 
     def _current_project(self):
         row = self._project_combobox.currentIndex()
@@ -222,11 +229,11 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 self._project_combobox.setCurrentIndex(row)
 
         selected_project = self._current_project()
-        self._set_project(selected_project)
+        self._set_project(selected_project, True)
 
     def _on_project_change(self):
         selected_project = self._current_project()
-        self._set_project(selected_project)
+        self._set_project(selected_project, False)
 
     def _on_project_refresh(self):
         self.refresh_projects()
@@ -238,7 +245,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.hierarchy_view.add_asset()
 
     def _on_add_task(self):
-        self.hierarchy_view.add_task()
+        self.hierarchy_view.add_task_and_edit()
 
     def _on_create_folders(self):
         project_name = self._current_project()

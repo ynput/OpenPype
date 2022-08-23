@@ -1,6 +1,6 @@
 import re
 
-from avalon import api
+from openpype.pipeline import get_representation_path
 from openpype.hosts.photoshop import api as photoshop
 from openpype.hosts.photoshop.api import get_unique_layer_name
 
@@ -54,14 +54,14 @@ class ImageLoader(photoshop.PhotoshopLoader):
         else:  # switching version - keep same name
             layer_name = container["namespace"]
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         with photoshop.maintained_selection():
             stub.replace_smart_object(
                 layer, path, layer_name
             )
 
         stub.imprint(
-            layer, {"representation": str(representation["_id"])}
+            layer.id, {"representation": str(representation["_id"])}
         )
 
     def remove(self, container):
@@ -73,7 +73,7 @@ class ImageLoader(photoshop.PhotoshopLoader):
         stub = self.get_stub()
 
         layer = container.pop("layer")
-        stub.imprint(layer, {})
+        stub.imprint(layer.id, {})
         stub.delete_layer(layer.id)
 
     def switch(self, container, representation):

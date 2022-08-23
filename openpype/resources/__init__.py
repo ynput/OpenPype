@@ -14,6 +14,15 @@ def get_resource(*args):
     return os.path.normpath(os.path.join(RESOURCES_DIR, *args))
 
 
+def get_image_path(*args):
+    """Helper function to get images.
+
+    Args:
+        *<str>: Filepath part items.
+    """
+    return get_resource("images", *args)
+
+
 def get_liberation_font_path(bold=False, italic=False):
     font_name = "LiberationSans"
     suffix = ""

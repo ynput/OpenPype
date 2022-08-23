@@ -1,9 +1,8 @@
-import avalon.api
+from openpype.pipeline import LoaderPlugin
 from .launch_logic import get_stub
 
 
-class AfterEffectsLoader(avalon.api.Loader):
+class AfterEffectsLoader(LoaderPlugin):
     @staticmethod
     def get_stub():
         return get_stub()
-

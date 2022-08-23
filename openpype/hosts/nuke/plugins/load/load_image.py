@@ -1,9 +1,16 @@
-import re
 import nuke
 
-from avalon.vendor import qargparse
-from avalon import api, io
+import qargparse
 
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
@@ -14,7 +21,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadImage(api.Loader):
+class LoadImage(load.LoaderPlugin):
     """Load still image into Nuke"""
 
     families = [
@@ -32,6 +39,9 @@ class LoadImage(api.Loader):
     order = -10
     icon = "image"
     color = "white"
+
+    # Loaded from settings
+    _representations = []
 
     node_name_template = "{class_name}_{ext}"
 
@@ -162,7 +172,7 @@ class LoadImage(api.Loader):
 
         repr_cont = representation["context"]
 
-        file = api.get_representation_path(representation)
+        file = get_representation_path(representation)
 
         if not file:
             repr_id = representation["_id"]
@@ -180,20 +190,13 @@ class LoadImage(api.Loader):
                 format(frame_number, "0{}".format(padding)))
 
         # Get start frame from version data
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
 
-        # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
-
-        version_data = version.get("data", {})
+        version_data = version_doc.get("data", {})
 
         last = first = int(frame_number)
 
@@ -209,7 +212,7 @@ class LoadImage(api.Loader):
             "representation": str(representation["_id"]),
             "frameStart": str(first),
             "frameEnd": str(last),
-            "version": str(version.get("name")),
+            "version": str(version_doc.get("name")),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "fps": str(version_data.get("fps")),
@@ -217,17 +220,18 @@ class LoadImage(api.Loader):
         })
 
         # change color of node
-        if version.get("name") not in [max_version]:
-            node["tile_color"].setValue(int("0xd84f20ff", 16))
+        if version_doc["_id"] == last_version_doc["_id"]:
+            color_value = "0x4ecd25ff"
         else:
-            node["tile_color"].setValue(int("0x4ecd25ff", 16))
+            color_value = "0xd84f20ff"
+        node["tile_color"].setValue(int(color_value, 16))
 
         # Update the imprinted representation
         update_container(
             node,
             updated_dict
         )
-        self.log.info("updated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def remove(self, container):
         node = nuke.toNode(container['objectName'])

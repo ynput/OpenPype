@@ -50,6 +50,10 @@ class ExtractCamera(api.Extractor):
             filepath=filepath,
             use_active_collection=False,
             use_selection=True,
+            bake_anim_use_nla_strips=False,
+            bake_anim_use_all_actions=False,
+            add_leaf_bones=False,
+            armature_nodetype='ROOT',
             object_types={'CAMERA'},
             bake_anim_simplify_factor=0.0
         )

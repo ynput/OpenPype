@@ -1,4 +1,5 @@
 import pyblish.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateLayersGroup(pyblish.api.InstancePlugin):
@@ -30,14 +31,20 @@ class ValidateLayersGroup(pyblish.api.InstancePlugin):
             "\"{}\"".format(layer_name)
             for layer_name in duplicated_layer_names
         ])
-
-        # Raise an error
-        raise AssertionError(
+        detail_lines = [
+            "- {}".format(layer_name)
+            for layer_name in set(duplicated_layer_names)
+        ]
+        raise PublishXmlValidationError(
+            self,
             (
                 "Layers have duplicated names for instance {}."
                 # Description what's wrong
                 " There are layers with same name and one of them is marked"
                 " for publishing so it is not possible to know which should"
                 " be published. Please look for layers with names: {}"
-            ).format(instance.data["label"], layers_msg)
+            ).format(instance.data["label"], layers_msg),
+            formatting_data={
+                "layer_names": "<br/>".join(detail_lines)
+            }
         )

@@ -13,13 +13,12 @@ import pyblish.api
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    ffprobe_streams,
+    get_ffprobe_streams,
 
     path_to_subprocess_arg,
 
     should_convert_for_ffmpeg,
-    convert_for_ffmpeg,
-    get_transcode_temp_directory,
+    convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory
 )
 import speedcopy
@@ -46,13 +45,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "hiero",
         "premiere",
         "harmony",
+        "traypublisher",
         "standalonepublisher",
         "fusion",
         "tvpaint",
         "resolve",
         "webpublisher",
         "aftereffects",
-        "flame"
+        "flame",
+        "unreal"
     ]
 
     # Supported extensions
@@ -104,9 +105,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
 
+        subset_name = instance.data.get("subset")
         instance_families = self.families_from_instance(instance)
-        filtered_outputs = self.filter_outputs_by_families(
-            profile, instance_families
+        filtered_outputs = self.filter_output_defs(
+            profile, subset_name, instance_families
         )
         # Store `filename_suffix` to save arguments
         profile_outputs = []
@@ -188,23 +190,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
-        fill_data = copy.deepcopy(instance.data["anatomyData"])
-        for repre, outputs in outputs_per_repres:
+        for repre, outpu_defs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
             src_repre_staging_dir = repre["stagingDir"]
             # Receive filepath to first file in representation
             first_input_path = None
+            input_filepaths = []
             if not self.input_is_sequence(repre):
                 first_input_path = os.path.join(
                     src_repre_staging_dir, repre["files"]
                 )
+                input_filepaths.append(first_input_path)
             else:
                 for filename in repre["files"]:
-                    first_input_path = os.path.join(
+                    filepath = os.path.join(
                         src_repre_staging_dir, filename
                     )
-                    break
+                    input_filepaths.append(filepath)
+                    if first_input_path is None:
+                        first_input_path = filepath
 
             # Skip if file is not set
             if first_input_path is None:
@@ -231,136 +236,150 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
-                frame_start = instance.data["frameStart"]
-                frame_end = instance.data["frameEnd"]
-                convert_for_ffmpeg(
-                    first_input_path,
+                convert_input_paths_for_ffmpeg(
+                    input_filepaths,
                     new_staging_dir,
-                    frame_start,
-                    frame_end,
                     self.log
                 )
 
-            for _output_def in outputs:
-                output_def = copy.deepcopy(_output_def)
-                # Make sure output definition has "tags" key
-                if "tags" not in output_def:
-                    output_def["tags"] = []
-
-                if "burnins" not in output_def:
-                    output_def["burnins"] = []
-
-                # Create copy of representation
-                new_repre = copy.deepcopy(repre)
-                # Make sure new representation has origin staging dir
-                #   - this is because source representation may change
-                #       it's staging dir because of ffmpeg conversion
-                new_repre["stagingDir"] = src_repre_staging_dir
-
-                # Remove "delete" tag from new repre if there is
-                if "delete" in new_repre["tags"]:
-                    new_repre["tags"].remove("delete")
-
-                # Add additional tags from output definition to representation
-                for tag in output_def["tags"]:
-                    if tag not in new_repre["tags"]:
-                        new_repre["tags"].append(tag)
-
-                # Add burnin link from output definition to representation
-                for burnin in output_def["burnins"]:
-                    if burnin not in new_repre.get("burnins", []):
-                        if not new_repre.get("burnins"):
-                            new_repre["burnins"] = []
-                        new_repre["burnins"].append(str(burnin))
-
-                self.log.debug(
-                    "Linked burnins: `{}`".format(new_repre.get("burnins"))
+            try:
+                self._render_output_definitions(
+                    instance, repre, src_repre_staging_dir, outpu_defs
                 )
 
-                self.log.debug(
-                    "New representation tags: `{}`".format(
-                        new_repre.get("tags"))
+            finally:
+                # Make sure temporary staging is cleaned up and representation
+                #   has set origin stagingDir
+                if do_convert:
+                    # Set staging dir of source representation back to previous
+                    #   value
+                    repre["stagingDir"] = src_repre_staging_dir
+                    if os.path.exists(new_staging_dir):
+                        shutil.rmtree(new_staging_dir)
+
+    def _render_output_definitions(
+        self, instance, repre, src_repre_staging_dir, outpu_defs
+    ):
+        fill_data = copy.deepcopy(instance.data["anatomyData"])
+        for _output_def in outpu_defs:
+            output_def = copy.deepcopy(_output_def)
+            # Make sure output definition has "tags" key
+            if "tags" not in output_def:
+                output_def["tags"] = []
+
+            if "burnins" not in output_def:
+                output_def["burnins"] = []
+
+            # Create copy of representation
+            new_repre = copy.deepcopy(repre)
+            # Make sure new representation has origin staging dir
+            #   - this is because source representation may change
+            #       it's staging dir because of ffmpeg conversion
+            new_repre["stagingDir"] = src_repre_staging_dir
+
+            # Remove "delete" tag from new repre if there is
+            if "delete" in new_repre["tags"]:
+                new_repre["tags"].remove("delete")
+
+            # Add additional tags from output definition to representation
+            for tag in output_def["tags"]:
+                if tag not in new_repre["tags"]:
+                    new_repre["tags"].append(tag)
+
+            # Add burnin link from output definition to representation
+            for burnin in output_def["burnins"]:
+                if burnin not in new_repre.get("burnins", []):
+                    if not new_repre.get("burnins"):
+                        new_repre["burnins"] = []
+                    new_repre["burnins"].append(str(burnin))
+
+            self.log.debug(
+                "Linked burnins: `{}`".format(new_repre.get("burnins"))
+            )
+
+            self.log.debug(
+                "New representation tags: `{}`".format(
+                    new_repre.get("tags"))
+            )
+
+            temp_data = self.prepare_temp_data(instance, repre, output_def)
+            files_to_clean = []
+            if temp_data["input_is_sequence"]:
+                self.log.info("Filling gaps in sequence.")
+                files_to_clean = self.fill_sequence_gaps(
+                    temp_data["origin_repre"]["files"],
+                    new_repre["stagingDir"],
+                    temp_data["frame_start"],
+                    temp_data["frame_end"])
+
+            # create or update outputName
+            output_name = new_repre.get("outputName", "")
+            output_ext = new_repre["ext"]
+            if output_name:
+                output_name += "_"
+            output_name += output_def["filename_suffix"]
+            if temp_data["without_handles"]:
+                output_name += "_noHandles"
+
+            # add outputName to anatomy format fill_data
+            fill_data.update({
+                "output": output_name,
+                "ext": output_ext
+            })
+
+            try:  # temporary until oiiotool is supported cross platform
+                ffmpeg_args = self._ffmpeg_arguments(
+                    output_def, instance, new_repre, temp_data, fill_data
                 )
-
-                temp_data = self.prepare_temp_data(
-                    instance, repre, output_def)
-                files_to_clean = []
-                if temp_data["input_is_sequence"]:
-                    self.log.info("Filling gaps in sequence.")
-                    files_to_clean = self.fill_sequence_gaps(
-                        temp_data["origin_repre"]["files"],
-                        new_repre["stagingDir"],
-                        temp_data["frame_start"],
-                        temp_data["frame_end"])
-
-                # create or update outputName
-                output_name = new_repre.get("outputName", "")
-                output_ext = new_repre["ext"]
-                if output_name:
-                    output_name += "_"
-                output_name += output_def["filename_suffix"]
-                if temp_data["without_handles"]:
-                    output_name += "_noHandles"
-
-                # add outputName to anatomy format fill_data
-                fill_data.update({
-                    "output": output_name,
-                    "ext": output_ext
-                })
-
-                try:  # temporary until oiiotool is supported cross platform
-                    ffmpeg_args = self._ffmpeg_arguments(
-                        output_def, instance, new_repre, temp_data, fill_data
+            except ZeroDivisionError:
+                # TODO recalculate width and height using OIIO before
+                #   conversion
+                if 'exr' in temp_data["origin_repre"]["ext"]:
+                    self.log.warning(
+                        (
+                            "Unsupported compression on input files."
+                            " Skipping!!!"
+                        ),
+                        exc_info=True
                     )
-                except ZeroDivisionError:
-                    if 'exr' in temp_data["origin_repre"]["ext"]:
-                        self.log.debug("Unsupported compression on input " +
-                                       "files. Skipping!!!")
-                        return
-                    raise NotImplementedError
+                    return
+                raise NotImplementedError
 
-                subprcs_cmd = " ".join(ffmpeg_args)
+            subprcs_cmd = " ".join(ffmpeg_args)
 
-                # run subprocess
-                self.log.debug("Executing: {}".format(subprcs_cmd))
+            # run subprocess
+            self.log.debug("Executing: {}".format(subprcs_cmd))
 
-                openpype.api.run_subprocess(
-                    subprcs_cmd, shell=True, logger=self.log
-                )
+            openpype.api.run_subprocess(
+                subprcs_cmd, shell=True, logger=self.log
+            )
 
-                # delete files added to fill gaps
-                if files_to_clean:
-                    for f in files_to_clean:
-                        os.unlink(f)
+            # delete files added to fill gaps
+            if files_to_clean:
+                for f in files_to_clean:
+                    os.unlink(f)
 
-                new_repre.update({
-                    "name": "{}_{}".format(output_name, output_ext),
-                    "outputName": output_name,
-                    "outputDef": output_def,
-                    "frameStartFtrack": temp_data["output_frame_start"],
-                    "frameEndFtrack": temp_data["output_frame_end"],
-                    "ffmpeg_cmd": subprcs_cmd
-                })
+            new_repre.update({
+                "fps": temp_data["fps"],
+                "name": "{}_{}".format(output_name, output_ext),
+                "outputName": output_name,
+                "outputDef": output_def,
+                "frameStartFtrack": temp_data["output_frame_start"],
+                "frameEndFtrack": temp_data["output_frame_end"],
+                "ffmpeg_cmd": subprcs_cmd
+            })
 
-                # Force to pop these key if are in new repre
-                new_repre.pop("preview", None)
-                new_repre.pop("thumbnail", None)
-                if "clean_name" in new_repre.get("tags", []):
-                    new_repre.pop("outputName")
+            # Force to pop these key if are in new repre
+            new_repre.pop("preview", None)
+            new_repre.pop("thumbnail", None)
+            if "clean_name" in new_repre.get("tags", []):
+                new_repre.pop("outputName")
 
-                # adding representation
-                self.log.debug(
-                    "Adding new representation: {}".format(new_repre)
-                )
-                instance.data["representations"].append(new_repre)
-
-            # Cleanup temp staging dir after procesisng of output definitions
-            if do_convert:
-                temp_dir = repre["stagingDir"]
-                shutil.rmtree(temp_dir)
-                # Set staging dir of source representation back to previous
-                #   value
-                repre["stagingDir"] = src_repre_staging_dir
+            # adding representation
+            self.log.debug(
+                "Adding new representation: {}".format(new_repre)
+            )
+            instance.data["representations"].append(new_repre)
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
@@ -429,7 +448,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         input_is_sequence = self.input_is_sequence(repre)
         input_allow_bg = False
+        first_sequence_frame = None
         if input_is_sequence and repre["files"]:
+            # Calculate first frame that should be used
+            cols, _ = clique.assemble(repre["files"])
+            input_frames = list(sorted(cols[0].indexes))
+            first_sequence_frame = input_frames[0]
+            # WARNING: This is an issue as we don't know if first frame
+            #   is with or without handles!
+            # - handle start is added but how do not know if we should
+            output_duration = (output_frame_end - output_frame_start) + 1
+            if (
+                without_handles
+                and len(input_frames) - handle_start >= output_duration
+            ):
+                first_sequence_frame += handle_start
+
             ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
             if ext in self.alpha_exts:
                 input_allow_bg = True
@@ -449,6 +483,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
             "input_is_sequence": input_is_sequence,
+            "first_sequence_frame": first_sequence_frame,
             "input_allow_bg": input_allow_bg,
             "with_audio": with_audio,
             "without_handles": without_handles,
@@ -527,9 +562,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
             # - definition of input filepath
-            ffmpeg_input_args.append(
-                "-start_number {}".format(temp_data["output_frame_start"])
-            )
+            ffmpeg_input_args.extend([
+                "-start_number", str(temp_data["first_sequence_frame"])
+            ])
 
             # TODO add fps mapping `{fps: fraction}` ?
             # - e.g.: {
@@ -694,13 +729,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         audio_args_dentifiers = ["-af", "-filter:a"]
         for arg in tuple(output_args):
             for identifier in video_args_dentifiers:
-                if identifier in arg:
+                if arg.startswith("{} ".format(identifier)):
                     output_args.remove(arg)
                     arg = arg.replace(identifier, "").strip()
                     video_filters.append(arg)
 
             for identifier in audio_args_dentifiers:
-                if identifier in arg:
+                if arg.startswith("{} ".format(identifier)):
                     output_args.remove(arg)
                     arg = arg.replace(identifier, "").strip()
                     audio_filters.append(arg)
@@ -745,12 +780,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
         start_frame = int(start_frame)
         end_frame = int(end_frame)
         collections = clique.assemble(files)[0]
-        assert len(collections) == 1, "Multiple collections found."
+        msg = "Multiple collections {} found.".format(collections)
+        assert len(collections) == 1, msg
         col = collections[0]
-        # do nothing if sequence is complete
-        if list(col.indexes)[0] == start_frame and \
-                list(col.indexes)[-1] == end_frame and \
-                col.is_contiguous():
+
+        # do nothing if no gap is found in input range
+        not_gap = True
+        for fr in range(start_frame, end_frame + 1):
+            if fr not in col.indexes:
+                not_gap = False
+
+        if not_gap:
             return []
 
         holes = col.holes()
@@ -972,16 +1012,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def get_letterbox_filters(
         self,
         letter_box_def,
-        input_res_ratio,
-        output_res_ratio,
-        pixel_aspect,
-        scale_factor_by_width,
-        scale_factor_by_height
+        output_width,
+        output_height
     ):
         output = []
 
         ratio = letter_box_def["ratio"]
-        state = letter_box_def["state"]
         fill_color = letter_box_def["fill_color"]
         f_red, f_green, f_blue, f_alpha = fill_color
         fill_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
@@ -997,74 +1033,128 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )
         line_color_alpha = float(l_alpha) / 255
 
-        if input_res_ratio == output_res_ratio:
-            ratio /= pixel_aspect
-        elif input_res_ratio < output_res_ratio:
-            ratio /= scale_factor_by_width
-        else:
-            ratio /= scale_factor_by_height
+        # test ratios and define if pillar or letter boxes
+        output_ratio = float(output_width) / float(output_height)
+        self.log.debug("Output ratio: {} LetterBox ratio: {}".format(
+            output_ratio, ratio
+        ))
+        pillar = output_ratio > ratio
+        need_mask = format(output_ratio, ".3f") != format(ratio, ".3f")
+        if not need_mask:
+            return []
 
-        if state == "letterbox":
+        if not pillar:
             if fill_color_alpha > 0:
                 top_box = (
-                    "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c={}@{}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
+                    "drawbox=0:0:{width}"
+                    ":round(({height}-({width}/{ratio}))/2)"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
 
                 bottom_box = (
-                    "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                    ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c={1}@{2}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
-
+                    "drawbox=0"
+                    ":{height}-round(({height}-({width}/{ratio}))/2)"
+                    ":{width}"
+                    ":round(({height}-({width}/{ratio}))/2)"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
                 output.extend([top_box, bottom_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
                 top_line = (
-                    "drawbox=0:round((ih-(iw*(1/{0})))/2)-{1}:iw:{1}:"
-                    "t=fill:c={2}@{3}"
+                    "drawbox=0"
+                    ":round(({height}-({width}/{ratio}))/2)-{l_thick}"
+                    ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
                 bottom_line = (
-                    "drawbox=0:ih-round((ih-(iw*(1/{})))/2)"
-                    ":iw:{}:t=fill:c={}@{}"
+                    "drawbox=0"
+                    ":{height}-round(({height}-({width}/{ratio}))/2)"
+                    ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
                 output.extend([top_line, bottom_line])
 
-        elif state == "pillar":
+        else:
             if fill_color_alpha > 0:
                 left_box = (
-                    "drawbox=0:0:round((iw-(ih*{}))/2):ih:t=fill:c={}@{}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
+                    "drawbox=0:0"
+                    ":round(({width}-({height}*{ratio}))/2)"
+                    ":{height}"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
 
                 right_box = (
-                    "drawbox=iw-round((iw-(ih*{0}))/2))"
-                    ":0:round((iw-(ih*{0}))/2):ih:t=fill:c={1}@{2}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
-
+                    "drawbox="
+                    "{width}-round(({width}-({height}*{ratio}))/2)"
+                    ":0"
+                    ":round(({width}-({height}*{ratio}))/2)"
+                    ":{height}"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
                 output.extend([left_box, right_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
                 left_line = (
-                    "drawbox=round((iw-(ih*{}))/2):0:{}:ih:t=fill:c={}@{}"
+                    "drawbox=round(({width}-({height}*{ratio}))/2)"
+                    ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
 
                 right_line = (
-                    "drawbox=iw-round((iw-(ih*{}))/2))"
-                    ":0:{}:ih:t=fill:c={}@{}"
+                    "drawbox={width}-round(({width}-({height}*{ratio}))/2)"
+                    ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
-
                 output.extend([left_line, right_line])
-
-        else:
-            raise ValueError(
-                "Letterbox state \"{}\" is not recognized".format(state)
-            )
 
         return output
 
@@ -1079,10 +1169,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
+        # if reformat input video file is already reforamted from upstream
+        reformat_in_baking = bool("reformated" in new_repre["tags"])
+        self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
+
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from upstream process"
+            ))
+            pixel_aspect = 1
+
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         try:
-            streams = ffprobe_streams(
+            streams = get_ffprobe_streams(
                 full_input_path_single_file, self.log
             )
         except Exception as exc:
@@ -1096,11 +1200,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # - there may be a better way (checking `codec_type`?)
         input_width = None
         input_height = None
+        output_width = None
+        output_height = None
         for stream in streams:
             if "width" in stream and "height" in stream:
                 input_width = int(stream["width"])
                 input_height = int(stream["height"])
                 break
+
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from upstream process"
+            ))
+            pixel_aspect = 1
+            output_width = input_width
+            output_height = input_height
 
         # Raise exception of any stream didn't define input resolution
         if input_width is None:
@@ -1110,8 +1227,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_def.get("width") or None
-        output_height = output_def.get("height") or None
+        output_width = output_def.get("width") or output_width or None
+        output_height = output_def.get("height") or output_height or None
+        # Force to use input resolution if output resolution was not defined
+        #   in settings. Resolution from instance is not used when
+        #   'use_input_res' is set to 'True'.
+        use_input_res = False
 
         # Overscal color
         overscan_color_value = "black"
@@ -1123,6 +1244,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
         self.log.debug("Overscan color: `{}`".format(overscan_color_value))
 
+        # Scale input to have proper pixel aspect ratio
+        # - scale width by the pixel aspect ratio
+        scale_pixel_aspect = output_def.get("scale_pixel_aspect", True)
+        if scale_pixel_aspect and pixel_aspect != 1:
+            # Change input width after pixel aspect
+            input_width = int(input_width * pixel_aspect)
+            use_input_res = True
+            filters.append((
+                "scale={}x{}:flags=lanczos".format(input_width, input_height)
+            ))
+
         # Convert overscan value video filters
         overscan_crop = output_def.get("overscan_crop")
         overscan = OverscanCrop(
@@ -1133,19 +1265,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         #   resolution by it's values
         if overscan_crop_filters:
             filters.extend(overscan_crop_filters)
+            # Change input resolution after overscan crop
             input_width = overscan.width()
             input_height = overscan.height()
-            # Use output resolution as inputs after cropping to skip usage of
-            #   instance data resolution
-            if output_width is None or output_height is None:
-                output_width = input_width
-                output_height = input_height
-
-        letter_box_def = output_def["letter_box"]
-        letter_box_enabled = letter_box_def["enabled"]
-
-        # Get instance data
-        pixel_aspect = temp_data["pixel_aspect"]
+            use_input_res = True
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
@@ -1171,8 +1294,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("input_height: `{}`".format(input_height))
 
-        # Use instance resolution if output definition has not set it.
-        if output_width is None or output_height is None:
+        # Use instance resolution if output definition has not set it
+        #   - use instance resolution only if there were not scale changes
+        #       that may massivelly affect output 'use_input_res'
+        if not use_input_res and output_width is None or output_height is None:
             output_width = temp_data["resolution_width"]
             output_height = temp_data["resolution_height"]
 
@@ -1205,13 +1330,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "Output resolution is {}x{}".format(output_width, output_height)
         )
 
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
+
         # Skip processing if resolution is same as input's and letterbox is
         # not set
         if (
             output_width == input_width
             and output_height == input_height
             and not letter_box_enabled
-            and pixel_aspect == 1
         ):
             self.log.debug(
                 "Output resolution is same as input's"
@@ -1221,89 +1348,30 @@ class ExtractReview(pyblish.api.InstancePlugin):
             new_repre["resolutionHeight"] = input_height
             return filters
 
-        # defining image ratios
-        input_res_ratio = (
-            (float(input_width) * pixel_aspect) / input_height
-        )
-        output_res_ratio = float(output_width) / float(output_height)
-        self.log.debug("input_res_ratio: `{}`".format(input_res_ratio))
-        self.log.debug("output_res_ratio: `{}`".format(output_res_ratio))
-
-        # Round ratios to 2 decimal places for comparing
-        input_res_ratio = round(input_res_ratio, 2)
-        output_res_ratio = round(output_res_ratio, 2)
-
-        # get scale factor
-        scale_factor_by_width = (
-            float(output_width) / (input_width * pixel_aspect)
-        )
-        scale_factor_by_height = (
-            float(output_height) / input_height
-        )
-
-        self.log.debug(
-            "scale_factor_by_with: `{}`".format(scale_factor_by_width)
-        )
-        self.log.debug(
-            "scale_factor_by_height: `{}`".format(scale_factor_by_height)
-        )
-
-        # letter_box
-        if letter_box_enabled:
-            filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    output_width, output_height
-                ),
-                "setsar=1"
-            ])
-            filters.extend(
-                self.get_letterbox_filters(
-                    letter_box_def,
-                    input_res_ratio,
-                    output_res_ratio,
-                    pixel_aspect,
-                    scale_factor_by_width,
-                    scale_factor_by_height
-                )
-            )
-
         # scaling none square pixels and 1920 width
-        if (
-            input_height != output_height
-            or input_width != output_width
-            or pixel_aspect != 1
-        ):
-            if input_res_ratio < output_res_ratio:
-                self.log.debug(
-                    "Input's resolution ratio is lower then output's"
-                )
-                width_scale = int(input_width * scale_factor_by_height)
-                width_half_pad = int((output_width - width_scale) / 2)
-                height_scale = output_height
-                height_half_pad = 0
-            else:
-                self.log.debug("Input is heigher then output")
-                width_scale = output_width
-                width_half_pad = 0
-                height_scale = int(input_height * scale_factor_by_width)
-                height_half_pad = int((output_height - height_scale) / 2)
-
-            self.log.debug("width_scale: `{}`".format(width_scale))
-            self.log.debug("width_half_pad: `{}`".format(width_half_pad))
-            self.log.debug("height_scale: `{}`".format(height_scale))
-            self.log.debug("height_half_pad: `{}`".format(height_half_pad))
-
+        if input_height != output_height or input_width != output_width:
             filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    width_scale, height_scale
-                ),
-                "pad={}:{}:{}:{}:{}".format(
+                (
+                    "scale={}x{}"
+                    ":flags=lanczos"
+                    ":force_original_aspect_ratio=decrease"
+                ).format(output_width, output_height),
+                "pad={}:{}:(ow-iw)/2:(oh-ih)/2:{}".format(
                     output_width, output_height,
-                    width_half_pad, height_half_pad,
                     overscan_color_value
                 ),
                 "setsar=1"
             ])
+
+        # letter_box
+        if letter_box_enabled:
+            filters.extend(
+                self.get_letterbox_filters(
+                    letter_box_def,
+                    output_width,
+                    output_height
+                )
+            )
 
         new_repre["resolutionWidth"] = output_width
         new_repre["resolutionHeight"] = output_height
@@ -1391,6 +1459,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output = -1
         regexes = self.compile_list_of_regexes(in_list)
         for regex in regexes:
+            if not value:
+                continue
             if re.match(regex, value):
                 output = 1
                 break
@@ -1586,7 +1656,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 return True
         return False
 
-    def filter_outputs_by_families(self, profile, families):
+    def filter_output_defs(self, profile, subset_name, families):
         """Return outputs matching input instance families.
 
         Output definitions without families filter are marked as valid.
@@ -1618,6 +1688,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
             families_filters = output_filters.get("families")
             if not self.families_filter_validation(families, families_filters):
                 continue
+
+            # Subsets name filters
+            subset_filters = [
+                subset_filter
+                for subset_filter in output_filters.get("subsets", [])
+                # Skip empty strings
+                if subset_filter
+            ]
+            if subset_name and subset_filters:
+                match = False
+                for subset_filter in subset_filters:
+                    compiled = re.compile(subset_filter)
+                    if compiled.search(subset_name):
+                        match = True
+                        break
+
+                if not match:
+                    continue
 
             filtered_outputs[filename_suffix] = output_def
 

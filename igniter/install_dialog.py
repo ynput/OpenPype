@@ -12,7 +12,6 @@ from Qt.QtCore import QTimer  # noqa
 from .install_thread import InstallThread
 from .tools import (
     validate_mongo_connection,
-    get_openpype_path_from_db,
     get_openpype_icon_path
 )
 

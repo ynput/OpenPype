@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 
-from avalon import fusion
+from openpype.hosts.fusion.api import get_current_comp
 
 
 class CollectCurrentCompFusion(pyblish.api.ContextPlugin):
@@ -15,7 +15,7 @@ class CollectCurrentCompFusion(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect all image sequence tools"""
 
-        current_comp = fusion.get_current_comp()
+        current_comp = get_current_comp()
         assert current_comp, "Must have active Fusion composition"
         context.data["currentComp"] = current_comp
 

@@ -7,7 +7,7 @@ sidebar_label: Nuke
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overriden per project.
+Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overridden per project.
 
 :::warning Default studio values
 Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orage colour). Any changes in default project may affect all existing projects.
@@ -40,7 +40,7 @@ Custom templates are added into nuke's node graph as nodes. List of task types c
 
 ![nuke_workfile_builder_template_task_type](assets/nuke_workfile_builder_template_task_type.png)
 
- - multi platform path can be used in a variety of ways. Along the absolut path to a template file also an python formating could be used. At the moment these keys are supported (image example bellow):
+ - multi platform path can be used in a variety of ways. Along the absolute path to a template file also an python formatting could be used. At the moment these keys are supported (image example below):
    - `root[key]`: definitions from anatomy roots
    - `project[name, code]`: project in context
    - `asset`: name of asset/shot in context
@@ -49,7 +49,7 @@ Custom templates are added into nuke's node graph as nodes. List of task types c
 ![nuke_workfile_builder_template_anatomy](assets/nuke_workfile_builder_template_anatomy.png)
 
 #### Run Builder profiles on first launch
-Enabling this feature will look into available Builder's Prorfiles (look bellow for more informations about this feature) and load available versions into node graph.
+Enabling this feature will look into available Builder's Prorfiles (look below for more information about this feature) and load available versions into node graph.
 
 ### Profiles (Builder)
 Builder profiles are set of rules allowing artist Load any available versions for the context of the asset, which it is run from. Preset is having following attributes:

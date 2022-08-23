@@ -1,6 +1,7 @@
 import json
 
 import pyblish.api
+from openpype.pipeline import PublishXmlValidationError
 from openpype.hosts.tvpaint.api import lib
 
 
@@ -73,9 +74,34 @@ class ValidateMarks(pyblish.api.ContextPlugin):
                     "expected": expected_data[k]
                 }
 
-        if invalid:
-            raise AssertionError(
-                "Marks does not match database:\n{}".format(
-                    json.dumps(invalid, sort_keys=True, indent=4)
-                )
-            )
+        # Validation ends
+        if not invalid:
+            return
+
+        current_frame_range = (
+            (current_data["markOut"] - current_data["markIn"]) + 1
+        )
+        expected_frame_range = (
+            (expected_data["markOut"] - expected_data["markIn"]) + 1
+        )
+        mark_in_enable_state = "disabled"
+        if current_data["markInState"]:
+            mark_in_enable_state = "enabled"
+
+        mark_out_enable_state = "disabled"
+        if current_data["markOutState"]:
+            mark_out_enable_state = "enabled"
+
+        raise PublishXmlValidationError(
+            self,
+            "Marks does not match database:\n{}".format(
+                json.dumps(invalid, sort_keys=True, indent=4)
+            ),
+            formatting_data={
+                "current_frame_range": str(current_frame_range),
+                "expected_frame_range": str(expected_frame_range),
+                "mark_in_enable_state": mark_in_enable_state,
+                "mark_out_enable_state": mark_out_enable_state,
+                "expected_mark_out": expected_data["markOut"]
+            }
+        )

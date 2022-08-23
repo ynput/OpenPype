@@ -77,7 +77,7 @@ Template groups `work` and `publish` must be set in all circumstances. Both must
 | version | Version number. |
 | subset | Subset name. |
 | family | Main family name. |
-| ext | File extention. (Possible to use only in `work` template atm.) |
+| ext | File extension. (Possible to use only in `work` template atm.) |
 | representation | Representation name. (Is used instead of `ext` except `work` template atm.) |
 | frame | Frame number for sequence files. |
 | output |  |
@@ -160,7 +160,7 @@ group_1:
 
 group_2:
   # `global_key` is iverrided
-  global_key: "overriden global value"
+  global_key: "overridden global value"
 ```
 **Result**
 ```yaml
@@ -173,7 +173,7 @@ group_1:
 
 group_2:
   # `global_key` kept it's value for `group_2`
-  global_key: "overriden global value"
+  global_key: "overridden global value"
 ```
 
 ### Combine Inner keys with Global keys
@@ -273,7 +273,7 @@ Presets are categorized in folders based on what they control or what host (DCC 
 
 ### colorspace
 
-Defines all available color spaces in the studio. These configs not only tell the system what OCIO to use, but also how exactly it needs to be applied in the give application. From loading the data, trough previewing it all the way to rendered
+Defines all available color spaces in the studio. These configs not only tell the system what OCIO to use, but also how exactly it needs to be applied in the give application. From loading the data, through previewing it all the way to rendered
 
 ### Dataflow
 

@@ -66,6 +66,6 @@ Thanks to a very flexible and extensible system of presets, we're almost always 
 
 ### Studio-Project-Configs
 
-On top of studio wide pype config, we support project level overrides for any and all avriables and presets available in the main studio config.
+On top of studio wide pype config, we support project level overrides for any and all variables and presets available in the main studio config.
 
 ### Studio-Project-Scrips

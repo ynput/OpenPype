@@ -11,7 +11,6 @@ class CreateLook(plugin.Creator):
     label = "Look"
     family = "look"
     icon = "paint-brush"
-    defaults = ['Main']
     make_tx = True
 
     def __init__(self, *args, **kwargs):
@@ -23,4 +22,6 @@ class CreateLook(plugin.Creator):
         self.data["maketx"] = self.make_tx
 
         # Enable users to force a copy.
+        # - on Windows is "forceCopy" always changed to `True` because of
+        #   windows implementation of hardlinks
         self.data["forceCopy"] = False

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Create render node."""
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 from openpype.hosts.harmony.api import plugin
 
 

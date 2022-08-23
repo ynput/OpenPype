@@ -1,7 +1,7 @@
 import uuid
 from Qt import QtGui, QtCore
 
-from avalon import api
+from openpype.pipeline import discover_legacy_creator_plugins
 
 from . constants import (
     FAMILY_ROLE,
@@ -21,7 +21,7 @@ class CreatorsModel(QtGui.QStandardItemModel):
         self._creators_by_id = {}
 
         items = []
-        creators = api.discover(api.Creator)
+        creators = discover_legacy_creator_plugins()
         for creator in creators:
             item_id = str(uuid.uuid4())
             self._creators_by_id[item_id] = creator

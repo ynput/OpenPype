@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import List, Optional
 
 import bpy
-from avalon import api
+
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
 
 class OpenFileCacher:
@@ -77,7 +78,7 @@ def has_unsaved_changes() -> bool:
 def file_extensions() -> List[str]:
     """Return the supported file extensions for Blender scene files."""
 
-    return api.HOST_WORKFILE_EXTENSIONS["blender"]
+    return HOST_WORKFILE_EXTENSIONS["blender"]
 
 
 def work_root(session: dict) -> str:

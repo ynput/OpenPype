@@ -29,10 +29,9 @@ import pyblish
 
 from . import settings, util
 from .awesome import tags as awesome
-import Qt
 from Qt import QtCore, QtGui
+import qtawesome
 from six import text_type
-from .vendor import qtawesome
 from .constants import PluginStates, InstanceStates, GroupStates, Roles
 
 from openpype.api import get_system_settings
@@ -87,7 +86,7 @@ class IntentModel(QtGui.QStandardItemModel):
     First and default value is {"< Not Set >": None}
     """
 
-    default_item = {"< Not Set >": None}
+    default_empty_label = "< Not set >"
 
     def __init__(self, parent=None):
         super(IntentModel, self).__init__(parent)
@@ -103,27 +102,39 @@ class IntentModel(QtGui.QStandardItemModel):
         self._item_count = 0
         self.default_index = 0
 
-        intents_preset = (
+        intent_settings = (
             get_system_settings()
             .get("modules", {})
             .get("ftrack", {})
             .get("intent", {})
         )
 
-        default = intents_preset.get("default")
-        items = intents_preset.get("items", {})
+        items = intent_settings.get("items", {})
         if not items:
             return
 
-        for idx, item_value in enumerate(items.keys()):
+        allow_empty_intent = intent_settings.get("allow_empty_intent", True)
+        empty_intent_label = (
+            intent_settings.get("empty_intent_label")
+            or self.default_empty_label
+        )
+        listed_items = list(items.items())
+        if allow_empty_intent:
+            listed_items.insert(0, ("", empty_intent_label))
+
+        default = intent_settings.get("default")
+
+        for idx, item in enumerate(listed_items):
+            item_value = item[0]
             if item_value == default:
                 self.default_index = idx
                 break
 
-        self.add_items(items)
+        self._add_items(listed_items)
 
-    def add_items(self, items):
-        for value, label in items.items():
+    def _add_items(self, items):
+        for item in items:
+            value, label = item
             new_item = QtGui.QStandardItem()
             new_item.setData(label, QtCore.Qt.DisplayRole)
             new_item.setData(value, Roles.IntentItemValue)
@@ -428,12 +439,12 @@ class PluginModel(QtGui.QStandardItemModel):
         self.clear()
 
     def append(self, plugin):
-        plugin_groups = self.controller.order_groups.groups()
+        plugin_groups = self.controller.order_groups.groups
         label = None
         order = None
-        for _order, _label in reversed(plugin_groups.items()):
+        for _order, item in reversed(plugin_groups.items()):
             if _order is None or plugin.order < _order:
-                label = _label
+                label = item["label"]
                 order = _order
             else:
                 break

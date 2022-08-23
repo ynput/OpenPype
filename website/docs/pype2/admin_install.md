@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 The general approach to pype deployment is installing central repositories on a shared network storage which can be accessed by all artists in the studio. Simple shortcuts to launchers are then distributed to all workstations for artists to use. This approach ensures easy maintenance and updates.
 
-When artist first runs pype all the required python packages get installed automatically to his local workstation and updated everytime there is a change in the central installation.
+When artist first runs pype all the required python packages get installed automatically to his local workstation and updated every time there is a change in the central installation.
 
 :::note
 Automatic workstation installation and updates will not work in offline scenarios. In these case `pype install --force --offline` command must be triggered explicitly on the workstation

@@ -1,12 +1,15 @@
 import os
 import re
-from avalon import api
 
-from avalon.houdini import pipeline
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.hosts.houdini.api import pipeline
 
 
-class VdbLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+class VdbLoader(load.LoaderPlugin):
+    """Load VDB"""
 
     families = ["vdbcache"]
     label = "Load VDB"
@@ -37,7 +40,8 @@ class VdbLoader(api.Loader):
 
         # Explicitly create a file node
         file_node = container.createNode("file", node_name=node_name)
-        file_node.setParms({"file": self.format_path(self.fname)})
+        file_node.setParms(
+            {"file": self.format_path(self.fname, context["representation"])})
 
         # Set display on last node
         file_node.setDisplayFlag(True)
@@ -54,30 +58,20 @@ class VdbLoader(api.Loader):
             suffix="",
         )
 
-    def format_path(self, path):
+    @staticmethod
+    def format_path(path, representation):
         """Format file path correctly for single vdb or vdb sequence."""
         if not os.path.exists(path):
             raise RuntimeError("Path does not exist: %s" % path)
 
+        is_sequence = bool(representation["context"].get("frame"))
         # The path is either a single file or sequence in a folder.
-        is_single_file = os.path.isfile(path)
-        if is_single_file:
+        if not is_sequence:
             filename = path
         else:
-            # The path points to the publish .vdb sequence folder so we
-            # find the first file in there that ends with .vdb
-            files = sorted(os.listdir(path))
-            first = next((x for x in files if x.endswith(".vdb")), None)
-            if first is None:
-                raise RuntimeError(
-                    "Couldn't find first .vdb file of "
-                    "sequence in: %s" % path
-                )
+            filename = re.sub(r"(.*)\.(\d+)\.vdb$", "\\1.$F4.vdb", path)
 
-            # Set <frame>.vdb to $F.vdb
-            first = re.sub(r"\.(\d+)\.vdb$", ".$F.vdb", first)
-
-            filename = os.path.join(path, first)
+            filename = os.path.join(path, filename)
 
         filename = os.path.normpath(filename)
         filename = filename.replace("\\", "/")
@@ -96,10 +90,10 @@ class VdbLoader(api.Loader):
             return
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
-        file_path = self.format_path(file_path)
+        file_path = get_representation_path(representation)
+        file_path = self.format_path(file_path, representation)
 
-        file_node.setParms({"fileName": file_path})
+        file_node.setParms({"file": file_path})
 
         # Update attribute
         node.setParms({"representation": str(representation["_id"])})

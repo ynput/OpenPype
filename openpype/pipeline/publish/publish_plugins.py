@@ -1,3 +1,17 @@
+from abc import ABCMeta
+from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
+from openpype.lib import BoolDef
+from .lib import load_help_content_from_plugin
+
+
+class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
+    pass
+
+
+class AbstractMetaContextPlugin(ABCMeta, ExplicitMetaPlugin):
+    pass
+
+
 class PublishValidationError(Exception):
     """Validation error happened during publishing.
 
@@ -12,11 +26,33 @@ class PublishValidationError(Exception):
         description(str): Detailed description of an error. It is possible
             to use Markdown syntax.
     """
-    def __init__(self, message, title=None, description=None):
+
+    def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
         self.title = title or "< Missing title >"
         self.description = description or message
+        self.detail = detail
         super(PublishValidationError, self).__init__(message)
+
+
+class PublishXmlValidationError(PublishValidationError):
+    def __init__(
+        self, plugin, message, key=None, formatting_data=None
+    ):
+        if key is None:
+            key = "main"
+
+        if not formatting_data:
+            formatting_data = {}
+        result = load_help_content_from_plugin(plugin)
+        content_obj = result["errors"][key]
+        description = content_obj.description.format(**formatting_data)
+        detail = content_obj.detail
+        if detail:
+            detail = detail.format(**formatting_data)
+        super(PublishXmlValidationError, self).__init__(
+            message, content_obj.title, description, detail
+        )
 
 
 class KnownPublishError(Exception):
@@ -24,6 +60,7 @@ class KnownPublishError(Exception):
 
     Message will be shown in UI for artist.
     """
+
     pass
 
 
@@ -67,6 +104,7 @@ class OpenPypePyblishPluginMixin:
         Returns:
             list<AbtractAttrDef>: Attribute definitions for plugin.
         """
+
         return []
 
     @classmethod
@@ -84,3 +122,65 @@ class OpenPypePyblishPluginMixin:
                     plugin_values[key]
                 )
         return attribute_values
+
+    def get_attr_values_from_data(self, data):
+        """Get attribute values for attribute definitions from data.
+
+        Args:
+            data(dict): Data from instance or context.
+        """
+
+        return (
+            data
+            .get("publish_attributes", {})
+            .get(self.__class__.__name__, {})
+        )
+
+
+class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
+    """Prepare mixin for optional plugins.
+
+    Defined active attribute definition prepared for published and
+    prepares method which will check if is active or not.
+
+    ```
+    class ValidateScene(
+        pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
+    ):
+        def process(self, instance):
+            # Skip the instance if is not active by data on the instance
+            if not self.is_active(instance.data):
+                return
+    ```
+    """
+
+    @classmethod
+    def get_attribute_defs(cls):
+        """Attribute definitions based on plugin's optional attribute."""
+
+        # Empty list if plugin is not optional
+        if not getattr(cls, "optional", None):
+            return []
+
+        # Get active value from class as default value
+        active = getattr(cls, "active", True)
+        # Return boolean stored under 'active' key with label of the class name
+        label = cls.label or cls.__name__
+        return [
+            BoolDef("active", default=active, label=label)
+        ]
+
+    def is_active(self, data):
+        """Check if plugins is active for instance/context based on their data.
+
+        Args:
+            data(dict): Data from instance or context.
+        """
+        # Skip if is not optional and return True
+        if not getattr(self, "optional", None):
+            return True
+        attr_values = self.get_attr_values_from_data(data)
+        active = attr_values.get("active")
+        if active is None:
+            active = getattr(self, "active", True)
+        return active

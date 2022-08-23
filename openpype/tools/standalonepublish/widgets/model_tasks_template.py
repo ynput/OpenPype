@@ -1,7 +1,9 @@
 from Qt import QtCore
+import qtawesome
+
+from openpype.style import get_default_entity_icon_color
+
 from . import Node, TreeModel
-from avalon.vendor import qtawesome
-from avalon import style
 
 
 class TasksTemplateModel(TreeModel):
@@ -14,7 +16,7 @@ class TasksTemplateModel(TreeModel):
         self.selectable = selectable
         self.icon = qtawesome.icon(
             'fa.calendar-check-o',
-            color=style.colors.default
+            color=get_default_entity_icon_color()
         )
 
     def set_tasks(self, tasks):

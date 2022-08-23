@@ -2,7 +2,7 @@ import hou
 
 import pyblish.api
 
-from avalon.houdini import lib
+from openpype.hosts.houdini.api import lib
 
 
 class CollectInstances(pyblish.api.ContextPlugin):

@@ -5,12 +5,15 @@ Warning:
     settings of the Loader. So use this at your own risk.
 
 """
-from avalon import fusion
+from openpype.hosts.fusion.api.pipeline import (
+    get_current_comp,
+    comp_lock_and_undo_chunk
+)
 
 
 def update_loader_ranges():
-    comp = fusion.get_current_comp()
-    with fusion.comp_lock_and_undo_chunk(comp, "Reload clip time ranges"):
+    comp = get_current_comp()
+    with comp_lock_and_undo_chunk(comp, "Reload clip time ranges"):
         tools = comp.GetToolList(True, "Loader").values()
         for tool in tools:
 

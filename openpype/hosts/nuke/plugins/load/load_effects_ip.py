@@ -1,9 +1,17 @@
 import json
 from collections import OrderedDict
-
+import six
 import nuke
 
-from avalon import api, style, io
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
+from openpype.pipeline import (
+    legacy_io,
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api import lib
 from openpype.hosts.nuke.api import (
     containerise,
@@ -12,7 +20,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadEffectsInputProcess(api.Loader):
+class LoadEffectsInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["effectJson"]
@@ -21,7 +29,7 @@ class LoadEffectsInputProcess(api.Loader):
     label = "Load Effects - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):
@@ -69,7 +77,7 @@ class LoadEffectsInputProcess(api.Loader):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
-                      for key, value in json.load(f).iteritems()}
+                      for key, value in json.load(f).items()}
 
         # get correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
@@ -149,17 +157,16 @@ class LoadEffectsInputProcess(api.Loader):
 
         # get main variables
         # Get version from io
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
-        version_data = version.get("data", {})
-        vname = version.get("name", None)
+        version_data = version_doc.get("data", {})
+        vname = version_doc.get("name", None)
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
         workfile_first_frame = int(nuke.root()["first_frame"].getValue())
@@ -189,7 +196,7 @@ class LoadEffectsInputProcess(api.Loader):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
-                      for key, value in json.load(f).iteritems()}
+                      for key, value in json.load(f).items()}
 
         # get correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
@@ -247,20 +254,18 @@ class LoadEffectsInputProcess(api.Loader):
         #     return
 
         # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
 
         # change color of node
-        if version.get("name") not in [max_version]:
-            GN["tile_color"].setValue(int("0xd84f20ff", 16))
+        if version_doc["_id"] == last_version_doc["_id"]:
+            color_value = "0x3469ffff"
         else:
-            GN["tile_color"].setValue(int("0x3469ffff", 16))
+            color_value = "0xd84f20ff"
+        GN["tile_color"].setValue(int(color_value, 16))
 
-        self.log.info("updated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def connect_active_viewer(self, group_node):
         """
@@ -345,11 +350,11 @@ class LoadEffectsInputProcess(api.Loader):
 
         if isinstance(input, dict):
             return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, six.text_type):
+            return str(input)
         else:
             return input
 

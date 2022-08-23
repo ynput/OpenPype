@@ -1,8 +1,12 @@
 import os
 import json
 
-from avalon import api, harmony
-import openpype.lib
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.pipeline.context_tools import is_representation_from_latest
+import openpype.hosts.harmony.api as harmony
 
 
 copy_files = """function copyFile(srcFilename, dstFilename)
@@ -225,7 +229,7 @@ replace_files
 """
 
 
-class BackgroundLoader(api.Loader):
+class BackgroundLoader(load.LoaderPlugin):
     """Load images
     Stores the imported asset in a container named after the asset.
     """
@@ -276,9 +280,7 @@ class BackgroundLoader(api.Loader):
         )
 
     def update(self, container, representation):
-
-        path = api.get_representation_path(representation)
-
+        path = get_representation_path(representation)
         with open(path) as json_file:
             data = json.load(json_file)
 
@@ -296,10 +298,9 @@ class BackgroundLoader(api.Loader):
 
         bg_folder = os.path.dirname(path)
 
-        path = api.get_representation_path(representation)
-
         print(container)
 
+        is_latest = is_representation_from_latest(representation)
         for layer in sorted(layers):
             file_to_import = [
                 os.path.join(bg_folder, layer).replace("\\", "/")
@@ -343,7 +344,7 @@ class BackgroundLoader(api.Loader):
             }
             %s
             """ % (sig, sig)
-            if openpype.lib.is_latest(representation):
+            if is_latest:
                 harmony.send({"function": func, "args": [node, "green"]})
             else:
                 harmony.send({"function": func, "args": [node, "red"]})

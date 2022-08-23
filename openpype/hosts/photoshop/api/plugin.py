@@ -1,6 +1,6 @@
 import re
 
-import avalon.api
+from openpype.pipeline import LoaderPlugin
 from .launch_logic import stub
 
 
@@ -29,41 +29,7 @@ def get_unique_layer_name(layers, asset_name, subset_name):
     return "{}_{:0>3d}".format(name, occurrences + 1)
 
 
-class PhotoshopLoader(avalon.api.Loader):
+class PhotoshopLoader(LoaderPlugin):
     @staticmethod
     def get_stub():
         return stub()
-
-
-class Creator(avalon.api.Creator):
-    """Creator plugin to create instances in Photoshop
-
-    A LayerSet is created to support any number of layers in an instance. If
-    the selection is used, these layers will be added to the LayerSet.
-    """
-
-    def process(self):
-        # Photoshop can have multiple LayerSets with the same name, which does
-        # not work with Avalon.
-        msg = "Instance with name \"{}\" already exists.".format(self.name)
-        stub = lib.stub()  # only after Photoshop is up
-        for layer in stub.get_layers():
-            if self.name.lower() == layer.Name.lower():
-                msg = QtWidgets.QMessageBox()
-                msg.setIcon(QtWidgets.QMessageBox.Warning)
-                msg.setText(msg)
-                msg.exec_()
-                return False
-
-        # Store selection because adding a group will change selection.
-        with lib.maintained_selection():
-
-            # Add selection to group.
-            if (self.options or {}).get("useSelection"):
-                group = stub.group_selected_layers(self.name)
-            else:
-                group = stub.create_group(self.name)
-
-            stub.imprint(group, self.data)
-
-        return group

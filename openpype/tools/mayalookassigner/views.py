@@ -1,9 +1,6 @@
 from Qt import QtWidgets, QtCore
 
 
-DEFAULT_COLOR = "#fb9c15"
-
-
 class View(QtWidgets.QTreeView):
     data_changed = QtCore.Signal()
 

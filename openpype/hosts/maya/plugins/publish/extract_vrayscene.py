@@ -3,9 +3,9 @@
 import os
 import re
 
-import avalon.maya
 import openpype.api
 from openpype.hosts.maya.api.render_setup_tools import export_in_rs_layer
+from openpype.hosts.maya.api.lib import maintained_selection
 
 from maya import cmds
 
@@ -57,7 +57,7 @@ class ExtractVrayscene(openpype.api.Extractor):
 
         # Write out vrscene file
         self.log.info("Writing: '%s'" % file_path)
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             if "*" not in instance.data["setMembers"]:
                 self.log.info(
                     "Exporting: {}".format(instance.data["setMembers"]))

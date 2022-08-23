@@ -8,7 +8,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 
-Ftrack is currently the main project management option for Pype. This documentaion assumes that you are familiar with Ftrack and it's basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](http://ftrack.rtd.ftrack.com/en/stable/).
+Ftrack is currently the main project management option for Pype. This documentation assumes that you are familiar with Ftrack and it's basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](http://ftrack.rtd.ftrack.com/en/stable/).
 
 ## Prepare Ftrack for Pype
 
@@ -19,7 +19,7 @@ The only action that is strictly required is [Pype Admin - Create/Update Avalon 
 If you want to switch projects that are already in production, you might also need to run [Pype Doctor - Custom attr doc](manager_ftrack_actions#custom-attr-doc).
 
 :::caution
-Keep in mind that **Custom attr doc** action will migrate certain attributes from ftrack default ones to our custom attributes. Some attributes will also be renamed. We make backup of the values, but be very carefull with this option and consults us before running it.
+Keep in mind that **Custom attr doc** action will migrate certain attributes from ftrack default ones to our custom attributes. Some attributes will also be renamed. We make backup of the values, but be very careful with this option and consults us before running it.
 :::
 
 ## Event Server
@@ -180,7 +180,7 @@ This event makes sure statuses Asset Version get synced to it's task. After chan
 
 This event handler allows setting of different status to a first created Asset Version in ftrack.
 
-This is usefull for example if first version publish doesn't contain any actual reviewable work, but is only used for roundtrip conform check, in which case this version could receive status `pending conform` instead of standard `pending review`
+This is useful for example if first version publish doesn't contain any actual reviewable work, but is only used for roundtrip conform check, in which case this version could receive status `pending conform` instead of standard `pending review`
 
 Behaviour can be filtered by `name` or `type` of the task assigned to the Asset Version. Configuration can be found in [ftrack presets](admin_presets_ftrack#first_version_status-dict)
 

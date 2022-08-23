@@ -1,6 +1,5 @@
 import json
 
-from avalon import io
 import pyblish.api
 
 

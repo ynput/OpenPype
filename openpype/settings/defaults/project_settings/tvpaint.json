@@ -1,6 +1,10 @@
 {
     "stop_timer_on_application_exit": false,
     "publish": {
+        "CollectRenderScene": {
+            "enabled": false,
+            "render_layer": "Main"
+        },
         "ExtractSequence": {
             "review_bg": [
                 255,
@@ -28,6 +32,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ExtractConvertToEXR": {
+            "enabled": false,
+            "replace_pngs": true,
+            "exr_compression": "ZIP"
         }
     },
     "load": {
