@@ -567,12 +567,12 @@ class SubsetWidget(QtWidgets.QWidget):
 
             # Trigger
             project_name = self.dbcon.active_project()
-            subset_names_by_version_id = collections.defaultdict(set)
+            subset_name_by_version_id = dict()
             for item in items:
                 version_id = item["version_document"]["_id"]
-                subset_names_by_version_id[version_id].add(item["subset"])
+                subset_name_by_version_id[version_id] = item["subset"]
 
-            version_ids = set(subset_names_by_version_id.keys())
+            version_ids = set(subset_name_by_version_id.keys())
             repre_docs = get_representations(
                 project_name,
                 representation_names=[representation_name],
@@ -584,14 +584,15 @@ class SubsetWidget(QtWidgets.QWidget):
             for repre_doc in repre_docs:
                 repre_ids.append(repre_doc["_id"])
 
+                # keep only version ids without representation with that name
                 version_id = repre_doc["parent"]
-                if version_id not in version_ids:
-                    version_ids.remove(version_id)
+                version_ids.discard(version_id)
 
-            for version_id in version_ids:
+            if version_ids:
+                # report versions that didn't have valid representation
                 joined_subset_names = ", ".join([
-                    '"{}"'.format(subset)
-                    for subset in subset_names_by_version_id[version_id]
+                    '"{}"'.format(subset_name_by_version_id[version_id])
+                    for version_id in version_ids
                 ])
                 self.echo("Subsets {} don't have representation '{}'".format(
                     joined_subset_names, representation_name
@@ -1546,6 +1547,11 @@ def _load_representations_by_loader(loader, repre_contexts,
         return
 
     for repre_context in repre_contexts.values():
+        version_doc = repre_context["version"]
+        if version_doc["type"] == "hero_version":
+            version_name = "Hero"
+        else:
+            version_name = version_doc.get("name")
         try:
             if data_by_repre_id:
                 _id = repre_context["representation"]["_id"]
@@ -1563,7 +1569,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 None,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
 
         except Exception as exc:
@@ -1576,7 +1582,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 formatted_traceback,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
     return error_info
 
