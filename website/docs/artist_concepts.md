@@ -10,7 +10,7 @@ sidebar_label: Key Concepts
 
 In our pipeline all the main entities the project is made from are internally considered *'Assets'*. Episode, sequence, shot, character, prop, etc. All of these behave identically in the pipeline. Asset names need to be absolutely unique within the project because they are their key identifier.
 
-OpenPype has limitation regarging duplicated names. Name of assets must be unique across whole project.
+OpenPype has a limitation regarding duplicated names. Name of assets must be unique across whole project.
 
 ### Subset
 
