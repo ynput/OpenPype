@@ -272,11 +272,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
                 # update availability on active site when version changes
                 if self.sync_server.enabled and version_doc:
-                    repre_info = self.sync_server.get_repre_info_for_versions(
-                        project_name,
-                        [version_doc["_id"]],
-                        self.active_site,
-                        self.remote_site
+                    repre_info = list(
+                        self.sync_server.get_repre_info_for_versions(
+                            project_name,
+                            [version_doc["_id"]],
+                            self.active_site,
+                            self.remote_site
+                        )
                     )
                     if repre_info:
                         version_doc["data"].update(
