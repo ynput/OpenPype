@@ -23,7 +23,8 @@ def get_subset_name_with_asset_doc(
     project_name=None,
     host_name=None,
     default_template=None,
-    dynamic_data=None
+    dynamic_data=None,
+    project_settings=None
 ):
     """Calculate subset name based on passed context and OpenPype settings.
 
@@ -71,7 +72,9 @@ def get_subset_name_with_asset_doc(
     task_type = task_info.get("type")
 
     # Get settings
-    tools_settings = get_project_settings(project_name)["global"]["tools"]
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+    tools_settings = project_settings["global"]["tools"]
     profiles = tools_settings["creator"]["subset_name_profiles"]
     filtering_criteria = {
         "families": family,
@@ -116,7 +119,7 @@ def get_subset_name(
     host_name=None,
     default_template=None,
     dynamic_data=None,
-    dbcon=None
+    project_settings=None
 ):
     """Calculate subset name using OpenPype settings.
 
@@ -127,7 +130,7 @@ def get_subset_name(
     """
 
     if project_name is None:
-        project_name = dbcon.project_name
+        project_name = legacy_io.Session["AVALON_PROJECT"]
 
     asset_doc = get_asset_by_id(project_name, asset_id, fields=["data.tasks"])
 
@@ -139,5 +142,6 @@ def get_subset_name(
         project_name,
         host_name,
         default_template,
-        dynamic_data
+        dynamic_data,
+        project_settings
     )
