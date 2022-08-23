@@ -7,16 +7,17 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class BlendLookLoader(plugin.AssetLoader):
+class MaterialLookLoader(plugin.AssetLoader):
     """Load and assign extracted materials from look task."""
 
     families = ["look"]
-    representations = ["blend materials"]
+    representations = ["blend"]
 
     label = "Load Materials"
-    icon = "code-fork"
+    icon = "paint-brush"
     color = "orange"
     color_tag = "COLOR_07"
+    order = 3
     no_namespace = True
 
     def _process(self, libpath, asset_group):

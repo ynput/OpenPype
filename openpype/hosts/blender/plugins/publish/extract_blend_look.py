@@ -5,10 +5,10 @@ import bpy
 import openpype.api
 
 
-class ExtractBlendMaterials(openpype.api.Extractor):
-    """Extract a blend file with materials."""
+class ExtractBlendLook(openpype.api.Extractor):
+    """Extract a blend file with materials and meshes."""
 
-    label = "Extract Materials"
+    label = "Extract Look"
     hosts = ["blender"]
     families = ["look"]
     optional = True
@@ -51,6 +51,7 @@ class ExtractBlendMaterials(openpype.api.Extractor):
             # Store objects to pack images from their materials.
             if isinstance(obj, bpy.types.Object) and obj.type == "MESH":
                 objects.add(obj)
+                data_blocks.add(obj)
 
         # Get all objects materials.
         materials = set()
@@ -101,8 +102,8 @@ class ExtractBlendMaterials(openpype.api.Extractor):
         instance.data.setdefault("representations", [])
 
         representation = {
-            "name": "blend materials",
-            "ext": "mat.blend",
+            "name": "blend",
+            "ext": "blend",
             "files": filename,
             "stagingDir": stagingdir,
         }
