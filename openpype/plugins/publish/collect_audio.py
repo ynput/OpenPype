@@ -1,5 +1,4 @@
 import pyblish.api
-from pprint import pformat
 
 from openpype.client import (
     get_last_version_by_subset_name,
