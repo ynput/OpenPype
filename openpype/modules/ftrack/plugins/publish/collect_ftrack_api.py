@@ -105,11 +105,17 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         context.data["ftrackEntity"] = asset_entity
         context.data["ftrackTask"] = task_entity
 
-        self.per_instance_process(context, asset_name, task_name)
+        self.per_instance_process(context, asset_entity, task_entity)
 
     def per_instance_process(
-        self, context, context_asset_name, context_task_name
+        self, context, context_asset_entity, context_task_entity
     ):
+        context_task_name = None
+        context_asset_name = None
+        if context_asset_entity:
+            context_asset_name = context_asset_entity["name"]
+            if context_task_entity:
+                context_task_name = context_task_entity["name"]
         instance_by_asset_and_task = {}
         for instance in context:
             self.log.debug(
@@ -120,6 +126,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
             if not instance_asset_name and not instance_task_name:
                 self.log.debug("Instance does not have set context keys.")
+                instance.data["ftrackEntity"] = context_asset_entity
+                instance.data["ftrackTask"] = context_task_entity
                 continue
 
             elif instance_asset_name and instance_task_name:
@@ -131,6 +139,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                         "Instance's context is same as in publish context."
                         " Asset: {} | Task: {}"
                     ).format(context_asset_name, context_task_name))
+                    instance.data["ftrackEntity"] = context_asset_entity
+                    instance.data["ftrackTask"] = context_task_entity
                     continue
                 asset_name = instance_asset_name
                 task_name = instance_task_name
@@ -141,6 +151,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                         "Instance's context task is same as in publish"
                         " context. Task: {}"
                     ).format(context_task_name))
+                    instance.data["ftrackEntity"] = context_asset_entity
+                    instance.data["ftrackTask"] = context_task_entity
                     continue
 
                 asset_name = context_asset_name
@@ -152,6 +164,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                         "Instance's context asset is same as in publish"
                         " context. Asset: {}"
                     ).format(context_asset_name))
+                    instance.data["ftrackEntity"] = context_asset_entity
+                    instance.data["ftrackTask"] = context_task_entity
                     continue
 
                 # Do not use context's task name

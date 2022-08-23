@@ -6,7 +6,7 @@ import platform
 import copy
 from collections import deque, defaultdict
 
-
+from openpype.client import get_projects
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
 from openpype.settings import (
@@ -913,7 +913,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         enabled_projects = []
 
         if self.enabled:
-            for project in self.connection.projects(projection={"name": 1}):
+            for project in get_projects(fields=["name"]):
                 project_name = project["name"]
                 if self.is_project_enabled(project_name):
                     enabled_projects.append(project_name)
@@ -1242,10 +1242,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     def _prepare_sync_project_settings(self, exclude_locals):
         sync_project_settings = {}
         system_sites = self.get_all_site_configs()
-        project_docs = self.connection.projects(
-            projection={"name": 1},
-            only_active=True
-        )
+        project_docs = get_projects(fields=["name"])
         for project_doc in project_docs:
             project_name = project_doc["name"]
             sites = copy.deepcopy(system_sites)  # get all configured sites

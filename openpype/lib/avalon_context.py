@@ -1,11 +1,9 @@
 """Should be used only inside of hosts."""
 import os
-import json
 import re
 import copy
 import platform
 import logging
-import collections
 import functools
 import warnings
 
@@ -13,13 +11,9 @@ from openpype.client import (
     get_project,
     get_assets,
     get_asset_by_name,
-    get_subsets,
-    get_last_versions,
     get_last_version_by_subset_name,
-    get_representations,
     get_workfile_info,
 )
-from openpype.settings import get_project_settings
 from .profiles_filtering import filter_profiles
 from .events import emit_event
 from .path_templates import StringTemplate

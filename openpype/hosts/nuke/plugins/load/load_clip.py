@@ -162,7 +162,15 @@ class LoadClip(plugin.NukeLoader):
             data_imprint = {}
             for k in add_keys:
                 if k == 'version':
-                    data_imprint[k] = context["version"]['name']
+                    version_doc = context["version"]
+                    if version_doc["type"] == "hero_version":
+                        version = "hero"
+                    else:
+                        version = version_doc.get("name")
+
+                    if version:
+                        data_imprint[k] = version
+
                 elif k == 'colorspace':
                     colorspace = repre["data"].get(k)
                     colorspace = colorspace or version_data.get(k)

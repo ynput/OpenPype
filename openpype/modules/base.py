@@ -140,7 +140,7 @@ class _LoadCache:
 def get_default_modules_dir():
     """Path to default OpenPype modules."""
 
-    current_dir = os.path.abspath(os.path.dirname(__file__))
+    current_dir = os.path.dirname(os.path.abspath(__file__))
 
     output = []
     for folder_name in ("default_modules", ):
@@ -298,6 +298,8 @@ def _load_modules():
     # Add current directory at first place
     #   - has small differences in import logic
     current_dir = os.path.abspath(os.path.dirname(__file__))
+    hosts_dir = os.path.join(os.path.dirname(current_dir), "hosts")
+    module_dirs.insert(0, hosts_dir)
     module_dirs.insert(0, current_dir)
 
     processed_paths = set()
@@ -314,6 +316,7 @@ def _load_modules():
             continue
 
         is_in_current_dir = dirpath == current_dir
+        is_in_host_dir = dirpath == hosts_dir
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
@@ -352,6 +355,24 @@ def _load_modules():
                     default_module = __import__(import_str, fromlist=("", ))
                     sys.modules[new_import_str] = default_module
                     setattr(openpype_modules, basename, default_module)
+
+                elif is_in_host_dir:
+                    import_str = "openpype.hosts.{}".format(basename)
+                    new_import_str = "{}.{}".format(modules_key, basename)
+                    # Until all hosts are converted to be able use them as
+                    #   modules is this error check needed
+                    try:
+                        default_module = __import__(
+                            import_str, fromlist=("", )
+                        )
+                        sys.modules[new_import_str] = default_module
+                        setattr(openpype_modules, basename, default_module)
+
+                    except Exception:
+                        log.warning(
+                            "Failed to import host folder {}".format(basename),
+                            exc_info=True
+                        )
 
                 elif os.path.isdir(fullpath):
                     import_module_from_dirpath(dirpath, filename, modules_key)
@@ -768,24 +789,50 @@ class ModulesManager:
                 output.extend(paths)
         return output
 
-    def collect_launch_hook_paths(self):
-        """Helper to collect hooks from modules inherited ILaunchHookPaths.
+    def collect_launch_hook_paths(self, app):
+        """Helper to collect application launch hooks.
+
+        It used to be based on 'ILaunchHookPaths' which is not true anymore.
+        Module just have to have implemented 'get_launch_hook_paths' method.
+
+        Args:
+            app (Application): Application object which can be used for
+                filtering of which launch hook paths are returned.
 
         Returns:
             list: Paths to launch hook directories.
         """
-        from openpype_interfaces import ILaunchHookPaths
 
         str_type = type("")
         expected_types = (list, tuple, set)
 
         output = []
         for module in self.get_enabled_modules():
-            # Skip module that do not inherit from `ILaunchHookPaths`
-            if not isinstance(module, ILaunchHookPaths):
+            # Skip module if does not have implemented 'get_launch_hook_paths'
+            func = getattr(module, "get_launch_hook_paths", None)
+            if func is None:
                 continue
 
-            hook_paths = module.get_launch_hook_paths()
+            func = module.get_launch_hook_paths
+            if hasattr(inspect, "signature"):
+                sig = inspect.signature(func)
+                expect_args = len(sig.parameters) > 0
+            else:
+                expect_args = len(inspect.getargspec(func)[0]) > 0
+
+            # Pass application argument if method expect it.
+            try:
+                if expect_args:
+                    hook_paths = func(app)
+                else:
+                    hook_paths = func()
+            except Exception:
+                self.log.warning(
+                    "Failed to call 'get_launch_hook_paths'",
+                    exc_info=True
+                )
+                continue
+
             if not hook_paths:
                 continue
 
@@ -803,6 +850,45 @@ class ModulesManager:
 
             output.extend(hook_paths)
         return output
+
+    def get_host_module(self, host_name):
+        """Find host module by host name.
+
+        Args:
+            host_name (str): Host name for which is found host module.
+
+        Returns:
+            OpenPypeModule: Found host module by name.
+            None: There was not found module inheriting IHostModule which has
+                host name set to passed 'host_name'.
+        """
+
+        from openpype_interfaces import IHostModule
+
+        for module in self.get_enabled_modules():
+            if (
+                isinstance(module, IHostModule)
+                and module.host_name == host_name
+            ):
+                return module
+        return None
+
+    def get_host_names(self):
+        """List of available host names based on host modules.
+
+        Returns:
+            Iterable[str]: All available host names based on enabled modules
+                inheriting 'IHostModule'.
+        """
+
+        from openpype_interfaces import IHostModule
+
+        host_names = {
+            module.host_name
+            for module in self.get_enabled_modules()
+            if isinstance(module, IHostModule)
+        }
+        return host_names
 
     def print_report(self):
         """Print out report of time spent on modules initialization parts.
