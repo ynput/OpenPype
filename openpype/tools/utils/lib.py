@@ -443,10 +443,6 @@ class FamilyConfigCache:
         if profiles:
             # Make sure connection is installed
             # - accessing attribute which does not have auto-install
-            self.dbcon.install()
-            database = getattr(self.dbcon, "database", None)
-            if database is None:
-                database = self.dbcon._database
             asset_doc = get_asset_by_name(
                 project_name, asset_name, fields=["data.tasks"]
             ) or {}

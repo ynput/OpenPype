@@ -71,7 +71,6 @@ class CreateRender(plugin.Creator):
     label = "Render"
     family = "rendering"
     icon = "eye"
-
     _token = None
     _user = None
     _password = None
@@ -220,6 +219,12 @@ class CreateRender(plugin.Creator):
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
         self.data["useReferencedAovs"] = False
+        self.data["renderSetupIncludeLights"] = (
+            self._project_settings.get(
+                "maya", {}).get(
+                "RenderSettings", {}).get(
+                "enable_all_lights", False)
+            )
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

@@ -6,7 +6,6 @@ from . import pipeline
 from . import plugin
 from .pipeline import (
     install,
-    uninstall,
     maintained_selection,
     remove_instance,
     list_instances,
@@ -33,7 +32,6 @@ __all__ = (
     "plugin",
 
     "install",
-    "uninstall",
     "maintained_selection",
     "remove_instance",
     "list_instances",

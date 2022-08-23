@@ -19,8 +19,15 @@ class MissingMethodsError(ValueError):
         joined_missing = ", ".join(
             ['"{}"'.format(item) for item in missing_methods]
         )
+        if isinstance(host, HostBase):
+            host_name = host.name
+        else:
+            try:
+                host_name = host.__file__.replace("\\", "/").split("/")[-3]
+            except Exception:
+                host_name = str(host)
         message = (
-            "Host \"{}\" miss methods {}".format(host.name, joined_missing)
+            "Host \"{}\" miss methods {}".format(host_name, joined_missing)
         )
         super(MissingMethodsError, self).__init__(message)
 
