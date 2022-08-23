@@ -1,7 +1,7 @@
-from avalon import houdini
+from openpype.hosts.houdini.api import plugin
 
 
-class CreateArnoldRop(houdini.Creator):
+class CreateArnoldRop(plugin.Creator):
     """Arnold ROP"""
 
     label = "Arnold ROP"
@@ -26,8 +26,7 @@ class CreateArnoldRop(houdini.Creator):
 
         self.data.update({"node_type": "arnold"})
 
-    def process(self):
-        instance = super(CreateArnoldRop, self).process()
+    def _process(self, instance):
 
         basename = instance.name()
         instance.setName(basename + "_ROP", unique_name=True)
