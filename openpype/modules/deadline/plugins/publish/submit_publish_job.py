@@ -116,10 +116,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_plugin = "OpenPype"
     targets = ["local"]
 
-    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
+    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony",
+             "houdini"]
 
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "vrayscene"]
+                "renderlayer", "imagesequence", "vrayscene",
+                "arnold_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
