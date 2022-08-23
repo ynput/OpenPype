@@ -1,6 +1,5 @@
 import os
 import json
-import contextlib
 import tempfile
 import logging
 
@@ -9,7 +8,8 @@ import requests
 import pyblish.api
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.hosts import tvpaint
+from openpype.host import HostBase, IWorkfileHost, ILoadHost
+from openpype.hosts.tvpaint import TVPAINT_ROOT_DIR
 from openpype.api import get_current_project_settings
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
@@ -26,11 +26,6 @@ from .lib import (
 
 log = logging.getLogger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(tvpaint.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 
 METADATA_SECTION = "avalon"
 SECTION_NAME_CONTEXT = "context"
@@ -63,30 +58,132 @@ instances=2
 """
 
 
-def install():
-    """Install TVPaint-specific functionality."""
+class TVPaintHost(HostBase, IWorkfileHost, ILoadHost):
+    name = "tvpaint"
 
-    log.info("OpenPype - Installing TVPaint integration")
-    legacy_io.install()
+    def install(self):
+        """Install TVPaint-specific functionality."""
 
-    # Create workdir folder if does not exist yet
-    workdir = legacy_io.Session["AVALON_WORKDIR"]
-    if not os.path.exists(workdir):
-        os.makedirs(workdir)
+        log.info("OpenPype - Installing TVPaint integration")
+        legacy_io.install()
 
-    pyblish.api.register_host("tvpaint")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
+        # Create workdir folder if does not exist yet
+        workdir = legacy_io.Session["AVALON_WORKDIR"]
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
 
-    registered_callbacks = (
-        pyblish.api.registered_callbacks().get("instanceToggled") or []
-    )
-    if on_instance_toggle not in registered_callbacks:
-        pyblish.api.register_callback("instanceToggled", on_instance_toggle)
+        plugins_dir = os.path.join(TVPAINT_ROOT_DIR, "plugins")
+        publish_dir = os.path.join(plugins_dir, "publish")
+        load_dir = os.path.join(plugins_dir, "load")
+        create_dir = os.path.join(plugins_dir, "create")
 
-    register_event_callback("application.launched", initial_launch)
-    register_event_callback("application.exit", application_exit)
+        pyblish.api.register_host("tvpaint")
+        pyblish.api.register_plugin_path(publish_dir)
+        register_loader_plugin_path(load_dir)
+        register_creator_plugin_path(create_dir)
+
+        registered_callbacks = (
+            pyblish.api.registered_callbacks().get("instanceToggled") or []
+        )
+        if self.on_instance_toggle not in registered_callbacks:
+            pyblish.api.register_callback(
+                "instanceToggled", self.on_instance_toggle
+            )
+
+        register_event_callback("application.launched", self.initial_launch)
+        register_event_callback("application.exit", self.application_exit)
+
+    def open_workfile(self, filepath):
+        george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
+            filepath.replace("\\", "/")
+        )
+        return execute_george_through_file(george_script)
+
+    def save_workfile(self, filepath=None):
+        if not filepath:
+            filepath = self.get_current_workfile()
+        context = {
+            "project": legacy_io.Session["AVALON_PROJECT"],
+            "asset": legacy_io.Session["AVALON_ASSET"],
+            "task": legacy_io.Session["AVALON_TASK"]
+        }
+        save_current_workfile_context(context)
+
+        # Execute george script to save workfile.
+        george_script = "tv_SaveProject {}".format(filepath.replace("\\", "/"))
+        return execute_george(george_script)
+
+    def work_root(self, session):
+        return session["AVALON_WORKDIR"]
+
+    def get_current_workfile(self):
+        return execute_george("tv_GetProjectName")
+
+    def workfile_has_unsaved_changes(self):
+        return None
+
+    def get_workfile_extensions(self):
+        return [".tvpp"]
+
+    def get_containers(self):
+        return get_containers()
+
+    def initial_launch(self):
+        # Setup project settings if its the template that's launched.
+        # TODO also check for template creation when it's possible to define
+        #   templates
+        last_workfile = os.environ.get("AVALON_LAST_WORKFILE")
+        if not last_workfile or os.path.exists(last_workfile):
+            return
+
+        log.info("Setting up project...")
+        set_context_settings()
+
+    def application_exit(self):
+        """Logic related to TimerManager.
+
+        Todo:
+            This should be handled out of TVPaint integration logic.
+        """
+
+        data = get_current_project_settings()
+        stop_timer = data["tvpaint"]["stop_timer_on_application_exit"]
+
+        if not stop_timer:
+            return
+
+        # Stop application timer.
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
+        requests.post(rest_api_url)
+
+    def on_instance_toggle(self, instance, old_value, new_value):
+        """Update instance data in workfile on publish toggle."""
+        # Review may not have real instance in wokrfile metadata
+        if not instance.data.get("uuid"):
+            return
+
+        instance_id = instance.data["uuid"]
+        found_idx = None
+        current_instances = list_instances()
+        for idx, workfile_instance in enumerate(current_instances):
+            if workfile_instance["uuid"] == instance_id:
+                found_idx = idx
+                break
+
+        if found_idx is None:
+            return
+
+        if "active" in current_instances[found_idx]:
+            current_instances[found_idx]["active"] = new_value
+            self.write_instances(current_instances)
+
+    def list_instances(self):
+        """List all created instances from current workfile."""
+        return list_instances()
+
+    def write_instances(self, data):
+        return write_instances(data)
 
 
 def containerise(
@@ -116,7 +213,7 @@ def containerise(
         "representation": str(context["representation"]["_id"])
     }
     if current_containers is None:
-        current_containers = ls()
+        current_containers = get_containers()
 
     # Add container to containers list
     current_containers.append(container_data)
@@ -125,15 +222,6 @@ def containerise(
     write_workfile_metadata(SECTION_NAME_CONTAINERS, current_containers)
 
     return container_data
-
-
-@contextlib.contextmanager
-def maintained_selection():
-    # TODO implement logic
-    try:
-        yield
-    finally:
-        pass
 
 
 def split_metadata_string(text, chunk_length=None):
@@ -359,12 +447,7 @@ def write_instances(data):
     return write_workfile_metadata(SECTION_NAME_INSTANCES, data)
 
 
-# Backwards compatibility
-def _write_instances(*args, **kwargs):
-    return write_instances(*args, **kwargs)
-
-
-def ls():
+def get_containers():
     output = get_workfile_metadata(SECTION_NAME_CONTAINERS)
     if output:
         for item in output:
@@ -374,53 +457,6 @@ def ls():
                     members = "|".join([str(member) for member in members])
                 item["objectName"] = members
     return output
-
-
-def on_instance_toggle(instance, old_value, new_value):
-    """Update instance data in workfile on publish toggle."""
-    # Review may not have real instance in wokrfile metadata
-    if not instance.data.get("uuid"):
-        return
-
-    instance_id = instance.data["uuid"]
-    found_idx = None
-    current_instances = list_instances()
-    for idx, workfile_instance in enumerate(current_instances):
-        if workfile_instance["uuid"] == instance_id:
-            found_idx = idx
-            break
-
-    if found_idx is None:
-        return
-
-    if "active" in current_instances[found_idx]:
-        current_instances[found_idx]["active"] = new_value
-        write_instances(current_instances)
-
-
-def initial_launch():
-    # Setup project settings if its the template that's launched.
-    # TODO also check for template creation when it's possible to define
-    #   templates
-    last_workfile = os.environ.get("AVALON_LAST_WORKFILE")
-    if not last_workfile or os.path.exists(last_workfile):
-        return
-
-    log.info("Setting up project...")
-    set_context_settings()
-
-
-def application_exit():
-    data = get_current_project_settings()
-    stop_timer = data["tvpaint"]["stop_timer_on_application_exit"]
-
-    if not stop_timer:
-        return
-
-    # Stop application timer.
-    webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
-    rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
-    requests.post(rest_api_url)
 
 
 def set_context_settings(asset_doc=None):

@@ -5,11 +5,7 @@ from . import workio
 from . import pipeline
 from . import plugin
 from .pipeline import (
-    install,
-    maintained_selection,
-    remove_instance,
-    list_instances,
-    ls
+    TVPaintHost,
 )
 
 from .workio import (
@@ -31,11 +27,7 @@ __all__ = (
     "pipeline",
     "plugin",
 
-    "install",
-    "maintained_selection",
-    "remove_instance",
-    "list_instances",
-    "ls",
+    "TVPaintHost",
 
     # Workfiles API
     "open_file",
