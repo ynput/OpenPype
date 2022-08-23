@@ -646,7 +646,7 @@ def create_qthread(func, *args, **kwargs):
         def run(self):
             try:
                 func(*args, **kwargs)
-            except:
+            except BaseException:
                 traceback.print_exception(*sys.exc_info())
                 raise
     return Thread()
