@@ -109,11 +109,7 @@ module.exports = {
                 "admin_hosts_tvpaint"
             ],
         },
-        {
-            type: "category",
-            label: "Releases",
-            items: ["changelog", "update_notes"],
-        },
+        "admin_releases",
         {
             type: "category",
             collapsed: false,
