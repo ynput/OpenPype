@@ -65,13 +65,22 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(cls.knobs.keys()))
+
             if not families:
                 continue
 
             # Get all knobs to validate.
             knobs = {}
             for family in families:
+                # check if dot in family
+                if "." in family:
+                    family = family.split(".")[0]
+
+                # avoid families not in settings
+                if family not in cls.knobs:
+                    continue
+
+                # get presets of knobs
                 for preset in cls.knobs[family]:
                     knobs[preset] = cls.knobs[family][preset]
 
