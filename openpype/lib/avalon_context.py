@@ -18,6 +18,8 @@ from openpype.client.operations import (
     CURRENT_ASSET_DOC_SCHEMA,
     CURRENT_PROJECT_SCHEMA,
     CURRENT_PROJECT_CONFIG_SCHEMA,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
 )
 from .profiles_filtering import filter_profiles
 from .events import emit_event
@@ -34,10 +36,6 @@ CURRENT_DOC_SCHEMAS = {
     "asset": CURRENT_ASSET_DOC_SCHEMA,
     "config": CURRENT_PROJECT_CONFIG_SCHEMA
 }
-PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
-PROJECT_NAME_REGEX = re.compile(
-    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
-)
 
 
 class AvalonContextDeprecatedWarning(DeprecationWarning):

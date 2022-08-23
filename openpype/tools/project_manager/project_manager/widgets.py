@@ -5,8 +5,8 @@ from .constants import (
     NAME_ALLOWED_SYMBOLS,
     NAME_REGEX
 )
-from openpype.lib import (
-    create_project,
+from openpype.lib import create_project
+from openpype.client.operations import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
     PROJECT_NAME_REGEX
 )
