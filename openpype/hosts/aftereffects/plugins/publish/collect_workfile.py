@@ -77,7 +77,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],
-            host_name=context.data["hostName"]
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
         # Create instance
         instance = context.create_instance(subset)

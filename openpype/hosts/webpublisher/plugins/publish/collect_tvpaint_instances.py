@@ -53,7 +53,8 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             task_name,
             asset_doc,
             project_name,
-            host_name
+            host_name,
+            project_settings=context.data["project_settings"]
         )
         workfile_instance = self._create_workfile_instance(
             context, workfile_subset_name
@@ -67,7 +68,8 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             task_name,
             asset_doc,
             project_name,
-            host_name
+            host_name,
+            project_settings=context.data["project_settings"]
         )
         review_instance = self._create_review_instance(
             context, review_subset_name
@@ -121,7 +123,8 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                     asset_doc,
                     project_name,
                     host_name,
-                    dynamic_data=dynamic_data
+                    dynamic_data=dynamic_data,
+                    project_settings=context.data["project_settings"]
                 )
 
                 instance = self._create_render_pass_instance(
@@ -144,7 +147,8 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                 asset_doc,
                 project_name,
                 host_name,
-                dynamic_data=dynamic_data
+                dynamic_data=dynamic_data,
+                project_settings=context.data["project_settings"]
             )
             instance = self._create_render_layer_instance(
                 context, layers, subset_name

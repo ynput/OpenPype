@@ -49,7 +49,9 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
             self.subset_name_variant,
             task_name,
             asset_doc,
-            project_name
+            project_name,
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
         instance_name = f"{asset_name}_{subset_name}"
 

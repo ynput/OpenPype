@@ -82,7 +82,8 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
             asset_doc,
             project_name,
             host_name,
-            dynamic_data=dynamic_data
+            dynamic_data=dynamic_data,
+            project_settings=context.data["project_settings"]
         )
 
         instance_data = {

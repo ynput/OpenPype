@@ -29,6 +29,9 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
             variant,
             task_name,
             asset_doc,
+            context.data["projectName"],
+            context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
 
         # adding otio timeline to context

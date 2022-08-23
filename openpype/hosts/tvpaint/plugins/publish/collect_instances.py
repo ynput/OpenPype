@@ -113,7 +113,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     task_name,
                     asset_doc,
                     project_name,
-                    host_name
+                    host_name,
+                    project_settings=context.data["project_settings"]
                 )
                 instance_data["subset"] = new_subset_name
 

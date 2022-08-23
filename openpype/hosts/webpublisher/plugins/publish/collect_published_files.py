@@ -79,8 +79,13 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension.replace(".", ''))
 
             subset_name = get_subset_name_with_asset_doc(
-                family, variant, task_name, asset_doc,
-                project_name=project_name, host_name="webpublisher"
+                family,
+                variant,
+                task_name,
+                asset_doc,
+                project_name=project_name,
+                host_name="webpublisher",
+                project_settings=context.data["project_settings"]
             )
             version = self._get_next_version(
                 project_name, asset_doc, subset_name
