@@ -13,11 +13,7 @@ class SaveWorkfiledAction(pyblish.api.Action):
     icon = "save"
 
     def process(self, context, plugin):
-        current_file = workio.current_file()
-        if current_file:
-            workio.save_file(current_file)
-        else:
-            bpy.ops.wm.avalon_workfiles()
+        bpy.ops.wm.avalon_workfiles()
 
 
 class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
@@ -31,17 +27,11 @@ class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
     def process(self, context):
         """Inject the current working file"""
         current_file = workio.current_file()
-        has_unsaved_changes = workio.has_unsaved_changes()
 
         context.data["currentFile"] = current_file
 
         assert current_file, (
             "Current file is empty. Save the file before continuing."
-        )
-
-        assert not has_unsaved_changes, (
-            "Current file has unsaved changes. "
-            "Save the file before continuing."
         )
 
         folder, file = os.path.split(current_file)
