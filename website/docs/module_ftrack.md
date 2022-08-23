@@ -72,7 +72,7 @@ We do not recommend setting your Ftrack user and api key environments in a persi
 
 ### Where to run event server
 
-We recommend you to run event server on stable server machine with ability to connect to Avalon database and Ftrack web server. Best practice we recommend is to run event server as service. It can be Windows or Linux.
+We recommend you to run event server on stable server machine with ability to connect to OpenPype database and Ftrack web server. Best practice we recommend is to run event server as service. It can be Windows or Linux.
 
 :::important
 Event server should **not** run more than once! It may cause major issues.
