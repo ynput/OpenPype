@@ -562,6 +562,40 @@ class ModulesManager:
         self.initialize_modules()
         self.connect_modules()
 
+    def __getitem__(self, module_name):
+        return self.modules_by_name[module_name]
+
+    def get(self, module_name, default=None):
+        """Access module by name.
+
+        Args:
+            module_name (str): Name of module which should be returned.
+            default (Any): Default output if module is not available.
+
+        Returns:
+            Union[OpenPypeModule, None]: Module found by name or None.
+        """
+        return self.modules_by_name.get(module_name, default)
+
+    def get_enabled_module(self, module_name, default=None):
+        """Fast access to enabled module.
+
+        If module is available but is not enabled default value is returned.
+
+        Args:
+            module_name (str): Name of module which should be returned.
+            default (Any): Default output if module is not available or is
+                not enabled.
+
+        Returns:
+            Union[OpenPypeModule, None]: Enabled module found by name or None.
+        """
+
+        module = self.get(module_name)
+        if module is not None and module.enabled:
+            return module
+        return default
+
     def initialize_modules(self):
         """Import and initialize modules."""
         # Make sure modules are loaded
