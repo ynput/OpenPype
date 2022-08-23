@@ -44,8 +44,8 @@ class ExtractBlend(publish.Extractor):
                     return loader
         return loaders[0]
 
-    def _pack_images_from_objects(self, objects):
-        """Pack images from mesh objects materials."""
+    def _get_images_from_objects(self, objects):
+        """Get images from mesh objects materials."""
         # Get all objects materials using node tree shader.
         materials = set()
         for obj in objects:
@@ -65,10 +65,7 @@ class ExtractBlend(publish.Extractor):
                     and node.image
                 ):
                     images.add(node.image)
-        # Pack images.
-        for image in images:
-            if not image.packed_file:
-                image.pack()
+        return images
 
     def process(self, instance):
         # Define extract output file path
@@ -123,11 +120,25 @@ class ExtractBlend(publish.Extractor):
         )
 
         # Pack used images in the blend files.
+        packed_images = set()
         if self.pack_images:
-            self._pack_images_from_objects(objects)
+            for image in self._get_images_from_objects(objects):
+                if not image.packed_file:
+                    packed_images.add((image, image.is_dirty))
+                    image.pack()
 
         bpy.ops.file.make_paths_absolute()
         bpy.data.libraries.write(filepath, data_blocks)
+
+        # restor packed images.
+        for image, is_dirty in packed_images:
+            if not image.filepath:
+                unpack_method = "REMOVE"
+            elif is_dirty:
+                unpack_method = "WRITE_ORIGINAL"
+            else:
+                unpack_method = "USE_ORIGINAL"
+            image.unpack(method=unpack_method)
 
         # restor instance metadata
         instance_collection[AVALON_PROPERTY] = instance_metadata
