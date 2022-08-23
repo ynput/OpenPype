@@ -69,6 +69,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # get media source first frame
         source_first_frame = instance.data["sourceFirstFrame"]
 
+        self.log.debug("_ frame_start: {}".format(frame_start))
+        self.log.debug("_ source_first_frame: {}".format(source_first_frame))
+
         # get timeline in/out of segment
         clip_in = instance.data["clipIn"]
         clip_out = instance.data["clipOut"]
@@ -102,6 +105,25 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 + r_handle_end
             )
 
+        # get frame range with handles for representation range
+        frame_start_handle = frame_start - handle_start
+        repre_frame_start = frame_start_handle
+        if include_handles:
+            if r_speed == 1.0:
+                frame_start_handle = frame_start
+            else:
+                frame_start_handle = (
+                    frame_start - handle_start) + r_handle_start
+
+        self.log.debug("_ frame_start_handle: {}".format(
+            frame_start_handle))
+        self.log.debug("_ repre_frame_start: {}".format(
+            repre_frame_start))
+
+        # calculate duration with handles
+        source_duration_handles = (
+            source_end_handles - source_start_handles) + 1
+
         # create staging dir path
         staging_dir = self.staging_dir(instance)
 
@@ -120,15 +142,22 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         # set versiondata if any retime
         version_data = retimed_data.get("version_data")
+        self.log.debug("_ version_data: {}".format(version_data))
 
         if version_data:
             instance.data["versionData"].update(version_data)
 
         if r_speed != 1.0:
             instance.data["versionData"].update({
-                "frameStart": source_start_handles + r_handle_start,
-                "frameEnd": source_end_handles - r_handle_end,
+                "frameStart": frame_start_handle,
+                "frameEnd": (
+                    (frame_start_handle + source_duration_handles - 1)
+                    - (r_handle_start + r_handle_end)
+                )
             })
+        self.log.debug("_ i_version_data: {}".format(
+            instance.data["versionData"]
+        ))
 
         # loop all preset names and
         for unique_name, preset_config in export_presets.items():
@@ -151,22 +180,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     preset_file, export_type, extension
                 )
             )
-
-            # get frame range with handles for representation range
-            frame_start_handle = frame_start - handle_start
-            if include_handles:
-                if r_speed == 1.0:
-                    frame_start_handle = frame_start
-                else:
-                    frame_start_handle = (
-                        frame_start - handle_start) + r_handle_start
-
-            self.log.debug("_ frame_start_handle: {}".format(
-                frame_start_handle))
-
-            # calculate duration with handles
-            source_duration_handles = (
-                source_end_handles - source_start_handles) + 1
 
             exporting_clip = None
             name_patern_xml = "<name>_{}.".format(
@@ -203,7 +216,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             modify_xml_data.update({
                 # enum position low start from 0
                 "frameIndex": 0,
-                "startFrame": frame_start_handle,
+                "startFrame": repre_frame_start,
                 "namePattern": name_patern_xml
             })
 
@@ -248,7 +261,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "namePattern": "__thumbnail"
                 })
                 thumb_frame_number = int(in_mark + (
-                    source_duration_handles / 2))
+                    (out_mark - in_mark + 1) / 2))
 
                 self.log.debug("__ thumb_frame_number: {}".format(
                     thumb_frame_number
@@ -329,9 +342,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
             # add frame range
             if preset_config["representation_add_range"]:
                 representation_data.update({
-                    "frameStart": frame_start_handle,
+                    "frameStart": repre_frame_start,
                     "frameEnd": (
-                        frame_start_handle + source_duration_handles) - 1,
+                        repre_frame_start + source_duration_handles) - 1,
                     "fps": instance.data["fps"]
                 })
 
