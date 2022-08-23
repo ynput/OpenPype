@@ -86,22 +86,28 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
                                                       suffix=None)
         render_products.append(beauty_product)
 
-        # TODO: Implement AOVS
-        # num_aovs = rop.evalParm("ar_aovs")
-        # for index in range(num_aovs):
-        #     i = index + 1
-        #
-        #     # Skip disabled AOVs
-        #     if not rop.evalParm("ar_enable_aov%s" % i):
-        #         continue
-        #
-        #     label = evalParmNoFrame(rop, "ar_aov_label%s" % i)
-        #     if rop.evalParm("ar_aov_exr_enable_layer_name%s" % i):
-        #         label = rop.evalParm("ar_aov_exr_layer_name%s" % i)
-        #
-        #     aov_product = self.get_render_product_name(default_prefix,
-        #                                                suffix=label)
-        #     render_products.append(aov_product)
+        files_by_aov = {
+            "": self.generate_expected_files(instance, beauty_product)
+        }
+
+        num_aovs = rop.evalParm("ar_aovs")
+        for index in range(num_aovs):
+            i = index + 1
+
+            # Skip disabled AOVs
+            if not rop.evalParm("ar_enable_aov%s" % i):
+                continue
+
+            if rop.evalParm("ar_aov_exr_enable_layer_name%s" % i):
+                label = rop.evalParm("ar_aov_exr_layer_name%s" % i)
+            else:
+                label = evalParmNoFrame(rop, "ar_aov_label%s" % i)
+
+            aov_product = self.get_render_product_name(default_prefix,
+                                                       suffix=label)
+            render_products.append(aov_product)
+            files_by_aov[label] = self.generate_expected_files(instance,
+                                                            aov_product)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -111,6 +117,11 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
 
         # For now by default do NOT try to publish the rendered output
         instance.data["publishJobState"] = "Suspended"
+        instance.data["attachTo"] = []      # stub required data
+
+        if "expectedFiles" not in instance.data:
+           instance.data["expectedFiles"] = list()
+        instance.data["expectedFiles"].append(files_by_aov)
 
     def get_render_product_name(self, prefix, suffix):
         """Return the output filename using the AOV prefix and suffix"""
@@ -138,3 +149,26 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
                 product_name = prefix
 
         return product_name
+
+    def generate_expected_files(self, instance, path):
+        """Create expected files in instance data"""
+
+        dir = os.path.dirname(path)
+        file = os.path.basename(path)
+
+        if "#" in file:
+            pparts = file.split("#")
+            padding = "%0{}d".format(len(pparts) - 1)
+            file = pparts[0] + padding + pparts[-1]
+
+        if "%" not in file:
+            return path
+
+        expected_files = []
+        start = instance.data["frameStart"]
+        end = instance.data["frameEnd"]
+        for i in range(int(start), (int(end) + 1)):
+            expected_files.append(
+                os.path.join(dir, (file % i)).replace("\\", "/"))
+
+        return expected_files
