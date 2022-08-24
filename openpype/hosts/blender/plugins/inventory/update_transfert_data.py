@@ -14,11 +14,12 @@ from openpype.pipeline import (
     legacy_io,
     update_container,
 )
-from openpype.hosts.blender.api.ops import _process_app_events
+from openpype.hosts.blender.api.ops import GlobalClass, _process_app_events
 from openpype.hosts.blender.api.plugin import (
     ContainerMaintainer,
     get_children_recursive,
 )
+from openpype.tools.sceneinventory import switch_dialog
 
 
 class UpdateTransfertData(InventoryAction):
@@ -36,6 +37,13 @@ class UpdateTransfertData(InventoryAction):
             container.get("loader") in ("LinkModelLoader", "AppendModelLoader")
         )
 
+    def _process_container(self, container):
+        mti = update_container(container, self.update_version)
+        # NOTE (kaamaurice): I try mti.wait() but seems to stop the
+        # bpy.app.timers
+        while not mti.done:
+            _process_app_events()
+
     def process(self, containers):
 
         current_task = legacy_io.Session.get("AVALON_TASK")
@@ -46,7 +54,7 @@ class UpdateTransfertData(InventoryAction):
             maintained_params.append(
                 ["local_data", {"data_types": ["VGROUP_WEIGHTS"]}]
             )
-        elif current_task == "Lookdev":
+        elif current_task in ("Lookdev", "Shading"):
             maintained_params.append("material_slots")
             maintained_params.append("polygons_mat_idx")
             maintained_params.append(
@@ -68,11 +76,7 @@ class UpdateTransfertData(InventoryAction):
                 continue
 
             with ContainerMaintainer(container_collection, maintained_params):
-                mti = update_container(container, self.update_version)
-                # NOTE (kaamaurice): I try mti.wait() but seems to stop the
-                # bpy.app.timers
-                while not mti.done:
-                    _process_app_events()
+                self._process_container(container)
 
 
 class VersionTransfertData(UpdateTransfertData):
@@ -167,7 +171,7 @@ class VersionTransfertData(UpdateTransfertData):
             versions_by_label[label] = version["name"]
 
         label, state = QtWidgets.QInputDialog.getItem(
-            None,
+            GlobalClass.app.get_window("WM_OT_avalon_manager"),
             "Set version..",
             "Set version number to",
             labels,
@@ -184,4 +188,49 @@ class VersionTransfertData(UpdateTransfertData):
     def process(self, containers):
 
         if self._show_version_dialog(containers):
+            super().process(containers)
+
+
+class SwitchAssetDialog(switch_dialog.SwitchAssetDialog):
+
+    def __init__(self, parent=None, items=None):
+        super(SwitchAssetDialog, self).__init__(parent, items)
+        self.is_accepted = False
+        self.loader_plugin = None
+
+    def _on_accept(self):
+        self.is_accepted = True
+        self.close()
+
+    def _on_action_clicked(self, action):
+        self.loader_plugin = action.data()
+        self.is_accepted = True
+        self.close()
+
+    def process_items(self, items):
+        self._items = items
+        self._trigger_switch(self.loader_plugin)
+
+
+class SwitchTransfertData(UpdateTransfertData):
+
+    label = "Switch with local data transfert"
+    icon = "asterisk"
+    order = 2
+
+    switch_dialog = None
+
+    def _process_container(self, container):
+        self.switch_dialog.process_items([container])
+        _process_app_events()
+
+    def process(self, containers):
+
+        self.switch_dialog = SwitchAssetDialog(
+            parent=GlobalClass.app.get_window("WM_OT_avalon_manager"),
+            items=containers,
+        )
+        self.switch_dialog.exec_()
+
+        if self.switch_dialog.is_accepted:
             super().process(containers)
