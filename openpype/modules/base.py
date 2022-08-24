@@ -13,7 +13,6 @@ from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
 
-import openpype
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -26,7 +25,12 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
-from openpype.lib import Logger
+
+from openpype.lib import (
+    Logger,
+    import_filepath,
+    import_module_from_dirpath
+)
 
 # Files that will be always ignored on modules import
 IGNORED_FILENAMES = (
@@ -278,12 +282,6 @@ def load_modules(force=False):
 
 
 def _load_modules():
-    # Import helper functions from lib
-    from openpype.lib import (
-        import_filepath,
-        import_module_from_dirpath
-    )
-
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
 
