@@ -231,7 +231,8 @@ class ExistingLayoutLoader(plugin.Loader):
         for (repr_data, lasset) in layout_data:
             if not repr_data:
                 raise AssertionError("Representation not found")
-            if not (repr_data.get('data') or repr_data.get('data').get('path')):
+            if not (repr_data.get('data') or
+                    repr_data.get('data').get('path')):
                 raise AssertionError("Representation does not have path")
             if not repr_data.get('context'):
                 raise AssertionError("Representation does not have context")
@@ -256,7 +257,7 @@ class ExistingLayoutLoader(plugin.Loader):
                 filename = import_data.get_first_filename()
                 path = Path(filename)
 
-                if not path.name in repr_data.get('data').get('path'):
+                if path.name not in repr_data.get('data').get('path'):
                     continue
 
                 asset_name = path.with_suffix('').name
