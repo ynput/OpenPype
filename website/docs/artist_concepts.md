@@ -10,6 +10,8 @@ sidebar_label: Key Concepts
 
 In our pipeline all the main entities the project is made from are internally considered *'Assets'*. Episode, sequence, shot, character, prop, etc. All of these behave identically in the pipeline. Asset names need to be absolutely unique within the project because they are their key identifier.
 
+OpenPype has a limitation regarding duplicated names. Name of assets must be unique across whole project.
+
 ### Subset
 
 Usually, an asset needs to be created in multiple *'flavours'*. A character might have multiple different looks, model needs to be published in different resolutions, a standard animation rig might not be usable in a crowd system and so on. 'Subsets' are here to accommodate all this variety that might be needed within a single asset. A model might have subset: *'main'*, *'proxy'*, *'sculpt'*, while data of *'look'* family could have subsets *'main'*, *'dirty'*, *'damaged'*. Subsets have some recommendations for their names, but ultimately it's up to the artist to use them for separation of publishes when needed.
@@ -23,6 +25,11 @@ A numbered iteration of a given subset. Each version contains at least one [repr
 ### Representation
 
 Each published variant can come out of the software in multiple representations. All of them hold exactly the same data, but in different formats. A model, for example, might be saved as `.OBJ`, Alembic, Maya geometry or as all of them, to be ready for pickup in any other applications supporting these formats.
+
+
+#### Naming convention
+
+At this moment names of assets, tasks, subsets or representations can contain only letters, numbers and underscore.
 
 ### Family
 
