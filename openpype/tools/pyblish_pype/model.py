@@ -613,10 +613,7 @@ class InstanceItem(QtGui.QStandardItem):
         if role == QtCore.Qt.DisplayRole:
             label = None
             if settings.UseLabel:
-                label = (
-                    self.instance.data.get("label")
-                    or getattr(self.instance, "label", None)
-                )
+                label = self.instance.data.get("label")
 
             if not label:
                 if self.is_context:
