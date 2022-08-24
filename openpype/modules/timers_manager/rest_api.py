@@ -1,9 +1,7 @@
 import json
 
 from aiohttp.web_response import Response
-from openpype.api import Logger
-
-log = Logger().get_logger("Event processor")
+from openpype.lib import Logger
 
 
 class TimersManagerModuleRestApi:
@@ -12,12 +10,18 @@ class TimersManagerModuleRestApi:
         happens in Workfile app.
     """
     def __init__(self, user_module, server_manager):
+        self.log = None
         self.module = user_module
         self.server_manager = server_manager
 
         self.prefix = "/timers_manager"
 
         self.register()
+
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(self.__ckass__.__name__)
+        return self._log
 
     def register(self):
         self.server_manager.add_route(
@@ -47,7 +51,7 @@ class TimersManagerModuleRestApi:
                 "Payload must contain fields 'project_name,"
                 " 'asset_name' and 'task_name'"
             )
-            log.error(msg)
+            self.log.error(msg)
             return Response(status=400, message=msg)
 
         self.module.stop_timers()
@@ -73,7 +77,7 @@ class TimersManagerModuleRestApi:
                 "Payload must contain fields 'project_name, 'asset_name',"
                 " 'task_name'"
             )
-            log.warning(message)
+            self.log.warning(message)
             return Response(text=message, status=404)
 
         time = self.module.get_task_time(project_name, asset_name, task_name)
