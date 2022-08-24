@@ -56,7 +56,7 @@ class ExtractLayout(openpype.api.Extractor):
 
             json_element = {
                 "family": family,
-                "instance_name": cmds.getAttr(f"{container}.name"),
+                "instance_name": cmds.getAttr(f"{container}.namespace"),
                 "representation": str(representation_id),
                 "version": str(version_id)
             }
