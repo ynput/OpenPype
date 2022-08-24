@@ -170,26 +170,36 @@ def update_addon_state(addon_infos, destination_folder, factory,
         factory (AddonDownloader): factory to get appropriate downloader per
             addon type
         log (logging.Logger)
+    Returns:
+        (dict): {"addon_full_name":"exists"|"updated"|"failed"
     """
     if not log:
         log = logging.getLogger(__name__)
 
+    download_states = {}
     for addon in addon_infos:
         full_name = "{}_{}".format(addon.name, addon.version)
         addon_dest = os.path.join(destination_folder, full_name)
 
         if os.path.isdir(addon_dest):
             log.debug(f"Addon version folder {addon_dest} already exists.")
+            download_states[full_name] = "exists"
             continue
 
-        try:
-            downloader = factory.get_downloader(addon.type)
-            zip_file_path = downloader.download(addon.addon_url, addon_dest)
-            downloader.check_hash(zip_file_path, addon.hash)
-            downloader.unzip(zip_file_path, addon_dest)
-        except Exception:
-            log.warning(f"Error happened during updating {addon.name}",
-                        exc_info=True)
+        for source in addon.sources:
+            download_states[full_name] = "failed"
+            try:
+                downloader = factory.get_downloader(source["type"])
+                zip_file_path = downloader.download(source, addon_dest)
+                downloader.check_hash(zip_file_path, addon.hash)
+                downloader.unzip(zip_file_path, addon_dest)
+                download_states[full_name] = "updated"
+                break
+            except Exception:
+                log.warning(f"Error happened during updating {addon.name}",
+                            exc_info=True)
+
+    return download_states
 
 
 def check_addons(server_endpoint, addon_folder, downloaders):
