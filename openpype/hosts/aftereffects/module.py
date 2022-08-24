@@ -1,4 +1,3 @@
-import os
 from openpype.modules import OpenPypeModule
 from openpype.modules.interfaces import IHostModule
 
