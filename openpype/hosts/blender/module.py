@@ -32,8 +32,8 @@ class BlenderModule(OpenPypeModule, IHostModule):
 
         # Modify Blender user scripts path
         previous_user_scripts = set()
-        # Implementation path is added to set for easier paths check inside loops
-        # - will be removed at the end
+        # Implementation path is added to set for easier paths check inside
+        #   loops - will be removed at the end
         previous_user_scripts.add(implementation_user_script_path)
 
         openpype_blender_user_scripts = (
