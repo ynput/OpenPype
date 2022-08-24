@@ -462,7 +462,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 representation_id (string): MongoDB objectId value
                 site_name (string): 'gdrive', 'studio' etc.
         """
-        log.info("Pausing SyncServer for {}".format(representation_id))
+        self.log.info("Pausing SyncServer for {}".format(representation_id))
         self._paused_representations.add(representation_id)
         self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=True)
@@ -479,7 +479,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 representation_id (string): MongoDB objectId value
                 site_name (string): 'gdrive', 'studio' etc.
         """
-        log.info("Unpausing SyncServer for {}".format(representation_id))
+        self.log.info("Unpausing SyncServer for {}".format(representation_id))
         try:
             self._paused_representations.remove(representation_id)
         except KeyError:
@@ -518,7 +518,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Args:
                 project_name (string): project_name name
         """
-        log.info("Pausing SyncServer for {}".format(project_name))
+        self.log.info("Pausing SyncServer for {}".format(project_name))
         self._paused_projects.add(project_name)
 
     def unpause_project(self, project_name):
@@ -530,7 +530,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Args:
                 project_name (string):
         """
-        log.info("Unpausing SyncServer for {}".format(project_name))
+        self.log.info("Unpausing SyncServer for {}".format(project_name))
         try:
             self._paused_projects.remove(project_name)
         except KeyError:
@@ -558,14 +558,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             It won't check anything, not uploading/downloading...
         """
-        log.info("Pausing SyncServer")
+        self.log.info("Pausing SyncServer")
         self._paused = True
 
     def unpause_server(self):
         """
             Unpause server
         """
-        log.info("Unpausing SyncServer")
+        self.log.info("Unpausing SyncServer")
         self._paused = False
 
     def is_paused(self):
@@ -876,7 +876,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     #                             val = val[platform.system().lower()]
     #                     except KeyError:
     #                         st = "{}'s field value {} should be".format(key, val)  # noqa: E501
-    #                         log.error(st + " multiplatform dict")
+    #                         self.log.error(st + " multiplatform dict")
     #
     #                 item["namespace"] = item["namespace"].replace('{site}',
     #                                                               site_name)
@@ -1148,7 +1148,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if self.enabled:
             self.sync_server_thread.start()
         else:
-            log.info("No presets or active providers. " +
+            self.log.info("No presets or active providers. " +
                      "Synchronization not possible.")
 
     def tray_exit(self):
@@ -1166,12 +1166,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.is_running:
             return
         try:
-            log.info("Stopping sync server server")
+            self.log.info("Stopping sync server server")
             self.sync_server_thread.is_running = False
             self.sync_server_thread.stop()
-            log.info("Sync server stopped")
+            self.log.info("Sync server stopped")
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Error has happened during Killing sync server",
                 exc_info=True
             )
@@ -1256,7 +1256,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             sync_project_settings[project_name] = proj_settings
         if not sync_project_settings:
-            log.info("No enabled and configured projects for sync.")
+            self.log.info("No enabled and configured projects for sync.")
         return sync_project_settings
 
     def get_sync_project_setting(self, project_name, exclude_locals=False,
@@ -1387,7 +1387,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (list) of dictionaries
         """
-        log.debug("Check representations for : {}".format(project_name))
+        self.log.debug("Check representations for : {}".format(project_name))
         self.connection.Session["AVALON_PROJECT"] = project_name
         # retry_cnt - number of attempts to sync specific file before giving up
         retries_arr = self._get_retries_arr(project_name)
@@ -1466,9 +1466,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             }},
             {"$sort": {'priority': -1, '_id': 1}},
         ]
-        log.debug("active_site:{} - remote_site:{}".format(active_site,
-                                                           remote_site))
-        log.debug("query: {}".format(aggr))
+        self.log.debug("active_site:{} - remote_site:{}".format(
+            active_site, remote_site
+        ))
+        self.log.debug("query: {}".format(aggr))
         representations = self.connection.aggregate(aggr)
 
         return representations
@@ -1503,7 +1504,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         if get_local_site_id() not in (local_site, remote_site):
             # don't do upload/download for studio sites
-            log.debug("No local site {} - {}".format(local_site, remote_site))
+            self.log.debug("No local site {} - {}".format(local_site, remote_site))
             return SyncStatus.DO_NOTHING
 
         _, remote_rec = self._get_site_rec(sites, remote_site) or {}
@@ -1594,11 +1595,16 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             error_str = ''
 
         source_file = file.get("path", "")
-        log.debug("File for {} - {source_file} process {status} {error_str}".
-                  format(representation_id,
-                         status=status,
-                         source_file=source_file,
-                         error_str=error_str))
+        self.log.debug(
+            (
+                "File for {} - {source_file} process {status} {error_str}"
+            ).format(
+                representation_id,
+                status=status,
+                source_file=source_file,
+                error_str=error_str
+            )
+        )
 
     def _get_file_info(self, files, _id):
         """
@@ -1772,7 +1778,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     break
         if not found:
             msg = "Site {} not found".format(site_name)
-            log.info(msg)
+            self.log.info(msg)
             raise ValueError(msg)
 
         update = {
@@ -1799,7 +1805,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     break
         if not found:
             msg = "Site {} not found".format(site_name)
-            log.info(msg)
+            self.log.info(msg)
             raise ValueError(msg)
 
         if pause:
@@ -1834,7 +1840,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         reset_existing = False
         files = representation.get("files", [])
         if not files:
-            log.debug("No files for {}".format(representation_id))
+            self.log.debug("No files for {}".format(representation_id))
             return
 
         for repre_file in files:
@@ -1851,7 +1857,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                         reset_existing = True
                     else:
                         msg = "Site {} already present".format(site_name)
-                        log.info(msg)
+                        self.log.info(msg)
                         raise SiteAlreadyPresentError(msg)
 
         if reset_existing:
@@ -1951,16 +1957,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self.widget = SyncServerWindow(self)
             no_errors = True
         except ValueError:
-            log.info("No system setting for sync. Not syncing.", exc_info=True)
+            self.log.info(
+                "No system setting for sync. Not syncing.", exc_info=True
+            )
         except KeyError:
-            log.info((
+            self.log.info((
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
                 format(str(self.sync_project_settings)), exc_info=True)
         except:
-            log.error("Uncaught exception durin start of SyncServer",
-                      exc_info=True)
+            self.log.error(
+                "Uncaught exception durin start of SyncServer",
+                exc_info=True)
         self.enabled = no_errors
         self.widget.show()
 
