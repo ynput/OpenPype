@@ -39,6 +39,7 @@ from openpype.pipeline.create.creator_plugins import (
 )
 from openpype.pipeline.create.subset_name import get_subset_name
 from openpype.tools.utils import host_tools
+from openpype.hosts.blender.scripts import build_workfile
 
 from .workio import OpenFileCacher
 
@@ -993,6 +994,39 @@ class LaunchWorkFiles(LaunchQtApp):
         self._window.refresh()
 
 
+class BuildWorkFile(bpy.types.Operator):
+    """Build First Work File."""
+
+    bl_idname = "wm.avalon_builder"
+    bl_label = "Build First Workfile"
+    _app: QtWidgets.QApplication
+
+    def __init__(self):
+        print(f"Initialising {self.bl_idname}...")
+        self._app = BlenderApplication.get_app()
+        GlobalClass.app = self._app
+
+        if not bpy.app.timers.is_registered(_process_app_events):
+            bpy.app.timers.register(
+                _process_app_events,
+                persistent=True
+            )
+
+    def _build_first_workfile(self):
+        for obj in set(bpy.data.objects):
+            bpy.data.objects.remove(obj)
+        for collection in set(bpy.data.collections):
+            bpy.data.collections.remove(collection)
+        while bpy.data.orphans_purge(do_local_ids=False, do_recursive=True):
+            pass
+        build_workfile()
+
+    def execute(self, context):
+        mti = MainThreadItem(self._build_first_workfile)
+        execute_in_main_thread(mti)
+        return {'FINISHED'}
+
+
 class TOPBAR_MT_avalon(bpy.types.Menu):
     """Avalon menu."""
 
@@ -1033,6 +1067,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
         # TODO (jasper): maybe add 'Reload Pipeline', 'Set Frame Range' and
         #                'Set Resolution'?
+        layout.separator()
+        layout.operator(BuildWorkFile.bl_idname, text="Build First Workfile")
 
 
 def draw_avalon_menu(self, context):
@@ -1291,6 +1327,7 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
+    BuildWorkFile,
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
     SCENE_OT_ExposeContainerContent,
