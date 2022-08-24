@@ -66,7 +66,10 @@ class CollectAudio(pyblish.api.InstancePlugin):
             self.log.info("Audio Data added to instance ...")
 
     def _get_repre_doc(self, instance):
-        cache = instance.context.data.get("__cache_asset_audio", {})
+        cache = instance.context.data.get("__cache_asset_audio")
+        if cache is None:
+            cache = {}
+            instance.context.data["__cache_asset_audio"] = cache
         asset_name = instance.data["asset"]
 
         # first try to get it from cache
