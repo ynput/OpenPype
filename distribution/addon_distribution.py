@@ -4,6 +4,7 @@ from abc import abstractmethod
 import attr
 import logging
 import requests
+import platform
 
 from distribution.file_handler import RemoteFileHandler
 
@@ -15,12 +16,25 @@ class UrlType(Enum):
 
 
 @attr.s
+class MultiPlatformPath(object):
+    windows = attr.ib(default=None)
+    linux = attr.ib(default=None)
+    darwin = attr.ib(default=None)
+
+
+@attr.s
+class AddonSource(object):
+    type = attr.ib()
+    url = attr.ib(default=None)
+    path = attr.ib(default=attr.Factory(MultiPlatformPath))
+
+
+@attr.s
 class AddonInfo(object):
     """Object matching json payload from Server"""
-    name = attr.ib(default=None)
-    version = attr.ib(default=None)
-    addon_url = attr.ib(default=None)
-    type = attr.ib(default=None)
+    name = attr.ib()
+    version = attr.ib()
+    sources = attr.ib(default=attr.Factory(list), type=AddonSource)
     hash = attr.ib(default=None)
     description = attr.ib(default=None)
     license = attr.ib(default=None)
@@ -44,12 +58,11 @@ class AddonDownloader:
 
     @classmethod
     @abstractmethod
-    def download(cls, addon_url, destination):
+    def download(cls, source, destination):
         """Returns url to downloaded addon zip file.
 
         Args:
-            addon_url (str): http or OS or any supported protocol url to addon
-                zip file
+            source (dict): {type:"http", "url":"https://} ...}
             destination (str): local folder to unzip
         Retursn:
             (str) local path to addon zip file
@@ -90,8 +103,9 @@ class AddonDownloader:
 class OSAddonDownloader(AddonDownloader):
 
     @classmethod
-    def download(cls, addon_url, destination):
+    def download(cls, source, destination):
         # OS doesnt need to download, unzip directly
+        addon_url = source["path"].get(platform.system().lower())
         if not os.path.exists(addon_url):
             raise ValueError("{} is not accessible".format(addon_url))
         return addon_url
@@ -101,14 +115,15 @@ class HTTPAddonDownloader(AddonDownloader):
     CHUNK_SIZE = 100000
 
     @classmethod
-    def download(cls, addon_url, destination):
-        cls.log.debug(f"Downloading {addon_url} to {destination}")
+    def download(cls, source, destination):
+        source_url = source["url"]
+        cls.log.debug(f"Downloading {source_url} to {destination}")
         file_name = os.path.basename(destination)
         _, ext = os.path.splitext(file_name)
         if (ext.replace(".", '') not
                 in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
             file_name += ".zip"
-        RemoteFileHandler.download_url(addon_url,
+        RemoteFileHandler.download_url(source_url,
                                        destination,
                                        filename=file_name)
 
