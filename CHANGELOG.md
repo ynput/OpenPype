@@ -1,16 +1,40 @@
 # Changelog
 
-## [3.14.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.0...HEAD)
 
+### 📖 Documentation
+
+- Documentation: Few updates [\#3698](https://github.com/pypeclub/OpenPype/pull/3698)
+- Documentation: Settings development [\#3660](https://github.com/pypeclub/OpenPype/pull/3660)
+
 **🚀 Enhancements**
 
+- Unreal: Define unreal as module and use host class [\#3701](https://github.com/pypeclub/OpenPype/pull/3701)
+- Settings: Lock settings UI session [\#3700](https://github.com/pypeclub/OpenPype/pull/3700)
 - Ftrack: More logs related to auto sync value change [\#3671](https://github.com/pypeclub/OpenPype/pull/3671)
 
 **🐛 Bug fixes**
 
+- Settings: Fix project overrides save [\#3708](https://github.com/pypeclub/OpenPype/pull/3708)
+- Workfiles tool: Fix published workfile filtering [\#3704](https://github.com/pypeclub/OpenPype/pull/3704)
+- PS, AE: Provide default variant value for workfile subset [\#3703](https://github.com/pypeclub/OpenPype/pull/3703)
 - RoyalRender: handle host name that is not set [\#3695](https://github.com/pypeclub/OpenPype/pull/3695)
+- Flame: retime is working on clip publishing [\#3684](https://github.com/pypeclub/OpenPype/pull/3684)
+
+**🔀 Refactored code**
+
+- Loader: Subset groups using client operations [\#3710](https://github.com/pypeclub/OpenPype/pull/3710)
+- TVPaint: Defined as module [\#3707](https://github.com/pypeclub/OpenPype/pull/3707)
+- StandalonePublisher: Define StandalonePublisher as module [\#3706](https://github.com/pypeclub/OpenPype/pull/3706)
+- TrayPublisher: Define TrayPublisher as module [\#3705](https://github.com/pypeclub/OpenPype/pull/3705)
+- General: Move context specific functions to context tools [\#3702](https://github.com/pypeclub/OpenPype/pull/3702)
+
+**Merged pull requests:**
+
+- Deadline: better logging for DL webservice failures [\#3694](https://github.com/pypeclub/OpenPype/pull/3694)
+- Photoshop: resize saved images in ExtractReview for ffmpeg [\#3676](https://github.com/pypeclub/OpenPype/pull/3676)
 
 ## [3.14.0](https://github.com/pypeclub/OpenPype/tree/3.14.0) (2022-08-18)
 
@@ -91,7 +115,6 @@
 - General: Update imports in start script [\#3579](https://github.com/pypeclub/OpenPype/pull/3579)
 - Nuke: render family integration consistency  [\#3576](https://github.com/pypeclub/OpenPype/pull/3576)
 - Ftrack: Handle missing published path in integrator [\#3570](https://github.com/pypeclub/OpenPype/pull/3570)
-- Nuke: publish existing frames with slate with correct range [\#3555](https://github.com/pypeclub/OpenPype/pull/3555)
 
 **🔀 Refactored code**
 
@@ -111,32 +134,9 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.12.2-nightly.4...3.12.2)
 
-### 📖 Documentation
-
-- Update website with more studios [\#3554](https://github.com/pypeclub/OpenPype/pull/3554)
-- Documentation: Update publishing dev docs [\#3549](https://github.com/pypeclub/OpenPype/pull/3549)
-
-**🚀 Enhancements**
-
-- General: Global thumbnail extractor is ready for more cases [\#3561](https://github.com/pypeclub/OpenPype/pull/3561)
-
 **🐛 Bug fixes**
 
 - Maya: fix Review image plane attribute  [\#3569](https://github.com/pypeclub/OpenPype/pull/3569)
-- Maya: Fix animated attributes \(ie. overscan\) on loaded cameras breaking review publishing. [\#3562](https://github.com/pypeclub/OpenPype/pull/3562)
-- NewPublisher: Python 2 compatible html escape [\#3559](https://github.com/pypeclub/OpenPype/pull/3559)
-- Remove invalid submodules from `/vendor` [\#3557](https://github.com/pypeclub/OpenPype/pull/3557)
-- General: Remove hosts filter on integrator plugins [\#3556](https://github.com/pypeclub/OpenPype/pull/3556)
-- Settings: Clean default values of environments [\#3550](https://github.com/pypeclub/OpenPype/pull/3550)
-- Module interfaces: Fix import error [\#3547](https://github.com/pypeclub/OpenPype/pull/3547)
-
-**🔀 Refactored code**
-
-- General: Use query functions in integrator [\#3563](https://github.com/pypeclub/OpenPype/pull/3563)
-
-**Merged pull requests:**
-
-- Maya: fix active pane loss [\#3566](https://github.com/pypeclub/OpenPype/pull/3566)
 
 ## [3.12.1](https://github.com/pypeclub/OpenPype/tree/3.12.1) (2022-07-13)
 
