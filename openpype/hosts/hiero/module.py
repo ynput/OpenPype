@@ -30,6 +30,15 @@ class HieroModule(OpenPypeModule, IHostModule):
         env["HIERO_PLUGIN_PATH"] = os.pathsep.join(new_hiero_paths)
         env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
 
+        # Add vendor to PYTHONPATH
+        python_path = env["PYTHONPATH"]
+        python_path_parts = []
+        if python_path:
+            python_path_parts = python_path.split(os.pathsep)
+        vendor_path = os.path.join(HIERO_ROOT_DIR, "vendor")
+        python_path_parts.insert(0, vendor_path)
+        env["PYTHONPATH"] = os.pathsep.join(python_path_parts)
+
         # Set default values if are not already set via settings
         defaults = {
             "LOGLEVEL": "DEBUG"
