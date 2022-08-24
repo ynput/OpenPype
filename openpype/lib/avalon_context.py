@@ -1,6 +1,5 @@
 """Should be used only inside of hosts."""
 import os
-import re
 import copy
 import platform
 import logging
@@ -16,6 +15,13 @@ from openpype.client import (
     get_last_version_by_subset_name,
     get_workfile_info,
 )
+from openpype.client.operations import (
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_PROJECT_CONFIG_SCHEMA,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
+)
 from .profiles_filtering import filter_profiles
 from .path_templates import StringTemplate
 
@@ -24,15 +30,13 @@ legacy_io = None
 log = logging.getLogger("AvalonContext")
 
 
+# Backwards compatibility - should not be used anymore
+#   - Will be removed in OP 3.16.*
 CURRENT_DOC_SCHEMAS = {
-    "project": "openpype:project-3.0",
-    "asset": "openpype:asset-3.0",
-    "config": "openpype:config-2.0"
+    "project": CURRENT_PROJECT_SCHEMA,
+    "asset": CURRENT_ASSET_DOC_SCHEMA,
+    "config": CURRENT_PROJECT_CONFIG_SCHEMA
 }
-PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
-PROJECT_NAME_REGEX = re.compile(
-    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
-)
 
 
 class AvalonContextDeprecatedWarning(DeprecationWarning):
