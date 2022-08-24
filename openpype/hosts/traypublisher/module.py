@@ -1,25 +1,24 @@
 import os
+
+import click
+
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import ITrayAction
+from openpype.modules.interfaces import ITrayAction, IHostModule
+
+TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class TrayPublishAction(OpenPypeModule, ITrayAction):
+class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
     label = "Tray Publish"
     name = "traypublish_tool"
+    host_name = "traypublish"
 
     def initialize(self, modules_settings):
-        import openpype
         self.enabled = True
         self.publish_paths = [
-            os.path.join(
-                openpype.PACKAGE_DIR,
-                "hosts",
-                "traypublisher",
-                "plugins",
-                "publish"
-            )
+            os.path.join(TRAYPUBLISH_ROOT_DIR, "plugins", "publish")
         ]
 
     def tray_init(self):
@@ -34,5 +33,24 @@ class TrayPublishAction(OpenPypeModule, ITrayAction):
         self.publish_paths.extend(publish_paths)
 
     def run_traypublisher(self):
-        args = get_openpype_execute_args("traypublisher")
+        args = get_openpype_execute_args(
+            "module", self.name, "launch"
+        )
         run_detached_process(args)
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(TrayPublishModule.name, help="TrayPublisher related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+def launch():
+    """Launch TrayPublish tool UI."""
+
+    from openpype.tools import traypublisher
+
+    traypublisher.main()

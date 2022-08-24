@@ -2,6 +2,7 @@ import os
 import sys
 import contextlib
 import collections
+import traceback
 
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -443,10 +444,6 @@ class FamilyConfigCache:
         if profiles:
             # Make sure connection is installed
             # - accessing attribute which does not have auto-install
-            self.dbcon.install()
-            database = getattr(self.dbcon, "database", None)
-            if database is None:
-                database = self.dbcon._database
             asset_doc = get_asset_by_name(
                 project_name, asset_name, fields=["data.tasks"]
             ) or {}
@@ -647,7 +644,11 @@ class DynamicQThread(QtCore.QThread):
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except BaseException:
+                traceback.print_exception(*sys.exc_info())
+                raise
     return Thread()
 
 

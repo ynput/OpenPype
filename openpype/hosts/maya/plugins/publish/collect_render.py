@@ -154,12 +154,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             layer_name = "rs_{}".format(expected_layer_name)
 
             # collect all frames we are expecting to be rendered
-            renderer = self.get_render_attribute("currentRenderer",
-                                                 layer=layer_name)
-            # handle various renderman names
-            if renderer.startswith("renderman"):
-                renderer = "renderman"
-
             # return all expected files for all cameras and aovs in given
             # frame range
             layer_render_products = get_layer_render_products(layer_name)
@@ -202,8 +196,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             aov_dict = {}
             default_render_file = context.data.get('project_settings')\
                 .get('maya')\
-                .get('create')\
-                .get('CreateRender')\
+                .get('RenderSettings')\
                 .get('default_render_image_folder') or ""
             # replace relative paths with absolute. Render products are
             # returned as list of dictionaries.
@@ -318,7 +311,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False,
-                "aovSeparator": layer_render_products.layer_data.aov_separator  # noqa: E501
+                "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
+                "renderSetupIncludeLights": render_instance.data.get(
+                    "renderSetupIncludeLights"
+                )
             }
 
             # Collect Deadline url if Deadline module is enabled
@@ -361,6 +357,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
+            instance.data["farm"] = True
             instance.data.update(data)
             self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 

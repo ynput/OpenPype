@@ -41,18 +41,6 @@ def settings(dev):
 
 
 @main.command()
-def standalonepublisher():
-    """Show Pype Standalone publisher UI."""
-    PypeCommands().launch_standalone_publisher()
-
-
-@main.command()
-def traypublisher():
-    """Show new OpenPype Standalone publisher UI."""
-    PypeCommands().launch_traypublisher()
-
-
-@main.command()
 def tray():
     """Launch pype tray.
 

@@ -40,11 +40,13 @@ def get_ocio_config_path(profile_folder):
     Returns:
         str: Path to vendorized config file.
     """
+
     return os.path.join(
         os.environ["OPENPYPE_ROOT"],
         "vendor",
-        "configs",
-        "OpenColorIO-Configs",
+        "bin",
+        "ocioconfig",
+        "OpenColorIOConfigs",
         profile_folder,
         "config.ocio"
     )

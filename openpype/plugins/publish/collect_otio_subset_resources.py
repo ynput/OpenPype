@@ -121,10 +121,8 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
                 otio.schema.ImageSequenceReference
             ):
                 is_sequence = True
-        else:
-            # for OpenTimelineIO 0.12 and older
-            if metadata.get("padding"):
-                is_sequence = True
+        elif metadata.get("padding"):
+            is_sequence = True
 
         self.log.info(
             "frame_start-frame_end: {}-{}".format(frame_start, frame_end))
