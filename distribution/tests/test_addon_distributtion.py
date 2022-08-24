@@ -40,12 +40,12 @@ def sample_addon_info():
         "sources": [
             {
                 "type": "http",
-                "url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"
+                "url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"  # noqa
             },
             {
                 "type": "filesystem",
                 "path": {
-                    "windows": ["P:/sources/some_file.zip", "W:/sources/some_file.zip"],
+                    "windows": ["P:/sources/some_file.zip", "W:/sources/some_file.zip"],  # noqa
                     "linux": ["/mnt/srv/sources/some_file.zip"],
                     "darwin": ["/Volumes/srv/sources/some_file.zip"]
                 }
@@ -108,14 +108,14 @@ def test_update_addon_state(printer, sample_addon_info,
 
     addon_info.hash = "brokenhash"
     result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert (result["openpype_slack_1.0.0"] == UpdateState.FAILED.value,
-            "Hashes not matching")
+    assert result["openpype_slack_1.0.0"] == UpdateState.FAILED.value, \
+        "Hashes not matching"
 
     addon_info.hash = orig_hash
     result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert (result["openpype_slack_1.0.0"] == UpdateState.UPDATED.value,
-            "Failed updating")
+    assert result["openpype_slack_1.0.0"] == UpdateState.UPDATED.value, \
+        "Failed updating"
 
     result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert (result["openpype_slack_1.0.0"] == UpdateState.EXISTS.value,
-            "Tried to update")
+    assert result["openpype_slack_1.0.0"] == UpdateState.EXISTS.value, \
+        "Tried to update"

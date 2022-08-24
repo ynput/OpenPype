@@ -20,6 +20,7 @@ class UpdateState(Enum):
     UPDATED = "updated"
     FAILED = "failed"
 
+
 @attr.s
 class MultiPlatformPath(object):
     windows = attr.ib(default=None)
