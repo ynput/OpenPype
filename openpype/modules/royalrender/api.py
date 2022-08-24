@@ -5,11 +5,8 @@ import os
 
 from openpype.settings import get_project_settings
 from openpype.lib.local_settings import OpenPypeSettingsRegistry
-from openpype.lib import PypeLogger, run_subprocess
+from openpype.lib import Logger, run_subprocess
 from .rr_job import RRJob, SubmitFile, SubmitterParameter
-
-
-log = PypeLogger.get_logger("RoyalRender")
 
 
 class Api:
@@ -19,6 +16,7 @@ class Api:
     RR_SUBMIT_API = 2
 
     def __init__(self, settings, project=None):
+        self.log = Logger.get_logger("RoyalRender")
         self._settings = settings
         self._initialize_rr(project)
 
@@ -137,7 +135,7 @@ class Api:
             rr_console += ".exe"
 
         args = [rr_console, file]
-        run_subprocess(" ".join(args), logger=log)
+        run_subprocess(" ".join(args), logger=self.log)
 
     def _submit_using_api(self, file):
         # type: (SubmitFile) -> None
@@ -159,11 +157,11 @@ class Api:
         rr_server = tcp.getRRServer()
 
         if len(rr_server) == 0:
-            log.info("Got RR IP address {}".format(rr_server))
+            self.log.info("Got RR IP address {}".format(rr_server))
 
         # TODO: Port is hardcoded in RR? If not, move it to Settings
         if not tcp.setServer(rr_server, 7773):
-            log.error(
+            self.log.error(
                 "Can not set RR server: {}".format(tcp.errorMessage()))
             raise RoyalRenderException(tcp.errorMessage())
 

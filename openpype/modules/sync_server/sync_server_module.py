@@ -13,7 +13,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
-from openpype.lib import PypeLogger, get_local_site_id
+from openpype.lib import Logger, get_local_site_id
 from openpype.pipeline import AvalonMongoDB, Anatomy
 from openpype.settings.lib import (
     get_default_anatomy_settings,
@@ -28,7 +28,7 @@ from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 from openpype.client import get_representations, get_representation_by_id
 
 
-log = PypeLogger.get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class SyncServerModule(OpenPypeModule, ITrayModule):

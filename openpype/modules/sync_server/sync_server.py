@@ -6,12 +6,11 @@ import concurrent.futures
 from concurrent.futures._base import CancelledError
 
 from .providers import lib
-from openpype.lib import PypeLogger
+from openpype.lib import Logger
 
 from .utils import SyncStatus, ResumableError
 
-
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 async def upload(module, project_name, file, representation, provider_name,

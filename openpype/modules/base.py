@@ -26,7 +26,7 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
-from openpype.lib import PypeLogger
+from openpype.lib import Logger
 
 # Files that will be always ignored on modules import
 IGNORED_FILENAMES = (
@@ -93,7 +93,7 @@ class _ModuleClass(object):
     def log(self):
         if self._log is None:
             super(_ModuleClass, self).__setattr__(
-                "_log", PypeLogger.get_logger(self.name)
+                "_log", Logger.get_logger(self.name)
             )
         return self._log
 
@@ -290,7 +290,7 @@ def _load_modules():
     # Change `sys.modules`
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
-    log = PypeLogger.get_logger("ModulesLoader")
+    log = Logger.get_logger("ModulesLoader")
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
@@ -440,7 +440,7 @@ class OpenPypeModule:
     def __init__(self, manager, settings):
         self.manager = manager
 
-        self.log = PypeLogger.get_logger(self.name)
+        self.log = Logger.get_logger(self.name)
 
         self.initialize(settings)
 
@@ -1059,7 +1059,7 @@ class TrayModulesManager(ModulesManager):
     )
 
     def __init__(self):
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
@@ -1235,7 +1235,7 @@ def get_module_settings_defs():
 
     settings_defs = []
 
-    log = PypeLogger.get_logger("ModuleSettingsLoad")
+    log = Logger.get_logger("ModuleSettingsLoad")
 
     for raw_module in openpype_modules:
         for attr_name in dir(raw_module):

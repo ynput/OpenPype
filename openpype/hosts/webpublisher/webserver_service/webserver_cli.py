@@ -7,7 +7,7 @@ import json
 import subprocess
 
 from openpype.client import OpenPypeMongoConnection
-from openpype.lib import PypeLogger
+from openpype.lib import Logger
 
 from .webpublish_routes import (
     RestApiResource,
@@ -28,7 +28,7 @@ from openpype.lib.remote_publish import (
 )
 
 
-log = PypeLogger.get_logger("webserver_gui")
+log = Logger.get_logger("webserver_gui")
 
 
 def run_webserver(*args, **kwargs):
