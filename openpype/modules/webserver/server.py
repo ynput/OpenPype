@@ -171,7 +171,9 @@ class WebServerThread(threading.Thread):
         ]
         list(map(lambda task: task.cancel(), tasks))  # cancel all the tasks
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        self.log.debug(f'Finished awaiting cancelled tasks, results: {results}...')
+        self.log.debug(
+            f'Finished awaiting cancelled tasks, results: {results}...'
+        )
         await self.loop.shutdown_asyncgens()
         # to really make sure everything else has time to stop
         await asyncio.sleep(0.07)

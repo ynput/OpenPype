@@ -1504,7 +1504,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         if get_local_site_id() not in (local_site, remote_site):
             # don't do upload/download for studio sites
-            self.log.debug("No local site {} - {}".format(local_site, remote_site))
+            self.log.debug(
+                "No local site {} - {}".format(local_site, remote_site)
+            )
             return SyncStatus.DO_NOTHING
 
         _, remote_rec = self._get_site_rec(sites, remote_site) or {}
