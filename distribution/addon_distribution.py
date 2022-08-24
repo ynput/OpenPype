@@ -15,6 +15,11 @@ class UrlType(Enum):
     FILESYSTEM = "filesystem"
 
 
+class UpdateState(Enum):
+    EXISTS = "exists"
+    UPDATED = "updated"
+    FAILED = "failed"
+
 @attr.s
 class MultiPlatformPath(object):
     windows = attr.ib(default=None)
@@ -171,7 +176,8 @@ def update_addon_state(addon_infos, destination_folder, factory,
             addon type
         log (logging.Logger)
     Returns:
-        (dict): {"addon_full_name":"exists"|"updated"|"failed"
+        (dict): {"addon_full_name": UpdateState.value
+            (eg. "exists"|"updated"|"failed")
     """
     if not log:
         log = logging.getLogger(__name__)
@@ -183,17 +189,17 @@ def update_addon_state(addon_infos, destination_folder, factory,
 
         if os.path.isdir(addon_dest):
             log.debug(f"Addon version folder {addon_dest} already exists.")
-            download_states[full_name] = "exists"
+            download_states[full_name] = UpdateState.EXISTS.value
             continue
 
         for source in addon.sources:
-            download_states[full_name] = "failed"
+            download_states[full_name] = UpdateState.FAILED.value
             try:
                 downloader = factory.get_downloader(source["type"])
                 zip_file_path = downloader.download(source, addon_dest)
                 downloader.check_hash(zip_file_path, addon.hash)
                 downloader.unzip(zip_file_path, addon_dest)
-                download_states[full_name] = "updated"
+                download_states[full_name] = UpdateState.UPDATED.value
                 break
             except Exception:
                 log.warning(f"Error happened during updating {addon.name}",
@@ -203,11 +209,22 @@ def update_addon_state(addon_infos, destination_folder, factory,
 
 
 def check_addons(server_endpoint, addon_folder, downloaders):
-    """Main entry point to compare existing addons with those on server."""
+    """Main entry point to compare existing addons with those on server.
+
+    Args:
+        server_endpoint (str): url to v4 server endpoint
+        addon_folder (str): local dir path for addons
+        downloaders (AddonDownloader): factory of downloaders
+
+    Raises:
+        (RuntimeError) if any addon failed update
+    """
     addons_info = get_addons_info(server_endpoint)
-    update_addon_state(addons_info,
-                       addon_folder,
-                       downloaders)
+    result = update_addon_state(addons_info,
+                                addon_folder,
+                                downloaders)
+    if UpdateState.FAILED.value in result.values():
+        raise RuntimeError(f"Unable to update some addons {result}")
 
 
 def cli(args):
