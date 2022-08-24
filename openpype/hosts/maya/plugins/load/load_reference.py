@@ -52,7 +52,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["code"])
+                                               context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
