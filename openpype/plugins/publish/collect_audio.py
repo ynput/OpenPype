@@ -101,6 +101,5 @@ class CollectAudio(pyblish.api.InstancePlugin):
 
         # update cache
         cache[asset_name] = repre_doc
-        instance.context.data["__cache_asset_audio"].update(cache)
 
         return repre_doc
