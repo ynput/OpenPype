@@ -408,6 +408,9 @@ def get_custom_workfile_template(
     # add root dict
     anatomy_context_data["root"] = anatomy.roots
 
+    # extend anatomy context with os.environ
+    anatomy_context_data.update(os.environ)
+
     # get task type for the task in context
     current_task_type = anatomy_context_data["task"]["type"]
 
