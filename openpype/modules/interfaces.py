@@ -81,6 +81,13 @@ class ILaunchHookPaths(OpenPypeInterface):
 
     Expected result is list of paths.
     ["path/to/launch_hooks_dir"]
+
+    Deprecated:
+        This interface is not needed since OpenPype 3.14.*. Addon just have to
+        implement 'get_launch_hook_paths' which can expect Application object
+        or nothing as argument.
+
+        Interface class will be removed after 3.16.*.
     """
 
     @abstractmethod
