@@ -296,6 +296,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             for assembly_id in instance.data.get("assemblySubmissionJobs"):
                 payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
                 job_index += 1
+        elif instance.data.get("bakingSubmissionJobs"):
+            self.log.info("Adding baking submission jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data["bakingSubmissionJobs"]:
+                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
