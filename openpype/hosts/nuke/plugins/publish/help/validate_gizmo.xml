@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="multiple_outputs">
+        <title>Found multiple outputs</title>
+        <description>
+## Invalid amount of Output nodes
+
+Group node `{node_name}` is having more than one Output node.
+
+### How to repair?
+
+1. Use button `Open Group`.
+2. Remove redundant Output node.
+3. Hit reload button on the publisher.
+        </description>
+        <detail>
+### How could this happen?
+
+Perhaps you had created exciently more than one Output node.
+        </detail>
+    </error>
+    <error id="no_inputs">
+        <title>Missing Input nodes</title>
+        <description>
+## Missing Input nodes
+
+Make sure there is at least one connected Input node inside the group node with name `{node_name}`
+
+### How to repair?
+
+1. Use button `Open Group`.
+2. Add at least one Input node and connect to other nodes.
+3. Hit reload button on the publisher.
+        </description>
+    </error>
+</root>
