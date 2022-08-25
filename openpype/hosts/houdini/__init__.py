@@ -6,5 +6,5 @@ from .addon import (
 
 __all__ = (
     "HoudiniAddon",
-    "HOUDINI_HOST_DIR".
+    "HOUDINI_HOST_DIR",
 )
