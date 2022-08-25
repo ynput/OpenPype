@@ -5,19 +5,6 @@ import sys
 import json
 import time
 
-from openpype.api import get_app_environments_for_context
-from openpype.lib.plugin_tools import get_batch_asset_task_info
-from openpype.lib.remote_publish import (
-    get_webpublish_conn,
-    start_webpublish_log,
-    publish_and_log,
-    fail_batch,
-    find_variant_key,
-    get_task_data,
-    get_timeout,
-    IN_PROGRESS_STATUS
-)
-
 
 class PypeCommands:
     """Class implementing commands used by Pype.
@@ -100,6 +87,7 @@ class PypeCommands:
         """
 
         from openpype.lib import Logger
+        from openpype.lib.applications import get_app_environments_for_context
         from openpype.modules import ModulesManager
         from openpype.pipeline import install_openpype_plugins
         from openpype.tools.utils.host_tools import show_publish
@@ -199,9 +187,23 @@ class PypeCommands:
         """
 
         import pyblish.api
-        from openpype.lib import ApplicationManager
 
         from openpype.lib import Logger
+        from openpype.lib.applications import (
+            ApplicationManager,
+            get_app_environments_for_context,
+        )
+        from openpype.lib.plugin_tools import get_batch_asset_task_info
+        from openpype.lib.remote_publish import (
+            get_webpublish_conn,
+            start_webpublish_log,
+            fail_batch,
+            find_variant_key,
+            get_task_data,
+            get_timeout,
+            IN_PROGRESS_STATUS
+        )
+
         log = Logger.get_logger("CLI-remotepublishfromapp")
 
         log.info("remotepublishphotoshop command")
@@ -318,9 +320,16 @@ class PypeCommands:
         import pyblish.api
         import pyblish.util
 
-        from openpype.lib import Logger
         from openpype.pipeline import install_host
         from openpype.hosts.webpublisher import api as webpublisher
+        from openpype.lib import Logger
+        from openpype.lib.remote_publish import (
+            get_webpublish_conn,
+            start_webpublish_log,
+            publish_and_log,
+            fail_batch,
+            get_task_data,
+        )
 
         log = Logger.get_logger("remotepublish")
 
@@ -366,8 +375,10 @@ class PypeCommands:
 
         Called by Deadline plugin to propagate environment into render jobs.
         """
+
+        from openpype.lib.applications import get_app_environments_for_context
+
         if all((project, asset, task, app)):
-            from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(
                 project, asset, task, app, env_group
             )
