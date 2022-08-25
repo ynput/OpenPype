@@ -65,7 +65,7 @@ def install():
 
     self._has_been_setup = True
     # add houdini vendor packages
-    hou_pythonpath = os.path.join(os.path.dirname(HOUDINI_HOST_DIR), "vendor")
+    hou_pythonpath = os.path.join(HOUDINI_HOST_DIR, "vendor")
 
     sys.path.append(hou_pythonpath)
 
