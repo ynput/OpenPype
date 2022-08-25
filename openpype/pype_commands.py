@@ -61,8 +61,8 @@ class PypeCommands:
 
     @staticmethod
     def launch_webpublisher_webservercli(*args, **kwargs):
-        from openpype.hosts.webpublisher.webserver_service.webserver_cli \
-            import (run_webserver)
+        from openpype.hosts.webpublisher.webserver_service import run_webserver
+
         return run_webserver(*args, **kwargs)
 
     @staticmethod
