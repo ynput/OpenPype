@@ -6,8 +6,8 @@ BLENDER_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class BlenderModule(OpenPypeModule, IHostModule):
-    name = "nuke"
-    host_name = "nuke"
+    name = "blender"
+    host_name = "blender"
 
     def initialize(self, module_settings):
         self.enabled = True
