@@ -1,4 +1,4 @@
-from .module import ResolveModule
+from .addon import ResolveModule
 
 
 __all__ = (

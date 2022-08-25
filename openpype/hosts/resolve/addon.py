@@ -6,7 +6,7 @@ from openpype.modules.interfaces import IHostModule
 from .utils import RESOLVE_ROOT_DIR
 
 
-class ResolveModule(OpenPypeModule, IHostModule):
+class ResolveAddon(OpenPypeModule, IHostModule):
     name = "resolve"
     host_name = "resolve"
 
