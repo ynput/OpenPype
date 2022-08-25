@@ -24,6 +24,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
             if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
                 if any(v < 0 for v in obj.scale):
                     invalid.append(obj)
+        return invalid
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
