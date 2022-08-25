@@ -12,6 +12,7 @@ from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.settings import get_project_settings
 from openpype.lib import Logger
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.pipeline.publish.lib import find_close_plugin
 
 ERROR_STATUS = "error"
 IN_PROGRESS_STATUS = "in_progress"
@@ -108,7 +109,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}\n"
     error_format += "-" * 80 + "\n"
 
-    close_plugin = _get_close_plugin(close_plugin_name, log)
+    close_plugin = find_close_plugin(close_plugin_name, log)
 
     if isinstance(_id, str):
         _id = ObjectId(_id)
@@ -225,16 +226,6 @@ def find_variant_key(application_manager, host):
         raise ValueError("No executable for {} found".format(host))
 
     return found_variant_key
-
-
-def _get_close_plugin(close_plugin_name, log):
-    if close_plugin_name:
-        plugins = pyblish.api.discover()
-        for plugin in plugins:
-            if plugin.__name__ == close_plugin_name:
-                return plugin
-
-    log.debug("Close plugin not found, app might not close.")
 
 
 def get_task_data(batch_dir):
