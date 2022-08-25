@@ -321,7 +321,7 @@ class PypeCommands:
         import pyblish.util
 
         from openpype.pipeline import install_host
-        from openpype.hosts.webpublisher import api as webpublisher
+        from openpype.hosts.webpublisher.api import WebpublisherHost
         from openpype.lib import Logger
         from openpype.lib.remote_publish import (
             get_webpublish_conn,
@@ -335,14 +335,13 @@ class PypeCommands:
 
         log.info("remotepublish command")
 
-        host_name = "webpublisher"
+        webpublisher_host = WebpublisherHost()
+
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host_name
+        os.environ["AVALON_APP"] = webpublisher_host.name
         os.environ["USER_EMAIL"] = user_email
         os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
-
-        pyblish.api.register_host(host_name)
 
         if targets:
             if isinstance(targets, str):
@@ -350,7 +349,7 @@ class PypeCommands:
             for target in targets:
                 pyblish.api.register_target(target)
 
-        install_host(webpublisher)
+        install_host(webpublisher_host)
 
         log.info("Running publish ...")
 
