@@ -63,7 +63,7 @@ def publish(project, path, user=None, targets=None):
     More than one path is allowed.
     """
 
-    from .cli_functions import cli_publish
+    from .publish_functions import cli_publish
 
     cli_publish(project, path, user, targets)
 
@@ -82,6 +82,6 @@ def publishfromapp(project, path, user=None, targets=None):
     More than one path is allowed.
     """
 
-    from .cli_functions import cli_publish_from_app
+    from .publish_functions import cli_publish_from_app
 
     cli_publish_from_app(project, path, user, targets)
