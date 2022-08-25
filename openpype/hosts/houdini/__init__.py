@@ -1,6 +1,6 @@
 from .addon import (
     HoudiniAddon,
-    HOUDINI_HOST_DIR.
+    HOUDINI_HOST_DIR,
 )
 
 
