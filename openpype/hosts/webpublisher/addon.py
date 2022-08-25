@@ -85,3 +85,22 @@ def publishfromapp(project, path, user=None, targets=None):
     from .publish_functions import cli_publish_from_app
 
     cli_publish_from_app(project, path, user, targets)
+
+
+@cli_main.command()
+@click.option("-h", "--host", help="Host", default=None)
+@click.option("-p", "--port", help="Port", default=None)
+@click.option("-e", "--executable", help="Executable")
+@click.option("-u", "--upload_dir", help="Upload dir")
+def webserver(executable, upload_dir, host=None, port=None):
+    """Starts webserver for communication with Webpublish FR via command line
+
+        OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
+        FTRACK_BOT_API_KEY provided with api key from Ftrack.
+
+        Expect "pype.club" user created on Ftrack.
+    """
+
+    from .webserver_service import run_webserver
+
+    run_webserver(executable, upload_dir, host, port)
