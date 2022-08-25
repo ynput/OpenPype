@@ -28,6 +28,14 @@ from openpype.settings.lib import (
 )
 from openpype.lib import PypeLogger
 
+from .interfaces import (
+    OpenPypeInterface,
+    IPluginPaths,
+    IHostModule,
+    ITrayModule,
+    ITrayService
+)
+
 # Files that will be always ignored on modules import
 IGNORED_FILENAMES = (
     "__pycache__",
@@ -391,29 +399,7 @@ def _load_modules():
                 log.error(msg, exc_info=True)
 
 
-class _OpenPypeInterfaceMeta(ABCMeta):
-    """OpenPypeInterface meta class to print proper string."""
 
-    def __str__(self):
-        return "<'OpenPypeInterface.{}'>".format(self.__name__)
-
-    def __repr__(self):
-        return str(self)
-
-
-@six.add_metaclass(_OpenPypeInterfaceMeta)
-class OpenPypeInterface:
-    """Base class of Interface that can be used as Mixin with abstract parts.
-
-    This is way how OpenPype module or addon can tell that has implementation
-    for specific part or for other module/addon.
-
-    Child classes of OpenPypeInterface may be used as mixin in different
-    OpenPype modules which means they have to have implemented methods defined
-    in the interface. By default interface does not have any abstract parts.
-    """
-
-    pass
 
 
 @six.add_metaclass(ABCMeta)
@@ -749,8 +735,6 @@ class ModulesManager:
                 and "actions" each containing list of paths.
         """
         # Output structure
-        from openpype_interfaces import IPluginPaths
-
         output = {
             "publish": [],
             "create": [],
@@ -807,8 +791,6 @@ class ModulesManager:
             list: List of creator plugin paths.
         """
         # Output structure
-        from openpype_interfaces import IPluginPaths
-
         output = []
         for module in self.get_enabled_modules():
             # Skip module that do not inherit from `IPluginPaths`
@@ -897,8 +879,6 @@ class ModulesManager:
                 host name set to passed 'host_name'.
         """
 
-        from openpype_interfaces import IHostModule
-
         for module in self.get_enabled_modules():
             if (
                 isinstance(module, IHostModule)
@@ -914,8 +894,6 @@ class ModulesManager:
             Iterable[str]: All available host names based on enabled modules
                 inheriting 'IHostModule'.
         """
-
-        from openpype_interfaces import IHostModule
 
         host_names = {
             module.host_name
@@ -1098,8 +1076,6 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
-        from openpype_interfaces import ITrayModule
-
         output = []
         for module in self.modules:
             if module.enabled and isinstance(module, ITrayModule):
@@ -1175,8 +1151,6 @@ class TrayModulesManager(ModulesManager):
             self._report["Tray menu"] = report
 
     def start_modules(self):
-        from openpype_interfaces import ITrayService
-
         report = {}
         time_start = time.time()
         prev_start_time = time_start
