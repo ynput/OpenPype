@@ -225,7 +225,11 @@ class PypeCommands:
                 format("\n".join(running_batches))
             msg += "Ask admin to check them and reprocess current batch"
             fail_batch(_id, dbcon, msg)
-            print("Another batch running, probably stuck, ask admin for help")
+
+        if not task_data["context"]:
+            msg = "Batch manifest must contain context data"
+            msg += "Create new batch and set context properly."
+            fail_batch(_id, dbcon, msg)
 
         asset_name, task_name, task_type = get_batch_asset_task_info(
             task_data["context"])
@@ -340,6 +344,12 @@ class PypeCommands:
         _, batch_id = os.path.split(batch_path)
         dbcon = get_webpublish_conn()
         _id = start_webpublish_log(dbcon, batch_id, user_email)
+
+        task_data = get_task_data(batch_path)
+        if not task_data["context"]:
+            msg = "Batch manifest must contain context data"
+            msg += "Create new batch and set context properly."
+            fail_batch(_id, dbcon, msg)
 
         publish_and_log(dbcon, _id, log, batch_id=batch_id)
 
