@@ -805,68 +805,6 @@ class ModulesManager:
                 output.extend(paths)
         return output
 
-    def collect_launch_hook_paths(self, app):
-        """Helper to collect application launch hooks.
-
-        It used to be based on 'ILaunchHookPaths' which is not true anymore.
-        Module just have to have implemented 'get_launch_hook_paths' method.
-
-        Args:
-            app (Application): Application object which can be used for
-                filtering of which launch hook paths are returned.
-
-        Returns:
-            list: Paths to launch hook directories.
-        """
-
-        str_type = type("")
-        expected_types = (list, tuple, set)
-
-        output = []
-        for module in self.get_enabled_modules():
-            # Skip module if does not have implemented 'get_launch_hook_paths'
-            func = getattr(module, "get_launch_hook_paths", None)
-            if func is None:
-                continue
-
-            func = module.get_launch_hook_paths
-            if hasattr(inspect, "signature"):
-                sig = inspect.signature(func)
-                expect_args = len(sig.parameters) > 0
-            else:
-                expect_args = len(inspect.getargspec(func)[0]) > 0
-
-            # Pass application argument if method expect it.
-            try:
-                if expect_args:
-                    hook_paths = func(app)
-                else:
-                    hook_paths = func()
-            except Exception:
-                self.log.warning(
-                    "Failed to call 'get_launch_hook_paths'",
-                    exc_info=True
-                )
-                continue
-
-            if not hook_paths:
-                continue
-
-            # Convert string to list
-            if isinstance(hook_paths, str_type):
-                hook_paths = [hook_paths]
-
-            # Skip invalid types
-            if not isinstance(hook_paths, expected_types):
-                self.log.warning((
-                    "Result of `get_launch_hook_paths`"
-                    " has invalid type {}. Expected {}"
-                ).format(type(hook_paths), expected_types))
-                continue
-
-            output.extend(hook_paths)
-        return output
-
     def get_host_module(self, host_name):
         """Find host module by host name.
 
