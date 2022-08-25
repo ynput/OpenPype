@@ -1,4 +1,4 @@
-from .webserver_cli import run_webserver
+from .webserver import run_webserver
 
 
 __all__ = (
