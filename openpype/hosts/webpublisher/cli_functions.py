@@ -23,7 +23,7 @@ from openpype.pipeline import install_host
 from openpype.hosts.webpublisher.api import WebpublisherHost
 
 
-def publish(project_name, batch_path, user_email, targets):
+def cli_publish(project_name, batch_path, user_email, targets):
     """Start headless publishing.
 
     Used to publish rendered assets, workfiles etc via Webpublisher.
@@ -85,7 +85,7 @@ def publish(project_name, batch_path, user_email, targets):
     log.info("Publish finished.")
 
 
-def publish_from_app(
+def cli_publish_from_app(
     project_name, batch_path, host_name, user_email, targets
 ):
     """Opens installed variant of 'host' and run remote publish there.

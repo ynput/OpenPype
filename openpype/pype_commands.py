@@ -186,9 +186,11 @@ class PypeCommands:
                 (to choose validator for example)
         """
 
-        from openpype.hosts.webpublisher.cli_functions import publish_from_app
+        from openpype.hosts.webpublisher.cli_functions import (
+            cli_publish_from_app
+        )
 
-        publish_from_app(
+        cli_publish_from_app(
             project_name, batch_path, host_name, user_email, targets
         )
 
@@ -215,9 +217,11 @@ class PypeCommands:
             RuntimeError: When there is no path to process.
         """
 
-        from openpype.hosts.webpublisher.cli_functions import publish
+        from openpype.hosts.webpublisher.cli_functions import (
+            cli_publish
+        )
 
-        publish(project, batch_path, user_email, targets)
+        cli_publish(project, batch_path, user_email, targets)
 
     @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app,
