@@ -15,6 +15,30 @@ class WebpublisherAddon(OpenPypeModule, IHostModule):
     def initialize(self, module_settings):
         self.enabled = True
 
+    def headless_publish(self, log, close_plugin_name=None, is_test=False):
+        """Runs publish in a opened host with a context.
+
+        Close Python process at the end.
+        """
+
+        from openpype.pipeline.publish.lib import remote_publish
+        from .lib import get_webpublish_conn, publish_and_log
+
+        if is_test:
+            remote_publish(log, close_plugin_name)
+            return
+
+        dbcon = get_webpublish_conn()
+        _id = os.environ.get("BATCH_LOG_ID")
+        if not _id:
+            log.warning("Unable to store log records, "
+                        "batch will be unfinished!")
+            return
+
+        publish_and_log(
+            dbcon, _id, log, close_plugin_name=close_plugin_name
+        )
+
     def cli(self, click_group):
         click_group.add_command(cli_main)
 
