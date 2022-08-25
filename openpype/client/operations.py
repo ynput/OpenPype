@@ -1,3 +1,4 @@
+import re
 import uuid
 import copy
 import collections
@@ -10,6 +11,11 @@ from pymongo import DeleteOne, InsertOne, UpdateOne
 from .mongo import get_project_connection
 
 REMOVED_VALUE = object()
+
+PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
+PROJECT_NAME_REGEX = re.compile(
+    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
 
 CURRENT_PROJECT_SCHEMA = "openpype:project-3.0"
 CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
@@ -444,7 +450,7 @@ class UpdateOperation(AbstractOperation):
         set_data = {}
         for key, value in self._update_data.items():
             if value is REMOVED_VALUE:
-                unset_data[key] = value
+                unset_data[key] = None
             else:
                 set_data[key] = value
 

@@ -13,10 +13,8 @@ from openpype.client import (
     get_assets,
     get_asset_ids_with_subsets,
 )
-from openpype.lib import (
-    CURRENT_DOC_SCHEMAS,
-    PypeLogger,
-)
+from openpype.client.operations import CURRENT_ASSET_DOC_SCHEMA
+from openpype.lib import Logger
 
 from .constants import (
     IDENTIFIER_ROLE,
@@ -203,7 +201,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     @property
     def log(self):
         if self._log is None:
-            self._log = PypeLogger.get_logger("ProjectManagerModel")
+            self._log = Logger.get_logger("ProjectManagerModel")
         return self._log
 
     @property
@@ -1961,7 +1959,7 @@ class AssetItem(BaseItem):
         }
         schema_name = (
             self._origin_asset_doc.get("schema")
-            or CURRENT_DOC_SCHEMAS["asset"]
+            or CURRENT_ASSET_DOC_SCHEMA
         )
 
         doc = {

@@ -11,6 +11,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     label = "Collect After Effects Workfile Instance"
     order = pyblish.api.CollectorOrder + 0.1
 
+    default_variant = "Main"
+
     def process(self, context):
         existing_instance = None
         for instance in context:
@@ -71,7 +73,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         family = "workfile"
         subset = get_subset_name_with_asset_doc(
             family,
-            "",
+            self.default_variant,
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],

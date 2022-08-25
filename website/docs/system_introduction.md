@@ -17,7 +17,7 @@ various usage scenarios.
 
 You can find detailed breakdown of technical requirements [here](dev_requirements), but in general OpenPype should be able
 to operate in most studios fairly quickly. The main obstacles are usually related to workflows and habits, that
-might now be fully compatible with what OpenPype is expecting or enforcing. 
+might not be fully compatible with what OpenPype is expecting or enforcing. It is recommended to go through artists [key concepts](artist_concepts) to get idea about basics.
 
 Keep in mind that if you run into any workflows that are not supported, it's usually just because we haven't hit 
 that particular case and it can most likely be added upon request. 
@@ -48,24 +48,3 @@ to the table
 - Some DCCs do not support using Environment variables in file paths. This will make it very hard to maintain full multiplatform
 compatibility as well variable storage roots.
 - Relying on VPN connection and using it to work directly of network storage will be painfully slow.
-
-
-## Repositories
-
-### [OpenPype](https://github.com/pypeclub/pype)
-
-This is where vast majority of the code that works with your data lives. It acts
-as Avalon-Config, if we're speaking in avalon terms. 
-
-Avalon gives us the ability to work with a certain host, say Maya, in a standardized manner, but OpenPype defines **how** we work with all the data, allows most of the behavior to be configured on a very granular level and provides a comprehensive build and installation tools for it.
-
-Thanks to that, we are able to maintain one codebase for vast majority of the features across all our clients deployments while keeping the option to tailor the pipeline to each individual studio.
-
-### [Avalon-core](https://github.com/pypeclub/avalon-core)
-
-Avalon-core is the heart of OpenPype. It provides the base functionality including key GUIs (albeit expanded and modified by us), database connection, standards for data structures, working with entities and some universal tools.
-
-Avalon is being actively developed and maintained by a community of studios and TDs from around the world, with Pype Club team being an active contributor as well.
-
-Due to the extensive work we've done on OpenPype and the need to react quickly to production needs, we
-maintain our own fork of avalon-core, which is kept up to date with upstream changes as much as possible.
