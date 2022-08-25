@@ -1,8 +1,8 @@
 import abc
 import six
-from openpype.api import Logger
+from openpype.lib import Logger
 
-log = Logger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 @six.add_metaclass(abc.ABCMeta)

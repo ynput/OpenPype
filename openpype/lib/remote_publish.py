@@ -66,7 +66,7 @@ def publish(log, close_plugin_name=None, raise_error=False):
     """Loops through all plugins, logs to console. Used for tests.
 
         Args:
-            log (OpenPypeLogger)
+            log (openpype.lib.Logger)
             close_plugin_name (str): name of plugin with responsibility to
                 close host app
     """
@@ -98,7 +98,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
         Args:
             dbcon (OpenPypeMongoConnection)
             _id (str) - id of current job in DB
-            log (OpenPypeLogger)
+            log (openpype.lib.Logger)
             batch_id (str) - id sent from frontend
             close_plugin_name (str): name of plugin with responsibility to
                 close host app

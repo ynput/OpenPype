@@ -1,13 +1,11 @@
 import os
 import sys
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
     install_host,
     registered_host,
 )
-
-log = Logger().get_logger(__name__)
 
 
 def main(env):
@@ -17,6 +15,7 @@ def main(env):
     # activate resolve from pype
     install_host(api)
 
+    log = Logger.get_logger(__name__)
     log.info(f"Registered host: {registered_host()}")
 
     menu.launch_openpype_menu()

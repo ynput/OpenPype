@@ -2,11 +2,6 @@ import attr
 import abc
 import six
 
-from openpype.lib import PypeLogger
-
-
-log = PypeLogger().get_logger("SyncServer")
-
 STATUS = {
     0: 'In Progress',
     1: 'Queued',

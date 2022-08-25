@@ -5,7 +5,7 @@ import platform
 import json
 import tempfile
 
-from .log import PypeLogger as Logger
+from .log import Logger
 from .vendor_bin_utils import find_executable
 
 # MSDN process creation flag (Windows only)
@@ -40,7 +40,7 @@ def execute(args,
 
     log_levels = ['DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
 
-    log = Logger().get_logger('execute')
+    log = Logger.get_logger('execute')
     log.info("Executing ({})".format(" ".join(args)))
     popen = subprocess.Popen(
         args,
