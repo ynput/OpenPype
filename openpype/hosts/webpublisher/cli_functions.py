@@ -4,7 +4,15 @@ import pyblish.api
 import pyblish.util
 
 from openpype.lib import Logger
-from openpype.lib.remote_publish import (
+from openpype.lib.applications import (
+    ApplicationManager,
+    get_app_environments_for_context,
+)
+from openpype.pipeline import install_host
+from openpype.hosts.webpublisher.api import WebpublisherHost
+
+from .lib import (
+    get_batch_asset_task_info,
     get_webpublish_conn,
     start_webpublish_log,
     publish_and_log,
@@ -14,13 +22,6 @@ from openpype.lib.remote_publish import (
     get_timeout,
     IN_PROGRESS_STATUS
 )
-from openpype.lib.applications import (
-    ApplicationManager,
-    get_app_environments_for_context,
-)
-from openpype.lib.plugin_tools import get_batch_asset_task_info
-from openpype.pipeline import install_host
-from openpype.hosts.webpublisher.api import WebpublisherHost
 
 
 def cli_publish(project_name, batch_path, user_email, targets):

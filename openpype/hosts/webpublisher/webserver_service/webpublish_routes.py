@@ -10,16 +10,16 @@ from aiohttp.web_response import Response
 from openpype.client import (
     get_projects,
     get_assets,
-    OpenPypeMongoConnection,
 )
 from openpype.lib import Logger
-from openpype.lib.remote_publish import (
+from openpype.settings import get_project_settings
+from openpype_modules.webserver.base_routes import RestApiEndpoint
+from openpype_modules.webpublisher.lib import (
+    get_webpublish_conn,
     get_task_data,
     ERROR_STATUS,
     REPROCESS_STATUS
 )
-from openpype.settings import get_project_settings
-from openpype_modules.webserver.base_routes import RestApiEndpoint
 
 log = Logger.get_logger("WebpublishRoutes")
 
@@ -77,9 +77,7 @@ class WebpublishRestApiResource(JsonApiResource):
     """Resource carrying OP DB connection for storing batch info into DB."""
 
     def __init__(self):
-        mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
-        self.dbcon = mongo_client[database_name]["webpublishes"]
+        self.dbcon = get_webpublish_conn()
 
 
 class ProjectsEndpoint(ResourceRestApiEndpoint):

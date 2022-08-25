@@ -7,7 +7,14 @@ import json
 import subprocess
 
 from openpype.client import OpenPypeMongoConnection
+from openpype.modules import ModulesManager
 from openpype.lib import Logger
+
+from openpype_modules.webpublisher.lib import (
+    ERROR_STATUS,
+    REPROCESS_STATUS,
+    SENT_REPROCESSING_STATUS
+)
 
 from .webpublish_routes import (
     RestApiResource,
@@ -21,19 +28,12 @@ from .webpublish_routes import (
     TaskPublishEndpoint,
     UserReportEndpoint
 )
-from openpype.lib.remote_publish import (
-    ERROR_STATUS,
-    REPROCESS_STATUS,
-    SENT_REPROCESSING_STATUS
-)
-
 
 log = Logger.get_logger("webserver_gui")
 
 
 def run_webserver(*args, **kwargs):
     """Runs webserver in command line, adds routes."""
-    from openpype.modules import ModulesManager
 
     manager = ModulesManager()
     webserver_module = manager.modules_by_name["webserver"]
