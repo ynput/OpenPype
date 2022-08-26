@@ -6,7 +6,7 @@ from openpype.modules.interfaces import IHostAddon
 HIERO_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class HieroModule(OpenPypeModule, IHostAddon):
+class HieroAddon(OpenPypeModule, IHostAddon):
     name = "hiero"
     host_name = "hiero"
 
