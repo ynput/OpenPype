@@ -469,6 +469,19 @@ class ApplicationManager:
             for tool in group:
                 self.tools[tool.full_name] = tool
 
+    def find_latest_available_variant_for_group(self, group_name):
+        group = self.app_groups.get(group_name)
+        if group is None or not group.enabled:
+            return None
+
+        output = None
+        for _, variant in reversed(sorted(group.variants.items())):
+            executable = variant.find_executable()
+            if executable:
+                output = variant
+                break
+        return output
+
     def launch(self, app_name, **data):
         """Launch procedure.
 
