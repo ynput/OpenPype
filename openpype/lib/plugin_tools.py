@@ -11,12 +11,7 @@ import functools
 from openpype.client import get_asset_by_id
 from openpype.settings import get_project_settings
 
-from .profiles_filtering import filter_profiles
-
 log = logging.getLogger(__name__)
-
-# Subset name template used when plugin does not have defined any
-DEFAULT_SUBSET_TEMPLATE = "{family}{Variant}"
 
 
 class PluginToolsDeprecatedWarning(DeprecationWarning):
@@ -64,13 +59,14 @@ def deprecated(new_destination):
     return _decorator(func)
 
 
-class TaskNotSetError(KeyError):
-    def __init__(self, msg=None):
-        if not msg:
-            msg = "Creator's subset name template requires task name."
-        super(TaskNotSetError, self).__init__(msg)
+@deprecated("openpype.pipeline.create.TaskNotSetError")
+def TaskNotSetError(*args, **kwargs):
+    from openpype.pipeline.create import TaskNotSetError
+
+    return TaskNotSetError(*args, **kwargs)
 
 
+@deprecated("openpype.pipeline.create.get_subset_name")
 def get_subset_name_with_asset_doc(
     family,
     variant,
@@ -109,61 +105,22 @@ def get_subset_name_with_asset_doc(
         dbcon (AvalonMongoDB): Mongo connection to be able query asset document
             if 'asset_doc' is not passed.
     """
-    if not family:
-        return ""
 
-    if not host_name:
-        host_name = os.environ["AVALON_APP"]
+    from openpype.pipeline.create import get_subset_name
 
-    # Use only last part of class family value split by dot (`.`)
-    family = family.rsplit(".", 1)[-1]
-
-    if project_name is None:
-        from openpype.pipeline import legacy_io
-
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
-
-    # Get settings
-    tools_settings = get_project_settings(project_name)["global"]["tools"]
-    profiles = tools_settings["creator"]["subset_name_profiles"]
-    filtering_criteria = {
-        "families": family,
-        "hosts": host_name,
-        "tasks": task_name,
-        "task_types": task_type
-    }
-
-    matching_profile = filter_profiles(profiles, filtering_criteria)
-    template = None
-    if matching_profile:
-        template = matching_profile["template"]
-
-    # Make sure template is set (matching may have empty string)
-    if not template:
-        template = default_template or DEFAULT_SUBSET_TEMPLATE
-
-    # Simple check of task name existence for template with {task} in
-    #   - missing task should be possible only in Standalone publisher
-    if not task_name and "{task" in template.lower():
-        raise TaskNotSetError()
-
-    fill_pairs = {
-        "variant": variant,
-        "family": family,
-        "task": task_name
-    }
-    if dynamic_data:
-        # Dynamic data may override default values
-        for key, value in dynamic_data.items():
-            fill_pairs[key] = value
-
-    return template.format(**prepare_template_data(fill_pairs))
+    return get_subset_name(
+        family,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data
+    )
 
 
+@deprecated
 def get_subset_name(
     family,
     variant,
@@ -183,16 +140,18 @@ def get_subset_name(
     `get_subset_name_with_asset_doc` where asset document is expected.
     """
 
+    from openpype.pipeline.create import get_subset_name
+
     if project_name is None:
         project_name = dbcon.project_name
 
     asset_doc = get_asset_by_id(project_name, asset_id, fields=["data.tasks"])
 
-    return get_subset_name_with_asset_doc(
+    return get_subset_name(
         family,
         variant,
         task_name,
-        asset_doc or {},
+        asset_doc,
         project_name,
         host_name,
         default_template,
@@ -254,6 +213,9 @@ def filter_pyblish_plugins(plugins):
     Args:
         plugins (dict): Dictionary of plugins produced by :mod:`pyblish-base`
             `discover()` method.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.publish.lib import filter_pyblish_plugins
@@ -277,6 +239,9 @@ def set_plugin_attributes_from_settings(
             Value from environment `AVALON_APP` is used if not entered.
         project_name (str): Name of project for which settings will be loaded.
             Value from environment `AVALON_PROJECT` is used if not entered.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     # Function is not used anymore
