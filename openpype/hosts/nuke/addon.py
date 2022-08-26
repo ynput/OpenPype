@@ -6,7 +6,7 @@ from openpype.modules.interfaces import IHostAddon
 NUKE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class NukeModule(OpenPypeModule, IHostAddon):
+class NukeAddon(OpenPypeModule, IHostAddon):
     name = "nuke"
     host_name = "nuke"
 
