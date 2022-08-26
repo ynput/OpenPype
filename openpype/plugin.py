@@ -117,6 +117,8 @@ def contextplugin_should_run(plugin, context):
 
     This actually checks it correctly and returns whether it should run.
 
+    Deprecated:
+        Since 3.14.* will be removed in 3.16.* or later.
     """
 
     from openpype.pipeline.publish import context_plugin_should_run

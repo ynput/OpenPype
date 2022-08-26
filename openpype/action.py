@@ -50,6 +50,11 @@ def deprecated(new_destination):
 
 @deprecated("openpype.pipeline.publish.get_errored_instances_from_context")
 def get_errored_instances_from_context(context):
+    """
+    Deprecated:
+        Since 3.14.* will be removed in 3.16.* or later.
+    """
+
     from openpype.pipeline.publish import get_errored_instances_from_context
 
     return get_errored_instances_from_context(context)
@@ -57,6 +62,11 @@ def get_errored_instances_from_context(context):
 
 @deprecated("openpype.pipeline.publish.get_errored_plugins_from_context")
 def get_errored_plugins_from_data(context):
+    """
+    Deprecated:
+        Since 3.14.* will be removed in 3.16.* or later.
+    """
+
     from openpype.pipeline.publish import get_errored_plugins_from_context
 
     return get_errored_plugins_from_context(context)
