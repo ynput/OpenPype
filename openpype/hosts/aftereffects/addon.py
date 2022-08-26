@@ -2,7 +2,7 @@ from openpype.modules import OpenPypeModule
 from openpype.modules.interfaces import IHostAddon
 
 
-class AfterEffectsModule(OpenPypeModule, IHostAddon):
+class AfterEffectsAddon(OpenPypeModule, IHostAddon):
     name = "aftereffects"
     host_name = "aftereffects"
 
