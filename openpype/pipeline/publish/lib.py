@@ -378,6 +378,7 @@ def filter_instances_for_context_plugin(plugin, context):
         return []
 
     plugin_families = set(plugin.families)
+    all_families = "*" in plugin_families
     for instance in context:
         # Ignore inactive instances
         if (
@@ -387,11 +388,12 @@ def filter_instances_for_context_plugin(plugin, context):
             continue
 
         family = instance.data.get("family")
-        if family and family in plugin_families:
-            yield instance
-
-        families = instance.data.get("families", [])
-        if any(f in plugin_families for f in families):
+        families = instance.data.get("families") or []
+        if (
+            all_families
+            or (family and family in plugin_families)
+            or any(f in plugin_families for f in families)
+        ):
             yield instance
 
 
