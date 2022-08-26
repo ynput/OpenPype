@@ -20,6 +20,8 @@ from .lib import (
 
     get_errored_instances_from_context,
     get_errored_plugins_from_context,
+
+    context_plugin_should_run,
 )
 
 from .abstract_expected_files import ExpectedFiles
@@ -49,6 +51,8 @@ __all__ = (
 
     "get_errored_instances_from_context",
     "get_errored_plugins_from_context",
+
+    "context_plugin_should_run",
 
     "ExpectedFiles",
 

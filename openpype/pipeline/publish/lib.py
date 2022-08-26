@@ -357,3 +357,60 @@ def get_errored_plugins_from_context(context):
         plugins.append(result["plugin"])
 
     return plugins
+
+
+def filter_instances_for_context_plugin(plugin, context):
+    """Filter instances on context by context plugin filters.
+
+    This is for cases when context plugin need similar filtering like instance
+    plugin have, but for some reason must run on context.
+
+    Args:
+        plugin (pyblish.api.Plugin): Plugin with filters.
+        context (pyblish.api.Context): Pyblish context with insances.
+
+    Returns:
+        Iterator[pyblish.lib.Instance]: Iteration of valid instances.
+    """
+
+    if not plugin.families:
+        return []
+
+    plugin_families = set(plugin.families)
+    for instance in context:
+        # Ignore inactive instances
+        if (
+            not instance.data.get("publish", True)
+            or not instance.data.get("active", True)
+        ):
+            continue
+
+        family = instance.data.get("family")
+        if family and family in plugin_families:
+            yield instance
+
+        families = instance.data.get("families", [])
+        if any(f in plugin_families for f in families):
+            yield instance
+
+
+def context_plugin_should_run(plugin, context):
+    """Return whether the ContextPlugin should run on the given context.
+
+    This is a helper function to work around a bug pyblish-base#250
+    Whenever a ContextPlugin sets specific families it will still trigger even
+    when no instances are present that have those families.
+
+    This actually checks it correctly and returns whether it should run.
+
+    Args:
+        plugin (pyblish.api.Plugin): Plugin with filters.
+        context (pyblish.api.Context): Pyblish context with insances.
+
+    Returns:
+        bool: Context plugin should run based on valid instances.
+    """
+
+    for instance in filter_instances_for_context_plugin(plugin, context):
+        return True
+    return False
