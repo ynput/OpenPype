@@ -79,7 +79,3 @@ def contextplugin_should_run(plugin, context):
             return True
 
     return False
-
-
-class ValidationException(Exception):
-    pass
