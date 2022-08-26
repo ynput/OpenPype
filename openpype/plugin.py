@@ -1,3 +1,6 @@
+import functools
+import warnings
+
 import pyblish.api
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
@@ -6,6 +9,53 @@ ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
 
 
+class PluginDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def _deprecation_warning(item_name, warning_message):
+    warnings.simplefilter("always", PluginDeprecatedWarning)
+    warnings.warn(
+        (
+            "Call to deprecated function '{}'"
+            "\nFunction was moved or removed.{}"
+        ).format(item_name, warning_message),
+        category=PluginDeprecatedWarning,
+        stacklevel=4
+    )
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            _deprecation_warning(decorated_func.__name__, warning_message)
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 class ContextPlugin(pyblish.api.ContextPlugin):
     def process(cls, *args, **kwargs):
         super(ContextPlugin, cls).process(cls, *args, **kwargs)
@@ -41,6 +91,7 @@ class Extractor(pyblish.api.InstancePlugin):
         return get_instance_staging_dir(instance)
 
 
+@deprecated("openpype.pipeline.publish.context_plugin_should_run")
 def contextplugin_should_run(plugin, context):
     """Return whether the ContextPlugin should run on the given context.
 
@@ -51,25 +102,7 @@ def contextplugin_should_run(plugin, context):
     This actually checks it correctly and returns whether it should run.
 
     """
-    required = set(plugin.families)
 
-    # When no filter always run
-    if "*" in required:
-        return True
+    from openpype.pipeline.publish import context_plugin_should_run
 
-    for instance in context:
-
-        # Ignore inactive instances
-        if (not instance.data.get("publish", True) or
-                not instance.data.get("active", True)):
-            continue
-
-        families = instance.data.get("families", [])
-        if any(f in required for f in families):
-            return True
-
-        family = instance.data.get("family")
-        if family and family in required:
-            return True
-
-    return False
+    return context_plugin_should_run(plugin, context)
