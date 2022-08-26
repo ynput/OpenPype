@@ -4,6 +4,7 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
@@ -22,7 +23,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     label = 'Rig Out Set Node Ids'
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
-        openpype.api.RepairAction
+        RepairAction
     ]
     allow_history_only = False
 

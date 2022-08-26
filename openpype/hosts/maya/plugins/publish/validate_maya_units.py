@@ -5,6 +5,7 @@ import openpype.api
 import openpype.hosts.maya.api.lib as mayalib
 from openpype.pipeline.context_tools import get_current_project_asset
 from math import ceil
+from openpype.pipeline.publish import RepairContextAction
 
 
 def float_round(num, places=0, direction=ceil):
@@ -17,7 +18,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
     order = openpype.api.ValidateSceneOrder
     label = "Maya Units"
     hosts = ['maya']
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
 
     validate_linear_units = True
     linear_units = "cm"

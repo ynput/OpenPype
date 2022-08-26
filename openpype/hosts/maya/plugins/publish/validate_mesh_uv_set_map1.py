@@ -3,6 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
@@ -21,7 +22,7 @@ class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
     optional = True
     label = "Mesh has map1 UV Set"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     @staticmethod
     def get_invalid(instance):

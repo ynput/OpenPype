@@ -4,6 +4,7 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateShapeZero(pyblish.api.Validator):
@@ -19,7 +20,7 @@ class ValidateShapeZero(pyblish.api.Validator):
     label = "Shape Zero (Freeze)"
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
-        openpype.api.RepairAction
+        RepairAction
     ]
 
     @staticmethod

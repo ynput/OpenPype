@@ -2,6 +2,7 @@ import pyblish.api
 import openpype.api
 
 from maya import cmds
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -26,7 +27,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 "review",
                 "yeticache"]
     optional = True
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
     exclude_families = []
 
     def process(self, instance):

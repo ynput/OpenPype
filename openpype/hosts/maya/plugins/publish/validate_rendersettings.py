@@ -7,6 +7,7 @@ from maya import cmds, mel
 
 import pyblish.api
 import openpype.api
+from openpype.pipeline.publish import RepairAction
 from openpype.hosts.maya.api import lib
 
 
@@ -43,7 +44,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     label = "Render Settings"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     ImagePrefixes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',

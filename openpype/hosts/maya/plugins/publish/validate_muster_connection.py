@@ -5,8 +5,10 @@ import appdirs
 
 import pyblish.api
 from openpype.lib import requests_get
-from openpype.pipeline.publish import context_plugin_should_run
-import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    context_plugin_should_run,
+    RepairAction,
+)
 
 
 class ValidateMusterConnection(pyblish.api.ContextPlugin):
@@ -21,7 +23,7 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
     token = None
     if not os.environ.get("MUSTER_REST_URL"):
         active = False
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     def process(self, context):
 

@@ -6,6 +6,7 @@ import maya.cmds as cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
@@ -15,7 +16,7 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['ass']
     label = "ASS has relative texture paths"
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     def process(self, instance):
         # we cannot ask this until user open render settings as

@@ -4,6 +4,7 @@ import openpype.api
 from maya import cmds
 
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateShapeRenderStats(pyblish.api.Validator):
@@ -14,7 +15,7 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
     families = ['model']
     label = 'Shape Default Render Stats'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     defaults = {'castsShadows': 1,
                 'receiveShadows': 1,

@@ -3,6 +3,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import openpype.api
+from openpype.pipeline.publish import RepairAction
 import openpype.hosts.maya.api.action
 
 
@@ -23,7 +24,7 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = 'No Namespaces'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     @staticmethod
     def get_invalid(instance):

@@ -4,6 +4,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
@@ -21,7 +22,7 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
     hosts = ['maya']
     label = 'Look Id Reference Edits'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

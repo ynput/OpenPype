@@ -4,6 +4,7 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
@@ -23,7 +24,7 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = "Mesh Single UV Set"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     @staticmethod
     def get_invalid(instance):

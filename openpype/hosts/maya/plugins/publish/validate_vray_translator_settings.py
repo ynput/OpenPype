@@ -2,7 +2,10 @@
 """Validate VRay Translator settings."""
 import pyblish.api
 import openpype.api
-from openpype.pipeline.publish import context_plugin_should_run
+from openpype.pipeline.publish import (
+    context_plugin_should_run,
+    RepairContextAction,
+)
 
 from maya import cmds
 
@@ -13,7 +16,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
     order = openpype.api.ValidateContentsOrder
     label = "VRay Translator Settings"
     families = ["vrayscene_layer"]
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
 
     def process(self, context):
         """Plugin entry point."""

@@ -3,6 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateShadingEngine(pyblish.api.InstancePlugin):
@@ -16,7 +17,7 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     label = "Look Shading Engine Naming"
     actions = [
-        openpype.hosts.maya.api.action.SelectInvalidAction, openpype.api.RepairAction
+        openpype.hosts.maya.api.action.SelectInvalidAction, RepairAction
     ]
 
     # The default connections to check

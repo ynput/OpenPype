@@ -4,6 +4,7 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
@@ -22,7 +23,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
     label = 'Deformed shape ids'
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
-        openpype.api.RepairAction
+        RepairAction
     ]
 
     def process(self, instance):

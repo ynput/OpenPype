@@ -4,6 +4,7 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
@@ -22,7 +23,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     label = 'Animation Out Set Related Node Ids'
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
-        openpype.api.RepairAction
+        RepairAction
     ]
 
     def process(self, instance):

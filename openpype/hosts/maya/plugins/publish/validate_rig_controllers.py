@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-import openpype.api
+from openpype.pipeline.publish import RepairAction
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
 
@@ -29,7 +29,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     label = "Rig Controllers"
     hosts = ["maya"]
     families = ["rig"]
-    actions = [openpype.api.RepairAction,
+    actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
 
     # Default controller values
