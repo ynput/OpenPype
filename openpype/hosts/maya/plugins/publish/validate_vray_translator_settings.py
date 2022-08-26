@@ -2,7 +2,7 @@
 """Validate VRay Translator settings."""
 import pyblish.api
 import openpype.api
-from openpype.plugin import contextplugin_should_run
+from openpype.pipeline.publish import context_plugin_should_run
 
 from maya import cmds
 
@@ -18,7 +18,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
     def process(self, context):
         """Plugin entry point."""
         # Workaround bug pyblish-base#250
-        if not contextplugin_should_run(self, context):
+        if not context_plugin_should_run(self, context):
             return
 
         invalid = self.get_invalid(context)

@@ -363,7 +363,8 @@ def filter_instances_for_context_plugin(plugin, context):
     """Filter instances on context by context plugin filters.
 
     This is for cases when context plugin need similar filtering like instance
-    plugin have, but for some reason must run on context.
+    plugin have, but for some reason must run on context or should find out
+    if there is at least one instance with a family.
 
     Args:
         plugin (pyblish.api.Plugin): Plugin with filters.

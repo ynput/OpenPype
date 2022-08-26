@@ -5,7 +5,7 @@ import appdirs
 
 import pyblish.api
 from openpype.lib import requests_get
-from openpype.plugin import contextplugin_should_run
+from openpype.pipeline.publish import context_plugin_should_run
 import openpype.hosts.maya.api.action
 
 
@@ -26,7 +26,7 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # Workaround bug pyblish-base#250
-        if not contextplugin_should_run(self, context):
+        if not context_plugin_should_run(self, context):
             return
 
         # test if we have environment set (redundant as this plugin shouldn'
