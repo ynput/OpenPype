@@ -950,6 +950,63 @@ class ApplicationLaunchContext:
             )
         self.kwargs["env"] = value
 
+    def _collect_addons_launch_hook_paths(self):
+        """Helper to collect application launch hooks from addons.
+
+        Module have to have implemented 'get_launch_hook_paths' method which
+        can expect appliction as argument or nothing.
+
+        Returns:
+            List[str]: Paths to launch hook directories.
+        """
+
+        expected_types = (list, tuple, set)
+
+        output = []
+        for module in self.modules_manager.get_enabled_modules():
+            # Skip module if does not have implemented 'get_launch_hook_paths'
+            func = getattr(module, "get_launch_hook_paths", None)
+            if func is None:
+                continue
+
+            func = module.get_launch_hook_paths
+            if hasattr(inspect, "signature"):
+                sig = inspect.signature(func)
+                expect_args = len(sig.parameters) > 0
+            else:
+                expect_args = len(inspect.getargspec(func)[0]) > 0
+
+            # Pass application argument if method expect it.
+            try:
+                if expect_args:
+                    hook_paths = func(self.application)
+                else:
+                    hook_paths = func()
+            except Exception:
+                self.log.warning(
+                    "Failed to call 'get_launch_hook_paths'",
+                    exc_info=True
+                )
+                continue
+
+            if not hook_paths:
+                continue
+
+            # Convert string to list
+            if isinstance(hook_paths, six.string_types):
+                hook_paths = [hook_paths]
+
+            # Skip invalid types
+            if not isinstance(hook_paths, expected_types):
+                self.log.warning((
+                    "Result of `get_launch_hook_paths`"
+                    " has invalid type {}. Expected {}"
+                ).format(type(hook_paths), expected_types))
+                continue
+
+            output.extend(hook_paths)
+        return output
+
     def paths_to_launch_hooks(self):
         """Directory paths where to look for launch hooks."""
         # This method has potential to be part of application manager (maybe).
@@ -983,9 +1040,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        paths.extend(
-            self.modules_manager.collect_launch_hook_paths(self.application)
-        )
+        paths.extend(self._collect_addons_launch_hook_paths())
 
         return paths
 
