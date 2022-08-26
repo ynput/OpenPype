@@ -11,6 +11,7 @@ from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
+    get_representation_path,
     AVALON_CONTAINER_ID,
     legacy_io,
 )
@@ -132,6 +133,23 @@ class ExistingLayoutLoader(plugin.Loader):
         )
         return transform
 
+    def _spawn_actor(self, obj, lasset):
+        actor = EditorLevelLibrary.spawn_actor_from_object(
+            obj, unreal.Vector(0.0, 0.0, 0.0)
+        )
+
+        actor.set_actor_label(lasset.get('instance_name'))
+        smc = actor.get_editor_property('static_mesh_component')
+        mesh = smc.get_editor_property('static_mesh')
+        import_data = mesh.get_editor_property('asset_import_data')
+        filename = import_data.get_first_filename()
+        path = Path(filename)
+
+        transform = self._get_transform(
+            path.suffix, import_data, lasset)
+
+        actor.set_actor_transform(transform, False, True)
+
     @staticmethod
     def _get_fbx_loader(loaders, family):
         name = ""
@@ -192,25 +210,29 @@ class ExistingLayoutLoader(plugin.Loader):
         if not loader:
             raise AssertionError(f"No valid loader found for {representation}")
 
+        # This option is necessary to avoid importing the assets with a
+        # different conversion compared to the other assets. For ABC files,
+        # it is in fact impossible to access the conversion settings. So,
+        # we must assume that the Maya conversion settings have been applied.
+        options = {
+            "default_conversion": True
+        }
+
         assets = load_container(
             loader,
             representation,
-            namespace=instance_name
+            namespace=instance_name,
+            options=options
         )
 
         return assets
 
-    def load(self, context, name, namespace, options):
-        print("Loading Layout and Match Assets")
-
+    def _process(self, lib_path):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-
-        asset = context.get('asset').get('name')
-        container_name = f"{asset}_{name}_CON"
 
         actors = EditorLevelLibrary.get_all_level_actors()
 
-        with open(self.fname, "r") as fp:
+        with open(lib_path, "r") as fp:
             data = json.load(fp)
 
         layout_data = []
@@ -260,7 +282,6 @@ class ExistingLayoutLoader(plugin.Loader):
                 if path.name not in repr_data.get('data').get('path'):
                     continue
 
-                asset_name = path.with_suffix('').name
                 mesh_path = Path(mesh.get_path_name()).parent.as_posix()
 
                 # Create the container for the asset.
@@ -309,23 +330,7 @@ class ExistingLayoutLoader(plugin.Loader):
 
                 for asset in assets:
                     obj = asset.get_asset()
-                    actor = EditorLevelLibrary.spawn_actor_from_object(
-                        obj, unreal.Vector(0.0, 0.0, 0.0)
-                    )
-
-                    actor.set_actor_label(lasset.get('instance_name'))
-                    smc = actor.get_editor_property(
-                        'static_mesh_component')
-                    mesh = smc.get_editor_property('static_mesh')
-                    import_data = mesh.get_editor_property(
-                        'asset_import_data')
-                    filename = import_data.get_first_filename()
-                    path = Path(filename)
-
-                    transform = self._get_transform(
-                        path.suffix, import_data, lasset)
-
-                    actor.set_actor_transform(transform, False, True)
+                    self._spawn_actor(obj, lasset)
 
                 loaded = True
                 break
@@ -345,24 +350,7 @@ class ExistingLayoutLoader(plugin.Loader):
                 obj = ar.get_asset_by_object_path(asset).get_asset()
                 if not obj.get_class().get_name() == 'StaticMesh':
                     continue
-                actor = EditorLevelLibrary.spawn_actor_from_object(
-                    obj, unreal.Vector(0.0, 0.0, 0.0)
-                )
-
-                actor.set_actor_label(lasset.get('instance_name'))
-                smc = actor.get_editor_property('static_mesh_component')
-                mesh = smc.get_editor_property('static_mesh')
-                import_data = mesh.get_editor_property('asset_import_data')
-                filename = import_data.get_first_filename()
-                path = Path(filename)
-
-                transform = self._transform_from_basis(
-                    lasset.get('transform_matrix'),
-                    lasset.get('basis'),
-                    unreal.Matrix.IDENTITY.transform()
-                )
-
-                actor.set_actor_transform(transform, False, True)
+                self._spawn_actor(obj, lasset)
 
                 break
 
@@ -374,10 +362,21 @@ class ExistingLayoutLoader(plugin.Loader):
             if actor not in actors_matched:
                 EditorLevelLibrary.destroy_actor(actor)
 
+        return containers
+
+    def load(self, context, name, namespace, options):
+        print("Loading Layout and Match Assets")
+
+        asset = context.get('asset').get('name')
+        asset_name = f"{asset}_{name}" if asset else name
+        container_name = f"{asset}_{name}_CON"
+
         curr_level = self._get_current_level()
 
         if not curr_level:
-            return
+            raise AssertionError("Current level not saved")
+
+        containers = self._process(self.fname)
 
         curr_level_path = Path(
             curr_level.get_outer().get_path_name()).parent.as_posix()
@@ -402,3 +401,17 @@ class ExistingLayoutLoader(plugin.Loader):
             "loaded_assets": containers
         }
         upipeline.imprint(f"{curr_level_path}/{container_name}", data)
+
+    def update(self, container, representation):
+        asset_dir = container.get('namespace')
+
+        source_path = get_representation_path(representation)
+        containers = self._process(source_path)
+
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"]),
+            "loaded_assets": containers
+        }
+        upipeline.imprint(
+            "{}/{}".format(asset_dir, container.get('container_name')), data)
