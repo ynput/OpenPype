@@ -397,9 +397,6 @@ def _load_modules():
                 log.error(msg, exc_info=True)
 
 
-
-
-
 @six.add_metaclass(ABCMeta)
 class OpenPypeModule:
     """Base class of pype module.
