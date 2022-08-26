@@ -313,3 +313,47 @@ def remote_publish(log, close_plugin_name=None, raise_error=False):
                 # Fatal Error is because of Deadline
                 error_message = "Fatal Error: " + error_format.format(**result)
                 raise RuntimeError(error_message)
+
+
+def get_errored_instances_from_context(context):
+    """Collect failed instances from pyblish context.
+
+    Args:
+        context (pyblish.api.Context): Publish context where we're looking
+            for failed instances.
+
+    Returns:
+        List[pyblish.lib.Instance]: Instances which failed during processing.
+    """
+
+    instances = list()
+    for result in context.data["results"]:
+        if result["instance"] is None:
+            # When instance is None we are on the "context" result
+            continue
+
+        if result["error"]:
+            instances.append(result["instance"])
+
+    return instances
+
+
+def get_errored_plugins_from_context(context):
+    """Collect failed plugins from pyblish context.
+
+    Args:
+        context (pyblish.api.Context): Publish context where we're looking
+            for failed plugins.
+
+    Returns:
+        List[pyblish.api.Plugin]: Plugins which failed during processing.
+    """
+
+    plugins = list()
+    results = context.data.get("results", [])
+    for result in results:
+        if result["success"] is True:
+            continue
+        plugins.append(result["plugin"])
+
+    return plugins
