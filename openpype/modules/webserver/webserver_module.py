@@ -53,9 +53,12 @@ class WebServerModule(OpenPypeModule, ITrayService):
             try:
                 module.webserver_initialization(self.server_manager)
             except Exception:
-                self.log.warning((
-                    "Failed to connect module \"{}\" to webserver."
-                ).format(module.name))
+                self.log.warning(
+                    (
+                        "Failed to connect module \"{}\" to webserver."
+                    ).format(module.name),
+                    exc_info=True
+                )
 
     def tray_init(self):
         self.create_server_manager()

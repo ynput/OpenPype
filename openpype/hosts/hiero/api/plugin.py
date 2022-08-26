@@ -9,11 +9,12 @@ from Qt import QtWidgets, QtCore
 import qargparse
 
 import openpype.api as openpype
+from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
 from openpype.pipeline.context_tools import get_current_project_asset
 from . import lib
 
-log = openpype.Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def load_stylesheet():

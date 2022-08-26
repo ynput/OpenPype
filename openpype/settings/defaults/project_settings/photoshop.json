@@ -8,7 +8,7 @@
     },
     "publish": {
         "CollectColorCodedInstances": {
-            "create_flatten_image": false,
+            "create_flatten_image": "no",
             "flatten_subset_template": "",
             "color_code_mapping": []
         },

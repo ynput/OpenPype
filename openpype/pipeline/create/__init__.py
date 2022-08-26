@@ -16,8 +16,10 @@ from .creator_plugins import (
     AutoCreator,
     HiddenCreator,
 
-    discover_creator_plugins,
     discover_legacy_creator_plugins,
+    get_legacy_creator_by_name,
+
+    discover_creator_plugins,
     register_creator_plugin,
     deregister_creator_plugin,
     register_creator_plugin_path,
@@ -49,8 +51,10 @@ __all__ = (
     "AutoCreator",
     "HiddenCreator",
 
-    "discover_creator_plugins",
     "discover_legacy_creator_plugins",
+    "get_legacy_creator_by_name",
+
+    "discover_creator_plugins",
     "register_creator_plugin",
     "deregister_creator_plugin",
     "register_creator_plugin_path",
