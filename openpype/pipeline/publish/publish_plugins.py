@@ -8,7 +8,7 @@ from openpype.lib import BoolDef
 from .lib import (
     load_help_content_from_plugin,
     get_errored_instances_from_context,
-    get_errored_plugins_from_data
+    get_errored_plugins_from_context
 )
 
 
@@ -235,7 +235,7 @@ class RepairContextAction(pyblish.api.Action):
 
         # Get the errored instances
         self.log.info("Finding failed instances..")
-        errored_plugins = get_errored_plugins_from_data(context)
+        errored_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
         if plugin in errored_plugins:
