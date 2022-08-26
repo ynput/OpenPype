@@ -56,14 +56,30 @@ def deprecated(new_destination):
     if func is None:
         return _decorator
     return _decorator(func)
+
+
+# Classes just inheriting from pyblish classes
+# - seems to be unused in code (not 100% sure)
+# - they should be removed but because it is not clear if they're used
+#   we'll keep then and log deprecation warning
+# Deprecated since 3.14.* will be removed in 3.16.*
 class ContextPlugin(pyblish.api.ContextPlugin):
-    def process(cls, *args, **kwargs):
-        super(ContextPlugin, cls).process(cls, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        _deprecation_warning(
+            "openpype.plugin.ContextPlugin",
+            " Please replace your usage with 'pyblish.api.ContextPlugin'."
+        )
+        super(ContextPlugin, self).__init__(*args, **kwargs)
 
 
+# Deprecated since 3.14.* will be removed in 3.16.*
 class InstancePlugin(pyblish.api.InstancePlugin):
-    def process(cls, *args, **kwargs):
-        super(InstancePlugin, cls).process(cls, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        _deprecation_warning(
+            "openpype.plugin.ContextPlugin",
+            " Please replace your usage with 'pyblish.api.InstancePlugin'."
+        )
+        super(InstancePlugin, self).__init__(*args, **kwargs)
 
 
 # NOTE: This class is used on so many places I gave up moving it
