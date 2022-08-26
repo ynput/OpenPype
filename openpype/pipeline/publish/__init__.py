@@ -7,6 +7,9 @@ from .publish_plugins import (
     KnownPublishError,
     OpenPypePyblishPluginMixin,
     OptionalPyblishPluginMixin,
+
+    RepairAction,
+    RepairContextAction,
 )
 
 from .lib import (
@@ -35,6 +38,9 @@ __all__ = (
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
     "OptionalPyblishPluginMixin",
+
+    "RepairAction",
+    "RepairContextAction",
 
     "DiscoverResult",
     "publish_plugins_discover",

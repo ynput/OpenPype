@@ -1,7 +1,15 @@
 from abc import ABCMeta
+
+import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
+
 from openpype.lib import BoolDef
-from .lib import load_help_content_from_plugin
+
+from .lib import (
+    load_help_content_from_plugin,
+    get_errored_instances_from_context,
+    get_errored_plugins_from_data
+)
 
 
 class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
@@ -184,3 +192,52 @@ class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
         if active is None:
             active = getattr(self, "active", True)
         return active
+
+
+class RepairAction(pyblish.api.Action):
+    """Repairs the action
+
+    To process the repairing this requires a static `repair(instance)` method
+    is available on the plugin.
+    """
+
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_instances = get_errored_instances_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        for instance in instances:
+            plugin.repair(instance)
+
+
+class RepairContextAction(pyblish.api.Action):
+    """Repairs the action
+
+    To process the repairing this requires a static `repair(instance)` method
+    is available on the plugin.
+    """
+
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+
+    def process(self, context, plugin):
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_plugins = get_errored_plugins_from_data(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        if plugin in errored_plugins:
+            self.log.info("Attempting fix ...")
+            plugin.repair(context)
