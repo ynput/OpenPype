@@ -374,12 +374,15 @@ def filter_instances_for_context_plugin(plugin, context):
         Iterator[pyblish.lib.Instance]: Iteration of valid instances.
     """
 
-    if not plugin.families:
-        return []
+    instances = []
+    plugin_families = set()
+    all_families = False
+    if plugin.families:
+        instances = context
+        plugin_families = set(plugin.families)
+        all_families = "*" in plugin_families
 
-    plugin_families = set(plugin.families)
-    all_families = "*" in plugin_families
-    for instance in context:
+    for instance in instances:
         # Ignore inactive instances
         if (
             not instance.data.get("publish", True)
