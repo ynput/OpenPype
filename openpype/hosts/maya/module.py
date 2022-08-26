@@ -1,11 +1,11 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 MAYA_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class OpenPypeMaya(OpenPypeModule, IHostModule):
+class OpenPypeMaya(OpenPypeModule, IHostAddon):
     name = "openpype_maya"
     host_name = "maya"
 

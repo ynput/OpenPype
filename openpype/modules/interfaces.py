@@ -385,8 +385,8 @@ class ISettingsChangeListener(OpenPypeInterface):
         pass
 
 
-class IHostModule(OpenPypeInterface):
-    """Module which also contain a host implementation."""
+class IHostAddon(OpenPypeInterface):
+    """Addon which also contain a host implementation."""
 
     @abstractproperty
     def host_name(self):

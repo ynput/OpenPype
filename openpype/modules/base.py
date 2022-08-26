@@ -35,7 +35,7 @@ from openpype.lib import (
 from .interfaces import (
     OpenPypeInterface,
     IPluginPaths,
-    IHostModule,
+    IHostAddon,
     ITrayModule,
     ITrayService
 )
@@ -811,13 +811,13 @@ class ModulesManager:
 
         Returns:
             OpenPypeModule: Found host module by name.
-            None: There was not found module inheriting IHostModule which has
+            None: There was not found module inheriting IHostAddon which has
                 host name set to passed 'host_name'.
         """
 
         for module in self.get_enabled_modules():
             if (
-                isinstance(module, IHostModule)
+                isinstance(module, IHostAddon)
                 and module.host_name == host_name
             ):
                 return module
@@ -828,13 +828,13 @@ class ModulesManager:
 
         Returns:
             Iterable[str]: All available host names based on enabled modules
-                inheriting 'IHostModule'.
+                inheriting 'IHostAddon'.
         """
 
         host_names = {
             module.host_name
             for module in self.get_enabled_modules()
-            if isinstance(module, IHostModule)
+            if isinstance(module, IHostAddon)
         }
         return host_names
 

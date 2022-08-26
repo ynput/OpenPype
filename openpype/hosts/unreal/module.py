@@ -1,11 +1,11 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class UnrealModule(OpenPypeModule, IHostModule):
+class UnrealModule(OpenPypeModule, IHostAddon):
     name = "unreal"
     host_name = "unreal"
 

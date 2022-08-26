@@ -1,6 +1,6 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 TVPAINT_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -13,7 +13,7 @@ def get_launch_script_path():
     )
 
 
-class TVPaintModule(OpenPypeModule, IHostModule):
+class TVPaintModule(OpenPypeModule, IHostAddon):
     name = "tvpaint"
     host_name = "tvpaint"
 

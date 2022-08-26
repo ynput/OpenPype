@@ -5,12 +5,12 @@ import click
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import ITrayAction, IHostModule
+from openpype.modules.interfaces import ITrayAction, IHostAddon
 
 TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
+class TrayPublishModule(OpenPypeModule, IHostAddon, ITrayAction):
     label = "New Publish (beta)"
     name = "traypublish_tool"
     host_name = "traypublish"

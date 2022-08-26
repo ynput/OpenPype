@@ -1,11 +1,11 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 BLENDER_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class BlenderModule(OpenPypeModule, IHostModule):
+class BlenderModule(OpenPypeModule, IHostAddon):
     name = "blender"
     host_name = "blender"
 

@@ -3,12 +3,12 @@ import os
 import click
 
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 WEBPUBLISHER_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class WebpublisherAddon(OpenPypeModule, IHostModule):
+class WebpublisherAddon(OpenPypeModule, IHostAddon):
     name = "webpublisher"
     host_name = "webpublisher"
 
