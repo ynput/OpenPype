@@ -486,12 +486,18 @@ class Logger:
 
 
 class PypeLogger(Logger):
+    """Duplicate of 'Logger'.
+
+    Deprecated:
+        Class will be removed after release version 3.16.*
+    """
+
     @classmethod
     def get_logger(cls, *args, **kwargs):
         logger = Logger.get_logger(*args, **kwargs)
         # TODO uncomment when replaced most of places
-        # logger.warning((
-        #     "'openpype.lib.PypeLogger' is deprecated class."
-        #     " Please use 'openpype.lib.Logger' instead."
-        # ))
+        logger.warning((
+            "'openpype.lib.PypeLogger' is deprecated class."
+            " Please use 'openpype.lib.Logger' instead."
+        ))
         return logger

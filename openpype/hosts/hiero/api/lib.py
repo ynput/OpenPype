@@ -21,7 +21,7 @@ from openpype.client import (
 )
 from openpype.settings import get_anatomy_settings
 from openpype.pipeline import legacy_io, Anatomy
-from openpype.api import Logger
+from openpype.lib import Logger
 from . import tags
 
 try:
@@ -34,7 +34,7 @@ except ImportError:
 # from opentimelineio import opentime
 # from pprint import pformat
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self._has_been_setup = False

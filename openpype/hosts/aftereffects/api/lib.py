@@ -5,11 +5,12 @@ import json
 import contextlib
 import traceback
 import logging
+from functools import partial
 
 from Qt import QtWidgets
 
 from openpype.pipeline import install_host
-from openpype.lib.remote_publish import headless_publish
+from openpype.modules import ModulesManager
 
 from openpype.tools.utils import host_tools
 from .launch_logic import ProcessLauncher, get_stub
@@ -37,10 +38,18 @@ def main(*subprocess_args):
     launcher.start()
 
     if os.environ.get("HEADLESS_PUBLISH"):
-        launcher.execute_in_main_thread(lambda: headless_publish(
-            log,
-            "CloseAE",
-            os.environ.get("IS_TEST")))
+        manager = ModulesManager()
+        webpublisher_addon = manager["webpublisher"]
+
+        launcher.execute_in_main_thread(
+            partial(
+                webpublisher_addon.headless_publish,
+                log,
+                "CloseAE",
+                os.environ.get("IS_TEST")
+            )
+        )
+
     elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
         save = False
         if os.getenv("WORKFILES_SAVE_AS"):

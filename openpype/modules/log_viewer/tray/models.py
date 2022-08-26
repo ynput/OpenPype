@@ -1,6 +1,6 @@
 import collections
 from Qt import QtCore, QtGui
-from openpype.lib.log import PypeLogger
+from openpype.lib import Logger
 
 
 class LogModel(QtGui.QStandardItemModel):
@@ -41,14 +41,14 @@ class LogModel(QtGui.QStandardItemModel):
         self.dbcon = None
 
         # Crash if connection is not possible to skip this module
-        if not PypeLogger.initialized:
-            PypeLogger.initialize()
+        if not Logger.initialized:
+            Logger.initialize()
 
-        connection = PypeLogger.get_log_mongo_connection()
+        connection = Logger.get_log_mongo_connection()
         if connection:
-            PypeLogger.bootstrap_mongo_log()
-            database = connection[PypeLogger.log_database_name]
-            self.dbcon = database[PypeLogger.log_collection_name]
+            Logger.bootstrap_mongo_log()
+            database = connection[Logger.log_database_name]
+            self.dbcon = database[Logger.log_collection_name]
 
     def headerData(self, section, orientation, role):
         if (

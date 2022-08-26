@@ -14,9 +14,9 @@ from openpype.lib.path_templates import (
     TemplatesDict,
     FormatObject,
 )
-from openpype.lib.log import PypeLogger
+from openpype.lib.log import Logger
 
-log = PypeLogger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class ProjectNotSet(Exception):

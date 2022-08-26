@@ -1,7 +1,8 @@
 import nuke
-
+import six
 import pyblish.api
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateKnobs(pyblish.api.ContextPlugin):
@@ -27,11 +28,21 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     optional = True
 
     def process(self, context):
-
         invalid = self.get_invalid(context, compute=True)
         if invalid:
-            raise RuntimeError(
-                "Found knobs with invalid values:\n{}".format(invalid)
+            invalid_items = [
+                (
+                    "Node __{node_name}__ with knob _{label}_ "
+                    "expecting _{expected}_, "
+                    "but is set to _{current}_"
+                ).format(**i)
+                for i in invalid
+            ]
+            raise PublishXmlValidationError(
+                self,
+                "Found knobs with invalid values:\n{}".format(invalid),
+                formatting_data={
+                    "invalid_items": "\n".join(invalid_items)}
             )
 
     @classmethod
@@ -54,15 +65,24 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(cls.knobs.keys()))
+
             if not families:
                 continue
 
             # Get all knobs to validate.
             knobs = {}
             for family in families:
+                # check if dot in family
+                if "." in family:
+                    family = family.split(".")[0]
+
+                # avoid families not in settings
+                if family not in cls.knobs:
+                    continue
+
+                # get presets of knobs
                 for preset in cls.knobs[family]:
-                    knobs.update({preset: cls.knobs[family][preset]})
+                    knobs[preset] = cls.knobs[family][preset]
 
             # Get invalid knobs.
             nodes = []
@@ -71,8 +91,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
                 nodes.append(node)
                 if node.Class() == "Group":
                     node.begin()
-                    for i in nuke.allNodes():
-                        nodes.append(i)
+                    nodes.extend(iter(nuke.allNodes()))
                     node.end()
 
             for node in nodes:
@@ -84,6 +103,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
                     if node[knob].value() != expected:
                         invalid_knobs.append(
                             {
+                                "node_name": node.name(),
                                 "knob": node[knob],
                                 "name": node[knob].name(),
                                 "label": node[knob].label(),
@@ -99,7 +119,9 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         for data in invalid:
-            if isinstance(data["expected"], unicode):
+            # TODO: will need to improve type definitions
+            # with the new settings for knob types
+            if isinstance(data["expected"], six.text_type):
                 data["knob"].setValue(str(data["expected"]))
                 continue
 
