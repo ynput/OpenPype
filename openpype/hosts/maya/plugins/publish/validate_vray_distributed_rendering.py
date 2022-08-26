@@ -1,7 +1,9 @@
 import pyblish.api
-import openpype.api
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    RepairAction,
+)
 
 from maya import cmds
 
@@ -16,7 +18,7 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "VRay Distributed Rendering"
     families = ["renderlayer"]
     actions = [RepairAction]

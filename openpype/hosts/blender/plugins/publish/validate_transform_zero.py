@@ -4,6 +4,7 @@ import mathutils
 
 import pyblish.api
 import openpype.hosts.blender.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateTransformZero(pyblish.api.InstancePlugin):
@@ -15,7 +16,7 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
     category = "geometry"

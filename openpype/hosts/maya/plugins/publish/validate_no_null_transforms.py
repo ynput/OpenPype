@@ -3,7 +3,10 @@ import maya.cmds as cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 def has_shape_children(node):
@@ -38,7 +41,7 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
     category = 'cleanup'

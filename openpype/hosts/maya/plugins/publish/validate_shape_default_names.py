@@ -5,7 +5,10 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    RepairAction,
+)
 
 
 def short_name(node):
@@ -32,7 +35,7 @@ class ValidateShapeDefaultNames(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
     category = 'cleanup'

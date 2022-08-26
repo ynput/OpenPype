@@ -3,6 +3,9 @@ import warnings
 
 import pyblish.api
 
+# New location of orders: openpype.pipeline.publish.constants
+#   - can be imported as
+#       'from openpype.pipeline.publish import ValidatePipelineOrder'
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
 ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2

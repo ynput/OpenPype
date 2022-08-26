@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
 class ValidateColorSets(pyblish.api.Validator):
@@ -14,7 +17,7 @@ class ValidateColorSets(pyblish.api.Validator):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     category = 'geometry'

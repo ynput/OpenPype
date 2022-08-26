@@ -4,7 +4,10 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
@@ -18,7 +21,7 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['rig']
     version = (0, 1, 0)

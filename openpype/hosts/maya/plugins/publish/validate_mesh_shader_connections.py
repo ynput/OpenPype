@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
 def pairs(iterable):
@@ -87,7 +90,7 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     label = "Mesh Shader Connections"

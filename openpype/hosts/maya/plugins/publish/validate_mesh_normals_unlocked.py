@@ -4,7 +4,10 @@ import maya.api.OpenMaya as om2
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
 class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
@@ -15,7 +18,7 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     category = 'geometry'

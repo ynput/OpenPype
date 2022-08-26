@@ -4,7 +4,10 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
@@ -17,7 +20,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["rig"]
     hosts = ['maya']
     label = 'Rig Out Set Node Ids'

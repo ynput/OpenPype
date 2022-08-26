@@ -4,6 +4,7 @@ import mathutils
 
 import pyblish.api
 import openpype.hosts.blender.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
@@ -14,7 +15,7 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
     in Unreal and Blender.
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["camera"]
     category = "geometry"

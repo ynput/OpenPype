@@ -2,7 +2,10 @@ from maya import cmds
 
 import pyblish.api
 
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    RepairAction,
+)
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
 
@@ -25,7 +28,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         - Break all incoming connections to keyable attributes
 
     """
-    order = openpype.api.ValidateContentsOrder + 0.05
+    order = ValidateContentsOrder + 0.05
     label = "Rig Controllers"
     hosts = ["maya"]
     families = ["rig"]

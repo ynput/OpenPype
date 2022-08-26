@@ -4,7 +4,10 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
 class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
@@ -16,7 +19,7 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model', 'pointcache']
     category = 'uv'
