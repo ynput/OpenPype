@@ -1,4 +1,4 @@
-from .module import (
+from .addon import (
     PhotoshopAddon,
     PHOTOSHOP_HOST_DIR,
 )
