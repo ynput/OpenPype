@@ -408,12 +408,8 @@ def get_custom_workfile_template(
     # add root dict
     anatomy_context_data["root"] = anatomy.roots
 
-    # extend anatomy context with os.environ
-    full_context_data = os.environ.copy()
-    full_context_data.update(anatomy_context_data)
-
     # get task type for the task in context
-    current_task_type = full_context_data["task"]["type"]
+    current_task_type = anatomy_context_data["task"]["type"]
 
     # get path from matching profile
     matching_item = filter_profiles(
@@ -423,6 +419,11 @@ def get_custom_workfile_template(
     # when path is available try to format it in case
     # there are some anatomy template strings
     if matching_item:
+        # extend anatomy context with os.environ to
+        # also allow formatting against env
+        full_context_data = os.environ.copy()
+        full_context_data.update(anatomy_context_data)
+
         template = matching_item["path"][platform.system().lower()]
         return StringTemplate.format_strict_template(
             template, full_context_data
