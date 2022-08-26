@@ -10,9 +10,9 @@ from openpype.modules.interfaces import ITrayAction, IHostAddon
 STANDALONEPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class StandAlonePublishModule(OpenPypeModule, ITrayAction, IHostAddon):
+class StandAlonePublishAddon(OpenPypeModule, ITrayAction, IHostAddon):
     label = "Publish"
-    name = "standalonepublish_tool"
+    name = "standalonepublisher"
     host_name = "standalonepublisher"
 
     def initialize(self, modules_settings):
@@ -42,7 +42,7 @@ class StandAlonePublishModule(OpenPypeModule, ITrayAction, IHostAddon):
 
 
 @click.group(
-    StandAlonePublishModule.name,
+    StandAlonePublishAddon.name,
     help="StandalonePublisher related commands.")
 def cli_main():
     pass
