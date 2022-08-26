@@ -24,7 +24,7 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import PypeLogger
+from .log import Logger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 
@@ -138,7 +138,7 @@ def get_logger():
     """Global lib.applications logger getter."""
     global _logger
     if _logger is None:
-        _logger = PypeLogger.get_logger(__name__)
+        _logger = Logger.get_logger(__name__)
     return _logger
 
 
@@ -373,7 +373,7 @@ class ApplicationManager:
     """
 
     def __init__(self, system_settings=None):
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.app_groups = {}
         self.applications = {}
@@ -735,7 +735,7 @@ class LaunchHook:
 
         Always should be called
         """
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.launch_context = launch_context
 
@@ -877,7 +877,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = PypeLogger.get_logger(logger_name)
+        self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
 

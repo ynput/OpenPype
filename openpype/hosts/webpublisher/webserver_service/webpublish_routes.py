@@ -12,9 +12,7 @@ from openpype.client import (
     get_assets,
     OpenPypeMongoConnection,
 )
-from openpype.lib import (
-    PypeLogger,
-)
+from openpype.lib import Logger
 from openpype.lib.remote_publish import (
     get_task_data,
     ERROR_STATUS,
@@ -23,7 +21,7 @@ from openpype.lib.remote_publish import (
 from openpype.settings import get_project_settings
 from openpype_modules.webserver.base_routes import RestApiEndpoint
 
-log = PypeLogger.get_logger("WebpublishRoutes")
+log = Logger.get_logger("WebpublishRoutes")
 
 
 class ResourceRestApiEndpoint(RestApiEndpoint):

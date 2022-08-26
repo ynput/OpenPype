@@ -13,7 +13,6 @@ from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
 
-import openpype
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -26,7 +25,12 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
-from openpype.lib import PypeLogger
+
+from openpype.lib import (
+    Logger,
+    import_filepath,
+    import_module_from_dirpath
+)
 
 # Files that will be always ignored on modules import
 IGNORED_FILENAMES = (
@@ -93,7 +97,7 @@ class _ModuleClass(object):
     def log(self):
         if self._log is None:
             super(_ModuleClass, self).__setattr__(
-                "_log", PypeLogger.get_logger(self.name)
+                "_log", Logger.get_logger(self.name)
             )
         return self._log
 
@@ -278,19 +282,13 @@ def load_modules(force=False):
 
 
 def _load_modules():
-    # Import helper functions from lib
-    from openpype.lib import (
-        import_filepath,
-        import_module_from_dirpath
-    )
-
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
 
     # Change `sys.modules`
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
-    log = PypeLogger.get_logger("ModulesLoader")
+    log = Logger.get_logger("ModulesLoader")
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
@@ -440,7 +438,7 @@ class OpenPypeModule:
     def __init__(self, manager, settings):
         self.manager = manager
 
-        self.log = PypeLogger.get_logger(self.name)
+        self.log = Logger.get_logger(self.name)
 
         self.initialize(settings)
 
@@ -561,6 +559,40 @@ class ModulesManager:
 
         self.initialize_modules()
         self.connect_modules()
+
+    def __getitem__(self, module_name):
+        return self.modules_by_name[module_name]
+
+    def get(self, module_name, default=None):
+        """Access module by name.
+
+        Args:
+            module_name (str): Name of module which should be returned.
+            default (Any): Default output if module is not available.
+
+        Returns:
+            Union[OpenPypeModule, None]: Module found by name or None.
+        """
+        return self.modules_by_name.get(module_name, default)
+
+    def get_enabled_module(self, module_name, default=None):
+        """Fast access to enabled module.
+
+        If module is available but is not enabled default value is returned.
+
+        Args:
+            module_name (str): Name of module which should be returned.
+            default (Any): Default output if module is not available or is
+                not enabled.
+
+        Returns:
+            Union[OpenPypeModule, None]: Enabled module found by name or None.
+        """
+
+        module = self.get(module_name)
+        if module is not None and module.enabled:
+            return module
+        return default
 
     def initialize_modules(self):
         """Import and initialize modules."""
@@ -1025,7 +1057,7 @@ class TrayModulesManager(ModulesManager):
     )
 
     def __init__(self):
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
@@ -1201,7 +1233,7 @@ def get_module_settings_defs():
 
     settings_defs = []
 
-    log = PypeLogger.get_logger("ModuleSettingsLoad")
+    log = Logger.get_logger("ModuleSettingsLoad")
 
     for raw_module in openpype_modules:
         for attr_name in dir(raw_module):

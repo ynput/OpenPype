@@ -47,7 +47,6 @@ For more information [see here](admin_use.md#run-openpype).
 | interactive | Start python like interactive console session. | |
 | projectmanager | Launch Project Manager UI | [📑](#projectmanager-arguments) |
 | settings | Open Settings UI | [📑](#settings-arguments) |
-| standalonepublisher | Open Standalone Publisher UI | [📑](#standalonepublisher-arguments) |
 
 ---
 ### `tray` arguments {#tray-arguments}
@@ -140,12 +139,6 @@ openpypeconsole settings
 ```
 
 ---
-### `standalonepublisher` arguments {#standalonepublisher-arguments}
-`standalonepublisher` has no command-line arguments.
-```shell
-openpype_console standalonepublisher
-```
-
 ### `repack-version` arguments {#repack-version-arguments}
 Takes path to unzipped and possibly modified OpenPype version. Files will be
 zipped, checksums recalculated and version will be determined by folder name

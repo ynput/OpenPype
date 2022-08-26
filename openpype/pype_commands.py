@@ -5,7 +5,6 @@ import sys
 import json
 import time
 
-from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
 from openpype.lib.plugin_tools import get_batch_asset_task_info
 from openpype.lib.remote_publish import (
@@ -27,9 +26,10 @@ class PypeCommands:
     """
     @staticmethod
     def launch_tray():
-        PypeLogger.set_process_name("Tray")
-
+        from openpype.lib import Logger
         from openpype.tools import tray
+
+        Logger.set_process_name("Tray")
 
         tray.main()
 
@@ -47,10 +47,12 @@ class PypeCommands:
     @staticmethod
     def add_modules(click_func):
         """Modules/Addons can add their cli commands dynamically."""
+
+        from openpype.lib import Logger
         from openpype.modules import ModulesManager
 
         manager = ModulesManager()
-        log = PypeLogger.get_logger("AddModulesCLI")
+        log = Logger.get_logger("CLI-AddModules")
         for module in manager.modules:
             try:
                 module.cli(click_func)
@@ -77,11 +79,6 @@ class PypeCommands:
         return run_webserver(*args, **kwargs)
 
     @staticmethod
-    def launch_standalone_publisher():
-        from openpype.tools import standalonepublish
-        standalonepublish.main()
-
-    @staticmethod
     def launch_traypublisher():
         from openpype.tools import traypublisher
         traypublisher.main()
@@ -101,10 +98,10 @@ class PypeCommands:
         Raises:
             RuntimeError: When there is no path to process.
         """
+
+        from openpype.lib import Logger
         from openpype.modules import ModulesManager
         from openpype.pipeline import install_openpype_plugins
-
-        from openpype.api import Logger
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
 
@@ -112,7 +109,7 @@ class PypeCommands:
         import pyblish.api
         import pyblish.util
 
-        log = Logger.get_logger()
+        log = Logger.get_logger("CLI-publish")
 
         install_openpype_plugins()
 
@@ -200,11 +197,12 @@ class PypeCommands:
             targets (list): Pyblish targets
                 (to choose validator for example)
         """
+
         import pyblish.api
-        from openpype.api import Logger
         from openpype.lib import ApplicationManager
 
-        log = Logger.get_logger()
+        from openpype.lib import Logger
+        log = Logger.get_logger("CLI-remotepublishfromapp")
 
         log.info("remotepublishphotoshop command")
 
@@ -230,7 +228,11 @@ class PypeCommands:
                 format("\n".join(running_batches))
             msg += "Ask admin to check them and reprocess current batch"
             fail_batch(_id, dbcon, msg)
-            print("Another batch running, probably stuck, ask admin for help")
+
+        if not task_data["context"]:
+            msg = "Batch manifest must contain context data"
+            msg += "Create new batch and set context properly."
+            fail_batch(_id, dbcon, msg)
 
         asset_name, task_name, task_type = get_batch_asset_task_info(
             task_data["context"])
@@ -316,10 +318,11 @@ class PypeCommands:
         import pyblish.api
         import pyblish.util
 
+        from openpype.lib import Logger
         from openpype.pipeline import install_host
         from openpype.hosts.webpublisher import api as webpublisher
 
-        log = PypeLogger.get_logger()
+        log = Logger.get_logger("remotepublish")
 
         log.info("remotepublish command")
 
@@ -345,6 +348,12 @@ class PypeCommands:
         _, batch_id = os.path.split(batch_path)
         dbcon = get_webpublish_conn()
         _id = start_webpublish_log(dbcon, batch_id, user_email)
+
+        task_data = get_task_data(batch_path)
+        if not task_data["context"]:
+            msg = "Batch manifest must contain context data"
+            msg += "Create new batch and set context properly."
+            fail_batch(_id, dbcon, msg)
 
         publish_and_log(dbcon, _id, log, batch_id=batch_id)
 

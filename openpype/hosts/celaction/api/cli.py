@@ -14,7 +14,7 @@ from openpype.tools.utils import host_tools
 from openpype.pipeline import install_openpype_plugins
 
 
-log = Logger().get_logger("Celaction_cli_publisher")
+log = Logger.get_logger("Celaction_cli_publisher")
 
 publish_host = "celaction"
 
