@@ -93,7 +93,7 @@ def build_workfile():
         bpy.context.object.data.name = f"{asset}_model"
         create_instance("CreateModel", "modelMain", useSelection=True)
 
-    elif task in ("texture", "texturing", "look", "lookdev", "shader", "shadering"):  # noqa E501
+    elif task in ("texture", "texturing", "look", "lookdev", "shader", "shadering", "shading"):  # noqa E501
         create_instance("CreateLook", "lookMain")
         load_subset(project, asset, "modelMain", "Append")
 
