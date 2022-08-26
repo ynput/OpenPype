@@ -2,6 +2,7 @@ import os
 import sys
 import types
 import inspect
+import tempfile
 import xml.etree.ElementTree
 
 import six
@@ -420,3 +421,30 @@ def context_plugin_should_run(plugin, context):
     for instance in filter_instances_for_context_plugin(plugin, context):
         return True
     return False
+
+
+def get_instance_staging_dir(instance):
+    """Unified way how staging dir is stored and created on instances.
+
+    First check if 'stagingDir' is already set in instance data. If there is
+    not create new in tempdir.
+
+    Note:
+        Staging dir does not have to be necessarily in tempdir so be carefull
+            about it's usage.
+
+    Args:
+        instance (pyblish.lib.Instance): Instance for which we want to get
+            staging dir.
+
+    Returns:
+        str: Path to staging dir of instance.
+    """
+
+    staging_dir = instance.data.get("stagingDir")
+    if not staging_dir:
+        instance.data["stagingDir"] = os.path.normpath(
+            tempfile.mkdtemp(prefix="pyblish_tmp_")
+        )
+
+    return staging_dir

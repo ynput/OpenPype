@@ -21,7 +21,9 @@ from .lib import (
     get_errored_instances_from_context,
     get_errored_plugins_from_context,
 
+    filter_instances_for_context_plugin,
     context_plugin_should_run,
+    get_instance_staging_dir,
 )
 
 from .abstract_expected_files import ExpectedFiles
@@ -52,7 +54,9 @@ __all__ = (
     "get_errored_instances_from_context",
     "get_errored_plugins_from_context",
 
+    "filter_instances_for_context_plugin",
     "context_plugin_should_run",
+    "get_instance_staging_dir",
 
     "ExpectedFiles",
 

@@ -1,5 +1,3 @@
-import tempfile
-import os
 import pyblish.api
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
@@ -18,7 +16,8 @@ class InstancePlugin(pyblish.api.InstancePlugin):
         super(InstancePlugin, cls).process(cls, *args, **kwargs)
 
 
-class Extractor(InstancePlugin):
+# NOTE: This class is used on so many places I gave up moving it
+class Extractor(pyblish.api.InstancePlugin):
     """Extractor base class.
 
     The extractor base class implements a "staging_dir" function used to
@@ -36,15 +35,10 @@ class Extractor(InstancePlugin):
         Upon calling this method the staging directory is stored inside
         the instance.data['stagingDir']
         """
-        staging_dir = instance.data.get('stagingDir', None)
 
-        if not staging_dir:
-            staging_dir = os.path.normpath(
-                tempfile.mkdtemp(prefix="pyblish_tmp_")
-            )
-            instance.data['stagingDir'] = staging_dir
+        from openpype.pipeline.publish import get_instance_staging_dir
 
-        return staging_dir
+        return get_instance_staging_dir(instance)
 
 
 def contextplugin_should_run(plugin, context):
