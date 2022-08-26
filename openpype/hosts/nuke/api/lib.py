@@ -1952,15 +1952,25 @@ class WorkfileSettings(object):
             if not write_node:
                 return
 
-            # write all knobs to node
-            for knob in nuke_imageio_writes["knobs"]:
-                value = knob["value"]
-                if isinstance(value, six.text_type):
-                    value = str(value)
-                if str(value).startswith("0x"):
-                    value = int(value, 16)
+            try:
+                # write all knobs to node
+                for knob in nuke_imageio_writes["knobs"]:
+                    value = knob["value"]
+                    if isinstance(value, six.text_type):
+                        value = str(value)
+                    if str(value).startswith("0x"):
+                        value = int(value, 16)
 
-                write_node[knob["name"]].setValue(value)
+                    log.debug("knob: {}| value: {}".format(
+                        knob["name"], value
+                    ))
+                    write_node[knob["name"]].setValue(value)
+            except TypeError:
+                log.warning(
+                    "Legacy workflow didnt work, switching to current")
+
+                set_node_knobs_from_settings(
+                    write_node, nuke_imageio_writes["knobs"])
 
     def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
@@ -2017,12 +2027,14 @@ class WorkfileSettings(object):
         # get imageio
         nuke_colorspace = get_nuke_imageio_settings()
 
+        log.info("Setting colorspace to workfile...")
         try:
             self.set_root_colorspace(nuke_colorspace["workfile"])
         except AttributeError:
             msg = "set_colorspace(): missing `workfile` settings in template"
             nuke.message(msg)
 
+        log.info("Setting colorspace to viewers...")
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
         except AttributeError:
@@ -2030,23 +2042,17 @@ class WorkfileSettings(object):
             nuke.message(msg)
             log.error(msg)
 
+        log.info("Setting colorspace to write nodes...")
         try:
             self.set_writes_colorspace()
         except AttributeError as _error:
             nuke.message(_error)
             log.error(_error)
 
+        log.info("Setting colorspace to read nodes...")
         read_clrs_inputs = nuke_colorspace["regexInputs"].get("inputs", [])
         if read_clrs_inputs:
             self.set_reads_colorspace(read_clrs_inputs)
-
-        try:
-            for key in nuke_colorspace:
-                log.debug("Preset's colorspace key: {}".format(key))
-        except TypeError:
-            msg = "Nuke is not in templates! Contact your supervisor!"
-            nuke.message(msg)
-            log.error(msg)
 
     def reset_frame_range_handles(self):
         """Set frame range to current asset"""
