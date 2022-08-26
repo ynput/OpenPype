@@ -16,7 +16,7 @@ class StandAlonePublishAddon(OpenPypeModule, ITrayAction, IHostAddon):
     host_name = "standalonepublisher"
 
     def initialize(self, modules_settings):
-        self.enabled = modules_settings[self.name]["enabled"]
+        self.enabled = modules_settings["standalonepublish_tool"]["enabled"]
         self.publish_paths = [
             os.path.join(STANDALONEPUBLISH_ROOT_DIR, "plugins", "publish")
         ]
