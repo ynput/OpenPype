@@ -1,11 +1,11 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 HARMONY_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class HarmonyAddon(OpenPypeModule, IHostModule):
+class HarmonyAddon(OpenPypeModule, IHostAddon):
     name = "harmony"
     host_name = "harmony"
 
