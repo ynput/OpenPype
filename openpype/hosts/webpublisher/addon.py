@@ -57,7 +57,7 @@ def cli_main():
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
 def publish(project, path, user=None, targets=None):
-    """Start CLI publishing.
+    """Start publishing (Inner command).
 
     Publish collects json from paths provided as an argument.
     More than one path is allowed.
@@ -70,13 +70,13 @@ def publish(project, path, user=None, targets=None):
 
 @cli_main.command()
 @click.argument("path")
+@click.option("-p", "--project", help="Project")
 @click.option("-h", "--host", help="Host")
 @click.option("-u", "--user", help="User email address")
-@click.option("-p", "--project", help="Project")
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
-def publishfromapp(project, path, user=None, targets=None):
-    """Start CLI publishing.
+def publishfromapp(project, path, host, user=None, targets=None):
+    """Start publishing through application (Inner command).
 
     Publish collects json from paths provided as an argument.
     More than one path is allowed.
@@ -84,16 +84,16 @@ def publishfromapp(project, path, user=None, targets=None):
 
     from .publish_functions import cli_publish_from_app
 
-    cli_publish_from_app(project, path, user, targets)
+    cli_publish_from_app(project, path, host, user, targets)
 
 
 @cli_main.command()
-@click.option("-h", "--host", help="Host", default=None)
-@click.option("-p", "--port", help="Port", default=None)
 @click.option("-e", "--executable", help="Executable")
 @click.option("-u", "--upload_dir", help="Upload dir")
+@click.option("-h", "--host", help="Host", default=None)
+@click.option("-p", "--port", help="Port", default=None)
 def webserver(executable, upload_dir, host=None, port=None):
-    """Starts webserver for communication with Webpublish FR via command line
+    """Start service for communication with Webpublish Front end.
 
         OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
         FTRACK_BOT_API_KEY provided with api key from Ftrack.
