@@ -7,7 +7,14 @@ import json
 import subprocess
 
 from openpype.client import OpenPypeMongoConnection
+from openpype.modules import ModulesManager
 from openpype.lib import Logger
+
+from openpype_modules.webpublisher.lib import (
+    ERROR_STATUS,
+    REPROCESS_STATUS,
+    SENT_REPROCESSING_STATUS
+)
 
 from .webpublish_routes import (
     RestApiResource,
@@ -21,32 +28,29 @@ from .webpublish_routes import (
     TaskPublishEndpoint,
     UserReportEndpoint
 )
-from openpype.lib.remote_publish import (
-    ERROR_STATUS,
-    REPROCESS_STATUS,
-    SENT_REPROCESSING_STATUS
-)
-
 
 log = Logger.get_logger("webserver_gui")
 
 
-def run_webserver(*args, **kwargs):
+def run_webserver(executable, upload_dir, host=None, port=None):
     """Runs webserver in command line, adds routes."""
-    from openpype.modules import ModulesManager
+
+    if not host:
+        host = "localhost"
+    if not port:
+        port = 8079
 
     manager = ModulesManager()
     webserver_module = manager.modules_by_name["webserver"]
-    host = kwargs.get("host") or "localhost"
-    port = kwargs.get("port") or 8079
+
     server_manager = webserver_module.create_new_server_manager(port, host)
     webserver_url = server_manager.url
     # queue for remotepublishfromapp tasks
     studio_task_queue = collections.deque()
 
     resource = RestApiResource(server_manager,
-                               upload_dir=kwargs["upload_dir"],
-                               executable=kwargs["executable"],
+                               upload_dir=upload_dir,
+                               executable=executable,
                                studio_task_queue=studio_task_queue)
     projects_endpoint = ProjectsEndpoint(resource)
     server_manager.add_route(
@@ -111,7 +115,7 @@ def run_webserver(*args, **kwargs):
     last_reprocessed = time.time()
     while True:
         if time.time() - last_reprocessed > 20:
-            reprocess_failed(kwargs["upload_dir"], webserver_url)
+            reprocess_failed(upload_dir, webserver_url)
             last_reprocessed = time.time()
         if studio_task_queue:
             args = studio_task_queue.popleft()
