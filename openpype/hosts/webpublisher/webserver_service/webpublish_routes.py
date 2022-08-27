@@ -10,16 +10,17 @@ from aiohttp.web_response import Response
 from openpype.client import (
     get_projects,
     get_assets,
-    OpenPypeMongoConnection,
 )
 from openpype.lib import Logger
-from openpype.lib.remote_publish import (
+from openpype.settings import get_project_settings
+from openpype_modules.webserver.base_routes import RestApiEndpoint
+from openpype_modules.webpublisher import WebpublisherAddon
+from openpype_modules.webpublisher.lib import (
+    get_webpublish_conn,
     get_task_data,
     ERROR_STATUS,
     REPROCESS_STATUS
 )
-from openpype.settings import get_project_settings
-from openpype_modules.webserver.base_routes import RestApiEndpoint
 
 log = Logger.get_logger("WebpublishRoutes")
 
@@ -77,9 +78,7 @@ class WebpublishRestApiResource(JsonApiResource):
     """Resource carrying OP DB connection for storing batch info into DB."""
 
     def __init__(self):
-        mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
-        self.dbcon = mongo_client[database_name]["webpublishes"]
+        self.dbcon = get_webpublish_conn()
 
 
 class ProjectsEndpoint(ResourceRestApiEndpoint):
@@ -215,7 +214,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
             # TVPaint filter
             {
                 "extensions": [".tvpp"],
-                "command": "remotepublish",
+                "command": "publish",
                 "arguments": {
                     "targets": ["tvpaint_worker"]
                 },
@@ -224,13 +223,13 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
             # Photoshop filter
             {
                 "extensions": [".psd", ".psb"],
-                "command": "remotepublishfromapp",
+                "command": "publishfromapp",
                 "arguments": {
-                    # Command 'remotepublishfromapp' requires --host argument
+                    # Command 'publishfromapp' requires --host argument
                     "host": "photoshop",
                     # Make sure targets are set to None for cases that default
                     #   would change
-                    # - targets argument is not used in 'remotepublishfromapp'
+                    # - targets argument is not used in 'publishfromapp'
                     "targets": ["remotepublish"]
                 },
                 # does publish need to be handled by a queue, eg. only
@@ -242,7 +241,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
         batch_dir = os.path.join(self.resource.upload_dir, content["batch"])
 
         # Default command and arguments
-        command = "remotepublish"
+        command = "publish"
         add_args = {
             # All commands need 'project' and 'user'
             "project": content["project_name"],
@@ -273,6 +272,8 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
 
         args = [
             openpype_app,
+            "module",
+            WebpublisherAddon.name,
             command,
             batch_dir
         ]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Unreal launching and project tools."""
-import sys
+
 import os
 import platform
 import json
@@ -9,7 +9,7 @@ import subprocess
 import re
 from pathlib import Path
 from collections import OrderedDict
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 
 
 def get_engine_versions(env=None):

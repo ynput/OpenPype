@@ -11,10 +11,10 @@ except Exception:
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_asset_by_name, get_subsets
-from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import (
     CreatorError,
-    SUBSET_NAME_ALLOWED_SYMBOLS
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
 )
 from openpype.tools.utils import (
     ErrorMessageBox,
