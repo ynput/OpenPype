@@ -2,7 +2,6 @@
 from .base import (
     OpenPypeModule,
     OpenPypeAddOn,
-    OpenPypeInterface,
 
     load_modules,
 
@@ -20,7 +19,6 @@ from .base import (
 __all__ = (
     "OpenPypeModule",
     "OpenPypeAddOn",
-    "OpenPypeInterface",
 
     "load_modules",
 

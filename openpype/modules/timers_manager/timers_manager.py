@@ -6,7 +6,6 @@ from openpype.client import get_asset_by_name
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
-    ILaunchHookPaths,
     IPluginPaths
 )
 from openpype.lib.events import register_event_callback
@@ -79,7 +78,6 @@ class ExampleTimersManagerConnector:
 class TimersManager(
     OpenPypeModule,
     ITrayService,
-    ILaunchHookPaths,
     IPluginPaths
 ):
     """ Handles about Timers.
@@ -185,12 +183,11 @@ class TimersManager(
         )
 
     def get_launch_hook_paths(self):
-        """Implementation of `ILaunchHookPaths`."""
+        """Implementation for applications launch hooks."""
 
-        return os.path.join(
-            TIMER_MODULE_DIR,
-            "launch_hooks"
-        )
+        return [
+            os.path.join(TIMER_MODULE_DIR, "launch_hooks")
+        ]
 
     def get_plugin_paths(self):
         """Implementation of `IPluginPaths`."""

@@ -5,15 +5,15 @@ import click
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import ITrayAction, IHostModule
+from openpype.modules.interfaces import ITrayAction, IHostAddon
 
 TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
+class TrayPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
     label = "New Publish (beta)"
-    name = "traypublish_tool"
-    host_name = "traypublish"
+    name = "traypublisher"
+    host_name = "traypublisher"
 
     def initialize(self, modules_settings):
         self.enabled = True
@@ -28,7 +28,7 @@ class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
         self._experimental_tools = ExperimentalTools()
 
     def tray_menu(self, *args, **kwargs):
-        super(TrayPublishModule, self).tray_menu(*args, **kwargs)
+        super(TrayPublishAddon, self).tray_menu(*args, **kwargs)
         traypublisher = self._experimental_tools.get("traypublisher")
         visible = False
         if traypublisher and traypublisher.enabled:
@@ -53,7 +53,7 @@ class TrayPublishModule(OpenPypeModule, IHostModule, ITrayAction):
         click_group.add_command(cli_main)
 
 
-@click.group(TrayPublishModule.name, help="TrayPublisher related commands.")
+@click.group(TrayPublishAddon.name, help="TrayPublisher related commands.")
 def cli_main():
     pass
 

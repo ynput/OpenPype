@@ -1,6 +1,6 @@
-from .module import UnrealModule
+from .addon import UnrealAddon
 
 
 __all__ = (
-    "UnrealModule",
+    "UnrealAddon",
 )

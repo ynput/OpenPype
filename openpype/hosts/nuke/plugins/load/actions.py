@@ -2,10 +2,10 @@
 
 """
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import load
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class SetFrameRangeLoader(load.LoaderPlugin):

@@ -2,6 +2,7 @@ import sys
 import signal
 import socket
 
+from openpype.lib import Logger
 from openpype_modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 from openpype_modules.ftrack.ftrack_server.lib import (
     SocketSession,
@@ -9,9 +10,7 @@ from openpype_modules.ftrack.ftrack_server.lib import (
 )
 from openpype.modules import ModulesManager
 
-from openpype.api import Logger
-
-log = Logger().get_logger("FtrackUserServer")
+log = Logger.get_logger("FtrackUserServer")
 
 
 def main(args):

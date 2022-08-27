@@ -596,11 +596,6 @@ class InstanceItem(QtGui.QStandardItem):
         instance._logs = []
         instance.optional = getattr(instance, "optional", True)
         instance.data["publish"] = instance.data.get("publish", True)
-        instance.data["label"] = (
-            instance.data.get("label")
-            or getattr(instance, "label", None)
-            or instance.data["name"]
-        )
 
         family = self.data(Roles.FamiliesRole)[0]
         self.setData(
@@ -616,9 +611,16 @@ class InstanceItem(QtGui.QStandardItem):
 
     def data(self, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
+            label = None
             if settings.UseLabel:
-                return self.instance.data["label"]
-            return self.instance.data["name"]
+                label = self.instance.data.get("label")
+
+            if not label:
+                if self.is_context:
+                    label = "Context"
+                else:
+                    label = self.instance.data["name"]
+            return label
 
         if role == QtCore.Qt.DecorationRole:
             icon_name = self.instance.data.get("icon") or "file"

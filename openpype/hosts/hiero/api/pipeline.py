@@ -6,7 +6,7 @@ import contextlib
 from collections import OrderedDict
 
 from pyblish import api as pyblish
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
     schema,
     register_creator_plugin_path,
@@ -18,7 +18,7 @@ from openpype.pipeline import (
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 # plugin paths
 API_DIR = os.path.dirname(os.path.abspath(__file__))
