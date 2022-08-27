@@ -5,18 +5,18 @@ import click
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import ITrayAction, IHostModule
+from openpype.modules.interfaces import ITrayAction, IHostAddon
 
 STANDALONEPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class StandAlonePublishModule(OpenPypeModule, ITrayAction, IHostModule):
+class StandAlonePublishAddon(OpenPypeModule, ITrayAction, IHostAddon):
     label = "Publish"
-    name = "standalonepublish_tool"
+    name = "standalonepublisher"
     host_name = "standalonepublisher"
 
     def initialize(self, modules_settings):
-        self.enabled = modules_settings[self.name]["enabled"]
+        self.enabled = modules_settings["standalonepublish_tool"]["enabled"]
         self.publish_paths = [
             os.path.join(STANDALONEPUBLISH_ROOT_DIR, "plugins", "publish")
         ]
@@ -42,7 +42,7 @@ class StandAlonePublishModule(OpenPypeModule, ITrayAction, IHostModule):
 
 
 @click.group(
-    StandAlonePublishModule.name,
+    StandAlonePublishAddon.name,
     help="StandalonePublisher related commands.")
 def cli_main():
     pass

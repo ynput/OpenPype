@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import collections
+import json
 
 from bson.objectid import ObjectId
 
@@ -8,9 +9,10 @@ import pyblish.util
 import pyblish.api
 
 from openpype.client.mongo import OpenPypeMongoConnection
-from openpype.lib.plugin_tools import parse_json
+from openpype.settings import get_project_settings
+from openpype.lib import Logger
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.api import get_project_settings
+from openpype.pipeline.publish.lib import find_close_plugin
 
 ERROR_STATUS = "error"
 IN_PROGRESS_STATUS = "in_progress"
@@ -19,21 +21,51 @@ SENT_REPROCESSING_STATUS = "sent_for_reprocessing"
 FINISHED_REPROCESS_STATUS = "republishing_finished"
 FINISHED_OK_STATUS = "finished_ok"
 
+log = Logger.get_logger(__name__)
 
-def headless_publish(log, close_plugin_name=None, is_test=False):
-    """Runs publish in a opened host with a context and closes Python process.
+
+def parse_json(path):
+    """Parses json file at 'path' location
+
+        Returns:
+            (dict) or None if unparsable
+        Raises:
+            AsssertionError if 'path' doesn't exist
     """
-    if not is_test:
-        dbcon = get_webpublish_conn()
-        _id = os.environ.get("BATCH_LOG_ID")
-        if not _id:
-            log.warning("Unable to store log records, "
-                        "batch will be unfinished!")
-            return
+    path = path.strip('\"')
+    assert os.path.isfile(path), (
+        "Path to json file doesn't exist. \"{}\"".format(path)
+    )
+    data = None
+    with open(path, "r") as json_file:
+        try:
+            data = json.load(json_file)
+        except Exception as exc:
+            log.error(
+                "Error loading json: {} - Exception: {}".format(path, exc)
+            )
+    return data
 
-        publish_and_log(dbcon, _id, log, close_plugin_name=close_plugin_name)
+
+def get_batch_asset_task_info(ctx):
+    """Parses context data from webpublisher's batch metadata
+
+        Returns:
+            (tuple): asset, task_name (Optional), task_type
+    """
+    task_type = "default_task_type"
+    task_name = None
+    asset = None
+
+    if ctx["type"] == "task":
+        items = ctx["path"].split('/')
+        asset = items[-2]
+        task_name = ctx["name"]
+        task_type = ctx["attributes"]["type"]
     else:
-        publish(log, close_plugin_name)
+        asset = ctx["name"]
+
+    return asset, task_name, task_type
 
 
 def get_webpublish_conn():
@@ -62,36 +94,6 @@ def start_webpublish_log(dbcon, batch_id, user):
     }).inserted_id
 
 
-def publish(log, close_plugin_name=None, raise_error=False):
-    """Loops through all plugins, logs to console. Used for tests.
-
-        Args:
-            log (openpype.lib.Logger)
-            close_plugin_name (str): name of plugin with responsibility to
-                close host app
-    """
-    # Error exit as soon as any error occurs.
-    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-
-    close_plugin = _get_close_plugin(close_plugin_name, log)
-
-    for result in pyblish.util.publish_iter():
-        for record in result["records"]:
-            log.info("{}: {}".format(
-                result["plugin"].label, record.msg))
-
-        if result["error"]:
-            error_message = error_format.format(**result)
-            log.error(error_message)
-            if close_plugin:  # close host app explicitly after error
-                context = pyblish.api.Context()
-                close_plugin().process(context)
-            if raise_error:
-                # Fatal Error is because of Deadline
-                error_message = "Fatal Error: " + error_format.format(**result)
-                raise RuntimeError(error_message)
-
-
 def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     """Loops through all plugins, logs ok and fails into OP DB.
 
@@ -107,7 +109,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}\n"
     error_format += "-" * 80 + "\n"
 
-    close_plugin = _get_close_plugin(close_plugin_name, log)
+    close_plugin = find_close_plugin(close_plugin_name, log)
 
     if isinstance(_id, str):
         _id = ObjectId(_id)
@@ -224,16 +226,6 @@ def find_variant_key(application_manager, host):
         raise ValueError("No executable for {} found".format(host))
 
     return found_variant_key
-
-
-def _get_close_plugin(close_plugin_name, log):
-    if close_plugin_name:
-        plugins = pyblish.api.discover()
-        for plugin in plugins:
-            if plugin.__name__ == close_plugin_name:
-                return plugin
-
-    log.debug("Close plugin not found, app might not close.")
 
 
 def get_task_data(batch_dir):

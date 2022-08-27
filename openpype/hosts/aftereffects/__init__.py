@@ -1,6 +1,6 @@
-from .module import AfterEffectsModule
+from .addon import AfterEffectsAddon
 
 
 __all__ = (
-    "AfterEffectsModule",
+    "AfterEffectsAddon",
 )
