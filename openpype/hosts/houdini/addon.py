@@ -1,11 +1,11 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 HOUDINI_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class HoudiniAddon(OpenPypeModule, IHostModule):
+class HoudiniAddon(OpenPypeModule, IHostAddon):
     name = "houdini"
     host_name = "houdini"
 
