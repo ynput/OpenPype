@@ -1,6 +1,6 @@
-from .module import OpenPypeMaya
+from .addon import MayaAddon
 
 
 __all__ = (
-    "OpenPypeMaya",
+    "MayaAddon",
 )

@@ -1,6 +1,5 @@
 """Should be used only inside of hosts."""
 import os
-import re
 import copy
 import platform
 import logging
@@ -16,6 +15,13 @@ from openpype.client import (
     get_last_version_by_subset_name,
     get_workfile_info,
 )
+from openpype.client.operations import (
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_PROJECT_CONFIG_SCHEMA,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
+)
 from .profiles_filtering import filter_profiles
 from .path_templates import StringTemplate
 
@@ -24,15 +30,13 @@ legacy_io = None
 log = logging.getLogger("AvalonContext")
 
 
+# Backwards compatibility - should not be used anymore
+#   - Will be removed in OP 3.16.*
 CURRENT_DOC_SCHEMAS = {
-    "project": "openpype:project-3.0",
-    "asset": "openpype:asset-3.0",
-    "config": "openpype:config-2.0"
+    "project": CURRENT_PROJECT_SCHEMA,
+    "asset": CURRENT_ASSET_DOC_SCHEMA,
+    "config": CURRENT_PROJECT_CONFIG_SCHEMA
 }
-PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
-PROJECT_NAME_REGEX = re.compile(
-    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
-)
 
 
 class AvalonContextDeprecatedWarning(DeprecationWarning):
@@ -769,7 +773,7 @@ def BuildWorkfile():
     return BuildWorkfile()
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.create.get_legacy_creator_by_name")
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
@@ -780,23 +784,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
 
     Returns:
         Creator: Return first matching plugin or `None`.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    from openpype.pipeline import discover_legacy_creator_plugins
+    from openpype.pipeline.create import get_legacy_creator_by_name
 
-    # Lower input creator name if is not case sensitive
-    if not case_sensitive:
-        creator_name = creator_name.lower()
-
-    for creator_plugin in discover_legacy_creator_plugins():
-        _creator_name = creator_plugin.__name__
-
-        # Lower creator plugin name if is not case sensitive
-        if not case_sensitive:
-            _creator_name = _creator_name.lower()
-
-        if _creator_name == creator_name:
-            return creator_plugin
-    return None
+    return get_legacy_creator_by_name(creator_name, case_sensitive)
 
 
 @deprecated
