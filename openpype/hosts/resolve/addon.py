@@ -1,12 +1,12 @@
 import os
 
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 from .utils import RESOLVE_ROOT_DIR
 
 
-class ResolveAddon(OpenPypeModule, IHostModule):
+class ResolveAddon(OpenPypeModule, IHostAddon):
     name = "resolve"
     host_name = "resolve"
 
