@@ -189,8 +189,6 @@ from .plugin_tools import (
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     source_hash,
-    get_unique_layer_name,
-    get_background_layers,
 )
 
 from .path_tools import (
@@ -354,8 +352,6 @@ __all__ = [
     "filter_pyblish_plugins",
     "set_plugin_attributes_from_settings",
     "source_hash",
-    "get_unique_layer_name",
-    "get_background_layers",
 
     "create_hard_link",
     "version_up",

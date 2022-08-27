@@ -1,18 +1,18 @@
 import os
 from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostModule
+from openpype.modules.interfaces import IHostAddon
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class UnrealModule(OpenPypeModule, IHostModule):
+class UnrealAddon(OpenPypeModule, IHostAddon):
     name = "unreal"
     host_name = "unreal"
 
     def initialize(self, module_settings):
         self.enabled = True
 
-    def add_implementation_envs(self, env, app) -> None:
+    def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
         # Set OPENPYPE_UNREAL_PLUGIN required for Unreal implementation
 
