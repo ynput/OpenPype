@@ -19,17 +19,19 @@ from openpype.client import (
     get_last_versions,
     get_representations,
 )
-from openpype.api import (
+
+from openpype.host import HostDirmap
+from openpype.tools.utils import host_tools
+from openpype.lib import (
+    env_value_to_bool,
     Logger,
     get_version_from_path,
-    get_current_project_settings,
-)
-from openpype.tools.utils import host_tools
-from openpype.lib import env_value_to_bool
-from openpype.lib.path_tools import HostDirmap
+ )
+
 from openpype.settings import (
     get_project_settings,
     get_anatomy_settings,
+    get_current_project_settings,
 )
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
@@ -2651,20 +2653,16 @@ def add_scripts_gizmo():
 
 
 class NukeDirmap(HostDirmap):
-    def __init__(self, host_name, project_settings, sync_module, file_name):
+    def __init__(self, file_name, *args, **kwargs):
         """
-            Args:
-                host_name (str): Nuke
-                project_settings (dict): settings of current project
-                sync_module (SyncServerModule): to limit reinitialization
-                file_name (str): full path of referenced file from workfiles
+        Args:
+            file_name (str): full path of referenced file from workfiles
+            *args (tuple): Positional arguments for 'HostDirmap' class
+            **kwargs (dict): Keyword arguments for 'HostDirmap' class
         """
-        self.host_name = host_name
-        self.project_settings = project_settings
-        self.file_name = file_name
-        self.sync_module = sync_module
 
-        self._mapping = None  # cache mapping
+        self.file_name = file_name
+        super(NukeDirmap, self).__init__(*args, **kwargs)
 
     def on_enable_dirmap(self):
         pass
@@ -2684,14 +2682,20 @@ class NukeDirmap(HostDirmap):
 
 class DirmapCache:
     """Caching class to get settings and sync_module easily and only once."""
+    _project_name = None
     _project_settings = None
     _sync_module = None
 
     @classmethod
+    def project_name(cls):
+        if cls._project_name is None:
+            cls._project_name = os.getenv("AVALON_PROJECT")
+        return cls._project_name
+
+    @classmethod
     def project_settings(cls):
         if cls._project_settings is None:
-            cls._project_settings = get_project_settings(
-                os.getenv("AVALON_PROJECT"))
+            cls._project_settings = get_project_settings(cls.project_name())
         return cls._project_settings
 
     @classmethod
@@ -2757,10 +2761,14 @@ def dirmap_file_name_filter(file_name):
 
         Checks project settings for potential mapping from source to dest.
     """
-    dirmap_processor = NukeDirmap("nuke",
-                                  DirmapCache.project_settings(),
-                                  DirmapCache.sync_module(),
-                                  file_name)
+
+    dirmap_processor = NukeDirmap(
+        file_name,
+        "nuke",
+        DirmapCache.project_name(),
+        DirmapCache.project_settings(),
+        DirmapCache.sync_module(),
+    )
     dirmap_processor.process_dirmap()
     if os.path.exists(dirmap_processor.file_name):
         return dirmap_processor.file_name
