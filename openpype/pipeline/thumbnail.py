@@ -73,17 +73,18 @@ class ThumbnailResolver(object):
 
 
 class TemplateResolver(ThumbnailResolver):
-
     priority = 90
 
     def process(self, thumbnail_entity, thumbnail_type):
-
-        if not os.environ.get("AVALON_THUMBNAIL_ROOT"):
-            return
-
         template = thumbnail_entity["data"].get("template")
         if not template:
             self.log.debug("Thumbnail entity does not have set template")
+            return
+
+        thumbnail_root_format_key = "{thumbnail_root}"
+        thumbnail_root = os.environ.get("AVALON_THUMBNAIL_ROOT") or ""
+        # Check if template require thumbnail root and if is avaiable
+        if thumbnail_root_format_key in template and not thumbnail_root:
             return
 
         project_name = self.dbcon.active_project()
@@ -95,7 +96,7 @@ class TemplateResolver(ThumbnailResolver):
         template_data.update({
             "_id": str(thumbnail_entity["_id"]),
             "thumbnail_type": thumbnail_type,
-            "thumbnail_root": os.environ.get("AVALON_THUMBNAIL_ROOT"),
+            "thumbnail_root": thumbnail_root,
             "project": {
                 "name": project["name"],
                 "code": project["data"].get("code")
