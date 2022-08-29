@@ -20,9 +20,9 @@ from openpype.pipeline import Anatomy
 from openpype.pipeline.load import get_representation_path_with_anatomy
 from openpype.pipeline.delivery import (
     get_format_dict,
+    check_destination_path,
 )
 from openpype.lib.delivery import (
-    check_destination_path,
     process_single_file,
     process_sequence
 )

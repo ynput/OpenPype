@@ -3,7 +3,6 @@ import os
 import shutil
 import glob
 import clique
-import collections
 import functools
 import warnings
 
@@ -146,56 +145,38 @@ def get_format_dict(anatomy, location_path):
     return get_format_dict(anatomy, location_path)
 
 
+@deprecated("openpype.pipeline.delivery.check_destination_path")
 def check_destination_path(repre_id,
                            anatomy, anatomy_data,
                            datetime_data, template_name):
     """ Try to create destination path based on 'template_name'.
 
-        In the case that path cannot be filled, template contains unmatched
-        keys, provide error message to filter out repre later.
+    In the case that path cannot be filled, template contains unmatched
+    keys, provide error message to filter out repre later.
 
-        Args:
-            anatomy (Anatomy)
-            anatomy_data (dict): context to fill anatomy
-            datetime_data (dict): values with actual date
-            template_name (str): to pick correct delivery template
-        Returns:
-            (collections.defauldict): {"TYPE_OF_ERROR":"ERROR_DETAIL"}
+    Args:
+        anatomy (Anatomy)
+        anatomy_data (dict): context to fill anatomy
+        datetime_data (dict): values with actual date
+        template_name (str): to pick correct delivery template
+
+    Returns:
+        (collections.defauldict): {"TYPE_OF_ERROR":"ERROR_DETAIL"}
+
+    Deprecated:
+        Function was moved to different location and will be removed
+            after 3.16.* release.
     """
-    anatomy_data.update(datetime_data)
-    anatomy_filled = anatomy.format_all(anatomy_data)
-    dest_path = anatomy_filled["delivery"][template_name]
-    report_items = collections.defaultdict(list)
 
-    if not dest_path.solved:
-        msg = (
-            "Missing keys in Representation's context"
-            " for anatomy template \"{}\"."
-        ).format(template_name)
+    from openpype.pipeline.delivery import check_destination_path
 
-        sub_msg = (
-            "Representation: {}<br>"
-        ).format(repre_id)
-
-        if dest_path.missing_keys:
-            keys = ", ".join(dest_path.missing_keys)
-            sub_msg += (
-                "- Missing keys: \"{}\"<br>"
-            ).format(keys)
-
-        if dest_path.invalid_types:
-            items = []
-            for key, value in dest_path.invalid_types.items():
-                items.append("\"{}\" {}".format(key, str(value)))
-
-            keys = ", ".join(items)
-            sub_msg += (
-                "- Invalid value DataType: \"{}\"<br>"
-            ).format(keys)
-
-        report_items[msg].append(sub_msg)
-
-    return report_items
+    return check_destination_path(
+        repre_id,
+        anatomy,
+        anatomy_data,
+        datetime_data,
+        template_name
+    )
 
 
 def process_single_file(
