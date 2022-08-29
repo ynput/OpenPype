@@ -9,7 +9,6 @@ import maya.api.OpenMaya as om
 import pyblish.api
 
 from openpype.settings import get_project_settings
-import openpype.hosts.maya
 from openpype.host import (
     HostBase,
     IWorkfileHost,
@@ -32,7 +31,9 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import copy_workspace_mel
+
 from . import menu, lib
 from .workio import (
     open_file,
@@ -45,8 +46,7 @@ from .workio import (
 
 log = logging.getLogger("openpype.hosts.maya")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.maya.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(MAYA_ROOT_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
