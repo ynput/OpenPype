@@ -38,7 +38,7 @@ from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 
 @attr.s
-class DeadlinePluginInfo():
+class MayaPluginInfo:
     SceneFile = attr.ib(default=None)   # Input
     OutputFilePath = attr.ib(default=None)  # Output directory and filename
     OutputFilePrefix = attr.ib(default=None)
@@ -208,7 +208,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         instance = self._instance
         context = instance.context
 
-        plugin_info = DeadlinePluginInfo(
+        plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
             RenderLayer=instance.data['setMembers'],
