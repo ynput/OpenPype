@@ -55,19 +55,23 @@ def deprecated(new_destination):
 
 @deprecated("openpype.lib.path_tools.collect_frames")
 def collect_frames(files):
-    """
-        Returns dict of source path and its frame, if from sequence
+    """Returns dict of source path and its frame, if from sequence
 
-        Uses clique as most precise solution, used when anatomy template that
-        created files is not known.
+    Uses clique as most precise solution, used when anatomy template that
+    created files is not known.
 
-        Assumption is that frames are separated by '.', negative frames are not
-        allowed.
+    Assumption is that frames are separated by '.', negative frames are not
+    allowed.
 
-        Args:
-            files(list) or (set with single value): list of source paths
-        Returns:
-            (dict): {'/asset/subset_v001.0001.png': '0001', ....}
+    Args:
+        files(list) or (set with single value): list of source paths
+
+    Returns:
+        (dict): {'/asset/subset_v001.0001.png': '0001', ....}
+
+    Deprecated:
+        Function was moved to different location and will be removed
+            after 3.16.* release.
     """
 
     from .path_tools import collect_frames
@@ -77,7 +81,12 @@ def collect_frames(files):
 
 @deprecated("openpype.lib.path_tools.format_file_size")
 def sizeof_fmt(num, suffix=None):
-    """Returns formatted string with size in appropriate unit"""
+    """Returns formatted string with size in appropriate unit
+
+    Deprecated:
+        Function was moved to different location and will be removed
+            after 3.16.* release.
+    """
 
     from .path_tools import format_file_size
     return format_file_size(num, suffix)
