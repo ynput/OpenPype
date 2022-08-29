@@ -8,10 +8,15 @@ from .interfaces import (
     INewPublisher,
 )
 
+from .dirmap import HostDirmap
+
+
 __all__ = (
     "HostBase",
 
     "IWorkfileHost",
     "ILoadHost",
     "INewPublisher",
+
+    "HostDirmap",
 )
