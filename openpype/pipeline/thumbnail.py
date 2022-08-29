@@ -90,7 +90,6 @@ class TemplateResolver(ThumbnailResolver):
 
         project_name = self.dbcon.active_project()
         project = get_project(project_name, fields=["name", "data.code"])
-        anatomy = Anatomy(project_name)
 
         template_data = copy.deepcopy(
             thumbnail_entity["data"].get("template_data") or {}
@@ -103,8 +102,11 @@ class TemplateResolver(ThumbnailResolver):
                 "name": project["name"],
                 "code": project["data"].get("code")
             },
-            "root": anatomy.roots
         })
+        # Add anatomy roots if is in template
+        if "{root" in template:
+            anatomy = Anatomy(project_name)
+            template_data["root"] = anatomy.roots
 
         try:
             filepath = os.path.normpath(template.format(**template_data))
