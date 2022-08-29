@@ -31,8 +31,6 @@ from openpype.pipeline import (
     schema,
     legacy_io,
     Anatomy,
-    registered_root,
-    registered_host,
 )
 
 log = logging.getLogger(__name__)
@@ -594,6 +592,8 @@ def get_representation_path(representation, root=None, dbcon=None):
         dbcon = legacy_io
 
     if root is None:
+        from openpype.pipeline import registered_root
+
         root = registered_root()
 
     def path_from_represenation():
@@ -789,6 +789,8 @@ def get_outdated_containers(host=None, project_name=None):
     """
 
     if host is None:
+        from openpype.pipeline import registered_host
+
         host = registered_host()
 
     if project_name is None:
