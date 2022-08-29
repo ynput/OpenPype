@@ -1,6 +1,8 @@
 """Functions useful for delivery of published representations."""
 import os
 import shutil
+import glob
+import clique
 import collections
 
 from openpype.lib import create_hard_link
@@ -107,3 +109,60 @@ def check_destination_path(
         report_items[msg].append(sub_msg)
 
     return report_items
+
+
+def deliver_single_file(
+    src_path,
+    repre,
+    anatomy,
+    template_name,
+    anatomy_data,
+    format_dict,
+    report_items,
+    log
+):
+    """Copy single file to calculated path based on template
+
+    Args:
+        src_path(str): path of source representation file
+        repre (dict): full repre, used only in process_sequence, here only
+            as to share same signature
+        anatomy (Anatomy)
+        template_name (string): user selected delivery template name
+        anatomy_data (dict): data from repre to fill anatomy with
+        format_dict (dict): root dictionary with names and values
+        report_items (collections.defaultdict): to return error messages
+        log (logging.Logger): for log printing
+
+    Returns:
+        (collections.defaultdict, int)
+    """
+
+    # Make sure path is valid for all platforms
+    src_path = os.path.normpath(src_path.replace("\\", "/"))
+
+    if not os.path.exists(src_path):
+        msg = "{} doesn't exist for {}".format(src_path, repre["_id"])
+        report_items["Source file was not found"].append(msg)
+        return report_items, 0
+
+    anatomy_filled = anatomy.format(anatomy_data)
+    if format_dict:
+        template_result = anatomy_filled["delivery"][template_name]
+        delivery_path = template_result.rootless.format(**format_dict)
+    else:
+        delivery_path = anatomy_filled["delivery"][template_name]
+
+    # Backwards compatibility when extension contained `.`
+    delivery_path = delivery_path.replace("..", ".")
+    # Make sure path is valid for all platforms
+    delivery_path = os.path.normpath(delivery_path.replace("\\", "/"))
+
+    delivery_folder = os.path.dirname(delivery_path)
+    if not os.path.exists(delivery_folder):
+        os.makedirs(delivery_folder)
+
+    log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
+    _copy_file(src_path, delivery_path)
+
+    return report_items, 1

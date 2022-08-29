@@ -16,9 +16,9 @@ from openpype.pipeline.load import get_representation_path_with_anatomy
 from openpype.pipeline.delivery import (
     get_format_dict,
     check_destination_path,
+    deliver_single_file,
 )
 from openpype.lib.delivery import (
-    process_single_file,
     process_sequence,
 )
 
@@ -208,7 +208,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     args[0] = src_path
                     if frame:
                         anatomy_data["frame"] = frame
-                    new_report_items, uploaded = process_single_file(*args)
+                    new_report_items, uploaded = deliver_single_file(*args)
                     report_items.update(new_report_items)
                     self._update_progress(uploaded)
             else:  # fallback for Pype2 and representations without files
@@ -217,7 +217,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     repre["context"]["frame"] = len(str(frame)) * "#"
 
                 if not frame:
-                    new_report_items, uploaded = process_single_file(*args)
+                    new_report_items, uploaded = deliver_single_file(*args)
                 else:
                     new_report_items, uploaded = process_sequence(*args)
                 report_items.update(new_report_items)

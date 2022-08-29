@@ -21,9 +21,9 @@ from openpype.pipeline.load import get_representation_path_with_anatomy
 from openpype.pipeline.delivery import (
     get_format_dict,
     check_destination_path,
+    deliver_single_file,
 )
 from openpype.lib.delivery import (
-    process_single_file,
     process_sequence
 )
 
@@ -596,7 +596,7 @@ class Delivery(BaseAction):
                 self.log
             )
             if not frame:
-                process_single_file(*args)
+                deliver_single_file(*args)
             else:
                 process_sequence(*args)
 
