@@ -1,3 +1,11 @@
+"""Dirmap functionality used in host integrations inside DCCs.
+
+Idea for current dirmap implementation was used from Maya where is possible to
+enter source and destination roots and maya will try each found source
+in referenced file replace with each destionation paths. First path which
+exists is used.
+"""
+
 import os
 from abc import ABCMeta, abstractmethod
 
