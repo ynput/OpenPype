@@ -258,15 +258,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             )
             self._patch_workfile(filepath, patches)
 
-        # todo: on self.use_published replace path for publishRenderMetadataFolder
-        # if instance.data.get("publishRenderMetadataFolder"):
-        #     instance.data["publishRenderMetadataFolder"] = \
-        #         instance.data["publishRenderMetadataFolder"].replace(
-        #             orig_scene, new_scene)
-        # self.log.info("Scene name was switched {} -> {}".format(
-        #     orig_scene, new_scene
-        # ))
-
         # Gather needed data ------------------------------------------------
         workspace = context.data["workspaceDir"]
         default_render_file = instance.context.data.get('project_settings')\

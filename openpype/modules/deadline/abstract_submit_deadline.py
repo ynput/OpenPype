@@ -618,6 +618,12 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                 )
             instance.data["expectedFiles"] = new_exp
 
+        metadata_folder = instance.data.get("publishRenderMetadataFolder")
+        if metadata_folder:
+            metadata_folder = metadata_folder.replace(orig_scene,
+                                                      new_scene)
+            instance.data["publishRenderMetadataFolder"] = metadata_folder
+
         self.log.info("Scene name was switched {} -> {}".format(
             orig_scene, new_scene
         ))
