@@ -8,6 +8,7 @@ from Qt import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
+from openpype.pipeline.workfile.lock_workfile import is_workfile_locked, get_username, remove_lockfile
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
@@ -454,6 +455,20 @@ class FilesWidget(QtWidgets.QWidget):
 
     def open_file(self, filepath):
         host = self.host
+        if is_workfile_locked(filepath):
+            username = get_username(filepath)
+            popup_dialog = QtWidgets.QMessageBox(parent=self)
+            popup_dialog.setWindowTitle("Warning")
+            popup_dialog.setText(
+                username + " is using the file"
+                "\n Are you still want to open the files?"
+            )
+            popup_dialog.setStandardButtons(popup_dialog.Ok)
+
+            result = popup_dialog.exec_()
+            if result == popup_dialog.Ok:
+                return False
+
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()
         else:
@@ -479,7 +494,6 @@ class FilesWidget(QtWidgets.QWidget):
                     log.error("Can't save scene with no filename. Please "
                               "first save your work file using 'Save As'.")
                     return
-
                 # Save current scene, continue to open file
                 if isinstance(host, IWorkfileHost):
                     host.save_workfile(current_file)
