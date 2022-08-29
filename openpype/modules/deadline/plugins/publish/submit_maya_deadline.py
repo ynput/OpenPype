@@ -800,6 +800,10 @@ def _format_tiles(
                 tiles_x,
                 tiles_y
             )
+            top = int(height) - (tile_y * h_space)
+            bottom = int(height) - ((tile_y - 1) * h_space) - 1
+            left = (tile_x - 1) * w_space
+            right = (tile_x * w_space) - 1
 
             # Job Info
             new_filename = "{}/{}{}".format(
@@ -811,19 +815,17 @@ def _format_tiles(
 
             # Plugin Info
             out["PluginInfo"]["RegionPrefix{}".format(tile)] = "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))  # noqa: E501
-            out["PluginInfo"]["RegionTop{}".format(tile)] = int(height) - (tile_y * h_space)  # noqa: E501
-            out["PluginInfo"]["RegionBottom{}".format(tile)] = int(height) - ((tile_y - 1) * h_space) - 1  # noqa: E501
-            out["PluginInfo"]["RegionLeft{}".format(tile)] = (tile_x - 1) * w_space  # noqa: E501
-            out["PluginInfo"]["RegionRight{}".format(tile)] = (tile_x * w_space) - 1  # noqa: E501
+            out["PluginInfo"]["RegionTop{}".format(tile)] = top
+            out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
+            out["PluginInfo"]["RegionLeft{}".format(tile)] = left
+            out["PluginInfo"]["RegionRight{}".format(tile)] = right
 
             # Tile config
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
-            cfg["Tile{}X".format(tile)] = (tile_x - 1) * w_space
-
-            cfg["Tile{}Y".format(tile)] = int(height) - (tile_y * h_space)
-
+            cfg["Tile{}X".format(tile)] = left
+            cfg["Tile{}Y".format(tile)] = top
             cfg["Tile{}Width".format(tile)] = w_space
             cfg["Tile{}Height".format(tile)] = h_space
 
