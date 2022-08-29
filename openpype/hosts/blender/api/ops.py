@@ -1013,12 +1013,18 @@ class BuildWorkFile(bpy.types.Operator):
             )
 
     def _build_first_workfile(self):
+        # clear all objects and collections
         for obj in set(bpy.data.objects):
             bpy.data.objects.remove(obj)
         for collection in set(bpy.data.collections):
             bpy.data.collections.remove(collection)
+        # purgne unused datablock
         while bpy.data.orphans_purge(do_local_ids=False, do_recursive=True):
             pass
+        # clear all libraries
+        for library in list(bpy.data.libraries):
+            bpy.data.libraries.remove(library)
+
         build_workfile()
 
     def execute(self, context):
