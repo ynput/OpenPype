@@ -314,10 +314,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # if we have sequence of files, we need to create tile job for
         # every frame
-
         job_info.TileJob = True
         job_info.TileJobTilesInX = instance.data.get("tilesX")
         job_info.TileJobTilesInY = instance.data.get("tilesY")
+
+        tiles_count = job_info.TileJobTilesInX * job_info.TileJobTilesInY
 
         plugin_info["ImageHeight"] = instance.data.get("resolutionHeight")
         plugin_info["ImageWidth"] = instance.data.get("resolutionWidth")
@@ -334,7 +335,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         assembly_plugin_info = {
                 "CleanupTiles": 1,
-                "ErrorOnMissing": True
+                "ErrorOnMissing": True,
+                "Renderer": self._instance.data["renderer"]
         }
 
         frame_payloads = []
@@ -367,81 +369,69 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         file_index = 1
         for file in files:
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
-            new_payload = copy.deepcopy(payload)
-            new_payload["JobInfo"]["Name"] = \
-                "{} (Frame {} - {} tiles)".format(
+
+            new_job_info = copy.deepcopy(job_info)
+            new_job_info.Name = "{} (Frame {} - {} tiles)".format(
                     payload["JobInfo"]["Name"],
                     frame,
                     instance.data.get("tilesX") * instance.data.get("tilesY")
-                    # noqa: E501
-                )
-            self.log.info(
-                "... preparing job {}".format(
-                    new_payload["JobInfo"]["Name"]))
-            new_payload["JobInfo"]["TileJobFrame"] = frame
+            )
+            new_job_info.TileJobFrame = frame
 
-            tiles_data = _format_tiles(
+            new_plugin_info = copy.deepcopy(plugin_info)
+
+            # Add tile data into job info and plugin info
+            tiles_out, _ = _format_tiles(
                 file, 0,
                 instance.data.get("tilesX"),
                 instance.data.get("tilesY"),
                 instance.data.get("resolutionWidth"),
                 instance.data.get("resolutionHeight"),
                 payload["PluginInfo"]["OutputFilePrefix"]
-            )[0]
-            new_payload["JobInfo"].update(tiles_data["JobInfo"])
-            new_payload["PluginInfo"].update(tiles_data["PluginInfo"])
+            )
+            new_job_info.update(tiles_out["JobInfo"])
+            new_plugin_info.update(tiles_out["PluginInfo"])
 
             self.log.info("hashing {} - {}".format(file_index, file))
             job_hash = hashlib.sha256(
                 ("{}_{}".format(file_index, file)).encode("utf-8"))
             frame_jobs[frame] = job_hash.hexdigest()
-            new_payload["JobInfo"]["ExtraInfo0"] = job_hash.hexdigest()
-            new_payload["JobInfo"]["ExtraInfo1"] = file
 
-            frame_payloads.append(new_payload)
-            file_index += 1
+            new_job_info.ExtraInfo[0] = job_hash.hexdigest()
+            new_job_info.ExtraInfo[1] = file
 
-        file_index = 1
-        for file in assembly_files:
-            frame = re.search(R_FRAME_NUMBER, file).group("frame")
-
-            new_assembly_payload = copy.deepcopy(assembly_payload)
-            new_assembly_payload["JobInfo"]["Name"] = \
-                "{} (Frame {})".format(
-                    assembly_payload["JobInfo"]["Name"],
-                    frame)
-            new_assembly_payload["JobInfo"]["OutputFilename0"] = re.sub(
-                REPL_FRAME_NUMBER,
-                "\\1{}\\3".format("#" * len(frame)), file)
-
-            new_assembly_payload["PluginInfo"]["Renderer"] = \
-            self._instance.data["renderer"]  # noqa: E501
-            new_assembly_payload["JobInfo"]["ExtraInfo0"] = frame_jobs[
-                frame]  # noqa: E501
-            new_assembly_payload["JobInfo"]["ExtraInfo1"] = file
-            assembly_payloads.append(new_assembly_payload)
+            frame_payloads.append(self.assemble_payload(
+                job_info=new_job_info,
+                plugin_info=new_plugin_info
+            ))
             file_index += 1
 
         self.log.info(
             "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
-        tiles_count = instance.data.get("tilesX") * instance.data.get(
-            "tilesY")  # noqa: E501
-
-        for tile_job in frame_payloads:
-            response = self.submit(tile_job)
-
+        frame_tile_job_id = {}
+        for tile_job_payload in frame_payloads:
+            response = self.submit(tile_job_payload)
             job_id = response.json()["_id"]
-            hash = response.json()["Props"]["Ex0"]
+            frame_tile_job_id[frame] = job_id
 
-            # Add assembly job dependencies
-            for assembly_job in assembly_payloads:
-                assembly_job_info = assembly_job["JobInfo"]
-                if assembly_job_info.ExtraInfo[0] == hash:
-                    assembly_job.JobDependency = job_id
+        assembly_jobs = []
+        for i, file in enumerate(assembly_files):
+            frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
-        for assembly_job in assembly_payloads:
-            file = assembly_job["JobInfo"]["ExtraInfo1"]
+            frame_assembly_job_info = copy.deepcopy(assembly_job_info)
+            frame_assembly_job_info.Name += " (Frame {})".format(frame)
+            frame_assembly_job_info.OutputFilename[0] = re.sub(
+                REPL_FRAME_NUMBER,
+                "\\1{}\\3".format("#" * len(frame)), file)
+
+            hash = frame_jobs[frame]
+            tile_job_id = frame_tile_job_id[frame]
+
+            frame_assembly_job_info.ExtraInfo[0] = hash
+            frame_assembly_job_info.ExtraInfo[1] = file
+            frame_assembly_job_info.JobDependency = tile_job_id
+
             # write assembly job config files
             now = datetime.now()
 
@@ -461,9 +451,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 # directory is not available
                 self.log.warning("Path is unreachable: "
                                  "`{}`".format(config_file_dir))
-
-            # add config file as job auxFile
-            assembly_job["AuxFiles"] = [config_file]
 
             with open(config_file, "w") as cf:
                 print("TileCount={}".format(tiles_count), file=cf)
@@ -485,17 +472,20 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 for k, v in tiles.items():
                     print("{}={}".format(k, v), file=cf)
 
-        job_idx = 1
-        instance.data["assemblySubmissionJobs"] = []
-        for ass_job in assembly_payloads:
-            self.log.info("submitting assembly job {} of {}".format(
-                job_idx, len(assembly_payloads)
-            ))
-            response = self.submit(ass_job)
+            payload = self.assemble_payload(
+                job_info=frame_assembly_job_info,
+                plugin_info=assembly_plugin_info.copy(),
+                # add config file as job auxFile
+                aux_files=[config_file]
+            )
 
-            instance.data["assemblySubmissionJobs"].append(
-                response.json()["_id"])
-            job_idx += 1
+            self.log.info("submitting assembly job {} of {}".format(
+                i+1, len(assembly_payloads)
+            ))
+            response = self.submit(payload)
+            assembly_jobs.append(response.json()["_id"])
+
+        instance.data["assemblySubmissionJobs"] = assembly_jobs
 
     def _get_maya_payload(self, data):
 
