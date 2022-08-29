@@ -125,28 +125,25 @@ def copy_file(src_path, dst_path):
         shutil.copyfile(src_path, dst_path)
 
 
+@deprecated("openpype.pipeline.delivery.get_format_dict")
 def get_format_dict(anatomy, location_path):
     """Returns replaced root values from user provider value.
 
-        Args:
-            anatomy (Anatomy)
-            location_path (str): user provided value
-        Returns:
-            (dict): prepared for formatting of a template
+    Args:
+        anatomy (Anatomy)
+        location_path (str): user provided value
+
+    Returns:
+        (dict): prepared for formatting of a template
+
+    Deprecated:
+        Function was moved to different location and will be removed
+            after 3.16.* release.
     """
-    format_dict = {}
-    if location_path:
-        location_path = location_path.replace("\\", "/")
-        root_names = anatomy.root_names_from_templates(
-            anatomy.templates["delivery"]
-        )
-        if root_names is None:
-            format_dict["root"] = location_path
-        else:
-            format_dict["root"] = {}
-            for name in root_names:
-                format_dict["root"][name] = location_path
-    return format_dict
+
+    from openpype.pipeline.delivery import get_format_dict
+
+    return get_format_dict(anatomy, location_path)
 
 
 def check_destination_path(repre_id,
