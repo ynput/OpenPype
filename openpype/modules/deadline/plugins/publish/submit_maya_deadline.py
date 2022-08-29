@@ -266,10 +266,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # self.log.info("Scene name was switched {} -> {}".format(
         #     orig_scene, new_scene
         # ))
-        # # patch workfile is needed
-        # if filepath not in patched_files:
-        #     patched_file = self._patch_workfile(filepath, patches)
-        #     patched_files.append(patched_file)
 
         # Gather needed data ------------------------------------------------
         workspace = context.data["workspaceDir"]
