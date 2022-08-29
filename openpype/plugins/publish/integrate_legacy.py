@@ -33,6 +33,7 @@ from openpype.lib import (
     TemplateUnsolved
 )
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import get_publish_template_name
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -388,21 +389,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         family = self.main_family_from_instance(instance)
 
-        key_values = {
-            "families": family,
-            "tasks": task_name,
-            "hosts": instance.context.data["hostName"],
-            "task_types": task_type
-        }
-        profile = filter_profiles(
-            self.template_name_profiles,
-            key_values,
+        template_name = get_publish_template_name(
+            project_name,
+            instance.context.data["hostName"],
+            family,
+            task_name=task_info.get("name"),
+            task_type=task_info.get("type"),
+            project_settings=instance.context.data["project_settings"],
             logger=self.log
         )
-
-        template_name = "publish"
-        if profile:
-            template_name = profile["template_name"]
 
         published_representations = {}
         for idx, repre in enumerate(repres):
