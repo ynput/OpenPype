@@ -9,14 +9,18 @@ import maya.api.OpenMaya as om
 import pyblish.api
 
 from openpype.settings import get_project_settings
-from openpype.host import HostBase, IWorkfileHost, ILoadHost
 import openpype.hosts.maya
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost,
+    HostDirmap,
+)
 from openpype.tools.utils import host_tools
 from openpype.lib import (
     register_event_callback,
     emit_event
 )
-from openpype.lib.path_tools import HostDirmap
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -59,9 +63,10 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        project_name = os.getenv("AVALON_PROJECT")
+        project_settings = get_project_settings(project_name)
         # process path mapping
-        dirmap_processor = MayaDirmap("maya", project_settings)
+        dirmap_processor = MayaDirmap("maya", project_name, project_settings)
         dirmap_processor.process_dirmap()
 
         pyblish.api.register_plugin_path(PUBLISH_PATH)
