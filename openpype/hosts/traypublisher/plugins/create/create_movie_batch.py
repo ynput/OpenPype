@@ -6,12 +6,14 @@ from openpype.client import get_assets, get_asset_by_name
 from openpype.lib import (
     FileDef,
     BoolDef,
-    get_subset_name_with_asset_doc,
-    TaskNotSetError,
 )
 from openpype.pipeline import (
     CreatedInstance,
     CreatorError
+)
+from openpype.pipeline.create import (
+    get_subset_name,
+    TaskNotSetError,
 )
 
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
@@ -130,7 +132,7 @@ class BatchMovieCreator(TrayPublishCreator):
         task_name = self._get_task_name(asset_doc)
 
         try:
-            subset_name = get_subset_name_with_asset_doc(
+            subset_name = get_subset_name(
                 self.family,
                 variant,
                 task_name,
@@ -143,7 +145,7 @@ class BatchMovieCreator(TrayPublishCreator):
             #   but user have ability to change it
             # NOTE: This expect that there is not task 'Undefined' on asset
             task_name = "Undefined"
-            subset_name = get_subset_name_with_asset_doc(
+            subset_name = get_subset_name(
                 self.family,
                 variant,
                 task_name,

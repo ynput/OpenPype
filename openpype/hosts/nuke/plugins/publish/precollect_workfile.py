@@ -8,6 +8,7 @@ from openpype.hosts.nuke.api.lib import (
     add_publish_knob,
     get_avalon_knob_data
 )
+from openpype.pipeline import KnownPublishError
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -21,6 +22,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         root = nuke.root()
 
         current_file = os.path.normpath(nuke.root().name())
+
+        if current_file.lower() == "root":
+            raise KnownPublishError(
+                "Workfile is not correct file name. \n"
+                "Use workfile tool to manage the name correctly."
+            )
 
         knob_data = get_avalon_knob_data(root)
 
