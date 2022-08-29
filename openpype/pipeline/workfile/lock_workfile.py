@@ -62,4 +62,3 @@ def remove_lockfile(filepath):
     if not os.path.exists(lock_filepath):
         return
     return os.remove(lock_filepath)
-

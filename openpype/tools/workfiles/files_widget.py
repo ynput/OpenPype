@@ -459,10 +459,7 @@ class FilesWidget(QtWidgets.QWidget):
             username = get_username(filepath)
             popup_dialog = QtWidgets.QMessageBox(parent=self)
             popup_dialog.setWindowTitle("Warning")
-            popup_dialog.setText(
-                username + " is using the file"
-                "\n Are you still want to open the files?"
-            )
+            popup_dialog.setText(username + " is using the file")
             popup_dialog.setStandardButtons(popup_dialog.Ok)
 
             result = popup_dialog.exec_()

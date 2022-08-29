@@ -32,8 +32,7 @@ from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
     get_username,
     remove_lockfile,
-    is_workfile_locked,
-    lockfile_by_user
+    is_workfile_locked
 )
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
