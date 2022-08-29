@@ -14,6 +14,27 @@ from .profiles_filtering import filter_profiles
 log = logging.getLogger(__name__)
 
 
+def format_file_size(file_size, suffix=None):
+    """Returns formatted string with size in appropriate unit.
+
+    Args:
+        file_size (int): Size of file in bytes.
+        suffix (str): Suffix for formatted size. Default is 'B' (as bytes).
+
+    Returns:
+        str: Formatted size using proper unit and passed suffix (e.g. 7 MiB).
+    """
+
+    if suffix is None:
+        suffix = "B"
+
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(file_size) < 1024.0:
+            return "%3.1f%s%s" % (file_size, unit, suffix)
+        file_size /= 1024.0
+    return "%.1f%s%s" % (file_size, "Yi", suffix)
+
+
 def create_hard_link(src_path, dst_path):
     """Create hardlink of file.
 
