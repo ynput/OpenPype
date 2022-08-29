@@ -6,6 +6,8 @@ import logging
 import six
 import platform
 
+import clique
+
 from openpype.client import get_project
 from openpype.settings import get_project_settings
 
@@ -69,6 +71,43 @@ def create_hard_link(src_path, dst_path):
     raise NotImplementedError(
         "Implementation of hardlink for current environment is missing."
     )
+
+
+def collect_frames(files):
+    """Returns dict of source path and its frame, if from sequence
+
+    Uses clique as most precise solution, used when anatomy template that
+    created files is not known.
+
+    Assumption is that frames are separated by '.', negative frames are not
+    allowed.
+
+    Args:
+        files(list) or (set with single value): list of source paths
+
+    Returns:
+        (dict): {'/asset/subset_v001.0001.png': '0001', ....}
+    """
+
+    patterns = [clique.PATTERNS["frames"]]
+    collections, remainder = clique.assemble(
+        files, minimum_items=1, patterns=patterns)
+
+    sources_and_frames = {}
+    if collections:
+        for collection in collections:
+            src_head = collection.head
+            src_tail = collection.tail
+
+            for index in collection.indexes:
+                src_frame = collection.format("{padding}") % index
+                src_file_name = "{}{}{}".format(
+                    src_head, src_frame, src_tail)
+                sources_and_frames[src_file_name] = src_frame
+    else:
+        sources_and_frames[remainder.pop()] = None
+
+    return sources_and_frames
 
 
 def _rreplace(s, a, b, n=1):
