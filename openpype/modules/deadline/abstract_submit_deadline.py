@@ -546,65 +546,66 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         anatomy = self._instance.context.data['anatomy']
         file_path = None
         for i in self._instance.context:
-            if "workfile" in i.data["families"] \
-                    or i.data["family"] == "workfile":
-                # test if there is instance of workfile waiting
-                # to be published.
-                assert i.data["publish"] is True, (
-                    "Workfile (scene) must be published along")
-                # determine published path from Anatomy.
-                template_data = i.data.get("anatomyData")
-                rep = i.data.get("representations")[0]
-                template_data["representation"] = rep.get("name")
-                template_data["ext"] = rep.get("ext")
-                template_data["comment"] = None
-                anatomy_filled = anatomy.format(template_data)
-                template_filled = anatomy_filled["publish"]["path"]
-                file_path = os.path.normpath(template_filled)
 
-                self.log.info("Using published scene for render {}".format(
-                    file_path))
+            is_workfile =
+            if not is_workfile:
+                continue
 
-                if not os.path.exists(file_path):
-                    self.log.error("published scene does not exist!")
-                    raise
+            # test if there is instance of workfile waiting
+            # to be published.
+            assert i.data["publish"] is True, (
+                "Workfile (scene) must be published along")
+            # determine published path from Anatomy.
+            template_data = i.data.get("anatomyData")
+            rep = i.data.get("representations")[0]
+            template_data["representation"] = rep.get("name")
+            template_data["ext"] = rep.get("ext")
+            template_data["comment"] = None
+            anatomy_filled = anatomy.format(template_data)
+            template_filled = anatomy_filled["publish"]["path"]
+            file_path = os.path.normpath(template_filled)
 
-                if not replace_in_path:
-                    return file_path
+            self.log.info("Using published scene for render {}".format(
+                file_path))
 
-                # now we need to switch scene in expected files
-                # because <scene> token will now point to published
-                # scene file and that might differ from current one
-                new_scene = os.path.splitext(
-                    os.path.basename(file_path))[0]
-                orig_scene = os.path.splitext(
-                    os.path.basename(
-                        self._instance.context.data["currentFile"]))[0]
-                exp = self._instance.data.get("expectedFiles")
+            if not os.path.exists(file_path):
+                self.log.error("published scene does not exist!")
+                raise
 
-                if isinstance(exp[0], dict):
-                    # we have aovs and we need to iterate over them
-                    new_exp = {}
-                    for aov, files in exp[0].items():
-                        replaced_files = []
-                        for f in files:
-                            replaced_files.append(
-                                str(f).replace(orig_scene, new_scene)
-                            )
-                        new_exp[aov] = replaced_files
-                    # [] might be too much here, TODO
-                    self._instance.data["expectedFiles"] = [new_exp]
-                else:
-                    new_exp = []
-                    for f in exp:
-                        new_exp.append(
+            if not replace_in_path:
+                return file_path
+
+            # now we need to switch scene in expected files
+            # because <scene> token will now point to published
+            # scene file and that might differ from current one
+            new_scene = os.path.splitext(os.path.basename(file_path))[0]
+            orig_scene = os.path.splitext(os.path.basename(
+                    self._instance.context.data["currentFile"]))[0]
+            exp = self._instance.data.get("expectedFiles")
+
+            if isinstance(exp[0], dict):
+                # we have aovs and we need to iterate over them
+                new_exp = {}
+                for aov, files in exp[0].items():
+                    replaced_files = []
+                    for f in files:
+                        replaced_files.append(
                             str(f).replace(orig_scene, new_scene)
                         )
-                    self._instance.data["expectedFiles"] = new_exp
+                    new_exp[aov] = replaced_files
+                # [] might be too much here, TODO
+                self._instance.data["expectedFiles"] = [new_exp]
+            else:
+                new_exp = []
+                for f in exp:
+                    new_exp.append(
+                        str(f).replace(orig_scene, new_scene)
+                    )
+                self._instance.data["expectedFiles"] = new_exp
 
-                self.log.info("Scene name was switched {} -> {}".format(
-                    orig_scene, new_scene
-                ))
+            self.log.info("Scene name was switched {} -> {}".format(
+                orig_scene, new_scene
+            ))
 
         return file_path
 
