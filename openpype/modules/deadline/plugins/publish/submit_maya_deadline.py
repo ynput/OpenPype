@@ -800,23 +800,23 @@ def _format_tiles(
                 tiles_x,
                 tiles_y
             )
-            out_tile_index = "OutputFilename{}Tile{}".format(
-                str(index), tile
-            )
+
+            # Job Info
             new_filename = "{}/{}{}".format(
                 os.path.dirname(filename),
                 tile_prefix,
                 os.path.basename(filename)
             )
-            out["JobInfo"][out_tile_index] = new_filename
-            out["PluginInfo"]["RegionPrefix{}".format(tile)] = \
-                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
+            out["JobInfo"]["OutputFilename{}Tile{}".format(index, tile)] = new_filename   # noqa
 
+            # Plugin Info
+            out["PluginInfo"]["RegionPrefix{}".format(tile)] = "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))  # noqa: E501
             out["PluginInfo"]["RegionTop{}".format(tile)] = int(height) - (tile_y * h_space)  # noqa: E501
             out["PluginInfo"]["RegionBottom{}".format(tile)] = int(height) - ((tile_y - 1) * h_space) - 1  # noqa: E501
             out["PluginInfo"]["RegionLeft{}".format(tile)] = (tile_x - 1) * w_space  # noqa: E501
             out["PluginInfo"]["RegionRight{}".format(tile)] = (tile_x * w_space) - 1  # noqa: E501
 
+            # Tile config
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
@@ -828,4 +828,5 @@ def _format_tiles(
             cfg["Tile{}Height".format(tile)] = h_space
 
             tile += 1
+
     return out, cfg
