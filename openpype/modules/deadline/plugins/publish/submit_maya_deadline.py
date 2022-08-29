@@ -335,9 +335,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         if export_job:
             payload["JobInfo"]["JobDependency0"] = export_job
 
-        plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("using render plugin : {}".format(plugin))
-
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
 
