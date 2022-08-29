@@ -26,7 +26,7 @@ from openpype.lib import (
     env_value_to_bool,
     Logger,
     get_version_from_path,
- )
+)
 
 from openpype.settings import (
     get_project_settings,
