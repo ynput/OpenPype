@@ -1,4 +1,26 @@
 """Functions useful for delivery of published representations."""
+import os
+import shutil
+
+from openpype.lib import create_hard_link
+
+
+def _copy_file(src_path, dst_path):
+    """Hardlink file if possible(to save space), copy if not.
+
+    Because of using hardlinks should not be function used in other parts
+    of pipeline.
+    """
+
+    if os.path.exists(dst_path):
+        return
+    try:
+        create_hard_link(
+            src_path,
+            dst_path
+        )
+    except OSError:
+        shutil.copyfile(src_path, dst_path)
 
 
 def get_format_dict(anatomy, location_path):
