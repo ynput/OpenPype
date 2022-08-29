@@ -23,10 +23,16 @@ from openpype.client import (
     get_representation_by_name,
     get_representation_parents
 )
+from openpype.lib import (
+    StringTemplate,
+    TemplateUnsolved,
+)
 from openpype.pipeline import (
     schema,
     legacy_io,
     Anatomy,
+    registered_root,
+    registered_host,
 )
 
 log = logging.getLogger(__name__)
@@ -58,6 +64,11 @@ class HeroVersionType(object):
 
 class IncompatibleLoaderError(ValueError):
     """Error when Loader is incompatible with a representation."""
+    pass
+
+
+class InvalidRepresentationContext(ValueError):
+    """Representation path can't be received using representation document."""
     pass
 
 
@@ -515,6 +526,52 @@ def get_representation_path_from_context(context):
     return get_representation_path(representation, root)
 
 
+def get_representation_path_with_anatomy(repre_doc, anatomy):
+    """Receive representation path using representation document and anatomy.
+
+    Anatomy is used to replace 'root' key in representation file. Ideally
+    should be used instead of 'get_representation_path' which is based on
+    "current context".
+
+    Future notes:
+        We want also be able store resources into representation and I can
+        imagine the result should also contain paths to possible resources.
+
+    Args:
+        repre_doc (Dict[str, Any]): Representation document.
+        anatomy (Anatomy): Project anatomy object.
+
+    Returns:
+        Union[None, TemplateResult]: None if path can't be received
+
+    Raises:
+        InvalidRepresentationContext: When representation data are probably
+            invalid or not available.
+    """
+
+    try:
+        template = repre_doc["data"]["template"]
+
+    except KeyError:
+        raise InvalidRepresentationContext((
+            "Representation document does not"
+            " contain template in data ('data.template')"
+        ))
+
+    try:
+        context = repre_doc["context"]
+        context["root"] = anatomy.roots
+        path = StringTemplate.format_strict_template(template, context)
+
+    except TemplateUnsolved as exc:
+        raise InvalidRepresentationContext((
+            "Couldn't resolve representation template with available data."
+            " Reason: {}".format(str(exc))
+        ))
+
+    return path.normalized()
+
+
 def get_representation_path(representation, root=None, dbcon=None):
     """Get filename from representation document
 
@@ -533,14 +590,10 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     """
 
-    from openpype.lib import StringTemplate, TemplateUnsolved
-
     if dbcon is None:
         dbcon = legacy_io
 
     if root is None:
-        from openpype.pipeline import registered_root
-
         root = registered_root()
 
     def path_from_represenation():
@@ -736,7 +789,6 @@ def get_outdated_containers(host=None, project_name=None):
     """
 
     if host is None:
-        from openpype.pipeline import registered_host
         host = registered_host()
 
     if project_name is None:

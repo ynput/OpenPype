@@ -1,6 +1,8 @@
 from .utils import (
     HeroVersionType,
+
     IncompatibleLoaderError,
+    InvalidRepresentationContext,
 
     get_repres_contexts,
     get_subset_contexts,
@@ -20,6 +22,7 @@ from .utils import (
 
     get_representation_path_from_context,
     get_representation_path,
+    get_representation_path_with_anatomy,
 
     is_compatible_loader,
 
@@ -46,7 +49,9 @@ from .plugins import (
 __all__ = (
     # utils.py
     "HeroVersionType",
+
     "IncompatibleLoaderError",
+    "InvalidRepresentationContext",
 
     "get_repres_contexts",
     "get_subset_contexts",
