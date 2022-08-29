@@ -2,6 +2,7 @@ import os
 import sys
 import types
 import inspect
+import copy
 import xml.etree.ElementTree
 
 import six
@@ -47,17 +48,23 @@ def get_template_name_profiles(project_name=None, project_settings=None):
         ["template_name_profiles"]
     )
     if profiles:
-        return profiles
+        return copy.deepcopy(profiles)
 
     # Use legacy approach for cases new settings are not filled yet for the
     #   project
-    return (
+    legacy_profiles = (
         project_settings
         ["global"]
         ["publish"]
         ["IntegrateAssetNew"]
         ["template_name_profiles"]
     )
+    # Replace "tasks" key with "task_names"
+    profiles = []
+    for profile in copy.deepcopy(legacy_profiles):
+        profile["task_names"] = profile.pop("tasks", [])
+        profiles.append(profile)
+    return profiles
 
 
 def get_publish_template_name(
@@ -95,7 +102,7 @@ def get_publish_template_name(
     filter_criteria = {
         "hosts": host_name,
         "families": family,
-        "tasks": task_name,
+        "task_names": task_name,
         "task_types": task_type,
     }
     profiles = get_template_name_profiles(project_name, project_settings)
