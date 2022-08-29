@@ -303,9 +303,47 @@
                         "type": "dict",
                         "children": [
                             {
-                                "type": "label",
-                                "label": ""
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
                             },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "task_names",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template_name",
+                                "label": "Template name"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "list",
+                    "key": "hero_template_name_profiles",
+                    "label": "Hero template name profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
                             {
                                 "key": "families",
                                 "label": "Families",
@@ -324,7 +362,7 @@
                                 "type": "task-types-enum"
                             },
                             {
-                                "key": "tasks",
+                                "key": "task_names",
                                 "label": "Task names",
                                 "type": "list",
                                 "object_type": "text"
@@ -335,7 +373,8 @@
                             {
                                 "type": "text",
                                 "key": "template_name",
-                                "label": "Template name"
+                                "label": "Template name",
+                                "tooltip": "Name of template from Anatomy templates"
                             }
                         ]
                     }
