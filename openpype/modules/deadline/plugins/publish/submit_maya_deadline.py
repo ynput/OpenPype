@@ -273,9 +273,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "dirname": dirname,
         }
 
-        # Store output dir for unified publisher (filesequence)
-        instance.data["outputDir"] = os.path.dirname(output_filename_0)
-
         # Submit preceding export jobs -------------------------------------
         export_job = None
         assert not all(x in instance.data["families"]
@@ -326,26 +323,19 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         plugin_info["ImageWidth"] = instance.data.get("resolutionWidth")
         plugin_info["RegionRendering"] = True
 
-        assembly_payload = {
-            "AuxFiles": [],
-            "JobInfo": {
-                "BatchName": payload["JobInfo"]["BatchName"],
-                "Frames": 1,
-                "Name": "{} - Tile Assembly Job".format(
-                    payload["JobInfo"]["Name"]),
-                "OutputDirectory0":
-                    payload["JobInfo"]["OutputDirectory0"].replace(
-                        "\\", "/"),
-                "Plugin": self.tile_assembler_plugin,
-                "MachineLimit": 1
-            },
-            "PluginInfo": {
+        assembly_job_info = copy.deepcopy(job_info)
+        assembly_job_info.Plugin = self.tile_assembler_plugin
+        assembly_job_info.Name = "{job.Name} - Tile Assembly Job".format(
+            job=job_info)
+        assembly_job_info.Frames = 1
+        assembly_job_info.MachineLimit = 1
+        assembly_job_info.Priority = instance.data.get("tile_priority",
+                                                       self.tile_priority)
+
+        assembly_plugin_info = {
                 "CleanupTiles": 1,
                 "ErrorOnMissing": True
-            }
         }
-        assembly_payload["JobInfo"]["Priority"] = self._instance.data.get(
-            "tile_priority", self.tile_priority)
 
         frame_payloads = []
         assembly_payloads = []
@@ -414,6 +404,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         file_index = 1
         for file in assembly_files:
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
+
             new_assembly_payload = copy.deepcopy(assembly_payload)
             new_assembly_payload["JobInfo"]["Name"] = \
                 "{} (Frame {})".format(
@@ -434,7 +425,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         self.log.info(
             "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
-        url = "{}/api/jobs".format(self.deadline_url)
         tiles_count = instance.data.get("tilesX") * instance.data.get(
             "tilesY")  # noqa: E501
 
@@ -444,9 +434,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_id = response.json()["_id"]
             hash = response.json()["Props"]["Ex0"]
 
+            # Add assembly job dependencies
             for assembly_job in assembly_payloads:
-                if assembly_job["JobInfo"]["ExtraInfo0"] == hash:
-                    assembly_job["JobInfo"]["JobDependency0"] = job_id
+                assembly_job_info = assembly_job["JobInfo"]
+                if assembly_job_info.ExtraInfo[0] == hash:
+                    assembly_job.JobDependency = job_id
 
         for assembly_job in assembly_payloads:
             file = assembly_job["JobInfo"]["ExtraInfo1"]
@@ -461,14 +453,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 )
             )
 
+            config_file_dir = os.path.dirname(config_file)
             try:
-                if not os.path.isdir(os.path.dirname(config_file)):
-                    os.makedirs(os.path.dirname(config_file))
+                if not os.path.isdir(config_file_dir):
+                    os.makedirs(config_file_dir)
             except OSError:
                 # directory is not available
-                self.log.warning(
-                    "Path is unreachable: `{}`".format(
-                        os.path.dirname(config_file)))
+                self.log.warning("Path is unreachable: "
+                                 "`{}`".format(config_file_dir))
 
             # add config file as job auxFile
             assembly_job["AuxFiles"] = [config_file]
@@ -504,10 +496,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             instance.data["assemblySubmissionJobs"].append(
                 response.json()["_id"])
             job_idx += 1
-
-        instance.data["jobBatchName"] = payload["JobInfo"]["BatchName"]
-        self.log.info("Setting batch name on instance: {}".format(
-            instance.data["jobBatchName"]))
 
     def _get_maya_payload(self, data):
 
