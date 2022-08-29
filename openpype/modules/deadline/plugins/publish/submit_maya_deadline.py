@@ -307,7 +307,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "jobname": jobname,
             "comment": comment,
             "output_filename_0": output_filename_0,
-            "render_variables": render_variables,
             "renderlayer": renderlayer,
             "workspace": workspace,
             "dirname": dirname,
@@ -564,6 +563,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         renderer = self._instance.data["renderer"]
 
+        # Get layer prefix
+        render_products = self._instance.data["renderProducts"]
+        layer_metadata = render_products.layer_data
+        layer_prefix = layer_metadata.filePrefix
+
         # This hack is here because of how Deadline handles Renderman version.
         # it considers everything with `renderman` set as version older than
         # Renderman 22, and so if we are using renderman > 21 we need to set
@@ -583,7 +587,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "SceneFile": data["filepath"],
             # Output directory and filename
             "OutputFilePath": data["dirname"].replace("\\", "/"),
-            "OutputFilePrefix": data["render_variables"]["filename_prefix"],  # noqa: E501
+            "OutputFilePrefix": layer_prefix,
 
             # Only render layers are considered renderable in this pipeline
             "UsingRenderLayers": True,
