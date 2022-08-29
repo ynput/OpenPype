@@ -573,7 +573,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Renderman 22, and so if we are using renderman > 21 we need to set
         # renderer string on the job to `renderman22`. We will have to change
         # this when Deadline releases new version handling this.
-        if self._instance.data["renderer"] == "renderman":
+        if renderer == "renderman":
             try:
                 from rfm2.config import cfg  # noqa
             except ImportError:
