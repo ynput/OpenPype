@@ -10,10 +10,10 @@ from openpype import resources, style
 from openpype.lib import (
     format_file_size,
     collect_frames,
+    get_datetime_data,
 )
-from openpype.lib.dateutils import get_datetime_data
+from openpype.pipeline.load import get_representation_path_with_anatomy
 from openpype.lib.delivery import (
-    path_from_representation,
     get_format_dict,
     check_destination_path,
     process_single_file,
@@ -169,7 +169,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
             if repre["name"] not in selected_repres:
                 continue
 
-            repre_path = path_from_representation(repre, self.anatomy)
+            repre_path = get_representation_path_with_anatomy(
+                repre, self.anatomy
+            )
 
             anatomy_data = copy.deepcopy(repre["context"])
             new_report_items = check_destination_path(str(repre["_id"]),

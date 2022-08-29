@@ -7,11 +7,6 @@ import collections
 import functools
 import warnings
 
-from .path_templates import (
-    StringTemplate,
-    TemplateUnsolved,
-)
-
 
 class DeliveryDeprecatedWarning(DeprecationWarning):
     pass
@@ -88,24 +83,22 @@ def sizeof_fmt(num, suffix=None):
     return format_file_size(num, suffix)
 
 
+@deprecated("openpype.pipeline.load.get_representation_path_with_anatomy")
 def path_from_representation(representation, anatomy):
-    try:
-        template = representation["data"]["template"]
+    """Get representation path using representation document and anatomy.
 
-    except KeyError:
-        return None
+    Args:
+        representation (Dict[str, Any]): Representation document.
+        anatomy (Anatomy): Project anatomy.
 
-    try:
-        context = representation["context"]
-        context["root"] = anatomy.roots
-        path = StringTemplate.format_strict_template(template, context)
-        return os.path.normpath(path)
+    Deprecated:
+        Function was moved to different location and will be removed
+            after 3.16.* release.
+    """
 
-    except TemplateUnsolved:
-        # Template references unavailable data
-        return None
+    from openpype.pipeline.load import get_representation_path_with_anatomy
 
-    return path
+    return get_representation_path_with_anatomy(representation, anatomy)
 
 
 def copy_file(src_path, dst_path):

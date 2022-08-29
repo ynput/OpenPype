@@ -71,6 +71,7 @@ __all__ = (
 
     "get_representation_path_from_context",
     "get_representation_path",
+    "get_representation_path_with_anatomy",
 
     "is_compatible_loader",
 
