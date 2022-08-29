@@ -5,6 +5,9 @@ import copy
 import clique
 import six
 
+from bson.objectid import ObjectId
+import pyblish.api
+
 from openpype.client.operations import (
     OperationsSession,
     new_subset_document,
@@ -14,8 +17,6 @@ from openpype.client.operations import (
     prepare_version_update_data,
     prepare_representation_update_data,
 )
-from bson.objectid import ObjectId
-import pyblish.api
 
 from openpype.client import (
     get_representations,
@@ -23,7 +24,6 @@ from openpype.client import (
     get_version_by_name,
 )
 from openpype.lib import source_hash
-from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
