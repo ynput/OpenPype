@@ -8,8 +8,101 @@ import six
 import pyblish.plugin
 import pyblish.api
 
-from openpype.lib import Logger
-from openpype.settings import get_project_settings, get_system_settings
+from openpype.lib import Logger, filter_profiles
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings,
+)
+
+from .contants import DEFAULT_PUBLISH_TEMPLATE
+
+
+def get_template_name_profiles(project_name=None, project_settings=None):
+    """Receive profiles for publish template keys.
+
+    At least one of arguments must be passed.
+
+    Args:
+        project_name (str): Name of project where to look for templates.
+        project_settings(Dic[str, Any]): Prepared project settings.
+
+    Returns:
+        List[Dict[str, Any]]: Publish template profiles.
+    """
+
+    if not project_name and not project_settings:
+        raise ValueError((
+            "Both project name and project settings are missing."
+            " At least one must be entered."
+        ))
+
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    profiles = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["publish"]
+        ["template_name_profiles"]
+    )
+    if profiles:
+        return profiles
+
+    # Use legacy approach for cases new settings are not filled yet for the
+    #   project
+    return (
+        project_settings
+        ["global"]
+        ["publish"]
+        ["IntegrateAssetNew"]
+        ["template_name_profiles"]
+    )
+
+
+def get_publish_template_name(
+    project_name,
+    host_name,
+    family,
+    task_name,
+    task_type,
+    project_settings=None,
+    logger=None
+):
+    """Get template name which should be used for passed context.
+
+    Publish templates are filtered by host name, family, task name and
+    task type.
+
+    Default template which is used at if profiles are not available or profile
+    has empty value is defined by 'DEFAULT_PUBLISH_TEMPLATE' constant.
+
+    Args:
+        project_name (str): Name of project where to look for settings.
+        host_name (str): Name of host integration.
+        family (str): Family for which should be found template.
+        task_name (str): Task name on which is intance working.
+        task_type (str): Task type on which is intance working.
+        project_setting (Dict[str, Any]): Prepared project settings.
+        logger (logging.Logger): Custom logger used for 'filter_profiles'
+            function.
+
+    Returns:
+        str: Template name which should be used for integration.
+    """
+
+    template = None
+    filter_criteria = {
+        "hosts": host_name,
+        "families": family,
+        "tasks": task_name,
+        "task_types": task_type,
+    }
+    profiles = get_template_name_profiles(project_name, project_settings)
+    profile = filter_profiles(profiles, filter_criteria, logger=logger)
+    if profile:
+        template = profile["template_name"]
+    return template or DEFAULT_PUBLISH_TEMPLATE
 
 
 class DiscoverResult:

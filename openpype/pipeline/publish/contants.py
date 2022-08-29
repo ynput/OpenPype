@@ -1,0 +1,1 @@
+DEFAULT_PUBLISH_TEMPLATE = "publish"
