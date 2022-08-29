@@ -179,12 +179,12 @@ def get_version_from_path(file):
     """Find version number in file path string.
 
     Args:
-        file (string): file path
+        file (str): file path
 
     Returns:
-        v: version number in string ('001')
-
+        str: version number in string ('001')
     """
+
     pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
     try:
         return pattern.findall(file)[-1]
@@ -200,16 +200,17 @@ def get_last_version_from_path(path_dir, filter):
     """Find last version of given directory content.
 
     Args:
-        path_dir (string): directory path
+        path_dir (str): directory path
         filter (list): list of strings used as file name filter
 
     Returns:
-        string: file name with last version
+        str: file name with last version
 
     Example:
         last_version_file = get_last_version_from_path(
             "/project/shots/shot01/work", ["shot01", "compositing", "nk"])
     """
+
     assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
     assert isinstance(filter, list) and (
         len(filter) != 0), "`filter` argument needs to be list and not empty"

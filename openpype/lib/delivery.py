@@ -1,8 +1,6 @@
 """Functions useful for delivery action or loader"""
 import os
 import shutil
-import glob
-import clique
 import functools
 import warnings
 
@@ -109,6 +107,7 @@ def path_from_representation(representation, anatomy):
     return get_representation_path_with_anatomy(representation, anatomy)
 
 
+@deprecated
 def copy_file(src_path, dst_path):
     """Hardlink file if possible(to save space), copy if not"""
     from openpype.lib import create_hard_link  # safer importing
