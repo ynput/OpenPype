@@ -6,10 +6,9 @@ import copy
 
 import six
 import pyblish.api
-from bson.objectid import ObjectId
 
 from openpype.client import get_version_by_id
-from openpype.pipeline import legacy_io
+from openpype.client.operations import OperationsSession, new_thumbnail_doc
 
 
 class IntegrateThumbnails(pyblish.api.InstancePlugin):
@@ -24,13 +23,9 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
-
-        if not os.environ.get("AVALON_THUMBNAIL_ROOT"):
-            self.log.warning(
-                "AVALON_THUMBNAIL_ROOT is not set."
-                " Skipping thumbnail integration."
-            )
-            return
+        env_key = "AVALON_THUMBNAIL_ROOT"
+        thumbnail_root_format_key = "{thumbnail_root}"
+        thumbnail_root = os.environ.get(env_key) or ""
 
         published_repres = instance.data.get("published_representations")
         if not published_repres:
@@ -49,6 +44,16 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             self.log.warning((
                 "There is no \"thumbnail\" template set for the project \"{}\""
             ).format(project_name))
+            return
+
+        thumbnail_template = anatomy.templates["publish"]["thumbnail"]
+        if (
+            not thumbnail_root
+            and thumbnail_root_format_key in thumbnail_template
+        ):
+            self.log.warning((
+                "{} is not set. Skipping thumbnail integration."
+            ).format(env_key))
             return
 
         thumb_repre = None
