@@ -51,16 +51,6 @@ class MayaPluginInfo:
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
-    """Submit available render layers to Deadline.
-
-    Renders are submitted to a Deadline Web Service as
-    supplied via settings key "DEADLINE_REST_URL".
-
-    Attributes:
-        use_published (bool): Use published scene to render instead of the
-            one in work area.
-
-    """
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
