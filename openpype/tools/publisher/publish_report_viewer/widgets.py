@@ -1,9 +1,9 @@
 from math import ceil
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore, QtGui, QtSvg
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
-# from openpype.tools.utils import DeselectableTreeView
+from .resources import get_popup_icon_path
 from .constants import (
     ITEM_ID_ROLE,
     ITEM_IS_GROUP_ROLE
@@ -331,6 +331,101 @@ class DetailsPopup(QtWidgets.QDialog):
         self.closed.emit()
 
 
+class PopUpButton(QtWidgets.QPushButton):
+    def __init__(self, *args, **kwargs):
+        super(PopUpButton, self).__init__(*args, **kwargs)
+
+        size_policy = self.sizePolicy()
+        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Fixed)
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(size_policy)
+
+        self._icon = QtSvg.QSvgRenderer(get_popup_icon_path())
+
+        self._repaint = True
+        self._last_size = None
+        self._cached_normal_image = None
+        self._cached_hover_image = None
+        self._cached_disabled_image = None
+
+    def sizeHint(self):
+        result = super(PopUpButton, self).sizeHint()
+        icon_h = self.iconSize().height()
+        font_height = self.fontMetrics().height()
+        text_set = bool(self.text())
+        if not text_set and icon_h < font_height:
+            new_size = result.height() - icon_h + font_height
+            result.setHeight(new_size)
+            result.setWidth(new_size)
+
+        if self._last_size != result:
+            self._last_size = result
+            self._repaint = True
+        return result
+
+    def resizeEvent(self, event):
+        super(PopUpButton, self).resizeEvent(event)
+        self._repaint = True
+
+    def showEvent(self, event):
+        super(PopUpButton, self).showEvent(event)
+        self._repaint = True
+
+    def _repaint_image(self):
+        rect = QtCore.QRect(
+            0, 0, self._last_size.width(), self._last_size.height()
+        )
+        pix = QtGui.QPixmap(self._last_size)
+        pix.fill(QtCore.Qt.transparent)
+        painter = QtGui.QPainter(pix)
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+        )
+        self._icon.render(painter, rect)
+        painter.end()
+
+        hover_color = QtGui.QColor(QtCore.Qt.white)
+        normal_color = hover_color.darker(127)
+
+        normal_pix = QtGui.QPixmap(pix)
+        normal_pix.fill(normal_color)
+        normal_pix.setMask(pix.mask())
+
+        hover_pix = QtGui.QPixmap(pix)
+        hover_pix.fill(hover_color)
+        hover_pix.setMask(pix.mask())
+
+        disabled_pix = QtGui.QPixmap(pix)
+        disabled_pix.fill(QtCore.Qt.gray)
+        disabled_pix.setMask(pix.mask())
+
+        self._cached_normal_image = normal_pix
+        self._cached_hover_image = hover_pix
+        self._cached_disabled_image = disabled_pix
+
+    def paintEvent(self, event):
+        rect = event.rect()
+        if self._repaint:
+            if self._last_size is None:
+                self.sizeHint()
+            self._repaint_image()
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+        )
+        if not self.isEnabled():
+            pix = self._cached_disabled_image
+        elif self.underMouse():
+            pix = self._cached_hover_image
+        else:
+            pix = self._cached_normal_image
+        painter.drawPixmap(rect, pix)
+        painter.end()
+
+
 class PublishReportViewerWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PublishReportViewerWidget, self).__init__(parent)
@@ -389,12 +484,20 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
 
         details_widget = QtWidgets.QWidget(self)
         details_tab_widget = QtWidgets.QTabWidget(details_widget)
-        details_popup_btn = QtWidgets.QPushButton("PopUp", details_widget)
+        details_btns_widget = QtWidgets.QWidget(details_widget)
+
+        details_popup_btn = PopUpButton(details_btns_widget)
+        details_popup_btn.setToolTip("Pop details to dialog")
+
+        details_btns_layout = QtWidgets.QHBoxLayout(details_btns_widget)
+        details_btns_layout.setContentsMargins(0, 0, 0, 0)
+        details_btns_layout.addStretch(1)
+        details_btns_layout.addWidget(details_popup_btn, 0)
 
         details_layout = QtWidgets.QVBoxLayout(details_widget)
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.addWidget(details_tab_widget, 1)
-        details_layout.addWidget(details_popup_btn, 0)
+        details_layout.addWidget(details_btns_widget, 0)
 
         details_popup = DetailsPopup(self, details_tab_widget)
 
@@ -458,6 +561,7 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         self._details_widget = details_widget
         self._details_tab_widget = details_tab_widget
         self._details_popup = details_popup
+        self._details_popup_btn = details_popup_btn
 
     def _on_instance_view_clicked(self, index):
         if not index.isValid() or not index.data(ITEM_IS_GROUP_ROLE):
