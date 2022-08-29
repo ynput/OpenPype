@@ -71,10 +71,6 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             )
             return
 
-        legacy_io.install()
-
-        thumbnail_template = anatomy.templates["publish"]["thumbnail"]
-
         version = get_version_by_id(project_name, thumb_repre["parent"])
         if not version:
             raise AssertionError(
@@ -93,14 +89,15 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
 
         filename, file_extension = os.path.splitext(src_full_path)
         # Create id for mongo entity now to fill anatomy template
-        thumbnail_id = ObjectId()
+        thumbnail_doc = new_thumbnail_doc()
+        thumbnail_id = thumbnail_doc["_id"]
 
         # Prepare anatomy template fill data
         template_data = copy.deepcopy(thumb_repre_anatomy_data)
         template_data.update({
             "_id": str(thumbnail_id),
-            "thumbnail_root": os.environ.get("AVALON_THUMBNAIL_ROOT"),
             "ext": file_extension[1:],
+            "thumbnail_root": thumbnail_root,
             "thumbnail_type": "thumbnail"
         })
 
@@ -122,8 +119,8 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         shutil.copy(src_full_path, dst_full_path)
 
         # Clean template data from keys that are dynamic
-        template_data.pop("_id")
-        template_data.pop("thumbnail_root")
+        for key in ("_id", "thumbnail_root"):
+            template_data.pop(key, None)
 
         repre_context = template_filled.used_values
         for key in self.required_context_keys:
@@ -132,34 +129,40 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
                 continue
             repre_context[key] = template_data[key]
 
-        thumbnail_entity = {
-            "_id": thumbnail_id,
-            "type": "thumbnail",
-            "schema": "openpype:thumbnail-1.0",
-            "data": {
-                "template": thumbnail_template,
-                "template_data": repre_context
-            }
+        op_session = OperationsSession()
+
+        thumbnail_doc["data"] = {
+            "template": thumbnail_template,
+            "template_data": repre_context
         }
-        # Create thumbnail entity
-        legacy_io.insert_one(thumbnail_entity)
-        self.log.debug(
-            "Creating entity in database {}".format(str(thumbnail_entity))
+        op_session.create_entity(
+            project_name, thumbnail_doc["type"], thumbnail_doc
         )
+        # Create thumbnail entity
+        self.log.debug(
+            "Creating entity in database {}".format(str(thumbnail_doc))
+        )
+
         # Set thumbnail id for version
-        legacy_io.update_many(
-            {"_id": version["_id"]},
-            {"$set": {"data.thumbnail_id": thumbnail_id}}
+        op_session.update_entity(
+            project_name,
+            version["type"],
+            version["_id"],
+            {"data.thumbnail_id": thumbnail_id}
         )
         self.log.debug("Setting thumbnail for version \"{}\" <{}>".format(
             version["name"], str(version["_id"])
         ))
 
         asset_entity = instance.data["assetEntity"]
-        legacy_io.update_many(
-            {"_id": asset_entity["_id"]},
-            {"$set": {"data.thumbnail_id": thumbnail_id}}
+        op_session.update_entity(
+            project_name,
+            asset_entity["type"],
+            asset_entity["_id"],
+            {"data.thumbnail_id": thumbnail_id}
         )
         self.log.debug("Setting thumbnail for asset \"{}\" <{}>".format(
             asset_entity["name"], str(version["_id"])
         ))
+
+        op_session.commit()
