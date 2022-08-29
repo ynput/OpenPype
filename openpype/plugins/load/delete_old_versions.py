@@ -10,7 +10,7 @@ from Qt import QtWidgets, QtCore
 from openpype import style
 from openpype.client import get_versions, get_representations
 from openpype.modules import ModulesManager
-from openpype.lib import StringTemplate, format_file_size
+from openpype.lib import format_file_size
 from openpype.pipeline import load, AvalonMongoDB, Anatomy
 from openpype.pipeline.load import (
     get_representation_path_with_anatomy,
