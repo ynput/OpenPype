@@ -215,16 +215,21 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         renderlayer = instance.data['setMembers']       # rs_beauty
 
-        self.payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
-        self.payload_skeleton["PluginInfo"]["RenderSetupIncludeLights"] = instance.data.get("renderSetupIncludeLights") # noqa
-
         # Output driver to render
         plugin_info = DeadlinePluginInfo(
             SceneFile=context.data["currentFile"],
             Version=cmds.about(version=True),
+            RenderLayer=renderlayer,
+            RenderSetupIncludeLights=instance.data.get("renderSetupIncludeLights") # noqa
         )
 
-        return attr.asdict(plugin_info)
+        plugin_payload = attr.asdict(plugin_info)
+
+        # Patching with pluginInfo from settings
+        for key, value in self.pluginInfo.items():
+            plugin_payload[key] = value
+
+        return plugin_payload
 
     def process_submission(self):
 
@@ -337,10 +342,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
-
-        # add jobInfo and pluginInfo variables from Settings
-        payload["JobInfo"].update(self.jobInfo)
-        payload["PluginInfo"].update(self.pluginInfo)
 
         if instance.data.get("tileRendering"):
             # Prepare tiles data
