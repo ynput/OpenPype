@@ -140,7 +140,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     integrated_file_sizes = {}
 
     # Attributes set by settings
-    template_name_profiles = None
     subset_grouping_profiles = None
 
     def process(self, instance):
