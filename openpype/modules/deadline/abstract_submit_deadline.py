@@ -554,9 +554,9 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                     "Workfile (scene) must be published along")
                 # determine published path from Anatomy.
                 template_data = i.data.get("anatomyData")
-                rep = i.data.get("representations")[0].get("ext")
-                template_data["representation"] = rep
-                template_data["ext"] = rep
+                rep = i.data.get("representations")[0]
+                template_data["representation"] = rep.get("name")
+                template_data["ext"] = rep.get("ext")
                 template_data["comment"] = None
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled["publish"]["path"]

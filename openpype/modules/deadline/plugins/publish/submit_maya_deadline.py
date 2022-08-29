@@ -258,10 +258,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             )
             self._patch_workfile(filepath, patches)
 
-        # todo: on self.use_published originally use template_data["representation"] using .get("name") instead of .get("ext")
         # todo: on self.use_published replace path for publishRenderMetadataFolder
-        # rep = i.data.get("representations")[0].get("name")
-
         # if instance.data.get("publishRenderMetadataFolder"):
         #     instance.data["publishRenderMetadataFolder"] = \
         #         instance.data["publishRenderMetadataFolder"].replace(
