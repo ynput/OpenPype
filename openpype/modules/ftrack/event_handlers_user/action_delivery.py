@@ -22,9 +22,7 @@ from openpype.pipeline.delivery import (
     get_format_dict,
     check_destination_path,
     deliver_single_file,
-)
-from openpype.lib.delivery import (
-    process_sequence
+    deliver_sequence,
 )
 
 
@@ -598,7 +596,7 @@ class Delivery(BaseAction):
             if not frame:
                 deliver_single_file(*args)
             else:
-                process_sequence(*args)
+                deliver_sequence(*args)
 
         return self.report(report_items)
 

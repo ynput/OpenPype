@@ -17,9 +17,7 @@ from openpype.pipeline.delivery import (
     get_format_dict,
     check_destination_path,
     deliver_single_file,
-)
-from openpype.lib.delivery import (
-    process_sequence,
+    deliver_sequence,
 )
 
 
@@ -219,7 +217,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 if not frame:
                     new_report_items, uploaded = deliver_single_file(*args)
                 else:
-                    new_report_items, uploaded = process_sequence(*args)
+                    new_report_items, uploaded = deliver_sequence(*args)
                 report_items.update(new_report_items)
                 self._update_progress(uploaded)
 
