@@ -643,6 +643,10 @@
                     }
                 },
                 {
+                    "type": "label",
+                    "label": "<b>NOTE:</b> Publish template profiles settings were moved to <a href=\"settings://project_settings/global/tools/publish/template_name_profiles\"><b>Tools/Publish/Template name profiles</b></a>. Please move values there."
+                },
+                {
                     "type": "list",
                     "key": "template_name_profiles",
                     "label": "Template name profiles",
