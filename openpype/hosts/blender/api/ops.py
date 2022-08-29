@@ -1026,6 +1026,9 @@ class BuildWorkFile(bpy.types.Operator):
         execute_in_main_thread(mti)
         return {'FINISHED'}
 
+    def invoke(self, context, event):
+        return bpy.context.window_manager.invoke_confirm(self, event)
+
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
     """Avalon menu."""
