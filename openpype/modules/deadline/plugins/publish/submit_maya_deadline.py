@@ -305,7 +305,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "filename": filename,
             "filepath": filepath,
             "jobname": jobname,
-            "comment": comment,
             "output_filename_0": output_filename_0,
             "renderlayer": renderlayer,
             "workspace": workspace,
