@@ -10,7 +10,7 @@ from Qt import QtWidgets, QtCore
 from openpype.client import get_versions, get_representations
 from openpype import style
 from openpype.pipeline import load, AvalonMongoDB, Anatomy
-from openpype.lib import StringTemplate
+from openpype.lib import StringTemplate, format_file_size
 from openpype.modules import ModulesManager
 
 
@@ -37,13 +37,6 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             "remove_publish_folder", help="Remove publish folder:"
         )
     ]
-
-    def sizeof_fmt(self, num, suffix='B'):
-        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-            if abs(num) < 1024.0:
-                return "%3.1f%s%s" % (num, unit, suffix)
-            num /= 1024.0
-        return "%.1f%s%s" % (num, 'Yi', suffix)
 
     def delete_whole_dir_paths(self, dir_paths, delete=True):
         size = 0
@@ -456,7 +449,7 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                 size += self.main(project_name, data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))
 
-            msg = "Total size of files: " + self.sizeof_fmt(size)
+            msg = "Total size of files: {}".format(format_file_size(size))
             self.log.info(msg)
             self.message(msg)
 
