@@ -102,7 +102,6 @@ class CollectAERender(publish.AbstractCollectRender):
                 attachTo=False,
                 setMembers='',
                 publish=True,
-                renderer='aerender',
                 name=subset_name,
                 resolutionWidth=render_q.width,
                 resolutionHeight=render_q.height,
@@ -113,7 +112,6 @@ class CollectAERender(publish.AbstractCollectRender):
                 frameStart=frame_start,
                 frameEnd=frame_end,
                 frameStep=1,
-                toBeRenderedOn='deadline',
                 fps=fps,
                 app_version=app_version,
                 publish_attributes=inst.data.get("publish_attributes", {}),
@@ -138,6 +136,9 @@ class CollectAERender(publish.AbstractCollectRender):
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
+                instance.toBeRenderedOn = "deadline"
+                instance.renderer = "aerender"
+                instance.farm = True  # to skip integrate
 
             instances.append(instance)
             instances_to_remove.append(inst)

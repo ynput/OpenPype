@@ -1,3 +1,4 @@
+import os
 import copy
 
 from abc import (
@@ -7,10 +8,8 @@ from abc import (
 )
 import six
 
-from openpype.lib import (
-    get_subset_name_with_asset_doc,
-    set_plugin_attributes_from_settings,
-)
+from openpype.settings import get_system_settings, get_project_settings
+from openpype.lib import get_subset_name_with_asset_doc
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -416,6 +415,12 @@ class Creator(BaseCreator):
         return self.pre_create_attr_defs
 
 
+class HiddenCreator(BaseCreator):
+    @abstractmethod
+    def create(self, instance_data, source_data):
+        pass
+
+
 class AutoCreator(BaseCreator):
     """Creator which is automatically triggered without user interaction.
 
@@ -432,9 +437,53 @@ def discover_creator_plugins():
 
 
 def discover_legacy_creator_plugins():
+    from openpype.lib import Logger
+
+    log = Logger.get_logger("CreatorDiscover")
+
     plugins = discover(LegacyCreator)
-    set_plugin_attributes_from_settings(plugins, LegacyCreator)
+    project_name = os.environ.get("AVALON_PROJECT")
+    system_settings = get_system_settings()
+    project_settings = get_project_settings(project_name)
+    for plugin in plugins:
+        try:
+            plugin.apply_settings(project_settings, system_settings)
+        except Exception:
+            log.warning(
+                "Failed to apply settings to loader {}".format(
+                    plugin.__name__
+                ),
+                exc_info=True
+            )
     return plugins
+
+
+def get_legacy_creator_by_name(creator_name, case_sensitive=False):
+    """Find creator plugin by name.
+
+    Args:
+        creator_name (str): Name of creator class that should be returned.
+        case_sensitive (bool): Match of creator plugin name is case sensitive.
+            Set to `False` by default.
+
+    Returns:
+        Creator: Return first matching plugin or `None`.
+    """
+
+    # Lower input creator name if is not case sensitive
+    if not case_sensitive:
+        creator_name = creator_name.lower()
+
+    for creator_plugin in discover_legacy_creator_plugins():
+        _creator_name = creator_plugin.__name__
+
+        # Lower creator plugin name if is not case sensitive
+        if not case_sensitive:
+            _creator_name = _creator_name.lower()
+
+        if _creator_name == creator_name:
+            return creator_plugin
+    return None
 
 
 def register_creator_plugin(plugin):

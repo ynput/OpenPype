@@ -62,6 +62,7 @@ payload_skeleton_template = {
         "RenderLayer": None,  # Render only this layer
         "Renderer": None,
         "ProjectPath": None,  # Resolve relative references
+        "RenderSetupIncludeLights": None,  # Include all lights flag.
     },
     "AuxFiles": []  # Mandatory for Deadline, may be empty
 }
@@ -413,8 +414,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Gather needed data ------------------------------------------------
         default_render_file = instance.context.data.get('project_settings')\
             .get('maya')\
-            .get('create')\
-            .get('CreateRender')\
+            .get('RenderSettings')\
             .get('default_render_image_folder')
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
@@ -505,6 +505,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["Comment"] = comment
         self.payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
 
+        self.payload_skeleton["PluginInfo"]["RenderSetupIncludeLights"] = instance.data.get("renderSetupIncludeLights") # noqa
         # Adding file dependencies.
         dependencies = instance.context.data["fileDependencies"]
         dependencies.append(filepath)
@@ -519,12 +520,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
+            "OPENPYPE_SG_USER",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):

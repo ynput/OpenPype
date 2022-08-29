@@ -4,10 +4,10 @@ from collections import defaultdict
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_representations
-from openpype.lib import config
 from openpype.pipeline import load, Anatomy
 from openpype import resources, style
 
+from openpype.lib.dateutils import get_datetime_data
 from openpype.lib.delivery import (
     sizeof_fmt,
     path_from_representation,
@@ -160,7 +160,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         selected_repres = self._get_selected_repres()
 
-        datetime_data = config.get_datetime_data()
+        datetime_data = get_datetime_data()
         template_name = self.dropdown.currentText()
         format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
         for repre in self._representations:

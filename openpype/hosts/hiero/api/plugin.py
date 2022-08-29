@@ -9,10 +9,12 @@ from Qt import QtWidgets, QtCore
 import qargparse
 
 import openpype.api as openpype
+from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
+from openpype.pipeline.context_tools import get_current_project_asset
 from . import lib
 
-log = openpype.Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def load_stylesheet():
@@ -484,7 +486,7 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        asset_doc = openpype.get_asset(asset_name)
+        asset_doc = get_current_project_asset(asset_name)
         log.debug("__ asset_doc: {}".format(pformat(asset_doc)))
         self.data["assetData"] = asset_doc["data"]
 

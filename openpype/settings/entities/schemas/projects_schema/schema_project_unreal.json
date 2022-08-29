@@ -6,6 +6,11 @@
     "is_file": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "level_sequences_for_layouts",
+            "label": "Generate level sequences when loading layouts"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "project_setup",

@@ -2,6 +2,7 @@ import os
 import copy
 import logging
 
+from openpype.client import get_project
 from . import legacy_io
 from .plugin_discover import (
     discover,
@@ -85,13 +86,8 @@ class TemplateResolver(ThumbnailResolver):
             self.log.debug("Thumbnail entity does not have set template")
             return
 
-        project = self.dbcon.find_one(
-            {"type": "project"},
-            {
-                "name": True,
-                "data.code": True
-            }
-        )
+        project_name = self.dbcon.active_project()
+        project = get_project(project_name, fields=["name", "data.code"])
 
         template_data = copy.deepcopy(
             thumbnail_entity["data"].get("template_data") or {}

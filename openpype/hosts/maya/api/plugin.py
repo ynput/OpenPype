@@ -4,6 +4,7 @@ from maya import cmds
 
 import qargparse
 
+from openpype.lib import Logger
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -50,9 +51,7 @@ def get_reference_node(members, log=None):
     # Warn the user when we're taking the highest reference node
     if len(references) > 1:
         if not log:
-            from openpype.lib import PypeLogger
-
-            log = PypeLogger().get_logger(__name__)
+            log = Logger.get_logger(__name__)
 
         log.warning("More than one reference node found in "
                     "container, using highest reference node: "
@@ -208,7 +207,8 @@ class ReferenceLoader(Loader):
         file_type = {
             "ma": "mayaAscii",
             "mb": "mayaBinary",
-            "abc": "Alembic"
+            "abc": "Alembic",
+            "fbx": "FBX"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation
@@ -234,7 +234,7 @@ class ReferenceLoader(Loader):
             path = self.prepare_root_value(path,
                                            representation["context"]
                                                          ["project"]
-                                                         ["code"])
+                                                         ["name"])
             content = cmds.file(path,
                                 loadReference=reference_node,
                                 type=file_type,

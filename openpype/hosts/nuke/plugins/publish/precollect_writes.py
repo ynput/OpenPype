@@ -144,8 +144,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             self.log.debug("colorspace: `{}`".format(colorspace))
 
         version_data = {
-            "families": [f.replace(".local", "").replace(".farm", "")
-                         for f in _families_test if "write" not in f],
+            "families": [
+                _f.replace(".local", "").replace(".farm", "")
+                for _f in _families_test if "write" != _f
+            ],
             "colorspace": colorspace
         }
 

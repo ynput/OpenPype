@@ -6,6 +6,10 @@ import xml.etree.ElementTree
 
 import six
 import pyblish.plugin
+import pyblish.api
+
+from openpype.lib import Logger
+from openpype.settings import get_project_settings, get_system_settings
 
 
 class DiscoverResult:
@@ -180,3 +184,132 @@ def publish_plugins_discover(paths=None):
     result.plugins = plugins
 
     return result
+
+
+def filter_pyblish_plugins(plugins):
+    """Pyblish plugin filter which applies OpenPype settings.
+
+    Apply OpenPype settings on discovered plugins. On plugin with implemented
+    class method 'def apply_settings(cls, project_settings, system_settings)'
+    is called the method. Default behavior looks for plugin name and current
+    host name to look for
+
+    Args:
+        plugins (List[pyblish.plugin.Plugin]): Discovered plugins on which
+            are applied settings.
+    """
+
+    log = Logger.get_logger("filter_pyblish_plugins")
+
+    # TODO: Don't use host from 'pyblish.api' but from defined host by us.
+    #   - kept becau on farm is probably used host 'shell' which propably
+    #       affect how settings are applied there
+    host = pyblish.api.current_host()
+    project_name = os.environ.get("AVALON_PROJECT")
+
+    project_setting = get_project_settings(project_name)
+    system_settings = get_system_settings()
+
+    # iterate over plugins
+    for plugin in plugins[:]:
+        if hasattr(plugin, "apply_settings"):
+            try:
+                # Use classmethod 'apply_settings'
+                # - can be used to target settings from custom settings place
+                # - skip default behavior when successful
+                plugin.apply_settings(project_setting, system_settings)
+                continue
+
+            except Exception:
+                log.warning(
+                    (
+                        "Failed to apply settings on plugin {}"
+                    ).format(plugin.__name__),
+                    exc_info=True
+                )
+
+        try:
+            config_data = (
+                project_setting
+                [host]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            # host determined from path
+            file = os.path.normpath(inspect.getsourcefile(plugin))
+            file = os.path.normpath(file)
+
+            split_path = file.split(os.path.sep)
+            if len(split_path) < 4:
+                log.warning(
+                    'plugin path too short to extract host {}'.format(file)
+                )
+                continue
+
+            host_from_file = split_path[-4]
+            plugin_kind = split_path[-2]
+
+            # TODO: change after all plugins are moved one level up
+            if host_from_file == "openpype":
+                host_from_file = "global"
+
+            try:
+                config_data = (
+                    project_setting
+                    [host_from_file]
+                    [plugin_kind]
+                    [plugin.__name__]
+                )
+            except KeyError:
+                continue
+
+        for option, value in config_data.items():
+            if option == "enabled" and value is False:
+                log.info('removing plugin {}'.format(plugin.__name__))
+                plugins.remove(plugin)
+            else:
+                log.info('setting {}:{} on plugin {}'.format(
+                    option, value, plugin.__name__))
+
+                setattr(plugin, option, value)
+
+
+def find_close_plugin(close_plugin_name, log):
+    if close_plugin_name:
+        plugins = pyblish.api.discover()
+        for plugin in plugins:
+            if plugin.__name__ == close_plugin_name:
+                return plugin
+
+    log.debug("Close plugin not found, app might not close.")
+
+
+def remote_publish(log, close_plugin_name=None, raise_error=False):
+    """Loops through all plugins, logs to console. Used for tests.
+
+        Args:
+            log (openpype.lib.Logger)
+            close_plugin_name (str): name of plugin with responsibility to
+                close host app
+    """
+    # Error exit as soon as any error occurs.
+    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+    close_plugin = find_close_plugin(close_plugin_name, log)
+
+    for result in pyblish.util.publish_iter():
+        for record in result["records"]:
+            log.info("{}: {}".format(
+                result["plugin"].label, record.msg))
+
+        if result["error"]:
+            error_message = error_format.format(**result)
+            log.error(error_message)
+            if close_plugin:  # close host app explicitly after error
+                context = pyblish.api.Context()
+                close_plugin().process(context)
+            if raise_error:
+                # Fatal Error is because of Deadline
+                error_message = "Fatal Error: " + error_format.format(**result)
+                raise RuntimeError(error_message)

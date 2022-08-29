@@ -12,10 +12,11 @@ from ..lib import credentials
 from ..ftrack_module import FTRACK_MODULE_DIR
 from . import login_dialog
 
-from openpype.api import Logger, resources
+from openpype import resources
+from openpype.lib import Logger
 
 
-log = Logger().get_logger("FtrackModule")
+log = Logger.get_logger("FtrackModule")
 
 
 class FtrackTrayWrapper:

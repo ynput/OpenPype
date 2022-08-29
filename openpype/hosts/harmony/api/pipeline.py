@@ -4,25 +4,24 @@ import logging
 
 import pyblish.api
 
-from openpype import lib
-from openpype.client import get_representation_by_id
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-import openpype.hosts.harmony
+from openpype.pipeline.load import get_outdated_containers
+from openpype.pipeline.context_tools import get_current_project_asset
+
+from openpype.hosts.harmony import HARMONY_HOST_DIR
 import openpype.hosts.harmony.api as harmony
 
 
 log = logging.getLogger("openpype.hosts.harmony")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.harmony.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(HARMONY_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -50,7 +49,9 @@ def get_asset_settings():
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+
+    asset_doc = get_current_project_asset()
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
@@ -105,16 +106,7 @@ def check_inventory():
     in Harmony.
     """
 
-    project_name = legacy_io.active_project()
-    outdated_containers = []
-    for container in ls():
-        representation_id = container['representation']
-        representation_doc = get_representation_by_id(
-            project_name, representation_id, fields=["parent"]
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
+    outdated_containers = get_outdated_containers()
     if not outdated_containers:
         return
 

@@ -1,18 +1,20 @@
 import os
 import datetime
+import copy
 from Qt import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
-    get_asset_by_id,
     get_asset_by_name,
     get_workfile_info,
 )
+from openpype.client.operations import (
+    OperationsSession,
+    new_workfile_info_doc,
+    prepare_workfile_info_update_data,
+)
 from openpype import style
 from openpype import resources
-from openpype.lib import (
-    create_workfile_doc,
-    save_workfile_data_to_doc,
-)
+from openpype.pipeline import Anatomy
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
@@ -324,10 +326,23 @@ class Window(QtWidgets.QWidget):
         workfile_doc, data = self.side_panel.get_workfile_data()
         if not workfile_doc:
             filepath = self.files_widget._get_selected_filepath()
-            self._create_workfile_doc(filepath, force=True)
-            workfile_doc = self._get_current_workfile_doc()
+            workfile_doc = self._create_workfile_doc(filepath)
 
-        save_workfile_data_to_doc(workfile_doc, data, legacy_io)
+        new_workfile_doc = copy.deepcopy(workfile_doc)
+        new_workfile_doc["data"] = data
+        update_data = prepare_workfile_info_update_data(
+            workfile_doc, new_workfile_doc
+        )
+        if not update_data:
+            return
+
+        project_name = legacy_io.active_project()
+
+        session = OperationsSession()
+        session.update_entity(
+            project_name, "workfile", workfile_doc["_id"], update_data
+        )
+        session.commit()
 
     def _get_current_workfile_doc(self, filepath=None):
         if filepath is None:
@@ -343,20 +358,32 @@ class Window(QtWidgets.QWidget):
             project_name, asset_id, task_name, filename
         )
 
-    def _create_workfile_doc(self, filepath, force=False):
-        workfile_doc = None
-        if not force:
-            workfile_doc = self._get_current_workfile_doc(filepath)
+    def _create_workfile_doc(self, filepath):
+        workfile_doc = self._get_current_workfile_doc(filepath)
+        if workfile_doc:
+            return workfile_doc
 
-        if not workfile_doc:
-            workdir, filename = os.path.split(filepath)
-            asset_id = self.assets_widget.get_selected_asset_id()
-            project_name = legacy_io.active_project()
-            asset_doc = get_asset_by_id(project_name, asset_id)
-            task_name = self.tasks_widget.get_selected_task_name()
-            create_workfile_doc(
-                asset_doc, task_name, filename, workdir, legacy_io
-            )
+        workdir, filename = os.path.split(filepath)
+
+        project_name = legacy_io.active_project()
+        asset_id = self.assets_widget.get_selected_asset_id()
+        task_name = self.tasks_widget.get_selected_task_name()
+
+        anatomy = Anatomy(project_name)
+        success, rootless_dir = anatomy.find_root_template_from_path(workdir)
+        filepath = "/".join([
+            os.path.normpath(rootless_dir).replace("\\", "/"),
+            filename
+        ])
+
+        workfile_doc = new_workfile_info_doc(
+            filename, asset_id, task_name, [filepath]
+        )
+
+        session = OperationsSession()
+        session.create_entity(project_name, "workfile", workfile_doc)
+        session.commit()
+        return workfile_doc
 
     def refresh(self):
         # Refresh asset widget

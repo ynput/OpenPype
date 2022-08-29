@@ -1,29 +1,72 @@
 # -*- coding: utf-8 -*-
 """Avalon/Pyblish plugin tools."""
 import os
-import inspect
 import logging
 import re
 import json
 
+import warnings
+import functools
+
 from openpype.client import get_asset_by_id
 from openpype.settings import get_project_settings
 
-from .profiles_filtering import filter_profiles
-
 log = logging.getLogger(__name__)
 
-# Subset name template used when plugin does not have defined any
-DEFAULT_SUBSET_TEMPLATE = "{family}{Variant}"
+
+class PluginToolsDeprecatedWarning(DeprecationWarning):
+    pass
 
 
-class TaskNotSetError(KeyError):
-    def __init__(self, msg=None):
-        if not msg:
-            msg = "Creator's subset name template requires task name."
-        super(TaskNotSetError, self).__init__(msg)
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", PluginToolsDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=PluginToolsDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
+@deprecated("openpype.pipeline.create.TaskNotSetError")
+def TaskNotSetError(*args, **kwargs):
+    from openpype.pipeline.create import TaskNotSetError
+
+    return TaskNotSetError(*args, **kwargs)
+
+
+@deprecated("openpype.pipeline.create.get_subset_name")
 def get_subset_name_with_asset_doc(
     family,
     variant,
@@ -62,61 +105,22 @@ def get_subset_name_with_asset_doc(
         dbcon (AvalonMongoDB): Mongo connection to be able query asset document
             if 'asset_doc' is not passed.
     """
-    if not family:
-        return ""
 
-    if not host_name:
-        host_name = os.environ["AVALON_APP"]
+    from openpype.pipeline.create import get_subset_name
 
-    # Use only last part of class family value split by dot (`.`)
-    family = family.rsplit(".", 1)[-1]
-
-    if project_name is None:
-        from openpype.pipeline import legacy_io
-
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
-
-    # Get settings
-    tools_settings = get_project_settings(project_name)["global"]["tools"]
-    profiles = tools_settings["creator"]["subset_name_profiles"]
-    filtering_criteria = {
-        "families": family,
-        "hosts": host_name,
-        "tasks": task_name,
-        "task_types": task_type
-    }
-
-    matching_profile = filter_profiles(profiles, filtering_criteria)
-    template = None
-    if matching_profile:
-        template = matching_profile["template"]
-
-    # Make sure template is set (matching may have empty string)
-    if not template:
-        template = default_template or DEFAULT_SUBSET_TEMPLATE
-
-    # Simple check of task name existence for template with {task} in
-    #   - missing task should be possible only in Standalone publisher
-    if not task_name and "{task" in template.lower():
-        raise TaskNotSetError()
-
-    fill_pairs = {
-        "variant": variant,
-        "family": family,
-        "task": task_name
-    }
-    if dynamic_data:
-        # Dynamic data may override default values
-        for key, value in dynamic_data.items():
-            fill_pairs[key] = value
-
-    return template.format(**prepare_template_data(fill_pairs))
+    return get_subset_name(
+        family,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data
+    )
 
 
+@deprecated
 def get_subset_name(
     family,
     variant,
@@ -136,16 +140,18 @@ def get_subset_name(
     `get_subset_name_with_asset_doc` where asset document is expected.
     """
 
+    from openpype.pipeline.create import get_subset_name
+
     if project_name is None:
         project_name = dbcon.project_name
 
     asset_doc = get_asset_by_id(project_name, asset_id, fields=["data.tasks"])
 
-    return get_subset_name_with_asset_doc(
+    return get_subset_name(
         family,
         variant,
         task_name,
-        asset_doc or {},
+        asset_doc,
         project_name,
         host_name,
         default_template,
@@ -197,6 +203,7 @@ def prepare_template_data(fill_pairs):
     return fill_data
 
 
+@deprecated("openpype.pipeline.publish.lib.filter_pyblish_plugins")
 def filter_pyblish_plugins(plugins):
     """Filter pyblish plugins by presets.
 
@@ -207,56 +214,16 @@ def filter_pyblish_plugins(plugins):
         plugins (dict): Dictionary of plugins produced by :mod:`pyblish-base`
             `discover()` method.
 
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
-    from pyblish import api
 
-    host = api.current_host()
+    from openpype.pipeline.publish.lib import filter_pyblish_plugins
 
-    presets = get_project_settings(os.environ['AVALON_PROJECT']) or {}
-    # skip if there are no presets to process
-    if not presets:
-        return
-
-    # iterate over plugins
-    for plugin in plugins[:]:
-
-        try:
-            config_data = presets[host]["publish"][plugin.__name__]
-        except KeyError:
-            # host determined from path
-            file = os.path.normpath(inspect.getsourcefile(plugin))
-            file = os.path.normpath(file)
-
-            split_path = file.split(os.path.sep)
-            if len(split_path) < 4:
-                log.warning(
-                    'plugin path too short to extract host {}'.format(file)
-                )
-                continue
-
-            host_from_file = split_path[-4]
-            plugin_kind = split_path[-2]
-
-            # TODO: change after all plugins are moved one level up
-            if host_from_file == "openpype":
-                host_from_file = "global"
-
-            try:
-                config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
-            except KeyError:
-                continue
-
-        for option, value in config_data.items():
-            if option == "enabled" and value is False:
-                log.info('removing plugin {}'.format(plugin.__name__))
-                plugins.remove(plugin)
-            else:
-                log.info('setting {}:{} on plugin {}'.format(
-                    option, value, plugin.__name__))
-
-                setattr(plugin, option, value)
+    filter_pyblish_plugins(plugins)
 
 
+@deprecated
 def set_plugin_attributes_from_settings(
     plugins, superclass, host_name=None, project_name=None
 ):
@@ -272,7 +239,12 @@ def set_plugin_attributes_from_settings(
             Value from environment `AVALON_APP` is used if not entered.
         project_name (str): Name of project for which settings will be loaded.
             Value from environment `AVALON_PROJECT` is used if not entered.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
+
+    # Function is not used anymore
     from openpype.pipeline import LegacyCreator, LoaderPlugin
 
     # determine host application to use for finding presets
@@ -366,102 +338,3 @@ def source_hash(filepath, *args):
     time = str(os.path.getmtime(filepath))
     size = str(os.path.getsize(filepath))
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
-
-
-def get_unique_layer_name(layers, name):
-    """
-        Gets all layer names and if 'name' is present in them, increases
-        suffix by 1 (eg. creates unique layer name - for Loader)
-    Args:
-        layers (list): of strings, names only
-        name (string):  checked value
-
-    Returns:
-        (string): name_00X (without version)
-    """
-    names = {}
-    for layer in layers:
-        layer_name = re.sub(r'_\d{3}$', '', layer)
-        if layer_name in names.keys():
-            names[layer_name] = names[layer_name] + 1
-        else:
-            names[layer_name] = 1
-    occurrences = names.get(name, 0)
-
-    return "{}_{:0>3d}".format(name, occurrences + 1)
-
-
-def get_background_layers(file_url):
-    """
-        Pulls file name from background json file, enrich with folder url for
-        AE to be able import files.
-
-        Order is important, follows order in json.
-
-        Args:
-            file_url (str): abs url of background json
-
-        Returns:
-            (list): of abs paths to images
-    """
-    with open(file_url) as json_file:
-        data = json.load(json_file)
-
-    layers = list()
-    bg_folder = os.path.dirname(file_url)
-    for child in data['children']:
-        if child.get("filename"):
-            layers.append(os.path.join(bg_folder, child.get("filename")).
-                          replace("\\", "/"))
-        else:
-            for layer in child['children']:
-                if layer.get("filename"):
-                    layers.append(os.path.join(bg_folder,
-                                               layer.get("filename")).
-                                  replace("\\", "/"))
-    return layers
-
-
-def parse_json(path):
-    """Parses json file at 'path' location
-
-        Returns:
-            (dict) or None if unparsable
-        Raises:
-            AsssertionError if 'path' doesn't exist
-    """
-    path = path.strip('\"')
-    assert os.path.isfile(path), (
-        "Path to json file doesn't exist. \"{}\"".format(path)
-    )
-    data = None
-    with open(path, "r") as json_file:
-        try:
-            data = json.load(json_file)
-        except Exception as exc:
-            log.error(
-                "Error loading json: "
-                "{} - Exception: {}".format(path, exc)
-            )
-    return data
-
-
-def get_batch_asset_task_info(ctx):
-    """Parses context data from webpublisher's batch metadata
-
-        Returns:
-            (tuple): asset, task_name (Optional), task_type
-    """
-    task_type = "default_task_type"
-    task_name = None
-    asset = None
-
-    if ctx["type"] == "task":
-        items = ctx["path"].split('/')
-        asset = items[-2]
-        task_name = ctx["name"]
-        task_type = ctx["attributes"]["type"]
-    else:
-        asset = ctx["name"]
-
-    return asset, task_name, task_type

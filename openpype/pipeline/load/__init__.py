@@ -16,6 +16,7 @@ from .utils import (
     switch_container,
 
     get_loader_identifier,
+    get_loaders_by_name,
 
     get_representation_path_from_context,
     get_representation_path,
@@ -24,6 +25,10 @@ from .utils import (
 
     loaders_from_repre_context,
     loaders_from_representation,
+
+    any_outdated_containers,
+    get_outdated_containers,
+    filter_containers,
 )
 
 from .plugins import (
@@ -57,6 +62,7 @@ __all__ = (
     "switch_container",
 
     "get_loader_identifier",
+    "get_loaders_by_name",
 
     "get_representation_path_from_context",
     "get_representation_path",
@@ -65,6 +71,10 @@ __all__ = (
 
     "loaders_from_repre_context",
     "loaders_from_representation",
+
+    "any_outdated_containers",
+    "get_outdated_containers",
+    "filter_containers",
 
     # plugins.py
     "LoaderPlugin",

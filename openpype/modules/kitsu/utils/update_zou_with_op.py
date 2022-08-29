@@ -6,6 +6,11 @@ from typing import List
 import gazu
 from pymongo import UpdateOne
 
+from openpype.client import (
+    get_projects,
+    get_project,
+    get_assets,
+)
 from openpype.pipeline import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
@@ -36,7 +41,7 @@ def sync_zou(login: str, password: str):
     dbcon = AvalonMongoDB()
     dbcon.install()
 
-    op_projects = [p for p in dbcon.projects()]
+    op_projects = list(get_projects())
     for project_doc in op_projects:
         sync_zou_from_op_project(project_doc["name"], dbcon, project_doc)
 
@@ -53,9 +58,7 @@ def sync_zou_from_op_project(
     """
     # Get project doc if not provided
     if not project_doc:
-        project_doc = dbcon.database[project_name].find_one(
-            {"type": "project"}
-        )
+        project_doc = get_project(project_name)
 
     # Get all entities from zou
     print(f"Synchronizing {project_name}...")
@@ -96,7 +99,7 @@ def sync_zou_from_op_project(
     dbcon.Session["AVALON_PROJECT"] = project_name
     asset_docs = {
         asset_doc["_id"]: asset_doc
-        for asset_doc in dbcon.find({"type": "asset"})
+        for asset_doc in get_assets(project_name)
     }
 
     # Create new assets

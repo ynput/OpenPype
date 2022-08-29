@@ -5,19 +5,6 @@ import sys
 import json
 import time
 
-from openpype.lib import PypeLogger
-from openpype.api import get_app_environments_for_context
-from openpype.lib.plugin_tools import get_batch_asset_task_info
-from openpype.lib.remote_publish import (
-    get_webpublish_conn,
-    start_webpublish_log,
-    publish_and_log,
-    fail_batch,
-    find_variant_key,
-    get_task_data,
-    IN_PROGRESS_STATUS
-)
-
 
 class PypeCommands:
     """Class implementing commands used by Pype.
@@ -26,9 +13,10 @@ class PypeCommands:
     """
     @staticmethod
     def launch_tray():
-        PypeLogger.set_process_name("Tray")
-
+        from openpype.lib import Logger
         from openpype.tools import tray
+
+        Logger.set_process_name("Tray")
 
         tray.main()
 
@@ -46,10 +34,12 @@ class PypeCommands:
     @staticmethod
     def add_modules(click_func):
         """Modules/Addons can add their cli commands dynamically."""
+
+        from openpype.lib import Logger
         from openpype.modules import ModulesManager
 
         manager = ModulesManager()
-        log = PypeLogger.get_logger("AddModulesCLI")
+        log = Logger.get_logger("CLI-AddModules")
         for module in manager.modules:
             try:
                 module.cli(click_func)
@@ -71,14 +61,9 @@ class PypeCommands:
 
     @staticmethod
     def launch_webpublisher_webservercli(*args, **kwargs):
-        from openpype.hosts.webpublisher.webserver_service.webserver_cli \
-            import (run_webserver)
-        return run_webserver(*args, **kwargs)
+        from openpype.hosts.webpublisher.webserver_service import run_webserver
 
-    @staticmethod
-    def launch_standalone_publisher():
-        from openpype.tools import standalonepublish
-        standalonepublish.main()
+        return run_webserver(*args, **kwargs)
 
     @staticmethod
     def launch_traypublisher():
@@ -100,10 +85,11 @@ class PypeCommands:
         Raises:
             RuntimeError: When there is no path to process.
         """
+
+        from openpype.lib import Logger
+        from openpype.lib.applications import get_app_environments_for_context
         from openpype.modules import ModulesManager
         from openpype.pipeline import install_openpype_plugins
-
-        from openpype.api import Logger
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
 
@@ -111,7 +97,7 @@ class PypeCommands:
         import pyblish.api
         import pyblish.util
 
-        log = Logger.get_logger()
+        log = Logger.get_logger("CLI-publish")
 
         install_openpype_plugins()
 
@@ -170,7 +156,7 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def remotepublishfromapp(project, batch_path, host_name,
+    def remotepublishfromapp(project_name, batch_path, host_name,
                              user_email, targets=None):
         """Opens installed variant of 'host' and run remote publish there.
 
@@ -189,8 +175,8 @@ class PypeCommands:
         Runs publish process as user would, in automatic fashion.
 
         Args:
-            project (str): project to publish (only single context is expected
-                per call of remotepublish
+            project_name (str): project to publish (only single context is
+                expected per call of remotepublish
             batch_path (str): Path batch folder. Contains subfolders with
                 resources (workfile, another subfolder 'renders' etc.)
             host_name (str): 'photoshop'
@@ -199,78 +185,14 @@ class PypeCommands:
             targets (list): Pyblish targets
                 (to choose validator for example)
         """
-        import pyblish.api
-        from openpype.api import Logger
-        from openpype.lib import ApplicationManager
 
-        log = Logger.get_logger()
-
-        log.info("remotepublishphotoshop command")
-
-        task_data = get_task_data(batch_path)
-
-        workfile_path = os.path.join(batch_path,
-                                     task_data["task"],
-                                     task_data["files"][0])
-
-        print("workfile_path {}".format(workfile_path))
-
-        batch_id = task_data["batch"]
-        dbcon = get_webpublish_conn()
-        # safer to start logging here, launch might be broken altogether
-        _id = start_webpublish_log(dbcon, batch_id, user_email)
-
-        batches_in_progress = list(dbcon.find({"status": IN_PROGRESS_STATUS}))
-        if len(batches_in_progress) > 1:
-            fail_batch(_id, batches_in_progress, dbcon)
-            print("Another batch running, probably stuck, ask admin for help")
-
-        asset, task_name, _ = get_batch_asset_task_info(task_data["context"])
-
-        application_manager = ApplicationManager()
-        found_variant_key = find_variant_key(application_manager, host_name)
-        app_name = "{}/{}".format(host_name, found_variant_key)
-
-        # must have for proper launch of app
-        env = get_app_environments_for_context(
-            project,
-            asset,
-            task_name,
-            app_name
+        from openpype.hosts.webpublisher.cli_functions import (
+            cli_publish_from_app
         )
-        print("env:: {}".format(env))
-        os.environ.update(env)
 
-        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-        # must pass identifier to update log lines for a batch
-        os.environ["BATCH_LOG_ID"] = str(_id)
-        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
-        os.environ["USER_EMAIL"] = user_email
-
-        pyblish.api.register_host(host_name)
-        if targets:
-            if isinstance(targets, str):
-                targets = [targets]
-            current_targets = os.environ.get("PYBLISH_TARGETS", "").split(
-                os.pathsep)
-            for target in targets:
-                current_targets.append(target)
-
-            os.environ["PYBLISH_TARGETS"] = os.pathsep.join(
-                set(current_targets))
-
-        data = {
-            "last_workfile_path": workfile_path,
-            "start_last_workfile": True,
-            "project_name": project,
-            "asset_name": asset,
-            "task_name": task_name
-        }
-
-        launched_app = application_manager.launch(app_name, **data)
-
-        while launched_app.poll() is None:
-            time.sleep(0.5)
+        cli_publish_from_app(
+            project_name, batch_path, host_name, user_email, targets
+        )
 
     @staticmethod
     def remotepublish(project, batch_path, user_email, targets=None):
@@ -294,46 +216,12 @@ class PypeCommands:
         Raises:
             RuntimeError: When there is no path to process.
         """
-        if not batch_path:
-            raise RuntimeError("No publish paths specified")
 
-        # Register target and host
-        import pyblish.api
-        import pyblish.util
+        from openpype.hosts.webpublisher.cli_functions import (
+            cli_publish
+        )
 
-        from openpype.pipeline import install_host
-        from openpype.hosts.webpublisher import api as webpublisher
-
-        log = PypeLogger.get_logger()
-
-        log.info("remotepublish command")
-
-        host_name = "webpublisher"
-        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-        os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host_name
-        os.environ["USER_EMAIL"] = user_email
-        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
-
-        pyblish.api.register_host(host_name)
-
-        if targets:
-            if isinstance(targets, str):
-                targets = [targets]
-            for target in targets:
-                pyblish.api.register_target(target)
-
-        install_host(webpublisher)
-
-        log.info("Running publish ...")
-
-        _, batch_id = os.path.split(batch_path)
-        dbcon = get_webpublish_conn()
-        _id = start_webpublish_log(dbcon, batch_id, user_email)
-
-        publish_and_log(dbcon, _id, log, batch_id=batch_id)
-
-        log.info("Publish finished.")
+        cli_publish(project, batch_path, user_email, targets)
 
     @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app,
@@ -342,8 +230,10 @@ class PypeCommands:
 
         Called by Deadline plugin to propagate environment into render jobs.
         """
+
+        from openpype.lib.applications import get_app_environments_for_context
+
         if all((project, asset, task, app)):
-            from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(
                 project, asset, task, app, env_group
             )
@@ -445,7 +335,6 @@ class PypeCommands:
         sync_server_module.server_init()
         sync_server_module.server_start()
 
-        import time
         while True:
             time.sleep(1.0)
 

@@ -109,7 +109,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "clipAnnotations": annotations,
 
                 # add all additional tags
-                "tags": phiero.get_track_item_tags(track_item)
+                "tags": phiero.get_track_item_tags(track_item),
+                "newAssetPublishing": True
             })
 
             # otio clip data
