@@ -547,7 +547,10 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         file_path = None
         for i in self._instance.context:
 
-            is_workfile =
+            is_workfile = (
+                    "workfile" in i.data.get("families", []) or
+                    i.data["family"] == "workfile"
+            )
             if not is_workfile:
                 continue
 
