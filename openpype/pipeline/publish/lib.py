@@ -21,7 +21,9 @@ from .contants import (
 )
 
 
-def get_template_name_profiles(project_name=None, project_settings=None):
+def get_template_name_profiles(
+    project_name, project_settings=None, logger=None
+):
     """Receive profiles for publish template keys.
 
     At least one of arguments must be passed.
@@ -62,6 +64,16 @@ def get_template_name_profiles(project_name=None, project_settings=None):
         ["IntegrateAssetNew"]
         ["template_name_profiles"]
     )
+    if legacy_profiles:
+        if not logger:
+            logger = Logger.get_logger("get_template_name_profiles")
+
+        logger.warning((
+            "Project \"{}\" is using legacy access to publish template."
+            " It is recommended to move settings to new location"
+            " 'project_settings/global/tools/publish/template_name_profiles'."
+        ).format(project_name))
+
     # Replace "tasks" key with "task_names"
     profiles = []
     for profile in copy.deepcopy(legacy_profiles):
@@ -70,7 +82,9 @@ def get_template_name_profiles(project_name=None, project_settings=None):
     return profiles
 
 
-def get_hero_template_name_profiles(project_name=None, project_settings=None):
+def get_hero_template_name_profiles(
+    project_name, project_settings=None, logger=None
+):
     """Receive profiles for hero publish template keys.
 
     At least one of arguments must be passed.
@@ -104,13 +118,24 @@ def get_hero_template_name_profiles(project_name=None, project_settings=None):
 
     # Use legacy approach for cases new settings are not filled yet for the
     #   project
-    return copy.deepcopy(
+    legacy_profiles = copy.deepcopy(
         project_settings
         ["global"]
         ["publish"]
         ["IntegrateHeroVersion"]
         ["template_name_profiles"]
     )
+    if legacy_profiles:
+        if not logger:
+            logger = Logger.get_logger("get_hero_template_name_profiles")
+
+        logger.warning((
+            "Project \"{}\" is using legacy access to hero publish template."
+            " It is recommended to move settings to new location"
+            " 'project_settings/global/tools/publish/"
+            "hero_template_name_profiles'."
+        ).format(project_name))
+    return legacy_profiles
 
 
 def get_publish_template_name(
@@ -155,12 +180,12 @@ def get_publish_template_name(
     if hero:
         default_template = DEFAULT_HERO_PUBLISH_TEMPLATE
         profiles = get_hero_template_name_profiles(
-            project_name, project_settings
+            project_name, project_settings, logger
         )
 
     else:
         profiles = get_template_name_profiles(
-            project_name, project_settings
+            project_name, project_settings, logger
         )
         default_template = DEFAULT_PUBLISH_TEMPLATE
 
