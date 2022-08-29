@@ -4,6 +4,7 @@ import logging
 
 from openpype.client import get_project
 from . import legacy_io
+from .anatomy import Anatomy
 from .plugin_discover import (
     discover,
     register_plugin,
@@ -89,6 +90,7 @@ class TemplateResolver(ThumbnailResolver):
 
         project_name = self.dbcon.active_project()
         project = get_project(project_name, fields=["name", "data.code"])
+        anatomy = Anatomy(project_name)
 
         template_data = copy.deepcopy(
             thumbnail_entity["data"].get("template_data") or {}
@@ -100,7 +102,8 @@ class TemplateResolver(ThumbnailResolver):
             "project": {
                 "name": project["name"],
                 "code": project["data"].get("code")
-            }
+            },
+            "root": anatomy.roots
         })
 
         try:
