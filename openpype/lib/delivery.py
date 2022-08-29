@@ -4,6 +4,8 @@ import shutil
 import glob
 import clique
 import collections
+import functools
+import warnings
 
 from .path_templates import (
     StringTemplate,
@@ -11,6 +13,52 @@ from .path_templates import (
 )
 
 
+class DeliveryDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", DeliveryDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=DeliveryDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
+
+
+@deprecated("openpype.lib.path_tools.collect_frames")
 def collect_frames(files):
     """
         Returns dict of source path and its frame, if from sequence
@@ -26,34 +74,18 @@ def collect_frames(files):
         Returns:
             (dict): {'/asset/subset_v001.0001.png': '0001', ....}
     """
-    patterns = [clique.PATTERNS["frames"]]
-    collections, remainder = clique.assemble(files, minimum_items=1,
-                                             patterns=patterns)
 
-    sources_and_frames = {}
-    if collections:
-        for collection in collections:
-            src_head = collection.head
-            src_tail = collection.tail
+    from .path_tools import collect_frames
 
-            for index in collection.indexes:
-                src_frame = collection.format("{padding}") % index
-                src_file_name = "{}{}{}".format(src_head, src_frame,
-                                                src_tail)
-                sources_and_frames[src_file_name] = src_frame
-    else:
-        sources_and_frames[remainder.pop()] = None
-
-    return sources_and_frames
+    return collect_frames(files)
 
 
-def sizeof_fmt(num, suffix='B'):
+@deprecated("openpype.lib.path_tools.format_file_size")
+def sizeof_fmt(num, suffix=None):
     """Returns formatted string with size in appropriate unit"""
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+    from .path_tools import format_file_size
+    return format_file_size(num, suffix)
 
 
 def path_from_representation(representation, anatomy):
