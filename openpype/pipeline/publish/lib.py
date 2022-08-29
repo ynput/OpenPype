@@ -15,7 +15,10 @@ from openpype.settings import (
     get_system_settings,
 )
 
-from .contants import DEFAULT_PUBLISH_TEMPLATE
+from .contants import (
+    DEFAULT_PUBLISH_TEMPLATE,
+    DEFAULT_HERO_PUBLISH_TEMPLATE,
+)
 
 
 def get_template_name_profiles(project_name=None, project_settings=None):
@@ -67,6 +70,49 @@ def get_template_name_profiles(project_name=None, project_settings=None):
     return profiles
 
 
+def get_hero_template_name_profiles(project_name=None, project_settings=None):
+    """Receive profiles for hero publish template keys.
+
+    At least one of arguments must be passed.
+
+    Args:
+        project_name (str): Name of project where to look for templates.
+        project_settings(Dic[str, Any]): Prepared project settings.
+
+    Returns:
+        List[Dict[str, Any]]: Publish template profiles.
+    """
+
+    if not project_name and not project_settings:
+        raise ValueError((
+            "Both project name and project settings are missing."
+            " At least one must be entered."
+        ))
+
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    profiles = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["publish"]
+        ["hero_template_name_profiles"]
+    )
+    if profiles:
+        return copy.deepcopy(profiles)
+
+    # Use legacy approach for cases new settings are not filled yet for the
+    #   project
+    return copy.deepcopy(
+        project_settings
+        ["global"]
+        ["publish"]
+        ["IntegrateHeroVersion"]
+        ["template_name_profiles"]
+    )
+
+
 def get_publish_template_name(
     project_name,
     host_name,
@@ -74,6 +120,7 @@ def get_publish_template_name(
     task_name,
     task_type,
     project_settings=None,
+    hero=False,
     logger=None
 ):
     """Get template name which should be used for passed context.
@@ -105,11 +152,22 @@ def get_publish_template_name(
         "task_names": task_name,
         "task_types": task_type,
     }
-    profiles = get_template_name_profiles(project_name, project_settings)
+    if hero:
+        default_template = DEFAULT_HERO_PUBLISH_TEMPLATE
+        profiles = get_hero_template_name_profiles(
+            project_name, project_settings
+        )
+
+    else:
+        profiles = get_template_name_profiles(
+            project_name, project_settings
+        )
+        default_template = DEFAULT_PUBLISH_TEMPLATE
+
     profile = filter_profiles(profiles, filter_criteria, logger=logger)
     if profile:
         template = profile["template_name"]
-    return template or DEFAULT_PUBLISH_TEMPLATE
+    return template or default_template
 
 
 class DiscoverResult:
