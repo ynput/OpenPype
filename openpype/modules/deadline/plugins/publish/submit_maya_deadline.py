@@ -339,7 +339,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 "Renderer": self._instance.data["renderer"]
         }
 
-        frame_payloads = []
         assembly_payloads = []
 
         R_FRAME_NUMBER = re.compile(
@@ -358,14 +357,15 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 itertools.chain.from_iterable(
                     [f for _, f in exp[0].items()]))
             if not files:
-                # if beauty doesn't exists, use first aov we found
+                # if beauty doesn't exist, use first aov we found
                 files = exp[0].get(list(exp[0].keys())[0])
         else:
             files = exp
             assembly_files = files
 
+        # Define frame tile jobs
         frame_jobs = {}
-
+        frame_payloads = {}
         file_index = 1
         for file in files:
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
@@ -400,22 +400,24 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             new_job_info.ExtraInfo[0] = job_hash.hexdigest()
             new_job_info.ExtraInfo[1] = file
 
-            frame_payloads.append(self.assemble_payload(
+            frame_payloads[frame] = self.assemble_payload(
                 job_info=new_job_info,
                 plugin_info=new_plugin_info
-            ))
+            )
             file_index += 1
 
         self.log.info(
             "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
+        # Submit frame tile jobs
         frame_tile_job_id = {}
-        for tile_job_payload in frame_payloads:
+        for frame, tile_job_payload in frame_payloads.items():
             response = self.submit(tile_job_payload)
             job_id = response.json()["_id"]
             frame_tile_job_id[frame] = job_id
 
-        assembly_jobs = []
+        # Define assembly payloads
+        assembly_payloads = []
         for i, file in enumerate(assembly_files):
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
@@ -478,14 +480,18 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 # add config file as job auxFile
                 aux_files=[config_file]
             )
+            assembly_payloads.append(payload)
 
+        # Submit assembly jobs
+        assembly_job_ids = []
+        for i, payload in enumerate(assembly_payloads):
             self.log.info("submitting assembly job {} of {}".format(
                 i+1, len(assembly_payloads)
             ))
             response = self.submit(payload)
-            assembly_jobs.append(response.json()["_id"])
+            assembly_job_ids.append(response.json()["_id"])
 
-        instance.data["assemblySubmissionJobs"] = assembly_jobs
+        instance.data["assemblySubmissionJobs"] = assembly_job_ids
 
     def _get_maya_payload(self, data):
 
