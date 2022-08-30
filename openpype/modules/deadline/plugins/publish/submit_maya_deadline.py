@@ -141,17 +141,21 @@ def _format_tiles(
             out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
                 "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
 
-            out["PluginInfo"]["RegionTop{}".format(tile)] = int(height) - (tile_y * h_space)  # noqa: E501
-            out["PluginInfo"]["RegionBottom{}".format(tile)] = int(height) - ((tile_y - 1) * h_space) - 1  # noqa: E501
-            out["PluginInfo"]["RegionLeft{}".format(tile)] = (tile_x - 1) * w_space  # noqa: E501
-            out["PluginInfo"]["RegionRight{}".format(tile)] = (tile_x * w_space) - 1  # noqa: E501
+            top = int(height) - (tile_y * h_space)
+            bottom = int(height) - ((tile_y - 1) * h_space) - 1
+            left = (tile_x - 1) * w_space
+            right = (tile_x * w_space) - 1
+
+            out["PluginInfo"]["RegionTop{}".format(tile)] = int(top)
+            out["PluginInfo"]["RegionBottom{}".format(tile)] = int(bottom)
+            out["PluginInfo"]["RegionLeft{}".format(tile)] = int(left)
+            out["PluginInfo"]["RegionRight{}".format(tile)] = int(right)
 
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
-            cfg["Tile{}X".format(tile)] = (tile_x - 1) * w_space
-
-            cfg["Tile{}Y".format(tile)] = int(height) - (tile_y * h_space)
+            cfg["Tile{}X".format(tile)] = int(left)
+            cfg["Tile{}Y".format(tile)] = int(top)
 
             cfg["Tile{}Width".format(tile)] = w_space
             cfg["Tile{}Height".format(tile)] = h_space
