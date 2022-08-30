@@ -168,6 +168,39 @@ class EventCallback(object):
                 )
 
 
+class EventResponse(object):
+    """Result added to event during callback.
+
+    Args:
+        event (Event): Event which is source of the response.
+        data (Dict[str, Any]): Data of response.
+        source (str): Source name. May help event source to identify response
+            source and it.
+    """
+
+    def __init__(self, event, data, source):
+        self._id = str(uuid4())
+        self._event = event
+        self._data = data
+        self._source = source
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def event(self):
+        return self._event
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def source(self):
+        return self._source
+
+
 # Inherit from 'object' for Python 2 hosts
 class Event(object):
     """Base event object.
@@ -197,6 +230,7 @@ class Event(object):
         self._data = data
         self._source = source
         self._event_system = event_system
+        self._responses = []
 
     def __getitem__(self, key):
         return self._data[key]
@@ -244,6 +278,31 @@ class Event(object):
     @property
     def stopped(self):
         return self._stopped
+
+    @property
+    def responses(self):
+        """Event responses added by callbacks."""
+
+        return list(self._responses)
+
+    def add_response(self, data, source=None):
+        """Add response for an event.
+
+        Args:
+            data (Union[EventResponse, Dict[str, Any]]): Data of response or
+                already prepare 'EventResponse' object.
+            source (Union[None, str]): Source of response. Not used if 'data'
+                is already prepared 'EventResponse' object.
+        """
+
+        if not isinstance(data, EventResponse):
+            response = EventResponse(self, data, source)
+        elif self is not data.event:
+            raise ValueError("Added response is for different event.")
+        else:
+            response = data
+        self._responses.append(response)
+        return response
 
     def stop(self):
         """Stop processing of future callbacks."""
