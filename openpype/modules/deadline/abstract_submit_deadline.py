@@ -623,8 +623,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         for i in context:
 
             is_workfile = (
-                    "workfile" in i.data.get("families", []) or
-                    i.data["family"] == "workfile"
+                "workfile" in i.data.get("families", []) or
+                i.data["family"] == "workfile"
             )
             if not is_workfile:
                 continue

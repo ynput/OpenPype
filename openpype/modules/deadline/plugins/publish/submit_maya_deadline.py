@@ -357,14 +357,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                                                        self.tile_priority)
 
         assembly_plugin_info = {
-                "CleanupTiles": 1,
-                "ErrorOnMissing": True,
-                "Renderer": self._instance.data["renderer"]
+            "CleanupTiles": 1,
+            "ErrorOnMissing": True,
+            "Renderer": self._instance.data["renderer"]
         }
 
         assembly_payloads = []
         output_dir = self.job_info.OutputDirectory[0]
-        for i, file in enumerate(assembly_files):
+        for file in assembly_files:
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
             frame_assembly_job_info = copy.deepcopy(assembly_job_info)
@@ -383,7 +383,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             # write assembly job config files
             now = datetime.now()
 
-            config_file = os.path.join(output_dir,
+            config_file = os.path.join(
+                output_dir,
                 "{}_config_{}.txt".format(
                     os.path.splitext(file)[0],
                     now.strftime("%Y_%m_%d_%H_%M_%S")
@@ -427,10 +428,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Submit assembly jobs
         assembly_job_ids = []
+        num_assemblies = len(assembly_payloads)
         for i, payload in enumerate(assembly_payloads):
-            self.log.info("submitting assembly job {} of {}".format(
-                i+1, len(assembly_payloads)
-            ))
+            self.log.info(
+                "submitting assembly job {} of {}".format(i + 1,
+                                                          num_assemblies)
+            )
             assembly_job_id = self.submit(payload)
             assembly_job_ids.append(assembly_job_id)
 
@@ -682,7 +685,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                         pf.writelines(scene_data)
                         pf.truncate()
                         self.log.info("Applied {} patch to scene.".format(
-                                patches[i]["name"]
+                            patches[i]["name"]
                         ))
 
     def _job_info_label(self, label):
