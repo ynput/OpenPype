@@ -86,8 +86,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
-        job_info.UserName = context.data.get(
-            "deadlineUser", getpass.getuser())
+        job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
 
         # Deadline requires integers in frame range
         frames = "{start}-{end}x{step}".format(
@@ -134,25 +133,18 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        # TODO: Taken from old publish class - test whether still needed
-        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         # to recognize job from PYPE for turning Event On/Off
         environment["OPENPYPE_RENDER_JOB"] = "1"
+        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
 
-        for key in keys:
-            val = environment.get(key)
-            if val:
-                job_info.EnvironmentKeyValue = "{key}={value}".format(
-                    key=key,
-                    value=val
-                )
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
-        job_info.EnvironmentKeyValue = "OPENPYPE_LOG_NO_COLORS=1"
+        for key, value in environment.items():
+            if not value:
+                continue
+            job_info.EnvironmentKeyValue = "{key}={value}".format(key=key,
+                                                                  value=value)
 
-        # Optional, enable double-click to preview rendered
-        # frames from Deadline Monitor
-        for i, filepath in enumerate(instance.data["files"]):
+        # Enable double-click to preview rendered frames from Deadline Monitor
+        for filepath in instance.data["files"]:
             dirname = os.path.dirname(filepath)
             fname = os.path.basename(filepath)
             job_info.OutputDirectory = dirname.replace("\\", "/")
@@ -241,25 +233,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         filename = os.path.basename(filepath)
         dirname = os.path.join(workspace, default_render_file)
 
-        # this is needed because renderman handles directory and file
-        # prefixes separately
-        if self._instance.data["renderer"] == "renderman":
-            dirname = os.path.dirname(output_filename_0)
-
-        # Create render folder ----------------------------------------------
-        try:
-            # Ensure render folder exists
-            os.makedirs(dirname)
-        except OSError:
-            pass
-
         # Fill in common data to payload ------------------------------------
         # TODO: Replace these with collected data from CollectRender
         payload_data = {
             "filename": filename,
-            "filepath": filepath,
-            "output_filename_0": output_filename_0,
-            "renderlayer": renderlayer,
             "dirname": dirname,
         }
 
@@ -299,8 +276,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     def _tile_render(self, instance, payload):
 
         # As collected by super process()
-        job_info = self.job_info
-        plugin_info = self.pluginInfo
+        job_info = copy.deepcopy(self.job_info)
+        plugin_info = copy.deepcopy(self.plugin_info)
 
         # if we have sequence of files, we need to create tile job for
         # every frame
@@ -313,23 +290,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         plugin_info["ImageHeight"] = instance.data.get("resolutionHeight")
         plugin_info["ImageWidth"] = instance.data.get("resolutionWidth")
         plugin_info["RegionRendering"] = True
-
-        assembly_job_info = copy.deepcopy(job_info)
-        assembly_job_info.Plugin = self.tile_assembler_plugin
-        assembly_job_info.Name = "{job.Name} - Tile Assembly Job".format(
-            job=job_info)
-        assembly_job_info.Frames = 1
-        assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get("tile_priority",
-                                                       self.tile_priority)
-
-        assembly_plugin_info = {
-                "CleanupTiles": 1,
-                "ErrorOnMissing": True,
-                "Renderer": self._instance.data["renderer"]
-        }
-
-        assembly_payloads = []
 
         R_FRAME_NUMBER = re.compile(
             r".+\.(?P<frame>[0-9]+)\..+")  # noqa: N806, E501
@@ -407,7 +367,23 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             frame_tile_job_id[frame] = job_id
 
         # Define assembly payloads
+        assembly_job_info = copy.deepcopy(job_info)
+        assembly_job_info.Plugin = self.tile_assembler_plugin
+        assembly_job_info.Name = "{job.Name} - Tile Assembly Job".format(
+            job=job_info)
+        assembly_job_info.Frames = 1
+        assembly_job_info.MachineLimit = 1
+        assembly_job_info.Priority = instance.data.get("tile_priority",
+                                                       self.tile_priority)
+
+        assembly_plugin_info = {
+                "CleanupTiles": 1,
+                "ErrorOnMissing": True,
+                "Renderer": self._instance.data["renderer"]
+        }
+
         assembly_payloads = []
+        output_dir = self.job_info.OutputDirectory[0]
         for i, file in enumerate(assembly_files):
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
@@ -427,22 +403,19 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             # write assembly job config files
             now = datetime.now()
 
-            config_file = os.path.join(
-                os.path.dirname(output_filename_0),
+            config_file = os.path.join(output_dir,
                 "{}_config_{}.txt".format(
                     os.path.splitext(file)[0],
                     now.strftime("%Y_%m_%d_%H_%M_%S")
                 )
             )
-
-            config_file_dir = os.path.dirname(config_file)
             try:
-                if not os.path.isdir(config_file_dir):
-                    os.makedirs(config_file_dir)
+                if not os.path.isdir(output_dir):
+                    os.makedirs(output_dir)
             except OSError:
                 # directory is not available
                 self.log.warning("Path is unreachable: "
-                                 "`{}`".format(config_file_dir))
+                                 "`{}`".format(output_dir))
 
             with open(config_file, "w") as cf:
                 print("TileCount={}".format(tiles_count), file=cf)
@@ -567,17 +540,22 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info.Plugin = "Python"
         job_info.Frames = 1
 
+        renderlayer = self._instance.data["setMembers"]
+
         # add required env vars for the export script
         envs = {
             "AVALON_APP_NAME": os.environ.get("AVALON_APP_NAME"),
-            "OPENPYPE_ASS_EXPORT_RENDER_LAYER": data["renderlayer"],
+            "OPENPYPE_ASS_EXPORT_RENDER_LAYER": renderlayer,
             "OPENPYPE_ASS_EXPORT_SCENE_FILE": self.scene_path,
-            "OPENPYPE_ASS_EXPORT_OUTPUT": payload['JobInfo']['OutputFilename0'],  # noqa
+            "OPENPYPE_ASS_EXPORT_OUTPUT": job_info.OutputFilename[0],
             "OPENPYPE_ASS_EXPORT_START": int(self._instance.data["frameStartHandle"]),  # noqa
             "OPENPYPE_ASS_EXPORT_END":  int(self._instance.data["frameEndHandle"]),  # noqa
             "OPENPYPE_ASS_EXPORT_STEP": 1
         }
         for key, value in envs.items():
+            if not value:
+                continue
+
             job_info.EnvironmentKeyValue = "{key}={value}".format(key=key,
                                                                   value=value)
 
