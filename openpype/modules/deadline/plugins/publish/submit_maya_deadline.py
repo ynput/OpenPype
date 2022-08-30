@@ -765,10 +765,10 @@ def _format_tiles(
                 tiles_x,
                 tiles_y
             )
-            top = int(height) - (tile_y * h_space)
-            bottom = int(height) - ((tile_y - 1) * h_space) - 1
-            left = (tile_x - 1) * w_space
-            right = (tile_x * w_space) - 1
+            top = int(height - (tile_y * h_space))
+            bottom = int(height - ((tile_y - 1) * h_space) - 1)
+            left = int((tile_x - 1) * w_space)
+            right = int((tile_x * w_space) - 1)
 
             # Job Info
             new_filename = "{}/{}{}".format(
