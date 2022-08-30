@@ -443,8 +443,9 @@ def get_instance_staging_dir(instance):
 
     staging_dir = instance.data.get("stagingDir")
     if not staging_dir:
-        instance.data["stagingDir"] = os.path.normpath(
+        staging_dir = os.path.normpath(
             tempfile.mkdtemp(prefix="pyblish_tmp_")
         )
+        instance.data["stagingDir"] = staging_dir
 
     return staging_dir
