@@ -84,7 +84,8 @@
                 "rig",
                 "action",
                 "layout",
-                "setdress"
+                "setdress",
+                "blender_nodegroup"
             ]
         },
         "ExtractBlendMaterials": {
