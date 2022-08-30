@@ -30,7 +30,8 @@ from .lib import (
     maintained_temp_file_path,
     get_clip_segment,
     get_batch_group_from_desktop,
-    MediaInfoFile
+    MediaInfoFile,
+    TimeEffectMetadata
 )
 from .utils import (
     setup,
@@ -107,6 +108,7 @@ __all__ = [
     "get_clip_segment",
     "get_batch_group_from_desktop",
     "MediaInfoFile",
+    "TimeEffectMetadata",
 
     # pipeline
     "install",

@@ -1,6 +1,6 @@
 import os
 import json
-from openpype.pipeline import legacy_io
+from openpype.client import get_asset_by_name
 
 
 class HostContext:
@@ -17,10 +17,10 @@ class HostContext:
         if not asset_name:
             return project_name
 
-        asset_doc = legacy_io.find_one(
-            {"type": "asset", "name": asset_name},
-            {"data.parents": 1}
+        asset_doc = get_asset_by_name(
+            project_name, asset_name, fields=["data.parents"]
         )
+
         parents = asset_doc.get("data", {}).get("parents") or []
 
         hierarchy = [project_name]

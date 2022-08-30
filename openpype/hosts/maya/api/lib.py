@@ -23,7 +23,6 @@ from openpype.client import (
     get_last_versions,
     get_representation_by_name
 )
-from openpype import lib
 from openpype.api import get_anatomy_settings
 from openpype.pipeline import (
     legacy_io,
@@ -33,6 +32,7 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 from .commands import reset_frame_range
 
 
@@ -2174,7 +2174,7 @@ def reset_scene_resolution():
     project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_data = get_current_project_asset()["data"]
 
     # Set project resolution
     width_key = "resolutionWidth"
@@ -2208,7 +2208,8 @@ def set_context_settings():
     project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset(fields=["data.fps"])
+    asset_data = asset_doc.get("data", {})
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
@@ -2233,7 +2234,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset()["data"]["fps"]
+    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
     # TODO(antirotor): This is hack as for framerates having multiple
     # decimal places. FTrack is ceiling decimal values on
     # fps to two decimal places but Maya 2019+ is reporting those fps
@@ -3051,8 +3052,9 @@ def update_content_on_context_change():
     This will update scene content to match new asset on context change
     """
     scene_sets = cmds.listSets(allSets=True)
-    new_asset = legacy_io.Session["AVALON_ASSET"]
-    new_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset()
+    new_asset = asset_doc["name"]
+    new_data = asset_doc["data"]
     for s in scene_sets:
         try:
             if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":

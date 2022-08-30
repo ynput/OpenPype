@@ -86,7 +86,7 @@ class IntentModel(QtGui.QStandardItemModel):
     First and default value is {"< Not Set >": None}
     """
 
-    default_item = {"< Not Set >": None}
+    default_empty_label = "< Not set >"
 
     def __init__(self, parent=None):
         super(IntentModel, self).__init__(parent)
@@ -102,27 +102,39 @@ class IntentModel(QtGui.QStandardItemModel):
         self._item_count = 0
         self.default_index = 0
 
-        intents_preset = (
+        intent_settings = (
             get_system_settings()
             .get("modules", {})
             .get("ftrack", {})
             .get("intent", {})
         )
 
-        default = intents_preset.get("default")
-        items = intents_preset.get("items", {})
+        items = intent_settings.get("items", {})
         if not items:
             return
 
-        for idx, item_value in enumerate(items.keys()):
+        allow_empty_intent = intent_settings.get("allow_empty_intent", True)
+        empty_intent_label = (
+            intent_settings.get("empty_intent_label")
+            or self.default_empty_label
+        )
+        listed_items = list(items.items())
+        if allow_empty_intent:
+            listed_items.insert(0, ("", empty_intent_label))
+
+        default = intent_settings.get("default")
+
+        for idx, item in enumerate(listed_items):
+            item_value = item[0]
             if item_value == default:
                 self.default_index = idx
                 break
 
-        self.add_items(items)
+        self._add_items(listed_items)
 
-    def add_items(self, items):
-        for value, label in items.items():
+    def _add_items(self, items):
+        for item in items:
+            value, label = item
             new_item = QtGui.QStandardItem()
             new_item.setData(label, QtCore.Qt.DisplayRole)
             new_item.setData(value, Roles.IntentItemValue)
@@ -584,11 +596,6 @@ class InstanceItem(QtGui.QStandardItem):
         instance._logs = []
         instance.optional = getattr(instance, "optional", True)
         instance.data["publish"] = instance.data.get("publish", True)
-        instance.data["label"] = (
-            instance.data.get("label")
-            or getattr(instance, "label", None)
-            or instance.data["name"]
-        )
 
         family = self.data(Roles.FamiliesRole)[0]
         self.setData(
@@ -604,9 +611,16 @@ class InstanceItem(QtGui.QStandardItem):
 
     def data(self, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
+            label = None
             if settings.UseLabel:
-                return self.instance.data["label"]
-            return self.instance.data["name"]
+                label = self.instance.data.get("label")
+
+            if not label:
+                if self.is_context:
+                    label = "Context"
+                else:
+                    label = self.instance.data["name"]
+            return label
 
         if role == QtCore.Qt.DecorationRole:
             icon_name = self.instance.data.get("icon") or "file"

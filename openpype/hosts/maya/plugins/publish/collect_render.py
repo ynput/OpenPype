@@ -72,7 +72,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     def process(self, context):
         """Entry point to collector."""
         render_instance = None
-        deadline_url = None
 
         for instance in context:
             if "rendering" in instance.data["families"]:
@@ -96,22 +95,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         asset = legacy_io.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
-        deadline_settings = (
-            context.data
-            ["system_settings"]
-            ["modules"]
-            ["deadline"]
-        )
-
-        if deadline_settings["enabled"]:
-            deadline_url = render_instance.data.get("deadlineUrl")
-        self._rs = renderSetup.instance()
-        current_layer = self._rs.getVisibleRenderLayer()
+        # Retrieve render setup layers
+        rs = renderSetup.instance()
         maya_render_layers = {
-            layer.name(): layer for layer in self._rs.getRenderLayers()
+            layer.name(): layer for layer in rs.getRenderLayers()
         }
-
-        self.maya_layers = maya_render_layers
 
         for layer in collected_render_layers:
             try:
@@ -147,49 +135,28 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 self.log.warning(msg)
                 continue
 
-            # test if there are sets (subsets) to attach render to
+            # detect if there are sets (subsets) to attach render to
             sets = cmds.sets(layer, query=True) or []
             attach_to = []
-            if sets:
-                for s in sets:
-                    if "family" not in cmds.listAttr(s):
-                        continue
+            for s in sets:
+                if not cmds.attributeQuery("family", node=s, exists=True):
+                    continue
 
-                    attach_to.append(
-                        {
-                            "version": None,  # we need integrator for that
-                            "subset": s,
-                            "family": cmds.getAttr("{}.family".format(s)),
-                        }
-                    )
-                    self.log.info(" -> attach render to: {}".format(s))
+                attach_to.append(
+                    {
+                        "version": None,  # we need integrator for that
+                        "subset": s,
+                        "family": cmds.getAttr("{}.family".format(s)),
+                    }
+                )
+                self.log.info(" -> attach render to: {}".format(s))
 
             layer_name = "rs_{}".format(expected_layer_name)
 
             # collect all frames we are expecting to be rendered
-            renderer = cmds.getAttr(
-                "defaultRenderGlobals.currentRenderer"
-            ).lower()
-            # handle various renderman names
-            if renderer.startswith("renderman"):
-                renderer = "renderman"
-
-            try:
-                aov_separator = self._aov_chars[(
-                    context.data["project_settings"]
-                    ["create"]
-                    ["CreateRender"]
-                    ["aov_separator"]
-                )]
-            except KeyError:
-                aov_separator = "_"
-
-            render_instance.data["aovSeparator"] = aov_separator
-
             # return all expected files for all cameras and aovs in given
             # frame range
-            layer_render_products = get_layer_render_products(
-                layer_name, render_instance)
+            layer_render_products = get_layer_render_products(layer_name)
             render_products = layer_render_products.layer_data.products
             assert render_products, "no render products generated"
             exp_files = []
@@ -226,13 +193,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 )
 
             # append full path
-            full_exp_files = []
             aov_dict = {}
             default_render_file = context.data.get('project_settings')\
                 .get('maya')\
-                .get('create')\
-                .get('CreateRender')\
-                .get('default_render_image_folder')
+                .get('RenderSettings')\
+                .get('default_render_image_folder') or ""
             # replace relative paths with absolute. Render products are
             # returned as list of dictionaries.
             publish_meta_path = None
@@ -246,6 +211,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                     publish_meta_path = os.path.dirname(full_path)
                 aov_dict[aov_first_key] = full_paths
+            full_exp_files = [aov_dict]
 
             frame_start_render = int(self.get_render_attribute(
                 "startFrame", layer=layer_name))
@@ -268,8 +234,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 frame_end = frame_end_render
                 frame_start_handle = frame_start_render
                 frame_end_handle = frame_end_render
-
-            full_exp_files.append(aov_dict)
 
             # find common path to store metadata
             # so if image prefix is branching to many directories
@@ -298,16 +262,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
-
-            try:
-                aov_separator = self._aov_chars[(
-                    context.data["project_settings"]
-                    ["create"]
-                    ["CreateRender"]
-                    ["aov_separator"]
-                )]
-            except KeyError:
-                aov_separator = "_"
 
             data = {
                 "subset": expected_layer_name,
@@ -357,11 +311,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False,
-                "aovSeparator": aov_separator
+                "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
+                "renderSetupIncludeLights": render_instance.data.get(
+                    "renderSetupIncludeLights"
+                )
             }
 
-            if deadline_url:
-                data["deadlineUrl"] = deadline_url
+            # Collect Deadline url if Deadline module is enabled
+            deadline_settings = (
+                context.data["system_settings"]["modules"]["deadline"]
+            )
+            if deadline_settings["enabled"]:
+                data["deadlineUrl"] = render_instance.data.get("deadlineUrl")
 
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
@@ -369,19 +330,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 for instance in context:
                     if instance.data['family'] == "workfile":
                         instance.data["version"] = context.data["version"]
-
-            # Apply each user defined attribute as data
-            for attr in cmds.listAttr(layer, userDefined=True) or list():
-                try:
-                    value = cmds.getAttr("{}.{}".format(layer, attr))
-                except Exception:
-                    # Some attributes cannot be read directly,
-                    # such as mesh and color attributes. These
-                    # are considered non-essential to this
-                    # particular publishing pipeline.
-                    value = None
-
-                data[attr] = value
 
             # handle standalone renderers
             if render_instance.data.get("vrayScene") is True:
@@ -409,6 +357,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
+            instance.data["farm"] = True
             instance.data.update(data)
             self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
@@ -489,10 +438,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             pool_b = None
 
         return pool_a, pool_b
-
-    def _get_overrides(self, layer):
-        rset = self.maya_layers[layer].renderSettingsCollectionInstance()
-        return rset.getOverrides()
 
     @staticmethod
     def get_render_attribute(attr, layer):

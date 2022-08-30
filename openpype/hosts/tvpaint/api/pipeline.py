@@ -16,8 +16,6 @@ from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 
@@ -89,19 +87,6 @@ def install():
 
     register_event_callback("application.launched", initial_launch)
     register_event_callback("application.exit", application_exit)
-
-
-def uninstall():
-    """Uninstall TVPaint-specific functionality.
-
-    This function is called automatically on calling `uninstall_host()`.
-    """
-
-    log.info("OpenPype - Uninstalling TVPaint integration")
-    pyblish.api.deregister_host("tvpaint")
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def containerise(

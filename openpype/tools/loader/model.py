@@ -272,15 +272,17 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
                 # update availability on active site when version changes
                 if self.sync_server.enabled and version_doc:
-                    query = self._repre_per_version_pipeline(
-                        [version_doc["_id"]],
-                        self.active_site,
-                        self.remote_site
+                    repres_info = list(
+                        self.sync_server.get_repre_info_for_versions(
+                            project_name,
+                            [version_doc["_id"]],
+                            self.active_site,
+                            self.remote_site
+                        )
                     )
-                    docs = list(self.dbcon.aggregate(query))
-                    if docs:
-                        repre = docs.pop()
-                        version_doc["data"].update(self._get_repre_dict(repre))
+                    if repres_info:
+                        version_doc["data"].update(
+                            self._get_repre_dict(repres_info[0]))
 
             self.set_version(index, version_doc)
 
@@ -472,29 +474,34 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
             last_versions_by_subset_id[subset_id] = hero_version
 
-        repre_info = {}
+        repre_info_by_version_id = {}
         if self.sync_server.enabled:
-            version_ids = set()
+            versions_by_id = {}
             for _subset_id, doc in last_versions_by_subset_id.items():
-                version_ids.add(doc["_id"])
+                versions_by_id[doc["_id"]] = doc
 
-            query = self._repre_per_version_pipeline(
-                list(version_ids), self.active_site, self.remote_site
+            repres_info = self.sync_server.get_repre_info_for_versions(
+                project_name,
+                list(versions_by_id.keys()),
+                self.active_site,
+                self.remote_site
             )
-
-            for doc in self.dbcon.aggregate(query):
+            for repre_info in repres_info:
                 if self._doc_fetching_stop:
                     return
+
+                version_id = repre_info["_id"]
+                doc = versions_by_id[version_id]
                 doc["active_provider"] = self.active_provider
                 doc["remote_provider"] = self.remote_provider
-                repre_info[doc["_id"]] = doc
+                repre_info_by_version_id[version_id] = repre_info
 
         self._doc_payload = {
             "asset_docs_by_id": asset_docs_by_id,
             "subset_docs_by_id": subset_docs_by_id,
             "subset_families": subset_families,
             "last_versions_by_subset_id": last_versions_by_subset_id,
-            "repre_info_by_version_id": repre_info
+            "repre_info_by_version_id": repre_info_by_version_id
         }
 
         self.doc_fetched.emit()
@@ -826,83 +833,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             data["repre_info_remote"] = repres_str
 
         return data
-
-    def _repre_per_version_pipeline(self, version_ids,
-                                    active_site, remote_site):
-        query = [
-            {"$match": {"parent": {"$in": version_ids},
-                        "type": "representation",
-                        "files.sites.name": {"$exists": 1}}},
-            {"$unwind": "$files"},
-            {'$addFields': {
-                'order_local': {
-                    '$filter': {
-                        'input': '$files.sites', 'as': 'p',
-                        'cond': {'$eq': ['$$p.name', active_site]}
-                    }
-                }
-            }},
-            {'$addFields': {
-                'order_remote': {
-                    '$filter': {
-                        'input': '$files.sites', 'as': 'p',
-                        'cond': {'$eq': ['$$p.name', remote_site]}
-                    }
-                }
-            }},
-            {'$addFields': {
-                'progress_local': {"$arrayElemAt": [{
-                    '$cond': [
-                        {'$size': "$order_local.progress"},
-                        "$order_local.progress",
-                        # if exists created_dt count is as available
-                        {'$cond': [
-                            {'$size': "$order_local.created_dt"},
-                            [1],
-                            [0]
-                        ]}
-                    ]},
-                    0
-                ]}
-            }},
-            {'$addFields': {
-                'progress_remote': {"$arrayElemAt": [{
-                    '$cond': [
-                        {'$size': "$order_remote.progress"},
-                        "$order_remote.progress",
-                        # if exists created_dt count is as available
-                        {'$cond': [
-                            {'$size': "$order_remote.created_dt"},
-                            [1],
-                            [0]
-                        ]}
-                    ]},
-                    0
-                ]}
-            }},
-            {'$group': {  # first group by repre
-                '_id': '$_id',
-                'parent': {'$first': '$parent'},
-                'avail_ratio_local': {
-                    '$first': {
-                        '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]
-                    }
-                },
-                'avail_ratio_remote': {
-                    '$first': {
-                        '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]
-                    }
-                }
-            }},
-            {'$group': {  # second group by parent, eg version_id
-                '_id': '$parent',
-                'repre_count': {'$sum': 1},  # total representations
-                # fully available representation for site
-                'avail_repre_local': {'$sum': "$avail_ratio_local"},
-                'avail_repre_remote': {'$sum': "$avail_ratio_remote"},
-            }},
-        ]
-        return query
 
 
 class GroupMemberFilterProxyModel(QtCore.QSortFilterProxyModel):

@@ -360,6 +360,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     os.unlink(f)
 
             new_repre.update({
+                "fps": temp_data["fps"],
                 "name": "{}_{}".format(output_name, output_ext),
                 "outputName": output_name,
                 "outputDef": output_def,
@@ -1209,7 +1210,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
-
         if reformat_in_baking:
             self.log.debug((
                 "Using resolution from input. It is already "
@@ -1229,6 +1229,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # - settings value can't have None but has value of 0
         output_width = output_def.get("width") or output_width or None
         output_height = output_def.get("height") or output_height or None
+        # Force to use input resolution if output resolution was not defined
+        #   in settings. Resolution from instance is not used when
+        #   'use_input_res' is set to 'True'.
+        use_input_res = False
 
         # Overscal color
         overscan_color_value = "black"
@@ -1240,6 +1244,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
         self.log.debug("Overscan color: `{}`".format(overscan_color_value))
 
+        # Scale input to have proper pixel aspect ratio
+        # - scale width by the pixel aspect ratio
+        scale_pixel_aspect = output_def.get("scale_pixel_aspect", True)
+        if scale_pixel_aspect and pixel_aspect != 1:
+            # Change input width after pixel aspect
+            input_width = int(input_width * pixel_aspect)
+            use_input_res = True
+            filters.append((
+                "scale={}x{}:flags=lanczos".format(input_width, input_height)
+            ))
+
         # Convert overscan value video filters
         overscan_crop = output_def.get("overscan_crop")
         overscan = OverscanCrop(
@@ -1250,13 +1265,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         #   resolution by it's values
         if overscan_crop_filters:
             filters.extend(overscan_crop_filters)
+            # Change input resolution after overscan crop
             input_width = overscan.width()
             input_height = overscan.height()
-            # Use output resolution as inputs after cropping to skip usage of
-            #   instance data resolution
-            if output_width is None or output_height is None:
-                output_width = input_width
-                output_height = input_height
+            use_input_res = True
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
@@ -1282,8 +1294,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("input_height: `{}`".format(input_height))
 
-        # Use instance resolution if output definition has not set it.
-        if output_width is None or output_height is None:
+        # Use instance resolution if output definition has not set it
+        #   - use instance resolution only if there were not scale changes
+        #       that may massivelly affect output 'use_input_res'
+        if not use_input_res and output_width is None or output_height is None:
             output_width = temp_data["resolution_width"]
             output_height = temp_data["resolution_height"]
 
@@ -1325,7 +1339,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             output_width == input_width
             and output_height == input_height
             and not letter_box_enabled
-            and pixel_aspect == 1
         ):
             self.log.debug(
                 "Output resolution is same as input's"
@@ -1335,66 +1348,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
             new_repre["resolutionHeight"] = input_height
             return filters
 
-        # defining image ratios
-        input_res_ratio = (
-            (float(input_width) * pixel_aspect) / input_height
-        )
-        output_res_ratio = float(output_width) / float(output_height)
-        self.log.debug("input_res_ratio: `{}`".format(input_res_ratio))
-        self.log.debug("output_res_ratio: `{}`".format(output_res_ratio))
-
-        # Round ratios to 2 decimal places for comparing
-        input_res_ratio = round(input_res_ratio, 2)
-        output_res_ratio = round(output_res_ratio, 2)
-
-        # get scale factor
-        scale_factor_by_width = (
-            float(output_width) / (input_width * pixel_aspect)
-        )
-        scale_factor_by_height = (
-            float(output_height) / input_height
-        )
-
-        self.log.debug(
-            "scale_factor_by_with: `{}`".format(scale_factor_by_width)
-        )
-        self.log.debug(
-            "scale_factor_by_height: `{}`".format(scale_factor_by_height)
-        )
-
         # scaling none square pixels and 1920 width
-        if (
-            input_height != output_height
-            or input_width != output_width
-            or pixel_aspect != 1
-        ):
-            if input_res_ratio < output_res_ratio:
-                self.log.debug(
-                    "Input's resolution ratio is lower then output's"
-                )
-                width_scale = int(input_width * scale_factor_by_height)
-                width_half_pad = int((output_width - width_scale) / 2)
-                height_scale = output_height
-                height_half_pad = 0
-            else:
-                self.log.debug("Input is heigher then output")
-                width_scale = output_width
-                width_half_pad = 0
-                height_scale = int(input_height * scale_factor_by_width)
-                height_half_pad = int((output_height - height_scale) / 2)
-
-            self.log.debug("width_scale: `{}`".format(width_scale))
-            self.log.debug("width_half_pad: `{}`".format(width_half_pad))
-            self.log.debug("height_scale: `{}`".format(height_scale))
-            self.log.debug("height_half_pad: `{}`".format(height_half_pad))
-
+        if input_height != output_height or input_width != output_width:
             filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    width_scale, height_scale
-                ),
-                "pad={}:{}:{}:{}:{}".format(
+                (
+                    "scale={}x{}"
+                    ":flags=lanczos"
+                    ":force_original_aspect_ratio=decrease"
+                ).format(output_width, output_height),
+                "pad={}:{}:(ow-iw)/2:(oh-ih)/2:{}".format(
                     output_width, output_height,
-                    width_half_pad, height_half_pad,
                     overscan_color_value
                 ),
                 "setsar=1"
@@ -1496,6 +1459,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output = -1
         regexes = self.compile_list_of_regexes(in_list)
         for regex in regexes:
+            if not value:
+                continue
             if re.match(regex, value):
                 output = 1
                 break

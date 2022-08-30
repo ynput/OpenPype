@@ -14,9 +14,9 @@ from openpype.lib.path_templates import (
     TemplatesDict,
     FormatObject,
 )
-from openpype.lib.log import PypeLogger
+from openpype.lib.log import Logger
 
-log = PypeLogger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class ProjectNotSet(Exception):
@@ -372,6 +372,19 @@ class AnatomyTemplateResult(TemplateResult):
     def copy(self):
         tmp = TemplateResult(
             str(self),
+            self.template,
+            self.solved,
+            self.used_values,
+            self.missing_keys,
+            self.invalid_types
+        )
+        return self.__class__(tmp, self.rootless)
+
+    def normalized(self):
+        """Convert to normalized path."""
+
+        tmp = TemplateResult(
+            os.path.normpath(self),
             self.template,
             self.solved,
             self.used_values,

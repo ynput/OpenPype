@@ -60,31 +60,14 @@ class HostToolsHelper:
 
         return self._workfiles_tool
 
-    def show_workfiles(self, parent=None, use_context=None, save=None):
+    def show_workfiles(
+        self, parent=None, use_context=None, save=None, on_top=None
+    ):
         """Workfiles tool for changing context and saving workfiles."""
-        if use_context is None:
-            use_context = True
-
-        if save is None:
-            save = True
 
         with qt_app_context():
             workfiles_tool = self.get_workfiles_tool(parent)
-            workfiles_tool.set_save_enabled(save)
-
-            if not workfiles_tool.isVisible():
-                workfiles_tool.show()
-
-                if use_context:
-                    context = {
-                        "asset": legacy_io.Session["AVALON_ASSET"],
-                        "task": legacy_io.Session["AVALON_TASK"]
-                    }
-                    workfiles_tool.set_context(context)
-
-            # Pull window to the front.
-            workfiles_tool.raise_()
-            workfiles_tool.activateWindow()
+            workfiles_tool.ensure_visible(use_context, save, on_top)
 
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
@@ -395,9 +378,9 @@ def show_tool_by_name(tool_name, parent=None, *args, **kwargs):
     _SingletonPoint.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-def show_workfiles(parent=None, use_context=None, save=None):
+def show_workfiles(*args, **kwargs):
     _SingletonPoint.show_tool_by_name(
-        "workfiles", parent, use_context=use_context, save=save
+        "workfiles", *args, **kwargs
     )
 
 

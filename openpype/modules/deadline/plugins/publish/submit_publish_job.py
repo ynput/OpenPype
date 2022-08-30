@@ -10,7 +10,10 @@ import clique
 
 import pyblish.api
 
-import openpype.api
+from openpype.client import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
@@ -18,15 +21,23 @@ from openpype.pipeline import (
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
-def get_resources(version, extension=None):
+def get_resources(project_name, version, extension=None):
     """Get the files from the specific version."""
-    query = {"type": "representation", "parent": version["_id"]}
+
+    # TODO this functions seems to be weird
+    #   - it's looking for representation with one extension or first (any)
+    #       representation from a version?
+    #  - not sure how this should work, maybe it does for specific use cases
+    #       but probably can't be used for all resources from 2D workflows
+    extensions = None
     if extension:
-        query["name"] = extension
+        extensions = [extension]
+    repre_docs = list(get_representations(
+        project_name, version_ids=[version["_id"]], extensions=extensions
+    ))
+    assert repre_docs, "This is a bug"
 
-    representation = legacy_io.find_one(query)
-    assert representation, "This is a bug"
-
+    representation = repre_docs[0]
     directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
@@ -130,7 +141,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
         "OPENPYPE_PUBLISH_JOB",
-        "OPENPYPE_MONGO"
+        "OPENPYPE_MONGO",
+        "OPENPYPE_VERSION"
     ]
 
     # custom deadline attributes
@@ -147,7 +159,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # mapping of instance properties to be transfered to new instance for every
     # specified family
     instance_transfer = {
-        "slate": ["slateFrames"],
+        "slate": ["slateFrames", "slate"],
         "review": ["lutPath"],
         "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
@@ -284,6 +296,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             for assembly_id in instance.data.get("assemblySubmissionJobs"):
                 payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
                 job_index += 1
+        elif instance.data.get("bakingSubmissionJobs"):
+            self.log.info("Adding baking submission jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data["bakingSubmissionJobs"]:
+                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
@@ -330,13 +348,21 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Preparing to copy ...")
         start = instance.data.get("frameStart")
         end = instance.data.get("frameEnd")
+        project_name = legacy_io.active_project()
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        version = openpype.api.get_latest_version(instance.data.get("asset"),
-                                                  instance.data.get("subset"))
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            instance.data.get("subset"),
+            asset_name=instance.data.get("asset")
+        )
+
         # get its files based on extension
-        subset_resources = get_resources(version, representation.get("ext"))
+        subset_resources = get_resources(
+            project_name, version, representation.get("ext")
+        )
         r_col, _ = clique.assemble(subset_resources)
 
         # if override remove all frames we are expecting to be rendered
@@ -566,11 +592,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     " This may cause issues on farm."
                 ).format(staging))
 
+            frame_start = int(instance.get("frameStartHandle"))
+            if instance.get("slate"):
+                frame_start -= 1
+
             rep = {
                 "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(collection)],
-                "frameStart": int(instance.get("frameStartHandle")),
+                "frameStart": frame_start,
                 "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
@@ -1013,9 +1043,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        version = openpype.api.get_latest_version(asset_name=asset,
-                                                  subset_name=subset
-                                                  )
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            subset,
+            asset_name=asset
+        )
 
         # Set prev start / end frames for comparison
         if not prev_start and not prev_end:
@@ -1060,7 +1093,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 based on 'publish' template
         """
         if not version:
-            version = openpype.api.get_latest_version(asset, subset)
+            project_name = legacy_io.active_project()
+            version = get_last_version_by_subset_name(
+                project_name,
+                subset,
+                asset_name=asset
+            )
             if version:
                 version = int(version["name"]) + 1
             else:

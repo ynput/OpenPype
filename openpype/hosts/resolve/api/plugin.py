@@ -4,11 +4,11 @@ import uuid
 import qargparse
 from Qt import QtWidgets, QtCore
 
-import openpype.api as pype
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.hosts import resolve
 from . import lib
 
@@ -375,7 +375,7 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+        self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
     def load(self):
         # create project bin for the media to be imported into
