@@ -418,7 +418,7 @@ def context_plugin_should_run(plugin, context):
         bool: Context plugin should run based on valid instances.
     """
 
-    for instance in filter_instances_for_context_plugin(plugin, context):
+    for _ in filter_instances_for_context_plugin(plugin, context):
         return True
     return False
 
