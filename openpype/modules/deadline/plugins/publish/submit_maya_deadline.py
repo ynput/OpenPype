@@ -509,7 +509,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["Comment"] = comment
         self.payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
 
-        self.payload_skeleton["PluginInfo"]["RenderSetupIncludeLights"] = instance.data.get("renderSetupIncludeLights") # noqa
+        # Only set RenderSetupIncludeLights when not None
+        rs_include_lights = instance.data.get("renderSetupIncludeLights")
+        if rs_include_lights is not None:
+            self.payload_skeleton["PluginInfo"]["RenderSetupIncludeLights"] = (
+            rs_include_lights
+            )
+        else:
+            self.payload_skeleton["PluginInfo"].pop("RenderSetupIncludeLights")
+
         # Adding file dependencies.
         dependencies = instance.context.data["fileDependencies"]
         dependencies.append(filepath)
