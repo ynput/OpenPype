@@ -110,8 +110,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
-        for key, value in render_globals.items():
-            setattr(job_info, key, value)
+        job_info.update(render_globals)
 
         keys = [
             "FTRACK_API_KEY",
@@ -257,8 +256,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # As collected by super process()
         instance = self._instance
-        job_info = copy.deepcopy(self.job_info)
-        plugin_info = copy.deepcopy(self.plugin_info)
+
+        payload_job_info, payload_plugin_info = payload
+        job_info = copy.deepcopy(payload_job_info)
+        plugin_info = copy.deepcopy(payload_plugin_info)
 
         # if we have sequence of files, we need to create tile job for
         # every frame
@@ -309,16 +310,17 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             new_plugin_info = copy.deepcopy(plugin_info)
 
             # Add tile data into job info and plugin info
-            tiles_out, _ = _format_tiles(
+            tiles_data = _format_tiles(
                 file, 0,
                 instance.data.get("tilesX"),
                 instance.data.get("tilesY"),
                 instance.data.get("resolutionWidth"),
                 instance.data.get("resolutionHeight"),
-                payload["PluginInfo"]["OutputFilePrefix"]
-            )
-            new_job_info.update(tiles_out["JobInfo"])
-            new_plugin_info.update(tiles_out["PluginInfo"])
+                payload_plugin_info["OutputFilePrefix"]
+            )[0]
+
+            new_job_info.update(tiles_data["JobInfo"])
+            new_plugin_info.update(tiles_data["PluginInfo"])
 
             self.log.info("hashing {} - {}".format(file_index, file))
             job_hash = hashlib.sha256(
@@ -342,15 +344,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Submit frame tile jobs
         frame_tile_job_id = {}
         for frame, tile_job_payload in frame_payloads.items():
-            response = self.submit(tile_job_payload)
-            job_id = response.json()["_id"]
+            job_id = self.submit(tile_job_payload)
             frame_tile_job_id[frame] = job_id
 
         # Define assembly payloads
         assembly_job_info = copy.deepcopy(job_info)
         assembly_job_info.Plugin = self.tile_assembler_plugin
-        assembly_job_info.Name = "{job.Name} - Tile Assembly Job".format(
-            job=job_info)
+        assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
         assembly_job_info.Priority = instance.data.get("tile_priority",
@@ -411,10 +411,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                     instance.data.get("tilesY"),
                     instance.data.get("resolutionWidth"),
                     instance.data.get("resolutionHeight"),
-                    payload["PluginInfo"]["OutputFilePrefix"]
+                    payload_plugin_info["OutputFilePrefix"]
                 )[1]
-                sorted(tiles)
-                for k, v in tiles.items():
+                for k, v in sorted(tiles.items()):
                     print("{}={}".format(k, v), file=cf)
 
             payload = self.assemble_payload(
@@ -431,8 +430,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             self.log.info("submitting assembly job {} of {}".format(
                 i+1, len(assembly_payloads)
             ))
-            response = self.submit(payload)
-            assembly_job_ids.append(response.json()["_id"])
+            assembly_job_id = self.submit(payload)
+            assembly_job_ids.append(assembly_job_id)
 
         instance.data["assemblySubmissionJobs"] = assembly_job_ids
 
