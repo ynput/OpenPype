@@ -13,6 +13,7 @@ def _read_lock_file(lock_filepath):
 def _get_lock_file(filepath):
     return filepath + ".lock"
 
+
 def is_workfile_locked(filepath):
     lock_filepath = _get_lock_file(filepath)
     if not os.path.exists(lock_filepath):
@@ -30,7 +31,7 @@ def is_workfile_locked_for_current_process(filepath):
     return data["process_id"] == process_id
 
 
-def delete_lock_workfile(filepath):
+def delete_workfile_lock(filepath):
     lock_filepath = _get_lock_file(filepath)
     if not os.path.exists(lock_filepath):
         return
@@ -57,7 +58,8 @@ def get_username(filepath):
     username = data["username"]
     return username
 
-def remove_lockfile(filepath):
+
+def remove_workfile_lock(filepath):
     lock_filepath = _get_lock_file(filepath)
     if not os.path.exists(lock_filepath):
         return

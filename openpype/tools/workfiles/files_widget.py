@@ -8,7 +8,10 @@ from Qt import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
-from openpype.pipeline.workfile.lock_workfile import is_workfile_locked, get_username, remove_lockfile
+from openpype.pipeline.workfile.lock_workfile import (
+    is_workfile_locked,
+    get_username
+)
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
