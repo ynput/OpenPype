@@ -513,7 +513,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         rs_include_lights = instance.data.get("renderSetupIncludeLights")
         if rs_include_lights is not None:
             self.payload_skeleton["PluginInfo"]["RenderSetupIncludeLights"] = (
-            rs_include_lights
+                rs_include_lights
             )
         else:
             self.payload_skeleton["PluginInfo"].pop("RenderSetupIncludeLights")
