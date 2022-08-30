@@ -32,7 +32,8 @@ from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
     get_username,
     remove_lockfile,
-    is_workfile_locked
+    is_workfile_locked,
+    delete_lock_workfile
 )
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
@@ -104,6 +105,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("before.close", on_before_close)
         register_event_callback("before.file.open", before_file_open)
         register_event_callback("taskChanged", on_task_changed)
+        register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
 
     def open_workfile(self, filepath):
@@ -460,8 +462,9 @@ def on_check_lock():
     """Check if there is a user opening the file"""
     log.info("Running callback on checking the lock file...")
 
-    #add the lock file when opening the file
-    filepath = str(current_file())
+    # add the lock file when opening the file
+    filepath = current_file()
+
     if not is_workfile_locked(filepath):
         create_workfile_lock(filepath)
 
@@ -489,7 +492,9 @@ def on_before_close():
 def before_file_open():
     """check lock file when the file changed"""
     log.info("check lock file when file changed...")
-    pass
+    filepath = current_file()
+    if filepath:
+        remove_lockfile(filepath)
 
 def on_save():
     """Automatically add IDs to new nodes
@@ -499,6 +504,11 @@ def on_save():
     """
 
     log.info("Running callback on save..")
+    # remove lockfile if users jumps over from one scene to another
+    filepath = current_file()
+    if filepath:
+        remove_lockfile(filepath)
+
 
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
@@ -608,8 +618,15 @@ def on_task_changed():
         ("Context was changed to:\n{}".format(msg)),
     )
 
+def before_workfile_open():
+    filepath = current_file()
+    if filepath:
+        remove_lockfile(filepath)
 
 def before_workfile_save(event):
+    filepath = current_file()
+    if filepath:
+        remove_lockfile(filepath)
     workdir_path = event["workdir_path"]
     if workdir_path:
         copy_workspace_mel(workdir_path)
