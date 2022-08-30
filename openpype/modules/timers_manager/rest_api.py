@@ -10,7 +10,7 @@ class TimersManagerModuleRestApi:
         happens in Workfile app.
     """
     def __init__(self, user_module, server_manager):
-        self.log = None
+        self._log = None
         self.module = user_module
         self.server_manager = server_manager
 

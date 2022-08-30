@@ -1,6 +1,13 @@
 from .constants import (
-    SUBSET_NAME_ALLOWED_SYMBOLS
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    DEFAULT_SUBSET_TEMPLATE,
 )
+
+from .subset_name import (
+    TaskNotSetError,
+    get_subset_name,
+)
+
 from .creator_plugins import (
     CreatorError,
 
@@ -32,6 +39,10 @@ from .legacy_create import (
 
 __all__ = (
     "SUBSET_NAME_ALLOWED_SYMBOLS",
+    "DEFAULT_SUBSET_TEMPLATE",
+
+    "TaskNotSetError",
+    "get_subset_name",
 
     "CreatorError",
 

@@ -24,6 +24,7 @@ CURRENT_SUBSET_SCHEMA = "openpype:subset-3.0"
 CURRENT_VERSION_SCHEMA = "openpype:version-3.0"
 CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
 CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
+CURRENT_THUMBNAIL_SCHEMA = "openpype:thumbnail-1.0"
 
 
 def _create_or_convert_to_mongo_id(mongo_id):
@@ -192,6 +193,29 @@ def new_representation_doc(
 
         # Imprint shortcut to context for performance reasons.
         "context": context
+    }
+
+
+def new_thumbnail_doc(data=None, entity_id=None):
+    """Create skeleton data of thumbnail document.
+
+    Args:
+        data (Dict[str, Any]): Thumbnail document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of thumbnail document.
+    """
+
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "type": "thumbnail",
+        "schema": CURRENT_THUMBNAIL_SCHEMA,
+        "data": data
     }
 
 
