@@ -360,7 +360,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             instance.data["label"] = label
             instance.data["farm"] = True
             instance.data.update(data)
-            self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without.
