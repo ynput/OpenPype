@@ -189,6 +189,9 @@ class Event(object):
     def __init__(self, topic, data=None, source=None, event_system=None):
         self._id = str(uuid4())
         self._topic = topic
+        self._done = False
+        self._is_running = False
+        self._stopped = False
         if data is None:
             data = {}
         self._data = data
@@ -202,23 +205,64 @@ class Event(object):
         return self._data.get(key, *args, **kwargs)
 
     @property
+    def is_running(self):
+        return self._is_running
+
+    def set_is_running(self):
+        self._is_running = True
+
+    @property
     def id(self):
+        """Event identifier."""
+
         return self._id
 
     @property
     def source(self):
+        """Name of event source."""
+
         return self._source
 
     @property
     def data(self):
+        """Event data."""
+
         return self._data
 
     @property
     def topic(self):
+        """Event topic."""
+
         return self._topic
+
+    @property
+    def done(self):
+        """Event is done so won't be passed to any callbacks."""
+
+        return self._done
+
+    @property
+    def stopped(self):
+        return self._stopped
+
+    def stop(self):
+        """Stop processing of future callbacks."""
+
+        self._is_running = False
+        self._stopped = False
+
+    def set_done(self):
+        """Change done state of event.
+
+        Done attribute is checked at the start of event processing
+        """
+
+        self._is_running = False
+        self._done = True
 
     def emit(self):
         """Emit event and trigger callbacks."""
+
         if self._event_system is None:
             raise MissingEventSystem(
                 "Can't emit event {}. Does not have set event system.".format(
@@ -234,8 +278,6 @@ class EventSystem(object):
     System wraps registered callbacks and triggered events into single object
     so it is possible to create mutltiple independent systems that have their
     topics and callbacks.
-
-
     """
 
     def __init__(self):
@@ -297,14 +339,27 @@ class EventSystem(object):
             event (Event): Prepared event with topic and data.
         """
 
+        # Skip already processed event
+        if event.done or event.is_running:
+            return
+
+        # Change the running state at the beginning so the event can't
+        #   be emitted from the callbacks again
+        event.set_is_running()
+
         invalid_callbacks = []
         for callback in self._registered_callbacks:
+            if event.stopped:
+                break
+
             callback.process_event(event)
             if not callback.is_ref_valid:
                 invalid_callbacks.append(callback)
 
         for callback in invalid_callbacks:
             self._registered_callbacks.remove(callback)
+
+        event.set_done()
 
 
 class GlobalEventSystem:
