@@ -45,9 +45,15 @@
                             "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
                         },
                         {
-                            "type": "boolean",
                             "key": "create_flatten_image",
-                            "label": "Create flatten image"
+                            "label": "Create flatten image",
+                            "type": "enum",
+                            "multiselection": false,
+                            "enum_items": [
+                                { "flatten_with_images": "Flatten with images" },
+                                { "flatten_only": "Flatten only" },
+                                { "no": "No" }
+                            ]
                         },
                         {
                             "type": "text",
@@ -185,6 +191,15 @@
                             "type": "boolean",
                             "key": "make_image_sequence",
                             "label": "Makes an image sequence instead of a flatten image"
+                        },
+                        {
+                            "type": "number",
+                            "key": "max_downscale_size",
+                            "label": "Maximum size of sources for review",
+                            "tooltip": "FFMpeg can only handle limited resolution for creation of review and/or thumbnail",
+                            "minimum": 300,
+                            "maximum": 16384,
+                            "decimal": 0
                         },
                         {
                             "type": "dict",

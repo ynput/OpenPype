@@ -96,10 +96,6 @@
             "mapping": {},
             "asset_types_to_skip": []
         },
-        "first_version_status": {
-            "enabled": true,
-            "status": ""
-        },
         "next_task_update": {
             "enabled": true,
             "mapping": {
@@ -109,6 +105,27 @@
                 "Omitted"
             ],
             "name_sorting": false
+        },
+        "transfer_values_of_hierarchical_attributes": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "create_daily_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Administrator",
+                "Project Manager"
+            ],
+            "cycle_enabled": false,
+            "cycle_hour_start": [
+                0,
+                0,
+                0
+            ],
+            "review_session_template": "{yy}{mm}{dd}"
         }
     },
     "user_handlers": {
@@ -254,6 +271,51 @@
                 },
                 {
                     "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "families": [
+                        "plate",
+                        "review",
+                        "audio"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
                         "maya"
                     ],
                     "families": [
@@ -349,8 +411,27 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "photoshop"
+                    ],
+                    "families": [
+                        "review"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
+        },
+        "CollectFtrackCustomAttributeData": {
+            "enabled": false,
+            "custom_attribute_keys": []
+        },
+        "IntegrateHierarchyToFtrack": {
+            "create_task_status_profiles": []
         },
         "IntegrateFtrackNote": {
             "enabled": true,
@@ -366,6 +447,9 @@
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackComponentOverwrite": {
+            "enabled": true
         },
         "IntegrateFtrackInstance": {
             "family_mapping": {
@@ -402,7 +486,12 @@
                 "redshiftproxy": "cache",
                 "usd": "usd"
             },
-            "keep_first_subset_name_for_review": true
+            "keep_first_subset_name_for_review": true,
+            "asset_versions_status_profiles": [],
+            "additional_metadata_keys": []
+        },
+        "IntegrateFtrackFarmStatus": {
+            "farm_status_profiles": []
         }
     }
 }

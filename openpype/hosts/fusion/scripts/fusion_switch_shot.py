@@ -3,19 +3,21 @@ import re
 import sys
 import logging
 
-# Pipeline imports
-import avalon.api
-from avalon import io
-
+from openpype.client import (
+    get_asset_by_name,
+    get_versions,
+)
+from openpype.pipeline import (
+    legacy_io,
+    install_host,
+    registered_host,
+)
 from openpype.lib import version_up
 from openpype.hosts.fusion import api
 from openpype.hosts.fusion.api import lib
-from openpype.lib.avalon_context import get_workdir_from_session
+from openpype.pipeline.context_tools import get_workdir_from_session
 
 log = logging.getLogger("Update Slap Comp")
-
-self = sys.modules[__name__]
-self._project = None
 
 
 def _format_version_folder(folder):
@@ -162,9 +164,9 @@ def update_frame_range(comp, representations):
 
     """
 
-    version_ids = [r["parent"] for r in representations]
-    versions = io.find({"type": "version", "_id": {"$in": version_ids}})
-    versions = list(versions)
+    project_name = legacy_io.active_project()
+    version_ids = {r["parent"] for r in representations}
+    versions = list(get_versions(project_name, version_ids))
 
     versions = [v for v in versions
                 if v["data"].get("frameStart", None) is not None]
@@ -201,12 +203,9 @@ def switch(asset_name, filepath=None, new=True):
 
     # Assert asset name exists
     # It is better to do this here then to wait till switch_shot does it
-    asset = io.find_one({"type": "asset", "name": asset_name})
+    project_name = legacy_io.active_project()
+    asset = get_asset_by_name(project_name, asset_name)
     assert asset, "Could not find '%s' in the database" % asset_name
-
-    # Get current project
-    self._project = io.find_one({"type": "project",
-                                 "name": avalon.api.Session["AVALON_PROJECT"]})
 
     # Go to comp
     if not filepath:
@@ -218,7 +217,7 @@ def switch(asset_name, filepath=None, new=True):
         assert current_comp is not None, (
             "Fusion could not load '{}'").format(filepath)
 
-    host = avalon.api.registered_host()
+    host = registered_host()
     containers = list(host.ls())
     assert containers, "Nothing to update"
 
@@ -237,7 +236,7 @@ def switch(asset_name, filepath=None, new=True):
     current_comp.Print(message)
 
     # Build the session to switch to
-    switch_to_session = avalon.api.Session.copy()
+    switch_to_session = legacy_io.Session.copy()
     switch_to_session["AVALON_ASSET"] = asset['name']
 
     if new:
@@ -279,7 +278,7 @@ if __name__ == '__main__':
 
     args, unknown = parser.parse_args()
 
-    avalon.api.install(api)
+    install_host(api)
     switch(args.asset_name, args.file_path)
 
     sys.exit(0)

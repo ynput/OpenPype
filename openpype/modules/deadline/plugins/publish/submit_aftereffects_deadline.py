@@ -3,10 +3,11 @@ import attr
 import getpass
 import pyblish.api
 
-from avalon import api
-
-from openpype.lib import env_value_to_bool
-from openpype.lib.delivery import collect_frames
+from openpype.lib import (
+    env_value_to_bool,
+    collect_frames,
+)
+from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -34,11 +35,10 @@ class AfterEffectsSubmitDeadline(
     hosts = ["aftereffects"]
     families = ["render.farm"]  # cannot be "render' as that is integrated
     use_published = True
+    targets = ["local"]
 
     priority = 50
     chunk_size = 1000000
-    primary_pool = None
-    secondary_pool = None
     group = None
     department = None
     multiprocess = True
@@ -62,8 +62,8 @@ class AfterEffectsSubmitDeadline(
             dln_job_info.Frames = frame_range
 
         dln_job_info.Priority = self.priority
-        dln_job_info.Pool = self.primary_pool
-        dln_job_info.SecondaryPool = self.secondary_pool
+        dln_job_info.Pool = self._instance.data.get("primaryPool")
+        dln_job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
@@ -82,14 +82,15 @@ class AfterEffectsSubmitDeadline(
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         for key in keys:
             val = environment.get(key)
             if val:

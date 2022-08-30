@@ -2,24 +2,15 @@ import re
 import os
 import hiero
 
+from openpype.client import get_project, get_assets
 from openpype.api import Logger
-from avalon import io
+from openpype.pipeline import legacy_io
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def tag_data():
     return {
-        # "Retiming": {
-        #     "editable": "1",
-        #     "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa
-        #     "icon": "retiming.png",
-        #     "metadata": {
-        #         "family": "retiming",
-        #         "marginIn": 1,
-        #         "marginOut": 1
-        #     }
-        # },
         "[Lenses]": {
             "Set lense here": {
                 "editable": "1",
@@ -47,6 +38,16 @@ def tag_data():
             "metadata": {
                 "family": "comment",
                 "subset": "main"
+            }
+        },
+        "FrameMain": {
+            "editable": "1",
+            "note": "Publishing a frame subset.",
+            "icon": "z_layer_main.png",
+            "metadata": {
+                "family": "frame",
+                "subset": "main",
+                "format": "png"
             }
         }
     }
@@ -86,7 +87,7 @@ def update_tag(tag, data):
 
     # due to hiero bug we have to make sure keys which are not existent in
     # data are cleared of value by `None`
-    for _mk in mtd.keys():
+    for _mk in mtd.dict().keys():
         if _mk.replace("tag.", "") not in data_mtd.keys():
             mtd.setValue(_mk, str(None))
 
@@ -141,7 +142,9 @@ def add_tags_to_workfile():
     nks_pres_tags = tag_data()
 
     # Get project task types.
-    tasks = io.find_one({"type": "project"})["config"]["tasks"]
+    project_name = legacy_io.active_project()
+    project_doc = get_project(project_name)
+    tasks = project_doc["config"]["tasks"]
     nks_pres_tags["[Tasks]"] = {}
     log.debug("__ tasks: {}".format(tasks))
     for task_type in tasks.keys():
@@ -159,7 +162,9 @@ def add_tags_to_workfile():
     # asset builds and shots.
     if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) == 1:
         nks_pres_tags["[AssetBuilds]"] = {}
-        for asset in io.find({"type": "asset"}):
+        for asset in get_assets(
+            project_name, fields=["name", "data.entityType"]
+        ):
             if asset["data"]["entityType"] == "AssetBuild":
                 nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
                     "editable": "1",

@@ -8,10 +8,19 @@ from bson.objectid import ObjectId
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
 
-from avalon import api, io, schema
+from openpype.client import (
+    get_version_by_id,
+    get_hero_version_by_subset_id,
+    get_archived_representations,
+    get_representations,
+)
 from openpype.lib import (
     create_hard_link,
     filter_profiles
+)
+from openpype.pipeline import (
+    schema,
+    legacy_io,
 )
 
 
@@ -62,7 +71,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         template_key = self._get_template_key(instance)
 
         anatomy = instance.context.data["anatomy"]
-        project_name = api.Session["AVALON_PROJECT"]
+        project_name = anatomy.project_name
         if template_key not in anatomy.templates:
             self.log.warning((
                 "!!! Anatomy of project \"{}\" does not have set"
@@ -82,9 +91,13 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             hero_template
         ))
 
-        self.integrate_instance(instance, template_key, hero_template)
+        self.integrate_instance(
+            instance, project_name, template_key, hero_template
+        )
 
-    def integrate_instance(self, instance, template_key, hero_template):
+    def integrate_instance(
+        self, instance, project_name, template_key, hero_template
+    ):
         anatomy = instance.context.data["anatomy"]
         published_repres = instance.data["published_representations"]
         hero_publish_dir = self.get_publish_dir(instance, template_key)
@@ -115,8 +128,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 "Published version entity was not sent in representation data."
                 " Querying entity from database."
             ))
-            src_version_entity = (
-                self.version_from_representations(published_repres)
+            src_version_entity = self.version_from_representations(
+                project_name, published_repres
             )
 
         if not src_version_entity:
@@ -167,8 +180,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             other_file_paths_mapping.append((file_path, dst_filepath))
 
         # Current version
-        old_version, old_repres = (
-            self.current_hero_ents(src_version_entity)
+        old_version, old_repres = self.current_hero_ents(
+            project_name, src_version_entity
         )
 
         old_repres_by_name = {
@@ -220,11 +233,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         if old_repres_by_name:
             old_repres_to_delete = old_repres_by_name
 
-        archived_repres = list(io.find({
+        archived_repres = list(get_archived_representations(
+            project_name,
             # Check what is type of archived representation
-            "type": "archived_repsentation",
-            "parent": new_version_id
-        }))
+            version_ids=[new_version_id]
+        ))
         archived_repres_by_name = {}
         for repre in archived_repres:
             repre_name_low = repre["name"].lower()
@@ -300,13 +313,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 }
                 repre_context = template_filled.used_values
                 for key in self.db_representation_context_keys:
-                    if (
-                        key in repre_context or
-                        key not in anatomy_data
-                    ):
-                        continue
-
-                    repre_context[key] = anatomy_data[key]
+                    value = anatomy_data.get(key)
+                    if value is not None:
+                        repre_context[key] = value
 
                 # Prepare new repre
                 repre = copy.deepcopy(repre_info["representation"])
@@ -441,7 +450,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     )
 
             if bulk_writes:
-                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
 
@@ -503,11 +512,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
+            ).format(anatomy.project_name))
 
             file_path = anatomy_filled[template_key]["path"]
             # Directory
@@ -582,25 +590,23 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
         shutil.copy(src_path, dst_path)
 
-    def version_from_representations(self, repres):
+    def version_from_representations(self, project_name, repres):
         for repre in repres:
-            version = io.find_one({"_id": repre["parent"]})
+            version = get_version_by_id(project_name, repre["parent"])
             if version:
                 return version
 
-    def current_hero_ents(self, version):
-        hero_version = io.find_one({
-            "parent": version["parent"],
-            "type": "hero_version"
-        })
+    def current_hero_ents(self, project_name, version):
+        hero_version = get_hero_version_by_subset_id(
+            project_name, version["parent"]
+        )
 
         if not hero_version:
             return (None, [])
 
-        hero_repres = list(io.find({
-            "parent": hero_version["_id"],
-            "type": "representation"
-        }))
+        hero_repres = list(get_representations(
+            project_name, version_ids=[hero_version["_id"]]
+        ))
         return (hero_version, hero_repres)
 
     def _update_path(self, anatomy, path, src_file, dst_file):

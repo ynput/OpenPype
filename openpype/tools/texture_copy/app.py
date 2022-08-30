@@ -1,14 +1,12 @@
 import os
 import re
 import click
-from avalon import io, api
-from pprint import pprint
 
-from openpype.lib import Terminal
-from openpype.api import Anatomy
-
-import shutil
 import speedcopy
+
+from openpype.client import get_project, get_asset_by_name
+from openpype.lib import Terminal
+from openpype.pipeline import legacy_io, Anatomy
 
 
 t = Terminal()
@@ -20,8 +18,8 @@ texture_extensions = ['.tif', '.tiff', '.jpg', '.jpeg', '.tx', '.png', '.tga',
 class TextureCopy:
 
     def __init__(self):
-        if not io.Session:
-            io.install()
+        if not legacy_io.Session:
+            legacy_io.install()
 
     def _get_textures(self, path):
         textures = []
@@ -30,20 +28,6 @@ class TextureCopy:
                 os.path.join(dir, x) for x in files
                 if os.path.splitext(x)[1].lower() in texture_extensions)
         return textures
-
-    def _get_project(self, project_name):
-        project = io.find_one({
-            'type': 'project',
-            'name': project_name
-        })
-        return project
-
-    def _get_asset(self, asset_name):
-        asset = io.find_one({
-            'type': 'asset',
-            'name': asset_name
-        })
-        return asset
 
     def _get_destination_path(self, asset, project):
         project_name = project["name"]
@@ -90,11 +74,12 @@ class TextureCopy:
                 t.echo("!!! {}".format(e))
                 exit(1)
 
-    def process(self, asset, project, path):
+    def process(self, asset_name, project_name, path):
         """
         Process all textures found in path and copy them to asset under
         project.
         """
+
         t.echo(">>> Looking for textures ...")
         textures = self._get_textures(path)
         if len(textures) < 1:
@@ -103,14 +88,14 @@ class TextureCopy:
         else:
             t.echo(">>> Found {} textures ...".format(len(textures)))
 
-        project = self._get_project(project)
+        project = get_project(project_name)
         if not project:
-            t.echo("!!! Project name [ {} ] not found.".format(project))
+            t.echo("!!! Project name [ {} ] not found.".format(project_name))
             exit(1)
 
-        asset = self._get_asset(asset)
-        if not project:
-            t.echo("!!! Asset [ {} ] not found in project".format(asset))
+        asset = get_asset_by_name(project_name, asset_name)
+        if not asset:
+            t.echo("!!! Asset [ {} ] not found in project".format(asset_name))
             exit(1)
         t.echo((">>> Project [ {} ] and "
                 "asset [ {} ] seems to be OK ...").format(project['name'],

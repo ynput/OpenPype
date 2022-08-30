@@ -8,6 +8,29 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "RenderCreator",
+                    "label": "Create render",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Default Variants",
+                            "object_type": "text",
+                            "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [

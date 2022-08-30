@@ -1,10 +1,11 @@
-from avalon import io
 from openpype.lib import NumberDef
-from openpype.hosts.testhost.api import pipeline
+from openpype.client import get_asset_by_name
 from openpype.pipeline import (
+    legacy_io,
     AutoCreator,
     CreatedInstance,
 )
+from openpype.hosts.testhost.api import pipeline
 
 
 class MyAutoCreator(AutoCreator):
@@ -38,13 +39,13 @@ class MyAutoCreator(AutoCreator):
                 break
 
         variant = "Main"
-        project_name = io.Session["AVALON_PROJECT"]
-        asset_name = io.Session["AVALON_ASSET"]
-        task_name = io.Session["AVALON_TASK"]
-        host_name = io.Session["AVALON_APP"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        host_name = legacy_io.Session["AVALON_APP"]
 
         if existing_instance is None:
-            asset_doc = io.find_one({"type": "asset", "name": asset_name})
+            asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
@@ -66,7 +67,7 @@ class MyAutoCreator(AutoCreator):
             existing_instance["asset"] != asset_name
             or existing_instance["task"] != task_name
         ):
-            asset_doc = io.find_one({"type": "asset", "name": asset_name})
+            asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )

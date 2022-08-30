@@ -6,7 +6,7 @@ import uuid
 import datetime
 import traceback
 import time
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.settings import get_project_settings
 
 import ftrack_api
@@ -52,7 +52,7 @@ class BaseHandler(object):
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
         if not(
             isinstance(session, ftrack_api.session.Session) or
             isinstance(session, ftrack_server.lib.SocketSession)
@@ -535,7 +535,7 @@ class BaseHandler(object):
         )
 
     def trigger_event(
-        self, topic, event_data={}, session=None, source=None,
+        self, topic, event_data=None, session=None, source=None,
         event=None, on_error="ignore"
     ):
         if session is None:
@@ -543,6 +543,9 @@ class BaseHandler(object):
 
         if not source and event:
             source = event.get("source")
+
+        if event_data is None:
+            event_data = {}
         # Create and trigger event
         event = ftrack_api.event.base.Event(
             topic=topic,

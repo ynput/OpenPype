@@ -57,15 +57,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         audio_inputs.insert(0, empty)
 
         # create cmd
-        cmd = path_to_subprocess_arg(self.ffmpeg_path) + " "
-        cmd += self.create_cmd(audio_inputs)
-        cmd += path_to_subprocess_arg(audio_temp_fpath)
-
-        # run subprocess
-        self.log.debug("Executing: {}".format(cmd))
-        openpype.api.run_subprocess(
-            cmd, shell=True, logger=self.log
-        )
+        self.mix_audio(audio_inputs, audio_temp_fpath)
 
         # remove empty
         os.remove(empty["mediaPath"])
@@ -245,46 +237,80 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
             "durationSec": max_duration_sec
         }
 
-    def create_cmd(self, inputs):
+    def mix_audio(self, audio_inputs, audio_temp_fpath):
         """Creating multiple input cmd string
 
         Args:
-            inputs (list): list of input dicts. Order mater.
+            audio_inputs (list): list of input dicts. Order mater.
 
         Returns:
             str: the command body
-
         """
+
+        longest_input = 0
+        for audio_input in audio_inputs:
+            audio_len = audio_input["durationSec"]
+            if audio_len > longest_input:
+                longest_input = audio_len
+
         # create cmd segments
-        _inputs = ""
-        _filters = "-filter_complex \""
-        _channels = ""
-        for index, input in enumerate(inputs):
-            input_format = input.copy()
-            input_format.update({"i": index})
-            input_format["mediaPath"] = path_to_subprocess_arg(
-                input_format["mediaPath"]
+        input_args = []
+        filters = []
+        tag_names = []
+        for index, audio_input in enumerate(audio_inputs):
+            input_args.extend([
+                "-ss", str(audio_input["startSec"]),
+                "-t", str(audio_input["durationSec"]),
+                "-i", audio_input["mediaPath"]
+            ])
+
+            # Output tag of a filtered audio input
+            tag_name = "[r{}]".format(index)
+            tag_names.append(tag_name)
+            # Delay in audio by delay in item
+            filters.append("[{}]adelay={}:all=1{}".format(
+                index, audio_input["delayMilSec"], tag_name
+            ))
+
+        # Mixing filter
+        #   - dropout transition (when audio will get loader) is set to be
+        #       higher then any input audio item
+        #   - volume is set to number of inputs - each mix adds 1/n volume
+        #       where n is input inder (to get more info read ffmpeg docs and
+        #       send a giftcard to contributor)
+        filters.append(
+            (
+                "{}amix=inputs={}:duration=first:"
+                "dropout_transition={},volume={}[a]"
+            ).format(
+                "".join(tag_names),
+                len(audio_inputs),
+                (longest_input * 1000) + 1000,
+                len(audio_inputs),
             )
+        )
 
-            _inputs += (
-                "-ss {startSec} "
-                "-t {durationSec} "
-                "-i {mediaPath} "
-            ).format(**input_format)
+        # Store filters to a file (separated by ',')
+        #   - this is to avoid "too long" command issue in ffmpeg
+        with tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".txt"
+        ) as tmp_file:
+            filters_tmp_filepath = tmp_file.name
+            tmp_file.write(",".join(filters))
 
-            _filters += "[{i}]adelay={delayMilSec}:all=1[r{i}]; ".format(
-                **input_format)
-            _channels += "[r{}]".format(index)
+        args = [self.ffmpeg_path]
+        args.extend(input_args)
+        args.extend([
+            "-filter_complex_script", filters_tmp_filepath,
+            "-map", "[a]"
+        ])
+        args.append(audio_temp_fpath)
 
-        # merge all cmd segments together
-        cmd = _inputs + _filters + _channels
-        cmd += str(
-            "amix=inputs={inputs}:duration=first:"
-            "dropout_transition=1000,volume={inputs}[a]\" "
-        ).format(inputs=len(inputs))
-        cmd += "-map \"[a]\" "
+        # run subprocess
+        self.log.debug("Executing: {}".format(args))
+        openpype.api.run_subprocess(args, logger=self.log)
 
-        return cmd
+        os.remove(filters_tmp_filepath)
 
     def create_temp_file(self, name):
         """Create temp wav file

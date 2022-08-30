@@ -142,7 +142,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._help_text_by_instance_id = help_text_by_instance_id
 
     def sizeHint(self):
-        result = super().sizeHint()
+        result = super(ValidationErrorTitleWidget, self).sizeHint()
         expected_width = 0
         for idx in range(self._view_layout.count()):
             expected_width += self._view_layout.itemAt(idx).sizeHint().width()

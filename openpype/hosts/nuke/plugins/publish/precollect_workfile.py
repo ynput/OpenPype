@@ -8,6 +8,7 @@ from openpype.hosts.nuke.api.lib import (
     add_publish_knob,
     get_avalon_knob_data
 )
+from openpype.pipeline import KnownPublishError
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -17,10 +18,16 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     label = "Pre-collect Workfile"
     hosts = ['nuke']
 
-    def process(self, context):
+    def process(self, context):  # sourcery skip: avoid-builtin-shadow
         root = nuke.root()
 
         current_file = os.path.normpath(nuke.root().name())
+
+        if current_file.lower() == "root":
+            raise KnownPublishError(
+                "Workfile is not correct file name. \n"
+                "Use workfile tool to manage the name correctly."
+            )
 
         knob_data = get_avalon_knob_data(root)
 
@@ -74,20 +81,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         }
         context.data.update(script_data)
 
-        # creating instance data
-        instance.data.update({
-            "subset": subset,
-            "label": base_name,
-            "name": base_name,
-            "publish": root.knob('publish').value(),
-            "family": family,
-            "families": [family],
-            "representations": list()
-        })
-
-        # adding basic script data
-        instance.data.update(script_data)
-
         # creating representation
         representation = {
             'name': 'nk',
@@ -96,12 +89,18 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir,
         }
 
-        instance.data["representations"].append(representation)
+        # creating instance data
+        instance.data.update({
+            "subset": subset,
+            "label": base_name,
+            "name": base_name,
+            "publish": root.knob('publish').value(),
+            "family": family,
+            "families": [family],
+            "representations": [representation]
+        })
+
+        # adding basic script data
+        instance.data.update(script_data)
 
         self.log.info('Publishing script version')
-
-        # create instances in context data if not are created yet
-        if not context.data.get("instances"):
-            context.data["instances"] = list()
-
-        context.data["instances"].append(instance)

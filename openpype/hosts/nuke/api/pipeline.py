@@ -9,7 +9,6 @@ import pyblish.api
 import openpype
 from openpype.api import (
     Logger,
-    BuildWorkfile,
     get_current_project_settings
 )
 from openpype.lib import register_event_callback
@@ -22,6 +21,7 @@ from openpype.pipeline import (
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -32,13 +32,12 @@ from .lib import (
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
-    read,
+    read_avalon_data,
     Context
 )
 
 log = Logger.get_logger(__name__)
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -79,11 +78,11 @@ def reload_config():
     """
 
     for module in (
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.actions".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.menu".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.plugin".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.lib".format(AVALON_CONFIG),
+        "openpype.api",
+        "openpype.hosts.nuke.api.actions",
+        "openpype.hosts.nuke.api.menu",
+        "openpype.hosts.nuke.api.plugin",
+        "openpype.hosts.nuke.api.lib",
     ):
         log.info("Reloading module: {}...".format(module))
 
@@ -121,8 +120,9 @@ def install():
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
-    nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
     _install_menu()
+    launch_workfiles_app()
 
 
 def uninstall():
@@ -142,6 +142,14 @@ def uninstall():
     _uninstall_menu()
 
 
+def _show_workfiles():
+    # Make sure parent is not set
+    # - this makes Workfiles tool as separated window which
+    #   avoid issues with reopening
+    # - it is possible to explicitly change on top flag of the tool
+    host_tools.show_workfiles(parent=None, on_top=False)
+
+
 def _install_menu():
     # uninstall original avalon menu
     main_window = get_main_window()
@@ -158,7 +166,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Work Files...",
-        lambda: host_tools.show_workfiles(parent=main_window)
+        _show_workfiles
     )
 
     menu.addSeparator()
@@ -360,7 +368,7 @@ def parse_container(node):
         dict: The container schema data for this container node.
 
     """
-    data = read(node)
+    data = read_avalon_data(node)
 
     # (TODO) Remove key validation when `ls` has re-implemented.
     #

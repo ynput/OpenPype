@@ -15,9 +15,9 @@ from Qt import QtWidgets, QtCore
 import bpy
 import bpy.utils.previews
 
-import avalon.api
-from openpype.tools.utils import host_tools
 from openpype import style
+from openpype.pipeline import legacy_io
+from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
 
@@ -26,7 +26,7 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # This seems like a good value to keep the Qt app responsive and doesn't slow
 # down Blender. At least on macOS I the interace of Blender gets very laggy if
 # you make it smaller.
-TIMER_INTERVAL: float = 0.01
+TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
 
 
 class BlenderApplication(QtWidgets.QApplication):
@@ -164,6 +164,12 @@ def _process_app_events() -> Optional[float]:
             dialog.setDetailedText(detail)
             dialog.exec_()
 
+        # Refresh Manager
+        if GlobalClass.app:
+            manager = GlobalClass.app.get_window("WM_OT_avalon_manager")
+            if manager:
+                manager.refresh()
+
     if not GlobalClass.is_windows:
         if OpenFileCacher.opening_file:
             return TIMER_INTERVAL
@@ -192,10 +198,11 @@ class LaunchQtApp(bpy.types.Operator):
         self._app = BlenderApplication.get_app()
         GlobalClass.app = self._app
 
-        bpy.app.timers.register(
-            _process_app_events,
-            persistent=True
-        )
+        if not bpy.app.timers.is_registered(_process_app_events):
+            bpy.app.timers.register(
+                _process_app_events,
+                persistent=True
+            )
 
     def execute(self, context):
         """Execute the operator.
@@ -220,12 +227,9 @@ class LaunchQtApp(bpy.types.Operator):
                 self._app.store_window(self.bl_idname, window)
             self._window = window
 
-        if not isinstance(
-            self._window,
-            (QtWidgets.QMainWindow, QtWidgets.QDialog, ModuleType)
-        ):
+        if not isinstance(self._window, (QtWidgets.QWidget, ModuleType)):
             raise AttributeError(
-                "`window` should be a `QDialog or module`. Got: {}".format(
+                "`window` should be a `QWidget or module`. Got: {}".format(
                     str(type(window))
                 )
             )
@@ -249,9 +253,9 @@ class LaunchQtApp(bpy.types.Operator):
             self._window.setWindowFlags(on_top_flags)
             self._window.show()
 
-            if on_top_flags != origin_flags:
-                self._window.setWindowFlags(origin_flags)
-                self._window.show()
+            # if on_top_flags != origin_flags:
+            #     self._window.setWindowFlags(origin_flags)
+            #     self._window.show()
 
         return {'FINISHED'}
 
@@ -279,7 +283,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": avalon.api.Session["AVALON_ASSET"]},
+            {"asset": legacy_io.Session["AVALON_ASSET"]},
             refresh=True
         )
 
@@ -327,8 +331,8 @@ class LaunchWorkFiles(LaunchQtApp):
     def execute(self, context):
         result = super().execute(context)
         self._window.set_context({
-            "asset": avalon.api.Session["AVALON_ASSET"],
-            "task": avalon.api.Session["AVALON_TASK"]
+            "asset": legacy_io.Session["AVALON_ASSET"],
+            "task": legacy_io.Session["AVALON_TASK"]
         })
         return result
 
@@ -358,8 +362,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = avalon.api.Session['AVALON_ASSET']
-        task = avalon.api.Session['AVALON_TASK']
+        asset = legacy_io.Session['AVALON_ASSET']
+        task = legacy_io.Session['AVALON_TASK']
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
         context_label_item.operator(

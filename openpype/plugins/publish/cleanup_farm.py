@@ -3,7 +3,8 @@
 import os
 import shutil
 import pyblish.api
-import avalon.api
+
+from openpype.pipeline import legacy_io
 
 
 class CleanUpFarm(pyblish.api.ContextPlugin):
@@ -22,7 +23,7 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # Get source host from which farm publishing was started
-        src_host_name = avalon.api.Session.get("AVALON_APP")
+        src_host_name = legacy_io.Session.get("AVALON_APP")
         self.log.debug("Host name from session is {}".format(src_host_name))
         # Skip process if is not in list of source hosts in which this
         #    plugin should run

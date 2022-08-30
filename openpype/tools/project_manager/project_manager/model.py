@@ -7,6 +7,15 @@ from pymongo import UpdateOne, DeleteOne
 
 from Qt import QtCore, QtGui
 
+from openpype.client import (
+    get_projects,
+    get_project,
+    get_assets,
+    get_asset_ids_with_subsets,
+)
+from openpype.client.operations import CURRENT_ASSET_DOC_SCHEMA
+from openpype.lib import Logger
+
 from .constants import (
     IDENTIFIER_ROLE,
     ITEM_TYPE_ROLE,
@@ -17,8 +26,6 @@ from .constants import (
     PROJECT_NAME_ROLE
 )
 from .style import ResourceCache
-
-from openpype.lib import CURRENT_DOC_SCHEMAS
 
 
 class ProjectModel(QtGui.QStandardItemModel):
@@ -46,12 +53,8 @@ class ProjectModel(QtGui.QStandardItemModel):
             self._items_by_name[None] = none_project
             new_project_items.append(none_project)
 
-        project_docs = self.dbcon.projects(
-            projection={"name": 1},
-            only_active=True
-        )
         project_names = set()
-        for project_doc in project_docs:
+        for project_doc in get_projects(fields=["name"]):
             project_name = project_doc.get("name")
             if not project_name:
                 continue
@@ -185,6 +188,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             for key in self.multiselection_columns
         }
 
+        self._log = None
         # TODO Reset them on project change
         self._current_project = None
         self._root_item = None
@@ -193,6 +197,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.dbcon = dbcon
 
         self._reset_root_item()
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger("ProjectManagerModel")
+        return self._log
 
     @property
     def items_by_id(self):
@@ -245,10 +255,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return
 
         # Find project'd document
-        project_doc = self.dbcon.database[project_name].find_one(
-            {"type": "project"},
-            ProjectItem.query_projection
+        project_doc = get_project(
+            project_name,
+            fields=list(ProjectItem.query_projection.keys())
         )
+
         # Skip if project document does not exist
         # - this shouldn't happen using only UI elements
         if not project_doc:
@@ -259,9 +270,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.add_item(project_item)
 
         # Query all assets of the project
-        asset_docs = self.dbcon.database[project_name].find(
-            {"type": "asset"},
-            AssetItem.query_projection
+        asset_docs = get_assets(
+            project_name, fields=AssetItem.query_projection.keys()
         )
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
@@ -272,31 +282,16 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         #   if asset item can be modified (name and hierarchy change)
         # - the same must be applied to all it's parents
         asset_ids = list(asset_docs_by_id.keys())
-        result = []
+        asset_ids_with_subsets = []
         if asset_ids:
-            result = self.dbcon.database[project_name].aggregate([
-                {
-                    "$match": {
-                        "type": "subset",
-                        "parent": {"$in": asset_ids}
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": "$parent",
-                        "count": {"$sum": 1}
-                    }
-                }
-            ])
+            asset_ids_with_subsets = get_asset_ids_with_subsets(
+                project_name, asset_ids=asset_ids
+            )
 
         asset_modifiable = {
-            asset_id: True
+            asset_id: asset_id not in asset_ids_with_subsets
             for asset_id in asset_docs_by_id.keys()
         }
-        for item in result:
-            asset_id = item["_id"]
-            count = item["count"]
-            asset_modifiable[asset_id] = count < 1
 
         # Store assets by their visual parent to be able create their hierarchy
         asset_docs_by_parent_id = collections.defaultdict(list)
@@ -1367,6 +1362,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         to_process = collections.deque()
         to_process.append(project_item)
 
+        created_count = 0
+        updated_count = 0
+        removed_count = 0
         bulk_writes = []
         while to_process:
             parent = to_process.popleft()
@@ -1381,6 +1379,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     insert_list.append(item)
 
                 elif item.data(REMOVED_ROLE):
+                    removed_count += 1
                     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
                         bulk_writes.append(DeleteOne(
                             {"_id": item.asset_id}
@@ -1394,6 +1393,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 else:
                     update_data = item.update_data()
                     if update_data:
+                        updated_count += 1
                         bulk_writes.append(UpdateOne(
                             {"_id": item.asset_id},
                             update_data
@@ -1406,10 +1406,20 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 result = project_col.insert_many(new_docs)
                 for idx, mongo_id in enumerate(result.inserted_ids):
+                    created_count += 1
                     insert_list[idx].mongo_id = mongo_id
+
+        if sum([created_count, updated_count, removed_count]) == 0:
+            self.log.info("Nothing has changed")
+            return
 
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
+
+        self.log.info((
+            "Save finished."
+            " Created {} | Updated {} | Removed {} asset documents"
+        ).format(created_count, updated_count, removed_count))
 
         self.refresh_project()
 
@@ -1447,12 +1457,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         mimedata.setData("application/copy_task", encoded_data)
         return mimedata
 
-    def paste_mime_data(self, index, mime_data):
-        if not index.isValid():
-            return
-
-        item_id = index.data(IDENTIFIER_ROLE)
-        item = self._items_by_id[item_id]
+    def _paste_mime_data(self, item, mime_data):
         if not isinstance(item, (AssetItem, TaskItem)):
             return
 
@@ -1485,6 +1490,25 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
             task_item = TaskItem(task_data, True)
             self.add_item(task_item, parent)
+
+    def paste(self, indexes, mime_data):
+
+        # Get the selected Assets uniquely
+        items = set()
+        for index in indexes:
+            if not index.isValid():
+                return
+            item_id = index.data(IDENTIFIER_ROLE)
+            item = self._items_by_id[item_id]
+
+            # Do not copy into the Task Item so get parent Asset instead
+            if isinstance(item, TaskItem):
+                item = item.parent()
+
+            items.add(item)
+
+        for item in items:
+            self._paste_mime_data(item, mime_data)
 
 
 class BaseItem:
@@ -1819,12 +1843,16 @@ class AssetItem(BaseItem):
     }
     query_projection = {
         "_id": 1,
-        "data.tasks": 1,
-        "data.visualParent": 1,
-        "schema": 1,
-
         "name": 1,
+        "schema": 1,
         "type": 1,
+        "parent": 1,
+
+        "data.visualParent": 1,
+        "data.parents": 1,
+
+        "data.tasks": 1,
+
         "data.frameStart": 1,
         "data.frameEnd": 1,
         "data.fps": 1,
@@ -1835,7 +1863,7 @@ class AssetItem(BaseItem):
         "data.clipIn": 1,
         "data.clipOut": 1,
         "data.pixelAspect": 1,
-        "data.tools_env": 1
+        "data.tools_env": 1,
     }
 
     def __init__(self, asset_doc):
@@ -1931,7 +1959,7 @@ class AssetItem(BaseItem):
         }
         schema_name = (
             self._origin_asset_doc.get("schema")
-            or CURRENT_DOC_SCHEMAS["asset"]
+            or CURRENT_ASSET_DOC_SCHEMA
         )
 
         doc = {

@@ -1,5 +1,4 @@
 import os
-import contextlib
 import glob
 
 import capture
@@ -28,7 +27,6 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         camera = instance.data['review_camera']
 
-        capture_preset = ""
         capture_preset = (
             instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
         )
@@ -60,7 +58,29 @@ class ExtractThumbnail(openpype.api.Extractor):
             "overscan": 1.0,
             "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
         }
-
+        capture_presets = capture_preset
+        # Set resolution variables from capture presets
+        width_preset = capture_presets["Resolution"]["width"]
+        height_preset = capture_presets["Resolution"]["height"]
+        # Set resolution variables from asset values
+        asset_data = instance.data["assetEntity"]["data"]
+        asset_width = asset_data.get("resolutionWidth")
+        asset_height = asset_data.get("resolutionHeight")
+        review_instance_width = instance.data.get("review_width")
+        review_instance_height = instance.data.get("review_height")
+        # Tests if project resolution is set,
+        # if it is a value other than zero, that value is
+        # used, if not then the asset resolution is
+        # used
+        if review_instance_width and review_instance_height:
+            preset['width'] = review_instance_width
+            preset['height'] = review_instance_height
+        elif width_preset and height_preset:
+            preset['width'] = width_preset
+            preset['height'] = height_preset
+        elif asset_width and asset_height:
+            preset['width'] = asset_width
+            preset['height'] = asset_height
         stagingDir = self.staging_dir(instance)
         filename = "{0}".format(instance.name)
         path = os.path.join(stagingDir, filename)
@@ -81,9 +101,14 @@ class ExtractThumbnail(openpype.api.Extractor):
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
-        with maintained_time():
-            filename = preset.get("filename", "%TEMP%")
+        # Show or Hide Image Plane
+        image_plane = instance.data.get("imagePlane", True)
+        if "viewport_options" in preset:
+            preset["viewport_options"]["imagePlane"] = image_plane
+        else:
+            preset["viewport_options"] = {"imagePlane": image_plane}
 
+        with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
@@ -92,13 +117,16 @@ class ExtractThumbnail(openpype.api.Extractor):
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             if not override_viewport_options:
+                panel = cmds.getPanel(withFocus=True)
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
+                cmds.setFocus(panel)
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
         _, thumbnail = os.path.split(playblast)
+
 
         self.log.info("file list  {}".format(thumbnail))
 
@@ -152,12 +180,3 @@ class ExtractThumbnail(openpype.api.Extractor):
             filepath = max(files, key=os.path.getmtime)
 
         return filepath
-
-
-@contextlib.contextmanager
-def maintained_time():
-    ct = cmds.currentTime(query=True)
-    try:
-        yield
-    finally:
-        cmds.currentTime(ct, edit=True)

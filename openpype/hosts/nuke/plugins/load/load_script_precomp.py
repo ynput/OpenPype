@@ -1,8 +1,11 @@
 import nuke
 
-from avalon import io
-
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path,
 )
@@ -117,29 +120,23 @@ class LinkAsGroup(load.LoaderPlugin):
         root = get_representation_path(representation).replace("\\", "/")
 
         # Get start frame from version data
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
-
-        # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
 
         updated_dict = {}
+        version_data = version_doc["data"]
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "frameEnd": version["data"].get("frameEnd"),
-            "version": version.get("name"),
-            "colorspace": version["data"].get("colorspace"),
-            "source": version["data"].get("source"),
-            "handles": version["data"].get("handles"),
-            "fps": version["data"].get("fps"),
-            "author": version["data"].get("author")
+            "frameEnd": version_data.get("frameEnd"),
+            "version": version_doc.get("name"),
+            "colorspace": version_data.get("colorspace"),
+            "source": version_data.get("source"),
+            "handles": version_data.get("handles"),
+            "fps": version_data.get("fps"),
+            "author": version_data.get("author")
         })
 
         # Update the imprinted representation
@@ -151,12 +148,13 @@ class LinkAsGroup(load.LoaderPlugin):
         node["file"].setValue(root)
 
         # change color of node
-        if version.get("name") not in [max_version]:
-            node["tile_color"].setValue(int("0xd84f20ff", 16))
+        if version_doc["_id"] == last_version_doc["_id"]:
+            color_value = "0xff0ff0ff"
         else:
-            node["tile_color"].setValue(int("0xff0ff0ff", 16))
+            color_value = "0xd84f20ff"
+        node["tile_color"].setValue(int(color_value, 16))
 
-        self.log.info("updated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def remove(self, container):
         node = nuke.toNode(container['objectName'])

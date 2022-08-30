@@ -4,13 +4,15 @@ from maya import cmds
 
 import qargparse
 
+from openpype.lib import Logger
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
     AVALON_CONTAINER_ID,
+    Anatomy,
 )
-
+from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
 
@@ -49,9 +51,7 @@ def get_reference_node(members, log=None):
     # Warn the user when we're taking the highest reference node
     if len(references) > 1:
         if not log:
-            from openpype.lib import PypeLogger
-
-            log = PypeLogger().get_logger(__name__)
+            log = Logger.get_logger(__name__)
 
         log.warning("More than one reference node found in "
                     "container, using highest reference node: "
@@ -207,7 +207,8 @@ class ReferenceLoader(Loader):
         file_type = {
             "ma": "mayaAscii",
             "mb": "mayaBinary",
-            "abc": "Alembic"
+            "abc": "Alembic",
+            "fbx": "FBX"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation
@@ -230,6 +231,10 @@ class ReferenceLoader(Loader):
                 self.log.debug("No alembic nodes found in {}".format(members))
 
         try:
+            path = self.prepare_root_value(path,
+                                           representation["context"]
+                                                         ["project"]
+                                                         ["name"])
             content = cmds.file(path,
                                 loadReference=reference_node,
                                 type=file_type,
@@ -318,6 +323,29 @@ class ReferenceLoader(Loader):
                            deleteNamespaceContent=True)
         except RuntimeError:
             pass
+
+    def prepare_root_value(self, file_url, project_name):
+        """Replace root value with env var placeholder.
+
+        Use ${OPENPYPE_ROOT_WORK} (or any other root) instead of proper root
+        value when storing referenced url into a workfile.
+        Useful for remote workflows with SiteSync.
+
+        Args:
+            file_url (str)
+            project_name (dict)
+        Returns:
+            (str)
+        """
+        settings = get_project_settings(project_name)
+        use_env_var_as_root = (settings["maya"]
+                                       ["maya-dirmap"]
+                                       ["use_env_var_as_root"])
+        if use_env_var_as_root:
+            anatomy = Anatomy(project_name)
+            file_url = anatomy.replace_root_with_env_key(file_url, '${{{}}}')
+
+        return file_url
 
     @staticmethod
     def _organize_containers(nodes, container):

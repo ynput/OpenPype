@@ -1,6 +1,4 @@
-import os
 import re
-import json
 
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype.api import get_project_basic_paths, create_project_folders
@@ -85,6 +83,11 @@ class CreateProjectFolders(BaseAction):
             # Invoking OpenPype API to create the project folders
             create_project_folders(basic_paths, project_name)
             self.create_ftrack_entities(basic_paths, project_entity)
+
+            self.trigger_event(
+                "openpype.project.structure.created",
+                {"project_name": project_name}
+            )
 
         except Exception as exc:
             self.log.warning("Creating of structure crashed.", exc_info=True)

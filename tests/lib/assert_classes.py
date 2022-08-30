@@ -24,13 +24,14 @@ class DBAssert:
             else:
                 args[key] = val
 
+        no_of_docs = dbcon.count_documents(args)
+
+        msg = None
         args.pop("type")
         detail_str = " "
         if args:
             detail_str = " with '{}'".format(args)
 
-        msg = None
-        no_of_docs = dbcon.count_documents(args)
         if expected != no_of_docs:
             msg = "Not expected no of '{}'{}."\
                   "Expected {}, found {}".format(queried_type,

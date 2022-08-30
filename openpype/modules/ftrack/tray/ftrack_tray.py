@@ -2,6 +2,7 @@ import os
 import time
 import datetime
 import threading
+
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
@@ -11,10 +12,11 @@ from ..lib import credentials
 from ..ftrack_module import FTRACK_MODULE_DIR
 from . import login_dialog
 
-from openpype.api import Logger, resources
+from openpype import resources
+from openpype.lib import Logger
 
 
-log = Logger().get_logger("FtrackModule")
+log = Logger.get_logger("FtrackModule")
 
 
 class FtrackTrayWrapper:
@@ -47,6 +49,9 @@ class FtrackTrayWrapper:
         self.widget_login.show()
         self.widget_login.activateWindow()
         self.widget_login.raise_()
+
+    def show_ftrack_browser(self):
+        QtGui.QDesktopServices.openUrl(self.module.ftrack_url)
 
     def validate(self):
         validation = False
@@ -284,6 +289,13 @@ class FtrackTrayWrapper:
         tray_server_menu.addAction(self.action_server_stop)
 
         self.tray_server_menu = tray_server_menu
+
+        # Ftrack Browser
+        browser_open = QtWidgets.QAction("Open Ftrack...", tray_menu)
+        browser_open.triggered.connect(self.show_ftrack_browser)
+        tray_menu.addAction(browser_open)
+        self.browser_open = browser_open
+
         self.bool_logged = False
         self.set_menu_visibility()
 

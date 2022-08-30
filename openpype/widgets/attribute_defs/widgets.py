@@ -1,4 +1,5 @@
 import uuid
+import copy
 
 from Qt import QtWidgets, QtCore
 
@@ -10,10 +11,14 @@ from openpype.lib.attribute_definitions import (
     EnumDef,
     BoolDef,
     FileDef,
+    UIDef,
     UISeparatorDef,
     UILabelDef
 )
+from openpype.tools.utils import CustomTextComboBox
 from openpype.widgets.nice_checkbox import NiceCheckbox
+
+from .files_widget import FilesWidget
 
 
 def create_widget_for_attr_def(attr_def, parent=None):
@@ -49,6 +54,108 @@ def create_widget_for_attr_def(attr_def, parent=None):
     raise ValueError("Unknown attribute definition \"{}\"".format(
         str(type(attr_def))
     ))
+
+
+class AttributeDefinitionsWidget(QtWidgets.QWidget):
+    """Create widgets for attribute definitions in grid layout.
+
+    Widget creates input widgets for passed attribute definitions.
+
+    Widget can't handle multiselection values.
+    """
+
+    def __init__(self, attr_defs=None, parent=None):
+        super(AttributeDefinitionsWidget, self).__init__(parent)
+
+        self._widgets = []
+        self._current_keys = set()
+
+        self.set_attr_defs(attr_defs)
+
+    def clear_attr_defs(self):
+        """Remove all existing widgets and reset layout if needed."""
+        self._widgets = []
+        self._current_keys = set()
+
+        layout = self.layout()
+        if layout is not None:
+            if layout.count() == 0:
+                return
+
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.setVisible(False)
+                    widget.deleteLater()
+
+            layout.deleteLater()
+
+        new_layout = QtWidgets.QGridLayout()
+        new_layout.setColumnStretch(0, 0)
+        new_layout.setColumnStretch(1, 1)
+        self.setLayout(new_layout)
+
+    def set_attr_defs(self, attr_defs):
+        """Replace current attribute definitions with passed."""
+        self.clear_attr_defs()
+        if attr_defs:
+            self.add_attr_defs(attr_defs)
+
+    def add_attr_defs(self, attr_defs):
+        """Add attribute definitions to current."""
+        layout = self.layout()
+
+        row = 0
+        for attr_def in attr_defs:
+            if attr_def.key in self._current_keys:
+                raise KeyError("Duplicated key \"{}\"".format(attr_def.key))
+
+            self._current_keys.add(attr_def.key)
+            widget = create_widget_for_attr_def(attr_def, self)
+
+            expand_cols = 2
+            if attr_def.is_value_def and attr_def.is_label_horizontal:
+                expand_cols = 1
+
+            col_num = 2 - expand_cols
+
+            if attr_def.label:
+                label_widget = QtWidgets.QLabel(attr_def.label, self)
+                layout.addWidget(
+                    label_widget, row, 0, 1, expand_cols
+                )
+                if not attr_def.is_label_horizontal:
+                    row += 1
+
+            layout.addWidget(
+                widget, row, col_num, 1, expand_cols
+            )
+            self._widgets.append(widget)
+            row += 1
+
+    def set_value(self, value):
+        new_value = copy.deepcopy(value)
+        unused_keys = set(new_value.keys())
+        for widget in self._widgets:
+            attr_def = widget.attr_def
+            if attr_def.key not in new_value:
+                continue
+            unused_keys.remove(attr_def.key)
+
+            widget_value = new_value[attr_def.key]
+            if widget_value is None:
+                widget_value = copy.deepcopy(attr_def.default)
+            widget.set_value(widget_value)
+
+    def current_value(self):
+        output = {}
+        for widget in self._widgets:
+            attr_def = widget.attr_def
+            if not isinstance(attr_def, UIDef):
+                output[attr_def.key] = widget.current_value()
+
+        return output
 
 
 class _BaseAttrDefWidget(QtWidgets.QWidget):
@@ -263,8 +370,12 @@ class BoolAttrWidget(_BaseAttrDefWidget):
 
 
 class EnumAttrWidget(_BaseAttrDefWidget):
+    def __init__(self, *args, **kwargs):
+        self._multivalue = False
+        super(EnumAttrWidget, self).__init__(*args, **kwargs)
+
     def _ui_init(self):
-        input_widget = QtWidgets.QComboBox(self)
+        input_widget = CustomTextComboBox(self)
         combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
         input_widget.setItemDelegate(combo_delegate)
 
@@ -288,6 +399,9 @@ class EnumAttrWidget(_BaseAttrDefWidget):
 
     def _on_value_change(self):
         new_value = self.current_value()
+        if self._multivalue:
+            self._multivalue = False
+            self._input_widget.set_custom_text(None)
         self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
@@ -295,14 +409,23 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         return self._input_widget.itemData(idx)
 
     def set_value(self, value, multivalue=False):
+        if multivalue:
+            set_value = set(value)
+            if len(set_value) == 1:
+                multivalue = False
+                value = tuple(set_value)[0]
+
         if not multivalue:
             idx = self._input_widget.findData(value)
             cur_idx = self._input_widget.currentIndex()
             if idx != cur_idx and idx >= 0:
                 self._input_widget.setCurrentIndex(idx)
 
-        else:
-            self._input_widget.lineEdit().setText("Multiselection")
+        custom_text = None
+        if multivalue:
+            custom_text = "< Multiselection >"
+        self._input_widget.set_custom_text(custom_text)
+        self._multivalue = multivalue
 
 
 class UnknownAttrWidget(_BaseAttrDefWidget):
@@ -336,16 +459,12 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
 
 class FileAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
-        self.multipath = self.attr_def.multipath
-        if self.multipath:
-            from .files_widget import MultiFilesWidget
-
-            input_widget = MultiFilesWidget(self)
-
-        else:
-            from .files_widget import SingleFileWidget
-
-            input_widget = SingleFileWidget(self)
+        input_widget = FilesWidget(
+            self.attr_def.single_item,
+            self.attr_def.allow_sequences,
+            self.attr_def.extensions_label,
+            self
+        )
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)

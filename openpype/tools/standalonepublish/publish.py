@@ -1,14 +1,14 @@
 import os
 import sys
 
-import openpype
 import pyblish.api
+from openpype.pipeline import install_openpype_plugins
 from openpype.tools.utils.host_tools import show_publish
 
 
 def main(env):
     # Registers pype's Global pyblish plugins
-    openpype.install()
+    install_openpype_plugins()
 
     # Register additional paths
     addition_paths_str = env.get("PUBLISH_PATHS") or ""

@@ -468,10 +468,8 @@ class Window(QtWidgets.QDialog):
             current_page == "terminal"
         )
 
-        self.state = {
-            "is_closing": False,
-            "current_page": current_page
-        }
+        self._current_page = current_page
+        self._hidden_for_plugin_process = False
 
         self.tabs[current_page].setChecked(True)
 
@@ -525,6 +523,7 @@ class Window(QtWidgets.QDialog):
             instance_item.setData(enable_value, Roles.IsEnabledRole)
 
     def _add_intent_to_context(self):
+        context_value = None
         if (
             self.intent_model.has_items
             and "intent" not in self.controller.context.data
@@ -532,11 +531,17 @@ class Window(QtWidgets.QDialog):
             idx = self.intent_model.index(self.intent_box.currentIndex(), 0)
             intent_value = self.intent_model.data(idx, Roles.IntentItemValue)
             intent_label = self.intent_model.data(idx, QtCore.Qt.DisplayRole)
+            if intent_value:
+                context_value = {
+                    "value": intent_value,
+                    "label": intent_label
+                }
 
-            self.controller.context.data["intent"] = {
-                "value": intent_value,
-                "label": intent_label
-            }
+        # Unset intent if is set to empty value
+        if context_value is None:
+            self.controller.context.data.pop("intent", None)
+        else:
+            self.controller.context.data["intent"] = context_value
 
     def on_instance_toggle(self, index, state=None):
         """An item is requesting to be toggled"""
@@ -590,14 +595,14 @@ class Window(QtWidgets.QDialog):
                 target_page = page
                 if direction is None:
                     direction = -1
-            elif name == self.state["current_page"]:
+            elif name == self._current_page:
                 previous_page = page
                 if direction is None:
                     direction = 1
             else:
                 page.setVisible(False)
 
-        self.state["current_page"] = target
+        self._current_page = target
         self.slide_page(previous_page, target_page, direction)
 
     def slide_page(self, previous_page, target_page, direction):
@@ -684,7 +689,7 @@ class Window(QtWidgets.QDialog):
         comment_visible=None,
         terminal_filters_visibile=None
     ):
-        target = self.state["current_page"]
+        target = self._current_page
         comment_visibility = (
             not self.perspective_widget.isVisible()
             and not target == "terminal"
@@ -845,7 +850,7 @@ class Window(QtWidgets.QDialog):
 
     def apply_log_suspend_value(self, value):
         self._suspend_logs = value
-        if self.state["current_page"] == "terminal":
+        if self._current_page == "terminal":
             self.tabs["overview"].setChecked(True)
 
         self.tabs["terminal"].setVisible(not self._suspend_logs)
@@ -882,9 +887,21 @@ class Window(QtWidgets.QDialog):
         visibility = True
         if hasattr(plugin, "hide_ui_on_process") and plugin.hide_ui_on_process:
             visibility = False
+        self._hidden_for_plugin_process = not visibility
 
-        if self.isVisible() != visibility:
-            self.setVisible(visibility)
+        self._ensure_visible(visibility)
+
+    def _ensure_visible(self, visible):
+        if self.isVisible() == visible:
+            return
+
+        if not visible:
+            self.setVisible(visible)
+        else:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+            self.showNormal()
 
     def on_plugin_action_menu_requested(self, pos):
         """The user right-clicked on a plug-in
@@ -955,7 +972,7 @@ class Window(QtWidgets.QDialog):
         self.intent_box.setEnabled(True)
 
         # Refresh tab
-        self.on_tab_changed(self.state["current_page"])
+        self.on_tab_changed(self._current_page)
         self.update_compatibility()
 
         self.button_suspend_logs.setEnabled(False)
@@ -1027,8 +1044,9 @@ class Window(QtWidgets.QDialog):
 
         self._update_state()
 
-        if not self.isVisible():
-            self.setVisible(True)
+        if self._hidden_for_plugin_process:
+            self._hidden_for_plugin_process = False
+            self._ensure_visible(True)
 
     def on_was_skipped(self, plugin):
         plugin_item = self.plugin_model.plugin_items[plugin.id]
@@ -1103,8 +1121,9 @@ class Window(QtWidgets.QDialog):
                 plugin_item, instance_item
             )
 
-        if not self.isVisible():
-            self.setVisible(True)
+        if self._hidden_for_plugin_process:
+            self._hidden_for_plugin_process = False
+            self._ensure_visible(True)
 
     # -------------------------------------------------------------------------
     #
@@ -1223,53 +1242,20 @@ class Window(QtWidgets.QDialog):
 
         """
 
-        # Make it snappy, but take care to clean it all up.
-        # TODO(marcus): Enable GUI to return on problem, such
-        # as asking whether or not the user really wants to quit
-        # given there are things currently running.
-        self.hide()
+        self.info(self.tr("Closing.."))
 
-        if self.state["is_closing"]:
+        if self.controller.is_running:
+            self.info(self.tr("..as soon as processing is finished.."))
+            self.controller.stop()
 
-            # Explicitly clear potentially referenced data
-            self.info(self.tr("Cleaning up models.."))
-            self.intent_model.deleteLater()
-            self.plugin_model.deleteLater()
-            self.terminal_model.deleteLater()
-            self.terminal_proxy.deleteLater()
-            self.plugin_proxy.deleteLater()
+            self.info(self.tr("Cleaning up controller.."))
+            self.controller.cleanup()
 
             self.overview_instance_view.setModel(None)
             self.overview_plugin_view.setModel(None)
             self.terminal_view.setModel(None)
 
-            self.info(self.tr("Cleaning up controller.."))
-            self.controller.cleanup()
-
-            self.info(self.tr("All clean!"))
-            self.info(self.tr("Good bye"))
-            return super(Window, self).closeEvent(event)
-
-        self.info(self.tr("Closing.."))
-
-        def on_problem():
-            self.heads_up(
-                "Warning", "Had trouble closing down. "
-                "Please tell someone and try again."
-            )
-            self.show()
-
-        if self.controller.is_running:
-            self.info(self.tr("..as soon as processing is finished.."))
-            self.controller.stop()
-            self.finished.connect(self.close)
-            util.defer(200, on_problem)
-            return event.ignore()
-
-        self.state["is_closing"] = True
-
-        util.defer(200, self.close)
-        return event.ignore()
+        event.accept()
 
     def reject(self):
         """Handle ESC key"""

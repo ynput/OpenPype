@@ -193,15 +193,15 @@ if [ "$disable_submodule_update" == 1 ]; then
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # fix code signing issue
-    codesign --remove-signature "$openpype_root/build/OpenPype.app/Contents/MacOS/lib/Python"
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/Python"
     if command -v create-dmg > /dev/null 2>&1; then
       create-dmg \
-        --volname "OpenPype Installer" \
+        --volname "OpenPype $openpype_version Installer" \
         --window-pos 200 120 \
         --window-size 600 300 \
         --app-drop-link 100 50 \
-        "$openpype_root/build/OpenPype-Installer.dmg" \
-        "$openpype_root/build/OpenPype.app"
+        "$openpype_root/build/OpenPype-Installer-$openpype_version.dmg" \
+        "$openpype_root/build/OpenPype $openpype_version.app"
     else
       echo -e "${BIYellow}!!!${RST} ${BIWhite}create-dmg${RST} command is not available."
     fi

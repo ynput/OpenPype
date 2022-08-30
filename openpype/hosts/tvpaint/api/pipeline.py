@@ -7,18 +7,15 @@ import logging
 import requests
 
 import pyblish.api
-import avalon.api
 
-from avalon import io
-
+from openpype.client import get_project, get_asset_by_name
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 
@@ -67,16 +64,13 @@ instances=2
 
 
 def install():
-    """Install Maya-specific functionality of avalon-core.
+    """Install TVPaint-specific functionality."""
 
-    This function is called automatically on calling `api.install(maya)`.
-
-    """
     log.info("OpenPype - Installing TVPaint integration")
-    io.install()
+    legacy_io.install()
 
     # Create workdir folder if does not exist yet
-    workdir = io.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
     if not os.path.exists(workdir):
         os.makedirs(workdir)
 
@@ -93,19 +87,6 @@ def install():
 
     register_event_callback("application.launched", initial_launch)
     register_event_callback("application.exit", application_exit)
-
-
-def uninstall():
-    """Uninstall TVPaint-specific functionality of avalon-core.
-
-    This function is called automatically on calling `api.uninstall()`.
-
-    """
-    log.info("OpenPype - Uninstalling TVPaint integration")
-    pyblish.api.deregister_host("tvpaint")
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def containerise(
@@ -390,7 +371,7 @@ def ls():
             if "objectName" not in item and "members" in item:
                 members = item["members"]
                 if isinstance(members, list):
-                    members = "|".join(members)
+                    members = "|".join([str(member) for member in members])
                 item["objectName"] = members
     return output
 
@@ -447,14 +428,14 @@ def set_context_settings(asset_doc=None):
 
     Change fps, resolution and frame start/end.
     """
-    if asset_doc is None:
-        # Use current session asset if not passed
-        asset_doc = avalon.io.find_one({
-            "type": "asset",
-            "name": avalon.io.Session["AVALON_ASSET"]
-        })
 
-    project_doc = avalon.io.find_one({"type": "project"})
+    project_name = legacy_io.active_project()
+    if asset_doc is None:
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        # Use current session asset if not passed
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
+    project_doc = get_project(project_name)
 
     framerate = asset_doc["data"].get("fps")
     if framerate is None:

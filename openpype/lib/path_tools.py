@@ -6,12 +6,35 @@ import logging
 import six
 import platform
 
+import clique
+
+from openpype.client import get_project
 from openpype.settings import get_project_settings
 
-from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
+
+
+def format_file_size(file_size, suffix=None):
+    """Returns formatted string with size in appropriate unit.
+
+    Args:
+        file_size (int): Size of file in bytes.
+        suffix (str): Suffix for formatted size. Default is 'B' (as bytes).
+
+    Returns:
+        str: Formatted size using proper unit and passed suffix (e.g. 7 MiB).
+    """
+
+    if suffix is None:
+        suffix = "B"
+
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(file_size) < 1024.0:
+            return "%3.1f%s%s" % (file_size, unit, suffix)
+        file_size /= 1024.0
+    return "%.1f%s%s" % (file_size, "Yi", suffix)
 
 
 def create_hard_link(src_path, dst_path):
@@ -48,6 +71,43 @@ def create_hard_link(src_path, dst_path):
     raise NotImplementedError(
         "Implementation of hardlink for current environment is missing."
     )
+
+
+def collect_frames(files):
+    """Returns dict of source path and its frame, if from sequence
+
+    Uses clique as most precise solution, used when anatomy template that
+    created files is not known.
+
+    Assumption is that frames are separated by '.', negative frames are not
+    allowed.
+
+    Args:
+        files(list) or (set with single value): list of source paths
+
+    Returns:
+        (dict): {'/asset/subset_v001.0001.png': '0001', ....}
+    """
+
+    patterns = [clique.PATTERNS["frames"]]
+    collections, remainder = clique.assemble(
+        files, minimum_items=1, patterns=patterns)
+
+    sources_and_frames = {}
+    if collections:
+        for collection in collections:
+            src_head = collection.head
+            src_tail = collection.tail
+
+            for index in collection.indexes:
+                src_frame = collection.format("{padding}") % index
+                src_file_name = "{}{}{}".format(
+                    src_head, src_frame, src_tail)
+                sources_and_frames[src_file_name] = src_frame
+    else:
+        sources_and_frames[remainder.pop()] = None
+
+    return sources_and_frames
 
 
 def _rreplace(s, a, b, n=1):
@@ -119,12 +179,12 @@ def get_version_from_path(file):
     """Find version number in file path string.
 
     Args:
-        file (string): file path
+        file (str): file path
 
     Returns:
-        v: version number in string ('001')
-
+        str: version number in string ('001')
     """
+
     pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
     try:
         return pattern.findall(file)[-1]
@@ -140,16 +200,17 @@ def get_last_version_from_path(path_dir, filter):
     """Find last version of given directory content.
 
     Args:
-        path_dir (string): directory path
+        path_dir (str): directory path
         filter (list): list of strings used as file name filter
 
     Returns:
-        string: file name with last version
+        str: file name with last version
 
     Example:
         last_version_file = get_last_version_from_path(
             "/project/shots/shot01/work", ["shot01", "compositing", "nk"])
     """
+
     assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
     assert isinstance(filter, list) and (
         len(filter) != 0), "`filter` argument needs to be list and not empty"
@@ -171,45 +232,74 @@ def get_last_version_from_path(path_dir, filter):
     return None
 
 
-def compute_paths(basic_paths_items, project_root):
+def concatenate_splitted_paths(split_paths, anatomy):
     pattern_array = re.compile(r"\[.*\]")
-    project_root_key = "__project_root__"
     output = []
-    for path_items in basic_paths_items:
+    for path_items in split_paths:
         clean_items = []
+        if isinstance(path_items, str):
+            path_items = [path_items]
+
         for path_item in path_items:
-            matches = re.findall(pattern_array, path_item)
-            if len(matches) > 0:
-                path_item = path_item.replace(matches[0], "")
-            if path_item == project_root_key:
-                path_item = project_root
+            if not re.match(r"{.+}", path_item):
+                path_item = re.sub(pattern_array, "", path_item)
             clean_items.append(path_item)
+
+        # backward compatibility
+        if "__project_root__" in path_items:
+            for root, root_path in anatomy.roots.items():
+                if not os.path.exists(str(root_path)):
+                    log.debug("Root {} path path {} not exist on \
+                        computer!".format(root, root_path))
+                    continue
+                clean_items = ["{{root[{}]}}".format(root),
+                               r"{project[name]}"] + clean_items[1:]
+                output.append(os.path.normpath(os.path.sep.join(clean_items)))
+            continue
+
         output.append(os.path.normpath(os.path.sep.join(clean_items)))
+
     return output
 
 
-def create_project_folders(basic_paths, project_name):
-    anatomy = Anatomy(project_name)
-    roots_paths = []
-    if isinstance(anatomy.roots, dict):
-        for root in anatomy.roots.values():
-            roots_paths.append(root.value)
-    else:
-        roots_paths.append(anatomy.roots.value)
+def get_format_data(anatomy):
+    project_doc = get_project(anatomy.project_name, fields=["data.code"])
+    project_code = project_doc["data"]["code"]
 
-    for root_path in roots_paths:
-        project_root = os.path.join(root_path, project_name)
-        full_paths = compute_paths(basic_paths, project_root)
-        # Create folders
-        for path in full_paths:
-            full_path = path.format(project_root=project_root)
-            if os.path.exists(full_path):
-                log.debug(
-                    "Folder already exists: {}".format(full_path)
-                )
-            else:
-                log.debug("Creating folder: {}".format(full_path))
-                os.makedirs(full_path)
+    return {
+        "root": anatomy.roots,
+        "project": {
+            "name": anatomy.project_name,
+            "code": project_code
+        },
+    }
+
+
+def fill_paths(path_list, anatomy):
+    format_data = get_format_data(anatomy)
+    filled_paths = []
+
+    for path in path_list:
+        new_path = path.format(**format_data)
+        filled_paths.append(new_path)
+
+    return filled_paths
+
+
+def create_project_folders(basic_paths, project_name):
+    from openpype.pipeline import Anatomy
+    anatomy = Anatomy(project_name)
+
+    concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
+    filled_paths = fill_paths(concat_paths, anatomy)
+
+    # Create folders
+    for path in filled_paths:
+        if os.path.exists(path):
+            log.debug("Folder already exists: {}".format(path))
+        else:
+            log.debug("Creating folder: {}".format(path))
+            os.makedirs(path)
 
 
 def _list_path_items(folder_structure):
@@ -308,6 +398,7 @@ class HostDirmap:
             on_dirmap_enabled: run host code for enabling dirmap
             do_dirmap: run host code to do actual remapping
     """
+
     def __init__(self, host_name, project_settings, sync_module=None):
         self.host_name = host_name
         self.project_settings = project_settings

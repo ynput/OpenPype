@@ -1,24 +1,22 @@
 import os
 import sys
-import openpype
 
-from openpype.api import Logger
-
-log = Logger().get_logger(__name__)
+from openpype.lib import Logger
+from openpype.pipeline import (
+    install_host,
+    registered_host,
+)
 
 
 def main(env):
-    import avalon.api
     from openpype.hosts.fusion import api
     from openpype.hosts.fusion.api import menu
 
-    # Registers pype's Global pyblish plugins
-    openpype.install()
-
     # activate resolve from pype
-    avalon.api.install(api)
+    install_host(api)
 
-    log.info(f"Avalon registered hosts: {avalon.api.registered_host()}")
+    log = Logger.get_logger(__name__)
+    log.info(f"Registered host: {registered_host()}")
 
     menu.launch_openpype_menu()
 

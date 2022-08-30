@@ -1,10 +1,10 @@
-import os
 import pyblish.api
-import openpype.utils
+from openpype.api import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
     get_write_node_template_attr,
-    get_node_path
+    set_node_knobs_from_settings
 )
+from openpype.pipeline import PublishXmlValidationError
 
 
 @pyblish.api.log
@@ -14,18 +14,29 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-        instances = openpype.utils.filter_instances(context, plugin)
+        instances = get_errored_instances_from_context(context)
 
         for instance in instances:
-            node = instance[1]
-            correct_data = get_write_node_template_attr(node)
-            for k, v in correct_data.items():
-                node[k].setValue(v)
+            write_group_node = instance[0]
+            # get write node from inside of group
+            write_node = None
+            for x in instance:
+                if x.Class() == "Write":
+                    write_node = x
+
+            correct_data = get_write_node_template_attr(write_group_node)
+
+            set_node_knobs_from_settings(write_node, correct_data["knobs"])
+
             self.log.info("Node attributes were fixed")
 
 
 class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
-    """ Validates file output. """
+    """ Validate Write node's knobs.
+
+    Compare knobs on write node inside the render group
+    with settings. At the moment supporting only `file` knob.
+    """
 
     order = pyblish.api.ValidatorOrder
     optional = True
@@ -35,38 +46,69 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     hosts = ["nuke"]
 
     def process(self, instance):
+        write_group_node = instance[0]
 
-        node = instance[1]
-        correct_data = get_write_node_template_attr(node)
+        # get write node from inside of group
+        write_node = None
+        for x in instance:
+            if x.Class() == "Write":
+                write_node = x
+
+        if write_node is None:
+            return
+
+        correct_data = get_write_node_template_attr(write_group_node)
+
+        if correct_data:
+            check_knobs = correct_data["knobs"]
+        else:
+            return
 
         check = []
-        for k, v in correct_data.items():
-            if k is 'file':
-                padding = len(v.split('#'))
-                ref_path = get_node_path(v, padding)
-                n_path = get_node_path(node[k].value(), padding)
-                isnt = False
-                for i, p in enumerate(ref_path):
-                    if str(n_path[i]) not in str(p):
-                        if not isnt:
-                            isnt = True
-                        else:
-                            continue
-                if isnt:
-                    check.append([k, v, node[k].value()])
+        self.log.debug("__ write_node: {}".format(
+            write_node
+        ))
+
+        for knob_data in check_knobs:
+            key = knob_data["name"]
+            value = knob_data["value"]
+            node_value = write_node[key].value()
+
+            # fix type differences
+            if type(node_value) in (int, float):
+                value = float(value)
+                node_value = float(node_value)
             else:
-                if str(node[k].value()) not in str(v):
-                    check.append([k, v, node[k].value()])
+                value = str(value)
+                node_value = str(node_value)
+
+            self.log.debug("__ key: {} | value: {}".format(
+                key, value
+            ))
+            if (
+                node_value != value
+                and key != "file"
+                and key != "tile_color"
+            ):
+                check.append([key, value, write_node[key].value()])
 
         self.log.info(check)
 
-        msg = "Node's attribute `{0}` is not correct!\n" \
-              "\nCorrect: `{1}` \n\nWrong: `{2}` \n\n"
-
         if check:
-            print_msg = ""
-            for item in check:
-                print_msg += msg.format(item[0], item[1], item[2])
-            print_msg += "`RMB` click to the validator and `A` to fix!"
+            self._make_error(check)
 
-        assert not check, print_msg
+    def _make_error(self, check):
+        # sourcery skip: merge-assign-and-aug-assign, move-assign-in-block
+        dbg_msg = "Write node's knobs values are not correct!\n"
+        msg_add = "Knob '{0}' > Correct: `{1}` > Wrong: `{2}`"
+
+        details = [
+            msg_add.format(item[0], item[1], item[2])
+            for item in check
+        ]
+        xml_msg = "<br/>".join(details)
+        dbg_msg += "\n\t".join(details)
+
+        raise PublishXmlValidationError(
+            self, dbg_msg, formatting_data={"xml_msg": xml_msg}
+        )

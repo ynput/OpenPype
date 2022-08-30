@@ -3,13 +3,12 @@
 from pathlib import Path
 
 import attr
-from avalon import api
 
 from openpype.lib import get_formatted_current_time
-import openpype.lib.abstract_collect_render
+from openpype.pipeline import legacy_io
+from openpype.pipeline import publish
+from openpype.pipeline.publish import RenderInstance
 import openpype.hosts.harmony.api as harmony
-from openpype.lib.abstract_collect_render import RenderInstance
-import openpype.lib
 
 
 @attr.s
@@ -20,8 +19,7 @@ class HarmonyRenderInstance(RenderInstance):
     leadingZeros = attr.ib(default=3)
 
 
-class CollectFarmRender(openpype.lib.abstract_collect_render.
-                        AbstractCollectRender):
+class CollectFarmRender(publish.AbstractCollectRender):
     """Gather all publishable renders."""
 
     # https://docs.toonboom.com/help/harmony-17/premium/reference/node/output/write-node-image-formats.html
@@ -143,7 +141,8 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
                 source=context.data["currentFile"],
                 label=node.split("/")[1],
                 subset=subset_name,
-                asset=api.Session["AVALON_ASSET"],
+                asset=legacy_io.Session["AVALON_ASSET"],
+                task=task_name,
                 attachTo=False,
                 setMembers=[node],
                 publish=info[4],

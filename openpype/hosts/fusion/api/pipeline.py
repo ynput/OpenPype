@@ -8,7 +8,7 @@ import contextlib
 
 import pyblish.api
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -20,7 +20,7 @@ from openpype.pipeline import (
 )
 import openpype.hosts.fusion
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.fusion.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -45,7 +45,8 @@ def install():
     This is where you install menus and register families, data
     and loaders into fusion.
 
-    It is called automatically when installing via `api.install(avalon.fusion)`
+    It is called automatically when installing via
+    `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
 
     See the Maya equivalent for inspiration on how to implement this.
 

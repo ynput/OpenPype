@@ -7,6 +7,7 @@ import threading
 import datetime
 import time
 import queue
+import collections
 import appdirs
 import pymongo
 
@@ -24,17 +25,20 @@ except ImportError:
     from ftrack_api._weakref import WeakMethod
 from openpype_modules.ftrack.lib import get_ftrack_event_mongo_info
 
-from openpype.lib import OpenPypeMongoConnection
+from openpype.client import OpenPypeMongoConnection
 from openpype.api import Logger
 
 TOPIC_STATUS_SERVER = "openpype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "openpype.event.server.status.result"
 
 
-def check_ftrack_url(url, log_errors=True):
+def check_ftrack_url(url, log_errors=True, logger=None):
     """Checks if Ftrack server is responding"""
+    if logger is None:
+        logger = Logger.get_logger(__name__)
+
     if not url:
-        print('ERROR: Ftrack URL is not set!')
+        logger.error("Ftrack URL is not set!")
         return None
 
     url = url.strip('/ ')
@@ -48,15 +52,15 @@ def check_ftrack_url(url, log_errors=True):
         result = requests.get(url, allow_redirects=False)
     except requests.exceptions.RequestException:
         if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
+            logger.error("Entered Ftrack URL is not accesible!")
         return False
 
     if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
         if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
+            logger.error("Entered Ftrack URL is not accesible!")
         return False
 
-    print('DEBUG: Ftrack server {} is accessible.'.format(url))
+    logger.debug("Ftrack server {} is accessible.".format(url))
 
     return url
 
@@ -133,7 +137,7 @@ class ProcessEventHub(SocketBaseEventHub):
     hearbeat_msg = b"processor"
 
     is_collection_created = False
-    pypelog = Logger().get_logger("Session Processor")
+    pypelog = Logger.get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
         self.mongo_url = None
@@ -192,7 +196,7 @@ class ProcessEventHub(SocketBaseEventHub):
                 except pymongo.errors.AutoReconnect:
                     self.pypelog.error((
                         "Mongo server \"{}\" is not responding, exiting."
-                    ).format(os.environ["AVALON_MONGO"]))
+                    ).format(os.environ["OPENPYPE_MONGO"]))
                     sys.exit(0)
                 # Additional special processing of events.
                 if event['topic'] == 'ftrack.meta.disconnected':
@@ -306,7 +310,20 @@ class CustomEventHubSession(ftrack_api.session.Session):
 
         # Currently pending operations.
         self.recorded_operations = ftrack_api.operation.Operations()
-        self.record_operations = True
+
+        # OpenPype change - In new API are operations properties
+        new_api = hasattr(self.__class__, "record_operations")
+
+        if new_api:
+            self._record_operations = collections.defaultdict(
+                lambda: True
+            )
+            self._auto_populate = collections.defaultdict(
+                lambda: auto_populate
+            )
+        else:
+            self.record_operations = True
+            self.auto_populate = auto_populate
 
         self.cache_key_maker = cache_key_maker
         if self.cache_key_maker is None:
@@ -325,14 +342,15 @@ class CustomEventHubSession(ftrack_api.session.Session):
             if cache is not None:
                 self.cache.caches.append(cache)
 
+        if new_api:
+            self.merge_lock = threading.RLock()
+
         self._managed_request = None
         self._request = requests.Session()
         self._request.auth = ftrack_api.session.SessionAuthentication(
             self._api_key, self._api_user
         )
         self.request_timeout = timeout
-
-        self.auto_populate = auto_populate
 
         # Fetch server information and in doing so also check credentials.
         self._server_information = self._fetch_server_information()

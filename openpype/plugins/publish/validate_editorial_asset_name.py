@@ -1,6 +1,9 @@
-import pyblish.api
-from avalon import io
 from pprint import pformat
+
+import pyblish.api
+
+from openpype.pipeline import legacy_io
+from openpype.client import get_assets
 
 
 class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
@@ -16,7 +19,8 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         "hiero",
         "standalonepublisher",
         "resolve",
-        "flame"
+        "flame",
+        "traypublisher"
     ]
 
     def process(self, context):
@@ -24,11 +28,13 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         asset_and_parents = self.get_parents(context)
         self.log.debug("__ asset_and_parents: {}".format(asset_and_parents))
 
-        if not io.Session:
-            io.install()
+        if not legacy_io.Session:
+            legacy_io.install()
 
-        db_assets = list(io.find(
-            {"type": "asset"}, {"name": 1, "data.parents": 1}))
+        project_name = legacy_io.active_project()
+        db_assets = list(get_assets(
+            project_name, fields=["name", "data.parents"]
+        ))
         self.log.debug("__ db_assets: {}".format(db_assets))
 
         asset_db_docs = {

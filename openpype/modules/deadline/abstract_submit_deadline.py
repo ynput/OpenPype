@@ -4,6 +4,7 @@
 It provides Deadline JobInfo data class.
 
 """
+import json.decoder
 import os
 from abc import abstractmethod
 import platform
@@ -15,7 +16,12 @@ import attr
 import requests
 
 import pyblish.api
-from openpype.lib.abstract_metaplugins import AbstractMetaInstancePlugin
+from openpype.pipeline.publish import (
+    AbstractMetaInstancePlugin,
+    KnownPublishError
+)
+
+JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
 
 def requests_post(*args, **kwargs):
@@ -615,7 +621,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             str: resulting Deadline job id.
 
         Throws:
-            RuntimeError: if submission fails.
+            KnownPublishError: if submission fails.
 
         """
         url = "{}/api/jobs".format(self._deadline_url)
@@ -625,9 +631,16 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.error(response.status_code)
             self.log.error(response.content)
             self.log.debug(payload)
-            raise RuntimeError(response.text)
+            raise KnownPublishError(response.text)
 
-        result = response.json()
+        try:
+            result = response.json()
+        except JSONDecodeError:
+            msg = "Broken response {}. ".format(response)
+            msg += "Try restarting the Deadline Webservice."
+            self.log.warning(msg, exc_info=True)
+            raise KnownPublishError("Broken response from DL")
+
         # for submit publish job
         self._instance.data["deadlineSubmissionJob"] = result
 

@@ -419,7 +419,6 @@ class ExtractImage(pyblish.api.InstancePlugin):
 ```python
 import os
 
-from avalon import api, io
 import openpype.hosts.harmony.api as harmony
 
 signature = str(uuid4()).replace("-", "_")
@@ -611,7 +610,8 @@ class ImageSequenceLoader(load.LoaderPlugin):
     def update(self, container, representation):
         node = container.pop("node")
 
-        version = io.find_one({"_id": representation["parent"]})
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
         files = []
         for f in version["data"]["files"]:
             files.append(

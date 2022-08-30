@@ -1,5 +1,6 @@
 import os
 import json
+from openpype.client import get_asset_by_name
 
 
 class HostContext:
@@ -16,12 +17,10 @@ class HostContext:
         if not asset_name:
             return project_name
 
-        from avalon import io
-
-        asset_doc = io.find_one(
-            {"type": "asset", "name": asset_name},
-            {"data.parents": 1}
+        asset_doc = get_asset_by_name(
+            project_name, asset_name, fields=["data.parents"]
         )
+
         parents = asset_doc.get("data", {}).get("parents") or []
 
         hierarchy = [project_name]

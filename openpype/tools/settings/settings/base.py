@@ -1,7 +1,9 @@
+import os
 import sys
 import json
 import traceback
 import functools
+import datetime
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -10,7 +12,66 @@ from openpype.tools.settings import CHILD_OFFSET
 
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
-from .constants import DEFAULT_PROJECT_LABEL
+from .constants import (
+    DEFAULT_PROJECT_LABEL,
+    SETTINGS_PATH_KEY,
+    ROOT_KEY,
+    VALUE_KEY,
+    SAVE_TIME_KEY,
+    PROJECT_NAME_KEY,
+)
+
+_MENU_SEPARATOR_REQ = object()
+
+
+class ExtractHelper:
+    _last_save_dir = os.path.expanduser("~")
+
+    @classmethod
+    def get_last_save_dir(cls):
+        return cls._last_save_dir
+
+    @classmethod
+    def set_last_save_dir(cls, save_dir):
+        cls._last_save_dir = save_dir
+
+    @classmethod
+    def ask_for_save_filepath(cls, parent):
+        dialog = QtWidgets.QFileDialog(
+            parent,
+            "Save settings values",
+            cls.get_last_save_dir(),
+            "Values (*.json)"
+        )
+        # dialog.setOption(dialog.DontUseNativeDialog)
+        dialog.setAcceptMode(dialog.AcceptSave)
+        if dialog.exec() != dialog.Accepted:
+            return
+
+        selected_urls = dialog.selectedUrls()
+        if not selected_urls:
+            return
+
+        filepath = selected_urls[0].toLocalFile()
+        if not filepath:
+            return
+
+        if not filepath.lower().endswith(".json"):
+            filepath += ".json"
+        return filepath
+
+    @classmethod
+    def extract_settings_to_json(cls, filepath, settings_data, project_name):
+        now = datetime.datetime.now()
+        settings_data[SAVE_TIME_KEY] = now.strftime("%Y-%m-%d %H:%M:%S")
+        if project_name != 0:
+            settings_data[PROJECT_NAME_KEY] = project_name
+
+        with open(filepath, "w") as stream:
+            json.dump(settings_data, stream, indent=4)
+
+        new_dir = os.path.dirname(filepath)
+        cls.set_last_save_dir(new_dir)
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -190,24 +251,29 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
+    def _get_mime_data_from_entity(self):
+        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+            entity_path = None
+        else:
+            entity_path = "/".join(
+                [self.entity.root_key, self.entity.path]
+            )
+
+        value = self.entity.value
+
+        # Copy for settings tool
+        return {
+            VALUE_KEY: value,
+            ROOT_KEY: self.entity.root_key,
+            SETTINGS_PATH_KEY: entity_path
+        }
+
     def _copy_value_actions(self, menu):
         def copy_value():
             mime_data = QtCore.QMimeData()
 
-            if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
-                entity_path = None
-            else:
-                entity_path = "/".join(
-                    [self.entity.root_key, self.entity.path]
-                )
-
-            value = self.entity.value
             # Copy for settings tool
-            settings_data = {
-                "root_key": self.entity.root_key,
-                "value": value,
-                "path": entity_path
-            }
+            settings_data = self._get_mime_data_from_entity()
             settings_encoded_data = QtCore.QByteArray()
             settings_stream = QtCore.QDataStream(
                 settings_encoded_data, QtCore.QIODevice.WriteOnly
@@ -218,6 +284,7 @@ class BaseWidget(QtWidgets.QWidget):
             )
 
             # Copy as json
+            value = settings_data[VALUE_KEY]
             json_encoded_data = None
             if isinstance(value, (dict, list)):
                 json_encoded_data = QtCore.QByteArray()
@@ -241,25 +308,87 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Copy", menu)
         return [(action, copy_value)]
 
+    def _extract_to_file(self):
+        filepath = ExtractHelper.ask_for_save_filepath(self)
+        if not filepath:
+            return
+
+        settings_data = self._get_mime_data_from_entity()
+        project_name = 0
+        if hasattr(self.category_widget, "project_name"):
+            project_name = self.category_widget.project_name
+
+        ExtractHelper.extract_settings_to_json(
+            filepath, settings_data, project_name
+        )
+
+    def _extract_value_to_file_actions(self, menu):
+        extract_action = QtWidgets.QAction("Extract to file", menu)
+        return [
+            _MENU_SEPARATOR_REQ,
+            (extract_action, self._extract_to_file)
+        ]
+
+    def _parse_source_data_for_paste(self, data):
+        settings_path = None
+        root_key = None
+        if isinstance(data, dict):
+            data.pop(SAVE_TIME_KEY, None)
+            data.pop(PROJECT_NAME_KEY, None)
+            settings_path = data.pop(SETTINGS_PATH_KEY, settings_path)
+            root_key = data.pop(ROOT_KEY, root_key)
+            data = data.pop(VALUE_KEY, data)
+
+        return {
+            VALUE_KEY: data,
+            SETTINGS_PATH_KEY: settings_path,
+            ROOT_KEY: root_key
+        }
+
+    def _get_value_from_clipboard(self):
+        clipboard = QtWidgets.QApplication.clipboard()
+        mime_data = clipboard.mimeData()
+        app_value = mime_data.data("application/copy_settings_value")
+        if app_value:
+            settings_stream = QtCore.QDataStream(
+                app_value, QtCore.QIODevice.ReadOnly
+            )
+            mime_data_value_str = settings_stream.readQString()
+            return json.loads(mime_data_value_str)
+
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                local_file = url.toLocalFile()
+                try:
+                    with open(local_file, "r") as stream:
+                        value = json.load(stream)
+                except Exception:
+                    continue
+                if value:
+                    return self._parse_source_data_for_paste(value)
+
+        if mime_data.hasText():
+            text = mime_data.text()
+            try:
+                value = json.loads(text)
+            except Exception:
+                try:
+                    value = self.entity.convert_to_valid_type(text)
+                except Exception:
+                    return None
+            return self._parse_source_data_for_paste(value)
+
     def _paste_value_actions(self, menu):
         output = []
         # Allow paste of value only if were copied from this UI
-        clipboard = QtWidgets.QApplication.clipboard()
-        mime_data = clipboard.mimeData()
-        mime_value = mime_data.data("application/copy_settings_value")
+        mime_data_value = self._get_value_from_clipboard()
         # Skip if there is nothing to do
-        if not mime_value:
+        if not mime_data_value:
             return output
 
-        settings_stream = QtCore.QDataStream(
-            mime_value, QtCore.QIODevice.ReadOnly
-        )
-        mime_data_value_str = settings_stream.readQString()
-        mime_data_value = json.loads(mime_data_value_str)
-
-        value = mime_data_value["value"]
-        path = mime_data_value["path"]
-        root_key = mime_data_value["root_key"]
+        value = mime_data_value[VALUE_KEY]
+        path = mime_data_value[SETTINGS_PATH_KEY]
+        root_key = mime_data_value[ROOT_KEY]
 
         # Try to find matching entity to be able paste values to same spot
         # - entity can't by dynamic or in dynamic item
@@ -391,10 +520,19 @@ class BaseWidget(QtWidgets.QWidget):
         ui_actions.extend(self._copy_value_actions(menu))
         ui_actions.extend(self._paste_value_actions(menu))
         if ui_actions:
-            menu.addSeparator()
-            for action, callback in ui_actions:
-                menu.addAction(action)
-                actions_mapping[action] = callback
+            ui_actions.insert(0, _MENU_SEPARATOR_REQ)
+
+        ui_actions.extend(self._extract_value_to_file_actions(menu))
+
+        for item in ui_actions:
+            if item is _MENU_SEPARATOR_REQ:
+                if len(menu.actions()) > 0:
+                    menu.addSeparator()
+                continue
+
+            action, callback = item
+            menu.addAction(action)
+            actions_mapping[action] = callback
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
@@ -567,7 +705,9 @@ class GUIWidget(BaseWidget):
 
     def _create_label_ui(self):
         label = self.entity["label"]
+        word_wrap = self.entity.schema_data.get("word_wrap", False)
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setWordWrap(word_wrap)
         label_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         label_widget.setObjectName("SettingsLabel")
         label_widget.linkActivated.connect(self._on_link_activate)

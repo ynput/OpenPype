@@ -55,36 +55,49 @@
                     "nukeNodeClass": "Write",
                     "knobs": [
                         {
+                            "type": "text",
                             "name": "file_type",
                             "value": "exr"
                         },
                         {
+                            "type": "text",
                             "name": "datatype",
                             "value": "16 bit half"
                         },
                         {
+                            "type": "text",
                             "name": "compression",
                             "value": "Zip (1 scanline)"
                         },
                         {
+                            "type": "bool",
                             "name": "autocrop",
-                            "value": "True"
+                            "value": true
                         },
                         {
+                            "type": "color_gui",
                             "name": "tile_color",
-                            "value": "0xff0000ff"
+                            "value": [
+                                186,
+                                35,
+                                35,
+                                255
+                            ]
                         },
                         {
+                            "type": "text",
                             "name": "channels",
                             "value": "rgb"
                         },
                         {
+                            "type": "text",
                             "name": "colorspace",
                             "value": "linear"
                         },
                         {
+                            "type": "bool",
                             "name": "create_directories",
-                            "value": "True"
+                            "value": true
                         }
                     ]
                 },
@@ -95,36 +108,49 @@
                     "nukeNodeClass": "Write",
                     "knobs": [
                         {
+                            "type": "text",
                             "name": "file_type",
                             "value": "exr"
                         },
                         {
+                            "type": "text",
                             "name": "datatype",
                             "value": "16 bit half"
                         },
                         {
+                            "type": "text",
                             "name": "compression",
                             "value": "Zip (1 scanline)"
                         },
                         {
+                            "type": "bool",
                             "name": "autocrop",
-                            "value": "False"
+                            "value": true
                         },
                         {
+                            "type": "color_gui",
                             "name": "tile_color",
-                            "value": "0xadab1dff"
+                            "value": [
+                                171,
+                                171,
+                                10,
+                                255
+                            ]
                         },
                         {
+                            "type": "text",
                             "name": "channels",
                             "value": "rgb"
                         },
                         {
+                            "type": "text",
                             "name": "colorspace",
                             "value": "linear"
                         },
                         {
+                            "type": "bool",
                             "name": "create_directories",
-                            "value": "True"
+                            "value": true
                         }
                     ]
                 },
@@ -135,42 +161,54 @@
                     "nukeNodeClass": "Write",
                     "knobs": [
                         {
+                            "type": "text",
                             "name": "file_type",
                             "value": "tiff"
                         },
                         {
+                            "type": "text",
                             "name": "datatype",
                             "value": "16 bit"
                         },
                         {
+                            "type": "text",
                             "name": "compression",
                             "value": "Deflate"
                         },
                         {
+                            "type": "color_gui",
                             "name": "tile_color",
-                            "value": "0x23ff00ff"
+                            "value": [
+                                56,
+                                162,
+                                7,
+                                255
+                            ]
                         },
                         {
+                            "type": "text",
                             "name": "channels",
                             "value": "rgb"
                         },
                         {
+                            "type": "text",
                             "name": "colorspace",
                             "value": "sRGB"
                         },
                         {
+                            "type": "bool",
                             "name": "create_directories",
-                            "value": "True"
+                            "value": true
                         }
                     ]
                 }
             ],
-            "customNodes": []
+            "overrideNodes": []
         },
         "regexInputs": {
             "inputs": [
                 {
-                    "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
+                    "regex": "(beauty).*(?=.exr)",
                     "colorspace": "linear"
                 }
             ]
@@ -185,8 +223,8 @@
                 "linux": []
             },
             "renderSpace": "ACEScg",
-            "viewName": "ACES 1.0 SDR-video",
-            "displayName": "sRGB"
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
         },
         "colorManagementPreference": {
             "configFilePath": {

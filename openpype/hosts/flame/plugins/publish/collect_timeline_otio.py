@@ -1,8 +1,9 @@
 import pyblish.api
-import avalon.api as avalon
-import openpype.lib as oplib
+
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
+from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name
 
 
 class CollecTimelineOTIO(pyblish.api.ContextPlugin):
@@ -18,16 +19,19 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
 
         # main
         asset_doc = context.data["assetEntity"]
-        task_name = avalon.Session["AVALON_TASK"]
+        task_name = legacy_io.Session["AVALON_TASK"]
         project = opfapi.get_current_project()
         sequence = opfapi.get_current_sequence(opfapi.CTX.selection)
 
         # create subset name
-        subset_name = oplib.get_subset_name_with_asset_doc(
+        subset_name = get_subset_name(
             family,
             variant,
             task_name,
             asset_doc,
+            context.data["projectName"],
+            context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
 
         # adding otio timeline to context
@@ -38,7 +42,8 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
                 "name": subset_name,
                 "asset": asset_doc["name"],
                 "subset": subset_name,
-                "family": "workfile"
+                "family": "workfile",
+                "families": []
             }
 
             # create instance with workfile
