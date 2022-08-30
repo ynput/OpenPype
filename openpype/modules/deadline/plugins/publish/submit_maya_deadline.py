@@ -69,8 +69,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # todo: test whether this works for existing production cases
         #       where custom jobInfo was stored in the project settings
-        for key, value in self.jobInfo.items():
-            setattr(job_info, key, value)
+        job_info.update(self.jobInfo)
 
         instance = self._instance
         context = instance.context
