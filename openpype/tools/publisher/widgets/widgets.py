@@ -6,7 +6,6 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib import TaskNotSetError
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -17,7 +16,10 @@ from openpype.tools.utils import (
     BaseClickableFrame,
     set_style_property,
 )
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
+)
 from .assets_widget import AssetsDialog
 from .tasks_widget import TasksModel
 from .icons import (

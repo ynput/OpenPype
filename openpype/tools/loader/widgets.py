@@ -17,6 +17,7 @@ from openpype.client import (
     get_thumbnail_id_from_source,
     get_thumbnail,
 )
+from openpype.client.operations import OperationsSession, REMOVED_VALUE
 from openpype.pipeline import HeroVersionType, Anatomy
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
@@ -614,26 +615,30 @@ class SubsetWidget(QtWidgets.QWidget):
             box.show()
 
     def group_subsets(self, name, asset_ids, items):
-        field = "data.subsetGroup"
+        subset_ids = {
+            item["_id"]
+            for item in items
+            if item.get("_id")
+        }
+        if not subset_ids:
+            return
 
         if name:
-            update = {"$set": {field: name}}
             self.echo("Group subsets to '%s'.." % name)
         else:
-            update = {"$unset": {field: ""}}
             self.echo("Ungroup subsets..")
 
-        subsets = list()
-        for item in items:
-            subsets.append(item["subset"])
+        project_name = self.dbcon.active_project()
+        op_session = OperationsSession()
+        for subset_id in subset_ids:
+            op_session.update_entity(
+                project_name,
+                "subset",
+                subset_id,
+                {"data.subsetGroup": name or REMOVED_VALUE}
+            )
 
-        for asset_id in asset_ids:
-            filtr = {
-                "type": "subset",
-                "parent": asset_id,
-                "name": {"$in": subsets},
-            }
-            self.dbcon.update_many(filtr, update)
+        op_session.commit()
 
     def echo(self, message):
         print(message)

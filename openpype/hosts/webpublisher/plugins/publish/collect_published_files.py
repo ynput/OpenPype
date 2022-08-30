@@ -23,10 +23,8 @@ from openpype.lib import (
     get_ffprobe_streams,
     convert_ffprobe_fps_value,
 )
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_subset_name_with_asset_doc
-)
+from openpype.pipeline.create import get_subset_name
+from openpype_modules.webpublisher.lib import parse_json
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -80,9 +78,14 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset_name = get_subset_name_with_asset_doc(
-                family, variant, task_name, asset_doc,
-                project_name=project_name, host_name="webpublisher"
+            subset_name = get_subset_name(
+                family,
+                variant,
+                task_name,
+                asset_doc,
+                project_name=project_name,
+                host_name="webpublisher",
+                project_settings=context.data["project_settings"]
             )
             version = self._get_next_version(
                 project_name, asset_doc, subset_name

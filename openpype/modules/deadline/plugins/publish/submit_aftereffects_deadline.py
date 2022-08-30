@@ -3,8 +3,10 @@ import attr
 import getpass
 import pyblish.api
 
-from openpype.lib import env_value_to_bool
-from openpype.lib.delivery import collect_frames
+from openpype.lib import (
+    env_value_to_bool,
+    collect_frames,
+)
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo

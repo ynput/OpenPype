@@ -1,3 +1,4 @@
+import re
 import uuid
 import copy
 import collections
@@ -11,6 +12,11 @@ from .mongo import get_project_connection
 
 REMOVED_VALUE = object()
 
+PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
+PROJECT_NAME_REGEX = re.compile(
+    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
+
 CURRENT_PROJECT_SCHEMA = "openpype:project-3.0"
 CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
 CURRENT_ASSET_DOC_SCHEMA = "openpype:asset-3.0"
@@ -18,6 +24,7 @@ CURRENT_SUBSET_SCHEMA = "openpype:subset-3.0"
 CURRENT_VERSION_SCHEMA = "openpype:version-3.0"
 CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
 CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
+CURRENT_THUMBNAIL_SCHEMA = "openpype:thumbnail-1.0"
 
 
 def _create_or_convert_to_mongo_id(mongo_id):
@@ -186,6 +193,29 @@ def new_representation_doc(
 
         # Imprint shortcut to context for performance reasons.
         "context": context
+    }
+
+
+def new_thumbnail_doc(data=None, entity_id=None):
+    """Create skeleton data of thumbnail document.
+
+    Args:
+        data (Dict[str, Any]): Thumbnail document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of thumbnail document.
+    """
+
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "type": "thumbnail",
+        "schema": CURRENT_THUMBNAIL_SCHEMA,
+        "data": data
     }
 
 
@@ -444,7 +474,7 @@ class UpdateOperation(AbstractOperation):
         set_data = {}
         for key, value in self._update_data.items():
             if value is REMOVED_VALUE:
-                unset_data[key] = value
+                unset_data[key] = None
             else:
                 set_data[key] = value
 

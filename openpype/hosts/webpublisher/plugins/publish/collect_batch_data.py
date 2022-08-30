@@ -13,12 +13,13 @@ import os
 
 import pyblish.api
 
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_batch_asset_task_info
-)
-from openpype.lib.remote_publish import get_webpublish_conn, IN_PROGRESS_STATUS
 from openpype.pipeline import legacy_io
+from openpype_modules.webpublisher.lib import (
+    parse_json,
+    get_batch_asset_task_info,
+    get_webpublish_conn,
+    IN_PROGRESS_STATUS
+)
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):
