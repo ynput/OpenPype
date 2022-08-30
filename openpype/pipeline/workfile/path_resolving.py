@@ -419,9 +419,14 @@ def get_custom_workfile_template(
     # when path is available try to format it in case
     # there are some anatomy template strings
     if matching_item:
+        # extend anatomy context with os.environ to
+        # also allow formatting against env
+        full_context_data = os.environ.copy()
+        full_context_data.update(anatomy_context_data)
+
         template = matching_item["path"][platform.system().lower()]
         return StringTemplate.format_strict_template(
-            template, anatomy_context_data
+            template, full_context_data
         ).normalized()
 
     return None

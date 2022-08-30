@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.14.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.1](https://github.com/pypeclub/OpenPype/tree/3.14.1) (2022-08-30)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.0...3.14.1)
 
 ### 📖 Documentation
 
@@ -12,33 +12,37 @@
 **🆕 New features**
 
 - Webpublisher:change create flatten image into tri state [\#3678](https://github.com/pypeclub/OpenPype/pull/3678)
+- Blender: validators code correction with settings and defaults [\#3662](https://github.com/pypeclub/OpenPype/pull/3662)
 
 **🚀 Enhancements**
 
+- General: Thumbnail can use project roots [\#3750](https://github.com/pypeclub/OpenPype/pull/3750)
 - Settings: Remove settings lock on tray exit [\#3720](https://github.com/pypeclub/OpenPype/pull/3720)
 - General: Added helper getters to modules manager [\#3712](https://github.com/pypeclub/OpenPype/pull/3712)
 - Unreal: Define unreal as module and use host class [\#3701](https://github.com/pypeclub/OpenPype/pull/3701)
 - Settings: Lock settings UI session [\#3700](https://github.com/pypeclub/OpenPype/pull/3700)
 - General: Benevolent context label collector [\#3686](https://github.com/pypeclub/OpenPype/pull/3686)
 - Ftrack: Store ftrack entities on hierarchy integration to instances [\#3677](https://github.com/pypeclub/OpenPype/pull/3677)
-- Ftrack: More logs related to auto sync value change [\#3671](https://github.com/pypeclub/OpenPype/pull/3671)
 - Blender: ops refresh manager after process events [\#3663](https://github.com/pypeclub/OpenPype/pull/3663)
 
 **🐛 Bug fixes**
 
+- Maya: Fix typo in getPanel argument `with\_focus` -\> `withFocus` [\#3753](https://github.com/pypeclub/OpenPype/pull/3753)
+- General: Smaller fixes of imports [\#3748](https://github.com/pypeclub/OpenPype/pull/3748)
 - General: Logger tweaks [\#3741](https://github.com/pypeclub/OpenPype/pull/3741)
+- Nuke: missing job dependency if multiple bake streams [\#3737](https://github.com/pypeclub/OpenPype/pull/3737)
 - Nuke: color-space settings from anatomy is working [\#3721](https://github.com/pypeclub/OpenPype/pull/3721)
 - Settings: Fix studio default anatomy save [\#3716](https://github.com/pypeclub/OpenPype/pull/3716)
 - Maya: Use project name instead of project code [\#3709](https://github.com/pypeclub/OpenPype/pull/3709)
 - Settings: Fix project overrides save [\#3708](https://github.com/pypeclub/OpenPype/pull/3708)
 - Workfiles tool: Fix published workfile filtering [\#3704](https://github.com/pypeclub/OpenPype/pull/3704)
 - PS, AE: Provide default variant value for workfile subset [\#3703](https://github.com/pypeclub/OpenPype/pull/3703)
-- RoyalRender: handle host name that is not set [\#3695](https://github.com/pypeclub/OpenPype/pull/3695)
 - Flame: retime is working on clip publishing [\#3684](https://github.com/pypeclub/OpenPype/pull/3684)
 - Webpublisher: added check for empty context [\#3682](https://github.com/pypeclub/OpenPype/pull/3682)
 
 **🔀 Refactored code**
 
+- General: Move delivery logic to pipeline [\#3751](https://github.com/pypeclub/OpenPype/pull/3751)
 - General: Host addons cleanup [\#3744](https://github.com/pypeclub/OpenPype/pull/3744)
 - Webpublisher: Webpublisher is used as addon [\#3740](https://github.com/pypeclub/OpenPype/pull/3740)
 - Photoshop: Defined photoshop as addon [\#3736](https://github.com/pypeclub/OpenPype/pull/3736)
@@ -105,10 +109,6 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.13.0-nightly.1...3.13.0)
 
-**🆕 New features**
-
-- Support for mutliple installed versions - 3.13 [\#3605](https://github.com/pypeclub/OpenPype/pull/3605)
-
 **🚀 Enhancements**
 
 - Editorial: Mix audio use side file for ffmpeg filters [\#3630](https://github.com/pypeclub/OpenPype/pull/3630)
@@ -123,14 +123,10 @@
 - General: Extract review aspect ratio scale is calculated by ffmpeg [\#3620](https://github.com/pypeclub/OpenPype/pull/3620)
 - Maya: Fix types of default settings [\#3617](https://github.com/pypeclub/OpenPype/pull/3617)
 - Integrator: Don't force to have dot before frame [\#3611](https://github.com/pypeclub/OpenPype/pull/3611)
-- AfterEffects: refactored integrate doesnt work formulti frame publishes [\#3610](https://github.com/pypeclub/OpenPype/pull/3610)
-- Maya look data contents fails with custom attribute on group [\#3607](https://github.com/pypeclub/OpenPype/pull/3607)
-- TrayPublisher: Fix wrong conflict merge [\#3600](https://github.com/pypeclub/OpenPype/pull/3600)
 
 **🔀 Refactored code**
 
 - General: Plugin settings handled by plugins [\#3623](https://github.com/pypeclub/OpenPype/pull/3623)
-- General: Naive implementation of document create, update, delete [\#3601](https://github.com/pypeclub/OpenPype/pull/3601)
 
 **Merged pull requests:**
 
