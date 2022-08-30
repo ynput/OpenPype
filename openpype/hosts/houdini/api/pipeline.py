@@ -3,7 +3,10 @@ import sys
 import logging
 import contextlib
 
-import hou
+import hou  # noqa
+
+from openpype.host import HostBase, IWorkfileHost, ILoadHost
+from openpype.tools.utils import host_tools
 
 import pyblish.api
 
@@ -35,70 +38,96 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-self = sys.modules[__name__]
-self._has_been_setup = False
-self._parent = None
-self._events = dict()
+class HoudiniHost(HostBase, IWorkfileHost, ILoadHost):
+    name = "houdini"
 
+    def __init__(self):
+        super(HoudiniHost, self).__init__()
+        self._op_events = {}
+        self._has_been_setup = False
 
-def install():
-    _register_callbacks()
+    def install(self):
+        pyblish.api.register_host("houdini")
+        pyblish.api.register_host("hython")
+        pyblish.api.register_host("hpython")
 
-    pyblish.api.register_host("houdini")
-    pyblish.api.register_host("hython")
-    pyblish.api.register_host("hpython")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
 
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
+        log.info("Installing callbacks ... ")
+        # register_event_callback("init", on_init)
+        self._register_callbacks()
+        register_event_callback("before.save", before_save)
+        register_event_callback("save", on_save)
+        register_event_callback("open", on_open)
+        register_event_callback("new", on_new)
 
-    log.info("Installing callbacks ... ")
-    # register_event_callback("init", on_init)
-    register_event_callback("before.save", before_save)
-    register_event_callback("save", on_save)
-    register_event_callback("open", on_open)
-    register_event_callback("new", on_new)
+        pyblish.api.register_callback(
+            "instanceToggled", on_pyblish_instance_toggled
+        )
 
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+        self._has_been_setup = True
+        # add houdini vendor packages
+        hou_pythonpath = os.path.join(HOUDINI_HOST_DIR, "vendor")
 
-    self._has_been_setup = True
-    # add houdini vendor packages
-    hou_pythonpath = os.path.join(HOUDINI_HOST_DIR, "vendor")
+        sys.path.append(hou_pythonpath)
 
-    sys.path.append(hou_pythonpath)
+        # Set asset settings for the empty scene directly after launch of Houdini
+        # so it initializes into the correct scene FPS, Frame Range, etc.
+        # todo: make sure this doesn't trigger when opening with last workfile
+        _set_context_settings()
 
-    # Set asset settings for the empty scene directly after launch of Houdini
-    # so it initializes into the correct scene FPS, Frame Range, etc.
-    # todo: make sure this doesn't trigger when opening with last workfile
-    _set_context_settings()
+    def has_unsaved_changes(self):
+        return hou.hipFile.hasUnsavedChanges()
 
+    def get_workfile_extensions(self):
+        return [".hip", ".hiplc", ".hipnc"]
 
-def uninstall():
-    """Uninstall Houdini-specific functionality of avalon-core.
+    def save_workfile(self, dst_path=None):
+        # Force forwards slashes to avoid segfault
+        filepath = dst_path.replace("\\", "/")
+        hou.hipFile.save(file_name=filepath,
+                         save_to_recent_files=True)
+        return filepath
 
-    This function is called automatically on calling `api.uninstall()`.
-    """
+    def open_workfile(self, filepath):
+        # Force forwards slashes to avoid segfault
+        filepath = filepath.replace("\\", "/")
 
-    pyblish.api.deregister_host("hython")
-    pyblish.api.deregister_host("hpython")
-    pyblish.api.deregister_host("houdini")
+        hou.hipFile.load(filepath,
+                         suppress_save_prompt=True,
+                         ignore_load_warnings=False)
 
+        return filepath
 
-def _register_callbacks():
-    for event in self._events.copy().values():
-        if event is None:
-            continue
+    def get_current_workfile(self):
+        current_filepath = hou.hipFile.path()
+        if (os.path.basename(current_filepath) == "untitled.hip" and
+                not os.path.exists(current_filepath)):
+            # By default a new scene in houdini is saved in the current
+            # working directory as "untitled.hip" so we need to capture
+            # that and consider it 'not saved' when it's in that state.
+            return None
 
-        try:
-            hou.hipFile.removeEventCallback(event)
-        except RuntimeError as e:
-            log.info(e)
+        return current_filepath
 
-    self._events[on_file_event_callback] = hou.hipFile.addEventCallback(
-        on_file_event_callback
-    )
+    def get_containers(self):
+        return ls()
+
+    def _register_callbacks(self):
+        for event in self._op_events.copy().values():
+            if event is None:
+                continue
+
+            try:
+                hou.hipFile.removeEventCallback(event)
+            except RuntimeError as e:
+                log.info(e)
+
+        self._op_events[on_file_event_callback] = hou.hipFile.addEventCallback(
+            on_file_event_callback
+        )
 
 
 def on_file_event_callback(event):
@@ -110,22 +139,6 @@ def on_file_event_callback(event):
         emit_event("before.save")
     elif event == hou.hipFileEventType.AfterClear:
         emit_event("new")
-
-
-def get_main_window():
-    """Acquire Houdini's main window"""
-    if self._parent is None:
-        self._parent = hou.ui.mainQtWindow()
-    return self._parent
-
-
-def teardown():
-    """Remove integration"""
-    if not self._has_been_setup:
-        return
-
-    self._has_been_setup = False
-    print("pyblish: Integration torn down successfully")
 
 
 def containerise(name,
@@ -250,7 +263,7 @@ def on_open():
         log.warning("Scene has outdated content.")
 
         # Get main window
-        parent = get_main_window()
+        parent = lib.get_main_window()
         if parent is None:
             log.info("Skipping outdated content pop-up "
                      "because Houdini window can't be found.")
@@ -370,3 +383,27 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
             instance_node.bypass(not new_value)
     except hou.PermissionError as exc:
         log.warning("%s - %s", instance_node.path(), exc)
+
+
+def list_instances():
+    """List all publish instances in the scene."""
+    return lib.lsattr("id", "pyblish.avalon.instance")
+
+
+def remove_instance(instance):
+    """Remove specified instance from the scene.
+
+    This is only removing `id` parameter so instance is no longer instance,
+    because it might contain valuable data for artist.
+
+    """
+    nodes = instance[:]
+    if not nodes:
+        return
+
+    # Assume instance node is first node
+    instance_node = nodes[0]
+    for parameter in instance_node.spareParms():
+        if parameter.name() == "id" and \
+                parameter.eval() == "pyblish.avalon.instance":
+            instance_node.removeSpareParmTuple(parameter)

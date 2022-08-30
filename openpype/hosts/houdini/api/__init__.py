@@ -1,22 +1,13 @@
 from .pipeline import (
-    install,
-    uninstall,
-
+    HoudiniHost,
     ls,
     containerise,
+    list_instances,
+    remove_instance
 )
 
 from .plugin import (
     Creator,
-)
-
-from .workio import (
-    open_file,
-    save_file,
-    current_file,
-    has_unsaved_changes,
-    file_extensions,
-    work_root
 )
 
 from .lib import (
@@ -29,21 +20,14 @@ from .lib import (
 
 
 __all__ = [
-    "install",
-    "uninstall",
+    "HoudiniHost",
 
     "ls",
     "containerise",
+    "list_instances",
+    "remove_instance",
 
     "Creator",
-
-    # Workfiles API
-    "open_file",
-    "save_file",
-    "current_file",
-    "has_unsaved_changes",
-    "file_extensions",
-    "work_root",
 
     # Utility functions
     "lsattr",
@@ -52,7 +36,3 @@ __all__ = [
 
     "maintained_selection"
 ]
-
-# Backwards API compatibility
-open = open_file
-save = save_file

@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+import sys
 import uuid
 import logging
 from contextlib import contextmanager
+import json
 
 import six
 
@@ -8,9 +11,11 @@ from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
 from openpype.pipeline.context_tools import get_current_project_asset
 
-
 import hou
 
+
+self = sys.modules[__name__]
+self._parent = None
 log = logging.getLogger(__name__)
 
 
@@ -29,23 +34,18 @@ def set_id(node, unique_id, overwrite=False):
 
 
 def get_id(node):
-    """
-    Get the `cbId` attribute of the given node
+    """Get the `cbId` attribute of the given node.
+
     Args:
         node (hou.Node): the name of the node to retrieve the attribute from
 
     Returns:
-        str
+        str: cbId attribute of the node.
 
     """
 
-    if node is None:
-        return
-
-    id = node.parm("id")
-    if node is None:
-        return
-    return id
+    if node is not None:
+        return node.parm("id")
 
 
 def generate_ids(nodes, asset_id=None):
@@ -325,6 +325,11 @@ def imprint(node, data):
                                           label=key,
                                           num_components=1,
                                           default_value=(value,))
+        elif isinstance(value, dict):
+            parm = hou.StringParmTemplate(name=key,
+                                          label=key,
+                                          num_components=1,
+                                          default_value=(json.dumps(value),))
         else:
             raise TypeError("Unsupported type: %r" % type(value))
 
@@ -397,8 +402,20 @@ def read(node):
 
     """
     # `spareParms` returns a tuple of hou.Parm objects
-    return {parameter.name(): parameter.eval() for
-            parameter in node.spareParms()}
+    data = {}
+    for parameter in node.spareParms():
+        value = parameter.eval()
+        # test if value is json encoded dict
+        if isinstance(value, six.string_types) and \
+                len(value) > 0 and value[0] == "{":
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                # not a json
+                pass
+        data[parameter.name()] = value
+
+    return data
 
 
 @contextmanager
@@ -478,3 +495,10 @@ def load_creator_code_to_asset(
 
     # Store the source code into the PythonCook section of the asset.
     definition.addSection("PythonCook", source)
+
+
+def get_main_window():
+    """Acquire Houdini's main window"""
+    if self._parent is None:
+        self._parent = hou.ui.mainQtWindow()
+    return self._parent
