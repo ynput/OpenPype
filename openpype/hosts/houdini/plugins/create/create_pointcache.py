@@ -1,13 +1,22 @@
+# -*- coding: utf-8 -*-
 from openpype.hosts.houdini.api import plugin
+from openpype.hosts.houdini.api import list_instances
+from openpype.pipeline import CreatedInstance
 
 
 class CreatePointCache(plugin.HoudiniCreator):
     """Alembic ROP to pointcache"""
-
-    name = "pointcache"
+    identifier = "pointcache"
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
+
+    def collect_instances(self):
+        for instance_data in list_instances():
+            instance = CreatedInstance.from_existing(
+                instance_data, self
+            )
+            self._add_instance_to_context(instance)
 
     def create(self, subset_name, instance_data, pre_create_data):
         pass
