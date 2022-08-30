@@ -3,17 +3,17 @@
 import sys
 import six
 from abc import (
-    ABCMeta,
-    abstractmethod,
-    abstractproperty
+    ABCMeta
 )
 import six
 import hou
 from openpype.pipeline import (
     CreatorError,
     LegacyCreator,
-    Creator as NewCreator
+    Creator as NewCreator,
+    CreatedInstance
 )
+from openpype.hosts.houdini.api import list_instances, remove_instance
 from .lib import imprint
 
 
@@ -97,10 +97,17 @@ class HoudiniCreator(NewCreator):
     _nodes = []
 
     def collect_instances(self):
-        pass
+        for instance_data in list_instances():
+            instance = CreatedInstance.from_existing(
+                instance_data, self
+            )
+            self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
-        pass
+        for created_inst, _changes in update_list:
+            imprint(created_inst.get("instance_id"), created_inst.data_to_store())
 
     def remove_instances(self, instances):
-        pass
+        for instance in instances:
+            remove_instance(instance)
+            self._remove_instance_from_context(instance)
