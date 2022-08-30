@@ -50,7 +50,7 @@ class CreateWriteRender(plugin.AbstractWriteRender):
         except AttributeError:
             actual_format = nuke.root().knob('format').value()
             width, height = (actual_format.width(), actual_format.height())
-
+        self.prenodes = [] #HORNET: DISABLE REFORMAT NODE 
         if not self.is_legacy():
             return create_write_node(
                 self.data["subset"],
@@ -74,7 +74,7 @@ class CreateWriteRender(plugin.AbstractWriteRender):
                     "dependent": None
                 }
             ]
-
+            _prenodes = [] #HORNET: DISABLE REFORMAT NODES
             return create_write_node_legacy(
                 self.data["subset"],
                 write_data,
