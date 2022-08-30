@@ -544,26 +544,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
 
-        def _get_workfile_instance(context):
-            """Find workfile instance in context"""
-            for i in context:
-
-                is_workfile = (
-                        "workfile" in i.data.get("families", []) or
-                        i.data["family"] == "workfile"
-                )
-                if not is_workfile:
-                    continue
-
-                # test if there is instance of workfile waiting
-                # to be published.
-                assert i.data["publish"] is True, (
-                    "Workfile (scene) must be published along")
-
-                return i
-
         instance = self._instance
-        workfile_instance = _get_workfile_instance(instance.context)
+        workfile_instance = self._get_workfile_instance(instance.context)
         if not workfile_instance:
             return
 
@@ -689,3 +671,22 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         self._instance.data["deadlineSubmissionJob"] = result
 
         return result["_id"]
+
+    @staticmethod
+    def _get_workfile_instance(context):
+        """Find workfile instance in context"""
+        for i in context:
+
+            is_workfile = (
+                    "workfile" in i.data.get("families", []) or
+                    i.data["family"] == "workfile"
+            )
+            if not is_workfile:
+                continue
+
+            # test if there is instance of workfile waiting
+            # to be published.
+            assert i.data["publish"] is True, (
+                "Workfile (scene) must be published along")
+
+            return i
