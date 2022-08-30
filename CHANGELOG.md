@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.14.1-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.1](https://github.com/pypeclub/OpenPype/tree/3.14.1) (2022-08-30)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.0...3.14.1)
 
 ### 📖 Documentation
 
