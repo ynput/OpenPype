@@ -295,7 +295,7 @@ class DeadlineJobInfo(object):
     OutputFilename = attr.ib(factory=partial(DeadlineIndexedVar,
                                              "OutputFilename"))
     OutputFilenameTile = attr.ib(factory=partial(DeadlineIndexedVar,
-                                                "OutputFilename{}Tile"))
+                                                 "OutputFilename{}Tile"))
     OutputDirectory = attr.ib(factory=partial(DeadlineIndexedVar,
                                               "OutputDirectory"))
 
