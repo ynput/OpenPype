@@ -27,7 +27,6 @@ import itertools
 from collections import OrderedDict
 
 import attr
-import clique
 
 from maya import cmds
 
@@ -111,7 +110,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
-        for key, value in render_globals:
+        for key, value in render_globals.items():
             setattr(job_info, key, value)
 
         keys = [
@@ -143,13 +142,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_info.EnvironmentKeyValue = "{key}={value}".format(key=key,
                                                                   value=value)
 
-        # Enable double-click to preview rendered frames from Deadline Monitor
-        for filepath in instance.data["files"]:
-            dirname = os.path.dirname(filepath)
-            fname = os.path.basename(filepath)
-            job_info.OutputDirectory = dirname.replace("\\", "/")
-            job_info.OutputFilename = fname
-
         # Adding file dependencies.
         if self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
@@ -160,28 +152,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Add list of expected files to job
         # ---------------------------------
         exp = instance.data.get("expectedFiles")
-
-        def _get_output_filename(files):
-            col, rem = clique.assemble(files)
-            if not col and rem:
-                # we couldn't find any collections but have
-                # individual files.
-                assert len(rem) == 1, (
-                    "Found multiple non related files "
-                    "to render, don't know what to do "
-                    "with them.")
-                return rem[0]
-            else:
-                return col[0].format('{head}{padding}{tail}')
-
-        if isinstance(exp[0], dict):
-            # we have aovs and we need to iterate over them
-            for _aov, files in exp[0].items():
-                output_file = _get_output_filename(files)
-                job_info.OutputFilename = output_file
-        else:
-            output_file = _get_output_filename(exp)
-            job_info.OutputFilename = output_file
+        for filepath in self._iter_expected_files(exp):
+            job_info.OutputDirectory = os.path.dirname(filepath)
+            job_info.OutputFilename = os.path.basename(filepath)
 
         return job_info
 
@@ -194,6 +167,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
             RenderLayer=instance.data['setMembers'],
+            Renderer=instance.data["renderer"],
             RenderSetupIncludeLights=instance.data.get("renderSetupIncludeLights"),  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
@@ -216,7 +190,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # TODO: Avoid the need for this logic here, needed for submit publish
         # Store output dir for unified publisher (filesequence)
-        output_dir = os.path.dirname(instance.data["files"][0])
+        expected_files = instance.data["expectedFiles"]
+        first_file = next(self._iter_expected_files(expected_files))
+        output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
 
@@ -247,17 +223,20 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "Vray Scene and Ass Scene options are mutually exclusive")
 
         if "vrayscene" in instance.data["families"]:
+            self.log.debug("Submitting V-Ray scene render..")
             vray_export_payload = self._get_vray_export_payload(payload_data)
             export_job = self.submit(vray_export_payload)
 
             payload = self._get_vray_render_payload(payload_data)
 
         elif "assscene" in instance.data["families"]:
+            self.log.debug("Submitting Arnold .ass standalone render..")
             ass_export_payload = self._get_arnold_export_payload(payload_data)
             export_job = self.submit(ass_export_payload)
 
             payload = self._get_arnold_render_payload(payload_data)
         else:
+            self.log.debug("Submitting MayaBatch render..")
             payload = self._get_maya_payload(payload_data)
 
         # Add export job as dependency --------------------------------------
@@ -274,6 +253,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             self.submit(self.assemble_payload(job_info, plugin_info))
 
     def _tile_render(self, payload):
+        """Submit as tile render per frame with dependent assembly jobs."""
 
         # As collected by super process()
         instance = self._instance
@@ -315,7 +295,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             assembly_files = files
 
         # Define frame tile jobs
-        frame_jobs = {}
+        frame_file_hash = {}
         frame_payloads = {}
         file_index = 1
         for file in files:
@@ -343,9 +323,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             self.log.info("hashing {} - {}".format(file_index, file))
             job_hash = hashlib.sha256(
                 ("{}_{}".format(file_index, file)).encode("utf-8"))
-            frame_jobs[frame] = job_hash.hexdigest()
 
-            new_job_info.ExtraInfo[0] = job_hash.hexdigest()
+            file_hash = job_hash.hexdigest()
+            frame_file_hash[frame] = file_hash
+
+            new_job_info.ExtraInfo[0] = file_hash
             new_job_info.ExtraInfo[1] = file
 
             frame_payloads[frame] = self.assemble_payload(
@@ -391,10 +373,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 REPL_FRAME_NUMBER,
                 "\\1{}\\3".format("#" * len(frame)), file)
 
-            hash = frame_jobs[frame]
+            file_hash = frame_file_hash[frame]
             tile_job_id = frame_tile_job_id[frame]
 
-            frame_assembly_job_info.ExtraInfo[0] = hash
+            frame_assembly_job_info.ExtraInfo[0] = file_hash
             frame_assembly_job_info.ExtraInfo[1] = file
             frame_assembly_job_info.JobDependency = tile_job_id
 
@@ -483,11 +465,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             if int(rman_version.split(".")[0]) > 22:
                 renderer = "renderman22"
 
-        plugin_info = {
+        plugin_info = copy.deepcopy(self.plugin_info)
+        plugin_info.update({
             # Output directory and filename
             "OutputFilePath": data["dirname"].replace("\\", "/"),
             "OutputFilePrefix": layer_prefix,
-        }
+        })
 
         return job_info, plugin_info
 
@@ -709,6 +692,16 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             start=int(self._instance.data["frameStartHandle"]),
             end=int(self._instance.data["frameEndHandle"]),
         )
+
+    @staticmethod
+    def _iter_expected_files(exp):
+        if isinstance(exp[0], dict):
+            for _aov, files in exp[0].items():
+                for file in files:
+                    yield file
+        else:
+            for file in exp:
+                yield file
 
 
 def _format_tiles(
