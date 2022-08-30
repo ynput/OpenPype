@@ -419,8 +419,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             payload = self.assemble_payload(
                 job_info=frame_assembly_job_info,
                 plugin_info=assembly_plugin_info.copy(),
+                # todo: aux file transfers don't work with deadline webservice
                 # add config file as job auxFile
-                aux_files=[config_file]
+                # aux_files=[config_file]
             )
             assembly_payloads.append(payload)
 
