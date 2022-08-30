@@ -117,8 +117,8 @@ def _format_tiles(
     tile = 0
     out = {"JobInfo": {}, "PluginInfo": {}}
     cfg = OrderedDict()
-    w_space = width / tiles_x
-    h_space = height / tiles_y
+    w_space = width // tiles_x
+    h_space = height // tiles_y
 
     cfg["TilesCropped"] = "False"
 
@@ -146,16 +146,16 @@ def _format_tiles(
             left = (tile_x - 1) * w_space
             right = (tile_x * w_space) - 1
 
-            out["PluginInfo"]["RegionTop{}".format(tile)] = int(top)
-            out["PluginInfo"]["RegionBottom{}".format(tile)] = int(bottom)
-            out["PluginInfo"]["RegionLeft{}".format(tile)] = int(left)
-            out["PluginInfo"]["RegionRight{}".format(tile)] = int(right)
+            out["PluginInfo"]["RegionTop{}".format(tile)] = top
+            out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
+            out["PluginInfo"]["RegionLeft{}".format(tile)] = left
+            out["PluginInfo"]["RegionRight{}".format(tile)] = right
 
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
-            cfg["Tile{}X".format(tile)] = int(left)
-            cfg["Tile{}Y".format(tile)] = int(top)
+            cfg["Tile{}X".format(tile)] = left
+            cfg["Tile{}Y".format(tile)] = top
 
             cfg["Tile{}Width".format(tile)] = w_space
             cfg["Tile{}Height".format(tile)] = h_space
