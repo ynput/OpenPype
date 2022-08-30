@@ -267,15 +267,16 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         if instance.data.get("tileRendering"):
             # Prepare tiles data
-            self._tile_render(instance, payload)
+            self._tile_render(payload)
         else:
             # Submit main render job
             job_info, plugin_info = payload
             self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _tile_render(self, instance, payload):
+    def _tile_render(self, payload):
 
         # As collected by super process()
+        instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
 
@@ -321,11 +322,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
             new_job_info = copy.deepcopy(job_info)
-            new_job_info.Name = "{} (Frame {} - {} tiles)".format(
-                    payload["JobInfo"]["Name"],
-                    frame,
-                    instance.data.get("tilesX") * instance.data.get("tilesY")
-            )
+            new_job_info.Name += " (Frame {} - {} tiles)".format(frame,
+                                                                 tiles_count)
             new_job_info.TileJobFrame = frame
 
             new_plugin_info = copy.deepcopy(plugin_info)
