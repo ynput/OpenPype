@@ -8,6 +8,6 @@ class CreateBlenderNodegroup(plugin.Creator):
 
     name = "blenderNodegroupMain"
     label = "Blender Nodegroup"
-    family = "blender_nodegroud"
+    family = "blender.nodegroup"
     icon = "microchip"
     color_tag = "COLOR_06"

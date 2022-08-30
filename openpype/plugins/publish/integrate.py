@@ -138,6 +138,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "simpleUnrealTexture",
                 "online",
                 "uasset"
+                "blender.nodegroup",
                 ]
 
     default_template_name = "publish"
