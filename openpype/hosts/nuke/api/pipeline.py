@@ -26,6 +26,8 @@ from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
 from .lib import (
+    Context,
+    get_main_window,
     add_publish_knob,
     WorkfileSettings,
     process_workfile_builder,
@@ -33,7 +35,6 @@ from .lib import (
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
-    Context
 )
 
 log = Logger.get_logger(__name__)
@@ -51,23 +52,6 @@ MENU_LABEL = os.environ["AVALON_LABEL"]
 # registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
     pyblish.api.register_gui(os.getenv("PYBLISH_GUI", None))
-
-
-def get_main_window():
-    """Acquire Nuke's main window"""
-    if Context.main_window is None:
-        from Qt import QtWidgets
-
-        top_widgets = QtWidgets.QApplication.topLevelWidgets()
-        name = "Foundry::UI::DockMainWindow"
-        for widget in top_widgets:
-            if (
-                widget.inherits("QMainWindow")
-                and widget.metaObject().className() == name
-            ):
-                Context.main_window = widget
-                break
-    return Context.main_window
 
 
 def reload_config():

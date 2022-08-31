@@ -76,6 +76,23 @@ class Context:
     _project_doc = None
 
 
+def get_main_window():
+    """Acquire Nuke's main window"""
+    if Context.main_window is None:
+        from Qt import QtWidgets
+
+        top_widgets = QtWidgets.QApplication.topLevelWidgets()
+        name = "Foundry::UI::DockMainWindow"
+        for widget in top_widgets:
+            if (
+                widget.inherits("QMainWindow")
+                and widget.metaObject().className() == name
+            ):
+                Context.main_window = widget
+                break
+    return Context.main_window
+
+
 class Knobby(object):
     """For creating knob which it's type isn't mapped in `create_knobs`
 
