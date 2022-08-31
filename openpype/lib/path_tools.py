@@ -16,6 +16,51 @@ from .profiles_filtering import filter_profiles
 log = logging.getLogger(__name__)
 
 
+class PathToolsDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", PathToolsDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=PathToolsDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
+
+
 def format_file_size(file_size, suffix=None):
     """Returns formatted string with size in appropriate unit.
 
@@ -333,6 +378,7 @@ def get_project_basic_paths(project_name):
     return _list_path_items(folder_structure)
 
 
+@deprecated("openpype.pipeline.workfile.create_workdir_extra_folders")
 def create_workdir_extra_folders(
     workdir, host_name, task_type, task_name, project_name,
     project_settings=None
@@ -349,37 +395,18 @@ def create_workdir_extra_folders(
         project_name (str): Name of project on which task is.
         project_settings (dict): Prepared project settings. Are loaded if not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    # Load project settings if not set
-    if not project_settings:
-        project_settings = get_project_settings(project_name)
 
-    # Load extra folders profiles
-    extra_folders_profiles = (
-        project_settings["global"]["tools"]["Workfiles"]["extra_folders"]
+    from openpype.pipeline.project_folders import create_workdir_extra_folders
+
+    return create_workdir_extra_folders(
+        workdir,
+        host_name,
+        task_type,
+        task_name,
+        project_name,
+        project_settings
     )
-    # Skip if are empty
-    if not extra_folders_profiles:
-        return
-
-    # Prepare profiles filters
-    filter_data = {
-        "task_types": task_type,
-        "task_names": task_name,
-        "hosts": host_name
-    }
-    profile = filter_profiles(extra_folders_profiles, filter_data)
-    if profile is None:
-        return
-
-    for subfolder in profile["folders"]:
-        # Make sure backslashes are converted to forwards slashes
-        #   and does not start with slash
-        subfolder = subfolder.replace("\\", "/").lstrip("/")
-        # Skip empty strings
-        if not subfolder:
-            continue
-
-        fullpath = os.path.join(workdir, subfolder)
-        if not os.path.exists(fullpath):
-            os.makedirs(fullpath)

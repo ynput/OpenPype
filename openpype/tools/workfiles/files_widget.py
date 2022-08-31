@@ -10,10 +10,7 @@ from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-from openpype.lib import (
-    emit_event,
-    create_workdir_extra_folders,
-)
+from openpype.lib import emit_event
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -23,7 +20,10 @@ from openpype.pipeline.context_tools import (
     compute_session_changes,
     change_current_context
 )
-from openpype.pipeline.workfile import get_workfile_template_key
+from openpype.pipeline.workfile import (
+    get_workfile_template_key,
+    create_workdir_extra_folders,
+)
 
 from .model import (
     WorkAreaFilesModel,
