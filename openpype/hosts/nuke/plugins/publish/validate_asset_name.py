@@ -4,10 +4,13 @@ from __future__ import absolute_import
 
 import nuke
 import pyblish.api
-import openpype.api
+
 import openpype.hosts.nuke.api.lib as nlib
 import openpype.hosts.nuke.api as nuke_api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class SelectInvalidInstances(pyblish.api.Action):
@@ -97,7 +100,7 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
 
     Action on this validator will select invalid instances in Outliner.
     """
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "Validate correct asset name"
     hosts = ["nuke"]
     actions = [

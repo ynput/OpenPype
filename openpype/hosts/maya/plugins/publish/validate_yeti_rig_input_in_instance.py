@@ -3,12 +3,13 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
     """Validate if all input nodes are part of the instance's hierarchy"""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["yetiRig"]
     label = "Yeti Rig Input Shapes In Instance"
