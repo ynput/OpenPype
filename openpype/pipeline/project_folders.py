@@ -1,8 +1,13 @@
 import os
 import re
+import json
 
+import six
+
+from openpype.settings import get_project_settings
 from openpype.lib import Logger
 
+from .anatomy import Anatomy
 from .template_data import get_project_template_data
 
 
@@ -47,3 +52,54 @@ def fill_paths(path_list, anatomy):
         filled_paths.append(new_path)
 
     return filled_paths
+
+
+def create_project_folders(project_name, basic_paths=None):
+    log = Logger.get_logger("create_project_folders")
+    anatomy = Anatomy(project_name)
+    if basic_paths is None:
+        basic_paths = get_project_basic_paths(project_name)
+
+    concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
+    filled_paths = fill_paths(concat_paths, anatomy)
+
+    # Create folders
+    for path in filled_paths:
+        if os.path.exists(path):
+            log.debug("Folder already exists: {}".format(path))
+        else:
+            log.debug("Creating folder: {}".format(path))
+            os.makedirs(path)
+    return filled_paths
+
+
+def _list_path_items(folder_structure):
+    output = []
+    for key, value in folder_structure.items():
+        if not value:
+            output.append(key)
+            continue
+
+        paths = _list_path_items(value)
+        for path in paths:
+            if not isinstance(path, (list, tuple)):
+                path = [path]
+
+            item = [key]
+            item.extend(path)
+            output.append(item)
+
+    return output
+
+
+def get_project_basic_paths(project_name):
+    project_settings = get_project_settings(project_name)
+    folder_structure = (
+        project_settings["global"]["project_folder_structure"]
+    )
+    if not folder_structure:
+        return []
+
+    if isinstance(folder_structure, six.string_types):
+        folder_structure = json.loads(folder_structure)
+    return _list_path_items(folder_structure)

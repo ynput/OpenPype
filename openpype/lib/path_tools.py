@@ -1,19 +1,15 @@
 import os
 import re
-import abc
-import json
 import logging
-import six
 import platform
+import functools
+import warnings
 
 import clique
 
-from openpype.client import get_project
-from openpype.settings import get_project_settings
-
-from .profiles_filtering import filter_profiles
-
 log = logging.getLogger(__name__)
+
+
 
 
 class PathToolsDeprecatedWarning(DeprecationWarning):
@@ -315,51 +311,28 @@ def fill_paths(path_list, anatomy):
     return fill_paths(path_list, anatomy)
 
 
+@deprecated("openpype.pipeline.project_folders.create_project_folders")
 def create_project_folders(basic_paths, project_name):
-    from openpype.pipeline import Anatomy
-    anatomy = Anatomy(project_name)
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
-    filled_paths = fill_paths(concat_paths, anatomy)
+    from openpype.pipeline.project_folders import create_project_folders
 
-    # Create folders
-    for path in filled_paths:
-        if os.path.exists(path):
-            log.debug("Folder already exists: {}".format(path))
-        else:
-            log.debug("Creating folder: {}".format(path))
-            os.makedirs(path)
+    return create_project_folders(project_name, basic_paths)
 
 
-def _list_path_items(folder_structure):
-    output = []
-    for key, value in folder_structure.items():
-        if not value:
-            output.append(key)
-        else:
-            paths = _list_path_items(value)
-            for path in paths:
-                if not isinstance(path, (list, tuple)):
-                    path = [path]
-
-                item = [key]
-                item.extend(path)
-                output.append(item)
-
-    return output
-
-
+@deprecated("openpype.pipeline.project_folders.get_project_basic_paths")
 def get_project_basic_paths(project_name):
-    project_settings = get_project_settings(project_name)
-    folder_structure = (
-        project_settings["global"]["project_folder_structure"]
-    )
-    if not folder_structure:
-        return []
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    if isinstance(folder_structure, str):
-        folder_structure = json.loads(folder_structure)
-    return _list_path_items(folder_structure)
+    from openpype.pipeline.project_folders import get_project_basic_paths
+
+    return get_project_basic_paths(project_name)
 
 
 @deprecated("openpype.pipeline.workfile.create_workdir_extra_folders")
