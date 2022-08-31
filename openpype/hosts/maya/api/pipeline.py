@@ -100,7 +100,6 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
         register_event_callback("before.save", on_before_save)
-        register_event_callback("check.lock", on_check_lock)
         register_event_callback("before.close", on_before_close)
         register_event_callback("before.file.open", before_file_open)
         register_event_callback("taskChanged", on_task_changed)
@@ -168,29 +167,22 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
         self._op_events[_on_scene_open] = (
             OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kAfterOpen,
-             _on_scene_open
+                OpenMaya.MSceneMessage.kAfterOpen,
+                _on_scene_open
             )
         )
 
         self._op_events[_before_scene_open] = (
             OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kBeforeOpen,
-            _before_scene_open
-            )
-        )
-
-        self._op_events[_check_lock_file] = (
-            OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kAfterOpen,
-            _check_lock_file
+                OpenMaya.MSceneMessage.kBeforeOpen,
+                _before_scene_open
             )
         )
 
         self._op_events[_before_close_maya] = (
             OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kMayaExiting,
-             _before_close_maya
+                OpenMaya.MSceneMessage.kMayaExiting,
+                _before_close_maya
             )
         )
 
@@ -201,6 +193,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self.log.info("Installed event handler _on_scene_open..")
         self.log.info("Installed event handler _check_lock_file..")
         self.log.info("Installed event handler _before_close_maya..")
+
 
 def _set_project():
     """Sets the maya project to the current Session's work directory.
@@ -244,10 +237,6 @@ def _on_scene_save(*args):
 
 def _on_scene_open(*args):
     emit_event("open")
-
-
-def _check_lock_file(*args):
-    emit_event("check.lock")
 
 
 def _before_close_maya(*args):
@@ -494,34 +483,35 @@ def on_check_lock():
     else:
         username = get_username(filepath)
         reminder = cmds.window(title= "Friendly Reminder",
-                                width=400, height= 30)
+                               width=400, height= 30)
         cmds.columnLayout(adjustableColumn=True)
         cmds.separator()
         cmds.columnLayout(adjustableColumn=True)
-        cmds.text(" %s is working the same workfile!"
-                    % username, align='center')
+        cmds.text(" %s is working the same workfile!"% username,
+                  align='center')
         cmds.text(vis=False)
         cmds.rowColumnLayout(numberOfColumns = 3,
-                            columnWidth = [(1,300), (2, 100)],
-                            columnSpacing = [(2,10)])
+                             columnWidth = [(1,300), (2, 100)],
+                             columnSpacing = [(2,10)])
         cmds.separator(vis=False)
         cmds.button(label='Ok',
-        command="cmds.quit(force=True);cmds.deleteUI('%s')"
-        % reminder)
+                    command="cmds.quit(force=True);"
+                    "cmds.deleteUI('%s')" % reminder)
         cmds.showWindow(reminder)
 
 
 def on_before_close():
-        """Delete the lock file after user quitting the Maya Scene"""
-        log.info("Closing Maya...")
-        #delete the lock file
-        filepath = str(current_file())
-        remove_workfile_lock(filepath)
+    """Delete the lock file after user quitting the Maya Scene"""
+    log.info("Closing Maya...")
+    # delete the lock file
+    filepath = current_file()
+    remove_workfile_lock(filepath)
 
 
 def before_file_open():
     """check lock file when the file changed"""
     log.info("check lock file when file changed...")
+    # delete the lock file
     _remove_workfile_lock()
 
 
@@ -592,6 +582,8 @@ def on_open():
             dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
 
+    #create lock file for the maya scene
+    on_check_lock()
 
 def on_new():
     """Set project resolution and fps when create a new file"""
