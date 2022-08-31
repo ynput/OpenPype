@@ -487,8 +487,8 @@ def after_file_open():
         cmds.columnLayout(adjustableColumn=True)
         cmds.separator()
         cmds.columnLayout(adjustableColumn=True)
-        cmds.text(" %s is working the same workfile!" % username,
-                  align='center')
+        comment = " %s is working the same workfile!" % username
+        cmds.text(comment, align='center')
         cmds.text(vis=False)
         cmds.rowColumnLayout(numberOfColumns=3,
                              columnWidth=[(1, 300), (2, 100)],
