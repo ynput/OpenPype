@@ -277,58 +277,42 @@ def get_last_version_from_path(path_dir, filter):
     return None
 
 
+@deprecated("openpype.pipeline.project_folders.concatenate_splitted_paths")
 def concatenate_splitted_paths(split_paths, anatomy):
-    pattern_array = re.compile(r"\[.*\]")
-    output = []
-    for path_items in split_paths:
-        clean_items = []
-        if isinstance(path_items, str):
-            path_items = [path_items]
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-        for path_item in path_items:
-            if not re.match(r"{.+}", path_item):
-                path_item = re.sub(pattern_array, "", path_item)
-            clean_items.append(path_item)
+    from openpype.pipeline.project_folders import concatenate_splitted_paths
 
-        # backward compatibility
-        if "__project_root__" in path_items:
-            for root, root_path in anatomy.roots.items():
-                if not os.path.exists(str(root_path)):
-                    log.debug("Root {} path path {} not exist on \
-                        computer!".format(root, root_path))
-                    continue
-                clean_items = ["{{root[{}]}}".format(root),
-                               r"{project[name]}"] + clean_items[1:]
-                output.append(os.path.normpath(os.path.sep.join(clean_items)))
-            continue
-
-        output.append(os.path.normpath(os.path.sep.join(clean_items)))
-
-    return output
+    return concatenate_splitted_paths(split_paths, anatomy)
 
 
+@deprecated
 def get_format_data(anatomy):
-    project_doc = get_project(anatomy.project_name, fields=["data.code"])
-    project_code = project_doc["data"]["code"]
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    return {
-        "root": anatomy.roots,
-        "project": {
-            "name": anatomy.project_name,
-            "code": project_code
-        },
-    }
+    from openpype.pipeline.template_data import get_project_template_data
+
+    data = get_project_template_data(project_name=anatomy.project_name)
+    data["root"] = anatomy.roots
+    return data
 
 
+@deprecated("openpype.pipeline.project_folders.fill_paths")
 def fill_paths(path_list, anatomy):
-    format_data = get_format_data(anatomy)
-    filled_paths = []
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    for path in path_list:
-        new_path = path.format(**format_data)
-        filled_paths.append(new_path)
+    from openpype.pipeline.project_folders import fill_paths
 
-    return filled_paths
+    return fill_paths(path_list, anatomy)
 
 
 def create_project_folders(basic_paths, project_name):
