@@ -470,7 +470,7 @@ def on_before_save():
     return lib.validate_fps()
 
 
-def on_check_lock():
+def after_file_open():
     """Check if there is a user opening the file"""
     log.info("Running callback on checking the lock file...")
 
@@ -482,7 +482,7 @@ def on_check_lock():
 
     else:
         username = get_username(filepath)
-        reminder = cmds.window(title= "Reminder", width=400, height= 30)
+        reminder = cmds.window(title="Reminder", width=400, height=30)
         cmds.columnLayout(adjustableColumn=True)
         cmds.separator()
         cmds.columnLayout(adjustableColumn=True)
@@ -490,12 +490,12 @@ def on_check_lock():
                   align='center')
         cmds.text(vis=False)
         cmds.rowColumnLayout(
-            numberOfColumns = 3,
-            columnWidth = [(1,300), (2,100)],
-            columnSpacing = [(2,10)])
+            numberOfColumns=3,
+            columnWidth=[(1,300), (2,100)],
+            columnSpacing=[(2,10)])
         cmds.separator(vis=False)
         quit_command = "cmds.quit(force=True);cmds.deleteUI('%s')" % reminder
-        cmds.button(label='Ok',command= quit_command)
+        cmds.button(label='Ok',command=quit_command)
         cmds.showWindow(reminder)
 
 
@@ -582,7 +582,7 @@ def on_open():
             dialog.show()
 
     # create lock file for the maya scene
-    on_check_lock()
+    after_file_open()
 
 def on_new():
     """Set project resolution and fps when create a new file"""
