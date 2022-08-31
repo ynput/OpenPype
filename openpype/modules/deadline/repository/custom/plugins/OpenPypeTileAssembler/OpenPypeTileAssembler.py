@@ -453,7 +453,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
             # Swap to have input as foreground
             args.append("--swap")
             # Paste foreground to background
-            args.append("--paste +{}+{}".format(pos_x, pos_y))
+            args.append("--paste {x:+d}{y:+d}".format(x=pos_x, y=pos_y))
 
         args.append("-o")
         args.append(output_path)
