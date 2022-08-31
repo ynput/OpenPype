@@ -2702,7 +2702,7 @@ class DirmapCache:
 
 
 @contextlib.contextmanager
-def _duplicate_node_temp():
+def node_tempfile():
     """Create a temp file where node is pasted during duplication.
 
     This is to avoid using clipboard for node duplication.
@@ -2729,7 +2729,7 @@ def duplicate_node(node):
     # select required node for duplication
     node.setSelected(True)
 
-    with _duplicate_node_temp() as filepath:
+    with node_tempfile() as filepath:
         # copy selected to temp filepath
         nuke.nodeCopy(filepath)
 
