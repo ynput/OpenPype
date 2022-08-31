@@ -15,8 +15,8 @@ def open(filepath):
         subprocess.call(('xdg-open', filepath))
 
 
-class Openfile(load.LoaderPlugin):
-    """Open Image Sequence with system default"""
+class OpenFile(load.LoaderPlugin):
+    """Open Image Sequence or Video with system default"""
 
     families = ["render2d"]
     representations = ["*"]
@@ -27,32 +27,10 @@ class Openfile(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        import clique
 
-        directory = os.path.dirname(self.fname)
-        pattern = clique.PATTERNS["frames"]
+        path = self.fname
+        if not os.path.exists(path):
+            raise RuntimeError("File not found: {}".format(path))
 
-        files = os.listdir(directory)
-        representation = context["representation"]
-
-        ext = representation["name"]
-        path = representation["data"]["path"]
-
-        if ext in ["#"]:
-            collections, remainder = clique.assemble(files,
-                                                     patterns=[pattern],
-                                                     minimum_items=1)
-
-            seqeunce = collections[0]
-
-            first_image = list(seqeunce)[0]
-            filepath = os.path.normpath(os.path.join(directory, first_image))
-        else:
-            file = [f for f in files
-                    if ext in f
-                    if "#" not in f][0]
-            filepath = os.path.normpath(os.path.join(directory, file))
-
-        self.log.info("Opening : {}".format(filepath))
-
-        open(filepath)
+        self.log.info("Opening : {}".format(path))
+        open(path)

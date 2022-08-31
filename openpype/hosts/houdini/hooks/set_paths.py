@@ -1,5 +1,4 @@
 from openpype.lib import PreLaunchHook
-import os
 
 
 class SetPath(PreLaunchHook):
@@ -15,4 +14,4 @@ class SetPath(PreLaunchHook):
             self.log.warning("BUG: Workdir is not filled.")
             return
 
-        os.chdir(workdir)
+        self.launch_context.kwargs["cwd"] = workdir
