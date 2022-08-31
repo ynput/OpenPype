@@ -65,4 +65,3 @@ def remove_workfile_lock(filepath):
     if not os.path.exists(lock_filepath):
         return
     return os.remove(lock_filepath)
-
