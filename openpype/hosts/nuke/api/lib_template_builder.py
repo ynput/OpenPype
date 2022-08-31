@@ -1,9 +1,12 @@
 from collections import OrderedDict
 
-from openpype.vendor.python.common import qargparse
-from openpype.tools.utils.widgets import OptionDialog
-from openpype.hosts.nuke.api.lib import imprint
+import qargparse
+
 import nuke
+
+from openpype.tools.utils.widgets import OptionDialog
+
+from .lib import imprint, get_main_window
 
 
 # To change as enum
@@ -11,9 +14,19 @@ build_types = ["context_asset", "linked_asset", "all_assets"]
 
 
 def get_placeholder_attributes(node, enumerate=False):
-    list_atts = ['builder_type', 'family', 'representation', 'loader',
-                 'loader_args', 'order', 'asset', 'subset',
-                 'hierarchy', 'siblings', 'last_loaded']
+    list_atts = {
+        "builder_type",
+        "family",
+        "representation",
+        "loader",
+        "loader_args",
+        "order",
+        "asset",
+        "subset",
+        "hierarchy",
+        "siblings",
+        "last_loaded"
+    }
     attributes = {}
     for attr in node.knobs().keys():
         if attr in list_atts:
@@ -29,9 +42,8 @@ def get_placeholder_attributes(node, enumerate=False):
 
 
 def delete_placeholder_attributes(node):
-    '''
-    function to delete all extra placeholder attributes
-    '''
+    """Delete all extra placeholder attributes."""
+
     extra_attributes = get_placeholder_attributes(node)
     for attribute in extra_attributes.keys():
         try:
@@ -41,9 +53,8 @@ def delete_placeholder_attributes(node):
 
 
 def hide_placeholder_attributes(node):
-    '''
-    function to hide all extra placeholder attributes
-    '''
+    """Hide all extra placeholder attributes."""
+
     extra_attributes = get_placeholder_attributes(node)
     for attribute in extra_attributes.keys():
         try:
@@ -53,15 +64,14 @@ def hide_placeholder_attributes(node):
 
 
 def create_placeholder():
-
     args = placeholder_window()
-
     if not args:
-        return  # operation canceled, no locator created
+        # operation canceled, no locator created
+        return
 
     placeholder = nuke.nodes.NoOp()
-    placeholder.setName('PLACEHOLDER')
-    placeholder.knob('tile_color').setValue(4278190335)
+    placeholder.setName("PLACEHOLDER")
+    placeholder.knob("tile_color").setValue(4278190335)
 
     # custom arg parse to force empty data query
     # and still imprint them on placeholder
@@ -71,8 +81,8 @@ def create_placeholder():
         if not type(arg) == qargparse.Separator:
             options[str(arg)] = arg._data.get("items") or arg.read()
     imprint(placeholder, options)
-    imprint(placeholder, {'is_placeholder': True})
-    placeholder.knob('is_placeholder').setVisible(False)
+    imprint(placeholder, {"is_placeholder": True})
+    placeholder.knob("is_placeholder").setVisible(False)
 
 
 def update_placeholder():
@@ -101,18 +111,22 @@ def imprint_enum(placeholder, args):
     Imprint method doesn't act properly with enums.
     Replacing the functionnality with this for now
     """
-    enum_values = {str(arg): arg.read()
-                   for arg in args if arg._data.get("items")}
+
+    enum_values = {
+        str(arg): arg.read()
+        for arg in args
+        if arg._data.get("items")
+    }
     string_to_value_enum_table = {
-        build: i for i, build
-        in enumerate(build_types)}
+        build: idx
+        for idx, build in enumerate(build_types)
+    }
     attrs = {}
     for key, value in enum_values.items():
         attrs[key] = string_to_value_enum_table[value]
 
 
 def placeholder_window(options=None):
-    from openpype.hosts.nuke.api.pipeline import get_main_window
     options = options or dict()
     dialog = OptionDialog(parent=get_main_window())
     dialog.setWindowTitle("Create Placeholder")
