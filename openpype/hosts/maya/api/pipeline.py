@@ -259,6 +259,7 @@ def _before_scene_save(return_code, client_data):
         {"return_code": return_code}
     )
 
+
 def _remove_workfile_lock():
     filepath = current_file()
     if filepath:
@@ -489,10 +490,9 @@ def after_file_open():
         cmds.text(" %s is working the same workfile!" % username,
                   align='center')
         cmds.text(vis=False)
-        cmds.rowColumnLayout(
-            numberOfColumns=3,
-            columnWidth=[(1,300), (2,100)],
-            columnSpacing=[(2,10)])
+        cmds.rowColumnLayout(numberOfColumns=3,
+                             columnWidth=[(1, 300), (2, 100)],
+                             columnSpacing=[(2, 10)])
         cmds.separator(vis=False)
         quit_command = "cmds.quit(force=True);cmds.deleteUI('%s')" % reminder
         cmds.button(label='Ok',command=quit_command)

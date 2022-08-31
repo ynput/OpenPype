@@ -51,6 +51,7 @@ def create_workfile_lock(filepath):
     with open(lock_filepath, "w") as stream:
         json.dump(info, stream)
 
+
 def get_username(filepath):
     lock_filepath = _get_lock_file(filepath)
     with open(lock_filepath, "r") as stream:
@@ -64,3 +65,4 @@ def remove_workfile_lock(filepath):
     if not os.path.exists(lock_filepath):
         return
     return os.remove(lock_filepath)
+
