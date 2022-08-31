@@ -236,6 +236,7 @@ def get_system_general_anatomy_data(system_settings=None):
     return get_general_template_data(system_settings)
 
 
+@deprecated("openpype.client.get_linked_asset_ids")
 def get_linked_asset_ids(asset_doc):
     """Return linked asset ids for `asset_doc` from DB
 
@@ -244,26 +245,20 @@ def get_linked_asset_ids(asset_doc):
 
     Returns:
         (list): MongoDB ids of input links.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    output = []
-    if not asset_doc:
-        return output
 
-    input_links = asset_doc["data"].get("inputLinks") or []
-    if input_links:
-        for item in input_links:
-            # Backwards compatibility for "_id" key which was replaced with
-            #   "id"
-            if "_id" in item:
-                link_id = item["_id"]
-            else:
-                link_id = item["id"]
-            output.append(link_id)
+    from openpype.client import get_linked_asset_ids
+    from openpype.pipeline import legacy_io
 
-    return output
+    project_name = legacy_io.active_project()
+
+    return get_linked_asset_ids(project_name, asset_doc=asset_doc)
 
 
-@with_pipeline_io
+@deprecated("openpype.client.get_linked_assets")
 def get_linked_assets(asset_doc):
     """Return linked assets for `asset_doc` from DB
 
@@ -272,14 +267,17 @@ def get_linked_assets(asset_doc):
 
     Returns:
         (list) Asset documents of input links for passed asset doc.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
-    link_ids = get_linked_asset_ids(asset_doc)
-    if not link_ids:
-        return []
+    from openpype.pipeline import legacy_io
+    from openpype.client import get_linked_assets
 
     project_name = legacy_io.active_project()
-    return list(get_assets(project_name, link_ids))
+
+    return get_linked_assets(project_name, asset_doc=asset_doc)
 
 
 @deprecated("openpype.client.get_last_version_by_subset_name")
