@@ -1083,9 +1083,10 @@ def get_last_workfile(
     )
 
 
-@with_pipeline_io
-def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
-                                       link_type=None, max_depth=0):
+@deprecated("openpype.client.get_linked_ids_for_representations")
+def get_linked_ids_for_representations(
+    project_name, repre_ids, dbcon=None, link_type=None, max_depth=0
+):
     """Returns list of linked ids of particular type (if provided).
 
     Goes from representations to version, back to representations
@@ -1096,104 +1097,25 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
             with Session.
         link_type (str): ['reference', '..]
         max_depth (int): limit how many levels of recursion
+
     Returns:
         (list) of ObjectId - linked representations
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    # Create new dbcon if not passed and use passed project name
-    if not dbcon:
-        from openpype.pipeline import AvalonMongoDB
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-    # Validate that passed dbcon has same project
-    elif dbcon.Session["AVALON_PROJECT"] != project_name:
-        raise ValueError("Passed connection does not have right project")
+
+    from openpype.client import get_linked_representation_ids
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
 
-    version_ids = dbcon.distinct("parent", {
-        "_id": {"$in": repre_ids},
-        "type": "representation"
-    })
-
-    match = {
-        "_id": {"$in": version_ids},
-        "type": "version"
-    }
-
-    graph_lookup = {
-        "from": project_name,
-        "startWith": "$data.inputLinks.id",
-        "connectFromField": "data.inputLinks.id",
-        "connectToField": "_id",
-        "as": "outputs_recursive",
-        "depthField": "depth"
-    }
-    if max_depth != 0:
-        # We offset by -1 since 0 basically means no recursion
-        # but the recursion only happens after the initial lookup
-        # for outputs.
-        graph_lookup["maxDepth"] = max_depth - 1
-
-    pipeline_ = [
-        # Match
-        {"$match": match},
-        # Recursive graph lookup for inputs
-        {"$graphLookup": graph_lookup}
-    ]
-
-    result = dbcon.aggregate(pipeline_)
-    referenced_version_ids = _process_referenced_pipeline_result(result,
-                                                                 link_type)
-
-    ref_ids = dbcon.distinct(
-        "_id",
-        filter={
-            "parent": {"$in": list(referenced_version_ids)},
-            "type": "representation"
-        }
-    )
-
-    return list(ref_ids)
-
-
-def _process_referenced_pipeline_result(result, link_type):
-    """Filters result from pipeline for particular link_type.
-
-    Pipeline cannot use link_type directly in a query.
-    Returns:
-        (list)
-    """
-    referenced_version_ids = set()
-    correctly_linked_ids = set()
-    for item in result:
-        input_links = item["data"].get("inputLinks", [])
-        correctly_linked_ids = _filter_input_links(input_links,
-                                                   link_type,
-                                                   correctly_linked_ids)
-
-        # outputs_recursive in random order, sort by depth
-        outputs_recursive = sorted(item.get("outputs_recursive", []),
-                                   key=lambda d: d["depth"])
-
-        for output in outputs_recursive:
-            if output["_id"] not in correctly_linked_ids:  # leaf
-                continue
-
-            correctly_linked_ids = _filter_input_links(
-                output["data"].get("inputLinks", []),
-                link_type,
-                correctly_linked_ids)
-
-            referenced_version_ids.add(output["_id"])
-
-    return referenced_version_ids
-
-
-def _filter_input_links(input_links, link_type, correctly_linked_ids):
-    for input_link in input_links:
-        if not link_type or input_link["type"] == link_type:
-            correctly_linked_ids.add(input_link.get("id") or
-                                     input_link.get("_id"))  # legacy
-
-    return correctly_linked_ids
+    output = []
+    for repre_id in repre_ids:
+        output.extend(get_linked_representation_ids(
+            project_name,
+            repre_id=repre_id,
+            link_type=link_type,
+            max_depth=max_depth
+        ))
+    return output

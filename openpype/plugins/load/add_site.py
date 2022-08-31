@@ -1,6 +1,6 @@
+from openpype.client import get_linked_ids_for_representations
 from openpype.modules import ModulesManager
 from openpype.pipeline import load
-from openpype.lib.avalon_context import get_linked_ids_for_representations
 from openpype.modules.sync_server.utils import SiteAlreadyPresentError
 
 
@@ -45,9 +45,11 @@ class AddSyncSite(load.LoaderPlugin):
                                   force=True)
 
         if family == "workfile":
-            links = get_linked_ids_for_representations(project_name,
-                                                       [repre_id],
-                                                       link_type="reference")
+            links = get_linked_ids_for_representations(
+                project_name,
+                repre_id=repre_id,
+                link_type="reference"
+            )
             for link_repre_id in links:
                 try:
                     self.sync_server.add_site(project_name, link_repre_id,
