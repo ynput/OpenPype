@@ -103,13 +103,13 @@ def _format_tiles(
         filename (str): Filename to process as tiles.
         index (int): Index of that file if it is sequence.
         tiles_x (int): Number of tiles in X.
-        tiles_y (int): Number if tikes in Y.
+        tiles_y (int): Number of tiles in Y.
         width (int): Width resolution of final image.
         height (int):  Height resolution of final image.
         prefix (str): Image prefix.
 
     Returns:
-        (dict, dict): Tuple of two dictionaires - first can be used to
+        (dict, dict): Tuple of two dictionaries - first can be used to
                       extend JobInfo, second has tiles x, y, width and height
                       used for assembler configuration.
 
