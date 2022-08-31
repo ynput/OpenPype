@@ -84,6 +84,7 @@ def deprecated(new_destination):
     return _decorator(func)
 
 
+@deprecated("openpype.client.operations.create_project")
 def create_project(
     project_name, project_code, library_project=False, dbcon=None
 ):
@@ -107,59 +108,14 @@ def create_project(
 
     Returns:
         dict: Created project document.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    from openpype.settings import ProjectSettings, SaveWarningExc
-    from openpype.pipeline import AvalonMongoDB
-    from openpype.pipeline.schema import validate
+    from openpype.client.operations import create_project
 
-    if get_project(project_name, fields=["name"]):
-        raise ValueError("Project with name \"{}\" already exists".format(
-            project_name
-        ))
-
-    if dbcon is None:
-        dbcon = AvalonMongoDB()
-
-    if not PROJECT_NAME_REGEX.match(project_name):
-        raise ValueError((
-            "Project name \"{}\" contain invalid characters"
-        ).format(project_name))
-
-    database = dbcon.database
-    project_doc = {
-        "type": "project",
-        "name": project_name,
-        "data": {
-            "code": project_code,
-            "library_project": library_project
-        },
-        "schema": CURRENT_DOC_SCHEMAS["project"]
-    }
-    # Insert document with basic data
-    database[project_name].insert_one(project_doc)
-    # Load ProjectSettings for the project and save it to store all attributes
-    #   and Anatomy
-    try:
-        project_settings_entity = ProjectSettings(project_name)
-        project_settings_entity.save()
-    except SaveWarningExc as exc:
-        print(str(exc))
-    except Exception:
-        database[project_name].delete_one({"type": "project"})
-        raise
-
-    project_doc = get_project(project_name)
-
-    try:
-        # Validate created project document
-        validate(project_doc)
-    except Exception:
-        # Remove project if is not valid
-        database[project_name].delete_one({"type": "project"})
-        raise
-
-    return project_doc
+    return create_project(project_name, project_code, library_project)
 
 
 def with_pipeline_io(func):

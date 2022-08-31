@@ -51,6 +51,10 @@ from .entity_links import (
     get_linked_representation_ids,
 )
 
+from .operations import (
+    create_project,
+)
+
 
 __all__ = (
     "OpenPypeMongoConnection",
@@ -99,4 +103,6 @@ __all__ = (
     "get_linked_asset_ids",
     "get_linked_assets",
     "get_linked_representation_ids",
+
+    "create_project",
 )
