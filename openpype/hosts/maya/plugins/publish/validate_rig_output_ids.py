@@ -4,6 +4,10 @@ import pyblish.api
 
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateRigOutputIds(pyblish.api.InstancePlugin):
@@ -13,11 +17,11 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
     to ensure the id from the model is preserved through animation.
 
     """
-    order = openpype.api.ValidateContentsOrder + 0.05
+    order = ValidateContentsOrder + 0.05
     label = "Rig Output Ids"
     hosts = ["maya"]
     families = ["rig"]
-    actions = [openpype.api.RepairAction,
+    actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):

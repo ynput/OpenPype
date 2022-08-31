@@ -1,15 +1,16 @@
+import os
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
-import os
 
 COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']
 
 
 class ValidateMvLookContents(pyblish.api.InstancePlugin):
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ['mvLook']
     hosts = ['maya']
     label = 'Validate mvLook Data'

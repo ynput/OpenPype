@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import time
+import signal
 
 
 class PypeCommands:
@@ -315,8 +316,12 @@ class PypeCommands:
         pytest.main(args)
 
     def syncserver(self, active_site):
-        """Start running sync_server in background."""
-        import signal
+        """Start running sync_server in background.
+
+        This functionality is available in directly in module cli commands.
+        `~/openpype_console module sync_server syncservice`
+        """
+
         os.environ["OPENPYPE_LOCAL_ID"] = active_site
 
         def signal_handler(sig, frame):

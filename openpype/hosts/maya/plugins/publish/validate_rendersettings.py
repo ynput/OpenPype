@@ -6,7 +6,10 @@ from collections import OrderedDict
 from maya import cmds, mel
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 from openpype.hosts.maya.api import lib
 
 
@@ -39,11 +42,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "Render Settings"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     ImagePrefixes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',

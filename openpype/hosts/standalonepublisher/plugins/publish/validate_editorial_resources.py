@@ -1,6 +1,8 @@
 import pyblish.api
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateEditorialResources(pyblish.api.InstancePlugin):
@@ -13,7 +15,7 @@ class ValidateEditorialResources(pyblish.api.InstancePlugin):
     # make sure it is enabled only if at least both families are available
     match = pyblish.api.Subset
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
 
     def process(self, instance):
         self.log.debug(

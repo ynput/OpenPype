@@ -1,7 +1,9 @@
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateTextureBatchVersions(pyblish.api.InstancePlugin):
@@ -14,7 +16,7 @@ class ValidateTextureBatchVersions(pyblish.api.InstancePlugin):
     """
     label = "Validate Texture Batch Versions"
     hosts = ["standalonepublisher"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["textures"]
     optional = False
 

@@ -1,10 +1,15 @@
 import os
-from bson.objectid import ObjectId
+import sys
+import time
 from datetime import datetime
 import threading
 import platform
 import copy
+import signal
 from collections import deque, defaultdict
+
+import click
+from bson.objectid import ObjectId
 
 from openpype.client import get_projects
 from openpype.modules import OpenPypeModule
@@ -2080,3 +2085,46 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             settings ('presets')
         """
         return presets[project_name]['sites'][site_name]['root']
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(SyncServerModule.name, help="SyncServer module related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+@click.option(
+    "-a",
+    "--active_site",
+    required=True,
+    help="Name of active stie")
+def syncservice(active_site):
+    """Launch sync server under entered site.
+
+    This should be ideally used by system service (such us systemd or upstart
+    on linux and window service).
+    """
+
+    from openpype.modules import ModulesManager
+
+    os.environ["OPENPYPE_LOCAL_ID"] = active_site
+
+    def signal_handler(sig, frame):
+        print("You pressed Ctrl+C. Process ended.")
+        sync_server_module.server_exit()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    manager = ModulesManager()
+    sync_server_module = manager.modules_by_name["sync_server"]
+
+    sync_server_module.server_init()
+    sync_server_module.server_start()
+
+    while True:
+        time.sleep(1.0)
