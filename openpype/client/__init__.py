@@ -45,6 +45,11 @@ from .entities import (
     get_workfile_info,
 )
 
+from .operations import (
+    create_project,
+)
+
+
 __all__ = (
     "OpenPypeMongoConnection",
 
@@ -88,4 +93,6 @@ __all__ = (
     "get_thumbnail_id_from_source",
 
     "get_workfile_info",
+
+    "create_project",
 )

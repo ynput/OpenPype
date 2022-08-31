@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne, UpdateOne
 
 from .mongo import get_project_connection
+from .entities import get_project
 
 REMOVED_VALUE = object()
 
@@ -662,3 +663,89 @@ class OperationsSession(object):
         operation = DeleteOperation(project_name, entity_type, entity_id)
         self.add(operation)
         return operation
+
+
+def create_project(project_name, project_code, library_project=False):
+    """Create project using OpenPype settings.
+
+    This project creation function is not validating project document on
+    creation. It is because project document is created blindly with only
+    minimum required information about project which is it's name, code, type
+    and schema.
+
+    Entered project name must be unique and project must not exist yet.
+
+    Note:
+        This function is here to be OP v4 ready but in v3 has more logic
+            to do. That's why inner imports are in the body.
+
+    Args:
+        project_name(str): New project name. Should be unique.
+        project_code(str): Project's code should be unique too.
+        library_project(bool): Project is library project.
+
+    Raises:
+        ValueError: When project name already exists in MongoDB.
+
+    Returns:
+        dict: Created project document.
+    """
+
+    from openpype.settings import ProjectSettings, SaveWarningExc
+    from openpype.pipeline.schema import validate
+
+    if get_project(project_name, fields=["name"]):
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
+
+    if not PROJECT_NAME_REGEX.match(project_name):
+        raise ValueError((
+            "Project name \"{}\" contain invalid characters"
+        ).format(project_name))
+
+    project_doc = {
+        "type": "project",
+        "name": project_name,
+        "data": {
+            "code": project_code,
+            "library_project": library_project
+        },
+        "schema": CURRENT_PROJECT_SCHEMA
+    }
+
+    op_session = OperationsSession()
+    # Insert document with basic data
+    create_op = op_session.create_entity(
+        project_name, project_doc["type"], project_doc
+    )
+    op_session.commit()
+
+    # Load ProjectSettings for the project and save it to store all attributes
+    #   and Anatomy
+    try:
+        project_settings_entity = ProjectSettings(project_name)
+        project_settings_entity.save()
+    except SaveWarningExc as exc:
+        print(str(exc))
+    except Exception:
+        op_session.delete_entity(
+            project_name, project_doc["type"], create_op.entity_id
+        )
+        op_session.commit()
+        raise
+
+    project_doc = get_project(project_name)
+
+    try:
+        # Validate created project document
+        validate(project_doc)
+    except Exception:
+        # Remove project if is not valid
+        op_session.delete_entity(
+            project_name, project_doc["type"], create_op.entity_id
+        )
+        op_session.commit()
+        raise
+
+    return project_doc
