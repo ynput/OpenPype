@@ -482,10 +482,7 @@ def on_check_lock():
 
     else:
         username = get_username(filepath)
-        reminder = cmds.window(
-            title= "Friendly Reminder",
-            width=400, height= 30
-        )
+        reminder = cmds.window(title= "Reminder", width=400, height= 30)
         cmds.columnLayout(adjustableColumn=True)
         cmds.separator()
         cmds.columnLayout(adjustableColumn=True)
@@ -494,15 +491,11 @@ def on_check_lock():
         cmds.text(vis=False)
         cmds.rowColumnLayout(
             numberOfColumns = 3,
-            columnWidth = [(1,300), (2, 100)],
-            columnSpacing = [(2,10)]
-        )
+            columnWidth = [(1,300), (2,100)],
+            columnSpacing = [(2,10)])
         cmds.separator(vis=False)
-        cmds.button(
-            label='Ok',
-            command="cmds.quit(force=True);"
-                    "cmds.deleteUI('%s')" % reminder
-        )
+        quit_command = "cmds.quit(force=True);cmds.deleteUI('%s')" % reminder
+        cmds.button(label='Ok',command= quit_command)
         cmds.showWindow(reminder)
 
 
