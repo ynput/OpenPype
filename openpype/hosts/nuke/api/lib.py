@@ -2708,26 +2708,19 @@ def _duplicate_node_temp():
     This is to avoid using clipboard for node duplication.
     """
 
-    duplicate_node_temp_path = os.path.join(
-        tempfile.gettempdir(),
-        "openpype_nuke_duplicate_temp_{}".format(os.getpid())
+    tmp_file = tempfile.NamedTemporaryFile(
+        mode="w", prefix="openpype_nuke_temp_", suffix=".nk", delete=False
     )
-
-    # This can happen only if 'duplicate_node' would be
-    if os.path.exists(duplicate_node_temp_path):
-        log.warning((
-            "Temp file for node duplication already exists."
-            " Trying to remove {}"
-        ).format(duplicate_node_temp_path))
-        os.remove(duplicate_node_temp_path)
+    tmp_file.close()
+    node_tempfile_path = tmp_file.name
 
     try:
         # Yield the path where node can be copied
-        yield duplicate_node_temp_path
+        yield node_tempfile_path
 
     finally:
         # Remove the file at the end
-        os.remove(duplicate_node_temp_path)
+        os.remove(node_tempfile_path)
 
 
 def duplicate_node(node):
