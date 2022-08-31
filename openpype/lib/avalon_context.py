@@ -108,6 +108,9 @@ def create_project(
 
     Returns:
         dict: Created project document.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.client.operations import create_project
