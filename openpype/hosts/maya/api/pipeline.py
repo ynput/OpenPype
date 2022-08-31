@@ -482,21 +482,27 @@ def on_check_lock():
 
     else:
         username = get_username(filepath)
-        reminder = cmds.window(title= "Friendly Reminder",
-                               width=400, height= 30)
+        reminder = cmds.window(
+            title= "Friendly Reminder",
+            width=400, height= 30
+        )
         cmds.columnLayout(adjustableColumn=True)
         cmds.separator()
         cmds.columnLayout(adjustableColumn=True)
-        cmds.text(" %s is working the same workfile!"% username,
+        cmds.text(" %s is working the same workfile!" % username,
                   align='center')
         cmds.text(vis=False)
-        cmds.rowColumnLayout(numberOfColumns = 3,
-                             columnWidth = [(1,300), (2, 100)],
-                             columnSpacing = [(2,10)])
+        cmds.rowColumnLayout(
+            numberOfColumns = 3,
+            columnWidth = [(1,300), (2, 100)],
+            columnSpacing = [(2,10)]
+        )
         cmds.separator(vis=False)
-        cmds.button(label='Ok',
-                    command="cmds.quit(force=True);"
-                    "cmds.deleteUI('%s')" % reminder)
+        cmds.button(
+            label='Ok',
+            command="cmds.quit(force=True);"
+                    "cmds.deleteUI('%s')" % reminder
+        )
         cmds.showWindow(reminder)
 
 
@@ -582,7 +588,7 @@ def on_open():
             dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
 
-    #create lock file for the maya scene
+    # create lock file for the maya scene
     on_check_lock()
 
 def on_new():
