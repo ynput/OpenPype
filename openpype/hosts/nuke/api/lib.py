@@ -2817,3 +2817,100 @@ def ls_img_sequence(path):
         }
 
     return False
+
+
+def get_group_io_nodes(nodes):
+    """Get the input and the output of a group of nodes."""
+
+    if not nodes:
+        raise ValueError("there is no nodes in the list")
+
+    input_node = None
+    output_node = None
+
+    if len(nodes) == 1:
+        input_node = output_node = nodes[0]
+
+    else:
+        for node in nodes:
+            if "Input" in node.name():
+                input_node = node
+
+            if "Output" in node.name():
+                output_node = node
+
+            if input_node is not None and output_node is not None:
+                break
+
+        if input_node is None:
+            raise ValueError("No Input found")
+
+        if output_node is None:
+            raise ValueError("No Output found")
+    return input_node, output_node
+
+
+def get_extreme_positions(nodes):
+    """Get the 4 numbers that represent the box of a group of nodes."""
+
+    if not nodes:
+        raise ValueError("there is no nodes in the list")
+
+    nodes_xpos = [n.xpos() for n in nodes] + \
+        [n.xpos() + n.screenWidth() for n in nodes]
+
+    nodes_ypos = [n.ypos() for n in nodes] + \
+        [n.ypos() + n.screenHeight() for n in nodes]
+
+    min_x, min_y = (min(nodes_xpos), min(nodes_ypos))
+    max_x, max_y = (max(nodes_xpos), max(nodes_ypos))
+    return min_x, min_y, max_x, max_y
+
+
+def refresh_node(node):
+    """Correct a bug caused by the multi-threading of nuke.
+
+    Refresh the node to make sure that it takes the desired attributes.
+    """
+
+    x = node.xpos()
+    y = node.ypos()
+    nuke.autoplaceSnap(node)
+    node.setXYpos(x, y)
+
+
+def refresh_nodes(nodes):
+    for node in nodes:
+        refresh_node(node)
+
+
+def get_names_from_nodes(nodes):
+    """Get list of nodes names.
+
+    Args:
+        nodes(List[nuke.Node]): List of nodes to convert into names.
+
+    Returns:
+        List[str]: Name of passed nodes.
+    """
+
+    return [
+        node.name()
+        for node in nodes
+    ]
+
+
+def get_nodes_by_names(names):
+    """Get list of nuke nodes based on their names.
+
+    Args:
+        names (List[str]): List of node names to be found.
+
+    Returns:
+        List[nuke.Node]: List of nodes found by name.
+    """
+
+    return [
+        nuke.toNode(name)
+        for name in names
+    ]
