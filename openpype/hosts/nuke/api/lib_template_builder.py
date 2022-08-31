@@ -146,24 +146,24 @@ current context asset (Asset bob will find asset)
 
 linked_asset : Template loader will look for assets linked
 to current context asset.
-Linked asset are looked in avalon database under field "inputLinks"
+Linked asset are looked in OpenPype database under field "inputLinks"
 """
         ),
         qargparse.String(
             "family",
             default=options.get("family", ""),
             label="OpenPype Family",
-            placeholder="ex: model, look ..."),
+            placeholder="ex: image, plate ..."),
         qargparse.String(
             "representation",
             default=options.get("representation", ""),
             label="OpenPype Representation",
-            placeholder="ex: ma, abc ..."),
+            placeholder="ex: mov, png ..."),
         qargparse.String(
             "loader",
             default=options.get("loader", ""),
             label="Loader",
-            placeholder="ex: ReferenceLoader, LightLoader ...",
+            placeholder="ex: LoadClip, LoadImage ...",
             help="""Loader
 
 Defines what openpype loader will be used to load assets.
