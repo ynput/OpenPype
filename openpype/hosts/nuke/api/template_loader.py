@@ -1,16 +1,37 @@
-from openpype.hosts.nuke.api.lib_template_builder import (
-    delete_placeholder_attributes, get_placeholder_attributes,
-    hide_placeholder_attributes)
-from openpype.lib.abstract_template_loader import (
-    AbstractPlaceholder,
-    AbstractTemplateLoader)
+import re
+import collections
+
 import nuke
-from collections import defaultdict
-from openpype.hosts.nuke.api.lib import (
-    find_free_space_to_paste_nodes, get_extremes, get_io, imprint,
-    refresh_node, refresh_nodes, reset_selection,
-    get_names_from_nodes, get_nodes_from_names, select_nodes)
-PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
+
+from openpype.client import get_representations
+from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile.abstract_template_loader import (
+    AbstractPlaceholder,
+    AbstractTemplateLoader,
+)
+
+from .lib import (
+    find_free_space_to_paste_nodes,
+    get_extreme_positions,
+    get_group_io_nodes,
+    imprint,
+    refresh_node,
+    refresh_nodes,
+    reset_selection,
+    get_names_from_nodes,
+    get_nodes_by_names,
+    select_nodes,
+    duplicate_node,
+    node_tempfile,
+)
+
+from .lib_template_builder import (
+    delete_placeholder_attributes,
+    get_placeholder_attributes,
+    hide_placeholder_attributes
+)
+
+PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
 
 class NukeTemplateLoader(AbstractTemplateLoader):
@@ -39,7 +60,7 @@ class NukeTemplateLoader(AbstractTemplateLoader):
 
     def preload(self, placeholder, loaders_by_name, last_representation):
         placeholder.data["nodes_init"] = nuke.allNodes()
-        placeholder.data["_id"] = last_representation['_id']
+        placeholder.data["last_repre_id"] = str(last_representation["_id"])
 
     def populate_template(self, ignored_ids=None):
         processed_key = "_node_processed"
@@ -73,132 +94,150 @@ class NukeTemplateLoader(AbstractTemplateLoader):
     @staticmethod
     def get_template_nodes():
         placeholders = []
-        allGroups = [nuke.thisGroup()]
-        while len(allGroups) > 0:
-            group = allGroups.pop(0)
+        all_groups = collections.deque()
+        all_groups.append(nuke.thisGroup())
+        while all_groups:
+            group = all_groups.popleft()
             for node in group.nodes():
-                if "builder_type" in node.knobs().keys() and (
-                   'is_placeholder' in node.knobs().keys()
-                        and node.knob('is_placeholder').value()):
-                    if 'empty' in node.knobs().keys()\
-                            and node.knob('empty').value():
-                        continue
-                    placeholders += [node]
                 if isinstance(node, nuke.Group):
-                    allGroups.append(node)
+                    all_groups.append(node)
+
+                node_knobs = node.knobs()
+                if (
+                    "builder_type" not in node_knobs
+                    or "is_placeholder" not in node_knobs
+                    or not node.knob("is_placeholder").value()
+                ):
+                    continue
+
+                if "empty" in node_knobs and node.knob("empty").value():
+                    continue
+
+                placeholders.append(node)
 
         return placeholders
 
     def update_missing_containers(self):
-        nodes_byId = {}
-        nodes_byId = defaultdict(lambda: [], nodes_byId)
+        nodes_by_id = collections.defaultdict(list)
 
-        for n in nuke.allNodes():
-            if 'id_rep' in n.knobs().keys():
-                nodes_byId[n.knob('id_rep').getValue()] += [n.name()]
-            if 'empty' in n.knobs().keys():
-                n.removeKnob(n.knob('empty'))
-                imprint(n, {"empty": False})
-        for s in nodes_byId.values():
-            n = None
-            for name in s:
-                n = nuke.toNode(name)
-                if 'builder_type' in n.knobs().keys():
+        for node in nuke.allNodes():
+            node_knobs = node.knobs().keys()
+            if "repre_id" in node_knobs:
+                repre_id = node.knob("repre_id").getValue()
+                nodes_by_id[repre_id].append(node.name())
+
+            if "empty" in node_knobs:
+                node.removeKnob(node.knob("empty"))
+                imprint(node, {"empty": False})
+
+        for node_names in nodes_by_id.values():
+            node = None
+            for node_name in node_names:
+                node_by_name = nuke.toNode(node_name)
+                if "builder_type" in node_by_name.knobs().keys():
+                    node = node_by_name
                     break
-            if n is not None and 'builder_type' in n.knobs().keys():
 
-                placeholder = nuke.nodes.NoOp()
-                placeholder.setName('PLACEHOLDER')
-                placeholder.knob('tile_color').setValue(4278190335)
-                attributes = get_placeholder_attributes(n, enumerate=True)
-                imprint(placeholder, attributes)
-                x = int(n.knob('x').getValue())
-                y = int(n.knob('y').getValue())
-                placeholder.setXYpos(x, y)
-                imprint(placeholder, {'nb_children': 1})
-                refresh_node(placeholder)
+            if node is None:
+                continue
+
+            placeholder = nuke.nodes.NoOp()
+            placeholder.setName("PLACEHOLDER")
+            placeholder.knob("tile_color").setValue(4278190335)
+            attributes = get_placeholder_attributes(node, enumerate=True)
+            imprint(placeholder, attributes)
+            pos_x = int(node.knob("x").getValue())
+            pos_y = int(node.knob("y").getValue())
+            placeholder.setXYpos(pos_x, pos_y)
+            imprint(placeholder, {"nb_children": 1})
+            refresh_node(placeholder)
 
         self.populate_template(self.get_loaded_containers_by_id())
 
     def get_loaded_containers_by_id(self):
-        ids = []
-        for n in nuke.allNodes():
-            if 'id_rep' in n.knobs():
-                ids.append(n.knob('id_rep').getValue())
+        repre_ids = set()
+        for node in nuke.allNodes():
+            if "repre_id" in node.knobs():
+                repre_ids.add(node.knob("repre_id").getValue())
 
         # Removes duplicates in the list
-        ids = list(set(ids))
-        return ids
-
-    def get_placeholders(self):
-        placeholders = super().get_placeholders()
-        return placeholders
+        return list(repre_ids)
 
     def delete_placeholder(self, placeholder):
-        node = placeholder.data['node']
-        lastLoaded = placeholder.data['last_loaded']
-        if not placeholder.data['delete']:
-            if 'empty' in node.knobs().keys():
-                node.removeKnob(node.knob('empty'))
-            imprint(node, {"empty": True})
-        else:
-            if lastLoaded:
-                if 'last_loaded' in node.knobs().keys():
-                    for s in node.knob('last_loaded').values():
-                        n = nuke.toNode(s)
-                        try:
-                            delete_placeholder_attributes(n)
-                        except Exception:
-                            pass
+        placeholder_node = placeholder.data["node"]
+        last_loaded = placeholder.data["last_loaded"]
+        if not placeholder.data["delete"]:
+            if "empty" in placeholder_node.knobs().keys():
+                placeholder_node.removeKnob(placeholder_node.knob("empty"))
+            imprint(placeholder_node, {"empty": True})
+            return
 
-                lastLoaded_names = []
-                for loadedNode in lastLoaded:
-                    lastLoaded_names.append(loadedNode.name())
-                imprint(node, {'last_loaded': lastLoaded_names})
+        if not last_loaded:
+            nuke.delete(placeholder_node)
+            return
 
-                for n in lastLoaded:
-                    refresh_node(n)
-                    refresh_node(node)
-                    if 'builder_type' not in n.knobs().keys():
-                        attributes = get_placeholder_attributes(node, True)
-                        imprint(n, attributes)
-                        imprint(n, {'is_placeholder': False})
-                        hide_placeholder_attributes(n)
-                        n.knob('is_placeholder').setVisible(False)
-                        imprint(n, {'x': node.xpos(), 'y': node.ypos()})
-                        n.knob('x').setVisible(False)
-                        n.knob('y').setVisible(False)
-            nuke.delete(node)
+        if "last_loaded" in placeholder_node.knobs().keys():
+            for node_name in placeholder_node.knob("last_loaded").values():
+                node = nuke.toNode(node_name)
+                try:
+                    delete_placeholder_attributes(node)
+                except Exception:
+                    pass
+
+        last_loaded_names = [
+            loaded_node.name()
+            for loaded_node in last_loaded
+        ]
+        imprint(placeholder_node, {"last_loaded": last_loaded_names})
+
+        for node in last_loaded:
+            refresh_node(node)
+            refresh_node(placeholder_node)
+            if "builder_type" not in node.knobs().keys():
+                attributes = get_placeholder_attributes(placeholder_node, True)
+                imprint(node, attributes)
+                imprint(node, {"is_placeholder": False})
+                hide_placeholder_attributes(node)
+                node.knob("is_placeholder").setVisible(False)
+                imprint(
+                    node,
+                    {
+                        "x": placeholder_node.xpos(),
+                        "y": placeholder_node.ypos()
+                    }
+                )
+                node.knob("x").setVisible(False)
+                node.knob("y").setVisible(False)
+        nuke.delete(placeholder_node)
 
 
 class NukePlaceholder(AbstractPlaceholder):
-    """Concrete implementation of AbstractPlaceholder for Nuke
+    """Concrete implementation of AbstractPlaceholder for Nuke"""
 
-    """
-
-    optional_attributes = {'asset', 'subset', 'hierarchy'}
+    optional_keys = {"asset", "subset", "hierarchy"}
 
     def get_data(self, node):
         user_data = dict()
-        dictKnobs = node.knobs()
-        for attr in self.attributes.union(self.optional_attributes):
-            if attr in dictKnobs.keys():
-                user_data[attr] = dictKnobs[attr].getValue()
-        user_data['node'] = node
+        node_knobs = node.knobs()
+        for attr in self.required_keys.union(self.optional_keys):
+            if attr in node_knobs:
+                user_data[attr] = node_knobs[attr].getValue()
+        user_data["node"] = node
 
-        if 'nb_children' in dictKnobs.keys():
-            user_data['nb_children'] = int(dictKnobs['nb_children'].getValue())
-        else:
-            user_data['nb_children'] = 0
-        if 'siblings' in dictKnobs.keys():
-            user_data['siblings'] = dictKnobs['siblings'].values()
-        else:
-            user_data['siblings'] = []
+        nb_children = 0
+        if "nb_children" in node_knobs:
+            nb_children = int(node_knobs["nb_children"].getValue())
+        user_data["nb_children"] = nb_children
 
-        fullName = node.fullName()
-        user_data['group_name'] = fullName.rpartition('.')[0]
-        user_data['last_loaded'] = []
-        user_data['delete'] = False
+        siblings = []
+        if "siblings" in node_knobs:
+            siblings = node_knobs["siblings"].values()
+        user_data["siblings"] = siblings
+
+        node_full_name = node.fullName()
+        user_data["group_name"] = node_full_name.rpartition(".")[0]
+        user_data["last_loaded"] = []
+        user_data["delete"] = False
         self.data = user_data
 
     def parent_in_hierarchy(self, containers):
@@ -213,127 +252,137 @@ class NukePlaceholder(AbstractPlaceholder):
         """
 
         copies = {}
-        siblings = get_nodes_from_names(self.data['siblings'])
-        for n in siblings:
-            reset_selection()
-            n.setSelected(True)
-            nuke.nodeCopy("%clipboard%")
-            reset_selection()
-            nuke.nodePaste("%clipboard%")
-            new_node = nuke.selectedNodes()[0]
-            x_init = int(new_node.knob('x_init').getValue())
-            y_init = int(new_node.knob('y_init').getValue())
+        siblings = get_nodes_by_names(self.data["siblings"])
+        for node in siblings:
+            new_node = duplicate_node(node)
+
+            x_init = int(new_node.knob("x_init").getValue())
+            y_init = int(new_node.knob("y_init").getValue())
             new_node.setXYpos(x_init, y_init)
             if isinstance(new_node, nuke.BackdropNode):
-                w_init = new_node.knob('w_init').getValue()
-                h_init = new_node.knob('h_init').getValue()
-                new_node.knob('bdwidth').setValue(w_init)
-                new_node.knob('bdheight').setValue(h_init)
-                refresh_node(n)
+                w_init = new_node.knob("w_init").getValue()
+                h_init = new_node.knob("h_init").getValue()
+                new_node.knob("bdwidth").setValue(w_init)
+                new_node.knob("bdheight").setValue(h_init)
+                refresh_node(node)
 
-            if 'id_rep' in n.knobs().keys():
-                n.removeKnob(n.knob('id_rep'))
-            copies[n.name()] = new_node
+            if "repre_id" in node.knobs().keys():
+                node.removeKnob(node.knob("repre_id"))
+            copies[node.name()] = new_node
         return copies
 
     def fix_z_order(self):
-        """
-        fix the problem of z_order when a backdrop is loaded
-        """
-        orders_bd = []
-        nodes_loaded = self.data['last_loaded']
-        for n in nodes_loaded:
-            if isinstance(n, nuke.BackdropNode):
-                orders_bd.append(n.knob("z_order").getValue())
+        """Fix the problem of z_order when a backdrop is loaded."""
 
-        if orders_bd:
+        nodes_loaded = self.data["last_loaded"]
+        loaded_backdrops = []
+        bd_orders = set()
+        for node in nodes_loaded:
+            if isinstance(node, nuke.BackdropNode):
+                loaded_backdrops.append(node)
+                bd_orders.add(node.knob("z_order").getValue())
 
-            min_order = min(orders_bd)
-            siblings = self.data["siblings"]
+        if not bd_orders:
+            return
 
-            orders_sib = []
-            for s in siblings:
-                n = nuke.toNode(s)
-                if isinstance(n, nuke.BackdropNode):
-                    orders_sib.append(n.knob("z_order").getValue())
-            if orders_sib:
-                max_order = max(orders_sib)
-                for n in nodes_loaded:
-                    if isinstance(n, nuke.BackdropNode):
-                        z_order = n.knob("z_order").getValue()
-                        n.knob("z_order").setValue(
-                            z_order + max_order - min_order + 1)
+        sib_orders = set()
+        for node_name in self.data["siblings"]:
+            node = nuke.toNode(node_name)
+            if isinstance(node, nuke.BackdropNode):
+                sib_orders.add(node.knob("z_order").getValue())
+
+        if not sib_orders:
+            return
+
+        min_order = min(bd_orders)
+        max_order = max(sib_orders)
+        for backdrop_node in loaded_backdrops:
+            z_order = backdrop_node.knob("z_order").getValue()
+            backdrop_node.knob("z_order").setValue(
+                z_order + max_order - min_order + 1)
 
     def update_nodes(self, nodes, considered_nodes, offset_y=None):
-        """ Adjust backdrop nodes dimensions and positions considering some nodes
-            sizes
+        """Adjust backdrop nodes dimensions and positions.
 
-        Arguments:
+        Considering some nodes sizes.
+
+        Args:
             nodes (list): list of nodes to update
-            considered_nodes (list) : list of nodes to consider while updating
-                                      positions and dimensions
-            offset (int) : distance between copies
+            considered_nodes (list): list of nodes to consider while updating
+                positions and dimensions
+            offset (int): distance between copies
         """
-        node = self.data['node']
 
-        min_x, min_y, max_x, max_y = get_extremes(considered_nodes)
+        placeholder_node = self.data["node"]
+
+        min_x, min_y, max_x, max_y = get_extreme_positions(considered_nodes)
 
         diff_x = diff_y = 0
         contained_nodes = []  # for backdrops
 
         if offset_y is None:
-            width_ph = node.screenWidth()
-            height_ph = node.screenHeight()
+            width_ph = placeholder_node.screenWidth()
+            height_ph = placeholder_node.screenHeight()
             diff_y = max_y - min_y - height_ph
             diff_x = max_x - min_x - width_ph
-            contained_nodes = [node]
-            min_x = node.xpos()
-            min_y = node.ypos()
+            contained_nodes = [placeholder_node]
+            min_x = placeholder_node.xpos()
+            min_y = placeholder_node.ypos()
         else:
-            siblings = get_nodes_from_names(self.data['siblings'])
-            minX, _, maxX, _ = get_extremes(siblings)
+            siblings = get_nodes_by_names(self.data["siblings"])
+            minX, _, maxX, _ = get_extreme_positions(siblings)
             diff_y = max_y - min_y + 20
             diff_x = abs(max_x - min_x - maxX + minX)
             contained_nodes = considered_nodes
 
-        if diff_y > 0 or diff_x > 0:
-            for n in nodes:
-                refresh_node(n)
-                if n != node and n not in considered_nodes:
+        if diff_y <= 0 and diff_x <= 0:
+            return
 
-                    if not isinstance(n, nuke.BackdropNode)\
-                            or isinstance(n, nuke.BackdropNode)\
-                            and not set(contained_nodes) <= set(n.getNodes()):
-                        if offset_y is None and n.xpos() >= min_x:
-                            n.setXpos(n.xpos() + diff_x)
+        for node in nodes:
+            refresh_node(node)
 
-                        if n.ypos() >= min_y:
-                            n.setYpos(n.ypos() + diff_y)
+            if (
+                node == placeholder_node
+                or node in considered_nodes
+            ):
+                continue
 
-                    else:
-                        width = n.screenWidth()
-                        height = n.screenHeight()
-                        n.knob("bdwidth").setValue(width + diff_x)
-                        n.knob("bdheight").setValue(height + diff_y)
+            if (
+                not isinstance(node, nuke.BackdropNode)
+                or (
+                    isinstance(node, nuke.BackdropNode)
+                    and not set(contained_nodes) <= set(node.getNodes())
+                )
+            ):
+                if offset_y is None and node.xpos() >= min_x:
+                    node.setXpos(node.xpos() + diff_x)
 
-                    refresh_node(n)
+                if node.ypos() >= min_y:
+                    node.setYpos(node.ypos() + diff_y)
+
+            else:
+                width = node.screenWidth()
+                height = node.screenHeight()
+                node.knob("bdwidth").setValue(width + diff_x)
+                node.knob("bdheight").setValue(height + diff_y)
+
+            refresh_node(node)
 
     def imprint_inits(self):
-        """
-        add initial positions and dimensions to the attributes
-        """
-        for n in nuke.allNodes():
-            refresh_node(n)
-            imprint(n, {'x_init': n.xpos(), 'y_init': n.ypos()})
-            n.knob('x_init').setVisible(False)
-            n.knob('y_init').setVisible(False)
-            width = n.screenWidth()
-            height = n.screenHeight()
-            if 'bdwidth' in n.knobs().keys():
-                imprint(n, {'w_init': width, 'h_init': height})
-                n.knob('w_init').setVisible(False)
-                n.knob('h_init').setVisible(False)
-            refresh_node(n)
+        """Add initial positions and dimensions to the attributes"""
+
+        for node in nuke.allNodes():
+            refresh_node(node)
+            imprint(node, {"x_init": node.xpos(), "y_init": node.ypos()})
+            node.knob("x_init").setVisible(False)
+            node.knob("y_init").setVisible(False)
+            width = node.screenWidth()
+            height = node.screenHeight()
+            if "bdwidth" in node.knobs():
+                imprint(node, {"w_init": width, "h_init": height})
+                node.knob("w_init").setVisible(False)
+                node.knob("h_init").setVisible(False)
+            refresh_node(node)
 
     def imprint_siblings(self):
         """
@@ -341,76 +390,88 @@ class NukePlaceholder(AbstractPlaceholder):
         - add Id to the attributes of all the other nodes
         """
 
-        nodes_loaded = self.data['last_loaded']
-        d = {"id_rep": str(self.data['_id'])}
+        loaded_nodes = self.data["last_loaded"]
+        loaded_nodes_set = set(loaded_nodes)
+        data = {"repre_id": str(self.data["last_repre_id"])}
 
-        for n in nodes_loaded:
-            if "builder_type" in n.knobs().keys()\
-                    and ('is_placeholder' not in n.knobs().keys()
-                         or 'is_placeholder' in n.knobs().keys()
-                         and n.knob('is_placeholder').value()):
+        for node in loaded_nodes:
+            node_knobs = node.knobs()
+            if "builder_type" not in node_knobs:
+                # save the id of representation for all imported nodes
+                imprint(node, data)
+                node.knob("repre_id").setVisible(False)
+                refresh_node(node)
+                continue
 
-                siblings = list(set(nodes_loaded) - set([n]))
+            if (
+                "is_placeholder" not in node_knobs
+                or (
+                    "is_placeholder" in node_knobs
+                    and node.knob("is_placeholder").value()
+                )
+            ):
+                siblings = list(loaded_nodes_set - {node})
                 siblings_name = get_names_from_nodes(siblings)
                 siblings = {"siblings": siblings_name}
-                imprint(n, siblings)
-
-            elif 'builder_type' not in n.knobs().keys():
-                # save the id of representation for all imported nodes
-                imprint(n, d)
-                n.knob('id_rep').setVisible(False)
-                refresh_node(n)
+                imprint(node, siblings)
 
     def set_loaded_connections(self):
         """
         set inputs and outputs of loaded nodes"""
 
-        node = self.data['node']
-        input, output = get_io(self.data['last_loaded'])
-        for n in node.dependent():
-            for i in range(n.inputs()):
-                if n.input(i) == node:
-                    n.setInput(i, output)
+        placeholder_node = self.data["node"]
+        input_node, output_node = get_group_io_nodes(self.data["last_loaded"])
+        for node in placeholder_node.dependent():
+            for idx in range(node.inputs()):
+                if node.input(idx) == placeholder_node:
+                    node.setInput(idx, output_node)
 
-        for n in node.dependencies():
-            for i in range(node.inputs()):
-                if node.input(i) == n:
-                    input.setInput(0, n)
+        for node in placeholder_node.dependencies():
+            for idx in range(placeholder_node.inputs()):
+                if placeholder_node.input(idx) == node:
+                    input_node.setInput(0, node)
 
     def set_copies_connections(self, copies):
-        """
-        set inputs and outputs of the copies
+        """Set inputs and outputs of the copies.
 
-        Arguments :
-            copies (dict) : with copied nodes names and their copies
+        Args:
+            copies (dict): Copied nodes by their names.
         """
-        input, output = get_io(self.data['last_loaded'])
-        siblings = get_nodes_from_names(self.data['siblings'])
-        inp, out = get_io(siblings)
-        inp_copy, out_copy = (copies[inp.name()], copies[out.name()])
+
+        last_input, last_output = get_group_io_nodes(self.data["last_loaded"])
+        siblings = get_nodes_by_names(self.data["siblings"])
+        siblings_input, siblings_output = get_group_io_nodes(siblings)
+        copy_input = copies[siblings_input.name()]
+        copy_output = copies[siblings_output.name()]
 
         for node_init in siblings:
-            if node_init != out:
-                node_copy = copies[node_init.name()]
-                for n in node_init.dependent():
-                    for i in range(n.inputs()):
-                        if n.input(i) == node_init:
-                            if n in siblings:
-                                copies[n.name()].setInput(i, node_copy)
-                            else:
-                                input.setInput(0, node_copy)
+            if node_init == siblings_output:
+                continue
 
-                for n in node_init.dependencies():
-                    for i in range(node_init.inputs()):
-                        if node_init.input(i) == n:
-                            if node_init == inp:
-                                inp_copy.setInput(i, n)
-                            elif n in siblings:
-                                node_copy.setInput(i, copies[n.name()])
-                            else:
-                                node_copy.setInput(i, output)
+            node_copy = copies[node_init.name()]
+            for node in node_init.dependent():
+                for idx in range(node.inputs()):
+                    if node.input(idx) != node_init:
+                        continue
 
-        inp.setInput(0, out_copy)
+                    if node in siblings:
+                        copies[node.name()].setInput(idx, node_copy)
+                    else:
+                        last_input.setInput(0, node_copy)
+
+            for node in node_init.dependencies():
+                for idx in range(node_init.inputs()):
+                    if node_init.input(idx) != node:
+                        continue
+
+                    if node_init == siblings_input:
+                        copy_input.setInput(idx, node)
+                    elif node in siblings:
+                        node_copy.setInput(idx, copies[node.name()])
+                    else:
+                        node_copy.setInput(idx, last_output)
+
+        siblings_input.setInput(0, copy_output)
 
     def move_to_placeholder_group(self, nodes_loaded):
         """
@@ -420,48 +481,49 @@ class NukePlaceholder(AbstractPlaceholder):
             nodes_loaded (list): the new list of pasted nodes
         """
 
-        groups_name = self.data['group_name']
+        groups_name = self.data["group_name"]
         reset_selection()
         select_nodes(nodes_loaded)
         if groups_name:
-            nuke.nodeCopy("%clipboard%")
-            for n in nuke.selectedNodes():
-                nuke.delete(n)
-            group = nuke.toNode(groups_name)
-            group.begin()
-            nuke.nodePaste("%clipboard%")
-            nodes_loaded = nuke.selectedNodes()
+            with node_tempfile() as filepath:
+                nuke.nodeCopy(filepath)
+                for node in nuke.selectedNodes():
+                    nuke.delete(node)
+                group = nuke.toNode(groups_name)
+                group.begin()
+                nuke.nodePaste(filepath)
+                nodes_loaded = nuke.selectedNodes()
         return nodes_loaded
 
     def clean(self):
-        print("cleaaaaar")
         # deselect all selected nodes
-        node = self.data['node']
+        placeholder_node = self.data["node"]
 
         # getting the latest nodes added
         nodes_init = self.data["nodes_init"]
         nodes_loaded = list(set(nuke.allNodes()) - set(nodes_init))
-        print(nodes_loaded)
-        if nodes_loaded:
-            self.data['delete'] = True
-        else:
+        self.log.debug("Loaded nodes: {}".format(nodes_loaded))
+        if not nodes_loaded:
             return
+
+        self.data["delete"] = True
+
         nodes_loaded = self.move_to_placeholder_group(nodes_loaded)
-        self.data['last_loaded'] = nodes_loaded
+        self.data["last_loaded"] = nodes_loaded
         refresh_nodes(nodes_loaded)
 
         # positioning of the loaded nodes
-        min_x, min_y, _, _ = get_extremes(nodes_loaded)
-        for n in nodes_loaded:
-            xpos = (n.xpos() - min_x) + node.xpos()
-            ypos = (n.ypos() - min_y) + node.ypos()
-            n.setXYpos(xpos, ypos)
+        min_x, min_y, _, _ = get_extreme_positions(nodes_loaded)
+        for node in nodes_loaded:
+            xpos = (node.xpos() - min_x) + placeholder_node.xpos()
+            ypos = (node.ypos() - min_y) + placeholder_node.ypos()
+            node.setXYpos(xpos, ypos)
         refresh_nodes(nodes_loaded)
 
         self.fix_z_order()  # fix the problem of z_order for backdrops
         self.imprint_siblings()
 
-        if self.data['nb_children'] == 0:
+        if self.data["nb_children"] == 0:
             # save initial nodes postions and dimensions, update them
             # and set inputs and outputs of loaded nodes
 
@@ -469,26 +531,29 @@ class NukePlaceholder(AbstractPlaceholder):
             self.update_nodes(nuke.allNodes(), nodes_loaded)
             self.set_loaded_connections()
 
-        elif self.data['siblings']:
+        elif self.data["siblings"]:
             # create copies of placeholder siblings for the new loaded nodes,
             # set their inputs and outpus and update all nodes positions and
             # dimensions and siblings names
 
-            siblings = get_nodes_from_names(self.data['siblings'])
+            siblings = get_nodes_by_names(self.data["siblings"])
             refresh_nodes(siblings)
             copies = self.create_sib_copies()
             new_nodes = list(copies.values())  # copies nodes
             self.update_nodes(new_nodes, nodes_loaded)
-            node.removeKnob(node.knob('siblings'))
+            placeholder_node.removeKnob(placeholder_node.knob("siblings"))
             new_nodes_name = get_names_from_nodes(new_nodes)
-            imprint(node, {'siblings': new_nodes_name})
+            imprint(placeholder_node, {"siblings": new_nodes_name})
             self.set_copies_connections(copies)
 
-            self.update_nodes(nuke.allNodes(),
-                              new_nodes + nodes_loaded, 20)
+            self.update_nodes(
+                nuke.allNodes(),
+                new_nodes + nodes_loaded,
+                20
+            )
 
             new_siblings = get_names_from_nodes(new_nodes)
-            self.data['siblings'] = new_siblings
+            self.data["siblings"] = new_siblings
 
         else:
             # if the placeholder doesn't have siblings, the loaded
@@ -497,51 +562,67 @@ class NukePlaceholder(AbstractPlaceholder):
             xpointer, ypointer = find_free_space_to_paste_nodes(
                 nodes_loaded, direction="bottom", offset=200
             )
-            n = nuke.createNode("NoOp")
+            node = nuke.createNode("NoOp")
             reset_selection()
-            nuke.delete(n)
-            for n in nodes_loaded:
-                xpos = (n.xpos() - min_x) + xpointer
-                ypos = (n.ypos() - min_y) + ypointer
-                n.setXYpos(xpos, ypos)
+            nuke.delete(node)
+            for node in nodes_loaded:
+                xpos = (node.xpos() - min_x) + xpointer
+                ypos = (node.ypos() - min_y) + ypointer
+                node.setXYpos(xpos, ypos)
 
-        self.data['nb_children'] += 1
+        self.data["nb_children"] += 1
         reset_selection()
         # go back to root group
         nuke.root().begin()
 
-    def convert_to_db_filters(self, current_asset, linked_asset):
-        if self.data['builder_type'] == "context_asset":
-            return [{
-                "type": "representation",
-                "context.asset": {
-                    "$eq": current_asset, "$regex": self.data['asset']},
-                "context.subset": {"$regex": self.data['subset']},
-                "context.hierarchy": {"$regex": self.data['hierarchy']},
-                "context.representation": self.data['representation'],
-                "context.family": self.data['family'],
-            }]
+    def get_representations(self, current_asset_doc, linked_asset_docs):
+        project_name = legacy_io.active_project()
 
-        elif self.data['builder_type'] == "linked_asset":
-            return [{
-                "type": "representation",
-                "context.asset": {
-                    "$eq": asset_name, "$regex": self.data['asset']},
-                "context.subset": {"$regex": self.data['subset']},
-                "context.hierarchy": {"$regex": self.data['hierarchy']},
-                "context.representation": self.data['representation'],
-                "context.family": self.data['family'],
-            } for asset_name in linked_asset]
+        builder_type = self.data["builder_type"]
+        if builder_type == "context_asset":
+            context_filters = {
+                "asset": [re.compile(self.data["asset"])],
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representations": [self.data["representation"]],
+                "family": [self.data["family"]]
+            }
+
+        elif builder_type != "linked_asset":
+            context_filters = {
+                "asset": [
+                    current_asset_doc["name"],
+                    re.compile(self.data["asset"])
+                ],
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representation": [self.data["representation"]],
+                "family": [self.data["family"]]
+            }
 
         else:
-            return [{
-                "type": "representation",
-                "context.asset": {"$regex": self.data['asset']},
-                "context.subset": {"$regex": self.data['subset']},
-                "context.hierarchy": {"$regex": self.data['hierarchy']},
-                "context.representation": self.data['representation'],
-                "context.family": self.data['family'],
-            }]
+            asset_regex = re.compile(self.data["asset"])
+            linked_asset_names = []
+            for asset_doc in linked_asset_docs:
+                asset_name = asset_doc["name"]
+                if asset_regex.match(asset_name):
+                    linked_asset_names.append(asset_name)
+
+            if not linked_asset_names:
+                return []
+
+            context_filters = {
+                "asset": linked_asset_names,
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representation": [self.data["representation"]],
+                "family": [self.data["family"]],
+            }
+
+        return list(get_representations(
+            project_name,
+            context_filters=context_filters
+        ))
 
     def err_message(self):
         return (
