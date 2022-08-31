@@ -45,6 +45,13 @@ from .entities import (
     get_workfile_info,
 )
 
+from .entity_links import (
+    get_linked_asset_ids,
+    get_linked_assets,
+    get_linked_representation_ids,
+)
+
+
 __all__ = (
     "OpenPypeMongoConnection",
 
@@ -88,4 +95,8 @@ __all__ = (
     "get_thumbnail_id_from_source",
 
     "get_workfile_info",
+
+    "get_linked_asset_ids",
+    "get_linked_assets",
+    "get_linked_representation_ids",
 )
