@@ -42,10 +42,33 @@ class NukeTemplateLoader(AbstractTemplateLoader):
         placeholder.data["_id"] = last_representation['_id']
 
     def populate_template(self, ignored_ids=None):
-        place_holders = self.get_template_nodes()
-        while len(place_holders) > 0:
-            super().populate_template(ignored_ids)
-            place_holders = self.get_template_nodes()
+        processed_key = "_node_processed"
+
+        processed_nodes = []
+        nodes = self.get_template_nodes()
+        while nodes:
+            # Mark nodes as processed so they're not re-executed
+            # - that can happen if processing of placeholder node fails
+            for node in nodes:
+                imprint(node, {processed_key: True})
+                processed_nodes.append(node)
+
+            super(NukeTemplateLoader, self).populate_template(ignored_ids)
+
+            # Recollect nodes to repopulate
+            nodes = []
+            for node in self.get_template_nodes():
+                # Skip already processed nodes
+                if (
+                    processed_key in node.knobs()
+                    and node.knob(processed_key).value()
+                ):
+                    continue
+                nodes.append(node)
+
+        for node in processed_nodes:
+            if processed_key in node.knobs():
+                nuke.removeKnob(node, processed_key)
 
     @staticmethod
     def get_template_nodes():
