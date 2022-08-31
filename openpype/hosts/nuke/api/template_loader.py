@@ -88,8 +88,9 @@ class NukeTemplateLoader(AbstractTemplateLoader):
                 nodes.append(node)
 
         for node in processed_nodes:
-            if processed_key in node.knobs():
-                nuke.removeKnob(node, processed_key)
+            knob = node.knob(processed_key)
+            if knob is not None:
+                node.removeKnob(knob)
 
     @staticmethod
     def get_template_nodes():
