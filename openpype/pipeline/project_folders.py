@@ -60,6 +60,9 @@ def create_project_folders(project_name, basic_paths=None):
     if basic_paths is None:
         basic_paths = get_project_basic_paths(project_name)
 
+    if not basic_paths:
+        return
+
     concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
     filled_paths = fill_paths(concat_paths, anatomy)
 
@@ -70,7 +73,6 @@ def create_project_folders(project_name, basic_paths=None):
         else:
             log.debug("Creating folder: {}".format(path))
             os.makedirs(path)
-    return filled_paths
 
 
 def _list_path_items(folder_structure):
