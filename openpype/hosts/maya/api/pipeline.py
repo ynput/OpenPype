@@ -491,10 +491,11 @@ def after_file_open():
         cmds.text(comment, align='center')
         cmds.text(vis=False)
         cmds.rowColumnLayout(numberOfColumns=3,
-                             columnWidth=[(1, 300), (2, 100)], columnSpacing=[(2, 10)])
+                             columnWidth=[(1, 300), (2, 100)],
+                             columnSpacing=[(2, 10)])
         cmds.separator(vis=False)
         quit_command = "cmds.quit(force=True);cmds.deleteUI('%s')" % reminder
-        cmds.button(label='Ok',command=quit_command)
+        cmds.button(label='Ok', command=quit_command)
         cmds.showWindow(reminder)
 
 
