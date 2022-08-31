@@ -10,8 +10,6 @@ import clique
 log = logging.getLogger(__name__)
 
 
-
-
 class PathToolsDeprecatedWarning(DeprecationWarning):
     pass
 
