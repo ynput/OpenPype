@@ -13,7 +13,7 @@ import os
 import pyblish.api
 
 
-class CollectUsername(pyblish.api.ContextPlugin):
+class CollectUsernameForWebpublish(pyblish.api.ContextPlugin):
     """
         Translates user email to Ftrack username.
 
@@ -32,10 +32,8 @@ class CollectUsername(pyblish.api.ContextPlugin):
     hosts = ["webpublisher", "photoshop"]
     targets = ["remotepublish", "filespublish", "tvpaint_worker"]
 
-    _context = None
-
     def process(self, context):
-        self.log.info("CollectUsername")
+        self.log.info("{}".format(self.__class__.__name__))
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
 
