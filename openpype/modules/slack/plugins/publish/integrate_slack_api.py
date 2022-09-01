@@ -95,13 +95,15 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         Reviews might be large, so allow only adding link to message instead of
         uploading only.
         """
+
         fill_data = copy.deepcopy(instance.context.data["anatomyData"])
 
+        username = fill_data.get("user")
         fill_pairs = [
             ("asset", instance.data.get("asset", fill_data.get("asset"))),
             ("subset", instance.data.get("subset", fill_data.get("subset"))),
-            ("username", instance.data.get("username",
-                                           fill_data.get("username"))),
+            ("user", username),
+            ("username", username),
             ("app", instance.data.get("app", fill_data.get("app"))),
             ("family", instance.data.get("family", fill_data.get("family"))),
             ("version", str(instance.data.get("version",
