@@ -161,7 +161,7 @@ class ExtractReviewSlate(publish.Extractor):
 
             input_args.extend([
                 "-loop", "1",
-                "-i", openpype.lib.path_to_subprocess_arg(slate_path),
+                "-i", path_to_subprocess_arg(slate_path),
                 "-r", str(input_frame_rate),
                 "-frames:v", "1",
             ])
