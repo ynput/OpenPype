@@ -435,6 +435,7 @@ class CreatedInstance:
             if key in data:
                 data.pop(key)
 
+        self._data["variant"] = self._data.get("variant") or ""
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
