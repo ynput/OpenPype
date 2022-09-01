@@ -1,5 +1,8 @@
 """Loads publishing context from json and continues in publish process.
 
+Should run before 'CollectAnatomyContextData' so the user on context is
+changed before it's stored to context anatomy data or instance anatomy data.
+
 Requires:
     anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
 
@@ -52,12 +55,14 @@ class CollectUsernameForWebpublish(pyblish.api.ContextPlugin):
             return
 
         session = ftrack_api.Session(auto_connect_event_hub=False)
-        user = session.query("User where email like '{}'".format(user_email))
+        user = session.query(
+            "User where email like '{}'".format(user_email)
+        ).first()
 
         if not user:
             raise ValueError(
                 "Couldn't find user with {} email".format(user_email))
-        user = user[0]
+
         username = user.get("username")
         self.log.debug("Resolved ftrack username:: {}".format(username))
         os.environ["FTRACK_API_USER"] = username
