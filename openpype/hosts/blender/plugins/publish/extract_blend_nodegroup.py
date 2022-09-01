@@ -24,24 +24,25 @@ class ExtractBlendNodegroup(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        # Get all node groups
+        # Get all node groups and related objects
         node_groups = set()
+        data_blocks = set()
         for obj in [
             o
             for o in instance
             if isinstance(obj, bpy.types.Object) and obj.type == "MESH"
         ]:
             if hasattr(obj, "modifiers"):
-                obj_modifiers = list()
+                data_blocks.add(obj)
                 for mod in [m for m in obj.modifiers if m.type == "NODES"]:
                     group = mod.node_group
                     if group:
                         group.use_fake_user = True
+                        data_blocks.add(group)
                         node_groups.add(group)
-                    obj_modifiers.append(group)
 
         # Write datablock into file
-        bpy.data.libraries.write(filepath, node_groups, path_remap="ABSOLUTE")
+        bpy.data.libraries.write(filepath, data_blocks, path_remap="ABSOLUTE")
 
         # Restore fake user
         for group in node_groups:
