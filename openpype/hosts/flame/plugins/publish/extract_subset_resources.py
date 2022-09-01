@@ -1,11 +1,11 @@
 import os
 import re
 import tempfile
-from pprint import pformat
 from copy import deepcopy
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.flame import api as opfapi
 from openpype.hosts.flame.api import MediaInfoFile
 from openpype.pipeline.editorial import (
@@ -15,7 +15,7 @@ from openpype.pipeline.editorial import (
 import flame
 
 
-class ExtractSubsetResources(openpype.api.Extractor):
+class ExtractSubsetResources(publish.Extractor):
     """
     Extractor for transcoding files from Flame clip
     """
