@@ -8,7 +8,8 @@ from openpype.lib import BoolDef
 from .lib import (
     load_help_content_from_plugin,
     get_errored_instances_from_context,
-    get_errored_plugins_from_context
+    get_errored_plugins_from_context,
+    get_instance_staging_dir,
 )
 
 
@@ -241,3 +242,25 @@ class RepairContextAction(pyblish.api.Action):
         if plugin in errored_plugins:
             self.log.info("Attempting fix ...")
             plugin.repair(context)
+
+
+class Extractor(pyblish.api.InstancePlugin):
+    """Extractor base class.
+
+    The extractor base class implements a "staging_dir" function used to
+    generate a temporary directory for an instance to extract to.
+
+    This temporary directory is generated through `tempfile.mkdtemp()`
+
+    """
+
+    order = 2.0
+
+    def staging_dir(self, instance):
+        """Provide a temporary directory in which to store extracted files
+
+        Upon calling this method the staging directory is stored inside
+        the instance.data['stagingDir']
+        """
+
+        return get_instance_staging_dir(instance)
