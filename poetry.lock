@@ -339,7 +339,7 @@ test = ["pytest (>=6.2.0)", "pytest-benchmark", "pytest-cov", "pytest-subtests",
 
 [[package]]
 name = "cx-freeze"
-version = "6.9"
+version = "6.11.1"
 description = "Create standalone executables from Python scripts"
 category = "dev"
 optional = false
