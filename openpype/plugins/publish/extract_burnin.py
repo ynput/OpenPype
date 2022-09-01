@@ -492,6 +492,7 @@ class ExtractBurnin(openpype.api.Extractor):
         # OPENPYPE_USERNAME might have side effects
         webpublish_user_name = os.environ.get("WEBPUBLISH_OPENPYPE_USERNAME")
         if webpublish_user_name:
+            burnin_data["user"] = webpublish_user_name
             burnin_data["username"] = webpublish_user_name
 
         self.log.debug(
