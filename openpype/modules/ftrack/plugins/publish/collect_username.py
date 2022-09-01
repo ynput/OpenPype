@@ -65,5 +65,4 @@ class CollectUsernameForWebpublish(pyblish.api.ContextPlugin):
         burnin_name = username
         if '@' in burnin_name:
             burnin_name = burnin_name[:burnin_name.index('@')]
-        os.environ["WEBPUBLISH_OPENPYPE_USERNAME"] = burnin_name
         context.data["user"] = burnin_name
