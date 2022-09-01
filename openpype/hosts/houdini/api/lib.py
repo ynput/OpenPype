@@ -281,7 +281,7 @@ def render_rop(ropnode):
         raise RuntimeError("Render failed: {0}".format(exc))
 
 
-def imprint(node, data):
+def imprint(node, data, update=False):
     """Store attributes with value on a node
 
     Depending on the type of attribute it creates the correct parameter
@@ -293,50 +293,49 @@ def imprint(node, data):
     Args:
         node(hou.Node): node object from Houdini
         data(dict): collection of attributes and their value
+        update (bool, optional): flag if imprint should update
+            already existing data or leave them untouched and only
+            add new.
 
     Returns:
         None
 
     """
+    if not data:
+        return
+
+    current_parameters = node.spareParms()
+    current_keys = [p.name() for p in current_parameters]
+    update_keys = []
 
     parm_group = node.parmTemplateGroup()
-
     parm_folder = hou.FolderParmTemplate("folder", "Extra")
+    templates = []
     for key, value in data.items():
         if value is None:
             continue
 
-        if isinstance(value, float):
-            parm = hou.FloatParmTemplate(name=key,
-                                         label=key,
-                                         num_components=1,
-                                         default_value=(value,))
-        elif isinstance(value, bool):
-            parm = hou.ToggleParmTemplate(name=key,
-                                          label=key,
-                                          default_value=value)
-        elif isinstance(value, int):
-            parm = hou.IntParmTemplate(name=key,
-                                       label=key,
-                                       num_components=1,
-                                       default_value=(value,))
-        elif isinstance(value, six.string_types):
-            parm = hou.StringParmTemplate(name=key,
-                                          label=key,
-                                          num_components=1,
-                                          default_value=(value,))
-        elif isinstance(value, dict):
-            parm = hou.StringParmTemplate(name=key,
-                                          label=key,
-                                          num_components=1,
-                                          default_value=(json.dumps(value),))
-        else:
-            raise TypeError("Unsupported type: %r" % type(value))
-
-        parm_folder.addParmTemplate(parm)
-
+        if key in current_keys:
+            if not update:
+                print(f"{key} already exists on {node}")
+            else:
+                print(f"replacing {key}")
+                update_keys.append((key, value))
+            continue
+        parm = parm_to_template(key, value)
+        # parm.hide(True)
+        templates.append(parm)
+    parm_folder.setParmTemplates(templates)
     parm_group.append(parm_folder)
     node.setParmTemplateGroup(parm_group)
+
+    if update_keys:
+        parms = node.parmTuplesInFolder(("Extra",))
+        for parm in parms:
+            for key, value in update_keys:
+                if parm.name() == key:
+                    node.replaceSpareParmTuple(
+                        parm.name(), parm_to_template(key, value))
 
 
 def lsattr(attr, value=None, root="/"):
@@ -407,9 +406,9 @@ def read(node):
         value = parameter.eval()
         # test if value is json encoded dict
         if isinstance(value, six.string_types) and \
-                len(value) > 0 and value[0] == "{":
+                len(value) > 0 and value.startswith("JSON:::"):
             try:
-                value = json.loads(value)
+                value = json.loads(value.lstrip("JSON:::"))
             except json.JSONDecodeError:
                 # not a json
                 pass
@@ -502,3 +501,35 @@ def get_main_window():
     if self._parent is None:
         self._parent = hou.ui.mainQtWindow()
     return self._parent
+
+
+def parm_to_template(key, value):
+    if isinstance(value, float):
+        parm = hou.FloatParmTemplate(name=key,
+                                     label=key,
+                                     num_components=1,
+                                     default_value=(value,))
+    elif isinstance(value, bool):
+        parm = hou.ToggleParmTemplate(name=key,
+                                      label=key,
+                                      default_value=value)
+    elif isinstance(value, int):
+        parm = hou.IntParmTemplate(name=key,
+                                   label=key,
+                                   num_components=1,
+                                   default_value=(value,))
+    elif isinstance(value, six.string_types):
+        parm = hou.StringParmTemplate(name=key,
+                                      label=key,
+                                      num_components=1,
+                                      default_value=(value,))
+    elif isinstance(value, (dict, list, tuple)):
+        parm = hou.StringParmTemplate(name=key,
+                                      label=key,
+                                      num_components=1,
+                                      default_value=(
+                                          "JSON:::" + json.dumps(value),))
+    else:
+        raise TypeError("Unsupported type: %r" % type(value))
+
+    return parm

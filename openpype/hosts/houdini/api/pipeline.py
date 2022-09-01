@@ -5,8 +5,7 @@ import contextlib
 
 import hou  # noqa
 
-from openpype.host import HostBase, IWorkfileHost, ILoadHost
-from openpype.tools.utils import host_tools
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, INewPublisher
 
 import pyblish.api
 
@@ -38,7 +37,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class HoudiniHost(HostBase, IWorkfileHost, ILoadHost):
+class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
     name = "houdini"
 
     def __init__(self):
@@ -128,6 +127,16 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events[on_file_event_callback] = hou.hipFile.addEventCallback(
             on_file_event_callback
         )
+
+    def update_context_data(self, data, changes):
+        root_node = hou.node("/")
+        lib.imprint(root_node, data)
+
+    def get_context_data(self):
+        from pprint import pformat
+
+        self.log.debug(f"----" + pformat(lib.read(hou.node("/"))))
+        return lib.read(hou.node("/"))
 
 
 def on_file_event_callback(event):
@@ -385,9 +394,15 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
         log.warning("%s - %s", instance_node.path(), exc)
 
 
-def list_instances():
-    """List all publish instances in the scene."""
-    return lib.lsattr("id", "pyblish.avalon.instance")
+def list_instances(creator_id=None):
+    """List all publish instances in the scene.
+
+    """
+    instance_signature = {
+        "id": "pyblish.avalon.instance",
+        "identifier": creator_id
+    }
+    return lib.lsattrs(instance_signature)
 
 
 def remove_instance(instance):
@@ -397,13 +412,15 @@ def remove_instance(instance):
     because it might contain valuable data for artist.
 
     """
-    nodes = instance[:]
+    nodes = instance.get("members")
     if not nodes:
         return
 
     # Assume instance node is first node
-    instance_node = nodes[0]
+    instance_node = hou.node(nodes[0])
+    to_delete = None
     for parameter in instance_node.spareParms():
         if parameter.name() == "id" and \
                 parameter.eval() == "pyblish.avalon.instance":
-            instance_node.removeSpareParmTuple(parameter)
+            to_delete = parameter
+    instance_node.removeSpareParmTuple(to_delete)

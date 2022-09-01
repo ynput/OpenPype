@@ -13,8 +13,9 @@ from openpype.pipeline import (
     Creator as NewCreator,
     CreatedInstance
 )
+from openpype.lib import BoolDef
 from openpype.hosts.houdini.api import list_instances, remove_instance
-from .lib import imprint
+from .lib import imprint, read
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -96,18 +97,64 @@ class Creator(LegacyCreator):
 class HoudiniCreator(NewCreator):
     _nodes = []
 
-    def collect_instances(self):
-        for instance_data in list_instances():
-            instance = CreatedInstance.from_existing(
-                instance_data, self
-            )
+    def create(self, subset_name, instance_data, pre_create_data):
+        try:
+            if pre_create_data.get("use_selection"):
+                self._nodes = hou.selectedNodes()
+
+            # Get the node type and remove it from the data, not needed
+            node_type = instance_data.pop("node_type", None)
+            if node_type is None:
+                node_type = "geometry"
+
+            # Get out node
+            out = hou.node("/out")
+            instance_node = out.createNode(
+                node_type, node_name=subset_name)
+            instance_node.moveToGoodPosition()
+            instance_data["members"] = [instance_node.path()]
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
             self._add_instance_to_context(instance)
+            imprint(instance_node, instance.data_to_store())
+            return instance
+
+        except hou.Error as er:
+            six.reraise(
+                OpenPypeCreatorError,
+                OpenPypeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2])
+
+    def collect_instances(self):
+        for instance in list_instances(creator_id=self.identifier):
+            created_instance = CreatedInstance.from_existing(
+                read(instance), self
+            )
+            self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
-            imprint(created_inst.get("instance_id"), created_inst.data_to_store())
+            instance_node = hou.node(created_inst.get("members")[0])
+            current_data = read(instance_node)
+
+            imprint(
+                instance_node,
+                {
+                    key: value[1] for key, value in _changes.items()
+                    if current_data.get(key) != value[1]
+                },
+                update=True
+            )
 
     def remove_instances(self, instances):
         for instance in instances:
             remove_instance(instance)
             self._remove_instance_from_context(instance)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection", label="Use selection")
+        ]

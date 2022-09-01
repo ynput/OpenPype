@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from openpype.hosts.houdini.api import plugin
-from openpype.hosts.houdini.api import list_instances
 from openpype.pipeline import CreatedInstance
+
+import hou
 
 
 class CreatePointCache(plugin.HoudiniCreator):
@@ -11,50 +12,34 @@ class CreatePointCache(plugin.HoudiniCreator):
     family = "pointcache"
     icon = "gears"
 
-    def collect_instances(self):
-        for instance_data in list_instances():
-            instance = CreatedInstance.from_existing(
-                instance_data, self
-            )
-            self._add_instance_to_context(instance)
-
     def create(self, subset_name, instance_data, pre_create_data):
-        pass
+        instance_data.pop("active", None)
+        instance_data.update({"node_type": "alembic"})
 
-    def __init__(self, *args, **kwargs):
-        super(CreatePointCache, self).__init__(*args, **kwargs)
+        instance = super(CreatePointCache, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-        # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
-
-        self.data.update({"node_type": "alembic"})
-
-    def _process(self, instance):
-        """Creator main entry point.
-
-        Args:
-            instance (hou.Node): Created Houdini instance.
-
-        """
+        instance_node = hou.node(instance.get("members")[0])
         parms = {
-            "use_sop_path": True,  # Export single node from SOP Path
-            "build_from_path": True,  # Direct path of primitive in output
-            "path_attrib": "path",  # Pass path attribute for output
+            "use_sop_path": True,
+            "build_from_path": True,
+            "path_attrib": "path",
             "prim_to_detail_pattern": "cbId",
-            "format": 2,  # Set format to Ogawa
-            "facesets": 0,  # No face sets (by default exclude them)
-            "filename": "$HIP/pyblish/%s.abc" % self.name,
+            "format": 2,
+            "facesets": 0,
+            "filename": "$HIP/pyblish/{}.abc".format(self.identifier)
         }
 
-        if self.nodes:
-            node = self.nodes[0]
-            parms.update({"sop_path": node.path()})
+        if instance_node:
+            parms["sop_path"] = instance_node.path()
 
-        instance.setParms(parms)
-        instance.parm("trange").set(1)
+        instance_node.setParms(parms)
+        instance_node.parm("trange").set(1)
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
         for name in to_lock:
-            parm = instance.parm(name)
+            parm = instance_node.parm(name)
             parm.lock(True)
