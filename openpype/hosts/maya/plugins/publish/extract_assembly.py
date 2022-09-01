@@ -1,14 +1,13 @@
+import os
 import json
 
-import os
-
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import extract_alembic
 
 from maya import cmds
 
 
-class ExtractAssembly(openpype.api.Extractor):
+class ExtractAssembly(publish.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
