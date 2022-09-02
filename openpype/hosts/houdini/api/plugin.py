@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Houdini specific Avalon/Pyblish plugin definitions."""
 import sys
-import six
 from abc import (
     ABCMeta
 )
