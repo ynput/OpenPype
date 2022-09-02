@@ -67,9 +67,9 @@ class AfterEffectsSubmitDeadline(
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
-        dln_job_info.OutputFilename = \
+        dln_job_info.OutputFilename += \
             os.path.basename(self._instance.data["expectedFiles"][0])
-        dln_job_info.OutputDirectory = \
+        dln_job_info.OutputDirectory += \
             os.path.dirname(self._instance.data["expectedFiles"][0])
         dln_job_info.JobDelay = "00:00:00"
 

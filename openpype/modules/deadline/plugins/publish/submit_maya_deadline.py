@@ -144,14 +144,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             dependencies = instance.context.data["fileDependencies"]
             dependencies.append(context.data["currentFile"])
             for dependency in dependencies:
-                job_info.AssetDependency = dependency
+                job_info.AssetDependency += dependency
 
         # Add list of expected files to job
         # ---------------------------------
         exp = instance.data.get("expectedFiles")
         for filepath in self._iter_expected_files(exp):
-            job_info.OutputDirectory = os.path.dirname(filepath)
-            job_info.OutputFilename = os.path.basename(filepath)
+            job_info.OutputDirectory += os.path.dirname(filepath)
+            job_info.OutputFilename += os.path.basename(filepath)
 
         return job_info
 
@@ -443,7 +443,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         if self.asset_dependencies:
             # Asset dependency to wait for at least the scene file to sync.
-            job_info.AssetDependency = self.scene_path
+            job_info.AssetDependency += self.scene_path
 
         # Get layer prefix
         render_products = self._instance.data["renderProducts"]
