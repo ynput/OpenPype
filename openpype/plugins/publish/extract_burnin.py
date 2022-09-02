@@ -8,10 +8,10 @@ import shutil
 
 import clique
 import six
-import pyblish
+import pyblish.api
 
-import openpype
-import openpype.api
+from openpype import resources, PACKAGE_DIR
+from openpype.pipeline import publish
 from openpype.lib import (
     run_openpype_process,
 
@@ -23,7 +23,7 @@ from openpype.lib import (
 )
 
 
-class ExtractBurnin(openpype.api.Extractor):
+class ExtractBurnin(publish.Extractor):
     """
     Extractor to create video with pre-defined burnins from
     existing extracted video representation.
@@ -400,7 +400,7 @@ class ExtractBurnin(openpype.api.Extractor):
 
         # Use OpenPype default font
         if not font_filepath:
-            font_filepath = openpype.api.resources.get_liberation_font_path()
+            font_filepath = resources.get_liberation_font_path()
 
         burnin_options["font"] = font_filepath
 
@@ -981,7 +981,7 @@ class ExtractBurnin(openpype.api.Extractor):
         """Return path to python script for burnin processing."""
         scriptpath = os.path.normpath(
             os.path.join(
-                openpype.PACKAGE_DIR,
+                PACKAGE_DIR,
                 "scripts",
                 "otio_burnin.py"
             )
