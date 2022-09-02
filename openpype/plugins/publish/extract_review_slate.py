@@ -1,19 +1,22 @@
 import os
-from pprint import pformat
 import re
-import openpype.api
-import pyblish
+from pprint import pformat
+
+import pyblish.api
+
 from openpype.lib import (
     path_to_subprocess_arg,
+    run_subprocess,
     get_ffmpeg_tool_path,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
 )
+from openpype.pipeline import publish
 
 
-class ExtractReviewSlate(openpype.api.Extractor):
+class ExtractReviewSlate(publish.Extractor):
     """
     Will add slate frame at the start of the video files
     """
@@ -158,7 +161,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             input_args.extend([
                 "-loop", "1",
-                "-i", openpype.lib.path_to_subprocess_arg(slate_path),
+                "-i", path_to_subprocess_arg(slate_path),
                 "-r", str(input_frame_rate),
                 "-frames:v", "1",
             ])
@@ -267,7 +270,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             self.log.debug(
                 "Slate Executing: {}".format(slate_subprocess_cmd)
             )
-            openpype.api.run_subprocess(
+            run_subprocess(
                 slate_subprocess_cmd, shell=True, logger=self.log
             )
 
@@ -348,7 +351,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 "Executing concat filter: {}".format
                 (" ".join(concat_args))
             )
-            openpype.api.run_subprocess(
+            run_subprocess(
                 concat_args, logger=self.log
             )
 
@@ -533,7 +536,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
         self.log.debug("Silent Slate Executing: {}".format(
             " ".join(slate_silent_args)
         ))
-        openpype.api.run_subprocess(
+        run_subprocess(
             slate_silent_args, logger=self.log
         )
 
