@@ -318,7 +318,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(login: str, password: str, ignore_projects: list = []):
+def sync_all_projects(login: str, password: str, ignore_projects=[]):
     """Update all OP projects in DB with Zou data.
 
     Args:
