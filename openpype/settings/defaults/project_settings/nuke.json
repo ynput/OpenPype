@@ -325,5 +325,8 @@
             }
         ]
     },
+    "templated_workfile_build": {
+        "profiles": []
+    },
     "filters": {}
 }
