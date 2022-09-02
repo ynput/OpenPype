@@ -137,8 +137,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         for key, value in environment.items():
             if not value:
                 continue
-            job_info.EnvironmentKeyValue = "{key}={value}".format(key=key,
-                                                                  value=value)
+            job_info.EnvironmentKeyValue[key] = value
 
         # Adding file dependencies.
         if self.asset_dependencies:
@@ -538,9 +537,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         for key, value in envs.items():
             if not value:
                 continue
-
-            job_info.EnvironmentKeyValue = "{key}={value}".format(key=key,
-                                                                  value=value)
+            job_info.EnvironmentKeyValue[key] = value
 
         plugin_info.update({
             "Version": "3.6",

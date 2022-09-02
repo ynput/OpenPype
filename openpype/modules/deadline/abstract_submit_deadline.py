@@ -67,6 +67,43 @@ def requests_get(*args, **kwargs):
     return requests.get(*args, **kwargs)
 
 
+class DeadlineKeyValueVar(dict):
+    """
+
+    Serializes dictionary key values as "{key}={value}" like Deadline uses
+    for EnvironmentKeyValue.
+
+    As an example:
+        EnvironmentKeyValue0="A_KEY=VALUE_A"
+        EnvironmentKeyValue1="OTHER_KEY=VALUE_B"
+
+    The keys are serialized in alphabetical order (sorted).
+
+    Example:
+        >>> var = DeadlineKeyValueVar("EnvironmentKeyValue")
+        >>> var["my_var"] = "hello"
+        >>> var["my_other_var"] = "hello2"
+        >>> var.serialize()
+
+
+    """
+    def __init__(self, key):
+        super(DeadlineKeyValueVar, self).__init__()
+        self.__key = key
+
+    def serialize(self):
+        key = self.__key
+
+        # Allow custom location for index in serialized string
+        if "{}" not in key:
+            key = key + "{}"
+
+        return {
+            key.format(index): "{}={}".format(var_key, var_value)
+            for index, (var_key, var_value) in enumerate(sorted(self.items()))
+        }
+
+
 class DeadlineIndexedVar(dict):
     """
 
@@ -80,14 +117,8 @@ class DeadlineIndexedVar(dict):
 
     """
     def __init__(self, key):
+        super(DeadlineIndexedVar, self).__init__()
         self.__key = key
-
-    def next_available_index(self):
-        # Add as first unused entry
-        i = 0
-        while i in self.keys():
-            i += 1
-        return i
 
     def serialize(self):
         key = self.__key
@@ -99,6 +130,13 @@ class DeadlineIndexedVar(dict):
         return {
             key.format(index): value for index, value in sorted(self.items())
         }
+
+    def next_available_index(self):
+        # Add as first unused entry
+        i = 0
+        while i in self.keys():
+            i += 1
+        return i
 
     def update(self, data):
         # Force the integer key check
@@ -271,7 +309,7 @@ class DeadlineJobInfo(object):
 
     # Environment
     # ----------------------------------------------
-    EnvironmentKeyValue = attr.ib(factory=partial(DeadlineIndexedVar,
+    EnvironmentKeyValue = attr.ib(factory=partial(DeadlineKeyValueVar,
                                                   "EnvironmentKeyValue"))
 
     IncludeEnvironment = attr.ib(default=None)  # Default: false
@@ -281,7 +319,7 @@ class DeadlineJobInfo(object):
     # Job Extra Info
     # ----------------------------------------------
     ExtraInfo = attr.ib(factory=partial(DeadlineIndexedVar, "ExtraInfo"))
-    ExtraInfoKeyValue = attr.ib(factory=partial(DeadlineIndexedVar,
+    ExtraInfoKeyValue = attr.ib(factory=partial(DeadlineKeyValueVar,
                                                 "ExtraInfoKeyValue"))
 
     # Task Extra Info Names
@@ -326,7 +364,7 @@ class DeadlineJobInfo(object):
 
         """
         def filter_data(a, v):
-            if isinstance(v, DeadlineIndexedVar):
+            if isinstance(v, (DeadlineIndexedVar, DeadlineKeyValueVar)):
                 return False
             if v is None:
                 return False

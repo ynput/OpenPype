@@ -92,13 +92,12 @@ class AfterEffectsSubmitDeadline(
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
         for key in keys:
-            val = environment.get(key)
-            if val:
-                dln_job_info.EnvironmentKeyValue = "{key}={value}".format(
-                     key=key,
-                     value=val)
+            value = environment.get(key)
+            if value:
+                dln_job_info.EnvironmentKeyValue[key] = value
+
         # to recognize job from PYPE for turning Event On/Off
-        dln_job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
+        dln_job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
         return dln_job_info
 
