@@ -1,12 +1,23 @@
-from .graphql import fields_to_graphql
+from .graphql import (
+    project_graphql_from_fields,
+    projects_graphql_from_fields
+)
 from .server import get_server_api_connection
 
 
-project_direct_fields_mapping_v3_to_v4 = {
+PROJECT_FIELDS_MAPPING_V3_V4 = {
     "_id": {"name"},
     "name": {"name"},
     "data": {"data", "attrib", "code"},
     "data.library_project": {"library"},
+    "data.code": {"code"},
+    "data.active": {"active"},
+}
+
+FOLDER_FIELDS_MAPPING_V3_V4 = {
+    "_id": {"id"},
+    "name": {"name"},
+    "data": {"data", "attrib"},
     "data.code": {"code"},
     "data.active": {"active"},
 }
@@ -21,14 +32,15 @@ def project_fields_v3_to_v4(fields):
 
     output = set()
     for field in fields:
+        # If config is needed the rest api call must be used
         if field.startswith("config"):
             return None
 
-        if field in project_direct_fields_mapping_v3_to_v4:
-            output |= project_direct_fields_mapping_v3_to_v4[field]
+        if field in PROJECT_FIELDS_MAPPING_V3_V4:
+            output |= PROJECT_FIELDS_MAPPING_V3_V4[field]
 
         elif field.startswith("data"):
-            new_field = "attrib" + field[:4]
+            new_field = "attrib" + field[4:]
             output.add(new_field)
 
         else:
@@ -74,12 +86,9 @@ def _get_projects(active=None, library=None, fields=None):
     if not fields:
         return con.get_rest_projects(active, library)
 
-    graphql = "\n".join([
-        "query ProjectsQuery { projects { edges { node",
-        fields_to_graphql(fields),
-        "}}}"
-    ])
-    response = con.query(graphql)
+    query = projects_graphql_from_fields(fields)
+    response = con.query(query.calculate_query())
+
     output = []
     for edge in response.data["data"]["projects"]["edges"]:
         output.append(edge.pop("node"))
@@ -114,14 +123,10 @@ def get_project(project_name, active=True, inactive=False, fields=None):
             con.get_rest_project(active)
         )
 
-    fields.discard("name")
-    graphql = "\n".join([
-        "query ProjectQuery($projectName: String!) {"
-        "project(name: $projectName)",
-        fields_to_graphql(fields),
-        "}"
-    ])
-    response = con.query(graphql, projectName=project_name)
+    query = project_graphql_from_fields(project_name, fields)
+
+    variables = query.get_variable_values()
+    response = con.query(query.calculate_query(), **variables)
     data = response.data["data"]["project"]
     data["name"] = project_name
     return _convert_v4_project_to_v3(data)
