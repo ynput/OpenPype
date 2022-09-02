@@ -1,17 +1,20 @@
 import re
-import uuid
 import copy
 import collections
-from abc import ABCMeta, abstractmethod, abstractproperty
 
-import six
 from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne, UpdateOne
 
+from openpype.client.operations_base import (
+    REMOVED_VALUE,
+    CreateOperation,
+    UpdateOperation,
+    DeleteOperation,
+    BaseOperationsSession
+)
 from .mongo import get_project_connection
 from .entities import get_project
 
-REMOVED_VALUE = object()
 
 PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
 PROJECT_NAME_REGEX = re.compile(
@@ -268,7 +271,8 @@ def _prepare_update_data(old_doc, new_doc, replace):
 def prepare_subset_update_data(old_doc, new_doc, replace=True):
     """Compare two subset documents and prepare update data.
 
-    Based on compared values will create update data for 'UpdateOperation'.
+    Based on compared values will create update data for
+    'MongoUpdateOperation'.
 
     Empty output means that documents are identical.
 
@@ -282,7 +286,8 @@ def prepare_subset_update_data(old_doc, new_doc, replace=True):
 def prepare_version_update_data(old_doc, new_doc, replace=True):
     """Compare two version documents and prepare update data.
 
-    Based on compared values will create update data for 'UpdateOperation'.
+    Based on compared values will create update data for
+    'MongoUpdateOperation'.
 
     Empty output means that documents are identical.
 
@@ -296,7 +301,8 @@ def prepare_version_update_data(old_doc, new_doc, replace=True):
 def prepare_representation_update_data(old_doc, new_doc, replace=True):
     """Compare two representation documents and prepare update data.
 
-    Based on compared values will create update data for 'UpdateOperation'.
+    Based on compared values will create update data for
+    'MongoUpdateOperation'.
 
     Empty output means that documents are identical.
 
@@ -310,7 +316,8 @@ def prepare_representation_update_data(old_doc, new_doc, replace=True):
 def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
     """Compare two workfile info documents and prepare update data.
 
-    Based on compared values will create update data for 'UpdateOperation'.
+    Based on compared values will create update data for
+    'MongoUpdateOperation'.
 
     Empty output means that documents are identical.
 
@@ -321,70 +328,7 @@ def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
     return _prepare_update_data(old_doc, new_doc, replace)
 
 
-@six.add_metaclass(ABCMeta)
-class AbstractOperation(object):
-    """Base operation class.
-
-    Opration represent a call into database. The call can create, change or
-    remove data.
-
-    Args:
-        project_name (str): On which project operation will happen.
-        entity_type (str): Type of entity on which change happens.
-            e.g. 'asset', 'representation' etc.
-    """
-
-    def __init__(self, project_name, entity_type):
-        self._project_name = project_name
-        self._entity_type = entity_type
-        self._id = str(uuid.uuid4())
-
-    @property
-    def project_name(self):
-        return self._project_name
-
-    @property
-    def id(self):
-        """Identifier of operation."""
-
-        return self._id
-
-    @property
-    def entity_type(self):
-        return self._entity_type
-
-    @abstractproperty
-    def operation_name(self):
-        """Stringified type of operation."""
-
-        pass
-
-    @abstractmethod
-    def to_mongo_operation(self):
-        """Convert operation to Mongo batch operation."""
-
-        pass
-
-    def to_data(self):
-        """Convert opration to data that can be converted to json or others.
-
-        Warning:
-            Current state returns ObjectId objects which cannot be parsed by
-                json.
-
-        Returns:
-            Dict[str, Any]: Description of operation.
-        """
-
-        return {
-            "id": self._id,
-            "entity_type": self.entity_type,
-            "project_name": self.project_name,
-            "operation": self.operation_name
-        }
-
-
-class CreateOperation(AbstractOperation):
+class MongoCreateOperation(CreateOperation):
     """Opeartion to create an entity.
 
     Args:
@@ -397,51 +341,22 @@ class CreateOperation(AbstractOperation):
     operation_name = "create"
 
     def __init__(self, project_name, entity_type, data):
-        super(CreateOperation, self).__init__(project_name, entity_type)
+        super(MongoCreateOperation, self).__init__(project_name, entity_type)
 
-        if not data:
-            data = {}
+        if "_id" not in self._data:
+            self._data["_id"] = ObjectId()
         else:
-            data = copy.deepcopy(dict(data))
-
-        if "_id" not in data:
-            data["_id"] = ObjectId()
-        else:
-            data["_id"] = ObjectId(data["_id"])
-
-        self._entity_id = data["_id"]
-        self._data = data
-
-    def __setitem__(self, key, value):
-        self.set_value(key, value)
-
-    def __getitem__(self, key):
-        return self.data[key]
-
-    def set_value(self, key, value):
-        self.data[key] = value
-
-    def get(self, key, *args, **kwargs):
-        return self.data.get(key, *args, **kwargs)
+            self._data["_id"] = ObjectId(self._data["_id"])
 
     @property
     def entity_id(self):
-        return self._entity_id
-
-    @property
-    def data(self):
-        return self._data
+        return self._data["_id"]
 
     def to_mongo_operation(self):
         return InsertOne(copy.deepcopy(self._data))
 
-    def to_data(self):
-        output = super(CreateOperation, self).to_data()
-        output["data"] = copy.deepcopy(self.data)
-        return output
 
-
-class UpdateOperation(AbstractOperation):
+class MongoUpdateOperation(UpdateOperation):
     """Opeartion to update an entity.
 
     Args:
@@ -457,18 +372,11 @@ class UpdateOperation(AbstractOperation):
     operation_name = "update"
 
     def __init__(self, project_name, entity_type, entity_id, update_data):
-        super(UpdateOperation, self).__init__(project_name, entity_type)
+        super(MongoUpdateOperation, self).__init__(
+            project_name, entity_type, entity_id, update_data
+        )
 
-        self._entity_id = ObjectId(entity_id)
-        self._update_data = update_data
-
-    @property
-    def entity_id(self):
-        return self._entity_id
-
-    @property
-    def update_data(self):
-        return self._update_data
+        self._entity_id = ObjectId(self._entity_id)
 
     def to_mongo_operation(self):
         unset_data = {}
@@ -493,22 +401,8 @@ class UpdateOperation(AbstractOperation):
             op_data
         )
 
-    def to_data(self):
-        changes = {}
-        for key, value in self._update_data.items():
-            if value is REMOVED_VALUE:
-                value = None
-            changes[key] = value
 
-        output = super(UpdateOperation, self).to_data()
-        output.update({
-            "entity_id": self.entity_id,
-            "changes": changes
-        })
-        return output
-
-
-class DeleteOperation(AbstractOperation):
+class MongoDeleteOperation(DeleteOperation):
     """Opeartion to delete an entity.
 
     Args:
@@ -521,24 +415,17 @@ class DeleteOperation(AbstractOperation):
     operation_name = "delete"
 
     def __init__(self, project_name, entity_type, entity_id):
-        super(DeleteOperation, self).__init__(project_name, entity_type)
+        super(MongoDeleteOperation, self).__init__(
+            project_name, entity_type, entity_id
+        )
 
-        self._entity_id = ObjectId(entity_id)
-
-    @property
-    def entity_id(self):
-        return self._entity_id
+        self._entity_id = ObjectId(self._entity_id)
 
     def to_mongo_operation(self):
         return DeleteOne({"_id": self.entity_id})
 
-    def to_data(self):
-        output = super(DeleteOperation, self).to_data()
-        output["entity_id"] = self.entity_id
-        return output
 
-
-class OperationsSession(object):
+class OperationsSession(BaseOperationsSession):
     """Session storing operations that should happen in an order.
 
     At this moment does not handle anything special can be sonsidered as
@@ -551,61 +438,6 @@ class OperationsSession(object):
     Args:
         project_name (str): Project name to which are operations related.
     """
-
-    def __init__(self):
-        self._operations = []
-
-    def add(self, operation):
-        """Add operation to be processed.
-
-        Args:
-            operation (BaseOperation): Operation that should be processed.
-        """
-        if not isinstance(
-            operation,
-            (CreateOperation, UpdateOperation, DeleteOperation)
-        ):
-            raise TypeError("Expected Operation object got {}".format(
-                str(type(operation))
-            ))
-
-        self._operations.append(operation)
-
-    def append(self, operation):
-        """Add operation to be processed.
-
-        Args:
-            operation (BaseOperation): Operation that should be processed.
-        """
-
-        self.add(operation)
-
-    def extend(self, operations):
-        """Add operations to be processed.
-
-        Args:
-            operations (List[BaseOperation]): Operations that should be
-                processed.
-        """
-
-        for operation in operations:
-            self.add(operation)
-
-    def remove(self, operation):
-        """Remove operation."""
-
-        self._operations.remove(operation)
-
-    def clear(self):
-        """Clear all registered operations."""
-
-        self._operations = []
-
-    def to_data(self):
-        return [
-            operation.to_data()
-            for operation in self._operations
-        ]
 
     def commit(self):
         """Commit session operations."""
@@ -630,37 +462,37 @@ class OperationsSession(object):
                 collection.bulk_write(bulk_writes)
 
     def create_entity(self, project_name, entity_type, data):
-        """Fast access to 'CreateOperation'.
+        """Fast access to 'MongoCreateOperation'.
 
         Returns:
-            CreateOperation: Object of update operation.
+            MongoCreateOperation: Object of update operation.
         """
 
-        operation = CreateOperation(project_name, entity_type, data)
+        operation = MongoCreateOperation(project_name, entity_type, data)
         self.add(operation)
         return operation
 
     def update_entity(self, project_name, entity_type, entity_id, update_data):
-        """Fast access to 'UpdateOperation'.
+        """Fast access to 'MongoUpdateOperation'.
 
         Returns:
-            UpdateOperation: Object of update operation.
+            MongoUpdateOperation: Object of update operation.
         """
 
-        operation = UpdateOperation(
+        operation = MongoUpdateOperation(
             project_name, entity_type, entity_id, update_data
         )
         self.add(operation)
         return operation
 
     def delete_entity(self, project_name, entity_type, entity_id):
-        """Fast access to 'DeleteOperation'.
+        """Fast access to 'MongoDeleteOperation'.
 
         Returns:
-            DeleteOperation: Object of delete operation.
+            MongoDeleteOperation: Object of delete operation.
         """
 
-        operation = DeleteOperation(project_name, entity_type, entity_id)
+        operation = MongoDeleteOperation(project_name, entity_type, entity_id)
         self.add(operation)
         return operation
 
