@@ -183,6 +183,13 @@ class APIBase(object):
         )
         return GraphQlResponse(response.json())
 
+    def get_server_schema(self):
+        url = "{}/openapi.json".format(self._base_url)
+        response = self._do_rest_request(RequestTypes.get, url)
+        if response:
+            return response.data
+        return None
+
     def _do_rest_request(self, function, url, **kwargs):
         if "headers" not in kwargs:
             kwargs["headers"] = self.headers
@@ -272,7 +279,7 @@ class APIBase(object):
         )
 
 
-class API(APIBase):
+class ServerAPI(APIBase):
     def get_projects_basic(self):
         projects_query = """
         query ProjectsBasic {
@@ -288,8 +295,31 @@ class API(APIBase):
         data = self.query(projects_query).data
         return data["data"]["projects"]["edges"]
 
-    def get_project_names(self):
-        response = self.get("projects")
+    def get_rest_project(self, project_name):
+        response = self.get("projects/{}".format(project_name))
+        return response.data
+
+    def get_rest_projects(self, active=None, library=None):
+        for project_name in self.get_project_names(active, library):
+            project = self.get_rest_project(project_name)
+            if project:
+                yield project
+
+    def get_project_names(self, active=None, library=None):
+        query_keys = {}
+        if active is not None:
+            query_keys["active"] = "true" if active else "false"
+
+        if library is not None:
+            query_keys["library"] = "true" if active else "false"
+        query = ""
+        if query_keys:
+            query = "?{}".format(",".join([
+                "{}={}".format(key, value)
+                for key, value in query_keys.items()
+            ]))
+
+        response = self.get("projects{}".format(query), **query_keys)
         # TODO check status
         response.status
         data = response.data
