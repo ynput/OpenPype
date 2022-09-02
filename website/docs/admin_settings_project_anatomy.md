@@ -120,10 +120,10 @@ Project attributes are used as default values for new assets created under proje
 
 **Most of attributes don't need detailed explanation.**
 
-| Attribute | Description                                                                                                                 |
-| --- |-----------------------------------------------------------------------------------------------------------------------------|
-| `Applications` | List of applications that can be used in the project. At the moment used only as a possible filter of applications.         |
-| `Tools` | List of application tools. This value can be overridden per asset.                                                          |
+| Attribute | Description |
+| --- | --- |
+| `Applications` | List of applications that can be used in the project. At the moment used only as a possible filter of applications. |
+| `Tools` | List of application tools. This value can be overridden per asset. |
 | `Active project` | Project won't be visible in tools if enabled.<br/> - To revert check `Show Inactive projects` checkbox in project settings. |
 
 
