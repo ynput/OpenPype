@@ -85,7 +85,7 @@ class InstanceMember:
         })
 
 
-class AttributeValues:
+class AttributeValues(object):
     """Container which keep values of Attribute definitions.
 
     Goal is to have one object which hold values of attribute definitions for
