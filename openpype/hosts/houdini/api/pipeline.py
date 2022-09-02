@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Pipeline tools for OpenPype Houdini integration."""
 import os
 import sys
 import logging
@@ -72,9 +74,11 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
 
         sys.path.append(hou_pythonpath)
 
-        # Set asset settings for the empty scene directly after launch of Houdini
-        # so it initializes into the correct scene FPS, Frame Range, etc.
-        # todo: make sure this doesn't trigger when opening with last workfile
+        # Set asset settings for the empty scene directly after launch of
+        # Houdini so it initializes into the correct scene FPS,
+        # Frame Range, etc.
+        # TODO: make sure this doesn't trigger when
+        #       opening with last workfile.
         _set_context_settings()
 
     def has_unsaved_changes(self):
@@ -133,9 +137,6 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         lib.imprint(root_node, data)
 
     def get_context_data(self):
-        from pprint import pformat
-
-        self.log.debug(f"----" + pformat(lib.read(hou.node("/"))))
         return lib.read(hou.node("/"))
 
 
