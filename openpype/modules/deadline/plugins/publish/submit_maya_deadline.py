@@ -130,14 +130,15 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        # to recognize job from PYPE for turning Event On/Off
-        environment["OPENPYPE_RENDER_JOB"] = "1"
-        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
-
-        for key, value in environment.items():
+        for key in keys:
+            value = environment.get(key)
             if not value:
                 continue
             job_info.EnvironmentKeyValue[key] = value
+
+        # to recognize job from PYPE for turning Event On/Off
+        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Adding file dependencies.
         if self.asset_dependencies:
