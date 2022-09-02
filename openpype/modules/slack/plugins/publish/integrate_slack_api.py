@@ -112,13 +112,19 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         if review_path:
             fill_pairs.append(("review_filepath", review_path))
 
-        task_data = instance.data.get("task")
-        if not task_data:
-            task_data = fill_data.get("task")
-        for key, value in task_data.items():
-            fill_key = "task[{}]".format(key)
-            fill_pairs.append((fill_key, value))
-        fill_pairs.append(("task", task_data["name"]))
+        task_data = fill_data.get("task")
+        if task_data:
+            if (
+                "{task}" in message_templ
+                or "{Task}" in message_templ
+                or "{TASK}" in message_templ
+            ):
+                fill_pairs.append(("task", task_data["name"]))
+
+            else:
+                for key, value in task_data.items():
+                    fill_key = "task[{}]".format(key)
+                    fill_pairs.append((fill_key, value))
 
         self.log.debug("fill_pairs ::{}".format(fill_pairs))
         multiple_case_variants = prepare_template_data(fill_pairs)
