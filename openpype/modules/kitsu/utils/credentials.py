@@ -33,10 +33,8 @@ def validate_credentials(
     except gazu.exception.AuthFailedException:
         return False
 
-    emit_event("kitsu.user.logged", 
-           data={"username": login}, 
-           source="kitsu")
-           
+    emit_event("kitsu.user.logged", data={"username": login}, source="kitsu")
+
     return True
 
 
