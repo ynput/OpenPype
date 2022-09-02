@@ -22,10 +22,16 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.workfile import BuildWorkfile
+from openpype.pipeline.workfile.build_template import (
+    build_workfile_template,
+    update_workfile_template
+)
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
 from .lib import (
+    Context,
+    get_main_window,
     add_publish_knob,
     WorkfileSettings,
     process_workfile_builder,
@@ -33,7 +39,9 @@ from .lib import (
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
-    Context
+)
+from .lib_template_builder import (
+    create_placeholder, update_placeholder
 )
 
 log = Logger.get_logger(__name__)
@@ -51,23 +59,6 @@ MENU_LABEL = os.environ["AVALON_LABEL"]
 # registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
     pyblish.api.register_gui(os.getenv("PYBLISH_GUI", None))
-
-
-def get_main_window():
-    """Acquire Nuke's main window"""
-    if Context.main_window is None:
-        from Qt import QtWidgets
-
-        top_widgets = QtWidgets.QApplication.topLevelWidgets()
-        name = "Foundry::UI::DockMainWindow"
-        for widget in top_widgets:
-            if (
-                widget.inherits("QMainWindow")
-                and widget.metaObject().className() == name
-            ):
-                Context.main_window = widget
-                break
-    return Context.main_window
 
 
 def reload_config():
@@ -219,6 +210,24 @@ def _install_menu():
         lambda: BuildWorkfile().process()
     )
 
+    menu_template = menu.addMenu("Template Builder")  # creating template menu
+    menu_template.addCommand(
+        "Build Workfile from template",
+        lambda: build_workfile_template()
+    )
+    menu_template.addCommand(
+        "Update Workfile",
+        lambda: update_workfile_template()
+    )
+    menu_template.addSeparator()
+    menu_template.addCommand(
+        "Create Place Holder",
+        lambda: create_placeholder()
+    )
+    menu_template.addCommand(
+        "Update Place Holder",
+        lambda: update_placeholder()
+    )
     menu.addSeparator()
     menu.addCommand(
         "Experimental tools...",
