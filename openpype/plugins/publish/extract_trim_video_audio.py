@@ -1,14 +1,16 @@
 import os
+from pprint import pformat
+
 import pyblish.api
-import openpype.api
 
 from openpype.lib import (
     get_ffmpeg_tool_path,
+    run_subprocess,
 )
-from pprint import pformat
+from openpype.pipeline import publish
 
 
-class ExtractTrimVideoAudio(openpype.api.Extractor):
+class ExtractTrimVideoAudio(publish.Extractor):
     """Trim with ffmpeg "mov" and "wav" files."""
 
     # must be before `ExtractThumbnailSP`
@@ -98,7 +100,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
 
             joined_args = " ".join(ffmpeg_args)
             self.log.info(f"Processing: {joined_args}")
-            openpype.api.run_subprocess(
+            run_subprocess(
                 ffmpeg_args, logger=self.log
             )
 

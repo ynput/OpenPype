@@ -202,3 +202,67 @@ This video shows a way to publish shot look as effect from Hiero to Nuke.
 ### Assembling edit from published shot versions
 
 <iframe width="512px" height="288px" src="https://www.youtube.com/embed/5Wd6X-71vbg" frameborder="0" modestbranding="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
+
+# Nuke Build Workfile
+This is a tool of Node Graph initialisation using a pre-created template.
+
+### Add a profile
+The path to the template that will be used in the initialisation must be added as a profile on Project Settings.
+
+![Create menu](assets/nuke_addProfile.png)
+
+### Create Place Holder
+
+![Create menu](assets/nuke_createPlaceHolder.png)
+
+This tool creates a Place Holder, which is a node that will be replaced by published instances.
+
+![Create menu](assets/nuke_placeHolderNode.png)
+#### Result
+- Create a red node called `PLACEHOLDER` which can be manipulated as wanted by using it in Node Graph.
+
+![Create menu](assets/nuke_placeholder.png)
+
+:::note
+All published instances that will replace the place holder must contain unique input and output nodes in case they will not be imported as a single node. 
+:::
+
+![Create menu](assets/nuke_publishedinstance.png)
+
+
+The informations about these objects are given by the user by filling the extra attributes of the Place Holder
+
+![Create menu](assets/nuke_fillingExtraAttributes.png)
+
+
+
+### Update Place Holder
+This tool alows the user to change the information provided in the extra attributes of the selected Place Holder.
+
+![Create menu](assets/nuke_updatePlaceHolder.png)
+
+
+
+### Build Workfile from template
+This tool imports the template used and replaces the existed PlaceHolders with the corresponding published objects (which can contain Place Holders too). In case there is no published items with the description given, the place holder will remain in the node graph.
+
+![Create menu](assets/nuke_buildWorfileFromTemplate.png)
+
+#### Result
+- Replace `PLACEHOLDER` node in the template with the published instance corresponding to the informations provided in extra attributes of the Place Holder
+
+![Create menu](assets/nuke_buildworkfile.png)
+
+:::note
+In case the instance that will replace the Place holder **A** contains another Place Holder **B** that points to many published elements, all the nodes that were imported with **A** except **B** will be duplicated for each element that will replace **B**
+:::
+
+### Update Workfile
+This tool can be used to check if some instances were published after the last build, so they will be imported.
+
+![Create menu](assets/nuke_updateWorkfile.png)
+
+:::note
+Imported instances must not be deleted because they contain extra attributes that will be used to update the workfile since the place holder is been deleted.
+:::
