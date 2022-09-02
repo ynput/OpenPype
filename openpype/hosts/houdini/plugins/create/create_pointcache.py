@@ -29,7 +29,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             "prim_to_detail_pattern": "cbId",
             "format": 2,
             "facesets": 0,
-            "filename": "$HIP/pyblish/{}.abc".format(self.identifier)
+            "filename": "$HIP/pyblish/{}.abc".format(subset_name)
         }
 
         if instance_node:
