@@ -33,7 +33,10 @@ def validate_credentials(
     except gazu.exception.AuthFailedException:
         return False
 
-    emit_on_kitsu_login(login)
+    emit_event("kitsu.user.logged", 
+           data={"username": login}, 
+           source="kitsu")
+           
     return True
 
 
@@ -104,14 +107,3 @@ def set_credentials_envs(login: str, password: str):
     """
     os.environ["KITSU_LOGIN"] = login
     os.environ["KITSU_PWD"] = password
-
-
-def emit_on_kitsu_login(login: str):
-    """Notifies listeners that Kitsu module succesfully connected,
-    and passes them data
-
-    Args:
-        login (str): Kitsu username
-    """
-    event_data = {"username": login}
-    emit_event("kitsu.user.logged", data=event_data, source="kitsu")
