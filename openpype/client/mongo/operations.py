@@ -425,7 +425,7 @@ class MongoDeleteOperation(DeleteOperation):
         return DeleteOne({"_id": self.entity_id})
 
 
-class OperationsSession(BaseOperationsSession):
+class MongoOperationsSession(BaseOperationsSession):
     """Session storing operations that should happen in an order.
 
     At this moment does not handle anything special can be sonsidered as
@@ -546,7 +546,7 @@ def create_project(project_name, project_code, library_project=False):
         "schema": CURRENT_PROJECT_SCHEMA
     }
 
-    op_session = OperationsSession()
+    op_session = MongoOperationsSession()
     # Insert document with basic data
     create_op = op_session.create_entity(
         project_name, project_doc["type"], project_doc
