@@ -4,3 +4,6 @@ from .operations_base import REMOVED_VALUE
 if not OP4_TEST_ENABLED:
     from .mongo.operations import *
     OperationsSession = MongoOperationsSession
+
+else:
+    from .server.operations import *
