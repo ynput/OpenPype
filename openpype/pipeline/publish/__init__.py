@@ -17,6 +17,8 @@ from .publish_plugins import (
 
     RepairAction,
     RepairContextAction,
+
+    Extractor,
 )
 
 from .lib import (
@@ -57,6 +59,8 @@ __all__ = (
 
     "RepairAction",
     "RepairContextAction",
+
+    "Extractor",
 
     "DiscoverResult",
     "publish_plugins_discover",
