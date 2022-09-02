@@ -8,7 +8,9 @@ from openpype.lib.local_settings import OpenPypeSecureRegistry
 from openpype.lib import emit_event
 
 
-def validate_credentials(login: str, password: str, kitsu_url: str = None) -> bool:
+def validate_credentials(
+    login: str, password: str, kitsu_url: str = None
+) -> bool:
     """Validate credentials by trying to connect to Kitsu host URL.
 
     Args:
