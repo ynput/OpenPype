@@ -85,7 +85,6 @@ class InstancePlugin(pyblish.api.InstancePlugin):
         super(InstancePlugin, self).__init__(*args, **kwargs)
 
 
-# NOTE: This class is used on so many places I gave up moving it
 class Extractor(pyblish.api.InstancePlugin):
     """Extractor base class.
 
