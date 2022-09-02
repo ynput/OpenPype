@@ -641,7 +641,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return result
 
     def _patch_workfile(self):
-        # type: (str, dict) -> [str, None]
         """Patch Maya scene.
 
         This will take list of patches (lines to add) and apply them to
