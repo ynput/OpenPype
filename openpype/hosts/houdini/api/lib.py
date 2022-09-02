@@ -17,7 +17,7 @@ import hou
 self = sys.modules[__name__]
 self._parent = None
 log = logging.getLogger(__name__)
-
+JSON_PREFIX = "JSON:::"
 
 def get_asset_fps():
     """Return current asset fps."""
@@ -290,6 +290,11 @@ def imprint(node, data, update=False):
 
     http://www.sidefx.com/docs/houdini/hom/hou/ParmTemplate.html
 
+    Because of some update glitch where you cannot overwrite existing
+    ParmTemplates on node using:
+        `setParmTemplates()` and `parmTuplesInFolder()`
+    update is done in another pass.
+
     Args:
         node(hou.Node): node object from Houdini
         data(dict): collection of attributes and their value
@@ -304,38 +309,48 @@ def imprint(node, data, update=False):
     if not data:
         return
 
-    current_parameters = node.spareParms()
-    current_keys = [p.name() for p in current_parameters]
-    update_keys = []
-
-    parm_group = node.parmTemplateGroup()
-    parm_folder = hou.FolderParmTemplate("folder", "Extra")
+    current_parms = {p.name(): p for p in node.spareParms()}
+    update_parms = []
     templates = []
+
     for key, value in data.items():
         if value is None:
             continue
 
-        if key in current_keys:
+        parm = get_template_from_value(key, value)
+
+        if key in current_parms.keys():
             if not update:
-                print(f"{key} already exists on {node}")
+                log.debug("{} already exists on {}".format(key, node))
             else:
-                print(f"replacing {key}")
-                update_keys.append((key, value))
+                log.debug("replacing {}".format(key))
+                update_parms.append(parm)
             continue
-        parm = parm_to_template(key, value)
         # parm.hide(True)
         templates.append(parm)
-    parm_folder.setParmTemplates(templates)
-    parm_group.append(parm_folder)
+
+    parm_group = node.parmTemplateGroup()
+    parm_folder = parm_group.findFolder("Extra")
+
+    # if folder doesn't exist yet, create one and append to it,
+    # else append to existing one
+    if not parm_folder:
+        parm_folder = hou.FolderParmTemplate("folder", "Extra")
+        parm_folder.setParmTemplates(templates)
+        parm_group.append(parm_folder)
+    else:
+        for template in templates:
+            parm_group.appendToFolder(parm_folder, template)
+
     node.setParmTemplateGroup(parm_group)
 
-    if update_keys:
-        parms = node.parmTuplesInFolder(("Extra",))
-        for parm in parms:
-            for key, value in update_keys:
-                if parm.name() == key:
-                    node.replaceSpareParmTuple(
-                        parm.name(), parm_to_template(key, value))
+    # TODO: Updating is done here, by calling probably deprecated functions.
+    #       This needs to be addressed in the future.
+    if not update_parms:
+        return
+
+    for parm in update_parms:
+        node.replaceSpareParmTuple(parm.name(), parm)
 
 
 def lsattr(attr, value=None, root="/"):
@@ -406,9 +421,9 @@ def read(node):
         value = parameter.eval()
         # test if value is json encoded dict
         if isinstance(value, six.string_types) and \
-                len(value) > 0 and value.startswith("JSON:::"):
+                value.startswith(JSON_PREFIX):
             try:
-                value = json.loads(value.lstrip("JSON:::"))
+                value = json.loads(value[len(JSON_PREFIX):])
             except json.JSONDecodeError:
                 # not a json
                 pass
@@ -478,24 +493,6 @@ def reset_framerange():
     hou.setFrame(frame_start)
 
 
-def load_creator_code_to_asset(
-        otl_file_path, node_type_name, source_file_path):
-    # type: (str, str, str) -> None
-    # Load the Python source code.
-    with open(source_file_path, "rb") as src:
-        source = src.read()
-
-    # Find the asset definition in the otl file.
-    definitions = [definition
-        for definition in hou.hda.definitionsInFile(otl_file_path)
-        if definition.nodeTypeName() == node_type_name]
-    assert(len(definitions) == 1)
-    definition = definitions[0]
-
-    # Store the source code into the PythonCook section of the asset.
-    definition.addSection("PythonCook", source)
-
-
 def get_main_window():
     """Acquire Houdini's main window"""
     if self._parent is None:
@@ -503,7 +500,7 @@ def get_main_window():
     return self._parent
 
 
-def parm_to_template(key, value):
+def get_template_from_value(key, value):
     if isinstance(value, float):
         parm = hou.FloatParmTemplate(name=key,
                                      label=key,
@@ -528,7 +525,7 @@ def parm_to_template(key, value):
                                       label=key,
                                       num_components=1,
                                       default_value=(
-                                          "JSON:::" + json.dumps(value),))
+                                          JSON_PREFIX + json.dumps(value),))
     else:
         raise TypeError("Unsupported type: %r" % type(value))
 
