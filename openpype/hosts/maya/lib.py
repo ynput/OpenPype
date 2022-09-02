@@ -11,13 +11,16 @@ def copy_workspace_mel(workdir):
         return
 
     # Skip if workspace.mel already exists
-    dst_filepath = os.path.join(workdir, "workspace.mel")
+    abs_path = os.path.abspath(workdir)
+    proj_path = os.path.dirname(abs_path)
+    setting_path = os.path.join(proj_path,".workspace/")
+    dst_filepath = os.path.join(setting_path, "workspace.mel")
     if os.path.exists(dst_filepath):
         return
 
     # Create workdir if does not exists yet
-    if not os.path.exists(workdir):
-        os.makedirs(workdir)
+    if not os.path.exists(setting_path):
+        os.makedirs(setting_path)
 
     # Copy file
     print("Copying workspace mel \"{}\" -> \"{}\"".format(
