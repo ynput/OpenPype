@@ -184,11 +184,35 @@ class APIBase(object):
         return GraphQlResponse(response.json())
 
     def get_server_schema(self):
+        """Get server schema with info, url paths, components etc.
+
+        Todo:
+            Cache schema - How to find out it is outdated?
+
+        Returns:
+            Dict[str, Any]: Full server schema.
+        """
+
         url = "{}/openapi.json".format(self._base_url)
         response = self._do_rest_request(RequestTypes.get, url)
         if response:
             return response.data
         return None
+
+    def get_schemas(self):
+        """Get components schema.
+
+        Name of components does not match entity type names e.g. 'project' is under
+        'ProjectModel'. We should find out some mapping. Also there are properties
+        which don't have information about reference to object e.g. 'config' has
+        just object definition without reference schema.
+
+        Returns:
+            Dict[str, Any]: Component schemas.
+        """
+
+        server_schema = self.get_server_schema()
+        return server_schema["components"]["schemas"]
 
     def _do_rest_request(self, function, url, **kwargs):
         if "headers" not in kwargs:
@@ -454,3 +478,24 @@ class ServerAPI(APIBase):
         for item in result_data["data"]["project"]["taskTypes"]:
             task_types.add(item["name"])
         return task_types
+
+
+class GlobalContext:
+    _connection = None
+
+    @classmethod
+    def get_server_api_connection(cls):
+        if cls._connection is None:
+            # Fill to start work
+            # NOTE: This is not how it should be in production !!!
+            url = os.environ.get("OPENPYPE_SERVER_URL")
+            username = os.environ.get("OPENPYPE_SERVER_USER")
+            password = os.environ.get("OPENPYPE_SERVER_PASS")
+            con = ServerAPI(url)
+            con.login(username, password)
+            cls._connection = con
+        return cls._connection
+
+
+def get_server_api_connection():
+    return GlobalContext.get_server_api_connection()
