@@ -393,16 +393,6 @@ class DeadlineJobInfo(object):
         for key, value in data.items():
             setattr(self, key, value)
 
-    def __setattr__(self, key, value):
-        # Backwards compatibility: Allow appending to index vars by setting
-        # it on Job Info directly like: JobInfo.OutputFilename = filename
-        existing = getattr(self, key, None)
-        if isinstance(existing, DeadlineIndexedVar):
-            existing += value
-            return
-
-        object.__setattr__(self, key, value)
-
 
 @six.add_metaclass(AbstractMetaInstancePlugin)
 class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
