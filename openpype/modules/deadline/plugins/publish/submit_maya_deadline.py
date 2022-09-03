@@ -49,6 +49,30 @@ class MayaPluginInfo:
     RenderSetupIncludeLights = attr.ib(default=None)  # Include all lights flag
 
 
+@attr.s
+class PythonPluginInfo:
+    ScriptFile = attr.ib()
+    Version = attr.ib(default="3.6")
+    Arguments = attr.ib(default=None)
+    SingleFrameOnly = attr.ib(default=None)
+
+
+@attr.s
+class VRayPluginInfo:
+    InputFilename = attr.ib(default=None)   # Input
+    SeparateFilesPerFrame = attr.ib(default=None)
+    VRayEngine = attr.ib(default="V-Ray")
+    Width = attr.ib(default=None)
+    Height = attr.ib(default=None)  # Mandatory for Deadline
+    OutputFilePath = attr.ib(default=True)
+    OutputFileName = attr.ib(default=None)  # Render only this layer
+
+
+@attr.s
+class ArnoldPluginInfo:
+    ArnoldFile = attr.ib(default=None)
+
+
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
     label = "Submit Render to Deadline"
@@ -479,26 +503,19 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     def _get_vray_export_payload(self, data):
 
         job_info = copy.deepcopy(self.job_info)
-
         job_info.Name = self._job_info_label("Export")
 
         # Get V-Ray settings info to compute output path
-        vray_settings = cmds.ls(type="VRaySettingsNode")
-        node = vray_settings[0]
-        template = cmds.getAttr("{}.vrscene_filename".format(node))
-        scene, _ = os.path.splitext(data["filename"])
-        first_file = self.format_vray_output_filename(scene, template)
-        first_file = "{}/{}".format(data["workspace"], first_file)
-        output = os.path.dirname(first_file)
+        vray_scene = self.format_vray_output_filename()
 
         plugin_info = {
             "Renderer": "vray",
             "SkipExistingFrames": True,
             "UseLegacyRenderLayers": True,
-            "OutputFilePath": output
+            "OutputFilePath": os.path.dirname(vray_scene)
         }
 
-        return job_info, plugin_info
+        return job_info, attr.asdict(plugin_info)
 
     def _get_arnold_export_payload(self, data):
 
@@ -515,8 +532,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         script = os.path.normpath(module_path)
 
         job_info = copy.deepcopy(self.job_info)
-        plugin_info = copy.deepcopy(self.plugin_info)
-
         job_info.Name = self._job_info_label("Export")
 
         # Force a single frame Python job
@@ -540,14 +555,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        plugin_info.update({
-            "Version": "3.6",
-            "ScriptFile": script,
-            "Arguments": "",
-            "SingleFrameOnly": "True",
-        })
+        plugin_info = PythonPluginInfo(
+            ScriptFile=script,
+            Version="3.6",
+            Arguments="",
+            SingleFrameOnly="True"
+        )
 
-        return job_info, plugin_info
+        return job_info, attr.asdict(plugin_info)
 
     def _get_vray_render_payload(self, data):
 
@@ -558,27 +573,17 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info.OverrideTaskExtraInfoNames = False
 
         # Plugin Info
-        vray_settings = cmds.ls(type="VRaySettingsNode")
-        node = vray_settings[0]
-        template = cmds.getAttr("{}.vrscene_filename".format(node))
-        # "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>"
+        plugin_info = VRayPluginInfo(
+            InputFilename=self.format_vray_output_filename(),
+            SeparateFilesPerFrame=False,
+            VRayEngine="V-Ray",
+            Width=self._instance.data["resolutionWidth"],
+            Height=self._instance.data["resolutionHeight"],
+            OutputFilePath=job_info.OutputDirectory[0],
+            OutputFileName=job_info.OutputFilename[0]
+        )
 
-        scene, _ = os.path.splitext(self.scene_path)
-        first_file = self.format_vray_output_filename(scene, template)
-        first_file = "{}/{}".format(data["workspace"], first_file)
-
-        plugin_info = {
-            "InputFilename": first_file,
-            "SeparateFilesPerFrame": True,
-            "VRayEngine": "V-Ray",
-
-            "Width": self._instance.data["resolutionWidth"],
-            "Height": self._instance.data["resolutionHeight"],
-            "OutputFilePath": job_info.OutputDirectory[0],
-            "OutputFileName": job_info.OutputFilename[0]
-        }
-
-        return job_info, plugin_info
+        return job_info, attr.asdict(plugin_info)
 
     def _get_arnold_render_payload(self, data):
 
@@ -590,55 +595,55 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Plugin Info
         ass_file, _ = os.path.splitext(data["output_filename_0"])
-        first_file = ass_file + ".ass"
-        plugin_info = {
-            "ArnoldFile": first_file,
-        }
+        ass_filepath = ass_file + ".ass"
 
-        return job_info, plugin_info
+        plugin_info = ArnoldPluginInfo(
+            ArnoldFile=ass_filepath
+        )
 
-    def format_vray_output_filename(self, filename, template, dir=False):
+        return job_info, attr.asdict(plugin_info)
+
+    def format_vray_output_filename(self):
         """Format the expected output file of the Export job.
 
         Example:
             <Scene>/<Scene>_<Layer>/<Layer>
-            "shot010_v006/shot010_v006_CHARS/CHARS"
-
-        Args:
-            instance:
-            filename(str):
-            dir(bool):
-
+            "shot010_v006/shot010_v006_CHARS/CHARS_0001.vrscene"
         Returns:
             str
 
         """
+
+        # "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>"
+        vray_settings = cmds.ls(type="VRaySettingsNode")
+        node = vray_settings[0]
+        template = cmds.getAttr("{}.vrscene_filename".format(node))
+        scene, _ = os.path.splitext(self.scene_path)
+
         def smart_replace(string, key_values):
             new_string = string
             for key, value in key_values.items():
                 new_string = new_string.replace(key, value)
             return new_string
 
-        # Ensure filename has no extension
-        file_name, _ = os.path.splitext(filename)
+        # Get workfile scene path without extension to format vrscene_filename
+        scene_filename = os.path.basename(self.scene_path)
+        scene_filename_no_ext, _ = os.path.splitext(scene_filename)
 
         layer = self._instance.data['setMembers']
 
         # Reformat without tokens
         output_path = smart_replace(
             template,
-            {"<Scene>": file_name,
+            {"<Scene>": scene_filename_no_ext,
              "<Layer>": layer})
 
-        if dir:
-            return output_path.replace("\\", "/")
-
         start_frame = int(self._instance.data["frameStartHandle"])
+        workspace = self._instance.context.data["workspace"]
         filename_zero = "{}_{:04d}.vrscene".format(output_path, start_frame)
+        filepath_zero = os.path.join(workspace, filename_zero)
 
-        result = filename_zero.replace("\\", "/")
-
-        return result
+        return filepath_zero.replace("\\", "/")
 
     def _patch_workfile(self):
         """Patch Maya scene.
