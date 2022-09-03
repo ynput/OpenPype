@@ -754,14 +754,21 @@ def _format_tiles(
                       used for assembler configuration.
 
     """
-    tile = 0
+    # Math used requires integers for correct output - as such
+    # we ensure our inputs are correct.
+    assert type(tiles_x) is int, "tiles_x must be an integer"
+    assert type(tiles_y) is int, "tiles_y must be an integer"
+    assert type(width) is int, "width must be an integer"
+    assert type(height) is int, "height must be an integer"
+
     out = {"JobInfo": {}, "PluginInfo": {}}
     cfg = OrderedDict()
-    w_space = width / tiles_x
-    h_space = height / tiles_y
+    w_space = width // tiles_x
+    h_space = height // tiles_y
 
     cfg["TilesCropped"] = "False"
 
+    tile = 0
     for tile_x in range(1, tiles_x + 1):
         for tile_y in reversed(range(1, tiles_y + 1)):
             tile_prefix = "_tile_{}x{}_{}x{}_".format(
@@ -769,10 +776,10 @@ def _format_tiles(
                 tiles_x,
                 tiles_y
             )
-            top = int(height - (tile_y * h_space))
-            bottom = int(height - ((tile_y - 1) * h_space) - 1)
-            left = int((tile_x - 1) * w_space)
-            right = int((tile_x * w_space) - 1)
+            top = height - (tile_y * h_space)
+            bottom = height - ((tile_y - 1) * h_space) - 1
+            left = (tile_x - 1) * w_space
+            right = (tile_x * w_space) - 1
 
             # Job Info
             new_filename = "{}/{}{}".format(
