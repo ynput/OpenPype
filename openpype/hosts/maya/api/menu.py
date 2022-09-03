@@ -105,13 +105,6 @@ def install():
         cmds.menuItem(divider=True)
 
         cmds.menuItem(
-            "Set Render Settings",
-            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
-        )
-
-        cmds.menuItem(divider=True)
-
-        cmds.menuItem(
             "Work Files...",
             command=lambda *args: host_tools.show_workfiles(
                 parent=parent_widget
@@ -132,6 +125,12 @@ def install():
             "Set Colorspace",
             command=lambda *args: lib.set_colorspace(),
         )
+
+        cmds.menuItem(
+            "Set Render Settings",
+            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
+        )
+
         cmds.menuItem(divider=True, parent=MENU_NAME)
         cmds.menuItem(
             "Build First Workfile",

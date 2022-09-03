@@ -1,7 +1,10 @@
 import pyblish.api
-import openpype.api
 
 from maya import cmds
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -18,7 +21,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     """
 
     label = "Validate Frame Range"
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["animation",
                 "pointcache",
                 "camera",
@@ -26,7 +29,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 "review",
                 "yeticache"]
     optional = True
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
     exclude_families = []
 
     def process(self, instance):

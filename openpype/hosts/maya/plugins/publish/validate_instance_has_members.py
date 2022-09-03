@@ -1,12 +1,13 @@
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
     """Validates instance objectSet has *any* members."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     label = 'Instance has members'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
