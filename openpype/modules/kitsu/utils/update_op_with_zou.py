@@ -341,7 +341,7 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None):
     all_projects = gazu.project.all_open_projects()
     for project in all_projects:
         if ignore_projects and project["name"] in ignore_projects:
-                continue
+            continue
         sync_project_from_kitsu(dbcon, project)
 
 
