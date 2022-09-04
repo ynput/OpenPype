@@ -318,7 +318,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(login: str, password: str, ignore_projects=[]):
+def sync_all_projects(login: str, password: str, ignore_projects: list = None):
     """Update all OP projects in DB with Zou data.
 
     Args:
@@ -340,8 +340,9 @@ def sync_all_projects(login: str, password: str, ignore_projects=[]):
     dbcon.install()
     all_projects = gazu.project.all_open_projects()
     for project in all_projects:
-        if project["name"] not in ignore_projects:
-            sync_project_from_kitsu(dbcon, project)
+        if ignore_projects and project["name"] in ignore_projects:
+                continue
+        sync_project_from_kitsu(dbcon, project)
 
 
 def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
