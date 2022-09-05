@@ -1039,7 +1039,7 @@ def get_last_workfile(
     )
 
 
-@deprecated("openpype.client.get_linked_ids_for_representations")
+@deprecated("openpype.client.get_linked_representation_id")
 def get_linked_ids_for_representations(
     project_name, repre_ids, dbcon=None, link_type=None, max_depth=0
 ):
