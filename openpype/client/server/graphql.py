@@ -75,6 +75,39 @@ def projects_graphql_from_fields(fields):
     return query
 
 
+def folders_graphql_from_fields(project_name, fields):
+    query = GraphQlQuery("FoldersQuery")
+    project_name_var = query.add_variable("projectName", str, project_name)
+    project_query = query.add_field("project")
+    project_query.filter("name", project_name_var)
+
+    folders_query = project_query.add_field("folders", has_edges=True)
+
+    fields = set(fields)
+    if "tasks" in fields:
+        fields.remove("tasks")
+        tasks_query = folders_query.add_field("tasks", has_edges=True)
+        tasks_query.add_field("name")
+        tasks_query.add_field("taskType")
+
+    nested_fields = fields_to_dict(fields)
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, folders_query))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is ALL_SUBFIELDS:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
 def value_type_to_string(value_type):
     if value_type in six.string_types:
         return "String"
