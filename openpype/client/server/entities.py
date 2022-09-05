@@ -23,7 +23,7 @@ FOLDER_FIELDS_MAPPING_V3_V4 = {
 }
 
 
-def project_fields_v3_to_v4(fields):
+def _project_fields_v3_to_v4(fields):
     # TODO config fields
     # - config.apps
     # - config.groups
@@ -61,6 +61,11 @@ def _convert_v4_project_to_v3(project):
         "_id": project_name,
         "name": project_name
     }
+    if "config" in project:
+        output["config"] = project["config"]
+        output["config"]["tasks"] = project.get("taskTypes")
+        output["config"]["apps"] = []
+
     data = project.get("data") or {}
 
     for data_key, key in (
@@ -82,7 +87,7 @@ def _convert_v4_project_to_v3(project):
 
 def _get_projects(active=None, library=None, fields=None):
     con = get_server_api_connection()
-    fields = project_fields_v3_to_v4(fields)
+    fields = _project_fields_v3_to_v4(fields)
     if not fields:
         return con.get_rest_projects(active, library)
 
@@ -117,7 +122,7 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     if active and inactive:
         active = None
 
-    fields = project_fields_v3_to_v4(fields)
+    fields = _project_fields_v3_to_v4(fields)
     if not fields:
         return _convert_v4_project_to_v3(
             con.get_rest_project(active)
