@@ -16,7 +16,7 @@
         }
     },
     "mel-workspace":{
-        "scripts":[
+        "definition":[
             "workspace -fr \"shaders\" \"renderData/shaders\";",
             "workspace -fr \"images\" \"renders\";",
             "workspace -fr \"particles\" \"particles\";",

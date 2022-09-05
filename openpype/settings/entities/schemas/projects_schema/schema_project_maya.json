@@ -63,8 +63,8 @@
                  {
                     "type": "list",
                     "object_type": "text",
-                    "key": "scripts",
-                    "label": "scripts"
+                    "key": "definition",
+                    "label": "definition"
                  }
              ]
          },
