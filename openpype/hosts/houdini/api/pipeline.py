@@ -30,6 +30,7 @@ from .lib import get_asset_fps
 log = logging.getLogger("openpype.hosts.houdini")
 
 AVALON_CONTAINERS = "/obj/AVALON_CONTAINERS"
+CONTEXT_CONTAINER = "/obj/OpenPypeContext"
 IS_HEADLESS = not hasattr(hou, "ui")
 
 PLUGINS_DIR = os.path.join(HOUDINI_HOST_DIR, "plugins")
@@ -132,12 +133,37 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
             on_file_event_callback
         )
 
+    @staticmethod
+    def _create_context_node():
+        """Helper for creating context holding node.
+
+        Returns:
+            hou.Node: context node
+
+        """
+        obj_network = hou.node("/obj")
+        op_ctx = obj_network.createNode(
+            "null", node_name="OpenPypeContext")
+        op_ctx.moveToGoodPosition()
+        op_ctx.setBuiltExplicitly(False)
+        op_ctx.setCreatorState("OpenPype")
+        op_ctx.setComment("OpenPype node to hold context metadata")
+        op_ctx.setColor(hou.Color((0.081, 0.798, 0.810)))
+        op_ctx.hide(True)
+        return op_ctx
+
     def update_context_data(self, data, changes):
-        root_node = hou.node("/")
-        lib.imprint(root_node, data)
+        op_ctx = hou.node(CONTEXT_CONTAINER)
+        if not op_ctx:
+            op_ctx = self._create_context_node()
+
+        lib.imprint(op_ctx, data)
 
     def get_context_data(self):
-        return lib.read(hou.node("/"))
+        op_ctx = hou.node(CONTEXT_CONTAINER)
+        if not op_ctx:
+            op_ctx = self._create_context_node()
+        return lib.read(op_ctx)
 
 
 def on_file_event_callback(event):
