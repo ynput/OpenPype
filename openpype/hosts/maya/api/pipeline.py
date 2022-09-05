@@ -28,7 +28,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.hosts.maya.lib import copy_workspace_mel,load_workspace_mel
 from . import menu, lib
 from .workio import (
     open_file,
@@ -550,7 +550,7 @@ def on_task_changed():
 def before_workfile_save(event):
     workdir_path = event["workdir_path"]
     if workdir_path:
-        copy_workspace_mel(workdir_path)
+        load_workspace_mel(workdir_path)
 
 
 class MayaDirmap(HostDirmap):

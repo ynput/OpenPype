@@ -1,6 +1,8 @@
 import os
 import shutil
 
+import json
+from openpype.settings import get_current_project_settings
 
 def copy_workspace_mel(workdir):
     # Check that source mel exists
@@ -24,3 +26,19 @@ def copy_workspace_mel(workdir):
         src_filepath, dst_filepath
     ))
     shutil.copy(src_filepath, dst_filepath)
+
+
+def load_workspace_mel(workdir):
+    dst_filepath = os.path.join(workdir, "workspace.mel")
+    if os.path.exists(dst_filepath):
+        return
+
+    if not os.path.exists(workdir):
+        os.makedirs(workdir)
+
+    with open(dst_filepath, "w") as mel_file:
+        setting = get_current_project_settings()
+        mel_script = setting["maya"]["mel-workspace"]["scripts"]
+        for mel in mel_script:
+            mel_file.write(mel)
+            mel_file.write("\n")

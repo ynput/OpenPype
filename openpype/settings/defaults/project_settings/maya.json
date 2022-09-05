@@ -15,6 +15,20 @@
             "destination-path": []
         }
     },
+    "mel-workspace":{
+        "scripts":[
+            "workspace -fr \"shaders\" \"renderData/shaders\";",
+            "workspace -fr \"images\" \"renders\";",
+            "workspace -fr \"particles\" \"particles\";",
+            "workspace -fr \"mayaAscii\" \"\";",
+            "workspace -fr \"mayaBinary\" \"\";",
+            "workspace -fr \"scene\" \"\";",
+            "workspace -fr \"alembicCache\" \"cache/alembic\";",
+            "workspace -fr \"renderData\" \"renderData\";",
+            "workspace -fr \"sourceImages\" \"sourceimages\";",
+            "workspace -fr \"fileCache\" \"cache/nCache\";"
+        ]
+    },
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [

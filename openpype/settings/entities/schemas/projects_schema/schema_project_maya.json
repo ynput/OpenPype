@@ -54,6 +54,21 @@
             ]
         },
         {
+            "type": "dict",
+             "collapsible": true,
+             "key": "mel-workspace",
+             "label": "Maya MEL Workspace",
+             "is_group": true,
+             "children": [
+                 {
+                    "type": "list",
+                    "object_type": "text",
+                    "key": "scripts",
+                    "label": "scripts"
+                 }
+             ]
+         },
+        {
             "type": "schema",
             "name": "schema_scriptsmenu"
         },
