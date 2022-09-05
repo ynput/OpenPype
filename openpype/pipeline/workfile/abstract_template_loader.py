@@ -179,7 +179,7 @@ class AbstractTemplateLoader:
             build_info["profiles"],
             {
                 "task_types": task_type,
-                "tasks": task_name
+                "task_names": task_name
             }
         )
 

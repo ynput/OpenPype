@@ -78,7 +78,7 @@ def get_projects(active=True, inactive=False, fields=None):
             yield project_doc
 
 
-def get_project(project_name, active=True, inactive=False, fields=None):
+def get_project(project_name, active=True, inactive=True, fields=None):
     # Skip if both are disabled
     if not active and not inactive:
         return None
