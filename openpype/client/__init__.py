@@ -48,7 +48,7 @@ from .entities import (
 from .entity_links import (
     get_linked_asset_ids,
     get_linked_assets,
-    get_linked_representation_ids,
+    get_linked_representation_id,
 )
 
 from .operations import (
@@ -102,7 +102,7 @@ __all__ = (
 
     "get_linked_asset_ids",
     "get_linked_assets",
-    "get_linked_representation_ids",
+    "get_linked_representation_id",
 
     "create_project",
 )

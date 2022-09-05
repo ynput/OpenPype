@@ -1061,14 +1061,14 @@ def get_linked_ids_for_representations(
         Function will be removed after release version 3.16.*
     """
 
-    from openpype.client import get_linked_representation_ids
+    from openpype.client import get_linked_representation_id
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
 
     output = []
     for repre_id in repre_ids:
-        output.extend(get_linked_representation_ids(
+        output.extend(get_linked_representation_id(
             project_name,
             repre_id=repre_id,
             link_type=link_type,
