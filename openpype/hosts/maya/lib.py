@@ -3,6 +3,7 @@ import shutil
 
 from openpype.settings import get_current_project_settings
 
+
 def load_workspace_mel(workdir):
     dst_filepath = os.path.join(workdir, "workspace.mel")
     if os.path.exists(dst_filepath):
