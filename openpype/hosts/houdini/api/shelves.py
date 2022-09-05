@@ -1,12 +1,16 @@
 import os
 import logging
 import platform
+import six
 
 from openpype.settings import get_project_settings
 
 import hou
 
 log = logging.getLogger("openpype.hosts.houdini.shelves")
+
+if six.PY2:
+    FileNotFoundError = IOError
 
 
 def generate_shelves():
