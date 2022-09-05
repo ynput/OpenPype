@@ -92,11 +92,13 @@ def _get_projects(active=None, library=None, fields=None):
         return con.get_rest_projects(active, library)
 
     query = projects_graphql_from_fields(fields)
-    response = con.query(query.calculate_query())
+    query_str = query.calculate_query()
+    response = con.query(query_str)
+    parsed_data = query.parse_result(response.data["data"])
 
     output = []
-    for edge in response.data["data"]["projects"]["edges"]:
-        output.append(edge.pop("node"))
+    for project in parsed_data["projects"]:
+        output.append(project)
     return output
 
 
@@ -125,14 +127,16 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     fields = _project_fields_v3_to_v4(fields)
     if not fields:
         return _convert_v4_project_to_v3(
-            con.get_rest_project(active)
+            con.get_rest_project(project_name)
         )
 
     query = project_graphql_from_fields(project_name, fields)
 
+    query_str = query.calculate_query()
     variables = query.get_variable_values()
-    response = con.query(query.calculate_query(), **variables)
-    data = response.data["data"]["project"]
+    response = con.query(query_str, **variables)
+    parsed_data = query.parse_result(response.data["data"])
+    data = parsed_data["project"]
     data["name"] = project_name
     return _convert_v4_project_to_v3(data)
 
