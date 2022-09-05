@@ -28,7 +28,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-from openpype.hosts.maya.lib import copy_workspace_mel,load_workspace_mel
+from openpype.hosts.maya.lib import load_workspace_mel
 from . import menu, lib
 from .workio import (
     open_file,
