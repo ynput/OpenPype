@@ -176,6 +176,15 @@ class GraphQlQuery:
 
         return "\n".join(output)
 
+    def parse_result(self, data):
+        if not data:
+            return None
+
+        output = {}
+        for child in self._children:
+            output.update(child.parse_result(data))
+        return output
+
 
 class GraphQlQueryItem:
     def __init__(self, name, parent, has_edges=None):
@@ -285,3 +294,28 @@ class GraphQlQueryItem:
         output.append(offset + "}")
 
         return "\n".join(output)
+
+    def parse_result(self, data):
+        value = data.get(self._name)
+        if value is None:
+            if self._has_edges:
+                return []
+            return {}
+
+        if self._has_edges:
+            node_values = []
+            if self._children:
+                for edge in value["edges"]:
+                    edge_value = {}
+                    for child in self._children:
+                        edge_value.update(child.parse_result(edge["node"]))
+                    node_values.append(edge_value)
+            return {self._name: node_values}
+
+        if not self._children:
+            return {self._name: value}
+
+        output = {}
+        for child in self._children:
+            output.update(child.parse_result(value))
+        return {self._name: output}
